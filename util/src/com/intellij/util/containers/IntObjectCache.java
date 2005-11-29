@@ -1,9 +1,9 @@
 package com.intellij.util.containers;
 
-import com.intellij.util.EventDispatcher;
-
+import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +12,7 @@ import java.util.Iterator;
  * Time: 3:23:37 PM
  * To change this template use File | Settings | File Templates.
  */
-public class IntObjectCache implements Iterable {
+public class IntObjectCache<T> implements Iterable<T> {
 
   //private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.ObjectCache");
 
@@ -27,7 +27,7 @@ public class IntObjectCache implements Iterable {
   protected int myCount;
   protected int myFirstFree;
 
-  final protected EventDispatcher<DeletedPairsListener> myEventDispatcher = EventDispatcher.create(DeletedPairsListener.class);
+  final List<DeletedPairsListener> myListeners = new ArrayList<DeletedPairsListener>();
 
   private static final int[] tableSizes =
     new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,
@@ -36,9 +36,9 @@ public class IntObjectCache implements Iterable {
   private long myAttempts;
   private long myHits;
 
-  protected static class CacheEntry {
+  protected class CacheEntry {
     public int key;
-    public Object value;
+    public T value;
     public int prev;
     public int next;
     public int hash_next;
@@ -53,7 +53,7 @@ public class IntObjectCache implements Iterable {
       cacheSize = minSize;
     }
     myTop = myBack = 0;
-    myCache = new CacheEntry[cacheSize + 1];
+    myCache = new IntObjectCache.CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
       myCache[i] = new CacheEntry();
     }
@@ -77,12 +77,12 @@ public class IntObjectCache implements Iterable {
     return isCached(key);
   }
 
-  public Object get(int key) {
+  public T get(int key) {
     return tryKey(key);
   }
 
-  public Object put(int key, Object value) {
-    Object oldValue = tryKey(key);
+  public T put(int key, T value) {
+    T oldValue = tryKey(key);
     if (oldValue != null) {
       remove(key);
     }
@@ -117,7 +117,7 @@ public class IntObjectCache implements Iterable {
 
   // Some AbstractMap functions finished
 
-  final public void cacheObject(int key, Object x) {
+  final public void cacheObject(int key, T x) {
     int index = myFirstFree;
     if (myCount < myCache.length - 1) {
       if (index == 0) {
@@ -143,7 +143,7 @@ public class IntObjectCache implements Iterable {
     add2Top(index);
   }
 
-  final public Object tryKey(int key) {
+  final public T tryKey(int key) {
     ++myAttempts;
     int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -236,30 +236,28 @@ public class IntObjectCache implements Iterable {
 
   // start of Iterable implementation
 
-  public Iterator iterator() {
+  public Iterator<T> iterator() {
     return new IntObjectCacheIterator(this);
   }
 
-  protected class IntObjectCacheIterator implements Iterator {
-    private IntObjectCache myCache;
+  protected class IntObjectCacheIterator implements Iterator<T> {
     private int myCurrentEntry;
 
     public IntObjectCacheIterator(IntObjectCache cache) {
-      myCache = cache;
       myCurrentEntry = 0;
       cache.myCache[0].next = cache.myTop;
     }
 
     public boolean hasNext() {
-      return (myCurrentEntry = myCache.myCache[myCurrentEntry].next) != 0;
+      return (myCurrentEntry = myCache[myCurrentEntry].next) != 0;
     }
 
-    public Object next() {
-      return myCache.myCache[myCurrentEntry].value;
+    public T next() {
+      return myCache[myCurrentEntry].value;
     }
 
     public void remove() {
-      myCache.removeEntry(myCache.myCache[myCurrentEntry].key);
+      removeEntry(myCache[myCurrentEntry].key);
     }
   }
 
@@ -268,20 +266,22 @@ public class IntObjectCache implements Iterable {
   // start of listening features
 
   public interface DeletedPairsListener extends EventListener {
-    void ObjectRemoved(int key, Object value);
+    void objectRemoved(int key, Object value);
   }
 
   public void addDeletedPairsListener(DeletedPairsListener listener) {
-    myEventDispatcher.addListener(listener);
+    myListeners.add(listener);
   }
 
   public void removeDeletedPairsListener(DeletedPairsListener listener) {
-    myEventDispatcher.addListener(listener);
+    myListeners.remove(listener);
   }
 
   private void fireListenersAboutDeletion(int index) {
     final CacheEntry cacheEntry = myCache[index];
-    myEventDispatcher.getMulticaster().ObjectRemoved(cacheEntry.key, cacheEntry.value);
+    for (DeletedPairsListener listener : myListeners) {
+      listener.objectRemoved(cacheEntry.key, cacheEntry.value);
+    }
   }
 
   // end of listening features

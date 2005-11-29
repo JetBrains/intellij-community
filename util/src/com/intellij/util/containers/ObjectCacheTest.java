@@ -64,7 +64,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheFiniteness() {
-    IntObjectCache cache = new IntObjectCache(4);
+    IntObjectCache<Integer> cache = new IntObjectCache<Integer>(4);
     cache.put(0, 0);
     cache.put(1, 1);
     cache.put(2, 2);
@@ -75,7 +75,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheIterator() {
-    IntObjectCache cache = new IntObjectCache(4);
+    IntObjectCache<Integer> cache = new IntObjectCache<Integer>(4);
     cache.put(0, 0);
     cache.put(1, 1);
     cache.put(2, 2);
@@ -93,7 +93,7 @@ public class ObjectCacheTest extends TestCase {
   }
 
   public void testIntCacheNegativeKeys() {
-    IntObjectCache cache = new IntObjectCache(8);
+    IntObjectCache<Object> cache = new IntObjectCache<Object>(8);
     cache.put(-1, 1);
     cache.put(-2, 2);
     cache.put(-3, 3);
