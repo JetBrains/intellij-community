@@ -28,4 +28,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract boolean canClose(Project project);
 
   public abstract void saveChangedProjectFile(VirtualFile file);
+
+  public abstract boolean isFileSavedToBeReloaded(VirtualFile file);
 }

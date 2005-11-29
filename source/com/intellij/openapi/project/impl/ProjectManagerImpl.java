@@ -375,6 +375,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     });
   }
 
+  public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
+    for (List<VirtualFile> files : myChangedProjectFiles.values()) {
+      if (files.contains(candidate)) return true;
+    }
+
+    return false;
+  }
+
   public void saveChangedProjectFile(final VirtualFile file) {
     final Project[] projects = getOpenProjects();
     for (Project project : projects) {
