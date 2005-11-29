@@ -27,72 +27,81 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class InstantiatingObjectToGetClassObjectInspection extends ExpressionInspection {
+public class InstantiatingObjectToGetClassObjectInspection
+        extends ExpressionInspection {
 
-  private final InstantiatingObjectToGetClassObjectFix fix = new InstantiatingObjectToGetClassObjectFix();
+    private final InstantiatingObjectToGetClassObjectFix fix =
+            new InstantiatingObjectToGetClassObjectFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class InstantiatingObjectToGetClassObjectFix
-    extends InspectionGadgetsFix {
-
-    public String getName() {
-      return InspectionGadgetsBundle.message("instantiating.object.to.get.class.object.replace.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression expression =
-        (PsiMethodCallExpression)descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      final PsiType type = qualifier.getType();
-      final String text = type.getPresentableText();
-      replaceExpression(expression, text + ".class");
+    public boolean isEnabledByDefault() {
+        return true;
     }
-  }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new SystemGCVisitor();
-  }
-
-  private static class SystemGCVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"getClass".equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args == null || args.length != 0) {
-        return;
-      }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiNewExpression)) {
-        return;
-      }
-      registerError(expression);
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
-  }
+
+    private static class InstantiatingObjectToGetClassObjectFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "instantiating.object.to.get.class.object.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiMethodCallExpression expression =
+                    (PsiMethodCallExpression)descriptor.getPsiElement();
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            final PsiType type = qualifier.getType();
+            if (type == null || !(type instanceof PsiClassType)) {
+                return;
+            }
+            final PsiClassType classType = (PsiClassType)type;
+            final String text = classType.getClassName();
+            replaceExpression(expression, text + ".class");
+        }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstantiatingObjectToGetClassObjectVisitor();
+    }
+
+    private static class InstantiatingObjectToGetClassObjectVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"getClass".equals(methodName)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length != 0) {
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (!(qualifier instanceof PsiNewExpression)) {
+                return;
+            }
+            registerError(expression);
+        }
+    }
 }
