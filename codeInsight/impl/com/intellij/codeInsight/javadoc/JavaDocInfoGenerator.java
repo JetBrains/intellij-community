@@ -1019,21 +1019,23 @@ class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void generateReturnsSection(StringBuffer buffer, PsiMethod method, final PsiDocComment comment) {
+  private void generateReturnsSection(StringBuffer buffer, final PsiMethod method, final PsiDocComment comment) {
     PsiDocTag tag = comment == null ? null : comment.findTagByName("return");
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair =
-      tag == null ? null : new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider);
+      tag == null ? null : new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag,
+                                                                              new InheritDocProvider<PsiDocTag>(){
+                                                                                public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+                                                                                  return findInheritDocTag(method, new ReturnTagLocator());
+
+                                                                                }
+
+                                                                                public PsiClass getElement() {
+                                                                                  return method.getContainingClass();
+                                                                                }
+                                                                              });
 
     if (pair == null && myElement instanceof PsiMethod) {
-      pair = findInheritDocTag(((PsiMethod)myElement), new DocTagLocator<PsiDocTag>() {
-        public PsiDocTag find(PsiDocComment comment) {
-          if (comment == null) {
-            return null;
-          }
-
-          return comment.findTagByName("return");
-        }
-      });
+      pair = findInheritDocTag(((PsiMethod)myElement), new ReturnTagLocator());
     }
 
     if (pair != null) {
@@ -1436,5 +1438,15 @@ class JavaDocInfoGenerator {
     if (aClass == null) return null;
 
     return findInheritDocTagInClass(method, aClass, loc);
+  }
+
+  private static class ReturnTagLocator implements DocTagLocator<PsiDocTag> {
+    public PsiDocTag find(PsiDocComment comment) {
+      if (comment == null) {
+        return null;
+      }
+
+      return comment.findTagByName("return");
+    }
   }
 }
