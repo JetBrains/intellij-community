@@ -958,6 +958,24 @@ public class SelectWordUtil {
       List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
       PsiElement[] children = e.getChildren();
 
+      addTagContentSelection(children, result, editorText);
+
+      PsiElement prev = e.getPrevSibling();
+      while (prev instanceof PsiWhiteSpace || prev instanceof XmlText || prev instanceof XmlComment) {
+        if (prev instanceof XmlText && prev.getText().trim().length() > 0) break;
+        if (prev instanceof XmlComment) {
+          result.addAll(expandToWholeLine(editorText,
+                                          new TextRange(prev.getTextRange().getStartOffset(),
+                                                        e.getTextRange().getEndOffset()),
+                                          false));
+        }
+        prev = prev.getPrevSibling();
+      }
+
+      return result;
+    }
+
+    private void addTagContentSelection(final PsiElement[] children, final List<TextRange> result, final CharSequence editorText) {
       PsiElement first = null;
       PsiElement last = null;
       for (PsiElement child : children) {
@@ -979,8 +997,6 @@ public class SelectWordUtil {
                                                       last.getTextRange().getEndOffset()),
                                         false));
       }
-
-      return result;
     }
   }
   
