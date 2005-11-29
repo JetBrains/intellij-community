@@ -16,18 +16,21 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwHSpacer;
+import com.intellij.uiDesigner.lw.LwVSpacer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 24.11.2005
- * Time: 12:56:00
- * To change this template use File | Settings | File Templates.
+ * @author yole
  * @noinspection ForLoopReplaceableByForEach, unchecked
  */
 public class GridBagConverter {
@@ -56,6 +59,50 @@ public class GridBagConverter {
   public void addComponent(final JComponent component, final GridConstraints constraints) {
     myComponents.add(component);
     myConstraints.add(constraints);
+  }
+
+  public static void prepareConstraints(final LwContainer container, final Map idToConstraintsMap) {
+    GridLayoutManager gridLayout = (GridLayoutManager) container.getLayout();
+    GridBagConverter converter = new GridBagConverter(gridLayout.getMargin(),
+                                                      getGap(container, true),
+                                                      getGap(container, false),
+                                                      gridLayout.isSameSizeHorizontally(),
+                                                      gridLayout.isSameSizeVertically());
+    for(int i=0; i<container.getComponentCount(); i++) {
+      final LwComponent component = (LwComponent)container.getComponent(i);
+      if (component instanceof LwHSpacer || component instanceof LwVSpacer) {
+        GridConstraints constraints = component.getConstraints().store();
+        constraints.setHSizePolicy(constraints.getHSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
+        constraints.setVSizePolicy(constraints.getVSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
+        converter.addComponent(null, constraints);
+      }
+      else {
+        converter.addComponent(null, component.getConstraints());
+      }
+    }
+    Result[] results = converter.convert();
+    int componentIndex = 0;
+    for(int i=0; i<results.length; i++) {
+      if (!results [i].isFillerPanel) {
+        final LwComponent component = (LwComponent)container.getComponent(componentIndex++);
+        idToConstraintsMap.put(component.getId(), results [i]);
+      }
+      // else generateFillerPanel(generator, componentLocal, results [i]);
+    }
+  }
+
+  private static int getGap(LwContainer container, final boolean horizontal) {
+    while(container != null) {
+      final AbstractLayout layout = container.getLayout();
+      if (layout != null) {
+        final int gap = horizontal ? layout.getHGap() : layout.getVGap();
+        if (gap >= 0) {
+          return gap;
+        }
+      }
+      container = container.getParent();
+    }
+    return horizontal ? AbstractLayout.DEFAULT_HGAP : AbstractLayout.DEFAULT_VGAP;
   }
 
   public static class Result {
@@ -122,8 +169,8 @@ public class GridBagConverter {
                           ? result.minimumSize
                           : result.component.getMinimumSize();
       Dimension prefSize = result.preferredSize != null || result.component == null
-                          ? result.preferredSize
-                          : result.component.getPreferredSize();
+                           ? result.preferredSize
+                           : result.component.getPreferredSize();
       if (minSize != null) {
         minimum = Math.max(minimum, horizontal ? minSize.width : minSize.height);
       }

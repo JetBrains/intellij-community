@@ -92,6 +92,13 @@ public final class FormSourceCodeGenerator {
       return;
     }
 
+    if ("GridBagLayout".equals(rootContainer.getLayoutManager())) {
+      myLayoutSourceGenerator = new GridBagLayoutSourceGenerator();
+    }
+    else {
+      myLayoutSourceGenerator = new GridLayoutSourceGenerator();
+    }
+
     try {
       _generate(rootContainer, module);
     }
@@ -236,6 +243,7 @@ public final class FormSourceCodeGenerator {
     final LwContainer parent = component.getParent();
 
     final String variable = getVariable(component, component2TempVariable, class2variableIndex);
+    final String componentClass = myLayoutSourceGenerator.mapComponentClass(component.getComponentClassName());
 
     final String binding = component.getBinding();
     if (binding != null) {
@@ -243,16 +251,16 @@ public final class FormSourceCodeGenerator {
     }
     else {
       myBuffer.append("final ");
-      myBuffer.append(component.getComponentClassName());
+      myBuffer.append(componentClass);
       myBuffer.append(" ");
       myBuffer.append(variable);
     }
     myBuffer.append('=');
-    startConstructor(component.getComponentClassName());
+    startConstructor(componentClass);
     endConstructor(); // will finish the line
 
     if (component instanceof LwContainer) {
-      getComponentLayoutGenerator(component).generateContainerLayout(component, this, variable);
+      getComponentLayoutGenerator(component).generateContainerLayout((LwContainer) component, this, variable);
     }
 
     // introspected properties
@@ -270,7 +278,6 @@ public final class FormSourceCodeGenerator {
 
       Object value = component.getPropertyValue(property);
 
-      final String componentClass = component.getComponentClassName();
       //noinspection HardCodedStringLiteral
       final boolean isTextWithMnemonicProperty =
         "text".equals(property.getName()) &&
@@ -497,7 +504,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void newDimension(final Dimension dimension) {
+  void newDimension(final Dimension dimension) {
     startConstructor(Dimension.class.getName());
     push(dimension.width);
     push(dimension.height);
@@ -526,7 +533,7 @@ public final class FormSourceCodeGenerator {
   void startMethodCall(final String variable, @NonNls final String methodName) {
     checkParameter();
 
-    appendVarName(variable);
+    append(variable);
     myBuffer.append('.');
     myBuffer.append(methodName);
     myBuffer.append('(');
@@ -571,6 +578,10 @@ public final class FormSourceCodeGenerator {
 
   void push(final int value) {
     checkParameter();
+    append(value);
+  }
+
+  void append(final int value) {
     myBuffer.append(value);
   }
 
@@ -587,6 +598,10 @@ public final class FormSourceCodeGenerator {
 
   private void push(final double value) {
     checkParameter();
+    append(value);
+  }
+
+  public void append(final double value) {
     myBuffer.append(value);
   }
 
@@ -607,13 +622,13 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  void pushVar(final String variable) {
+  void pushVar(@NonNls final String variable) {
     checkParameter();
-    appendVarName(variable);
+    append(variable);
   }
 
-  private void appendVarName(final String variable) {
-    myBuffer.append(variable);
+  void append(@NonNls final String text) {
+    myBuffer.append(text);
   }
 
   void checkParameter() {
