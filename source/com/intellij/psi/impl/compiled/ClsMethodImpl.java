@@ -3,6 +3,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -654,12 +655,16 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   public boolean isVarArgs() {
       if (myIsVarArgs == null) {
         boolean isVarArgs;
-        if (getRepositoryId() < 0) {
-          isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
-        }
-        else {
-          RepositoryManager repositoryManager = getRepositoryManager();
-          isVarArgs = repositoryManager.getMethodView().isVarArgs(getRepositoryId());
+        if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+          if (getRepositoryId() < 0) {
+            isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
+          }
+          else {
+            RepositoryManager repositoryManager = getRepositoryManager();
+            isVarArgs = repositoryManager.getMethodView().isVarArgs(getRepositoryId());
+          }
+        } else {
+          isVarArgs = false;
         }
 
         myIsVarArgs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;

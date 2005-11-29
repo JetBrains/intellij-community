@@ -44,8 +44,19 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     String format = prepareString(formatString.toString());
     PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
-    for (PsiExpression arg : args) {
-      argumentList.add(arg);
+    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      for (PsiExpression arg : args) {
+        argumentList.add(arg);
+      }
+    } else {
+      final PsiNewExpression arrayArg = (PsiNewExpression)manager.getElementFactory().createExpressionFromText("new java.lang.Object[]{}", null);
+      final PsiArrayInitializerExpression arrayInitializer = arrayArg.getArrayInitializer();
+      assert arrayInitializer != null;
+      for (PsiExpression arg : args) {
+        arrayInitializer.add(arg);
+      }
+
+      argumentList.add(arrayArg);
     }
     call = (PsiMethodCallExpression) manager.getCodeStyleManager().shortenClassReferences(call);
     call = (PsiMethodCallExpression) manager.getCodeStyleManager().reformat(call);
