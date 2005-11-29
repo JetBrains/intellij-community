@@ -18,6 +18,7 @@ import java.util.Set;
  */
 public class DeprecationInspection extends LocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Deprecation";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
 
   @Nullable
   public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
@@ -92,7 +93,7 @@ public class DeprecationInspection extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.deprecated.display.name");
+    return DISPLAY_NAME;
   }
 
   public String getGroupDisplayName() {

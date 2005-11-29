@@ -31,11 +31,12 @@ import java.util.ArrayList;
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection");
   @NonNls public static final String SHORT_NAME = "JavadocReference";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.javadoc.ref.display.name");
 
 
   private ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template) {
     return InspectionManager.getInstance(element.getProject())
-      .createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      .createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
   @Nullable
@@ -150,7 +151,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
 
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.javadoc.ref.display.name");
+    return DISPLAY_NAME;
   }
 
   public String getGroupDisplayName() {

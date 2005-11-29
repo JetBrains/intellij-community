@@ -14,6 +14,7 @@ import com.intellij.codeInspection.actions.IntentionQuickFixWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -195,7 +196,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           type = HighlightInfoType.DEPRECATED;
         }
         else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-          type = HighlightInfoType.WRONG_REF;
+          if (tool.getShortName() == JavaDocReferenceInspection.SHORT_NAME){
+            type = HighlightInfoType.JAVADOC_WRONG_REF;
+          } else {
+            type = HighlightInfoType.WRONG_REF;
+          }
         }
         else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
           type = HighlightInfoType.UNUSED_SYMBOL;

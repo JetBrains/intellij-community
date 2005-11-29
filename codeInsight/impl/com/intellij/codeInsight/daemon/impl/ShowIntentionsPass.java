@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -230,7 +231,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
     }
     else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
-      final HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME);
+      HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME);
+      if (javadocKey == null){
+        HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
+      }
       if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
@@ -351,6 +355,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private static boolean canBeHint(HighlightInfoType type) {
-    return type == HighlightInfoType.WRONG_REF || type == HighlightInfoType.JAVADOC_WRONG_REF;
+    return type == HighlightInfoType.WRONG_REF;
   }
 }
