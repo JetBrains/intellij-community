@@ -88,11 +88,9 @@ public class MoveMembersImpl {
       }
     }
 
-    if (!sourceClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, sourceClass)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, sourceClass)) return;
 
-    final PsiClass initialTargerClass = targetContainer instanceof PsiClass? (PsiClass) targetContainer : (PsiClass) null;
+    final PsiClass initialTargerClass = targetContainer instanceof PsiClass? (PsiClass) targetContainer : null;
 
     MoveMembersDialog dialog = new MoveMembersDialog(
             project,

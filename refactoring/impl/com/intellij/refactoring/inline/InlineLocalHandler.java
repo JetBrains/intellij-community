@@ -35,9 +35,7 @@ class InlineLocalHandler {
    * should be called in AtomicAction
    */
   public void invoke(final Project project, final Editor editor, final PsiLocalVariable local) {
-    if (!local.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
 

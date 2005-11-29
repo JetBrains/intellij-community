@@ -59,9 +59,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     myProject = project;
     mySubclass = (PsiClass) elements[0];
 
-    if (!mySubclass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
     if (mySubclass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));

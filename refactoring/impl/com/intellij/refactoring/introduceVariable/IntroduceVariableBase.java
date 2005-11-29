@@ -124,9 +124,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       return false;
     }
 
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
     PsiElement containerParent = tempContainer;
     PsiElement lastScope = tempContainer;
@@ -251,7 +249,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 occurrence = expr1;
               }
               if (occurrence != null) {
-                occurrence = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)occurrence);
+                occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
               }
               if (replaceWrite || !RefactoringUtil.isAssignmentLHS(occurrence)) {
                 array.add(occurrence.replace(ref));

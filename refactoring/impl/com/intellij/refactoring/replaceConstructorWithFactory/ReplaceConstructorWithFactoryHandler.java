@@ -75,9 +75,7 @@ public class ReplaceConstructorWithFactoryHandler
                                                       REFACTORING_NAME, Messages.getQuestionIcon()
     );
     if (answer != 0) return;
-    if (!aClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
   }
 
@@ -109,9 +107,7 @@ public class ReplaceConstructorWithFactoryHandler
 
     if (!checkAbstractClassOrInterfaceMessage(aClass)) return;
 
-    if (!method.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, method)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, method)) return;
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }
 }

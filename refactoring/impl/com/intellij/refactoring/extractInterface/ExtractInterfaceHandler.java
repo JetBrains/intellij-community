@@ -59,9 +59,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     myClass = (PsiClass) elements[0];
 
 
-    if (!myClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(
             myProject,

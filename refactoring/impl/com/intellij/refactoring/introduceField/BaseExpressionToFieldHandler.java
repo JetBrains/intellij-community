@@ -98,9 +98,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
     final PsiClass parentClass = myParentClass;
     final OccurenceManager occurenceManager = createOccurenceManager(selectedExpr, parentClass);
@@ -175,9 +173,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, anchorElement);
           final PsiClass destClass = settings.getDestinationClass() == null ? myParentClass : settings.getDestinationClass();
 
-          if (!destClass.getContainingFile().isWritable()) {
-            if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
-          }
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
           PsiField field = createField(fieldName, type, initializer,
                                        initializerPlace == IN_FIELD_DECLARATION && initializer != null

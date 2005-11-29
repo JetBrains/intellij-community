@@ -39,9 +39,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     ElementToWorkOn elementToWorkOn =

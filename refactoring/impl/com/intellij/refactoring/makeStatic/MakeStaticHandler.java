@@ -53,9 +53,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
 
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
-    if (!member.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
 
     final PsiClass containingClass;
 

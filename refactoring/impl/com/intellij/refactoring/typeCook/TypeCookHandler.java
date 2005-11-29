@@ -15,25 +15,13 @@ public class TypeCookHandler implements RefactoringActionHandler {
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
-    if (elements == null || elements.length == 0) {
-      return;
-    }
+    if (elements == null || elements.length == 0) return;
 
-    for (int i = 0; i < elements.length; i++) {
-      if (!canCook(elements[i], project)) {
-        return;
-      }
+    for (PsiElement element : elements) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
     }
 
     new TypeCookDialog(project, elements).show();
   }
 
-  private boolean canCook(PsiElement element, Project project) {
-
-    if (!element.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
-    }
-
-    return true;
-  }
 }

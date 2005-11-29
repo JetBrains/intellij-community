@@ -32,9 +32,7 @@ public class PushDownHandler implements RefactoringActionHandler {
         return;
       }
 
-      if (!element.isWritable()) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
-      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
 
       if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
         invoke(project, new PsiElement[]{element}, dataContext);
@@ -62,9 +60,7 @@ public class PushDownHandler implements RefactoringActionHandler {
     } else
       return;
 
-    if (!aClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
         return true;

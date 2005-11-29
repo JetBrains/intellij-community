@@ -50,9 +50,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   }
 
   private void invokeOnVariable(final PsiFile file, final Project project, final PsiLocalVariable local, final Editor editor) {
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     String localName = local.getName();
     final PsiExpression initializer = local.getInitializer();

@@ -52,9 +52,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   public void invoke(final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     final int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);

@@ -166,9 +166,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
                                               message, null, project);
       return;
     }
-    if (!targetClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, targetClass)) return;
-    }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, targetClass)) return;
 
     invokeRefactoring(new ReplaceConstructorWithFactoryProcessor(project, myConstructor, myContainingClass,
                                                                  targetClass, getName()));

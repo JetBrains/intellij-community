@@ -50,9 +50,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
         return;
       }
 
-      if (!element.isWritable()) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
-      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
 
       if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
         invoke(project, new PsiElement[]{element}, dataContext);
@@ -174,14 +172,10 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
   }
 
   private boolean checkWritable(PsiClass superClass, MemberInfo[] infos) {
-    if (!superClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, superClass)) return false;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, superClass)) return false;
     for (MemberInfo info : infos) {
       if (info.getMember() instanceof PsiClass && info.getOverrides() != null) continue;
-      if (!info.getMember().isWritable()) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
-      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
     }
     return true;
   }

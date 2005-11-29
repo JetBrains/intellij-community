@@ -25,10 +25,7 @@ public class MoveInnerImpl {
     boolean condition = aClass.getParent() instanceof PsiClass;
     LOG.assertTrue(condition);
 
-    if (!aClass.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
-    }
-
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
     final MoveInnerDialog dialog = new MoveInnerDialog(
             project,

@@ -86,9 +86,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element instanceof XmlAttributeValue) {
       XmlAttribute value = (XmlAttribute)element.getParent();
       if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
-        if (!element.isWritable()) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
-        }
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
         return true;
       }
     }
@@ -107,10 +105,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       return false;
     }
 
-    if (!element.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
-    }
-    return true;
+    return CommonRefactoringUtil.checkReadOnlyStatus(project, element);
   }
 
 
@@ -145,9 +140,7 @@ public class PsiElementRenameHandler implements RenameHandler {
         elementToRename = EjbUtil.checkDeclMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
         if (elementToRename == null) return;
 
-        if (!elementToRename.isWritable()) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
-        }
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
       }
       String helpID = HelpID.getRenameHelpID(elementToRename);
       final RenameDialog dialog =

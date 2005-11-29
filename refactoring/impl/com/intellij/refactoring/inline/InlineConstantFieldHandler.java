@@ -17,9 +17,7 @@ public class InlineConstantFieldHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
   public void invoke(Project project, Editor editor, PsiField field) {
-    if (!field.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
@@ -48,7 +46,7 @@ public class InlineConstantFieldHandler {
     }
 
     final boolean invokedOnReference = (reference != null);
-    if (!invokedOnReference && !field.isWritable()) {
+    if (!invokedOnReference) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     }
     PsiReferenceExpression refExpression = reference != null ? (PsiReferenceExpression)reference.getElement() : null;

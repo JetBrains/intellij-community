@@ -37,6 +37,7 @@ public class CommonRefactoringUtil {
   }
 
   public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
+    if (element.isWritable()) return true;
     return checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
   }
 

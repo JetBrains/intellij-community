@@ -58,10 +58,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    if (!file.isWritable()) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-    }
-
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
     for (PsiElement element : elements) {
       if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
