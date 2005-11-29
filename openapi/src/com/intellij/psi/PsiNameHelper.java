@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -222,7 +223,7 @@ public abstract class PsiNameHelper {
    * @param name the identifier to split.
    * @return the array of strings into which the identifier has been split.
    */
-  public static String[] splitNameIntoWords(String name) {
+  public static String[] splitNameIntoWords(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
     List<String> result = new ArrayList<String>();
     for (String word : underlineDelimited) {

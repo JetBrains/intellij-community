@@ -197,6 +197,7 @@ public class RenameDialog extends RefactoringDialog {
   private String suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
     String name = ((PsiNamedElement)psiElement).getName();
+    if (name == null) return null;
     if (psiElement instanceof PsiVariable) {
       final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
