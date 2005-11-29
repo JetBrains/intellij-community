@@ -18,106 +18,141 @@ package com.siyeh.ig.jdk15;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
-  }
+  /** @noinspection PublicField*/
+  public boolean ignoreObjectConstruction = true;
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new RawUseOfParameterizedTypeVisitor();
-  }
-
-  private static class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
-    public void visitVariable(@NotNull PsiVariable variable) {
-      super.visitVariable(variable);
-      final PsiManager manager = variable.getManager();
-      final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      checkTypeElement(typeElement);
+    public String getGroupDisplayName() {
+        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
-    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
-      super.visitTypeCastExpression(cast);
-      final PsiManager manager = cast.getManager();
-      final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      final PsiTypeElement typeElement = cast.getCastType();
-      checkTypeElement(typeElement);
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+          InspectionGadgetsBundle.message(
+                  "raw.use.of.parameterized.type.ignore.new.objects"), this,
+                "ignoreObjectConstruction");
     }
 
-    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
-      final PsiManager manager = expression.getManager();
-      final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      super.visitInstanceOfExpression(expression);
-      final PsiTypeElement typeElement = expression.getCheckType();
-      checkTypeElement(typeElement);
+    public BaseInspectionVisitor buildVisitor() {
+        return new RawUseOfParameterizedTypeVisitor();
     }
 
-    public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
-      final PsiManager manager = newExpression.getManager();
-      final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      super.visitNewExpression(newExpression);
-      final PsiJavaCodeReferenceElement classReference =
-        newExpression.getClassReference();
+    private class RawUseOfParameterizedTypeVisitor
+            extends BaseInspectionVisitor {
 
-      if (classReference == null) {
-        return;
-      }
-      if (newExpression.getTypeArgumentList() != null) {
-        return;
-      }
-      final PsiElement referent = classReference.resolve();
-      if (!(referent instanceof PsiClass)) {
-        return;
-      }
+        public void visitNewExpression(
+                @NotNull PsiNewExpression newExpression) {
+            if (!hasNeededLanguageLevel(newExpression)) {
+                return;
+            }
+            super.visitNewExpression(newExpression);
+            if (ignoreObjectConstruction) {
+                return;
+            }
+            if (newExpression.getArrayInitializer() != null ||
+                newExpression.getArrayDimensions().length > 0) {
+                // array creation cannot be generic
+                return;
+            }
+            final PsiJavaCodeReferenceElement classReference =
+                    newExpression.getClassReference();
+            if (classReference == null) {
+                return;
+            }
+            final PsiType[] typeParameters = classReference.getTypeParameters();
+            if (typeParameters.length > 0) {
+                return;
+            }
+            final PsiElement referent = classReference.resolve();
+            if (!(referent instanceof PsiClass)) {
+                return;
+            }
+            final PsiClass referredClass = (PsiClass) referent;
+            if (!referredClass.hasTypeParameters()) {
+                return;
+            }
+            registerError(classReference);
+        }
 
-      final PsiClass referredClass = (PsiClass)referent;
-      if (!referredClass.hasTypeParameters()) {
-        return;
-      }
-      registerError(classReference);
+        public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+            if (!hasNeededLanguageLevel(typeElement)) {
+                return;
+            }
+            super.visitTypeElement(typeElement);
+            final PsiElement parent = typeElement.getParent();
+            if (parent instanceof PsiInstanceOfExpression ||
+                    parent instanceof PsiClassObjectAccessExpression ||
+                    parent instanceof PsiReferenceParameterList) {
+                return;
+            }
+            if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class)
+                    != null) {
+                return;
+            }
+            final PsiType type = typeElement.getType();
+            if(!(type instanceof PsiClassType)) {
+                return;
+            }
+            final PsiClassType classType = (PsiClassType) type;
+            if(classType.hasParameters()) {
+                return;
+            }
+            final PsiClass aClass = classType.resolve();
+            if(aClass == null) {
+                return;
+            }
+            if(!aClass.hasTypeParameters()) {
+                return;
+            }
+            final PsiElement typeNameElement =
+                    typeElement.getInnermostComponentReferenceElement();
+            registerError(typeNameElement);
+        }
+
+        //public void visitReferenceElement(
+        //        @NotNull PsiJavaCodeReferenceElement reference) {
+        //    super.visitReferenceElement(reference);
+        //    final PsiElement parent = reference.getParent();
+        //    if (!(parent instanceof PsiReferenceList)) {
+        //        return;
+        //    }
+        //    final PsiElement element = reference.resolve();
+        //    if (!(element instanceof PsiClass)) {
+        //        return;
+        //    }
+        //    final PsiClass aClass = (PsiClass)element;
+        //    if (!aClass.hasTypeParameters()) {
+        //        return;
+        //    }
+        //    final PsiTypeParameter[] classTypeParameters =
+        //            aClass.getTypeParameters();
+        //    final PsiType[] referenceTypeParameters =
+        //            reference.getTypeParameters();
+        //    if (classTypeParameters == referenceTypeParameters) {
+        //        return;
+        //    }
+        //    registerError(reference);
+        //}
+
+        private boolean hasNeededLanguageLevel(
+                @NotNull PsiElement element) {
+            final PsiManager manager = element.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            return !(languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                     languageLevel.equals(LanguageLevel.JDK_1_4));
+        }
     }
-
-    private void checkTypeElement(PsiTypeElement typeElement) {
-      if (typeElement == null) {
-        return;
-      }
-      final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-
-      final PsiClassType classType = (PsiClassType)type;
-      if (classType.hasParameters()) {
-        return;
-      }
-      final PsiClass aClass = classType.resolve();
-
-      if (aClass == null) {
-        return;
-      }
-      if (!aClass.hasTypeParameters()) {
-        return;
-      }
-      final PsiElement typeNameElement =
-        typeElement.getInnermostComponentReferenceElement();
-      registerError(typeNameElement);
-    }
-  }
 }
