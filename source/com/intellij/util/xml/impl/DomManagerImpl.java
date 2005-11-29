@@ -117,9 +117,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     synchronized (PsiLock.LOCK) {
       try {
         XmlTag tag = handler.getXmlTag();
-        final ClassChooser classChooser = ClassChooserManager.getClassChooser(DomUtil.getRawType(handler.getDomElementType()));
-        Class clazz = getProxyClassFor(classChooser.chooseClass(tag));
+        final Class<?> rawType = DomUtil.getRawType(handler.getDomElementType());
+        final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(rawType);
+        final Class<? extends DomElement> implementationClass = classChooser.chooseClass(tag);
+        Class clazz = getProxyClassFor(implementationClass);
         final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
+        if (implementationClass != rawType) {
+          handler.setType(implementationClass);
+        }
         handler.setProxy(element);
         handler.attach(tag);
         return element;

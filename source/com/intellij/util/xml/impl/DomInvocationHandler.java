@@ -30,7 +30,7 @@ import java.util.*;
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
 
-  private final Type myType;
+  private Type myType;
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   private final String myTagName;
@@ -42,7 +42,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private boolean myInitialized = false;
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
-  private final GenericInfoImpl myGenericInfoImpl;
+  private GenericInfoImpl myGenericInfoImpl;
   private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
   private final Map<Class, Object> myImplementations = new HashMap<Class, Object>();
   private boolean myInvalidated;
@@ -54,14 +54,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                                  final String tagName,
                                  final DomManagerImpl manager,
                                  final Converter genericConverter) {
-    myType = type;
     myXmlTag = tag;
     myParent = parent;
     myTagName = tagName;
     myManager = manager;
-    myGenericInfoImpl = manager.getGenericInfo(type);
-    myInvocationCache = manager.getInvocationCache(type);
     myGenericConverter = genericConverter;
+    setType(type);
   }
 
   private final void createImplementations(Class<?> interfaceClass) {
@@ -80,6 +78,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public DomElement getParent() {
     return isValid() ? myParent.getProxy() : null;
+  }
+
+  public void setType(final Type type) {
+    myType = type;
+    myGenericInfoImpl = myManager.getGenericInfo(type);
+    myInvocationCache = myManager.getInvocationCache(type);
   }
 
   final DomInvocationHandler getParentHandler() {
