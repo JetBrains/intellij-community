@@ -25,14 +25,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassComplexityInspection
         extends ClassMetricInspection {
-    public String getID(){
+
+    public String getID() {
         return "OverlyComplexAnonymousInnerClass";
     }
     private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
-    private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix();
+    private final MoveAnonymousToInnerClassFix fix =
+            new MoveAnonymousToInnerClassFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("overly.complex.anonymous.inner.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "overly.complex.anonymous.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -44,7 +47,8 @@ public class AnonymousClassComplexityInspection
     }
 
     protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("cyclomatic.complexity.limit.option");
+        return InspectionGadgetsBundle.message(
+                "cyclomatic.complexity.limit.option");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -58,7 +62,9 @@ public class AnonymousClassComplexityInspection
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
         final int totalComplexity = calculateTotalComplexity(aClass);
-        return InspectionGadgetsBundle.message("overly.complex.anonymous.inner.class.problem.descriptor", totalComplexity);
+        return InspectionGadgetsBundle.message(
+                "overly.complex.anonymous.inner.class.problem.descriptor",
+                totalComplexity);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,15 +82,14 @@ public class AnonymousClassComplexityInspection
             if (totalComplexity <= getLimit()) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameIdentifier =
-                    aClass.getBaseClassReference();
-            registerError(classNameIdentifier);
+            registerClassError(aClass);
         }
-
-
     }
 
-    private static int calculateTotalComplexity(PsiClass aClass) {
+    static int calculateTotalComplexity(PsiClass aClass) {
+        if (aClass == null) {
+            return 0;
+        }
         final PsiMethod[] methods = aClass.getMethods();
         int totalComplexity = calculateComplexityForMethods(methods);
         totalComplexity += calculateInitializerComplexity(aClass);
@@ -113,5 +118,4 @@ public class AnonymousClassComplexityInspection
         }
         return complexity;
     }
-
 }
