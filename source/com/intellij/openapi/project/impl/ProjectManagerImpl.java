@@ -4,11 +4,11 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -376,11 +376,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
-    for (List<VirtualFile> files : myChangedProjectFiles.values()) {
-      if (files.contains(candidate)) return true;
-    }
-
-    return false;
+    return mySavedCopies.containsKey(candidate);
   }
 
   public void saveChangedProjectFile(final VirtualFile file) {
