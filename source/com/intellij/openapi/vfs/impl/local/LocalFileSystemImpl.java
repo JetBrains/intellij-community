@@ -358,9 +358,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         }
 
         for (final WatchRequest request : requests) {
-          final String rootPath = request.getRootPath();
-
-          String runPath = rootPath;
+          String runPath = request.getRootPath();
           final VirtualFileImpl rootFile = (VirtualFileImpl)_findFileByPath(runPath, false);
           if (rootFile != null) {
 
