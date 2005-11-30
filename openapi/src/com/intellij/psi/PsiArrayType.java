@@ -83,7 +83,7 @@ public class PsiArrayType extends PsiType {
   }
 
   public boolean equals(Object obj) {
-    if (!getClass().equals(obj.getClass())) return false;
+    if (obj == null || !getClass().equals(obj.getClass())) return false;
     return myComponentType.equals(((PsiArrayType)obj).getComponentType());
   }
 
