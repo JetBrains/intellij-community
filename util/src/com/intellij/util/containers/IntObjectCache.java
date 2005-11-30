@@ -21,7 +21,7 @@ public class IntObjectCache<T> implements Iterable<T> {
 
   protected int myTop;
   protected int myBack;
-  final protected CacheEntry[] myCache;
+  final protected CacheEntry<T>[] myCache;
   final protected int[] myHashTable;
   protected int myHashTableSize;
   protected int myCount;
@@ -36,7 +36,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   private long myAttempts;
   private long myHits;
 
-  protected class CacheEntry {
+  protected static class CacheEntry<T> {
     public int key;
     public T value;
     public int prev;
@@ -53,9 +53,9 @@ public class IntObjectCache<T> implements Iterable<T> {
       cacheSize = minSize;
     }
     myTop = myBack = 0;
-    myCache = new IntObjectCache.CacheEntry[cacheSize + 1];
+    myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
-      myCache[i] = new CacheEntry();
+      myCache[i] = new CacheEntry<T>();
     }
     myHashTableSize = cacheSize;
     int i = 0;
@@ -170,7 +170,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   public double hitRate() {
-    return (myAttempts > 0) ? ((double)myHits / (double)myAttempts) : 0;
+    return myAttempts > 0 ? (double)myHits / (double)myAttempts : 0;
   }
 
   private void add2Top(int index) {
@@ -206,9 +206,8 @@ public class IntObjectCache<T> implements Iterable<T> {
     int hash_index = Math.abs(myCache[index].key) % myHashTableSize;
     int current = myHashTable[hash_index];
     int previous = 0;
-    int next;
     while (current != 0) {
-      next = myCache[current].hash_next;
+      int next = myCache[current].hash_next;
       if (current == index) {
         if (previous != 0) {
           myCache[previous].hash_next = next;
