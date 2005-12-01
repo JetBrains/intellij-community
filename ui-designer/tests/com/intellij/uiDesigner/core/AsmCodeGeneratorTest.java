@@ -223,6 +223,13 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(1.0, gbc.weighty, 0.01);
   }
 
+  public void testLabelFor() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestLabelFor.form", "BindingTest.class");
+    JTextField textField = (JTextField) panel.getComponent(0);
+    JLabel label = (JLabel) panel.getComponent(1);
+    assertEquals(textField, label.getLabelFor());
+  }
+
   private class MyClassLoader extends ClassLoader {
     private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value\nmnemonic=Mne&monic").array();
 

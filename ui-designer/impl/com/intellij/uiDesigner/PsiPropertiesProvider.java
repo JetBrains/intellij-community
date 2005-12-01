@@ -7,13 +7,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.lw.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.HashMap;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -23,11 +23,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
   private final Module myModule;
   private final HashMap myCache;
 
-  public PsiPropertiesProvider(final Module module){
-    if (module == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("module cannot be null");
-    }
+  public PsiPropertiesProvider(@NotNull final Module module){
     myModule = module;
     myCache = new HashMap();
   }
@@ -76,7 +72,6 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       final String propertyClassName = type.getCanonicalText();
 
       final LwIntrospectedProperty property;
-
       if (int.class.getName().equals(propertyClassName)) { // int
         property = new LwIntroIntProperty(name);
       }
@@ -99,8 +94,17 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
         property = new LwIntroRectangleProperty(name);
       }
       else {
-        // type is not supported
-        continue;
+        PsiClass propClass = psiManager.findClass(propertyClassName,
+                                                  GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+        PsiClass componentClass = psiManager.findClass("java.awt.Component",
+                                                       GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+        if (componentClass != null && propClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
+          property = new LwIntroComponentProperty(name);
+        }
+        else {
+          // type is not supported
+          continue;
+        }
       }
 
       result.put(name, property);

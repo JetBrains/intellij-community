@@ -38,6 +38,8 @@ public class AsmCodeGenerator {
   private ArrayList myErrors;
   private ArrayList myWarnings;
 
+  private Map myIdToLocalMap = new HashMap();
+
   private static final String CONSTRUCTOR_NAME = "<init>";
   private String myClassToBind;
   private byte[] myPatchedData;
@@ -244,7 +246,9 @@ public class AsmCodeGenerator {
 
     private void buildSetupMethod(final GeneratorAdapter generator) {
       try {
-        generateSetupCodeForComponent((LwComponent)myRootContainer.getComponent(0), generator, -1);
+        final LwComponent topComponent = (LwComponent)myRootContainer.getComponent(0);
+        generateSetupCodeForComponent(topComponent, generator, -1);
+        generateComponentReferenceProperties(topComponent, generator);
       }
       catch (CodeGenerationException e) {
         myErrors.add(e.getMessage());
@@ -260,6 +264,9 @@ public class AsmCodeGenerator {
       Class componentClass = getComponentClass(className, myLoader);
       final Type componentType = Type.getType(componentClass);
       final int componentLocal = generator.newLocal(componentType);
+
+      myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
+
       generator.newInstance(componentType);
       generator.dup();
       generator.invokeConstructor(componentType, Method.getMethod("void <init>()"));
@@ -304,6 +311,9 @@ public class AsmCodeGenerator {
       final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
         final LwIntrospectedProperty property = introspectedProperties[i];
+        if (property instanceof LwIntroComponentProperty) {
+          continue;
+        }
         final String propertyClass = property.getPropertyClassName();
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
 
@@ -334,11 +344,46 @@ public class AsmCodeGenerator {
             continue;
           }
           propGen.generatePushValue(generator, value);
-          setterArgType = Type.getType("L" + propertyClass.replace('.', '/') + ";");
+          setterArgType = getSetterArgType(property);
         }
 
         generator.invokeVirtual(componentType, new Method(property.getWriteMethodName(),
                                                           Type.VOID_TYPE, new Type[] { setterArgType } ));
+      }
+    }
+
+    private Type getSetterArgType(final LwIntrospectedProperty property) {
+      return Type.getType("L" + property.getPropertyClassName().replace('.', '/') + ";");
+    }
+
+    private void generateComponentReferenceProperties(final LwComponent component,
+                                                      final GeneratorAdapter generator) throws CodeGenerationException {
+      int componentLocal = ((Integer) myIdToLocalMap.get(component.getId())).intValue();
+      Class componentClass = getComponentClass(myLayoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
+      final Type componentType = Type.getType(componentClass);
+
+      final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
+      for (int i = 0; i < introspectedProperties.length; i++) {
+        final LwIntrospectedProperty property = introspectedProperties[i];
+        if (property instanceof LwIntroComponentProperty) {
+          String targetId = (String) component.getPropertyValue(property);
+          if (targetId != null && targetId.length() > 0) {
+            int targetLocal = ((Integer) myIdToLocalMap.get(targetId)).intValue();
+            generator.loadLocal(componentLocal);
+            generator.loadLocal(targetLocal);
+            generator.invokeVirtual(componentType,
+                                    new Method(property.getWriteMethodName(),
+                                               Type.VOID_TYPE, new Type[] { getSetterArgType(property) } ));
+          }
+        }
+      }
+
+      if (component instanceof LwContainer) {
+        LwContainer container = (LwContainer) component;
+
+        for(int i=0; i<container.getComponentCount(); i++) {
+          generateComponentReferenceProperties((LwComponent) container.getComponent(i), generator);
+        }
       }
     }
 

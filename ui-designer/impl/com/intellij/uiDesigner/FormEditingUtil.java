@@ -136,9 +136,6 @@ public final class FormEditingUtil {
    */
   @Nullable
   public static RadComponent getDraggerHost(@NotNull final GuiEditor editor){
-    //noinspection ConstantConditions
-    LOG.assertTrue(editor != null);
-
     final Ref<RadComponent> result = new Ref<RadComponent>();
     iterate(
       editor.getRootContainer(),
@@ -242,9 +239,6 @@ public final class FormEditingUtil {
    */
   @NotNull
   public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor){
-    //noinspection ConstantConditions
-    LOG.assertTrue(editor != null);
-
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     calcSelectedComponentsImpl(result, editor.getRootContainer());
     return result;
@@ -276,9 +270,6 @@ public final class FormEditingUtil {
    */
   @NotNull
   public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor){
-    //noinspection ConstantConditions
-    LOG.assertTrue(editor != null);
-
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     iterate(
       editor.getRootContainer(),
@@ -375,10 +366,7 @@ public final class FormEditingUtil {
   /**
    * Iterates component and its children (if any)
    */
-  public static void iterate(final IComponent component, final ComponentVisitor visitor){
-    LOG.assertTrue(component != null);
-    LOG.assertTrue(visitor != null);
-
+  public static void iterate(@NotNull final IComponent component, @NotNull final ComponentVisitor visitor){
     iterateImpl(component, visitor);
   }
 
@@ -457,10 +445,7 @@ public final class FormEditingUtil {
    * then the method immediately retuns it.
    */
   @Nullable
-  public static RadComponent findComponent(final RadComponent component, final String id) {
-    LOG.assertTrue(component != null);
-    LOG.assertTrue(id != null);
-
+  public static RadComponent findComponent(@NotNull final RadComponent component, @NotNull final String id) {
     if (id.equals(component.getId())) {
       return component;
     }
@@ -479,10 +464,19 @@ public final class FormEditingUtil {
   }
 
   @Nullable
-  public static PsiClass findClassToBind(final Module module, final String classToBindName) {
-    LOG.assertTrue(module != null);
-    LOG.assertTrue(classToBindName != null);
+  public static RadComponent findComponentAnywhere(@NotNull final RadComponent component, @NotNull final String valueId) {
+    RadContainer container = component.getParent();
+    if (container == null) {
+      return null;
+    }
+    while (container.getParent() != null) {
+      container = container.getParent();
+    }
+    return findComponent(container, valueId);
+  }
 
+  @Nullable
+  public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
     return PsiManager.getInstance(module.getProject()).findClass(
       classToBindName.replace('$','.'),
       GlobalSearchScope.moduleScope(module)

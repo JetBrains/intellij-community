@@ -4,11 +4,11 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -16,21 +16,21 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
-import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -66,10 +66,6 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   public ComponentTree(@NotNull final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    //noinspection ConstantConditions
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
     myEditor = editor;
 
     setCellRenderer(new MyTreeCellRenderer());
@@ -272,6 +268,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
 
+  @Nullable
   public static String getComponentTitle(final RadComponent component) {
     Palette palette = Palette.getInstance(component.getModule().getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
@@ -309,6 +306,24 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
     }
     return null;
+  }
+
+  public static Icon getComponentIcon(final RadComponent component) {
+    if (!(component instanceof RadErrorComponent)) {
+      final Palette palette = Palette.getInstance(component.getModule().getProject());
+      final ComponentItem item = palette.getItem(component.getComponentClassName());
+      final Icon icon;
+      if (item != null) {
+        icon = item.getSmallIcon();
+      }
+      else {
+        icon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown-small.png");
+      }
+      return icon;
+    }
+    else {
+      return IconLoader.getIcon("/com/intellij/uiDesigner/icons/error-small.png");
+    }
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -399,20 +414,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
 
         // Icon
-        if (!(component instanceof RadErrorComponent)) {
-          final ComponentItem item = Palette.getInstance(myEditor.getProject()).getItem(componentClassName);
-          final Icon icon;
-          if (item != null) {
-            icon = item.getSmallIcon();
-          }
-          else {
-            icon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown-small.png");
-          }
-          setIcon(icon);
-        }
-        else {
-          setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/error-small.png"));
-        }
+        setIcon(getComponentIcon(component));
 
         if (component == myDropTargetComponent) {
           setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));

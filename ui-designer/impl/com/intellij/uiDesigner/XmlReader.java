@@ -2,12 +2,13 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
-import com.intellij.uiDesigner.compiler.Utils;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
@@ -18,21 +19,18 @@ import java.text.MessageFormat;
 public final class XmlReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.XmlReader");
 
-  /**
-   * @return never null
-   */
+  private XmlReader() {
+  }
+
+  @NotNull
   public static RadRootContainer createRoot(final Module module, final LwRootContainer lwRootContainer, final ClassLoader loader) throws Exception{
     return (RadRootContainer)createComponent(module, lwRootContainer, loader);
   }
 
-  /**
-   * @return never null
-   */
-  public static RadComponent createComponent(final Module module, final LwComponent lwComponent, final ClassLoader loader) throws Exception{
-    LOG.assertTrue(module != null);
-    LOG.assertTrue(lwComponent != null);
-    LOG.assertTrue(loader != null);
-
+  @NotNull
+  public static RadComponent createComponent(@NotNull final Module module,
+                                             @NotNull final LwComponent lwComponent,
+                                             @NotNull final ClassLoader loader) throws Exception{
     final Class componentClass;
     if (lwComponent.getErrorComponentProperties() != null) {
       componentClass = null;
@@ -121,10 +119,9 @@ public final class XmlReader {
     final LwIntrospectedProperty[] properties = lwComponent.getAssignedIntrospectedProperties();
     if (componentClass != null) {
       final Palette palette = Palette.getInstance(module.getProject());
-      for (int i = 0; i < properties.length; i++) {
-        final LwIntrospectedProperty lwProperty = properties[i];
+      for (final LwIntrospectedProperty lwProperty : properties) {
         final IntrospectedProperty property = palette.getIntrospectedProperty(componentClass, lwProperty.getName());
-        if (property == null){
+        if (property == null) {
           continue;
         }
         try {
@@ -132,7 +129,7 @@ public final class XmlReader {
           property.setValue(component, value);
         }
         catch (Exception e) {
-          LOG.info(e);
+          LOG.error(e);
           //TODO[anton,vova]: show error and continue to load form
         }
       }

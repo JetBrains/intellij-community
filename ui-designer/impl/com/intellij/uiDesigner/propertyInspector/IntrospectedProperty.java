@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.XmlWriter;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
@@ -47,17 +48,17 @@ public abstract class IntrospectedProperty extends Property{
    * <b>Do not overide this method without serious reason!</b>
    */
   protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
-    myWriteMethod.invoke(component.getDelegee(), new Object[]{value});
+    myWriteMethod.invoke(component.getDelegee(), value);
   }
 
   /**
    * Serializes (writes) propertie's value
    *
-   * @param value property value which should be serialized. Must not be null.
+   * @param value property value which should be serialized.
    * @param writer writer which should be used for serialization. It is assumed that
    * before invocation of this method <code>writer</code> already has opened tag
    * that corresponds to this property. You can just append some attributes
    * here or add some subtags.
    */
-  public abstract void write(Object value, XmlWriter writer);
+  public abstract void write(@NotNull Object value, XmlWriter writer);
 }

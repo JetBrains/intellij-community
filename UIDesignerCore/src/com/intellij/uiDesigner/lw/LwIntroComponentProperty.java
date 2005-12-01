@@ -18,13 +18,17 @@ package com.intellij.uiDesigner.lw;
 import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 
-public final class LwIntroBooleanProperty extends LwIntrospectedProperty {
-  public LwIntroBooleanProperty(final String name){
-    super(name, Boolean.class.getName());
+import java.awt.*;
+
+/**
+ * @author yole
+ */
+public class LwIntroComponentProperty extends LwIntrospectedProperty {
+  public LwIntroComponentProperty(final String name) {
+    super(name, Component.class.getName());
   }
 
-  public Object read(final Element element) throws Exception{
-    return Boolean.valueOf(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_VALUE));
+  public Object read(Element element) throws Exception {
+    return LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_VALUE);
   }
 }
-

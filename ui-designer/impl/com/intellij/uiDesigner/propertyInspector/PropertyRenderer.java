@@ -1,5 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.uiDesigner.RadComponent;
+
 import javax.swing.*;
 
 /**
@@ -13,13 +15,13 @@ public interface PropertyRenderer {
    * consistent with other UI additional parameter abount selection and
    * focus are also passed.
    */
-  public JComponent getComponent(Object value, boolean selected, boolean hasFocus);
+  JComponent getComponent(RadComponent component, Object value, boolean selected, boolean hasFocus);
 
   /**
    * Renderer should update UI of all its internal components to fit current
    * IDEA Look And Feel. We cannot directly update UI of the component
-   * that is returned by {@link #getComponent(Object,boolean,boolean) } method
+   * that is returned by {@link #getComponent(RadComponent,Object,boolean,boolean) } method
    * because hidden component that are not in the Swing tree can exist.
    */
-  public abstract void updateUI();
+  void updateUI();
 }

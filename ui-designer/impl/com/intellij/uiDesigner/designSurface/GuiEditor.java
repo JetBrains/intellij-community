@@ -162,10 +162,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   public GuiEditor(@NotNull final Module module, @NotNull final VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    //noinspection ConstantConditions
-    LOG.assertTrue(module != null);
-    //noinspection ConstantConditions
-    LOG.assertTrue(file != null);
     LOG.assertTrue(file.isValid());
 
     myModule = module;
@@ -589,14 +585,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   /**
    * @param rootContainer new container to be set as a root.
-   * @throws java.lang.IllegalArgumentException
-   *          if <code>rootContainer</code>
-   *          is <code>null</code>.
    */
-  private void setRootContainer(final RadRootContainer rootContainer) {
-    if (rootContainer == null) {
-      throw new IllegalArgumentException();
-    }
+  private void setRootContainer(@NotNull final RadRootContainer rootContainer) {
     if (myRootContainer != null) {
       myLayeredPane.remove(myRootContainer.getDelegee());
     }

@@ -13,7 +13,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.compiler.*;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.ClassToBindNotFoundException;
+import com.intellij.uiDesigner.compiler.CodeGenerationException;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
@@ -124,16 +127,22 @@ public final class FormSourceCodeGenerator {
 
     final HashMap<LwComponent,String> component2variable = new HashMap<LwComponent,String>();
     final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<String>();
+    final HashMap<String,LwComponent> id2component = new HashMap<String, LwComponent>();
 
     if (rootContainer.getComponentCount() != 1) {
       throw new CodeGenerationException(UIDesignerBundle.message("error.one.toplevel.component.required"));
     }
-    if (containsNotEmptyPanelsWithXYLayout((LwComponent)rootContainer.getComponent(0))) {
+    final LwComponent topComponent = (LwComponent)rootContainer.getComponent(0);
+    if (containsNotEmptyPanelsWithXYLayout(topComponent)) {
       throw new CodeGenerationException(UIDesignerBundle.message("error.nonempty.xy.panels.found"));
     }
 
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    generateSetupCodeForComponent((LwComponent)rootContainer.getComponent(0), component2variable, class2variableIndex, scope);
+    generateSetupCodeForComponent(topComponent,
+                                  component2variable,
+                                  class2variableIndex,
+                                  id2component, scope);
+    generateComponentReferenceProperties(topComponent, component2variable, class2variableIndex, id2component);
 
     final String methodText = myBuffer.toString();
 
@@ -182,13 +191,9 @@ public final class FormSourceCodeGenerator {
 
   public static void cleanup(final PsiClass aClass) throws IncorrectOperationException{
     final PsiMethod[] methods = aClass.findMethodsByName(METHOD_NAME, false);
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
-
+    for (final PsiMethod method: methods) {
       final PsiClassInitializer[] initializers = aClass.getInitializers();
-      for (int j = 0; j < initializers.length; j++) {
-        final PsiClassInitializer initializer = initializers[j];
-
+      for (final PsiClassInitializer initializer : initializers) {
         if (containsMethodIdentifier(initializer, method)) {
           initializer.delete();
         }
@@ -238,8 +243,11 @@ public final class FormSourceCodeGenerator {
     final LwComponent component,
     final HashMap<LwComponent, String> component2TempVariable,
     final TObjectIntHashMap<String> class2variableIndex,
+    final HashMap<String, LwComponent> id2component,
     final GlobalSearchScope globalSearchScope
   ) throws CodeGenerationException{
+    id2component.put(component.getId(), component);
+
     final LwContainer parent = component.getParent();
 
     final String variable = getVariable(component, component2TempVariable, class2variableIndex);
@@ -273,8 +281,11 @@ public final class FormSourceCodeGenerator {
       }
     });
 
-    for (int i = 0; i < introspectedProperties.length; i++) {
-      final LwIntrospectedProperty property = introspectedProperties[i];
+    for (final LwIntrospectedProperty property : introspectedProperties) {
+      if (property instanceof LwIntroComponentProperty) {
+        // component properties are processed in second pass
+        continue;
+      }
 
       Object value = component.getPropertyValue(property);
 
@@ -321,13 +332,13 @@ public final class FormSourceCodeGenerator {
       if (propertyClass.equals(Dimension.class.getName())) {
         newDimension((Dimension)value);
       }
-      else if (propertyClass.equals(Integer.class.getName())){
+      else if (propertyClass.equals(Integer.class.getName())) {
         push(((Integer)value).intValue());
       }
-      else if (propertyClass.equals(Double.class.getName())){
+      else if (propertyClass.equals(Double.class.getName())) {
         push(((Double)value).doubleValue());
       }
-      else if (propertyClass.equals(Boolean.class.getName())){
+      else if (propertyClass.equals(Boolean.class.getName())) {
         push(((Boolean)value).booleanValue());
       }
       else if (propertyClass.equals(Rectangle.class.getName())) {
@@ -414,7 +425,37 @@ public final class FormSourceCodeGenerator {
       }
 
       for (int i = 0; i < container.getComponentCount(); i++) {
-        generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, globalSearchScope);
+        generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
+                                      globalSearchScope);
+      }
+    }
+  }
+
+  private void generateComponentReferenceProperties(final LwComponent component,
+                                                    final HashMap<LwComponent, String> component2variable,
+                                                    final TObjectIntHashMap<String> class2variableIndex,
+                                                    final HashMap<String, LwComponent> id2component) {
+    String variable = getVariable(component, component2variable, class2variableIndex);
+    final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
+    for (final LwIntrospectedProperty property : introspectedProperties) {
+      if (property instanceof LwIntroComponentProperty) {
+        String componentId = (String) component.getPropertyValue(property);
+        if (componentId != null && componentId.length() > 0) {
+          LwComponent target = id2component.get(componentId);
+          if (target != null) {
+            String targetVariable = getVariable(target, component2variable, class2variableIndex);
+            startMethodCall(variable, property.getWriteMethodName());
+            pushVar(targetVariable);
+            endMethod();
+          }
+        }
+      }
+    }
+
+    if (component instanceof LwContainer) {
+      final LwContainer container = (LwContainer)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        generateComponentReferenceProperties((LwComponent)container.getComponent(i), component2variable, class2variableIndex, id2component);
       }
     }
   }

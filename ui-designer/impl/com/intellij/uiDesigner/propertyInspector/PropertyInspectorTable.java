@@ -825,7 +825,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
       else if(column==1){ // painter for second column
         final PropertyRenderer renderer=property.getRenderer();
-        final JComponent component = renderer.getComponent(property.getValue(myComponent),selected,hasFocus);
+        final JComponent component = renderer.getComponent(myComponent, property.getValue(myComponent),selected,hasFocus);
         if (!selected) {
           component.setBackground(background);
         }
@@ -937,7 +937,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       LOG.assertTrue(rowCount>0);
       int selectedRow=getSelectedRow();
       if(selectedRow!=-1){
-        selectedRow=selectedRow-1;
+        selectedRow -= 1;
       }
       selectedRow=(selectedRow+rowCount)%rowCount;
       if(isEditing()){
@@ -1050,7 +1050,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
      */
     private void updateUI(final Property property){
       final PropertyRenderer renderer = property.getRenderer();
-      LOG.assertTrue(renderer != null);
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();
       if(editor != null){

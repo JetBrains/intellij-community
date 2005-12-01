@@ -7,15 +7,12 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 25.11.2005
- * Time: 13:42:15
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class LayoutManagerProperty extends Property {
   private PropertyRenderer myRenderer = new LabelPropertyRenderer() {
@@ -50,11 +47,11 @@ public class LayoutManagerProperty extends Property {
     ((RadRootContainer) component).setLayoutManager((String) value);
   }
 
-  public Property[] getChildren() {
+  @NotNull public Property[] getChildren() {
     return EMPTY_ARRAY;
   }
 
-  public PropertyRenderer getRenderer() {
+  @NotNull public PropertyRenderer getRenderer() {
     return myRenderer;
   }
 

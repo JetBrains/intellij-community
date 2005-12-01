@@ -111,6 +111,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       else if (Rectangle.class.equals(propertyType)) { // java.awt.Rectangle
         property = new LwIntroRectangleProperty(name);
       }
+      else if (propertyType.isAssignableFrom(Component.class)) {
+        property = new LwIntroComponentProperty(name);
+      }
       else {
         // type is not supported
         continue;

@@ -2,6 +2,8 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -19,22 +21,16 @@ public abstract class Property {
    */
   private final String myName;
 
-  /**
-   * @exception java.lang.IllegalArgumentException if <code>name</code> is <code>null</code>
-   */
-  public Property(final Property parent, @NonNls final String name){
-    if(name == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("name cannot be null");
-    }
+  public Property(final Property parent, @NotNull @NonNls final String name){
     myParent = parent;
     myName = name;
   }
 
   /**
-   * @return property's name. The method always returns not <code>null</code> string.
+   * @return property's name.
    */
-  public final String getName(){
+  @NotNull
+  public final String getName() {
     return myName;
   }
 
@@ -81,24 +77,28 @@ public abstract class Property {
    * The method can return <code>null</code> if the property
    * doesn't have parent.
    */
-  public final Property getParent(){
+  @Nullable
+  public final Property getParent() {
     return myParent;
   }
 
   /**
-   * @return child properties. The method never returns <code>null</code>.
+   * @return child properties.
    */
+  @NotNull
   public abstract Property[] getChildren();
 
   /**
-   * @return property's renderer. This method should never return <code>null</code>.
+   * @return property's renderer.
    */
+  @NotNull
   public abstract PropertyRenderer getRenderer();
 
   /**
    * @return property's editor. The method allows to return <code>null</code>.
    * In this case property is not editable.
    */
+  @Nullable
   public abstract PropertyEditor getEditor();
 
   public boolean appliesTo(RadComponent component) {

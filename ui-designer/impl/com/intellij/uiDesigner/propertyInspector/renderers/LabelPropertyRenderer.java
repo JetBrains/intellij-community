@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.RadComponent;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ public abstract class LabelPropertyRenderer extends JLabel implements PropertyRe
     setOpaque(true);
   }
 
-  public final JComponent getComponent(final Object value, final boolean selected, final boolean hasFocus){
+  public final JComponent getComponent(final RadComponent component, final Object value, final boolean selected, final boolean hasFocus){
     // Reset text and icon
     setText(null);
     setIcon(null);

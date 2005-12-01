@@ -798,6 +798,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if(Rectangle.class.equals(propertyType)){ // java.awt.Rectangle
           property = new IntroRectangleProperty(name, readMethod, writeMethod);
         }
+        else if (propertyType.isAssignableFrom(Component.class)) {
+          property = new IntroComponentProperty(name, readMethod, writeMethod);
+        }
         else {
           // other types are not supported (yet?)
           continue;
@@ -867,7 +870,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   private final class MyLafManagerListener implements LafManagerListener{
     private void updateUI(final Property property){
       final PropertyRenderer renderer = property.getRenderer();
-      LOG.assertTrue(renderer != null);
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();
       if(editor != null){
