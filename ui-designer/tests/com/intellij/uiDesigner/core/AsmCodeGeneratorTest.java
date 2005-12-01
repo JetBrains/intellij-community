@@ -68,7 +68,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    return new MyClassLoader().doDefineClass("BindingTest", patchedData);
+    return new MyClassLoader(AsmCodeGeneratorTest.class.getClassLoader()).doDefineClass("BindingTest", patchedData);
   }
 
   private JComponent getInstrumentedRootComponent(final String formFileName, final String className) throws Exception {
@@ -230,8 +230,13 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(textField, label.getLabelFor());
   }
 
-  private class MyClassLoader extends ClassLoader {
-    private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value\nmnemonic=Mne&monic").array();
+  private static class MyClassLoader extends ClassLoader {
+    private byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
+    private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
+
+    public MyClassLoader(ClassLoader parent) {
+      super(parent);
+    }
 
     public Class doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);
@@ -243,7 +248,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     public InputStream getResourceAsStream(String name) {
       if (name.equals("TestProperties.properties")) {
-        return new ByteArrayInputStream(myTestProperties);
+        return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
       }
       return super.getResourceAsStream(name);
     }
