@@ -78,7 +78,7 @@ public class DomUtil {
             final Type argument = arguments[0];
             if (argument instanceof WildcardType) {
               final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1 && isDomElement(upperBounds[0])) {
+              if (upperBounds.length == 1) {
                 return upperBounds[0];
               }
             }
@@ -87,7 +87,7 @@ public class DomUtil {
                 return argument;
               }
             }
-            else if (isDomElement(argument)) {
+            else if (argument instanceof Class) {
               return argument;
             }
           }
@@ -98,7 +98,7 @@ public class DomUtil {
   }
 
   public static boolean isDomElement(final Type type) {
-    return type instanceof Class && DomElement.class.isAssignableFrom((Class)type);
+    return type != null && DomElement.class.isAssignableFrom(getRawType(type));
   }
 
   public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {

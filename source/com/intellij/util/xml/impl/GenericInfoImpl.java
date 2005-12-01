@@ -118,6 +118,15 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
   }
 
+  private Method getCloserMethod(Method method) {
+    try {
+      return myClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
+    }
+    catch (NoSuchMethodException e) {
+      return method;
+    }
+  }
+
   public final synchronized void buildMethodMaps() {
     if (myInitialized) return;
 
@@ -128,14 +137,14 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
         if (DomUtil.isGetter(method)) {
-          processGetterMethod(method);
+          processGetterMethod(getCloserMethod(method));
         }
       }
     }
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
         if (isAddMethod(method)) {
-          myCollectionChildrenAdditionMethods.put(method, extractTagName(method, "add"));
+          myCollectionChildrenAdditionMethods.put(getCloserMethod(method), extractTagName(method, "add"));
         }
       }
     }
@@ -205,7 +214,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
 
     final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
-    if (type != null) {
+    if (DomUtil.isDomElement(type)) {
       final String qname = getSubTagNameForCollection(method);
       if (qname != null) {
         myCollectionChildrenClasses.put(qname, type);
@@ -214,9 +223,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
   }
 
-  public final Invocation createInvocation(final Method method) {
+  public final Invocation createInvocation(Method method) {
     buildMethodMaps();
 
+    method = getCloserMethod(method);
     final CustomMethod customMethod = method.getAnnotation(CustomMethod.class);
     if (customMethod != null) {
       return createCustomMethodInvocation(customMethod, method);
@@ -248,16 +258,16 @@ public class GenericInfoImpl implements DomGenericInfo {
                                     myCollectionChildrenClasses.get(qname));
     }
 
-    for (final Method method1 : myClass.getMethods()) {
+    /*for (final Method method1 : myClass.getMethods()) {
       if (!method1.equals(method) && method1.getName().equals(method.getName()) &&
           Arrays.equals(method.getParameterTypes(), method1.getParameterTypes())) {
         return new Invocation() {
           public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-            return method1.invoke(handler, args);
+            return method1.invoke(handler.getProxy(), args);
           }
         };
       }
-    }
+    }*/
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
