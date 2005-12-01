@@ -18,7 +18,7 @@ import java.util.Stack;
  * @author Vladimir Kondratyev
  */
 public final class XmlWriter{
-  private final int INDENT = 2;
+  private static final int INDENT = 2;
 
   private final Stack myElementNames;
   private final Stack myElementHasBody;

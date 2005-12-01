@@ -22,14 +22,11 @@ import org.objectweb.asm.Type;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2005
- * Time: 13:34:07
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class RectanglePropertyCodeGenerator extends PropertyCodeGenerator {
   private static Type myRectangleType = Type.getType(Rectangle.class);
+  private static Method myInitMethod = Method.getMethod("void <init>(int,int,int,int)");
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     final Rectangle rc = (Rectangle) value;
@@ -39,6 +36,6 @@ public class RectanglePropertyCodeGenerator extends PropertyCodeGenerator {
     generator.push(rc.y);
     generator.push(rc.width);
     generator.push(rc.height);
-    generator.invokeConstructor(myRectangleType, Method.getMethod("void <init>(int,int,int,int)"));
+    generator.invokeConstructor(myRectangleType, myInitMethod);
   }
 }

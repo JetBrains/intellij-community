@@ -75,8 +75,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   @NonNls private static final String ELEMENT_ITEM = "item";
   @NonNls private static final String ELEMENT_GROUP = "group";
 
-  public static Palette getInstance(final Project project) {
-    LOG.assertTrue(project != null);
+  public static Palette getInstance(@NotNull final Project project) {
     return project.getComponent(Palette.class);
   }
 
@@ -90,15 +89,13 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /**Adds specified listener.*/
-  public void addListener(final Listener l){
-    LOG.assertTrue(l != null);
+  public void addListener(@NotNull final Listener l){
     LOG.assertTrue(!myListeners.contains(l));
     myListeners.add(l);
   }
 
   /**Removes specified listener.*/
-  public void removeListener(final Listener l){
-    LOG.assertTrue(l != null);
+  public void removeListener(@NotNull final Listener l){
     LOG.assertTrue(myListeners.contains(l));
     myListeners.remove(l);
   }
@@ -122,8 +119,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
   }
 
-  public void readExternal(final Element element) {
-    LOG.assertTrue(element != null);
+  public void readExternal(@NotNull final Element element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     // It seems that IDEA inokes readExternal twice: first time for node in defaults XML
@@ -141,8 +137,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     LOG.assertTrue(myPanelItem != null);
   }
 
-  public void writeExternal(final Element element) {
-    LOG.assertTrue(element != null);
+  public void writeExternal(@NotNull final Element element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     writeGroups(element);
@@ -167,10 +162,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   @Nullable
   public ComponentItem getItem(@NotNull final String componentClassName) {
-    //noinspection ConstantConditions
-    if(componentClassName == null){
-      throw new IllegalArgumentException("componentClassName cannot be null");
-    }
     return myClassName2Item.get(componentClassName);
   }
 
@@ -186,9 +177,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * @param groups list of new groups.
    */
   public void setGroups(@NotNull final ArrayList<GroupItem> groups){
-    //noinspection ConstantConditions
-    LOG.assertTrue(groups != null);
-
     myGroups.clear();
     myGroups.addAll(groups);
 
@@ -201,10 +189,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * @exception java.lang.IllegalArgumentException  if an item for the same class
    * is already exists in the palette
    */
-  private void addItem(final GroupItem group, final ComponentItem item) {
-    LOG.assertTrue(group != null);
-    LOG.assertTrue(item != null);
-
+  private void addItem(@NotNull final GroupItem group, @NotNull final ComponentItem item) {
     // class -> item
     final String componentClassName = item.getClassName();
     if (getItem(componentClassName) != null) {
@@ -229,9 +214,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * Helper method.
    */
-  private static GridConstraints processDefaultConstraintsElement(final Element element){
-    LOG.assertTrue(element != null);
-
+  private static GridConstraints processDefaultConstraintsElement(@NotNull final Element element){
     final GridConstraints constraints = new GridConstraints();
 
     // grid related attributes
@@ -264,10 +247,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     return constraints;
   }
 
-  private void processItemElement(final Element itemElement, final GroupItem group){
-    LOG.assertTrue(itemElement != null);
-    LOG.assertTrue(group != null);
-
+  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group){
     // Class name. It's OK if class does not exist.
     final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
 
@@ -336,10 +316,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
-  private static void writeDefaultConstraintsElement(final Element itemElement, final GridConstraints c){
-    LOG.assertTrue(itemElement != null);
+  private static void writeDefaultConstraintsElement(@NotNull final Element itemElement, @NotNull final GridConstraints c){
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
-    LOG.assertTrue(c != null);
 
     final Element element = new Element(ELEMENT_DEFAULT_CONSTRAINTS);
     itemElement.addContent(element);
@@ -484,11 +462,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   @NotNull
   public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass){
-    //noinspection ConstantConditions
-    if (aClass == null) {
-      throw new IllegalArgumentException("aClass cannot be null");
-    }
-
     // Try the cache first
     // TODO[vova, anton] update cache after class reloading (its properties caould be hanged).
     if (myClass2Properties.containsKey(aClass)) {
@@ -801,6 +774,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if (propertyType.isAssignableFrom(Component.class)) {
           property = new IntroComponentProperty(name, readMethod, writeMethod);
         }
+        else if (Color.class.equals(propertyType)) {
+          property = new IntroColorProperty(name, readMethod, writeMethod);
+        }
         else {
           // other types are not supported (yet?)
           continue;
@@ -825,14 +801,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   @Nullable
   public IntrospectedProperty getIntrospectedProperty(@NotNull final Class aClass, @NotNull final String name){
-    //noinspection ConstantConditions
-    if (aClass == null){
-      throw new IllegalArgumentException("aClass cannot be null");
-    }
-    //noinspection ConstantConditions
-    if (name == null) {
-      throw new IllegalArgumentException("name cannot be null");
-    }
     final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
     for (final IntrospectedProperty property: properties) {
       if (name.equals(property.getName())) {
@@ -849,10 +817,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   @Nullable
   public IntrospectedProperty getInplaceProperty(@NotNull final Class aClass){
-    //noinspection ConstantConditions
-    if (aClass == null) {
-      throw new IllegalArgumentException("aClass cannot be null");
-    }
     final String inplaceProperty = com.intellij.uiDesigner.Properties.getInstance().getInplaceProperty(aClass);
     final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
     for (int i = properties.length - 1; i >= 0; i--) {

@@ -93,6 +93,9 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       else if (Rectangle.class.getName().equals(propertyClassName)) { // java.awt.Rectangle
         property = new LwIntroRectangleProperty(name);
       }
+      else if (Color.class.getName().equals(propertyClassName)) {
+        property = new LwIntroColorProperty(name);
+      }
       else {
         PsiClass propClass = psiManager.findClass(propertyClassName,
                                                   GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));

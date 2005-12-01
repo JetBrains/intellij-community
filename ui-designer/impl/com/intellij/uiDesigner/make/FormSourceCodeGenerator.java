@@ -350,6 +350,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(String.class.getName())) {
         push((String)value);
       }
+      else if (propertyClass.equals(Color.class.getName())) {
+        pushColor((ColorDescriptor) value);
+      }
       else {
         //noinspection HardCodedStringLiteral
         throw new RuntimeException("unexpected property class: " + propertyClass);
@@ -480,6 +483,25 @@ public final class FormSourceCodeGenerator {
       push(descriptor.getBundleName());
       push(descriptor.getKey());
       endMethod();
+    }
+  }
+
+  private void pushColor(final ColorDescriptor descriptor) {
+    if (descriptor.getColor() != null) {
+      startConstructor(Color.class.getName());
+      push(descriptor.getColor().getRGB());
+      endConstructor();
+    }
+    else if (descriptor.getSwingColor() != null) {
+      startStaticMethodCall(UIManager.class, "getColor");
+      push(descriptor.getSwingColor());
+      endMethod();
+    }
+    else if (descriptor.getSystemColor() != null) {
+      pushVar("java.awt.SystemColor." + descriptor.getSystemColor());
+    }
+    else if (descriptor.getAWTColor() != null) {
+      pushVar("java.awt.Color." + descriptor.getAWTColor());
     }
   }
 
