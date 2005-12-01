@@ -49,7 +49,7 @@ public class ColorDescriptor extends Color {
     return result;
   }
 
-  private static Color getColorField(final Class<? extends Color> aClass, final String fieldName) {
+  private static Color getColorField(final Class aClass, final String fieldName) {
     try {
       final Field field = aClass.getDeclaredField(fieldName);
       return (Color)field.get(null);
