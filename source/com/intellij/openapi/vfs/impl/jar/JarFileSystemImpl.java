@@ -183,8 +183,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
     }
 
-    for (int i = 0; i < infos.length; i++) {
-      refreshInfo(infos[i], asynchronous, false);
+    for (JarFileInfo info : infos) {
+      refreshInfo(info, asynchronous, false);
     }
   }
 
@@ -299,4 +299,23 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return myManager;
   }
 
+  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vDir).getFile().getPath()));
+  }
+
+  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vDir).getFile().getPath()));
+  }
+
+  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+  }
+
+  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+  }
+
+  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+  }
 }

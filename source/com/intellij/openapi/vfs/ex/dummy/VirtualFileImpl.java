@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -13,17 +13,16 @@ import java.io.IOException;
 abstract class VirtualFileImpl extends VirtualFile {
   protected final DummyFileSystem myFileSystem;
   protected VirtualFileDirectoryImpl myParent;
-  private boolean myRootFlag;
   private String myName;
-  private boolean myIsValid = true;
+  protected boolean myIsValid = true;
 
   protected VirtualFileImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     myFileSystem = fileSystem;
     myParent = parent;
-    myRootFlag = parent != null;
     myName = name;
   }
 
+  @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
@@ -36,15 +35,13 @@ abstract class VirtualFileImpl extends VirtualFile {
     }
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
-  public void rename(Object requestor, String newName) throws IOException {
-    if (myName.equals(newName)){
-      return;
-    }
-    myName = newName;
+  void setName(final String name) {
+    myName = name;
   }
 
   public boolean isWritable() {
@@ -53,30 +50,10 @@ abstract class VirtualFileImpl extends VirtualFile {
 
   public boolean isValid() {
     return myIsValid;
-/*
-    if (myParent != null){
-      return myParent.isValid();
-    }
-    else{
-      return myRootFlag;
-    }
-*/
   }
 
   public VirtualFile getParent() {
     return myParent;
-  }
-
-  public void delete(Object requestor) throws IOException {
-    if (myParent == null){
-      throw new IOException(VfsBundle.message("file.delete.root.error", getPresentableUrl()));
-    }
-    myParent.removeChild(this);
-    myIsValid = false;
-  }
-
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException();
   }
 
   public long getTimeStamp() {

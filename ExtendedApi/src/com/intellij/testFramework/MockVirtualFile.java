@@ -46,9 +46,6 @@ public class MockVirtualFile extends VirtualFile {
     return myName;
   }
 
-  public void rename(Object requestor, String newName) throws IOException {
-  }
-
   public boolean isWritable() {
     return myIsWritable;
   }
@@ -67,20 +64,6 @@ public class MockVirtualFile extends VirtualFile {
 
   public VirtualFile[] getChildren() {
     return VirtualFile.EMPTY_ARRAY;
-  }
-
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-    return null;
-  }
-
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
-    return null;
-  }
-
-  public void delete(Object requestor) throws IOException {
-  }
-
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
   }
 
   public InputStream getInputStream() throws IOException {

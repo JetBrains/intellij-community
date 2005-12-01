@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -360,7 +361,7 @@ public class FileUtil {
     return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 
-  public static String toSystemIndependentName(String aFileName) {
+  public static String toSystemIndependentName(@NotNull String aFileName) {
     return aFileName.replace('\\', '/');
   }
 

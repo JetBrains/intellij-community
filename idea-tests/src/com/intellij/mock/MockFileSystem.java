@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.MockVirtualFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -35,6 +36,23 @@ public class MockFileSystem extends VirtualFileSystem {
 
   public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
 
+  }
+
+  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+  }
+
+  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+  }
+
+  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+  }
+
+  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+    return null;
+  }
+
+  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+    return null;
   }
 
   public VirtualFile refreshAndFindFileByPath(String path) {

@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ArrayUtil;
 
 import java.io.*;
@@ -30,7 +29,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
-  protected static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
@@ -66,10 +64,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       return myName + " (" + myRevision + ")";
   }
 
-  public void rename(Object requestor, String newName) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
   public boolean isWritable() {
     return false;
   }
@@ -87,22 +81,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     return null;
   }
 
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  public void delete(Object requestor) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
-  }
-
   public InputStream getInputStream() throws IOException {
     final byte[] buf = contentsToByteArray();
     //52243 NPE
@@ -114,7 +92,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+    throw new RuntimeException(VcsFileSystem.COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
   public abstract byte[] contentsToByteArray() throws IOException;

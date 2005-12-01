@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public class HttpFileSystem extends VirtualFileSystem implements ApplicationComponent {
 
   @NonNls public static final String PROTOCOL = "http";
@@ -47,5 +49,25 @@ public class HttpFileSystem extends VirtualFileSystem implements ApplicationComp
 
   public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
 
+  }
+
+  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+    throw new UnsupportedOperationException();
   }
 }

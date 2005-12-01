@@ -19,11 +19,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vcs.VcsBundle;
+
+import java.io.IOException;
 
 
 public class VcsFileSystem extends VirtualFileSystem implements ApplicationComponent {
 
   private final String myProtocol;
+  public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
 
   public static VcsFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(VcsFileSystem.class);
@@ -80,5 +84,25 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   }
 
   public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
+  }
+
+  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+  }
+
+  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+  }
+
+  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+  }
+
+  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+  }
+
+  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 }

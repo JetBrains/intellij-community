@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import java.nio.charset.Charset;
  * @see VirtualFileManager
  */
 public abstract class VirtualFile implements UserDataHolder, ModificationTracker {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   private Charset myCharset;
@@ -160,7 +162,14 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param newName the new file name
    * @throws IOException if file failed to be renamed
    */
-  public abstract void rename(Object requestor, String newName) throws IOException;
+  public void rename(Object requestor, String newName) throws IOException {
+    if (getName().equals(newName)) return;
+    if (!VfsUtil.isValidName(newName)) {
+      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
+    }
+
+    getFileSystem().renameFile(requestor, this, newName);
+  };
 
   /**
    * Checks whether this file has write permission. Note that this value may be cached and may differ from
@@ -270,7 +279,21 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return <code>VirtualFile</code> representing the created directory
    * @throws IOException if directory failed to be created
    */
-  public abstract VirtualFile createChildDirectory(Object requestor, String name) throws IOException;
+  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
+    if (!isDirectory()) {
+      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
+    }
+
+    if (!isValid()) {
+      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+    }
+
+    if (!VfsUtil.isValidName(name)) {
+      throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
+    }
+
+    return getFileSystem().createChildDirectory(requestor, this, name);
+  }
 
   /**
    * Creates a new file in this directory. This method should be only called within write-action.
@@ -282,7 +305,21 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
-  public abstract VirtualFile createChildData(Object requestor, String name) throws IOException;
+  public VirtualFile createChildData(Object requestor, String name) throws IOException {
+    if (!isDirectory()) {
+      throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
+    }
+
+    if (!isValid()) {
+      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+    }
+
+    if (!VfsUtil.isValidName(name)) {
+      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+    }
+
+    return getFileSystem().createChildFile(requestor, this, name);
+  }
 
   /**
    * Deletes this file. This method should be only called within write-action.
@@ -293,7 +330,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link VirtualFileEvent#getRequestor}
    * @throws IOException if file failed to be deleted
    */
-  public abstract void delete(Object requestor) throws IOException;
+  public void delete(Object requestor) throws IOException {
+    LOG.assertTrue(isValid());
+    getFileSystem().deleteFile(requestor, this);
+  };
 
   /**
    * Moves this file to another directory. This method should be only called within write-action.
@@ -305,7 +345,13 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
-  public abstract void move(Object requestor, VirtualFile newParent) throws IOException;
+  public void move(Object requestor, VirtualFile newParent) throws IOException {
+    if (getFileSystem() != newParent.getFileSystem()) {
+      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+    }
+
+    getFileSystem().moveFile(requestor, this, newParent);
+  }
 
   /**
    * Gets the <code>InputStream</code> for this file.

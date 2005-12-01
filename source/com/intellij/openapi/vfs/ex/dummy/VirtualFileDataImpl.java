@@ -30,14 +30,6 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     return null;
   }
 
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-    throw new IOException();
-  }
-
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
-    throw new IOException();
-  }
-
   public InputStream getInputStream() throws IOException {
     return new ByteArrayInputStream(myContents);
   }

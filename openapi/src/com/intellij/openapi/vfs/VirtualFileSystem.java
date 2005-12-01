@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -245,4 +246,34 @@ public abstract class VirtualFileSystem {
    * @since 5.0.2
    */
   public abstract void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files);
+
+  /**
+   * Implementation of deleting files in this file system
+   * @see VirtualFile#delete(Object)
+   */
+  protected abstract void deleteFile(Object requestor, VirtualFile vFile) throws IOException;
+
+  /**
+   * Implementation of moving files in this file system
+   * @see VirtualFile#move(Object, VirtualFile)
+   */
+  protected abstract void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException;
+
+  /**
+   * Implementation of renaming files in this file system
+   * @see VirtualFile#rename(Object, String)
+   */
+  protected abstract void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException;
+
+  /**
+   * Implementation of adding files in this file system
+   * @see VirtualFile#createChildData(Object, String)
+   */
+  protected abstract VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException;
+
+  /**
+   * Implementation of adding directories in this file system
+   * @see VirtualFile#createChildDirectory(Object, String)
+   */
+  protected abstract VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException;
 }

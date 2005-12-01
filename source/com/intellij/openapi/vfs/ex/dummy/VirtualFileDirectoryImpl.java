@@ -29,26 +29,6 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
     return myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-    VirtualFile file = findChild(name);
-    if (file != null){
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
-    }
-    VirtualFileImpl child = new VirtualFileDirectoryImpl(myFileSystem, this, name);
-    addChild(child);
-    return child;
-  }
-
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
-    VirtualFile file = findChild(name);
-    if (file != null){
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
-    }
-    VirtualFileImpl child = new VirtualFileDataImpl(myFileSystem, this, name);
-    addChild(child);
-    return child;
-  }
-
   public InputStream getInputStream() throws IOException {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
@@ -71,12 +51,10 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
 
   void addChild(VirtualFileImpl child) {
     myChildren.add(child);
-    myFileSystem.fireFileCreated(null, child);
   }
 
   void removeChild(VirtualFileImpl child) {
-    myFileSystem.fireBeforeFileDeletion(null, child);
     myChildren.remove(child);
-    myFileSystem.fireFileDeleted(null, child, child.getName(), child.isDirectory(), this);
+    child.myIsValid = false;
   }
 }

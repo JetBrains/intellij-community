@@ -534,4 +534,9 @@ public class VfsUtil {
 
     return null;
   }
+
+  public static boolean isValidName(String name) {
+    if (name.indexOf('\\') >= 0) return false;
+    return name.indexOf('/') < 0;
+  }
 }

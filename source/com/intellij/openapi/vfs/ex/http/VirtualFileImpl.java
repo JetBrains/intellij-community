@@ -1,23 +1,21 @@
 
 package com.intellij.openapi.vfs.ex.http;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 class VirtualFileImpl extends VirtualFile {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.ex.http.VirtualFileImpl");
 
   private final HttpFileSystem myFileSystem;
 
   private String myPath;
   private String myParentPath;
   private String myName;
-
-  private static final VirtualFileImpl[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFileImpl[0];
 
   VirtualFileImpl(HttpFileSystem fileSystem, String path) {
     myFileSystem = fileSystem;
@@ -40,6 +38,7 @@ class VirtualFileImpl extends VirtualFile {
     }
   }
 
+  @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
@@ -48,6 +47,7 @@ class VirtualFileImpl extends VirtualFile {
     return myPath;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -55,10 +55,6 @@ class VirtualFileImpl extends VirtualFile {
   public VirtualFile getParent() {
     if (myParentPath == null) return null;
     return myFileSystem.findFileByPath(myParentPath);
-  }
-
-  public void rename(Object requestor, String newName) throws IOException {
-    throw new UnsupportedOperationException();
   }
 
   public boolean isWritable() {
@@ -74,22 +70,6 @@ class VirtualFileImpl extends VirtualFile {
   }
 
   public VirtualFile[] getChildren() {
-    throw new UnsupportedOperationException();
-  }
-
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  public void delete(Object requestor) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
     throw new UnsupportedOperationException();
   }
 

@@ -5,8 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 /**
  *
@@ -32,17 +36,17 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     return root;
   }
 
-  protected void fireFileCreated(Object requestor, VirtualFile file) {
+  /*protected void fireFileCreated(Object requestor, VirtualFile file) {
     super.fireFileCreated(requestor, file);
-  }
+  }*/
 
-  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent) {
+  /*protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent) {
     super.fireFileDeleted(requestor, file, fileName, isDirectory, parent);
   }
 
   protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
     super.fireBeforeFileDeletion(requestor, file);
-  }
+  }*/
 
   public String getProtocol() {
     return PROTOCOL;
@@ -70,5 +74,52 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
 
   public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
 
+  }
+
+  public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+    fireBeforeFileDeletion(requestor, vFile);
+    final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
+    if (parent == null){
+      throw new IOException(VfsBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
+    }
+
+    parent.removeChild((VirtualFileImpl)vFile);
+  }
+
+  public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+    final String oldName = vFile.getName();
+    if (Comparing.equal(oldName, newName)) return;
+
+    fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
+    ((VirtualFileImpl)vFile).setName(newName);
+    firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
+  }
+
+  public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+    VirtualFile file = vDir.findChild(fileName);
+    if (file != null){
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", vDir.getUrl(), fileName));
+    }
+    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
+    dir.addChild(child);
+    fireFileCreated(requestor, child);
+    return child;
+  }
+
+  public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+    VirtualFile file = vDir.findChild(dirName);
+    if (file != null){
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", vDir.getUrl(), dirName));
+    }
+    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
+    dir.addChild(child);
+    fireFileCreated(requestor, child);
+    return child;
   }
 }
