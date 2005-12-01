@@ -24,4 +24,5 @@
   <include name="componentSets/StructuralSearch"/>
   <include name="componentSets/Css"/>
   <include name="componentSets/PropertiesFile"/>
+  <include name="componentSets/Profiles"/>
 </components>

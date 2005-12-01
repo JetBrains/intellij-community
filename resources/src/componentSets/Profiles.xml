@@ -1,0 +1,29 @@
+<components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.profile.codeInspection.InspectionProfileFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProfileFactory</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.profile.scope.ProfileScopeFactory</interface-class>
+      <implementation-class>com.intellij.profile.scope.ProfileScopeFactoryImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.profile.ui.ProfileUIFactory</interface-class>
+      <implementation-class>com.intellij.profile.ui.ProfileUIFactoryImpl</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileFactory</implementation-class>
+    </component>
+    <!--<component>
+      <implementation-class>com.intellij.profile.ui.InspectionProfileConfigurable</implementation-class>
+    </component>-->
+  </project-components>
+</components>
