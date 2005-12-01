@@ -27,7 +27,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   protected int myCount;
   protected int myFirstFree;
 
-  final List<DeletedPairsListener> myListeners = new ArrayList<DeletedPairsListener>();
+  final ArrayList<DeletedPairsListener> myListeners = new ArrayList<DeletedPairsListener>();
 
   private static final int[] tableSizes =
     new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,
@@ -278,8 +278,8 @@ public class IntObjectCache<T> implements Iterable<T> {
 
   private void fireListenersAboutDeletion(int index) {
     final CacheEntry cacheEntry = myCache[index];
-    for (DeletedPairsListener listener : myListeners) {
-      listener.objectRemoved(cacheEntry.key, cacheEntry.value);
+    for (int i = 0; i < myListeners.size(); i++) {
+      myListeners.get(i).objectRemoved(cacheEntry.key, cacheEntry.value);
     }
   }
 
