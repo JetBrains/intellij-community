@@ -196,14 +196,14 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   private void addEntry2HashTable(int index) {
-    int hash_index = Math.abs(myCache[index].key) % myHashTableSize;
+    int hash_index = (myCache[index].key & 0x7fffffff) % myHashTableSize;
     myCache[index].hash_next = myHashTable[hash_index];
     myHashTable[hash_index] = index;
     ++myCount;
   }
 
   private void removeEntryFromHashTable(int index) {
-    int hash_index = Math.abs(myCache[index].key) % myHashTableSize;
+    int hash_index = (myCache[index].key & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[hash_index];
     int previous = 0;
     while (current != 0) {
@@ -224,7 +224,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   private int searchForCacheEntry(int key) {
-    int index = Math.abs(key) % myHashTableSize;
+    int index = (key & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[index];
     myCache[0].key = key;
     while (key != myCache[current].key) {
