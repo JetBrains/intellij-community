@@ -12,6 +12,6 @@ class RRR implements I {
     }
 
     void g(I i) {
-        boolean foo = !isFooInverted();
+        boolean foo = !i.isFooInverted();
     }
 }
