@@ -100,10 +100,6 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
   }
 
   public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
-    VirtualFile file = vDir.findChild(fileName);
-    if (file != null){
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", vDir.getUrl(), fileName));
-    }
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
     dir.addChild(child);
@@ -112,10 +108,6 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
   }
 
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
-    VirtualFile file = vDir.findChild(dirName);
-    if (file != null){
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", vDir.getUrl(), dirName));
-    }
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
     dir.addChild(child);

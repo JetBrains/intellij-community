@@ -277,7 +277,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link VirtualFileEvent#getRequestor}
    * @param name directory name
    * @return <code>VirtualFile</code> representing the created directory
-   * @throws IOException if directory failed to be created
+   * @throws java.io.IOException if directory failed to be created
    */
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
     if (!isDirectory()) {
@@ -290,6 +290,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
     if (!VfsUtil.isValidName(name)) {
       throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
+    }
+
+    if (findChild(name) != null){
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildDirectory(requestor, this, name);
@@ -316,6 +320,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
     if (!VfsUtil.isValidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+    }
+
+    if (findChild(name) != null){
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildFile(requestor, this, name);

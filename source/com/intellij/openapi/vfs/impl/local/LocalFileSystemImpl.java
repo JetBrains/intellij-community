@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -906,8 +905,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     final boolean handled = auxRename(file, newName);
 
     String oldName = file.getName();
-    if (Comparing.equal(oldName, newName)) return;
-
     fireBeforePropertyChange(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
 
     if (!handled) {
@@ -970,10 +967,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
     final VirtualFileImpl dir = ((VirtualFileImpl)vDir);
 
-    if (!vDir.isDirectory()) {
-      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
-    }
-
     VirtualFile existingFile = dir.findChild(dirName);
 
     final boolean auxCommand = auxCreateDirectory(vDir, dirName);
@@ -1001,9 +994,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
     final VirtualFileImpl dir = ((VirtualFileImpl)vDir);
-    if(!vDir.isDirectory()) {
-      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
-    }
     final boolean handled = auxCreateFile(vDir, fileName);
 
     PhysicalFile physicalFile = dir.getPhysicalFile().createChild(fileName);
