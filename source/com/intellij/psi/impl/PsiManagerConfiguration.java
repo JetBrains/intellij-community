@@ -1,13 +1,11 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.Element;
 
 public class PsiManagerConfiguration implements ApplicationComponent, JDOMExternalizable {

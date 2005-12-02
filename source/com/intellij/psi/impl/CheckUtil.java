@@ -27,7 +27,11 @@ public class CheckUtil {
         if (file == null){
           throw new IncorrectOperationException();
         }
-        throw new IncorrectOperationException("Cannot modify a read-only file " + file.getVirtualFile().getPresentableUrl() + ".");
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null){
+          throw new IncorrectOperationException();
+        }
+        throw new IncorrectOperationException("Cannot modify a read-only file " + virtualFile.getPresentableUrl() + ".");
       }
     }
   }

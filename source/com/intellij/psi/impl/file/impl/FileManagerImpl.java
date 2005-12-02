@@ -21,10 +21,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.RepositoryElementsManager;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -713,21 +710,19 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void removeInvalidFilesAndDirs(boolean useFind) {
-    com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
+    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
     if (useFind) {
-      myVFileToPsiDirMap = new com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory>();
+      myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
     }
     for (Iterator<VirtualFile> iterator = fileToPsiDirMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
       if (!vFile.isValid()) {
         iterator.remove();
-        continue;
-      }
-
-      PsiDirectory psiDir = findDirectory(vFile);
-      if (psiDir == null) {
-        iterator.remove();
-        continue;
+      } else {
+        PsiDirectory psiDir = findDirectory(vFile);
+        if (psiDir == null) {
+          iterator.remove();
+        }
       }
     }
     myVFileToPsiDirMap = fileToPsiDirMap;
@@ -771,6 +766,7 @@ public class FileManagerImpl implements FileManager {
 
   private void reloadFromDisk(PsiFile file, boolean ignoreDocument) {
     VirtualFile vFile = file.getVirtualFile();
+    assert vFile != null;
 
     if (file instanceof PsiBinaryFile) {
       file.setModificationStamp(vFile.getModificationStamp());
@@ -1202,9 +1198,9 @@ public class FileManagerImpl implements FileManager {
       final PsiDirectory newParentDir = findDirectory(event.getNewParent());
       if (oldParentDir == null && newParentDir == null) return;
 
-      final PsiElement oldElement = vFile.isDirectory() ? (PsiElement)myVFileToPsiDirMap.get(vFile) : getCachedPsiFileInner(vFile);
+      final PsiElement oldElement = vFile.isDirectory() ? myVFileToPsiDirMap.get(vFile) : getCachedPsiFileInner(vFile);
       removeInvalidFilesAndDirs(true);
-      final PsiElement newElement = vFile.isDirectory() ? (PsiElement)findDirectory(vFile) : findFile(vFile);
+      final PsiElement newElement = vFile.isDirectory() ? findDirectory(vFile) : findFile(vFile);
       if (oldElement == null && newElement == null) return;
 
       if (oldElement != null && newElement != null) {

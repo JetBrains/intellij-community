@@ -132,8 +132,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public boolean isValid() {
     if (myFile == null || myExplicitlySetAsValid) return true; // "dummy" file
-    if (!myFile.isValid()) return false;
-    return myManager.getFileManager().findFile(myFile) == this;
+    return myFile.isValid();
   }
 
   public boolean isContentsLoaded() {
@@ -291,7 +290,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public boolean isWritable() {
-    return myFile != null ? myFile.isWritable() : true;
+    return myFile == null || myFile.isWritable();
   }
 
   public PsiElement getParent() {

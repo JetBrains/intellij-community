@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
@@ -74,6 +75,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return super.getRepositoryId() != -2;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
   }
@@ -95,17 +97,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   public boolean isValid() {
     if (myIsForDecompiling) return true;
     VirtualFile vFile = getVirtualFile();
-    return vFile.isValid() && myManager.findFile(vFile) == this;
+    return vFile.isValid();
   }
 
   public String getName() {
     return myFile.getName();
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return getClasses(); // TODO : package statement?
   }
 
+  @NotNull
   public PsiClass[] getClasses() {
     long id = getRepositoryId();
     if (myClass == null) {
@@ -128,6 +132,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return myPackageStatement.getPackageName() != null ? myPackageStatement : null;
   }
 
+  @NotNull
   public String getPackageName() {
     PsiPackageStatement statement = getPackageStatement();
     if (statement == null) {
@@ -142,18 +147,22 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return null;
   }
 
+  @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getImplicitlyImportedPackages() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
@@ -173,8 +182,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
     buffer.append(PsiBundle.message("psi.decompiled.text.header"));
-    if (getPackageStatement() != null) {
-      buffer.append(((ClsElementImpl)getPackageStatement()).getMirrorText());
+    final PsiPackageStatement packageStatement = getPackageStatement();
+    if (packageStatement != null) {
+      buffer.append(((ClsElementImpl)packageStatement).getMirrorText());
     }
     PsiClass aClass = getClasses()[0];
     buffer.append(((ClsClassImpl)aClass).getMirrorText());
@@ -207,6 +217,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return myMirror.getText();
   }
 
+  @NotNull
   public char[] textToCharArray() {
     initializeMirror();
     return myMirror.textToCharArray();
@@ -268,14 +279,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return true;
   }
 
+  @NotNull
   public FileType getFileType() {
     return StdFileTypes.CLASS;
   }
 
+  @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @NotNull
   public PsiFile createPseudoPhysicalCopy() {
     LOG.assertTrue(false);
     return null;
@@ -283,7 +297,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   public static String decompile(PsiManager manager, VirtualFile file) {
     final ClsFileImpl psiFile = new ClsFileImpl((PsiManagerImpl)manager, file, true);
-    final String text = psiFile.getMirrorText();
-    return text;
+    return psiFile.getMirrorText();
   }
 }
