@@ -282,24 +282,28 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  final DomInvocationHandler getFixedChild(final Method method) {
+  final DomInvocationHandler getFixedChild(final MethodSignature method) {
     final DomInvocationHandler domElement = myFixedChildren.get(myGenericInfoImpl.getFixedChildInfo(method));
     assert domElement != null : method.toString();
     return domElement;
   }
 
   @NotNull
-  final AttributeChildInvocationHandler getAttributeChild(final Method method) {
+  final AttributeChildInvocationHandler getAttributeChild(final MethodSignature method) {
     final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfoImpl.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
   }
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    Invocation invocation = myInvocationCache.getInvocation(method);
+    return doInvoke(MethodSignature.getSignature(method), args);
+  }
+
+  public final Object doInvoke(final MethodSignature signature, final Object... args) throws Throwable {
+    Invocation invocation = myInvocationCache.getInvocation(signature);
     if (invocation == null) {
-      invocation = createInvocation(method);
-      myInvocationCache.putInvocation(method, invocation);
+      invocation = createInvocation(signature.findMethod(myType));
+      myInvocationCache.putInvocation(signature, invocation);
     }
     return invocation.invoke(this, args);
   }
@@ -323,21 +327,21 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       if (myInitialized) return;
       try {
         myGenericInfoImpl.buildMethodMaps();
-        for (Map.Entry<Method, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
-          getOrCreateAttributeChild(entry.getKey(), entry.getValue());
+        for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
+          getOrCreateAttributeChild(entry.getKey().findMethod(myType), entry.getValue());
         }
 
         final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
         final XmlTag tag = getXmlTag();
-        for (Map.Entry<Method, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
+        for (Map.Entry<MethodSignature, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
           final Pair<String, Integer> pair = entry.getValue();
           final XmlTag subTag = findSubTag(tag, pair.getFirst(), pair.getSecond());
-          getOrCreateIndexedChild(entry.getKey(), subTag, pair);
+          getOrCreateIndexedChild(entry.getKey().findMethod(myType), subTag, pair);
           usedTags.add(subTag);
         }
 
         if (tag != null) {
-          for (Map.Entry<Method, String> entry : myGenericInfoImpl.getCollectionChildrenEntries()) {
+          for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getCollectionChildrenEntries()) {
             String qname = entry.getValue();
             for (XmlTag subTag : tag.findSubTags(qname)) {
               if (!usedTags.contains(subTag)) {
@@ -374,8 +378,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private void getOrCreateAttributeChild(final Method method, final String attributeName) {
-    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this,
-                                                                                        attributeName, myManager,
+    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(),
+                                                                                        getXmlTag(),
+                                                                                        this,
+                                                                                        attributeName,
+                                                                                        myManager,
                                                                                         getConverterForChild(method));
     myManager.createDomElement(handler);
     myAttributeChildren.put(handler.getXmlElementName(), handler);
@@ -489,7 +496,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
     checkInitialized();
     final XmlTag tag = ensureTagExists();
-    for (Map.Entry<Method, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
+    for (Map.Entry<MethodSignature, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
       final Pair<String, Integer> pair = entry.getValue();
       if (tagName.equals(pair.getFirst()) && pair.getSecond() < count) {
         getFixedChild(entry.getKey()).ensureTagExists();

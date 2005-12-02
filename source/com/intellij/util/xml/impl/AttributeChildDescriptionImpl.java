@@ -16,14 +16,14 @@ import java.util.List;
  * @author peter
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
-  private final Method myGetterMethod;
+  private final MethodSignature myGetterMethod;
 
   protected AttributeChildDescriptionImpl(final String attributeName, final Method getter) {
     super(attributeName, getter.getGenericReturnType());
-    myGetterMethod = getter;
+    myGetterMethod = MethodSignature.getSignature(getter);
   }
 
-  public final Method getGetterMethod() {
+  public final MethodSignature getGetterMethod() {
     return myGetterMethod;
   }
 
@@ -37,9 +37,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     try {
-      return (GenericAttributeValue)myGetterMethod.invoke(parent);
+      return (GenericAttributeValue)DomManagerImpl.getDomInvocationHandler(parent).doInvoke(myGetterMethod);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new RuntimeException(e);
     }
   }

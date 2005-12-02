@@ -3,20 +3,18 @@
  */
 package com.intellij.util.xml.impl;
 
-import java.lang.reflect.Method;
-
 /**
  * @author peter
  */
 public class GetFixedChildInvocation implements Invocation {
-  private Method myMethod;
+  private MethodSignature myMethodSignature;
 
-  public GetFixedChildInvocation(final Method method) {
-    myMethod = method;
+  public GetFixedChildInvocation(final MethodSignature method) {
+    myMethodSignature = method;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     handler.checkInitialized();
-    return handler.getFixedChild(myMethod).getProxy();
+    return handler.getFixedChild(myMethodSignature).getProxy();
   }
 }
