@@ -92,8 +92,6 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
 
   public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
     final String oldName = vFile.getName();
-    if (Comparing.equal(oldName, newName)) return;
-
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
     ((VirtualFileImpl)vFile).setName(newName);
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
