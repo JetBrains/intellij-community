@@ -35,7 +35,8 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
     private final OverlyStrongCastFix fix = new OverlyStrongCastFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("overly.strong.type.cast.display.name");
+        return InspectionGadgetsBundle.message(
+                "overly.strong.type.cast.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -47,7 +48,8 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
       final PsiType expectedType = (PsiType)arg;
       assert expectedType != null;
       final String typeText = expectedType.getPresentableText();
-      return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor", typeText);  
+      return InspectionGadgetsBundle.message(
+              "overly.strong.type.cast.problem.descriptor", typeText);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -55,8 +57,10 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
     }
 
     private static class OverlyStrongCastFix extends InspectionGadgetsFix {
+
         public String getName() {
-            return InspectionGadgetsBundle.message("overly.strong.type.cast.weaken.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "overly.strong.type.cast.weaken.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -80,11 +84,12 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         return new OverlyStrongTypeCastVisitor();
     }
 
-    private static class OverlyStrongTypeCastVisitor extends BaseInspectionVisitor {
+    private static class OverlyStrongTypeCastVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
+        public void visitTypeCastExpression(
+                @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
-
             final PsiExpression operand = expression.getOperand();
             if (operand == null) {
                 return;
@@ -110,17 +115,16 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 return;
             }
             if (expectedType.isAssignableFrom(operandType)) {
-                return;     //then it's redundant, and caught by the built-in exception
+                //then it's redundant, and caught by the built-in exception
+                return;
             }
             if(isTypeParameter(expectedType)) {
                 return;
             }
-            if(expectedType instanceof PsiArrayType)
-            {
+            if(expectedType instanceof PsiArrayType) {
                 final PsiArrayType arrayType = (PsiArrayType) expectedType;
                 final PsiType componentType = arrayType.getDeepComponentType();
-                if(isTypeParameter(componentType))
-                {
+                if(isTypeParameter(componentType)) {
                     return;
                 }
             }
@@ -139,7 +143,6 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         }
 
         private static boolean isTypeParameter(PsiType type){
-
             if(!(type instanceof PsiClassType)){
                 return false;
             }
