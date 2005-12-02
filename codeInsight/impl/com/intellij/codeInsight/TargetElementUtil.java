@@ -105,7 +105,8 @@ public class TargetElementUtil {
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
         if (parent.getTextOffset() == element.getTextOffset() &&
             Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
-            !(parent instanceof XmlAttribute)
+            !(parent instanceof XmlAttribute) &&
+            !(parent instanceof PsiReference)
            ) {
           return parent;
         }
