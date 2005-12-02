@@ -106,7 +106,7 @@ public class OSProcessHandler extends ProcessHandler {
               catch (InterruptedException e) {
               }
 
-              notifyProcessTerminated(exitCode);
+              onOSProcessTerminated(exitCode);
             }
           }.start();
         }
@@ -117,6 +117,10 @@ public class OSProcessHandler extends ProcessHandler {
     });
 
     super.startNotify();
+  }
+
+  protected void onOSProcessTerminated(final int exitCode) {
+    notifyProcessTerminated(exitCode);
   }
 
   protected Reader createProcessOutReader() {
