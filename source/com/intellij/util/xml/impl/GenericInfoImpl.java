@@ -164,14 +164,14 @@ public class GenericInfoImpl implements DomGenericInfo {
     return StringUtil.isEmpty(tagName) ? null : tagName;
   }
 
-  private void processGetterMethod(final Method method) {
-    if (method.getAnnotation(PropertyAccessor.class) != null || method.getAnnotation(CustomMethod.class) != null) {
-      return;
+  private boolean processGetterMethod(final Method method) {
+    if (isCustomMethod(method)) {
+      return true;
     }
 
     if (DomUtil.isTagValueGetter(method)) {
       myValueElement = true;
-      return;
+      return true;
     }
 
     final boolean isAttributeMethod = method.getReturnType().equals(GenericAttributeValue.class);
@@ -185,7 +185,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method) : s;
       assert StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
       myAttributeChildrenMethods.put(signature, attributeName);
-      return;
+      return true;
     }
 
     if (DomUtil.isDomElement(method.getReturnType())) {
@@ -201,7 +201,7 @@ public class GenericInfoImpl implements DomGenericInfo {
         if (integer == null || integer < index + 1) {
           myFixedChildrenCounts.put(qname, index + 1);
         }
-        return;
+        return true;
       }
     }
 
@@ -211,8 +211,15 @@ public class GenericInfoImpl implements DomGenericInfo {
       if (qname != null) {
         myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(signature, qname);
+        return true;
       }
     }
+
+    return false;
+  }
+
+  private boolean isCustomMethod(final Method method) {
+    return method.getAnnotation(PropertyAccessor.class) != null || method.getAnnotation(CustomMethod.class) != null;
   }
 
   public final Invocation createInvocation(Method method) {

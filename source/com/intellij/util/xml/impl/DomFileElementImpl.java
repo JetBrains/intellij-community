@@ -131,6 +131,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFile.getResolveScope();
   }
 
+  public <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict) {
+    return DomFileElement.class.isAssignableFrom(requiredClass) && !strict ? (T)this : null;
+  }
+
   @NotNull
   public T getRootElement() {
     return (T)getRootHandler().getProxy();

@@ -260,6 +260,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return getRoot().getResolveScope();
   }
 
+  private <T extends DomElement> T _getParentOfType(Class<T> requiredClass, DomElement element) {
+    while (element != null && !(requiredClass.isInstance(element))) {
+      element = element.getParent();
+    }
+    return (T)element;
+  }
+
+  public final <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict) {
+    return _getParentOfType(requiredClass, strict ? getParent() : getProxy());
+  }
+
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     if (DomUtil.isTagValueGetter(method)) {
       return createGetValueInvocation(getConverter(method, true));

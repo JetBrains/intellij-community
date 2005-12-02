@@ -45,4 +45,6 @@ public interface DomElement {
   String getCommonPresentableName();
 
   GlobalSearchScope getResolveScope();
+
+  <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
 }
