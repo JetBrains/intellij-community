@@ -276,8 +276,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return createGetValueInvocation(getConverter(method, true));
     }
 
-    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
-    if (setter && (method.getAnnotation(TagValue.class) != null || "setValue".equals(method.getName()))) {
+    if (DomUtil.isTagValueSetter(method)) {
       return createSetValueInvocation(getConverter(method, false));
     }
 

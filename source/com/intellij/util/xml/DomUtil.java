@@ -186,4 +186,9 @@ public class DomUtil {
       LOG.error(e);
     }
   }
+
+  public static boolean isTagValueSetter(final Method method) {
+    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
+    return setter && (method.getAnnotation(TagValue.class) != null || "setValue".equals(method.getName()));
+  }
 }

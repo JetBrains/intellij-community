@@ -125,20 +125,35 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     collectImplementations(myClass);
 
-    for (Method method : myClass.getMethods()) {
-      if (!isCoreMethod(method)) {
-        if (DomUtil.isGetter(method)) {
-          processGetterMethod(method);
-        }
+    final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
+    for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
+      final Method method = iterator.next();
+      if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) || isCustomMethod(method)) {
+        iterator.remove();
       }
     }
-    for (Method method : myClass.getMethods()) {
-      if (!isCoreMethod(method)) {
-        if (isAddMethod(method)) {
-          myCollectionChildrenAdditionMethods.put(MethodSignature.getSignature(method), extractTagName(method, "add"));
-        }
+
+    for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
+      Method method = iterator.next();
+      if (DomUtil.isGetter(method) && processGetterMethod(method)) {
+        iterator.remove();
       }
     }
+
+    for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
+      Method method = iterator.next();
+      if (isAddMethod(method)) {
+        myCollectionChildrenAdditionMethods.put(MethodSignature.getSignature(method), extractTagName(method, "add"));
+        iterator.remove();
+      }
+    }
+
+    if (false) {
+      if (!methods.isEmpty()) {
+        throw new AssertionError("No implementation for methods: " + methods);
+      }
+    }
+
   }
 
   private boolean isAddMethod(Method method) {
@@ -165,10 +180,6 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private boolean processGetterMethod(final Method method) {
-    if (isCustomMethod(method)) {
-      return true;
-    }
-
     if (DomUtil.isTagValueGetter(method)) {
       myValueElement = true;
       return true;
