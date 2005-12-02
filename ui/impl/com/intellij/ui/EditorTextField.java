@@ -38,6 +38,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myInheritSwingFont = true;
+  private Color myEnforcedBgColor = null;
 
   public EditorTextField(String text) {
     this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
@@ -78,6 +79,15 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   public String getText() {
     return myDocument.getText();
+  }
+
+  @Override
+  public void setBackground(Color bg) {
+    super.setBackground(bg);
+    myEnforcedBgColor = bg;
+    if (myEditor != null) {
+      myEditor.setBackgroundColor(bg);
+    }
   }
 
   public JComponent getComponent() {
@@ -326,6 +336,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   private Color getBackgroundColor(boolean enabled){
+    if (myEnforcedBgColor != null) return myEnforcedBgColor;
     return enabled ? UIUtil.getActiveTextColor()
     : UIUtil.getInactiveTextColor();
   }
