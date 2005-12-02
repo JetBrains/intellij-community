@@ -7,4 +7,10 @@ package com.intellij.util.xml;
  * @author peter
  */
 public interface GenericDomValue<T> extends DomElement, GenericValue<T>{
+
+  @TagValue
+  void setStringValue(String value);
+
+  void setValue(T value);
+
 }

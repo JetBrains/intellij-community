@@ -14,11 +14,7 @@ public interface GenericValue<T> {
   @Nullable
   String getStringValue();
 
-  @TagValue
-  void setStringValue(String value);
-
   @Nullable
   T getValue();
 
-  void setValue(T value);
 }
