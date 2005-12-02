@@ -55,10 +55,10 @@ public class ColorDescriptor extends Color {
       return (Color)field.get(null);
     }
     catch (NoSuchFieldException e) {
-      return Color.BLACK;
+      return Color.black;
     }
     catch (IllegalAccessException e) {
-      return Color.BLACK;
+      return Color.black;
     }
   }
 
