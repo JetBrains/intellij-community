@@ -94,8 +94,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiSearchHelper helper = manager.getSearchHelper();
     final List<UsageInfo> usagesList = new ArrayList<UsageInfo>();
     for (PsiMember member : myMembersToMove) {
       for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
@@ -297,7 +295,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void addInaccessiblleConflicts(final ArrayList<String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
     String newVisibility = myNewVisibility;
-    if (newVisibility.equals(VisibilityUtil.MINIMAL_VISIBLE)) { //Still need to check for access object
+    if (VisibilityUtil.MINIMAL_VISIBLE.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
@@ -383,7 +381,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public static String[] analyzeAccessibilityConflicts(final Set<PsiMember> membersToMove,
                                                 final PsiClass targetClass,
                                                 final LinkedHashSet<String> conflicts, String newVisibility) {
-    if (newVisibility.equals(VisibilityUtil.MINIMAL_VISIBLE)) { //Still need to check for access object
+    if (VisibilityUtil.MINIMAL_VISIBLE.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
