@@ -7,14 +7,12 @@ import org.objectweb.asm.Type;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 22.11.2005
- * Time: 17:43:00
- * To change this template use File | Settings | File Templates.
+ * @author yole
+ * @noinspection HardCodedStringLiteral
  */
 public class DimensionPropertyCodeGenerator extends PropertyCodeGenerator {
-  private final Type myDimensionType = Type.getType(Dimension.class);
+  private static final Type myDimensionType = Type.getType(Dimension.class);
+  private static final Method myInitMethod = Method.getMethod("void <init>(int,int)");
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     Dimension dimension = (Dimension) value;
@@ -22,6 +20,6 @@ public class DimensionPropertyCodeGenerator extends PropertyCodeGenerator {
     generator.dup();
     generator.push(dimension.width);
     generator.push(dimension.height);
-    generator.invokeConstructor(myDimensionType, Method.getMethod("void <init>(int,int)"));
+    generator.invokeConstructor(myDimensionType, myInitMethod);
   }
 }

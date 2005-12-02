@@ -35,33 +35,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
 //----------------------------------------------------
   public JComponent createComponent() {
     myComponent = new MyComponent();
-    Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    DefaultComboBoxModel aModel = new DefaultComboBoxModel();
-    for (int i = 0; i < fonts.length; i++) {
-      // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-      try {
-        final Font font = fonts[i];
-        if (
-          font.canDisplay('a') &&
-          font.canDisplay('z') &&
-          font.canDisplay('A') &&
-          font.canDisplay('Z') &&
-          font.canDisplay('0') &&
-          font.canDisplay('1')
-        ) {
-          aModel.addElement(font.getName());
-        }
-      }
-      catch (Exception e) {
-        // JRE has problems working with the font. Just skip.
-        continue;
-      }
-    }
+    DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
 
     myComponent.myFontSizeCombo.setModel(
-      new DefaultComboBoxModel(
-        new String[]{"8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"}));
+      new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
 
     myComponent.myFontSizeCombo.setEditable(true);
 //    myComponent.myLafComboBox=new JComboBox(LafManager.getInstance().getInstalledLookAndFeels());
@@ -235,9 +213,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
     myComponent.updateCombo();
-    
+
   }
-  
+
   public boolean isModified() {
     UISettings settings = UISettings.getInstance();
 

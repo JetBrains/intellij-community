@@ -114,6 +114,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       else if (Color.class.equals(propertyType)) {
         property = new LwIntroColorProperty(name);
       }
+      else if (Font.class.equals(propertyType)) {
+        property = new LwIntroFontProperty(name);
+      }
       else if (propertyType.isAssignableFrom(Component.class)) {
         property = new LwIntroComponentProperty(name);
       }

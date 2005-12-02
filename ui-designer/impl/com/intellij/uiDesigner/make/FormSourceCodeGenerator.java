@@ -37,12 +37,18 @@ public final class FormSourceCodeGenerator {
   private final ArrayList<String> myErrors;
   private LayoutSourceGenerator myLayoutSourceGenerator = new GridLayoutSourceGenerator();
 
-  private static Map<Class, LayoutSourceGenerator> myComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
+  private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
+  private static TIntObjectHashMap ourFontStyleMap = new TIntObjectHashMap();
 
   static {
-    myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
-    myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutSourceGenerator());
-    myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutSourceGenerator());
+    ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
+    ourComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutSourceGenerator());
+    ourComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutSourceGenerator());
+
+    ourFontStyleMap.put(Font.PLAIN, "java.awt.Font.PLAIN");
+    ourFontStyleMap.put(Font.BOLD, "java.awt.Font.BOLD");
+    ourFontStyleMap.put(Font.ITALIC, "java.awt.Font.ITALIC");
+    ourFontStyleMap.put(Font.BOLD | Font.ITALIC, "java.awt.Font.BOLD | java.awt.Font.ITALIC");
   }
 
   public FormSourceCodeGenerator(@NotNull final Project project){
@@ -353,6 +359,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Color.class.getName())) {
         pushColor((ColorDescriptor) value);
       }
+      else if (propertyClass.equals(Font.class.getName())) {
+        pushFont((FontDescriptor) value);
+      }
       else {
         //noinspection HardCodedStringLiteral
         throw new RuntimeException("unexpected property class: " + propertyClass);
@@ -464,7 +473,7 @@ public final class FormSourceCodeGenerator {
   }
 
   private LayoutSourceGenerator getComponentLayoutGenerator(final LwComponent lwComponent) {
-    LayoutSourceGenerator generator = myComponentLayoutCodeGenerators.get(lwComponent.getClass());
+    LayoutSourceGenerator generator = ourComponentLayoutCodeGenerators.get(lwComponent.getClass());
     if (generator != null) {
       return generator;
     }
@@ -502,6 +511,28 @@ public final class FormSourceCodeGenerator {
     }
     else if (descriptor.getAWTColor() != null) {
       pushVar("java.awt.Color." + descriptor.getAWTColor());
+    }
+    else {
+      throw new IllegalStateException("Unknown color type");
+    }
+  }
+
+  private void pushFont(final FontDescriptor fontDescriptor) {
+    Font font = fontDescriptor.getFont();
+    if (font != null) {
+      startConstructor(Font.class.getName());
+      push(font.getName());
+      push(font.getStyle(), ourFontStyleMap);
+      push(font.getSize());
+      endMethod();
+    }
+    else if (fontDescriptor.getSwingFont() != null) {
+      startStaticMethodCall(UIManager.class, "getFont");
+      push(fontDescriptor.getSwingFont());
+      endMethod();
+    }
+    else {
+      throw new IllegalStateException("Unknown font type");
     }
   }
 

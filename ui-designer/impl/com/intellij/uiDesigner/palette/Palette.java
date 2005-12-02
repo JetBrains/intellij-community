@@ -387,10 +387,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
-  private static void writeComponentItem(final Element groupElement, final ComponentItem item){
-    LOG.assertTrue(groupElement != null);
+  private static void writeComponentItem(@NotNull final Element groupElement, @NotNull final ComponentItem item){
     LOG.assertTrue(ELEMENT_GROUP.equals(groupElement.getName()));
-    LOG.assertTrue(item != null);
 
     final Element itemElement = new Element(ELEMENT_ITEM);
     groupElement.addContent(itemElement);
@@ -422,9 +420,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * @param parentElement element to which all "group" elements will be appended
    */
-  private void writeGroups(final Element parentElement){
-    LOG.assertTrue(parentElement != null);
-
+  private void writeGroups(@NotNull final Element parentElement){
     for (final GroupItem group : myGroups) {
       final Element groupElement = new Element(ELEMENT_GROUP);
       parentElement.addContent(groupElement);
@@ -776,6 +772,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         }
         else if (Color.class.equals(propertyType)) {
           property = new IntroColorProperty(name, readMethod, writeMethod);
+        }
+        else if (Font.class.equals(propertyType)) {
+          property = new IntroFontProperty(name, readMethod, writeMethod);
         }
         else {
           // other types are not supported (yet?)

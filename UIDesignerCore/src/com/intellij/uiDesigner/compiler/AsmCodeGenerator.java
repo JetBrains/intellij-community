@@ -58,6 +58,7 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put("java.awt.Insets", new InsetsPropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Rectangle", new RectanglePropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Color", new ColorPropertyCodeGenerator());
+    myPropertyCodeGenerators.put("java.awt.Font", new FontPropertyCodeGenerator());
   }
 
   public AsmCodeGenerator(final LwRootContainer rootContainer,

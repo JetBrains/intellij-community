@@ -63,7 +63,7 @@ public class ColorEditor extends PropertyEditor {
   }
 
   public void updateUI() {
-    myTextField.updateUI();
+    SwingUtilities.updateComponentTreeUI(myTextField);
   }
 
   private class MyColorChooserDialog extends DialogWrapper {
@@ -135,7 +135,7 @@ public class ColorEditor extends PropertyEditor {
       while(e.hasMoreElements()) {
         Object key = e.nextElement();
         Object value = defaults.get(key);
-        if (value instanceof Color) {
+        if (key instanceof String && value instanceof Color) {
           result.add(ColorDescriptor.fromSwingColor((String) key));
         }
       }

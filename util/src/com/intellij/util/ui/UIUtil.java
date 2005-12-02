@@ -26,6 +26,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author max
@@ -479,6 +481,35 @@ public class UIUtil {
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
+  }
+
+  public static String[] getValidFontNames(final boolean familyName) {
+    Set<String> result = new TreeSet<String>();
+    Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+    for (Font font : fonts) {
+      // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
+      try {
+        if (
+          font.canDisplay('a') &&
+          font.canDisplay('z') &&
+          font.canDisplay('A') &&
+          font.canDisplay('Z') &&
+          font.canDisplay('0') &&
+          font.canDisplay('1')
+          ) {
+          result.add(familyName ? font.getFamily() : font.getName());
+        }
+      }
+      catch (Exception e) {
+        // JRE has problems working with the font. Just skip.
+        continue;
+      }
+    }
+    return result.toArray(new String[result.size()]);
+  }
+
+  public static String[] getStandardFontSizes() {
+    return new String[]{"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
   }
 }
 

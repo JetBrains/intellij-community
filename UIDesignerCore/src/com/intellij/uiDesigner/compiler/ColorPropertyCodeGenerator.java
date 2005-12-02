@@ -25,33 +25,37 @@ import java.awt.*;
 
 /**
  * @author yole
+ * @noinspection HardCodedStringLiteral
  */
 public class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
-  private static final Type myColorType = Type.getType(Color.class);
-  private static final Type myObjectType = Type.getType(Object.class);
-  private static final Type myUIManagerType = Type.getType(UIManager.class);
-  private static final Type mySystemColorType = Type.getType(SystemColor.class);
+  private static final Type ourColorType = Type.getType(Color.class);
+  private static final Type ourObjectType = Type.getType(Object.class);
+  private static final Type ourUIManagerType = Type.getType(UIManager.class);
+  private static final Type ourSystemColorType = Type.getType(SystemColor.class);
 
-  private static Method myInitMethod = Method.getMethod("void <init>(int)");
+  private static final Method ourInitMethod = Method.getMethod("void <init>(int)");
+  private static final Method ourGetColorMethod = new Method("getColor", ourColorType, new Type[] { ourObjectType } );
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     ColorDescriptor descriptor = (ColorDescriptor) value;
     if (descriptor.getColor() != null) {
-      generator.newInstance(myColorType);
+      generator.newInstance(ourColorType);
       generator.dup();
       generator.push(descriptor.getColor().getRGB());
-      generator.invokeConstructor(myColorType, myInitMethod);
+      generator.invokeConstructor(ourColorType, ourInitMethod);
     }
     else if (descriptor.getSwingColor() != null) {
       generator.push(descriptor.getSwingColor());
-      generator.invokeStatic(myUIManagerType,
-                             new Method("getColor", myColorType, new Type[] { myObjectType } ));
+      generator.invokeStatic(ourUIManagerType, ourGetColorMethod);
     }
     else if (descriptor.getSystemColor() != null) {
-      generator.getStatic(mySystemColorType, descriptor.getSystemColor(), mySystemColorType);
+      generator.getStatic(ourSystemColorType, descriptor.getSystemColor(), ourSystemColorType);
     }
     else if (descriptor.getAWTColor() != null) {
-      generator.getStatic(myColorType, descriptor.getAWTColor(), myColorType);
+      generator.getStatic(ourColorType, descriptor.getAWTColor(), ourColorType);
+    }
+    else {
+      throw new IllegalStateException("Unknown color type");
     }
   }
 }

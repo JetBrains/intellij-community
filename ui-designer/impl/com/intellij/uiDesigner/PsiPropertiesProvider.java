@@ -96,6 +96,9 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       else if (Color.class.getName().equals(propertyClassName)) {
         property = new LwIntroColorProperty(name);
       }
+      else if (Font.class.getName().equals(propertyClassName)) {
+        property = new LwIntroFontProperty(name);
+      }
       else {
         PsiClass propClass = psiManager.findClass(propertyClassName,
                                                   GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));

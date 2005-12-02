@@ -106,16 +106,16 @@ public class ColorDescriptor extends Color {
     }
     ColorDescriptor rhs = (ColorDescriptor) obj;
     if (myColor != null) {
-      return rhs.myColor != null && rhs.myColor.equals(myColor);
+      return myColor.equals(rhs.myColor);
     }
     if (mySwingColor != null) {
-      return rhs.mySwingColor != null && rhs.mySwingColor.equals(mySwingColor);
+      return mySwingColor.equals(rhs.mySwingColor);
     }
     if (mySystemColor != null) {
-      return rhs.mySystemColor != null && rhs.mySystemColor.equals(mySystemColor);
+      return mySystemColor.equals(rhs.mySystemColor);
     }
     if (myAWTColor != null) {
-      return rhs.myAWTColor != null && rhs.myAWTColor.equals(myAWTColor);
+      return myAWTColor.equals(rhs.myAWTColor);
     }
     return false;
   }

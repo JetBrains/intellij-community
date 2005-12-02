@@ -32,6 +32,10 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_SWING_COLOR = "swing-color";
   public static final String ATTRIBUTE_SYSTEM_COLOR = "system-color";
   public static final String ATTRIBUTE_AWT_COLOR = "awt-color";
+  public static final String ATTRIBUTE_NAME = "name";
+  public static final String ATTRIBUTE_SIZE = "size";
+  public static final String ATTRIBUTE_STYLE = "style";
+  public static final String ATTRIBUTE_SWING_FONT = "swing-font";
 
   private UIFormXmlConstants() {
   }
