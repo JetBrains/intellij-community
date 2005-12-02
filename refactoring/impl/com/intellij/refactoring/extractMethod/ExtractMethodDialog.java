@@ -191,7 +191,7 @@ class ExtractMethodDialog extends DialogWrapper {
 
 
   protected JComponent createCenterPanel() {
-    myVisibilityPanel = new VisibilityPanel(false);
+    myVisibilityPanel = new VisibilityPanel(false, false);
     myVisibilityPanel.setVisibility(PsiModifier.PRIVATE);
     myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
       public void visibilityChanged(String newVisibility) {

@@ -239,10 +239,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
     if (myMethod.getContainingClass() != null
         && !myMethod.getContainingClass().isInterface()) {
-      myVisibilityPanel = new VisibilityPanel(false);
+      myVisibilityPanel = new VisibilityPanel(false, false);
       myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()));
       myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
-        public void visibilityChanged(String s) {
+        public void visibilityChanged(String newVisibility) {
           updateSignature();
         }
       });

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.VisibilityUtil;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -22,12 +23,13 @@ public class VisibilityPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.ui.VisibilityPanel");
 
   private JRadioButton myRbAsIs;
+  private JRadioButton myRbMinimalVisible;
   private JRadioButton myRbPrivate;
   private JRadioButton myRbProtected;
   private JRadioButton myRbPackageLocal;
   private JRadioButton myRbPublic;
 
-  public VisibilityPanel(boolean hasAsIs) {
+  public VisibilityPanel(boolean hasAsIs, final boolean hasMinimalVisible) {
     setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
@@ -39,6 +41,14 @@ public class VisibilityPanel extends JPanel {
         }
       };
     };
+
+    if(hasMinimalVisible) {
+      myRbMinimalVisible = new JRadioButton();
+      myRbMinimalVisible.setText(RefactoringBundle.getVisibilityMinimalVisible());
+      myRbMinimalVisible.addItemListener(listener);
+      add(myRbMinimalVisible);
+      bg.add(myRbMinimalVisible);
+    }
 
     if(hasAsIs) {
       myRbAsIs = new JRadioButton();
@@ -93,6 +103,9 @@ public class VisibilityPanel extends JPanel {
     if (myRbPrivate.isSelected()) {
       return PsiModifier.PRIVATE;
     }
+    if (myRbMinimalVisible != null && myRbMinimalVisible.isSelected()) {
+      return VisibilityUtil.MINIMAL_VISIBLE;
+    }
 
     return null;
   }
@@ -118,8 +131,13 @@ public class VisibilityPanel extends JPanel {
       myRbPrivate.setSelected(true);
     }
     else {
-      LOG.assertTrue(myRbAsIs != null);
-      myRbAsIs.setSelected(true);
+      if (myRbMinimalVisible != null) {
+        myRbMinimalVisible.setSelected(true);
+      }
+      else {
+        LOG.assertTrue(myRbAsIs != null);
+        myRbAsIs.setSelected(true);
+      }
     }
   }
 

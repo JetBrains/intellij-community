@@ -171,7 +171,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     scrollPane.setBorder(border);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    myVisibilityPanel = new VisibilityPanel(true);
+    myVisibilityPanel = new VisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
     panel.add(myVisibilityPanel, BorderLayout.EAST);
 

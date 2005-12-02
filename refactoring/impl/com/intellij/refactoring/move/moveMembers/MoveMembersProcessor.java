@@ -28,6 +28,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -203,9 +204,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
         member.delete();
 
-        PsiElement newMember = myTargetClass.add(memberCopy);
+        PsiMember newMember = (PsiMember)myTargetClass.add(memberCopy);
 
-        fixVisibility(newMember);
+        fixVisibility(newMember, usages);
         for (PsiReference reference : refsToBeRebind) {
           reference.bindToElement(newMember);
         }
@@ -225,8 +226,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void fixVisibility(PsiElement newMember) throws IncorrectOperationException {
-    PsiModifierList modifierList = ((PsiModifierListOwner) newMember).getModifierList();
+  private void fixVisibility(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
+    PsiModifierList modifierList = newMember.getModifierList();
 
     if(myTargetClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
@@ -237,7 +238,18 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     if(myNewVisibility == null) return;
 
-    RefactoringUtil.setVisibility(modifierList, myNewVisibility);
+    if (VisibilityUtil.MINIMAL_VISIBLE.equals(myNewVisibility)) {
+      for (UsageInfo usage : usages) {
+        if (usage instanceof MyUsageInfo) {
+          final PsiElement place = usage.getElement();
+          if (place != null) {
+            VisibilityUtil.escalateVisibility(newMember, place);
+          }
+        }
+      }
+    } else {
+      RefactoringUtil.setVisibility(modifierList, myNewVisibility);
+    }
   }
 
 
@@ -284,11 +296,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void addInaccessiblleConflicts(final ArrayList<String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
+    String newVisibility = myNewVisibility;
+    if (newVisibility.equals(VisibilityUtil.MINIMAL_VISIBLE)) { //Still need to check for access object
+      newVisibility = PsiModifier.PUBLIC;
+    }
+
     Map<PsiMember, PsiModifierList> modifierListCopies = new HashMap<PsiMember, PsiModifierList>();
     for (PsiMember member : myMembersToMove) {
       final PsiModifierList copy = (PsiModifierList)member.getModifierList().copy();
-      if (myNewVisibility != null) {
-        RefactoringUtil.setVisibility(copy, myNewVisibility);
+      if (newVisibility != null) {
+        RefactoringUtil.setVisibility(copy, newVisibility);
       }
       modifierListCopies.put(member, copy);
     }
@@ -307,7 +324,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             }
 
             if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectMember, null)) {
-              final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : myNewVisibility;
+              newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
                                           newVisibility, ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
@@ -340,7 +357,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static String[] analyzeMoveConflicts(final Set<PsiMember> membersToMove, final PsiClass targetClass, String newVisibility) {
+  private String[] analyzeMoveConflicts(final Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
     for (final PsiMember member : membersToMove) {
       if (member instanceof PsiMethod) {
@@ -364,8 +381,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public static String[] analyzeAccessibilityConflicts(final Set<PsiMember> membersToMove,
-                                                       final PsiClass targetClass,
-                                                       final LinkedHashSet<String> conflicts, String newVisibility) {
+                                                final PsiClass targetClass,
+                                                final LinkedHashSet<String> conflicts, String newVisibility) {
+    if (newVisibility.equals(VisibilityUtil.MINIMAL_VISIBLE)) { //Still need to check for access object
+      newVisibility = PsiModifier.PUBLIC;
+    }
+
     for (PsiMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, targetClass, conflicts);
 
@@ -379,23 +400,27 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           /* do nothing and hope for the best */
         }
       }
-      final boolean isMemberPublic =
-        modifierList.hasModifierProperty(PsiModifier.PUBLIC)
-        || targetClass.isInterface()
-        || (newVisibility != null && PsiModifier.PUBLIC.equals(newVisibility));
-      if (!isMemberPublic) {
-        PsiManager manager = member.getManager();
-        for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
-          PsiElement ref = psiReference.getElement();
-          if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
-            if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
-              String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                         ConflictsUtil.getDescription(member, true),
-                                                         VisibilityUtil.getVisibilityStringToDisplay(member),
-                                                         ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-              message = ConflictsUtil.capitalize(message);
-              conflicts.add(message);
-            }
+      PsiManager manager = member.getManager();
+      for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
+        PsiElement ref = psiReference.getElement();
+        if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
+          //Check for target class accessibility
+          if (!manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
+            String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+                                                       ConflictsUtil.getDescription(targetClass, true),
+                                                       VisibilityUtil.getVisibilityStringToDisplay(targetClass),
+                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
+            message = ConflictsUtil.capitalize(message);
+            conflicts.add(message);
+          }
+          //check for member accessibility
+          else if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
+            String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+                                                       ConflictsUtil.getDescription(member, true),
+                                                       VisibilityUtil.getVisibilityStringToDisplay(member),
+                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
+            message = ConflictsUtil.capitalize(message);
+            conflicts.add(message);
           }
         }
       }

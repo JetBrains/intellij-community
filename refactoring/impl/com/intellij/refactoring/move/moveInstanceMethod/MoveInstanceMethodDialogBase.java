@@ -1,17 +1,16 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
-import com.intellij.refactoring.util.VisibilityUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -83,8 +82,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   }
 
   protected VisibilityPanel createVisibilityPanel() {
-    final VisibilityPanel visibilityPanel = new VisibilityPanel (false);
-    visibilityPanel.setVisibility (VisibilityUtil.getVisibilityModifier (myMethod.getModifierList()));
+    final VisibilityPanel visibilityPanel = new VisibilityPanel (false, false);
+    visibilityPanel.setVisibility (null);
     return visibilityPanel;
   }
 
