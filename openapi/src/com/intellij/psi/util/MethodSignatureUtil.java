@@ -173,8 +173,7 @@ public class MethodSignatureUtil {
         computeMap(sameSignatureMethods, myClass);
 
         return new Result<MethodSignatureToMethods>
-          (sameSignatureMethods,
-           new Object[]{myClass, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+          (sameSignatureMethods, myClass, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
       finally {
         if (LOG.isDebugEnabled()) {
