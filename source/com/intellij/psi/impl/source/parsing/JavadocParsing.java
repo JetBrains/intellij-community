@@ -19,21 +19,17 @@ import org.jetbrains.annotations.NonNls;
 public class JavadocParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.JavadocParsing");
 
-  private final static TokenSet TOKEN_FILTER = TokenSet.create(new IElementType[]{
-    JavaDocTokenType.DOC_SPACE,
-    JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS,
-  });
+  private final static TokenSet TOKEN_FILTER = TokenSet.create(JavaDocTokenType.DOC_SPACE,
+                                                               JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
 
-  private final static TokenSet TAG_VALUE = TokenSet.create(new IElementType[]{
-    JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
-    JavaDocTokenType.DOC_TAG_VALUE_COMMA,
-    JavaDocTokenType.DOC_TAG_VALUE_DOT,
-    JavaDocTokenType.DOC_TAG_VALUE_LPAREN,
-    JavaDocTokenType.DOC_TAG_VALUE_RPAREN,
-    JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
-    JavaDocTokenType.DOC_TAG_VALUE_LT,
-    JavaDocTokenType.DOC_TAG_VALUE_GT
-  });
+  private final static TokenSet TAG_VALUE = TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_COMMA,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_DOT,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_LPAREN,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_RPAREN,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_LT,
+                                                            JavaDocTokenType.DOC_TAG_VALUE_GT);
 
   private int myBraceScope = 0;
   @NonNls private static final String SEE_TAG = "@see";
@@ -76,7 +72,7 @@ public class JavadocParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   public TreeElement parseDocCommentText(PsiManager manager, char[] buffer, int startOffset, int endOffset) {
@@ -100,14 +96,14 @@ public class JavadocParsing extends Parsing {
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new TokenProcessor(this), myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   private CompositeElement parseTag(PsiManager manager, Lexer lexer) {
     if (lexer.getTokenType() != JavaDocTokenType.DOC_TAG_NAME) return null;
     CompositeElement tag = Factory.createCompositeElement(DOC_TAG);
     TreeUtil.addChildren(tag, createTokenElement(lexer));
-    String tagName = new String(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+    String tagName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
     lexer.advance();
     while (true) {
       IElementType tokenType = lexer.getTokenType();
@@ -151,7 +147,7 @@ public class JavadocParsing extends Parsing {
       while (true) {
         IElementType tokenType = lexer.getTokenType();
         if (tokenType == JavaDocTokenType.DOC_TAG_NAME) {
-          inlineTagName = new String(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+          inlineTagName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
         }
 
         if (tokenType == null || tokenType == JavaDocTokenType.DOC_COMMENT_END) break;
