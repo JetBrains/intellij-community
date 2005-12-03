@@ -36,7 +36,7 @@ public class MethodSuperSearcher implements QueryExecutor<PsiMethod, SuperMethod
           substitutors.put(baseMethod.getContainingClass(), substitutor);
         }
 
-        if (MethodSignatureUtil.isSubsignature(baseMethod.getSignature(substitutor), signature)) {
+        if (MethodSignatureUtil.isSubsignature(signature, baseMethod.getSignature(substitutor))) {
           if (!consumer.process(baseMethod)) return false;
         }
       }
