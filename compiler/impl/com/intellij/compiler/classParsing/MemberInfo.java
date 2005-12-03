@@ -115,8 +115,8 @@ public abstract class MemberInfo {
 
   protected final void saveAnnotations(DataOutput out, final AnnotationConstantValue[] annotations) throws IOException {
     out.writeInt(annotations.length);
-    for (int idx = 0; idx < annotations.length; idx++) {
-      MemberInfoExternalizer.saveConstantValue(out, annotations[idx]);
+    for (AnnotationConstantValue annotation : annotations) {
+      MemberInfoExternalizer.saveConstantValue(out, annotation);
     }
   }
 
