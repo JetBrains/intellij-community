@@ -90,8 +90,8 @@ public class MethodInfo extends MemberInfo {
     else {
       out.writeInt(-1);
     }
-    for (int idx = 0; idx < myThrownExceptions.length; idx++) {
-      out.writeInt(myThrownExceptions[idx]);
+    for (int thrownException : myThrownExceptions) {
+      out.writeInt(thrownException);
     }
     saveParameterAnnotations(out, myRuntimeVisibleParameterAnnotations);
     saveParameterAnnotations(out, myRuntimeInvisibleParameterAnnotations);
@@ -108,11 +108,10 @@ public class MethodInfo extends MemberInfo {
     }
     if (myThrownExceptions.length != 0) { // optimization
       TIntHashSet exceptionsSet = new TIntHashSet();
-      for (int idx = 0; idx < myThrownExceptions.length; idx++) {
-        exceptionsSet.add(myThrownExceptions[idx]);
+      for (int thrownException : myThrownExceptions) {
+        exceptionsSet.add(thrownException);
       }
-      for (int idx = 0; idx < info.myThrownExceptions.length; idx++) {
-        int exception = info.myThrownExceptions[idx];
+      for (int exception : info.myThrownExceptions) {
         if (!exceptionsSet.contains(exception)) {
           return false;
         }
@@ -163,14 +162,14 @@ public class MethodInfo extends MemberInfo {
   }
 
   private String[] parseParameterDescriptors(String signature) {
-    ArrayList list = new ArrayList();
+    ArrayList<String> list = new ArrayList<String>();
     String paramSignature = parseFieldType(signature);
     while (paramSignature != null && !"".equals(paramSignature)) {
       list.add(paramSignature);
       signature = signature.substring(paramSignature.length());
       paramSignature = parseFieldType(signature);
     }
-    return (String[])list.toArray(new String[list.size()]);
+    return list.toArray(new String[list.size()]);
   }
 
   private @NonNls String parseFieldType(@NonNls String signature) {
@@ -237,8 +236,8 @@ public class MethodInfo extends MemberInfo {
 
   private void saveParameterAnnotations(DataOutput out, AnnotationConstantValue[][] parameterAnnotations) throws IOException {
     out.writeInt(parameterAnnotations.length);
-    for (int idx = 0; idx < parameterAnnotations.length; idx++) {
-      saveAnnotations(out, parameterAnnotations[idx]);
+    for (AnnotationConstantValue[] parameterAnnotation : parameterAnnotations) {
+      saveAnnotations(out, parameterAnnotation);
     }
   }
 
