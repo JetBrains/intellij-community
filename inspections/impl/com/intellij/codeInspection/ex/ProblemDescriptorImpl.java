@@ -68,7 +68,7 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
   }
 
   public PsiElement getEndElement() {
-    return myEndSmartPointer == null ? myStartSmartPointer.getElement() : myEndSmartPointer.getElement();
+    return myEndSmartPointer == null ? getStartElement() : myEndSmartPointer.getElement();
   }
 
   public int getLineNumber() {
@@ -100,7 +100,12 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
     PsiElement startElement = getStartElement();
     PsiElement endElement = getEndElement();
     if (startElement == null || endElement == null) return null;
-    if (startElement == endElement) return startElement.getTextRange();
-    return new TextRange(startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
+    TextRange textRange = startElement.getTextRange();
+    if (startElement == endElement) {
+      if (isAfterEndOfLine()) return new TextRange(textRange.getEndOffset()-1, textRange.getEndOffset());
+      return textRange;
+    }
+    LOG.assertTrue(!isAfterEndOfLine());
+    return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
   }
 }
