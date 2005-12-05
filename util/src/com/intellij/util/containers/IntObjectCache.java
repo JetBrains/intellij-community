@@ -3,7 +3,6 @@ package com.intellij.util.containers;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -145,16 +144,29 @@ public class IntObjectCache<T> implements Iterable<T> {
 
   final public T tryKey(int key) {
     ++myAttempts;
-    int index = searchForCacheEntry(key);
+    final int index = searchForCacheEntry(key);
     if (index == 0) {
       return null;
     }
     ++myHits;
-    if (index != myTop) {
-      removeEntry(index);
-      add2Top(index);
+    final CacheEntry<T> cacheEntry = myCache[index];
+    final int top = myTop;
+    if (index != top) {
+      final int prev = cacheEntry.prev;
+      final int next = cacheEntry.next;
+      if (index == myBack) {
+        myBack = prev;
+      }
+      else {
+        myCache[next].prev = prev;
+      }
+      myCache[prev].next = next;
+      cacheEntry.next = top;
+      cacheEntry.prev = 0;
+      myCache[top].prev = index;
+      myTop = index;
     }
-    return myCache[index].value;
+    return cacheEntry.value;
   }
 
   final public boolean isCached(int key) {
@@ -203,7 +215,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   private void removeEntryFromHashTable(int index) {
-    int hash_index = (myCache[index].key & 0x7fffffff) % myHashTableSize;
+    final int hash_index = (myCache[index].key & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[hash_index];
     int previous = 0;
     while (current != 0) {
@@ -224,11 +236,14 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   private int searchForCacheEntry(int key) {
-    int index = (key & 0x7fffffff) % myHashTableSize;
-    int current = myHashTable[index];
     myCache[0].key = key;
-    while (key != myCache[current].key) {
-      current = myCache[current].hash_next;
+    int current = myHashTable[((key & 0x7fffffff) % myHashTableSize)];
+    for(;;) {
+      final CacheEntry<T> cacheEntry = myCache[current];
+      if( key == cacheEntry.key) {
+        break;
+      }
+      current = cacheEntry.hash_next;
     }
     return current;
   }
