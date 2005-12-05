@@ -68,7 +68,8 @@ public class PluginInstaller {
           continue;
         }
 
-        PluginNode depPlugin = new PluginNode(depPluginId);
+        PluginNode depPlugin = new PluginNode();
+        depPlugin.setName(depPluginId.getIdString());
         depPlugin.setSize("-1");
 
         depends.add(depPlugin);
