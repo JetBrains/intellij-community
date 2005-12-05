@@ -35,6 +35,7 @@ import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -140,10 +141,9 @@ public class SSBasedInspection extends LocalInspectionTool {
   @Nullable
   public JComponent createOptionsPanel() {
     JPanel component = new SSBasedInspectionOptions(myConfigurations){
-      public void configurationsChanged() {
-        super.configurationsChanged();
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        precompileConfigurations(projects[0]);
+      public void configurationsChanged(final SearchContext searchContext) {
+        super.configurationsChanged(searchContext);
+        precompileConfigurations(searchContext.getProject());
       }
     }.getComponent();
     return component;

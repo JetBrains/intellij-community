@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -47,7 +48,11 @@ public final class SearchContext implements DataProvider, Cloneable {
   }
 
   public void configureFromDataContext(DataContext context) {
-    setProject((Project)context.getData(DataConstants.PROJECT));
+    Project project = (Project)context.getData(DataConstants.PROJECT);
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    setProject(project);
 
     setFile((PsiFile)context.getData(DataConstants.PSI_FILE));
     setCurrentFile((VirtualFile)context.getData(DataConstants.VIRTUAL_FILE));

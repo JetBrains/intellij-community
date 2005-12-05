@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -479,9 +480,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     openInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
     openInNewTab.setSelected(ourOpenInNewTab);
-    openInNewTab.setEnabled(
-      ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND).isAvailable()
-    );
+    ToolWindow findWindow = ToolWindowManager.getInstance(searchContext.getProject()).getToolWindow(ToolWindowId.FIND);
+    openInNewTab.setEnabled(findWindow != null && findWindow.isAvailable());
     panel.add(openInNewTab, BorderLayout.EAST);
 
     optionsContent.add(BorderLayout.SOUTH, panel);
@@ -829,5 +829,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("find.structuredSearch");
+  }
+
+  public SearchContext getSearchContext() {
+    return searchContext;
   }
 }

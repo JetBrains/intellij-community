@@ -132,7 +132,7 @@ public class SSBasedInspectionOptions {
         }
         Configuration newConfiguration = dialog.getConfiguration();
         copyConfiguration(newConfiguration, configuration);
-        configurationsChanged();
+        configurationsChanged(dialog.getSearchContext());
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -148,7 +148,7 @@ public class SSBasedInspectionOptions {
             }
           }
         }
-        configurationsChanged();
+        configurationsChanged(createSearchContext());
       }
     });
     // later because InspectionToolPanel enables all controls recursively
@@ -187,19 +187,24 @@ public class SSBasedInspectionOptions {
     }
     myConfigurations.add(configuration);
 
-    configurationsChanged();
+    configurationsChanged(dialog.getSearchContext());
   }
          
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
-    AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
-                                            "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
-    SearchContext searchContext = new SearchContext();
-    searchContext.configureFromDataContext(event.getDataContext());
+    SearchContext searchContext = createSearchContext();
     SearchDialog dialog = searchDialogFactory.createDialog(searchContext);
     return dialog;
   }
 
-  public void configurationsChanged() {
+  private static SearchContext createSearchContext() {
+    AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
+                                            "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
+    SearchContext searchContext = new SearchContext();
+    searchContext.configureFromDataContext(event.getDataContext());
+    return searchContext;
+  }
+
+  public void configurationsChanged(final SearchContext searchContext) {
     ((MyListModel)myTemplatesList.getModel()).fireContentsChanged();
   }
 
