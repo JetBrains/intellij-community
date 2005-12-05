@@ -106,7 +106,7 @@ public class ModelMerger {
       private List<Object> getMergedImplementations(final Method method,
                                                     final Object[] args,
                                                     final boolean isList,
-                                                    final Class<?> returnType)
+                                                    final Class returnType)
         throws IllegalAccessException,
                InvocationTargetException {
 
@@ -142,7 +142,7 @@ public class ModelMerger {
             final Object o = method.invoke(t, args);
             if (o != null) {
               if (isList) {
-                results.addAll((List<?>)o);
+                results.addAll((List)o);
               } else {
                 results.add(o);
                 break;

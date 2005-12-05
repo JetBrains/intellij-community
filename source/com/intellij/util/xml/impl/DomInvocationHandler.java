@@ -116,7 +116,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
     finally {
       myManager.setChanging(changing);
-      myManager.fireEvent(new ElementDefinedEvent(this));
+      myManager.fireEvent(new ElementDefinedEvent(getProxy()));
     }
     return myXmlTag;
   }

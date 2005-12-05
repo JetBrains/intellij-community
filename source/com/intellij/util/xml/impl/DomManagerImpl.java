@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import net.sf.cglib.core.CodeGenerationException;
-import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.Proxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +109,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
-    return (DomInvocationHandler)Proxy.getInvocationHandler(proxy);
+    return (DomInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
   }
 
   final DomElement createDomElement(final DomInvocationHandler handler) {
@@ -120,8 +119,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         final Class<?> rawType = DomUtil.getRawType(handler.getDomElementType());
         final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(rawType);
         final Class<? extends DomElement> implementationClass = classChooser.chooseClass(tag);
-        Class clazz = getProxyClassFor(implementationClass);
-        final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
+        final DomElement element = AdvancedProxy.createProxy(implementationClass, handler);
+        //final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         if (implementationClass != rawType) {
           handler.setType(implementationClass);
         }
