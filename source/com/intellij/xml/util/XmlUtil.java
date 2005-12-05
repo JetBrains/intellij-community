@@ -90,6 +90,12 @@ public class XmlUtil {
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
   private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
   public static final @NonNls String[] JSF_URIS = new String[] { JSF_URI };
+  public static final @NonNls String[] WEB_XML_URIS = new String[] {
+    "http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
+    "http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
+    "http://java.sun.com/dtd/web-app_2_3.dtd",
+    "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"
+  };
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
