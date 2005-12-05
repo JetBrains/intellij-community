@@ -335,7 +335,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
 
     registerXmlTagReferenceProvider(
-      new String[]{"welcome-file","location"},
+      new String[]{"welcome-file","location","taglib-location"},
       new NamespaceFilter(XmlUtil.WEB_XML_URIS),
       true,
       getProviderByType(PATH_REFERENCES_PROVIDER)
