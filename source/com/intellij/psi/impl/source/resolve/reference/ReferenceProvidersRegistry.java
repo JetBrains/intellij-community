@@ -334,6 +334,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
+    registerXmlTagReferenceProvider(
+      new String[]{"welcome-file","location"},
+      new NamespaceFilter(XmlUtil.WEB_XML_URIS),
+      true,
+      getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
+
     registerXmlAttributeValueReferenceProvider(
       new String[]{"tagdir"},
       new ScopeFilter(
