@@ -459,7 +459,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       Class aClass = sc;
       while (!Object.class.equals(aClass)) {
         for (final Method method : aClass.getDeclaredMethods()) {
-          if ((method.getModifiers() & (Constants.ACC_ABSTRACT | Constants.ACC_VOLATILE)) == 0) {
+          if ((method.getModifiers() & Constants.ACC_ABSTRACT) == 0) {
             actualMethods.remove(method);
           }
         }

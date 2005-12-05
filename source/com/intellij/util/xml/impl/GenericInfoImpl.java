@@ -12,10 +12,9 @@ import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -29,11 +28,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<MethodSignature, String> myCollectionChildrenAdditionMethods = new HashMap<MethodSignature, String>();
   private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
   private final Map<MethodSignature, String> myAttributeChildrenMethods = new HashMap<MethodSignature, String>();
-  private final Map<Class, Class> myImplementationClasses = new HashMap<Class, Class>();
   private boolean myValueElement;
   private boolean myInitialized;
   private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
-
 
   public GenericInfoImpl(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -108,22 +105,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
-  private void collectImplementations(Class<?> interfaceClass) {
-    final Implementation annotation = interfaceClass.getAnnotation(Implementation.class);
-    if (annotation != null) {
-      myImplementationClasses.put(annotation.value(), interfaceClass);
-    }
-    for (Class aClass1 : interfaceClass.getInterfaces()) {
-      collectImplementations(aClass1);
-    }
-  }
-
   public final synchronized void buildMethodMaps() {
     if (myInitialized) return;
 
     myInitialized = true;
-
-    collectImplementations(myClass);
 
     final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
@@ -232,19 +217,13 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private boolean isCustomMethod(final MethodSignature method) {
-    return method.findAnnotation(PropertyAccessor.class, myClass) != null ||
-           method.findAnnotation(CustomMethod.class, myClass) != null;
+    return method.findAnnotation(PropertyAccessor.class, myClass) != null;
   }
 
   public final Invocation createInvocation(Method method) {
     buildMethodMaps();
 
     final MethodSignature signature = MethodSignature.getSignature(method);
-    final CustomMethod customMethod = signature.findAnnotation(CustomMethod.class, myClass);
-    if (customMethod != null) {
-      return createCustomMethodInvocation(customMethod, method);
-    }
-
     final PropertyAccessor accessor = signature.findAnnotation(PropertyAccessor.class, myClass);
     if (accessor != null) {
       return createPropertyAccessorInvocation(accessor);
@@ -309,50 +288,6 @@ public class GenericInfoImpl implements DomGenericInfo {
     };
   }
 
-
-  private Method findImplementationMethod(String methodName, Class[] paramTypes) {
-    for (Class aClass : myImplementationClasses.keySet()) {
-      try {
-        return aClass.getMethod(methodName, paramTypes);
-      }
-      catch (NoSuchMethodException e) {
-      }
-    }
-    return null;
-  }
-
-  private Invocation createCustomMethodInvocation(final CustomMethod customMethod, final Method method) {
-    final Class aClass = customMethod.value();
-    final String methodName = StringUtil.isNotEmpty(customMethod.methodName()) ? customMethod.methodName() : method.getName();
-
-    if (void.class.equals(aClass)) {
-      final Method implementationMethod = findImplementationMethod(methodName, method.getParameterTypes());
-      assert implementationMethod != null;
-      final Class interfaceClass = myImplementationClasses.get(implementationMethod.getDeclaringClass());
-      return new Invocation() {
-        public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-          return implementationMethod.invoke(handler.getImplementation(interfaceClass), args);
-        }
-      };
-    }
-
-    try {
-      final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
-      final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
-      final Class<?> returnType1 = method.getReturnType();
-      final Class<?> returnType2 = staticMethod.getReturnType();
-      assert returnType1.isAssignableFrom(returnType2) : returnType1 + " " + returnType2;
-      return new Invocation() {
-        public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-          return staticMethod.invoke(null, insertFirst(handler.getProxy(), args));
-        }
-      };
-    }
-    catch (NoSuchMethodException e) {
-      throw new AssertionError(e);
-    }
-  }
-
   private Method findGetter(Class aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
     try {
@@ -368,13 +303,6 @@ public class GenericInfoImpl implements DomGenericInfo {
         return null;
       }
     }
-  }
-
-  private <T> T[] insertFirst(final T element, final T[] parameterTypes) {
-    final List<T> types = new ArrayList<T>();
-    types.add(element);
-    types.addAll(Arrays.asList(parameterTypes));
-    return types.toArray((T[])Array.newInstance(parameterTypes.getClass().getComponentType(), types.size()));
   }
 
   private Function<Object[], Type> getTypeGetter(final Method method) {

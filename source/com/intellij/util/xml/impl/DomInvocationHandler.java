@@ -44,7 +44,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private GenericInfoImpl myGenericInfoImpl;
   private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
-  private final Map<Class, Object> myImplementations = new HashMap<Class, Object>();
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
 
@@ -60,16 +59,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myManager = manager;
     myGenericConverter = genericConverter;
     setType(type);
-  }
-
-  private final void createImplementations(Class<?> interfaceClass) {
-    final Implementation annotation = interfaceClass.getAnnotation(Implementation.class);
-    if (annotation != null) {
-      myImplementations.put(interfaceClass, createImplementation(annotation.value()));
-    }
-    for (Class aClass1 : interfaceClass.getInterfaces()) {
-      createImplementations(aClass1);
-    }
   }
 
   public DomFileElementImpl getRoot() {
@@ -229,11 +218,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myProxy = proxy;
   }
 
-  public Object getImplementation(Class interfaceClass) {
-    checkInitialized();
-    return myImplementations.get(interfaceClass);
-  }
-
   @NotNull
   protected final XmlFile getFile() {
     if (myFile == null) {
@@ -362,28 +346,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
           }
         }
 
-        createImplementations(DomUtil.getRawType(myType));
       }
       finally {
         myInitialized = true;
       }
-    }
-  }
-
-  private final Object createImplementation(Class aClass) {
-    try {
-      return aClass.getConstructor().newInstance();
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        return aClass.getConstructor(DomElement.class).newInstance(myProxy);
-      }
-      catch (Exception e1) {
-        throw new AssertionError(aClass.getName() + " should have either empty or <init>(DomElement) constructor");
-      }
-    }
-    catch (Exception e) {
-      throw new AssertionError(e);
     }
   }
 

@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import net.sf.cglib.core.CodeGenerationException;
-import net.sf.cglib.proxy.Proxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
-  private final Map<Class<? extends DomElement>, Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
   private DomEventListener[] myCachedListeners;
@@ -116,13 +114,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     synchronized (PsiLock.LOCK) {
       try {
         XmlTag tag = handler.getXmlTag();
-        final Class<?> rawType = DomUtil.getRawType(handler.getDomElementType());
-        final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(rawType);
-        final Class<? extends DomElement> implementationClass = classChooser.chooseClass(tag);
-        final DomElement element = AdvancedProxy.createProxy(implementationClass, handler);
-        //final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
-        if (implementationClass != rawType) {
-          handler.setType(implementationClass);
+        final Class<?> abstractInterface = DomUtil.getRawType(handler.getDomElementType());
+        final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(abstractInterface);
+        final Class<? extends DomElement> concreteInterface = classChooser.chooseClass(tag);
+        final DomElement element = doCreateDomElement(concreteInterface, handler);
+        if (concreteInterface != abstractInterface) {
+          handler.setType(concreteInterface);
         }
         handler.setProxy(element);
         handler.attach(tag);
@@ -137,13 +134,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   }
 
-  private Class getProxyClassFor(final Class<? extends DomElement> aClass) {
-    Class proxyClass = myClass2ProxyClass.get(aClass);
-    if (proxyClass == null) {
-      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass});
-      myClass2ProxyClass.put(aClass, proxyClass);
+  private DomElement doCreateDomElement(final Class<? extends DomElement> concreteInterface, final DomInvocationHandler handler) {
+    final Implementation implementationClass = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+    if (implementationClass != null) {
+      return AdvancedProxy.createProxy(implementationClass.value(), new Class[]{concreteInterface}, handler);
     }
-    return proxyClass;
+    return AdvancedProxy.createProxy(concreteInterface, handler);
   }
 
   public Project getProject() {
