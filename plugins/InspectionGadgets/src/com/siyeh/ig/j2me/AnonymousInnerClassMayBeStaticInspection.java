@@ -29,10 +29,13 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
-    private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix() ;
+
+    private final MoveAnonymousToInnerClassFix fix =
+            new MoveAnonymousToInnerClassFix() ;
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "anonymous.inner.may.be.named.static.inner.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -40,7 +43,8 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
+      return InspectionGadgetsBundle.message(
+              "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -55,13 +59,13 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass){
-            if(aClass instanceof PsiAnonymousClass)
-            {
-                final PsiAnonymousClass anAnonymousClass = (PsiAnonymousClass) aClass;
+            if(aClass instanceof PsiAnonymousClass) {
+                final PsiAnonymousClass anAnonymousClass =
+                        (PsiAnonymousClass) aClass;
                 final InnerClassReferenceVisitor visitor =
                         new InnerClassReferenceVisitor(anAnonymousClass);
                 anAnonymousClass.accept(visitor);
-                if(!visitor.areReferenceStaticallyAccessible()){
+                if(!visitor.canInnerClassBeStatic()) {
                     return;
                 }
                 final PsiJavaCodeReferenceElement classNameIdentifier =
