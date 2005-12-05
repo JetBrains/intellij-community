@@ -15,36 +15,58 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class MethodCallUtils {
+
     private MethodCallUtils() {
         super();
-
     }
 
-    public static @Nullable String getMethodName(@NotNull PsiMethodCallExpression expression) {
+    @Nullable
+    public static String getMethodName(
+            @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression method = expression.getMethodExpression();
-        if (method == null) {
-            return null;
-        }
         return method.getReferenceName();
     }
 
-    public static @Nullable PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
+    @Nullable
+    public static PsiType getTargetType(
+            @NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression method = expression.getMethodExpression();
-        if (method == null) {
-            return null;
-        }
-        final PsiExpression qualifierExpression = method.getQualifierExpression();
+        final PsiExpression qualifierExpression =
+                method.getQualifierExpression();
         if (qualifierExpression == null) {
             return null;
         }
         return qualifierExpression.getType();
+    }
+
+    public static boolean isEqualsCall(PsiMethodCallExpression expression) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        final PsiElement element = methodExpression.resolve();
+        if (!(element instanceof PsiMethod)) {
+            return false;
+        }
+        final PsiMethod method = (PsiMethod)element;
+        return MethodUtils.isEquals(method);
+    }
+
+    public static boolean isMethodCall(
+            @NotNull PsiMethodCallExpression expression,
+            @NonNls String methodName, int parameterCount, PsiType returnType) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        final PsiElement element = methodExpression.resolve();
+        if (!(element instanceof PsiMethod)) {
+            return false;
+        }
+        final PsiMethod method = (PsiMethod)element;
+        return MethodUtils.methodMatches(method, methodName, parameterCount,
+                returnType);
     }
 }

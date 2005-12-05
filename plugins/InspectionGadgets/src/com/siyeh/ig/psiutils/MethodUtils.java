@@ -24,31 +24,40 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import com.siyeh.HardcodedMethodConstants;
 
 public class MethodUtils{
+
     private MethodUtils(){
         super();
     }
 
     public static boolean isCompareTo(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.COMPARE_TO, 1, PsiType.INT);
+        return methodMatches(method, HardcodedMethodConstants.COMPARE_TO, 1,
+                PsiType.INT);
     }
 
     public static boolean isHashCode(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.HASH_CODE, 0, PsiType.INT);
+        return methodMatches(method, HardcodedMethodConstants.HASH_CODE, 0,
+                PsiType.INT);
     }
 
     public static boolean isEquals(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.EQUALS, 1, PsiType.BOOLEAN);
+        return methodMatches(method, HardcodedMethodConstants.EQUALS, 1,
+                PsiType.BOOLEAN);
     }
 
-    private static boolean methodMatches(PsiMethod method,
-                                         String methodNameP,
-                                         int parameterCount,
-                                         PsiType returnTypeP){
+    public static boolean methodMatches(PsiMethod method,
+                                        @NotNull String methodNameP,
+                                        int parameterCount,
+                                        @NotNull PsiType returnTypeP){
         if(method == null){
             return false;
+        }
+        if (parameterCount < 0) {
+            throw new IllegalArgumentException(
+                    "parameterCount must be greater or equals to zero");
         }
         final String methodName = method.getName();
         if(!methodNameP.equals(methodName)){
@@ -71,7 +80,6 @@ public class MethodUtils{
         final PsiSearchHelper searchHelper = manager.getSearchHelper();
         final PsiElementProcessor.FindElement<PsiMethod> processor =
                 new PsiElementProcessor.FindElement<PsiMethod>();
-
         final ProgressManager progressManager = ProgressManager.getInstance();
         progressManager.runProcess(new Runnable() {
             public void run() {
@@ -79,7 +87,6 @@ public class MethodUtils{
                                                       globalScope, true);
             }
         }, null);
-
         return processor.isFound();
     }
 
@@ -100,7 +107,7 @@ public class MethodUtils{
             return null;
         }
         @NonNls final String name = method.getName();
-        if (name == null || !name.startsWith("get") && !name.startsWith("is")) {
+        if (!name.startsWith("get") && !name.startsWith("is")) {
             return null;
         }
         if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
@@ -172,7 +179,7 @@ public class MethodUtils{
             return null;
         }
         @NonNls final String name = method.getName();
-        if (name == null || !name.startsWith("set")) {
+        if (!name.startsWith("set")) {
             return null;
         }
         if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
@@ -194,9 +201,6 @@ public class MethodUtils{
                 (PsiExpressionStatement) statement;
         final PsiExpression possibleAssignment =
                 possibleAssignmentStatement.getExpression();
-        if(possibleAssignment == null){
-            return null;
-        }
         if(!(possibleAssignment instanceof PsiAssignmentExpression)){
             return null;
         }

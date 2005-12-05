@@ -21,102 +21,141 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
-  private final StringEqualsEmptyStringFix fix = new StringEqualsEmptyStringFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
+    private final StringEqualsEmptyStringFix fix =
+            new StringEqualsEmptyStringFix();
 
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class StringEqualsEmptyStringFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("string.equals.empty.string.replace.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
-      assert expression != null;
-      final PsiExpression call = (PsiExpression)expression.getParent();
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      final String qualifierText = qualifier.getText();
-      assert call != null;
-      final PsiElement parent = call.getParent();
-      if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
-        replaceExpression((PsiExpression)parent, qualifierText + ".length()!=0");
-      }
-      else {
-        replaceExpression(call, qualifierText + ".length()==0");
-      }
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StringEqualsEmptyStringVisitor();
-  }
-
-  private static class StringEqualsEmptyStringVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"equals".equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 1) {
-        return;
-      }
-      if (!isEmptyStringLiteral(args[0])) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      final PsiType type = qualifier.getType();
-      if (!TypeUtils.isJavaLangString(type)) {
-        return;
-      }
-      final PsiElement context = call.getParent();
-      if (context instanceof PsiExpressionStatement) {
-        return; //cheesy, but necessary, because otherwise the quickfix will produce
-        //uncompilable code (out of merely incorrect code).
-      }
-      registerMethodCallError(call);
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
 
-    private static boolean isEmptyStringLiteral(PsiExpression arg) {
-      final PsiType type = arg.getType();
-      if (!TypeUtils.isJavaLangString(type)) {
-        return false;
-      }
-      if (!(arg instanceof PsiLiteralExpression)) {
-        return false;
-      }
-      final PsiLiteralExpression literal = (PsiLiteralExpression)arg;
-      final String value = (String)literal.getValue();
-      if (value == null) {
-        return false;
-      }
-      return value.length() == 0;
+    private static class StringEqualsEmptyStringFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "string.equals.empty.string.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiIdentifier name =
+                    (PsiIdentifier) descriptor.getPsiElement();
+            final PsiReferenceExpression expression =
+                    (PsiReferenceExpression) name.getParent();
+            if (expression == null) {
+                return;
+            }
+            final PsiExpression call = (PsiExpression)expression.getParent();
+            final PsiExpression qualifier = expression.getQualifierExpression();
+            final String qualifierText = getRemainingText(qualifier);
+            if (call == null) {
+                return;
+            }
+            final PsiElement parent = call.getParent();
+            if (parent instanceof PsiExpression) {
+                final PsiExpression parentExpression = (PsiExpression) parent;
+                if(BoolUtils.isNegation(parentExpression)) {
+                    replaceExpression(parentExpression,
+                            qualifierText + ".length()!=0");
+                }
+                else {
+                    replaceExpression(call, qualifierText + ".length()==0");
+                }
+            }
+            else {
+                replaceExpression(call, qualifierText + ".length()==0");
+            }
+        }
+
+        private static String getRemainingText(PsiExpression qualifier) {
+            final String qualifierText;
+            if (qualifier instanceof PsiMethodCallExpression) {
+                // to replace stringBuffer.toString().equals("") with
+                // stringBuffer.length() == 0
+                final PsiMethodCallExpression callExpression =
+                        (PsiMethodCallExpression) qualifier;
+                final PsiReferenceExpression methodExpression =
+                        callExpression.getMethodExpression();
+                final String referenceName =
+                        methodExpression.getReferenceName();
+                final PsiExpression qualifierExpression =
+                        methodExpression.getQualifierExpression();
+                if (qualifierExpression == null) {
+                    return qualifier.getText();
+                }
+                final PsiType type = qualifierExpression.getType();
+                if (HardcodedMethodConstants.TO_STRING.equals(referenceName) &&
+                        type != null &&
+                        (type.equalsToText("java.lang.StringBuffer") ||
+                                type.equalsToText("java.lang.StringBuilder"))) {
+                    qualifierText = qualifierExpression.getText();
+                } else {
+                    qualifierText = qualifier.getText();
+                }
+            } else {
+                qualifierText = qualifier.getText();
+            }
+            return qualifierText;
+        }
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringEqualsEmptyStringVisitor();
+    }
 
+    private static class StringEqualsEmptyStringVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
+            super.visitMethodCallExpression(call);
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"equals".equals(methodName)) {
+                return;
+            }
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length != 1) {
+                return;
+            }
+            if (!ExpressionUtils.isEmptyStringLiteral(args[0])) {
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            final PsiType type = qualifier.getType();
+            if (!TypeUtils.isJavaLangString(type)) {
+                return;
+            }
+            final PsiElement context = call.getParent();
+            if (context instanceof PsiExpressionStatement) {
+                //cheesy, but necessary, because otherwise the quickfix will
+                // produce uncompilable code (out of merely incorrect code).
+                return;
+            }
+            registerMethodCallError(call);
+        }
+    }
 }

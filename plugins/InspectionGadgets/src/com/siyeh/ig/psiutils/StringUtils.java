@@ -15,76 +15,78 @@
  */
 package com.siyeh.ig.psiutils;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import com.intellij.psi.PsiKeyword;
-
 public class StringUtils{
-    @NonNls private static final Set<String> keywordTable = new HashSet<String>();
 
-    static
-    {
-      keywordTable.add("abstract");
-      keywordTable.add("assert");
-      keywordTable.add("boolean");
-      keywordTable.add("break");
-      keywordTable.add("byte");
-      keywordTable.add("case");
-      keywordTable.add("catch");
-      keywordTable.add("class");
-      keywordTable.add("continue");
-      keywordTable.add("const");
-      keywordTable.add("default");
-      keywordTable.add("do");
-      keywordTable.add("double");
-      keywordTable.add("enum");
-      keywordTable.add("else");
-      keywordTable.add("extends");
-      keywordTable.add("false");
-      keywordTable.add("final");
-      keywordTable.add("finally");
-      keywordTable.add("float");
-      keywordTable.add("for");
-      keywordTable.add("goto");
-      keywordTable.add("implements");
-      keywordTable.add("instanceof");
-      keywordTable.add("int");
-      keywordTable.add("interface");
-      keywordTable.add("if");
-      keywordTable.add("import");
-      keywordTable.add("long");
-      keywordTable.add("native");
-      keywordTable.add("new");
-      keywordTable.add("null");
-      keywordTable.add("package");
-      keywordTable.add("private");
-      keywordTable.add("protected");
-      keywordTable.add("public");
-      keywordTable.add("return");
-      keywordTable.add("short");
-      keywordTable.add("static");
-      keywordTable.add("strictfp");
-      keywordTable.add("super");
-      keywordTable.add("switch");
-      keywordTable.add("synchronized");
-      keywordTable.add("throw");
-      keywordTable.add("throws");
-      keywordTable.add("transient");
-      keywordTable.add("true");
-      keywordTable.add("try");
-      keywordTable.add(PsiKeyword.VOID);
-      keywordTable.add("volatile");
-      keywordTable.add("while");
+    @NonNls private static final Set<String> keywordTable =
+            new HashSet<String>();
+    @NonNls private static final String AN = "an";
+
+    static {
+        keywordTable.add("abstract");
+        keywordTable.add("assert");
+        keywordTable.add("boolean");
+        keywordTable.add("break");
+        keywordTable.add("byte");
+        keywordTable.add("case");
+        keywordTable.add("catch");
+        keywordTable.add("char");
+        keywordTable.add("class");
+        keywordTable.add("const");
+        keywordTable.add("continue");
+        keywordTable.add("default");
+        keywordTable.add("do");
+        keywordTable.add("double");
+        keywordTable.add("else");
+        keywordTable.add("enum");
+        keywordTable.add("extends");
+        keywordTable.add("false");
+        keywordTable.add("final");
+        keywordTable.add("finally");
+        keywordTable.add("float");
+        keywordTable.add("for");
+        keywordTable.add("goto");
+        keywordTable.add("if");
+        keywordTable.add("implements");
+        keywordTable.add("import");
+        keywordTable.add("instanceof");
+        keywordTable.add("int");
+        keywordTable.add("interface");
+        keywordTable.add("long");
+        keywordTable.add("native");
+        keywordTable.add("new");
+        keywordTable.add("null");
+        keywordTable.add("package");
+        keywordTable.add("private");
+        keywordTable.add("protected");
+        keywordTable.add("public");
+        keywordTable.add("return");
+        keywordTable.add("short");
+        keywordTable.add("static");
+        keywordTable.add("strictfp");
+        keywordTable.add("super");
+        keywordTable.add("switch");
+        keywordTable.add("synchronized");
+        keywordTable.add("this");
+        keywordTable.add("throw");
+        keywordTable.add("throws");
+        keywordTable.add("transient");
+        keywordTable.add("true");
+        keywordTable.add("try");
+        keywordTable.add("void");
+        keywordTable.add("volatile");
+        keywordTable.add("while");
     }
 
-  private StringUtils(){
-      super();
-  }
+    private StringUtils(){
+        super();
+    }
 
     public static String capitalize(@NotNull String name){
         final char startChar = name.charAt(0);
@@ -95,9 +97,10 @@ public class StringUtils{
         }
     }
 
-    public static @NotNull String stripPrefixAndSuffix(@NotNull String name,
-                                                       @Nullable String prefix,
-                                                       @Nullable String suffix){
+    @NotNull
+    public static String stripPrefixAndSuffix(@NotNull String name,
+                                              @Nullable String prefix,
+                                              @Nullable String suffix){
         String strippedName = name;
         if(prefix != null){
             final int prefixLength = prefix.length();
@@ -126,16 +129,26 @@ public class StringUtils{
         } else if(name.charAt(nameLength - 1) == 's'){
             singularName = name.substring(0, nameLength - 1);
         } else{
-            singularName = 'a' + capitalize(name);
+            singularName = preprendIndefiniteArticle(name);
         }
-        if(isKeyword(singularName)){
-            return 'a' + capitalize(singularName);
+        if(keywordTable.contains(singularName)){
+            return preprendIndefiniteArticle(singularName);
         } else{
             return singularName;
         }
     }
 
-    private static boolean isKeyword(String name){
-        return keywordTable.contains(name);
+    @NotNull private static String preprendIndefiniteArticle(
+            String singularName){
+        switch(singularName.charAt(0)){
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                return AN + capitalize(singularName);
+            default:
+                return 'a' + capitalize(singularName);
+        }
     }
 }

@@ -18,14 +18,18 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NullArgumentToVariableArgMethodInspection extends ExpressionInspection{
+public class NullArgumentToVariableArgMethodInspection
+        extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.display.name");
+        return InspectionGadgetsBundle.message(
+                "null.argument.to.var.arg.method.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +41,8 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "null.argument.to.var.arg.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -47,8 +52,8 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
     private static class NullArgumentToVariableArgVisitor
             extends BaseInspectionVisitor{
 
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiManager manager = call.getManager();
             final LanguageLevel languageLevel =
@@ -57,15 +62,12 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
                 return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
-            if(argumentList == null){
-                return;
-            }
             final PsiExpression[] args = argumentList.getExpressions();
             if(args.length == 0){
                 return;
             }
             final PsiExpression lastArg = args[args.length - 1];
-            if(!isNull(lastArg)){
+            if(!ExpressionUtils.isNullLiteral(lastArg)){
                 return;
             }
             final PsiMethod method = call.resolveMethod();
@@ -73,9 +75,6 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return;
-            }
             final PsiParameter[] parameters = parameterList.getParameters();
             if(parameters == null){
                 return;
@@ -83,20 +82,12 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
             if(parameters.length != args.length){
                 return;
             }
-            final PsiParameter lastParameter = parameters[parameters.length - 1];
-            if(!lastParameter.isVarArgs())
-            {
+            final PsiParameter lastParameter =
+                    parameters[parameters.length - 1];
+            if(!lastParameter.isVarArgs()){
                 return;
             }
             registerError(lastArg);
-        }
-
-        private static boolean isNull(PsiExpression arg){
-            if(!(arg instanceof PsiLiteralExpression)){
-                return false;
-            }
-            final String text = arg.getText();
-            return PsiKeyword.NULL.equals(text);
         }
     }
 }

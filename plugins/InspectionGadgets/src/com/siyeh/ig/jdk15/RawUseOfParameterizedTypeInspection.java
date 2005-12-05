@@ -151,8 +151,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             final PsiManager manager = element.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
-            return !(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                     languageLevel.equals(LanguageLevel.JDK_1_4));
+            return languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
         }
     }
 }
