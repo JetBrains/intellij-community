@@ -54,7 +54,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
 
-    if ((!toOpenInNewTab) && reusable) {
+    if (!toOpenInNewTab && reusable) {
       Content[] contents = myFindContentManager.getContents();
       Content contentToDelete = null;
 
@@ -104,7 +104,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public Content getSelectedContent() {
-    return myFindContentManager.getSelectedContent();
+    return myFindContentManager == null ? null : myFindContentManager.getSelectedContent();
   }
 
   public void closeContent(Content content) {

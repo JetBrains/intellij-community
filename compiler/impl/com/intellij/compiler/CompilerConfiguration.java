@@ -10,11 +10,11 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -111,10 +111,14 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   }
 
   public void projectOpened() {
+    createCompilers();
+  }
+
+  private void createCompilers() {
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     registeredCompilers.add(JAVAC_EXTERNAL_BACKEND);
     JAVAC_EMBEDDED_BACKEND = new JavacEmbeddedCompiler(myProject);
-    registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
+    //registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       JIKES_BACKEND = new JikesCompiler(myProject);
@@ -372,6 +376,9 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   }
 
   public BackendCompiler getDefaultCompiler() {
+    if (JAVAC_EXTERNAL_BACKEND == null) {
+      createCompilers();
+    }
     if (myDefaultJavaCompiler != JAVAC_EXTERNAL_BACKEND) return myDefaultJavaCompiler;
     boolean runEmbedded = ApplicationManager.getApplication().isUnitTestMode()
                           ? !JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()

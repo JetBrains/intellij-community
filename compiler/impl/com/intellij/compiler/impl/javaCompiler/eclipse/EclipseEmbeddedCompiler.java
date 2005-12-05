@@ -61,7 +61,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseCompilerSettings.getInstance(myProject));
+    return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerSettings.getInstance(myProject));
   }
 
   @Nullable
