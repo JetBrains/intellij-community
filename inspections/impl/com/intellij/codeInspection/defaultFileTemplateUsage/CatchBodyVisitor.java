@@ -86,10 +86,9 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
     myProblemDescriptors.add(descriptor);
   }
 
-  private static LocalQuickFix createQuickFix(final PsiCatchSection section) {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
-    if (catchBodyTemplate.isDefault()) return null;
-    return new ReplaceWithFileTemplateFix() {
+  private static LocalQuickFix[] createQuickFix(final PsiCatchSection section) {
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
+    ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(Project project, ProblemDescriptor descriptor) {
         final PsiParameter parameter = section.getParameter();
         if (parameter == null) return;
@@ -108,5 +107,10 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
       }
 
     };
+    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceWithFileTemplateFix);
+    if (template.isDefault()) {
+      return new LocalQuickFix[]{editFileTemplateFix};
+    }
+    return new LocalQuickFix[]{replaceWithFileTemplateFix, editFileTemplateFix};
   }
 }

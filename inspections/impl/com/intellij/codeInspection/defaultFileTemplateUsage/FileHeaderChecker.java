@@ -57,7 +57,7 @@ public class FileHeaderChecker {
       });
       PsiDocComment element = docComment.get();
       if (element == null) return null;
-      LocalQuickFix quickFix = createQuickFix(element, matcher, offsetToProperty);
+      LocalQuickFix[] quickFix = createQuickFix(element, matcher, offsetToProperty);
       final String description = InspectionsBundle.message("default.file.template.description");
       ProblemDescriptor descriptor = manager.createProblemDescriptor(element, description, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       return descriptor;
@@ -65,12 +65,11 @@ public class FileHeaderChecker {
     return null;
   }
 
-  private static LocalQuickFix createQuickFix(final PsiDocComment element,
+  private static LocalQuickFix[] createQuickFix(final PsiDocComment element,
                                               final Matcher matcher,
                                               final TIntObjectHashMap<String> offsetToProperty) {
     FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
-    if (template.isDefault()) return null;
-    return new ReplaceWithFileTemplateFix() {
+    final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(Project project, ProblemDescriptor descriptor) {
         FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
         try {
@@ -102,6 +101,11 @@ public class FileHeaderChecker {
         return properties;
       }
     };
+    final LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceTemplateFix);
+    if (template.isDefault()) {
+      return new LocalQuickFix[]{editFileTemplateFix};
+    }
+    return new LocalQuickFix[]{replaceTemplateFix,editFileTemplateFix};
   }
 
   private static String templateToRegex(final String text, TIntObjectHashMap<String> offsetToProperty) {

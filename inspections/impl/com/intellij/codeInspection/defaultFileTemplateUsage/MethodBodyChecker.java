@@ -66,19 +66,20 @@ public class MethodBodyChecker {
     return template;
   }
 
-  private static LocalQuickFix createMethodBodyQuickFix(final PsiMethod method) {
+  private static LocalQuickFix[] createMethodBodyQuickFix(final PsiMethod method) {
     PsiType returnType = method.getReturnType();
     PsiClass aClass = method.getContainingClass();
     List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+    FileTemplate template;
     try {
       PsiMethod templateMethod = method.getManager().getElementFactory().createMethod("x", returnType);
-      FileTemplate template = setupMethodBody(superSignatures, templateMethod, aClass, false);
-      if (template.isDefault()) return null;
+      template = setupMethodBody(superSignatures, templateMethod, aClass, false);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+      return null;
     }
-    return new ReplaceWithFileTemplateFix() {
+    final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(Project project, ProblemDescriptor descriptor) {
         PsiType returnType = method.getReturnType();
         if (method.isConstructor() || returnType == null) return;
@@ -98,5 +99,10 @@ public class MethodBodyChecker {
         }
       }
     };
+    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceWithFileTemplateFix);
+    if (template.isDefault()) {
+      return new LocalQuickFix[]{editFileTemplateFix};
+    }
+    return new LocalQuickFix[]{replaceWithFileTemplateFix, editFileTemplateFix};
   }
 }

@@ -1,11 +1,12 @@
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -97,5 +98,30 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
   @Nullable
   public JComponent createOptionsPanel() {
     return new InspectionOptions(this).getComponent();
+  }
+
+  public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final LocalQuickFix replaceTemplateFix) {
+    return new LocalQuickFix() {
+      public String getName() {
+        return InspectionsBundle.message("default.file.template.edit.template");
+      }
+
+      public String getFamilyName() {
+        return getName();
+      }
+
+      public void applyFix(Project project, ProblemDescriptor descriptor) {
+        final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            configurable.setTemplate(templateToEdit, null);
+          }
+        });
+        boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+        if (ok) {
+          replaceTemplateFix.applyFix(project, descriptor);
+        }
+      }
+    };
   }
 }
