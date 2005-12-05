@@ -387,7 +387,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     pointer.offset += 4;
     int numParameters = ClsUtil.readU1(pointer);
     ClsAnnotationImpl[][] result = new ClsAnnotationImpl[numParameters][];
-    for (int i = 0; i < numParameters; i++) {
+    for (int i = 0; i < Math.min(numParameters, parameters.length); i++) {
       result[i] = myParent.getClassFileData().readAnnotations(parameters[i], pointer);
     }
 
