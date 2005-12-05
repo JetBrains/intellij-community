@@ -365,7 +365,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private boolean insertingAnnotationWithParameters() {
     if(insertingAnnotation()) {
-      return ((PsiClass)myLookupItem.getObject()).getMethods().length > 0;
+      final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
+      for(PsiMethod m:psiClass.getMethods()) {
+        if (!(m instanceof PsiAnnotationMethod)) continue;
+        final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
+        if (defaultValue == null) return true;
+      }
     }
     return false;
   }
