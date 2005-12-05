@@ -11,6 +11,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -18,18 +21,20 @@ import com.intellij.psi.SmartPsiElementPointer;
 public class ProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.ProblemDescriptorImpl");
 
-  private SmartPsiElementPointer mySmartPointer;
+  @NotNull private SmartPsiElementPointer myStartSmartPointer;
+  @Nullable private SmartPsiElementPointer myEndSmartPointer;
   private final String myDescriptionTemplate;
   private final LocalQuickFix[] myFixes;
   private ProblemHighlightType myHighlightType;
   private boolean myAfterEndOfLine;
 
-  public ProblemDescriptorImpl(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
-    LOG.assertTrue(psiElement.isValid());
-    LOG.assertTrue(psiElement.isPhysical());
+  public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
+    LOG.assertTrue(startElement.isValid());
+    LOG.assertTrue(startElement.isPhysical());
+    LOG.assertTrue(endElement.isValid());
+    LOG.assertTrue(endElement.isPhysical());
 
-    TextRange range = psiElement.getTextRange();
-    if (range.getStartOffset() == range.getEndOffset()) {
+    if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
       LOG.error("Empty PSI elements should not be passed to createDescriptor");
     }
 
@@ -41,14 +46,29 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
     }
 
     myHighlightType = highlightType;
-    final Project project = psiElement.getProject();
-    mySmartPointer = SmartPointerManager.getInstance(project).createLazyPointer(psiElement);
+    final Project project = startElement.getProject();
+    myStartSmartPointer = SmartPointerManager.getInstance(project).createLazyPointer(startElement);
+    myEndSmartPointer = startElement == endElement ? null : SmartPointerManager.getInstance(project).createLazyPointer(endElement);
     myDescriptionTemplate = descriptionTemplate;
     myAfterEndOfLine = isAfterEndOfLine;
   }
 
   public PsiElement getPsiElement() {
-    return mySmartPointer.getElement();
+    PsiElement startElement = getStartElement();
+    PsiElement endElement = getEndElement();
+    if (startElement == endElement) {
+      return startElement;
+    }
+    if (startElement == null || endElement == null) return null;
+    return PsiTreeUtil.findCommonParent(startElement,endElement);
+  }
+
+  public PsiElement getStartElement() {
+    return myStartSmartPointer.getElement();
+  }
+
+  public PsiElement getEndElement() {
+    return myEndSmartPointer == null ? myStartSmartPointer.getElement() : myEndSmartPointer.getElement();
   }
 
   public int getLineNumber() {
@@ -76,4 +96,11 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
     return myDescriptionTemplate;
   }
 
+  public TextRange getTextRange() {
+    PsiElement startElement = getStartElement();
+    PsiElement endElement = getEndElement();
+    if (startElement == null || endElement == null) return null;
+    if (startElement == endElement) return startElement.getTextRange();
+    return new TextRange(startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
+  }
 }

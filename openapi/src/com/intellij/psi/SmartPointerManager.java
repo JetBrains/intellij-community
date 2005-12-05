@@ -16,13 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SmartPointerManager {
   public static SmartPointerManager getInstance(Project project) {
     return project.getComponent(SmartPointerManager.class);
   }
 
-  public abstract SmartPsiElementPointer createSmartPsiElementPointer(PsiElement element);
-  public abstract SmartTypePointer createSmartTypePointer(PsiType type);
-  public abstract SmartPsiElementPointer createLazyPointer(PsiElement element);
+  @NotNull public abstract SmartPsiElementPointer createSmartPsiElementPointer(PsiElement element);
+  @NotNull public abstract SmartTypePointer createSmartTypePointer(PsiType type);
+  @NotNull public abstract SmartPsiElementPointer createLazyPointer(PsiElement element);
 }

@@ -40,18 +40,16 @@ public class CreateFromTemplateGroup extends ActionGroup{
 
   public AnAction[] getChildren(@Nullable AnActionEvent e){
     FileTemplateManager manager = FileTemplateManager.getInstance();
-    FileTemplate[] templates;
-    templates = manager.getAllTemplates();
-    List<AnAction> result = new ArrayList<AnAction>();
+    FileTemplate[] templates = manager.getAllTemplates();
 
     boolean showAll = templates.length <= FileTemplateManager.RECENT_TEMPLATES_SIZE;
     if (!showAll) {
-      List recentNames = manager.getRecentNames();
+      Collection<String> recentNames = manager.getRecentNames();
       templates = new FileTemplate[recentNames.size()];
       int i = 0;
-      for (Iterator iterator = recentNames.iterator(); iterator.hasNext(); i++) {
-        String name = (String)iterator.next();
+      for (String name : recentNames) {
         templates[i] = FileTemplateManager.getInstance().getTemplate(name);
+        i++;
       }
     }
 
@@ -75,6 +73,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
         return template1.getName().compareTo(template2.getName());
       }
     });
+    List<AnAction> result = new ArrayList<AnAction>();
 
     for (FileTemplate template : templates) {
       if (canCreateFromTemplate(e, template)) {
@@ -95,7 +94,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     return result.toArray(new AnAction[result.size()]);
 }
 
-  private boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
+  private static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
     IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
@@ -107,7 +106,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private class CreateFromTemplatesAction extends AnAction{
+  private static class CreateFromTemplatesAction extends AnAction{
 
     public CreateFromTemplatesAction(String title){
       super(title);
@@ -146,7 +145,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
 
   }
 
-  private PsiElement showCreateFromTemplateDialog(Project project, PsiDirectory directory, FileTemplate template){
+  private static PsiElement showCreateFromTemplateDialog(Project project, PsiDirectory directory, FileTemplate template){
     CreateFromTemplateDialog dialog;
     try{
       dialog = new CreateFromTemplateDialog(project, directory, template);
@@ -165,7 +164,6 @@ public class CreateFromTemplateGroup extends ActionGroup{
     else{
       Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
       Properties properties = new Properties(defaultProperties);
-      String fileName = null;
       LOG.assertTrue(template.isJavaClassTemplate());
       if(template.isJavaClassTemplate()){
         String packageName = directory.getPackage().getQualifiedName();
@@ -173,6 +171,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
       }
       PsiElement[] element = new PsiElement[1];
       try{
+        String fileName = null;
         FileTemplateUtil.createFromTemplate(element, template, fileName, properties, project, directory);
       }
       catch (Exception e){
@@ -187,7 +186,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
   /**
    * @return false if all template attributes can be defined.
    */
-  private boolean needToShowDialog(FileTemplate template){
+  private static boolean needToShowDialog(FileTemplate template){
     if(template == null) return false;
     if(!template.isJavaClassTemplate()) return true;  //Will show filename attribute
 
@@ -202,7 +201,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
   }
 
 
-  private class CreateFromTemplateAction extends AnAction{
+  private static class CreateFromTemplateAction extends AnAction{
     private FileTemplate myTemplate;
 
     public CreateFromTemplateAction(FileTemplate template){

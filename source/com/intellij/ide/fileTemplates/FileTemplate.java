@@ -54,4 +54,5 @@ public interface FileTemplate{
   void setAdjust(boolean adjust);
 
   boolean isInternal();
+
 }

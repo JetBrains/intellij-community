@@ -86,16 +86,16 @@ public class PsiTreeUtil {
     return parents;
   }
 
-  @Nullable public static <ChildType extends PsiElement> ChildType getChildOfType(@NotNull PsiElement element, @NotNull Class<ChildType> aClass) {
+  @Nullable public static <T extends PsiElement> T getChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
-      if (aClass.isInstance(child)) return (ChildType)child;
+      if (aClass.isInstance(child)) return (T)child;
     }
     return null;
   }
 
-  @Nullable public static <ChildType extends PsiElement> ChildType getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<ChildType> aClass) {
+  @Nullable public static <T extends PsiElement> T getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
     for(PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()){
-      if (aClass.isInstance(child)) return (ChildType)child;
+      if (aClass.isInstance(child)) return (T)child;
     }
     return null;
   }
@@ -107,11 +107,11 @@ public class PsiTreeUtil {
     return null;
   }
 
-  @Nullable public static <ParentType extends PsiElement> ParentType getParentOfType(@Nullable PsiElement element, @NotNull Class<ParentType> aClass) {
+  @Nullable public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return getParentOfType(element, aClass, true);
   }
 
-  @Nullable public static <ContextType extends PsiElement> ContextType getContextOfType(@Nullable PsiElement element, @NotNull Class<ContextType> aClass, boolean strict) {
+  @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
     if (element == null) return null;
     if (strict) {
       element = element.getContext();
@@ -121,11 +121,11 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    return (ContextType)element;
+    return (T)element;
   }
 
   @Nullable
-  public static <ParentType extends PsiElement> ParentType getParentOfType(@Nullable PsiElement element, @NotNull Class<ParentType> aClass, boolean strict) {
+  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
     if (element == null) return null;
     if (strict) {
       element = element.getParent();
@@ -135,7 +135,7 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    return (ParentType)element;
+    return (T)element;
   }
 
   @Nullable public static PsiElement skipSiblingsForward (@Nullable PsiElement element, @NotNull Class[] elementClasses) {

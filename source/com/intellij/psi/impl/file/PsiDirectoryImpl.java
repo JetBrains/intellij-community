@@ -57,6 +57,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     myFile = file;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
   }
@@ -69,6 +70,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return myFile.isValid();
   }
 
+  @NotNull
   public Language getLanguage() {
     return Language.ANY;
   }
@@ -81,6 +83,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return myFile.getName();
   }
 
+  @NotNull
   public PsiElement setName(String name) throws IncorrectOperationException {
     checkSetName(name);
 
@@ -290,6 +293,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return null;
   }
 
+  @NotNull
   public PsiClass createClass(String name) throws IncorrectOperationException {
     return createSomeClass(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
   }
@@ -299,6 +303,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return createSomeClass(name, templateName);
   }
 
+  @NotNull
   public PsiClass createInterface(String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
@@ -308,6 +313,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return someClass;
   }
 
+  @NotNull
   public PsiClass createEnum(String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
@@ -317,6 +323,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return someClass;
   }
 
+  @NotNull
   public PsiClass createAnnotationType(String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);
@@ -362,7 +369,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return newFile.getClasses()[0];
   }
 
-  private String getIncorrectTemplateMessage(String templateName) {
+  private static String getIncorrectTemplateMessage(String templateName) {
     return PsiBundle.message("psi.error.incorroect.class.template.message",
                              FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
   }
@@ -386,6 +393,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     checkCreateFile(fileName);
   }
 
+  @NotNull
   public PsiDirectory createSubdirectory(String name) throws IncorrectOperationException {
     checkCreateSubdirectory(name);
 
@@ -409,6 +417,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     CheckUtil.checkWritable(this);
   }
 
+  @NotNull
   public PsiFile createFile(String name) throws IncorrectOperationException {
     checkCreateFile(name);
 
@@ -488,7 +497,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         PsiDocumentManager.getInstance(myManager.getProject()).commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
-        if (newFile instanceof com.intellij.psi.impl.source.PsiFileImpl) {
+        if (newFile instanceof PsiFileImpl) {
           ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));
           PsiUtil.updatePackageStatement(newFile);
           ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));

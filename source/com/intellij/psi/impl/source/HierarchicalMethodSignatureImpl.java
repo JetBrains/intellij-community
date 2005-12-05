@@ -2,10 +2,11 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -22,6 +23,7 @@ public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature
     mySupers.add(superSignatureHierarchical);
   }
 
+  @NotNull
   public List<HierarchicalMethodSignature> getSuperSignatures() {
     return Collections.unmodifiableList(mySupers == null ?
                                         Collections.<HierarchicalMethodSignature>emptyList() :

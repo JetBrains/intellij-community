@@ -58,7 +58,7 @@ public class StringUtil {
       int i1 = text1.indexOf(oldS1, i);
       if (i1 < 0) {
         if (i == 0) return text;
-        newText.append(text.substring(i));
+        newText.append(text,i,text.length());
         break;
       }
       else {
@@ -66,7 +66,7 @@ public class StringUtil {
         if (newText == null) {
           newText = new StringBuffer();
         }
-        newText.append(text.substring(i, i1));
+        newText.append(text,i, i1);
         newText.append(newS);
         i = i1 + oldS.length();
       }

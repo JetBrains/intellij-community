@@ -217,7 +217,7 @@ public class OverrideImplementUtil {
     for (PsiMethod result : results) {
       EjbUtil.tuneMethodForEjb(J2EERolesUtil.getEjbRole(aClass), method, result);
 
-      setupBody(result, method, aClass);
+      setupMethodBody(result, method, aClass);
 
       // probably, it's better to reformat the whole method - it can go from other style sources
       CodeStyleManager codeStyleManager = method.getManager().getCodeStyleManager();
@@ -276,15 +276,20 @@ public class OverrideImplementUtil {
     return buffer.toString();
   }
 
-  public static void setupBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
+  public static void setupMethodBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
+    String templName = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
+                       FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    setupMethodBody(result, originalMethod, targetClass, template);
+  }
+
+  public static void setupMethodBody(final PsiMethod result, final PsiMethod originalMethod, final PsiClass targetClass,
+                                     final FileTemplate template) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
       final PsiCodeBlock body = result.getBody();
       if (body != null) body.delete();
     }
 
-    String templName = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                       FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     PsiType returnType = result.getReturnType();
     if (returnType == null) {

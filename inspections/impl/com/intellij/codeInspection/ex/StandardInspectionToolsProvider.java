@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.canBeStatic.CanBeStaticInspection;
@@ -106,7 +107,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UnusedThrowsDeclaration.class,
       AccessStaticViaInstance.class,
       HtmlStyleLocalInspection.class,
-      RequiredAttributesInspection.class
+      RequiredAttributesInspection.class,
+      DefaultFileTemplateUsageInspection.class,
       };
   }
 }

@@ -183,7 +183,7 @@ public class Browser extends JPanel {
                 if (psiElement == null) return;
                 VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
                 if (vFile != null) {
-                  TextRange range = psiElement.getTextRange();
+                  TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
                   fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
                 }
               }

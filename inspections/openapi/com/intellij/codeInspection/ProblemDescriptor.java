@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
  */
 public interface ProblemDescriptor {
   PsiElement getPsiElement();
+  PsiElement getStartElement();
+  PsiElement getEndElement();
   String getDescriptionTemplate();
   int getLineNumber();
   LocalQuickFix[] getFixes();

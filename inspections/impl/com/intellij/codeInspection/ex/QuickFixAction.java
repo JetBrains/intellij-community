@@ -112,8 +112,7 @@ public abstract class QuickFixAction extends AnAction {
                           final DescriptorProviderInspection tool,
                           final ProblemDescriptor[] descriptors) {
     final Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
-    for (int i = 0; i < descriptors.length; i++) {
-      ProblemDescriptor descriptor = descriptors[i];
+    for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement != null && !psiElement.isWritable()) {
         readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
@@ -130,15 +129,15 @@ public abstract class QuickFixAction extends AnAction {
         CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            for (int i = 0; i < descriptors.length; i++) {
-              ProblemDescriptor descriptor = descriptors[i];
+            for (ProblemDescriptor descriptor : descriptors) {
               final LocalQuickFix[] fixes = descriptor.getFixes();
               if (descriptor.getPsiElement() != null && fixes != null) {
-                for (LocalQuickFix fix: fixes) {
-                  if (fix != null ) {
+                for (LocalQuickFix fix : fixes) {
+                  if (fix != null) {
                     final QuickFixAction quickFixAction = QuickFixAction.this;
-                    if (quickFixAction instanceof LocalQuickFixWrapper && !(((LocalQuickFixWrapper)quickFixAction).getFix()).getClass().isInstance(fix)){
-                       continue;
+                    if (quickFixAction instanceof LocalQuickFixWrapper &&
+                        !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
+                      continue;
                     }
                     fix.applyFix(project, descriptor);
                     tool.ignoreProblem(descriptor, fix);

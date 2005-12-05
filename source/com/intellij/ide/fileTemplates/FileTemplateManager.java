@@ -1,10 +1,9 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -47,7 +46,7 @@ public abstract class FileTemplateManager{
   public abstract void removeTemplate(FileTemplate template, boolean fromDiskOnly);
   public abstract void removeInternal(FileTemplate template);
 
-  public abstract List getRecentNames();
+  public abstract Collection<String> getRecentNames();
 
   public abstract void addRecentName(String name);
 
@@ -73,11 +72,11 @@ public abstract class FileTemplateManager{
   public abstract void removeCodeTemplate(FileTemplate template, boolean fromDiskOnly);
   public abstract void removeJ2eeTemplate(FileTemplate template, boolean fromDiskOnly);
 
-  public abstract VirtualFile getDefaultTemplate (String name, String extension);
-  public abstract VirtualFile getDefaultTemplateDescription();
-
-  public abstract VirtualFile getDefaultIncludeDescription();
   public abstract String internalTemplateToSubject(String templateName);
 
   public abstract String localizeInternalTemplateName(final FileTemplate template);
+
+  public abstract FileTemplate getPattern(String name);
+
+  public abstract FileTemplate getDefaultTemplate(String name);
 }

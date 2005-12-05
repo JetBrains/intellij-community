@@ -50,18 +50,17 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     initPrimitiveTypes();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initPrimitiveTypes() {
-    ourPrimitiveTypesMap.put("byte", (PsiPrimitiveType)PsiType.BYTE);
-    ourPrimitiveTypesMap.put("char", (PsiPrimitiveType)PsiType.CHAR);
-    ourPrimitiveTypesMap.put("double", (PsiPrimitiveType)PsiType.DOUBLE);
-    ourPrimitiveTypesMap.put("float", (PsiPrimitiveType)PsiType.FLOAT);
-    ourPrimitiveTypesMap.put("int", (PsiPrimitiveType)PsiType.INT);
-    ourPrimitiveTypesMap.put("long", (PsiPrimitiveType)PsiType.LONG);
-    ourPrimitiveTypesMap.put("short", (PsiPrimitiveType)PsiType.SHORT);
-    ourPrimitiveTypesMap.put("boolean", (PsiPrimitiveType)PsiType.BOOLEAN);
-    ourPrimitiveTypesMap.put("void", (PsiPrimitiveType)PsiType.VOID);
-    ourPrimitiveTypesMap.put("null", (PsiPrimitiveType)PsiType.NULL);
+    ourPrimitiveTypesMap.put(PsiType.BYTE.getCanonicalText(), (PsiPrimitiveType)PsiType.BYTE);
+    ourPrimitiveTypesMap.put(PsiType.CHAR.getCanonicalText(), (PsiPrimitiveType)PsiType.CHAR);
+    ourPrimitiveTypesMap.put(PsiType.DOUBLE.getCanonicalText(), (PsiPrimitiveType)PsiType.DOUBLE);
+    ourPrimitiveTypesMap.put(PsiType.FLOAT.getCanonicalText(), (PsiPrimitiveType)PsiType.FLOAT);
+    ourPrimitiveTypesMap.put(PsiType.INT.getCanonicalText(), (PsiPrimitiveType)PsiType.INT);
+    ourPrimitiveTypesMap.put(PsiType.LONG.getCanonicalText(), (PsiPrimitiveType)PsiType.LONG);
+    ourPrimitiveTypesMap.put(PsiType.SHORT.getCanonicalText(), (PsiPrimitiveType)PsiType.SHORT);
+    ourPrimitiveTypesMap.put(PsiType.BOOLEAN.getCanonicalText(), (PsiPrimitiveType)PsiType.BOOLEAN);
+    ourPrimitiveTypesMap.put(PsiType.VOID.getCanonicalText(), (PsiPrimitiveType)PsiType.VOID);
+    ourPrimitiveTypesMap.put(PsiType.NULL.getCanonicalText(), (PsiPrimitiveType)PsiType.NULL);
   }
 
   private PsiJavaFile myDummyJavaFile;
@@ -183,8 +182,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiMethod createConstructor() {
-    @NonNls String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
     try {
+      @NonNls String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
       PsiJavaFile aFile = createDummyJavaFile(text);
       PsiClass aClass = aFile.getClasses()[0];
       PsiMethod method = aClass.getMethods()[0];
@@ -424,7 +423,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("catch (");
     buffer.append(exceptionType.getCanonicalText());
-    buffer.append(" " + exceptionName + "){}");
+    buffer.append(" ").append(exceptionName).append("){}");
     String catchSectionText = buffer.toString();
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText.toCharArray());
@@ -571,8 +570,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createVariableDeclarationStatement(name, type, initializer, true);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public PsiDocTag createParamTag(String parameterName, String description) throws IncorrectOperationException {
+  public PsiDocTag createParamTag(String parameterName, @NonNls String description) throws IncorrectOperationException {
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(" * @param ");
     buffer.append(parameterName);
@@ -606,14 +604,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiFile createFileFromText(String name, String text) throws IncorrectOperationException {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
+    if (type.isBinary()) {
+      throw new IncorrectOperationException("Cannot create binary files from text");
+    }
 
     char[] chars = text.toCharArray();
     int startOffset = 0;
     int endOffset = text.length();
 
-    if (type.isBinary()) {
-      throw new IncorrectOperationException("Cannot create binary files from text");
-    }
 
     return createFileFromText(myManager, type, name, chars, startOffset, endOffset);
   }
@@ -666,7 +664,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new JavaParsingContext(holderElement.getCharTable(), myManager.getEffectiveLanguageLevel());
   }
 
-  private JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
+  private static JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
     return new JavaParsingContext(holderElement.getCharTable(), languageLevel);
   }
 

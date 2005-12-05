@@ -53,21 +53,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         super.visitField(field);
         if (InspectionManagerEx.isToCheckMember(field, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkField(field, getManager(), false);
-          if (problemDescriptions != null) {
-            problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
-            RefManager refManager = getManager().getRefManager();
-            RefElement refElement = refManager.getReference(field);
-            if (refElement != null) {
-              addProblemElement(refElement, problemDescriptions);
-            }
-          }
+          addProblemDescriptors(field, problemDescriptions);
         }
       }
 
       private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
         Set<ProblemDescriptor> set = null;
-        for (int i = 0; i < problemDescriptions.length; i++) {
-          ProblemDescriptor description = problemDescriptions[i];
+        for (ProblemDescriptor description : problemDescriptions) {
           if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
             if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
             set.remove(description);
@@ -80,14 +72,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         super.visitClass(aClass);
         if (InspectionManagerEx.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
           ProblemDescriptor[] problemDescriptions = myTool.checkClass(aClass, getManager(), false);
-          if (problemDescriptions != null) {
-            problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
-            RefManager refManager = getManager().getRefManager();
-            RefElement refElement = refManager.getReference(aClass);
-            if (refElement != null) {
-              addProblemElement(refElement, problemDescriptions);
-            }
-          }
+          addProblemDescriptors(aClass, problemDescriptions);
         }
       }
 
@@ -96,10 +81,16 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         super.visitMethod(method);
         if (InspectionManagerEx.isToCheckMember(method, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkMethod(method, getManager(), false);
-          if (problemDescriptions != null) {
-            problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
+          addProblemDescriptors(method, problemDescriptions);
+        }
+      }
+
+      private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions) {
+        if (problemDescriptions != null) {
+          problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
+          if (problemDescriptions.length != 0) {
             RefManager refManager = getManager().getRefManager();
-            RefElement refElement = refManager.getReference(method);
+            RefElement refElement = refManager.getReference(element);
             if (refElement != null) {
               addProblemElement(refElement, problemDescriptions);
             }
@@ -110,13 +101,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       public void visitFile(PsiFile file) {
         super.visitFile(file);
         ProblemDescriptor[] problemDescriptions = myTool.checkFile(file, getManager(), false);
-        if (problemDescriptions != null) {
-          RefManager refManager = getManager().getRefManager();
-          RefElement refElement = refManager.getReference(file);
-          if (refElement != null) {
-            addProblemElement(refElement, problemDescriptions);
-          }
-        }
+        addProblemDescriptors(file, problemDescriptions);
       }
     });
   }

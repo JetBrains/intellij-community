@@ -292,7 +292,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
       public void update(AnActionEvent e) {
         super.update(e);
         FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
-        FileTemplateManager manager = FileTemplateManager.getInstance();
+        FileTemplateManagerImpl manager = FileTemplateManagerImpl.getInstance();
         e.getPresentation().setEnabled(selectedItem != null
                                        && !selectedItem.isDefault()
                                        &&
@@ -397,7 +397,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
         }
       }
       if (selectedValue == null) {
-        myEditor.setTemplate(null, FileTemplateManager.getInstance().getDefaultTemplateDescription());
+        myEditor.setTemplate(null, FileTemplateManagerImpl.getInstance().getDefaultTemplateDescription());
       }
       else {
         selectTemplate(selectedValue);
@@ -408,10 +408,10 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   private void selectTemplate(FileTemplate template) {
     VirtualFile defDesc = null;
     if (myCurrentTab == myTemplatesList) {
-      defDesc = FileTemplateManager.getInstance().getDefaultTemplateDescription();
+      defDesc = FileTemplateManagerImpl.getInstance().getDefaultTemplateDescription();
     }
     else if (myCurrentTab == myPatternsList) {
-      defDesc = FileTemplateManager.getInstance().getDefaultIncludeDescription();
+      defDesc = FileTemplateManagerImpl.getInstance().getDefaultIncludeDescription();
     }
     if (myEditor.getTemplate() != template) {
       myEditor.setTemplate(template, defDesc);

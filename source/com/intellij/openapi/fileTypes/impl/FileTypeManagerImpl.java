@@ -185,7 +185,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return myFileTypes.toArray();
   }
 
-  public String getExtension(String fileName) {
+  public @NotNull String getExtension(String fileName) {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
     return fileName.substring(index + 1);

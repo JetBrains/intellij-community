@@ -1,16 +1,19 @@
 package com.intellij.codeInsight;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * @author ven
@@ -18,7 +21,7 @@ import java.util.List;
 public class PsiEquivalenceUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.PsiEquivalenceUtil");
 
-  public static boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
+  public static boolean areElementsEquivalent(@NotNull PsiElement element1, @NotNull PsiElement element2, @Nullable Comparator<PsiElement> resolvedElementsComparator) {
     ASTNode node1 = element1.getNode();
     ASTNode node2 = element2.getNode();
     if (node1 == null || node2 == null) return false;
@@ -31,7 +34,7 @@ public class PsiEquivalenceUtil {
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!areElementsEquivalent(child1, child2)) return false;
+      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator)) return false;
     }
 
     if (children1.length == 0) {
@@ -42,9 +45,16 @@ public class PsiEquivalenceUtil {
     if (ref1 != null) {
       PsiReference ref2 = element2.getReference();
       if (ref2 == null) return false;
-      if (!Comparing.equal(ref1.resolve(), ref2.resolve())) return false;
+      PsiElement resolved1 = ref1.resolve();
+      PsiElement resolved2 = ref2.resolve();
+      if (!Comparing.equal(resolved1, resolved2)
+          && (resolvedElementsComparator == null || resolvedElementsComparator.compare(resolved1, resolved2) != 0)) return false;
     }
     return true;
+
+  }
+  public static boolean areElementsEquivalent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
+    return areElementsEquivalent(element1, element2, null);
   }
 
   private static PsiElement[] getFilteredChildren(PsiElement element1) {

@@ -103,6 +103,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myCurrentProfileName = "Default";
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -173,26 +174,38 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return profile;
   }
 
+  @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
                                                    String descriptionTemplate,
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType) {
-    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fix != null ? new LocalQuickFix[]{fix} : null, highlightType, false);
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fix != null ? new LocalQuickFix[]{fix} : null, highlightType, false);
   }
 
+  @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
                                                    String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType) {
-    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fixes, highlightType, false);
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false);
   }
 
+  @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
                                                    String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType,
                                                    boolean isAfterEndOfLine) {
-    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine);
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine);
+  }
+
+  @NotNull
+  public ProblemDescriptor createProblemDescriptor(PsiElement startElement,
+                                                   PsiElement endElement,
+                                                   String descriptionTemplate,
+                                                   ProblemHighlightType highlightType, LocalQuickFix... fixes
+  ) {
+    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false);
   }
 
   public void projectClosed() {
@@ -307,10 +320,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           return matcher.group(1);
         }
     }
-    if (element instanceof PsiModifierListOwner) {
-      Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation((PsiModifierListOwner)element);
-      return StringUtil.join(suppressedIds, ",");
-    }
     if (element instanceof PsiDocCommentOwner) {
       PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
       if (docComment != null) {
@@ -322,6 +331,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           }
         }
       }
+    }
+    if (element instanceof PsiModifierListOwner) {
+      Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation((PsiModifierListOwner)element);
+      return StringUtil.join(suppressedIds, ",");
     }
     return null;
   }
@@ -717,7 +730,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     };
 
     if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) return;
+      .runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) {
+      return;
+    }
 
     InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
     if (!view.update()) {
@@ -836,8 +851,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   private ArrayList<LocalInspectionToolWrapper> initJobDescriptors(InspectionTool[] tools,
                                                                    final AnalysisScope scope) {
-    ArrayList<LocalInspectionToolWrapper> localTools = new ArrayList<LocalInspectionToolWrapper>();
     myJobDescriptors = new ArrayList<JobDescriptor>();
+    ArrayList<LocalInspectionToolWrapper> localTools = new ArrayList<LocalInspectionToolWrapper>();
     for (InspectionTool tool : tools) {
       if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
         if (tool instanceof LocalInspectionToolWrapper) {

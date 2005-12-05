@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -64,7 +65,7 @@ public class Descriptor {
   public Descriptor(HighlightDisplayKey key,
                     InspectionProfile.ModifiableModel inspectionProfile) {
     myText = HighlightDisplayKey.getDisplayNameByKey(key);
-    myGroup = InspectionsBundle.message("inspection.general.tools.group.name");
+    myGroup = GroupNames.GENERAL_GROUP_NAME;
     myKey = key;
     myConfig = null;
     myEnabled = inspectionProfile.isToolEnabled(key);
@@ -81,7 +82,7 @@ public class Descriptor {
     }
     myConfig = config;
     myText = tool.getDisplayName();
-    myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? InspectionsBundle.message("inspection.general.tools.group.name") : tool.getGroupDisplayName();
+    myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? GroupNames.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
     myDescriptorFileName = tool.getDescriptionFileName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
     if (myKey == null) {

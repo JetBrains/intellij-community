@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -20,7 +21,7 @@ public abstract class FileTypeManagerEx extends FileTypeManager{
   public abstract void setIgnoredFilesList(String list);
   public abstract boolean isIgnoredFilesListEqualToCurrent(String list);
 
-  public abstract String getExtension(String fileName);
+  @NotNull public abstract String getExtension(String fileName);
 
   public abstract void fireFileTypesChanged();
 

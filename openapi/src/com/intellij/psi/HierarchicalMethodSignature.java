@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,5 +30,5 @@ public abstract class HierarchicalMethodSignature extends MethodSignatureBackedB
           signature.getParameterTypes(), signature.getTypeParameters());
   }
 
-  public abstract List<HierarchicalMethodSignature> getSuperSignatures();
+  @NotNull public abstract List<HierarchicalMethodSignature> getSuperSignatures();
 }

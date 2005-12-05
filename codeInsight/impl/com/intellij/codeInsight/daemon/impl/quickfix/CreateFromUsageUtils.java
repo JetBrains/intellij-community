@@ -73,8 +73,7 @@ public class CreateFromUsageUtils {
     if (argList == null) return false;
     if (candidate == null) {
       if (targetClass == null || targetClass.isInterface() || targetClass instanceof PsiTypeParameter) return false;
-      if (argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0) return false;
-      return true;
+      return !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -83,14 +82,25 @@ public class CreateFromUsageUtils {
 
   public static void setupMethodBody(PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
-    PsiType returnType = method.getReturnType() != null ? method.getReturnType() : PsiType.VOID;
+    setupMethodBody(method, aClass);
+  }
+
+  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY);
+    setupMethodBody(method, aClass, template);
+  }
+
+  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, final FileTemplate template) throws
+                                                                                                                 IncorrectOperationException {
+    PsiType returnType = method.getReturnType();
+    if (returnType == null) {
+      returnType = PsiType.VOID;
+    }
 
     PsiElementFactory factory = method.getManager().getElementFactory();
 
     LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
 
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(
-      FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     Properties properties = new Properties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
@@ -357,7 +367,7 @@ public class CreateFromUsageUtils {
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
       public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
         if(!(element instanceof PsiField) ||
-           element.getManager().getResolveHelper().isAccessible(((PsiField)element), expression, null)) {
+           element.getManager().getResolveHelper().isAccessible((PsiField)element, expression, null)) {
           return super.execute(element, substitutor);
         }
         return true;
@@ -544,15 +554,13 @@ public class CreateFromUsageUtils {
             if (type instanceof PsiClassType && (expectedFieldNames.size() > 0 || expectedMethodNames.size() > 0)) {
               PsiClass aClass = ((PsiClassType) type).resolve();
               if (aClass != null) {
-                for (Iterator<String> i = expectedFieldNames.iterator(); i.hasNext();) {
-                  String fieldName = i.next();
+                for (String fieldName : expectedFieldNames) {
                   if (aClass.findFieldByName(fieldName, true) == null) return null;
                 }
 
-                for (Iterator<String> i = expectedMethodNames.iterator(); i.hasNext();) {
-                  String methodName = i.next();
+                for (String methodName : expectedMethodNames) {
                   PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
-                  if (methods == null || methods.length == 0) return null;
+                  if (methods.length == 0) return null;
                 }
               }
             }
@@ -610,7 +618,7 @@ public class CreateFromUsageUtils {
         final PsiElement pparent = expression.getParent().getParent();
         if (pparent instanceof PsiMethodCallExpression) {
 
-          PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(((PsiMethod)member), (PsiMethodCallExpression)pparent, false);
+          PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor((PsiMethod)member, (PsiMethodCallExpression)pparent, false);
           if (substitutor == null) {
             type = factory.createType(aClass);
           } else {
@@ -680,7 +688,7 @@ public class CreateFromUsageUtils {
         if (parameterNames.contains(name)) {
           int j = 1;
           while (parameterNames.contains(name + j)) j++;
-          name = name + j;
+          name += j;
         }
 
         names.add(name);
@@ -693,7 +701,7 @@ public class CreateFromUsageUtils {
           if (parameterNames.contains(name)) {
             int j = 1;
             while (parameterNames.contains(name + j)) j++;
-            name = name + j;
+            name += j;
           }
 
           if (!names.contains(name)) {

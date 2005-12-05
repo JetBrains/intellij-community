@@ -3,7 +3,6 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -158,23 +157,31 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   /** Read template from file. */
-  private String readExternal(File file) throws IOException{
+  private static String readExternal(File file) throws IOException{
     FileInputStream inputStream = new FileInputStream(file);
-    String result = readExternal(inputStream);
-    inputStream.close();
-    return result;
+    try {
+      String result = readExternal(inputStream);
+      return result;
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   /** Read template from URL. */
-  private String readExternal(VirtualFile url) throws IOException{
-    InputStream inputStream = url.getInputStream();
-    String result = readExternal(inputStream);
-    inputStream.close();
-    return result;
+  private static String readExternal(VirtualFile virtualFile) throws IOException{
+    InputStream inputStream = virtualFile.getInputStream();
+    try {
+      String result = readExternal(inputStream);
+      return result;
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   /** Read template from stream. Stream does not closed after reading. */
-  private String readExternal(InputStream inputStream) throws IOException{
+  private static String readExternal(InputStream inputStream) throws IOException{
     StringWriter wr = new StringWriter();
     Reader fr = new InputStreamReader(inputStream, ourEncoding);
     BufferedReader br = new BufferedReader(fr);
@@ -194,13 +201,8 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   /** Removes template file.
    */
   void removeFromDisk() {
-    if(myReadOnly){
-      return;
-    }
-    else if(myTemplateFile != null){
-      if(myTemplateFile.delete()){
-        myModified = false;
-      }
+    if (!myReadOnly && myTemplateFile != null && myTemplateFile.delete()) {
+      myModified = false;
     }
   }
 
@@ -335,7 +337,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   public void resetToDefault() {
     LOG.assertTrue(!isDefault());
-    VirtualFile file = FileTemplateManager.getInstance().getDefaultTemplate(myName, myExtension);
+    VirtualFile file = FileTemplateManagerImpl.getInstance().getDefaultTemplate(myName, myExtension);
     if (file == null) return;
     try {
       String text = readExternal(file);
@@ -346,13 +348,17 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-   private String replaceFileSeparatorChar(String s) {
+   private static String replaceFileSeparatorChar(String s) {
     StringBuffer buffer = new StringBuffer();
     char[] chars = s.toCharArray();
-    for (int i = 0; i < chars.length; i++) {
-      if (chars[i] == File.separatorChar) buffer.append("$");
-      else buffer.append(chars[i]);
-    }
+     for (char aChar : chars) {
+       if (aChar == File.separatorChar) {
+         buffer.append("$");
+       }
+       else {
+         buffer.append(aChar);
+       }
+     }
     return buffer.toString();
   }
 

@@ -6,6 +6,7 @@ import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
 import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
@@ -438,7 +439,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (tool.hasReportedProblems()) {
       final InspectionNode toolNode = new InspectionNode(tool);
       initToolNode(tool, toolNode,
-                   getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : InspectionsBundle.message("inspection.general.tools.group.name"), errorLevel,
+                   getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : GroupNames.GENERAL_GROUP_NAME, errorLevel,
                                      groupedBySeverity));
       if (tool instanceof DeadCodeInspection) {
         final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
@@ -961,6 +962,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
               final List<RefElement> elementsToSuppress = myTree.getElementsToSuppressInSubTree(node);
               for (RefElement refElement : elementsToSuppress) {
                 final PsiElement element = refElement.getElement();
+                if (element instanceof PsiFile) continue;
                 final PsiFile file = element.getContainingFile();
                 final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
                 if (action.isAvailable(myProject, null, file)) {

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.actions.IntentionQuickFixWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -156,12 +158,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     for (int i = 0; i < myDescriptors.size(); i++) {
       ProblemDescriptor problemDescriptor = myDescriptors.get(i);
       String message = renderDescriptionMessage(problemDescriptor);
-      PsiElement psiElement = problemDescriptor.getPsiElement();
-      HighlightInfo highlightInfo =
-        HighlightInfo.createHighlightInfo(myLevels.get(i), psiElement, message, message, problemDescriptor.isAfterEndOfLine());
+      HighlightInfoType highlightInfoType = myLevels.get(i);
+      HighlightInfo highlightInfo = highlightInfoFromDescriptor(problemDescriptor, highlightInfoType, message, message);
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
-      List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
+      List<IntentionAction> options = getStandardIntentionOptions(tool, problemDescriptor.getPsiElement());
       final LocalQuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
@@ -176,6 +177,16 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     }
     return highlights;
+  }
+
+  private static HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
+                                                           final HighlightInfoType highlightInfoType,
+                                                           final String message,
+                                                           final String toolTip) {
+    TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
+    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, textRange, message, toolTip);
+    highlightInfo.isAfterEndOfLine = problemDescriptor.isAfterEndOfLine();
+    return highlightInfo;
   }
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
@@ -240,7 +251,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
       @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, tooltip, descriptor.isAfterEndOfLine());
+      HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
       infos.add(highlightInfo);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
       final LocalQuickFix[] fixes = descriptor.getFixes();
