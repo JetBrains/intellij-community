@@ -37,7 +37,7 @@ public class ConverterManagerImpl implements ConverterManager {
       return converter;
     }
 
-    final Convert convert = method.getAnnotation(Convert.class);
+    final Convert convert = DomUtil.getAnnotation(method, Convert.class);
     if (convert != null) {
       converter = getConverter(convert.value());
     }

@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.xml.impl.MethodSignature;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
@@ -134,7 +135,15 @@ public class DomUtil {
   }
 
   public static boolean isTagValueGetter(final Method method) {
-    return isGetter(method) && (method.getAnnotation(TagValue.class) != null || "getValue".equals(method.getName()));
+    return isGetter(method) && (hasTagValueAnnotation(method) || "getValue".equals(method.getName()));
+  }
+
+  private static boolean hasTagValueAnnotation(final Method method) {
+    return getAnnotation(method, TagValue.class) != null;
+  }
+
+  public static <T extends Annotation> T getAnnotation(final Method method, final Class<T> annotationClass) {
+    return MethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
   }
 
   public static boolean isGetter(final Method method) {
@@ -189,6 +198,6 @@ public class DomUtil {
 
   public static boolean isTagValueSetter(final Method method) {
     boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
-    return setter && (method.getAnnotation(TagValue.class) != null || "setValue".equals(method.getName()));
+    return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
   }
 }

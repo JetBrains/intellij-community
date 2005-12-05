@@ -74,8 +74,8 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getSubTagName(final Method method) {
-    final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+  private String getSubTagName(final MethodSignature method) {
+    final SubTag subTagAnnotation = method.findAnnotation(SubTag.class, myClass);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
       return getNameFromMethod(method);
     }
@@ -83,8 +83,8 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getSubTagNameForCollection(final Method method) {
-    final SubTagList subTagList = method.getAnnotation(SubTagList.class);
+  private String getSubTagNameForCollection(final MethodSignature method) {
+    final SubTagList subTagList = method.findAnnotation(SubTagList.class, myClass);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
       return propertyName != null ? getNameStrategy().convertName(StringUtil.unpluralize(propertyName)) : null;
@@ -93,13 +93,13 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getNameFromMethod(final Method method) {
+  private String getNameFromMethod(final MethodSignature method) {
     final String propertyName = getPropertyName(method);
     return propertyName == null ? null : getNameStrategy().convertName(propertyName);
   }
 
-  private static String getPropertyName(Method method) {
-    return PropertyUtil.getPropertyName(method.getName());
+  private static String getPropertyName(MethodSignature method) {
+    return PropertyUtil.getPropertyName(method.getMethodName());
   }
 
   @NotNull
@@ -128,7 +128,8 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
-      if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) || isCustomMethod(method)) {
+      if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) ||
+          isCustomMethod(MethodSignature.getSignature(method))) {
         iterator.remove();
       }
     }
@@ -142,8 +143,9 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
-      if (isAddMethod(method)) {
-        myCollectionChildrenAdditionMethods.put(MethodSignature.getSignature(method), extractTagName(method, "add"));
+      final MethodSignature signature = MethodSignature.getSignature(method);
+      if (isAddMethod(method, signature)) {
+        myCollectionChildrenAdditionMethods.put(signature, extractTagName(signature, "add"));
         iterator.remove();
       }
     }
@@ -156,8 +158,8 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   }
 
-  private boolean isAddMethod(Method method) {
-    final String tagName = extractTagName(method, "add");
+  private boolean isAddMethod(Method method, MethodSignature signature) {
+    final String tagName = extractTagName(signature, "add");
     if (tagName == null) return false;
 
     final Type childrenClass = getCollectionChildrenType(tagName);
@@ -166,11 +168,11 @@ public class GenericInfoImpl implements DomGenericInfo {
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 
-  private String extractTagName(Method method, String prefix) {
-    final String name = method.getName();
+  private String extractTagName(MethodSignature method, String prefix) {
+    final String name = method.getMethodName();
     if (!name.startsWith(prefix)) return null;
 
-    final SubTagList subTagAnnotation = method.getAnnotation(SubTagList.class);
+    final SubTagList subTagAnnotation = method.findAnnotation(SubTagList.class, myClass);
     if (subTagAnnotation != null && !StringUtil.isEmpty(subTagAnnotation.value())) {
       return subTagAnnotation.value();
     }
@@ -186,24 +188,24 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
 
     final boolean isAttributeMethod = method.getReturnType().equals(GenericAttributeValue.class);
-    final Attribute annotation = method.getAnnotation(Attribute.class);
+    final MethodSignature signature = MethodSignature.getSignature(method);
+    final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
     if (annotation != null) {
       assert isAttributeMethod : method + " should return " + GenericAttributeValue.class;
     }
-    final MethodSignature signature = MethodSignature.getSignature(method);
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();
-      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method) : s;
+      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(signature) : s;
       assert StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
       myAttributeChildrenMethods.put(signature, attributeName);
       return true;
     }
 
     if (DomUtil.isDomElement(method.getReturnType())) {
-      final String qname = getSubTagName(method);
+      final String qname = getSubTagName(signature);
       if (qname != null) {
         int index = 0;
-        final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+        final SubTag subTagAnnotation = signature.findAnnotation(SubTag.class, myClass);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
           index = subTagAnnotation.index();
         }
@@ -218,7 +220,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
     if (DomUtil.isDomElement(type)) {
-      final String qname = getSubTagNameForCollection(method);
+      final String qname = getSubTagNameForCollection(signature);
       if (qname != null) {
         myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(signature, qname);
@@ -229,24 +231,25 @@ public class GenericInfoImpl implements DomGenericInfo {
     return false;
   }
 
-  private boolean isCustomMethod(final Method method) {
-    return method.getAnnotation(PropertyAccessor.class) != null || method.getAnnotation(CustomMethod.class) != null;
+  private boolean isCustomMethod(final MethodSignature method) {
+    return method.findAnnotation(PropertyAccessor.class, myClass) != null ||
+           method.findAnnotation(CustomMethod.class, myClass) != null;
   }
 
   public final Invocation createInvocation(Method method) {
     buildMethodMaps();
 
-    final CustomMethod customMethod = method.getAnnotation(CustomMethod.class);
+    final MethodSignature signature = MethodSignature.getSignature(method);
+    final CustomMethod customMethod = signature.findAnnotation(CustomMethod.class, myClass);
     if (customMethod != null) {
       return createCustomMethodInvocation(customMethod, method);
     }
 
-    final PropertyAccessor accessor = method.getAnnotation(PropertyAccessor.class);
+    final PropertyAccessor accessor = signature.findAnnotation(PropertyAccessor.class, myClass);
     if (accessor != null) {
       return createPropertyAccessorInvocation(accessor);
     }
 
-    final MethodSignature signature = MethodSignature.getSignature(method);
     if (myAttributeChildrenMethods.containsKey(signature)) {
       return new GetAttributeChildInvocation(signature);
     }
