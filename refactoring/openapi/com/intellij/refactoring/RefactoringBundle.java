@@ -46,8 +46,8 @@ public class RefactoringBundle {
     return message("visibility.as.is");
   }
 
-  public static String getVisibilityMinimalVisible() {
-    return message("visibility.minimal.visible");
+  public static String getEscalateVisibility() {
+    return message("visibility.escalate");
   }
 
   public static String getCannotRefactorMessage(final String message) {

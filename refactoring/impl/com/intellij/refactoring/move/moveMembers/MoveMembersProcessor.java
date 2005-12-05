@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +27,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -236,7 +234,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     if(myNewVisibility == null) return;
 
-    if (VisibilityUtil.MINIMAL_VISIBLE.equals(myNewVisibility)) {
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
       for (UsageInfo usage : usages) {
         if (usage instanceof MyUsageInfo) {
           final PsiElement place = usage.getElement();
@@ -265,7 +263,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     expr = (PsiReferenceExpression)CodeStyleManager.getInstance(myProject).reformat(expr);
 
     PsiReferenceExpression qualifier = factory.createReferenceExpression(aClass);
-    expr.getQualifierExpression().replace(qualifier);
+    PsiExpression qualifierExpression = expr.getQualifierExpression();
+    assert qualifierExpression != null;
+    qualifierExpression.replace(qualifier);
 
     if (refExpr.getParent() != null) {
       return (PsiReferenceExpression) refExpr.replace(expr);
@@ -295,7 +295,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void addInaccessiblleConflicts(final ArrayList<String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
     String newVisibility = myNewVisibility;
-    if (VisibilityUtil.MINIMAL_VISIBLE.equals(newVisibility)) { //Still need to check for access object
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
@@ -381,7 +381,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public static String[] analyzeAccessibilityConflicts(final Set<PsiMember> membersToMove,
                                                 final PsiClass targetClass,
                                                 final LinkedHashSet<String> conflicts, String newVisibility) {
-    if (VisibilityUtil.MINIMAL_VISIBLE.equals(newVisibility)) { //Still need to check for access object
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 

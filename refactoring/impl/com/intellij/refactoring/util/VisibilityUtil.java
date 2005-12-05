@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NonNls;
 
 
 public class VisibilityUtil  {
-  @NonNls public static final String MINIMAL_VISIBLE = "MimimalVisible";
+  @NonNls public static final String ESCALATE_VISIBILITY = "EscalateVisible";
   private static final String[] visibilityModifiers = {
     PsiModifier.PRIVATE,
     PsiModifier.PACKAGE_LOCAL,
