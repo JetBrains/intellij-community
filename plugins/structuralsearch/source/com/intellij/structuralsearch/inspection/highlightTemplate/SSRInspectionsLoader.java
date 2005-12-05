@@ -20,11 +20,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 05.10.2005
- * Time: 20:19:08
- * To change this template use File | Settings | File Templates.
+ * @author cdr
  */
 public class SSRInspectionsLoader implements ApplicationComponent, InspectionToolProvider {
   @NonNls
