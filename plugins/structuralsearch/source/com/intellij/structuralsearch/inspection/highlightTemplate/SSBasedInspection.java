@@ -15,14 +15,15 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
@@ -83,7 +84,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return InspectionsBundle.message("inspection.general.tools.group.name");
+    return GroupNames.GENERAL_GROUP_NAME;
   }
 
   public String getDisplayName() {
@@ -151,5 +152,12 @@ public class SSBasedInspection extends LocalInspectionTool {
   // must be inside event dispatch
   public void precompileConfigurations(final Project project) {
     compiledConfigurations = new Matcher(project).precompileOptions(myConfigurations);
+    // avoid memory leak
+    ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
+      public void projectClosed(Project project) {
+        compiledConfigurations = null;
+        ProjectManager.getInstance().removeProjectManagerListener(project, this);
+      }
+    });
   }
 }

@@ -15,9 +15,8 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
+import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -40,6 +39,7 @@ public class SSRInspectionsLoader implements ApplicationComponent, InspectionToo
   public Class[] getInspectionClasses() {
     return new Class[] {
       SSBasedInspection.class,
+      //SSDefaultFileTemplateUsageInspection.class,
     };
   }
 }
