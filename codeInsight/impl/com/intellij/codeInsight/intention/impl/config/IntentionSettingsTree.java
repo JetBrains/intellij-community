@@ -70,7 +70,6 @@ public abstract class IntentionSettingsTree {
   }
 
   private ActionToolbar createTreeToolbarPanel() {
-    DefaultActionGroup actions = new DefaultActionGroup();
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
 
     TreeExpander treeExpander = new TreeExpander() {
@@ -93,6 +92,7 @@ public abstract class IntentionSettingsTree {
 
     AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
+    DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(expandAllToolbarAction);
 
     AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
@@ -148,7 +148,7 @@ public abstract class IntentionSettingsTree {
     return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
-  private boolean resetCheckMark(final CheckedTreeNode root) {
+  private static boolean resetCheckMark(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
@@ -157,11 +157,11 @@ public abstract class IntentionSettingsTree {
       return enabled;
     }
     else {
-      root.setChecked(true);
+      root.setChecked(false);
       visitChildren(root, new CheckedNodeVisitor() {
         public void visit(CheckedTreeNode node) {
-          if (!resetCheckMark(node)) {
-            root.setChecked(false);
+          if (resetCheckMark(node)) {
+            root.setChecked(true);
           }
         }
       });
@@ -169,7 +169,7 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private void checkRecursively(CheckedTreeNode root, final boolean check) {
+  private static void checkRecursively(CheckedTreeNode root, final boolean check) {
     Object userObject = root.getUserObject();
     root.setChecked(check);
     if (!(userObject instanceof IntentionActionMetaData)) {
@@ -214,7 +214,7 @@ public abstract class IntentionSettingsTree {
     apply(root);
   }
 
-  private void apply(CheckedTreeNode root) {
+  private static void apply(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
@@ -233,7 +233,7 @@ public abstract class IntentionSettingsTree {
     return isModified(getRoot());
   }
 
-  private boolean isModified(CheckedTreeNode root) {
+  private static boolean isModified(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;

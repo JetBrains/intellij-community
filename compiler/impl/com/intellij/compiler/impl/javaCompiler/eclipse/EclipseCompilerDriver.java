@@ -43,6 +43,8 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -62,8 +64,13 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   }
 
   private void parseCommandLine(String[] args) throws InvalidInputException {
-    Main driver = new Main(null, null, false);
+    StringWriter err = new StringWriter();
+    Main driver = new Main(null, new PrintWriter(err), false);
     driver.configure(args);
+    StringBuffer buffer = err.getBuffer();
+    if (buffer.length() != 0) {
+      throw new InvalidInputException(buffer.toString());
+    }
     sourceFilePaths = driver.filenames;
     compilerOptions = driver.options;
     classPath = driver.getLibraryAccess();
