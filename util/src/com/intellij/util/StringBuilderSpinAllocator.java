@@ -14,6 +14,9 @@ public class StringBuilderSpinAllocator {
   private static class Disposer implements SpinAllocator.IDisposer<StringBuilder> {
     public void disposeInstance(final StringBuilder instance) {
       instance.setLength(0);
+      if( instance.capacity() > 1024 ) {
+        instance.trimToSize();
+      }
     }
   }
 
