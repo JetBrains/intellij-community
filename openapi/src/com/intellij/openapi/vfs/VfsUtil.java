@@ -23,12 +23,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -36,6 +37,28 @@ import java.util.*;
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
+  public static String loadText(VirtualFile file) throws IOException{
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), file.getCharset()));
+    try {
+      StringBuilder builder = new StringBuilder((int)file.getLength());
+
+      do {
+        final String line = reader.readLine();
+        if (line == null) break;
+        builder.append(line);
+        //builder.append('\n');
+      } while (true);
+
+      return builder.toString();
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  public static void saveText(VirtualFile file, String text) throws IOException {
+    file.setBinaryContent(text.getBytes(file.getCharset().name()));
+  }
 
   /**
    * Checks whether the <code>ancestor {@link VirtualFile}</code> is parent of <code>file

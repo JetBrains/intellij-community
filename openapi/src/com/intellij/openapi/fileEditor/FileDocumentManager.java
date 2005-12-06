@@ -35,6 +35,7 @@ public abstract class FileDocumentManager {
   public abstract void saveDocument(Document document);
   public abstract Document[] getUnsavedDocuments();
   public abstract boolean isDocumentUnsaved(Document document);
+  public abstract boolean isFileModified(VirtualFile file);
 
   public abstract void addFileDocumentManagerListener(FileDocumentManagerListener listener);
   public abstract void removeFileDocumentManagerListener(FileDocumentManagerListener listener);

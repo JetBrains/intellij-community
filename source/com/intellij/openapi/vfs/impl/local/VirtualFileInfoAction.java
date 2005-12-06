@@ -4,10 +4,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,7 +47,13 @@ public class VirtualFileInfoAction extends AnAction{
       info.append(String.valueOf(virtualFile.isWritable()));
       info.append("\n");
       info.append("Content: ");
-      info.append(FileDocumentManager.getInstance().getDocument(virtualFile) != null ? FileDocumentManager.getInstance().getDocument(virtualFile).getText() : "");
+      try {
+        info.append(VfsUtil.loadText(virtualFile));
+      }
+      catch (IOException e1) {
+        info.append("<unable to load content>");
+        info.append(e1.getMessage());
+      }
       info.append("\n");
 
       Messages.showMessageDialog(info.toString(), "Virtual File Info", Messages.getInformationIcon());

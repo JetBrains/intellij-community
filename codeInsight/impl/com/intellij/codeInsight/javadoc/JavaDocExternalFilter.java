@@ -6,23 +6,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.HttpConfigurable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.net.URL;
 import java.net.URLConnection;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -247,7 +246,7 @@ private static abstract class RefConvertor {
           return null;
         }
 
-        return new StringReader(FileDocumentManager.getInstance().getDocument(file).getText());
+        return new StringReader(VfsUtil.loadText(file));
       }
 
       URL url = BrowserUtil.getURL(surl);
@@ -255,7 +254,9 @@ private static abstract class RefConvertor {
       final URLConnection urlConnection = url.openConnection();
       final String contentEncoding = urlConnection.getContentEncoding();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      return new InputStreamReader(urlConnection.getInputStream(), contentEncoding);
+      return contentEncoding != null
+             ? new InputStreamReader(urlConnection.getInputStream(), contentEncoding)
+             : new InputStreamReader(urlConnection.getInputStream());
     }
     catch (final IOException e) {
       showErrorMessage(e);

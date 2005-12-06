@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +60,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
     final VirtualFile virtualFile = file.getVirtualFile();
     assertNotNull(virtualFile);
-    Matcher matcher = pattern.matcher(FileDocumentManager.getInstance().getDocument(virtualFile).getText());
+    Matcher matcher = pattern.matcher(VfsUtil.loadText(virtualFile));
     assertTrue(matcher.matches());
     final String text = matcher.group(1);
     final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));

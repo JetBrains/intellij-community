@@ -1,16 +1,15 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetSettings;
-import com.intellij.openapi.vfs.SmartEncodingInputStream;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.CharsetSettings;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.SmartEncodingInputStream;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.Patches;
-import com.intellij.testFramework.MockVirtualFile;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -163,20 +162,8 @@ public final class LoadTextUtil {
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException{
-    if(virtualFile instanceof MockVirtualFile){
-      final MockVirtualFile mockVirtualFile = (MockVirtualFile)virtualFile;
-      return new CharArrayWriter() {
-        public void close() {
-          super.close();
-          mockVirtualFile.myModStamp = newModificationStamp;
-          mockVirtualFile.myContent = toString();
-        }
-      };
-    }
-    else{
-      Charset charset = virtualFile.getCharset();
-      OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp);
-      return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
-    }
+    Charset charset = virtualFile.getCharset();
+    OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp);
+    return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
   }
 }

@@ -29,8 +29,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.EditorPopupHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -198,7 +198,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * Just calculates "modified" property
    */
   private boolean isModifiedImpl(){
-    return myFile.isModified();
+    return FileDocumentManager.getInstance().isFileModified(myFile);
   }
 
   /**

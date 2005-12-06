@@ -4,15 +4,16 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -128,7 +129,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
       assertNotNull(vFile);
       byte[] content = vFile.getFileType().isBinary() ? vFile.contentsToByteArray(): null;
-      final String fileText =  vFile.getFileType().isBinary() ? null: FileDocumentManager.getInstance().getDocument(vFile).getText();
+      final String fileText = vFile.getFileType().isBinary() ? null : VfsUtil.loadText(vFile);
       
       String newFileText = null;
       RangeMarker caretMarker = null;

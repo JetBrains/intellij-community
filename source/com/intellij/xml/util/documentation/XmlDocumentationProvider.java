@@ -6,13 +6,13 @@ import com.intellij.ant.impl.AntInstallation;
 import com.intellij.ant.impl.references.PsiNoWhereElement;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
@@ -20,22 +20,22 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -162,7 +162,12 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
               );
 
               if (fileByIoFile != null) {
-                return FileDocumentManager.getInstance().getDocument(fileByIoFile).getText();
+                try {
+                  return VfsUtil.loadText(fileByIoFile);
+                }
+                catch (IOException e) {
+                  // ignore exception
+                }
               }
             }
           }

@@ -5,6 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -12,9 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -99,7 +100,12 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   public String getDescription(){
-    return myDescription != null ? FileDocumentManager.getInstance().getDocument(myDescription).getText() : "";
+    try {
+      return myDescription != null ? VfsUtil.loadText(myDescription) : "";
+    }
+    catch (IOException e) {
+      return "";
+    }
   }
 
   void setDescription(VirtualFile file){

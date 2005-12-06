@@ -11,19 +11,18 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
@@ -115,7 +114,6 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     setupFileEditorAndDocument(fileName, newFileText);
     setupCaret(caretMarker, newFileText);
     setupSelection(selStartMarker, selEndMarker);
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
   private void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
@@ -142,7 +140,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     deleteVFile();
     myVFile = getSourceRoot().createChildData(this, fileName);
-    FileDocumentManager.getInstance().getDocument(myVFile).setText(fileText);
+    VfsUtil.saveText(myVFile, fileText);
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     ((PsiFileImpl) myFile).setIsPhysicalExplicitly(true);

@@ -10,6 +10,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -33,12 +34,13 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -473,14 +475,13 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(newVFile, getProject());
           String text = originalFile.getText();
-          if(FileDocumentManager.getInstance().getDocument(newVFile) != null)
-            FileDocumentManager.getInstance().getDocument(newVFile).setText(text);
-          else{
-            if (!lineSeparator.equals("\n")) {
-              text = StringUtil.convertLineSeparators(text, lineSeparator);
-            }
-            newVFile.setBinaryContent(text.getBytes(newVFile.getCharset().name()));
+          if (!lineSeparator.equals("\n")) {
+            text = StringUtil.convertLineSeparators(text, lineSeparator);
           }
+
+          final Writer writer = LoadTextUtil.getWriter(newVFile, myManager, -1, -1);
+          writer.write(text);
+          writer.close();
         }
         else {
           byte[] storedContents = ((PsiBinaryFileImpl)originalFile).getStoredContents();

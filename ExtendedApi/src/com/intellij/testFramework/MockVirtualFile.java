@@ -7,7 +7,10 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.Assert;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class MockVirtualFile extends VirtualFile {
   public String myContent = "";
@@ -70,8 +73,13 @@ public class MockVirtualFile extends VirtualFile {
     return null;
   }
 
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    return null;
+  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+    return new ByteArrayOutputStream() {
+      public void close() throws IOException {
+        myModStamp = newModificationStamp;
+        myContent = toString();
+      }
+    };
   }
 
   public byte[] contentsToByteArray() throws IOException {
@@ -90,6 +98,10 @@ public class MockVirtualFile extends VirtualFile {
     myActualTimeStamp = actualTimeStamp;
   }
 
+  public long getActualTimeStamp() {
+    return myActualTimeStamp;
+  }
+
   public long getLength() {
     try {
       return contentsToByteArray().length;
@@ -102,16 +114,6 @@ public class MockVirtualFile extends VirtualFile {
   }
 
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-  }
-
-  public Writer getWriter(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
-    return new CharArrayWriter() {
-      public void close() {
-        super.close();
-        myModStamp = newModificationStamp;
-        myContent = toString();
-      }
-    };
   }
 
   public void setContent(Object requestor, String content, boolean fireEvent) {

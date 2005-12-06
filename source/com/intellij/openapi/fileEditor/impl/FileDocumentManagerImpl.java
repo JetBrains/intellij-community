@@ -44,10 +44,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PendingEventDispatcher;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 
 import javax.swing.*;
@@ -264,13 +265,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         return;
       }
 
-      if (!file.isModified()){
+      if (!isFileModified(file)){
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
 
-      if (file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp()){
+      if (needsRefresh(file)){
         file.refresh(false, false);
         if (!myUnsavedDocuments.contains(document)) return;
         if (!file.isValid()) return;
@@ -314,6 +315,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  private boolean needsRefresh(final VirtualFile file) {
+    return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp() ||
+      file instanceof MockVirtualFile && file.getTimeStamp() != ((MockVirtualFile)file).getActualTimeStamp();
+  }
+
   public static String getLineSeparator(Document document, VirtualFile file) {
     String lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
     if (lineSeparator == null){
@@ -352,6 +358,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public boolean isDocumentUnsaved(Document document) {
     return myUnsavedDocuments.contains(document);
+  }
+
+  public boolean isFileModified(VirtualFile file) {
+    final Document doc = getCachedDocument(file);
+    if (doc == null) return false;
+    return doc.getModificationStamp() != file.getModificationStamp();
   }
 
   public void addFileDocumentManagerListener(FileDocumentManagerListener listener) {

@@ -15,22 +15,21 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ReadOnlyModificationException;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
@@ -414,10 +413,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public abstract byte[] contentsToByteArray() throws IOException;
 
-  public final boolean isModified(){
-    final Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(this);
-    return cachedDocument != null && cachedDocument.getModificationStamp() != getModificationStamp();
-  }
 
   /**
    * Gets modification stamp value. Modification stamp is a value changed by any modification

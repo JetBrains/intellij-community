@@ -11,8 +11,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -71,7 +71,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     }
 
     final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-    FileDocumentManager.getInstance().getDocument(vFile).setText(text);
+    VfsUtil.saveText(vFile, text);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     assertNotNull(vFile);
@@ -84,7 +84,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
     assertNotNull("file " + filePath + " not found", vFile);
 
-    String fileText = FileDocumentManager.getInstance().getDocument(vFile) != null ? FileDocumentManager.getInstance().getDocument(vFile).getText() : "";
+    String fileText = VfsUtil.loadText(vFile);
     fileText = StringUtil.convertLineSeparators(fileText, "\n");
 
     int offset = fileText.indexOf(marker);

@@ -1,8 +1,8 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
@@ -31,10 +31,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -42,10 +44,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.IOException;
 import java.util.Vector;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /*
  * @author: MYakovlev
@@ -279,8 +279,13 @@ public class FileTemplateConfigurable implements Configurable {
     if (description == null) {
       description = "";
     }
-    if ((description.length() == 0) && (myDefaultDescription != null) && FileDocumentManager.getInstance().getDocument(myDefaultDescription) != null) {
-      description = FileDocumentManager.getInstance().getDocument(myDefaultDescription).getText();
+    if ((description.length() == 0) && (myDefaultDescription != null)) {
+      try {
+        description = VfsUtil.loadText(myDefaultDescription);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     boolean adjust = (myTemplate != null) && myTemplate.isAdjust();
     setHighlighter();
