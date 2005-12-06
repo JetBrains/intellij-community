@@ -22,7 +22,7 @@ public class ModelMerger {
     return AdvancedProxy.createProxy(aClass, new MergingInvocationHandler<T>(implementations));
   }
 
-  private static class MergingInvocationHandler<T> implements InvocationHandler {
+  public static class MergingInvocationHandler<T> implements InvocationHandler {
     private final T[] myImplementations;
 
     public MergingInvocationHandler(final T... implementations) {
@@ -36,8 +36,7 @@ public class ModelMerger {
     private Object getPrimaryKey(final Class aClass, final Object implementation) throws IllegalAccessException, InvocationTargetException {
       for (final Method method : aClass.getMethods()) {
         final Class<?> returnType = method.getReturnType();
-        if (DomUtil.findAnnotationDFS(method, PrimaryKey.class) != null && returnType != void.class &&
-            method.getParameterTypes().length == 0) {
+        if (isPrimaryKey(method, returnType)) {
           final Object o = method.invoke(implementation);
           return GenericValue.class.isAssignableFrom(returnType) ? ((GenericValue)o).getValue() : o;
         }
@@ -49,6 +48,11 @@ public class ModelMerger {
       }
 
       return null;
+    }
+
+    private boolean isPrimaryKey(final Method method, final Class<?> returnType) {
+      return DomUtil.findAnnotationDFS(method, PrimaryKey.class) != null && returnType != void.class &&
+             method.getParameterTypes().length == 0;
     }
 
 
@@ -137,25 +141,27 @@ public class ModelMerger {
             results.add(objects.get(0));
           }
           else {
-            results.add(mergeModels(returnType, objects.toArray()));
+            results.add(mergeImplementations(returnType, objects.toArray()));
           }
         }
       }
       else {
         for (final T t : myImplementations) {
           final Object o = method.invoke(t, args);
-          if (o != null) {
-            if (o instanceof Collection) {
-              results.addAll((Collection)o);
-            }
-            else {
-              results.add(o);
-              break;
-            }
+          if (o instanceof Collection) {
+            results.addAll((Collection)o);
+          }
+          else if (o != null) {
+            results.add(o);
+            break;
           }
         }
       }
       return results;
+    }
+
+    protected Object mergeImplementations(final Class returnType, final Object[] implementations) {
+      return mergeModels(returnType, implementations);
     }
 
     private boolean addToMaps(final Object o,
