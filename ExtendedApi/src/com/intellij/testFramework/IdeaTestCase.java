@@ -59,7 +59,7 @@ import java.util.Map;
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends TestCase implements DataProvider {
-
+  private static final String PROFILE = "Configurable";
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
   }
@@ -125,7 +125,7 @@ import java.util.Map;
       enableInspectionTool(tool);
     }
 
-    final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
       public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
         final Collection<LocalInspectionTool> tools = myAvailableTools.values();
         return tools.toArray(new LocalInspectionTool[tools.size()]);
@@ -240,6 +240,7 @@ import java.util.Map;
   }
 
   protected void tearDown() throws Exception {
+    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       assertNotNull("Application components damaged", ProjectManager.getInstance());
 

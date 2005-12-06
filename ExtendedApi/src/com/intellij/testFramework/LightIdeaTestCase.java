@@ -60,6 +60,7 @@ import java.util.*;
  * so it contains classes that is really needed in order to speed up tests startup.
  */
 @NonNls public class LightIdeaTestCase extends TestCase implements DataProvider {
+  private static final String PROFILE = "Configurable";
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
   private static Module ourModule;
@@ -266,6 +267,7 @@ import java.util.*;
   }
 
   protected void tearDown() throws Exception {
+    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
