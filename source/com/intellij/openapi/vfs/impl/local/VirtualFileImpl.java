@@ -24,7 +24,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   private static final LocalFileSystemImpl ourFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
 
-  private static char[] myBuffer = new char[1024];
+  private static char[] ourBuffer = new char[1024];
 
   private VirtualFileImpl myParent;
   private String myName;
@@ -103,11 +103,11 @@ public class VirtualFileImpl extends VirtualFile {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
     synchronized (ourFileSystem.LOCK) {
       try {
-        int length = appendPath(myBuffer, separatorChar);
-        return new String(myBuffer, 0, length);
+        int length = appendPath(ourBuffer, separatorChar);
+        return new String(ourBuffer, 0, length);
       }
       catch (ArrayIndexOutOfBoundsException aiob) {
-        myBuffer = new char[myBuffer.length * 2];
+        ourBuffer = new char[ourBuffer.length * 2];
         return getPath(separatorChar);
       }
     }
