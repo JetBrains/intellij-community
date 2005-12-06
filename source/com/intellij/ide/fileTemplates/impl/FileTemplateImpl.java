@@ -13,6 +13,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -97,13 +99,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   public String getDescription(){
-    try{
-      return myDescription != null ? new String(myDescription.contentsToCharArray()) : "";
-    }
-    catch (IOException e){
-      LOG.error(e);
-    }
-    return "";
+    return myDescription != null ? FileDocumentManager.getInstance().getDocument(myDescription).getText() : "";
   }
 
   void setDescription(VirtualFile file){
@@ -169,15 +165,9 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   /** Read template from URL. */
-  private static String readExternal(VirtualFile virtualFile) throws IOException{
-    InputStream inputStream = virtualFile.getInputStream();
-    try {
-      String result = readExternal(inputStream);
-      return result;
-    }
-    finally {
-      inputStream.close();
-    }
+  private String readExternal(VirtualFile url) throws IOException{
+    final Document content = FileDocumentManager.getInstance().getDocument(url);
+    return content != null ? content.getText() : new String(url.contentsToByteArray(), ourEncoding);
   }
 
   /** Read template from stream. Stream does not closed after reading. */
@@ -232,7 +222,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
       outputStreamWriter = new OutputStreamWriter(fileOutputStream, ourEncoding);
     }
     catch (UnsupportedEncodingException e){
-      Messages.showMessageDialog(IdeBundle.message("error.unable.to.save.file.template.using.encoding", getName(), ourEncoding), 
+      Messages.showMessageDialog(IdeBundle.message("error.unable.to.save.file.template.using.encoding", getName(), ourEncoding),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       outputStreamWriter = new OutputStreamWriter(fileOutputStream);
     }

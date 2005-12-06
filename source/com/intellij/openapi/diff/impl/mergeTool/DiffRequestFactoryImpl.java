@@ -47,7 +47,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class DiffRequestFactoryImpl implements DiffRequestFactory {
 
@@ -114,32 +113,8 @@ public class DiffRequestFactoryImpl implements DiffRequestFactory {
     }
 
     private void storeChangedContent(String text) {
-      OutputStream outputStream = null;
-      byte[] bytes = null;
-      try {
-        bytes = text.getBytes(myFile.getCharset().name());
-        outputStream = myFile.getOutputStream(this);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      try {
-        outputStream.write(bytes);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        try {
-          outputStream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      final Document content = FileDocumentManager.getInstance().getDocument(myFile);
+      content.replaceString(0, content.getTextLength(), text);
     }
-
   }
-
-
 }

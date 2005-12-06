@@ -72,7 +72,7 @@ public class CharsetToolkit {
   private Charset defaultCharset;
   private boolean enforce8Bit = false;
 
-  static final byte[] UTF8_BOM = new byte[]{-17, -69, -65, };
+  public static final byte[] UTF8_BOM = new byte[]{-17, -69, -65, };
   private static final byte[] UTF16LE_BOM = new byte[]{-1, -2, };
   private static final byte[] UTF16BE_BOM = new byte[]{-2, -1, };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";

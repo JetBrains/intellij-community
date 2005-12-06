@@ -32,8 +32,10 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -45,6 +47,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 
 import javax.swing.*;
@@ -150,11 +153,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     if (fileType.isBinary()) return null;
+    if(file.isDirectory()) return ArrayUtil.EMPTY_CHAR_SEQUENCE;
 
-    final String[] detectedLineSeparator = new String[1];
-    final CharSequence result = LoadTextUtil.loadText(file, detectedLineSeparator);
-    file.putUserData(DETECTED_LINE_SEPARATOR_KEY, detectedLineSeparator[0]);
-    return result;
+    final byte[] bytes;
+    try {
+      bytes = file.contentsToByteArray();
+    }
+    catch (IOException e) {
+      return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+    }
+    return getTextByBinaryPresentation(bytes, file);
   }
 
   private char[] decompile(VirtualFile file) {
@@ -256,13 +264,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         return;
       }
 
-      if (file.getModificationStamp() == document.getModificationStamp()){
+      if (!file.isModified()){
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         return;
       }
 
-      if (file.getTimeStamp() != file.getActualTimeStamp()){
+      if (file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp()){
         file.refresh(false, false);
         if (!myUnsavedDocuments.contains(document)) return;
         if (!file.isValid()) return;
@@ -283,7 +291,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (!lineSeparator.equals("\n")){
           text = StringUtil.convertLineSeparators(text, lineSeparator);
         }
-        writer = file.getWriter(this, document.getModificationStamp(), -1);
+        writer = LoadTextUtil.getWriter(file, this, document.getModificationStamp(), -1);
         writer.write(text);
         commited = true;
       }
@@ -325,6 +333,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     else {
       return lineSeparator;
     }
+  }
+
+  public CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
+    final Pair<CharSequence, String> result = LoadTextUtil.loadText(content, virtualFile);
+    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+    return result.getFirst();
+  }
+
+  public void discardAllChanges() {
+    myUnsavedDocuments.clear();
   }
 
 
@@ -369,7 +387,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void contentsChanged(VirtualFileEvent event) {
-    if (event.getRequestor() == this) return;
+    if (event.isFromSave()) return;
     final VirtualFile file = event.getFile();
     final Document document = getCachedDocument(file);
     if (document == null) {

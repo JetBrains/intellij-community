@@ -190,4 +190,7 @@ public class MockDocument implements DocumentEx {
 
   public void setCyclicBufferSize(int bufferSize) {
   }
+
+  public void setText(final CharSequence text) {
+  }
 }

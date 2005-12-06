@@ -170,7 +170,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
   }
 
   private boolean externalChange(VirtualFileEvent event) {
-    return event.getRequestor() == null;
+    return event.isFromRefresh();
   }
 
   public void purge() {

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -320,6 +321,20 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     if (path == null) return null;
     path = path.replace(File.separatorChar, '/');
     return refreshAndFindFileByPath(path);
+  }
+
+  public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
+    if(!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray(); 
+    VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
+    InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
+    try {
+      int physicalFileLength = virtualFileImpl.getPhysicalFileLength();
+      LOG.assertTrue(physicalFileLength >= 0);
+      return FileUtil.loadBytes(inputStream, physicalFileLength);
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   public String extractPresentableUrl(String path) {

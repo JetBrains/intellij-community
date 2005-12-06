@@ -55,13 +55,10 @@ public class ConstantValuesTest extends PsiTestCase{
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          try{
-            byte[] contents = file.getVirtualFile().contentsToByteArray();
-            OutputStream out = file.getVirtualFile().getOutputStream(this);
-            out.write(contents);
-            out.close();
+          try {
+            file.getVirtualFile().setBinaryContent(file.getVirtualFile().contentsToByteArray());
           }
-          catch(IOException e){
+          catch (IOException e) {
             LOG.error(e);
           }
         }

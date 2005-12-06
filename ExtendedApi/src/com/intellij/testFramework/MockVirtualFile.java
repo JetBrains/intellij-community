@@ -10,9 +10,9 @@ import junit.framework.Assert;
 import java.io.*;
 
 public class MockVirtualFile extends VirtualFile {
-  protected String myContent = "";
+  public String myContent = "";
   protected String myName = "";
-  protected long myModStamp = LocalTimeCounter.currentTime();
+  public long myModStamp = LocalTimeCounter.currentTime();
   protected long myTimeStamp = System.currentTimeMillis();
   protected long myActualTimeStamp = myTimeStamp;
   private boolean myIsWritable = true;
@@ -78,20 +78,12 @@ public class MockVirtualFile extends VirtualFile {
     return myContent.getBytes();
   }
 
-  public char[] contentsToCharArray() throws IOException {
-    return myContent.toCharArray();
-  }
-
   public long getModificationStamp() {
     return myModStamp;
   }
 
   public long getTimeStamp() {
     return myTimeStamp;
-  }
-
-  public long getActualTimeStamp() {
-    return myActualTimeStamp;
   }
 
   public void setActualTimeStamp(long actualTimeStamp) {
@@ -110,10 +102,6 @@ public class MockVirtualFile extends VirtualFile {
   }
 
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-  }
-
-  public Reader getReader() throws IOException {
-    return new CharArrayReader(contentsToCharArray());
   }
 
   public Writer getWriter(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {

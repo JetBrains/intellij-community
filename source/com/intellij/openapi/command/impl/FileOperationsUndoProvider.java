@@ -130,7 +130,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   private boolean shouldProcess(final VirtualFileEvent event) {
-    return event.getRequestor() != null && getLocalVcs().isUnderVcs(event.getFile());
+    return !event.isFromRefresh() && getLocalVcs().isUnderVcs(event.getFile());
   }
 
   public void fileDeleted(VirtualFileEvent event) {

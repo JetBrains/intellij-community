@@ -39,8 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -475,20 +473,20 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(newVFile, getProject());
           String text = originalFile.getText();
-          if (!lineSeparator.equals("\n")) {
-            text = StringUtil.convertLineSeparators(text, lineSeparator);
+          if(FileDocumentManager.getInstance().getDocument(newVFile) != null)
+            FileDocumentManager.getInstance().getDocument(newVFile).setText(text);
+          else{
+            if (!lineSeparator.equals("\n")) {
+              text = StringUtil.convertLineSeparators(text, lineSeparator);
+            }
+            newVFile.setBinaryContent(text.getBytes(newVFile.getCharset().name()));
           }
-          Writer writer = newVFile.getWriter(myManager); //?
-          writer.write(text);
-          writer.close();
         }
         else {
           byte[] storedContents = ((PsiBinaryFileImpl)originalFile).getStoredContents();
           if (storedContents != null) {
             newVFile = myFile.createChildData(myManager, originalFile.getName());
-            OutputStream out = newVFile.getOutputStream(myManager);
-            out.write(storedContents);
-            out.close();
+            newVFile.setBinaryContent(storedContents);
           }
           else {
             newVFile = VfsUtil.copyFile(null, originalFile.getVirtualFile(), myFile);

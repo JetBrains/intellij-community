@@ -198,7 +198,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * Just calculates "modified" property
    */
   private boolean isModifiedImpl(){
-    return myDocument.getModificationStamp() != myFile.getModificationStamp();
+    return myFile.isModified();
   }
 
   /**
@@ -420,7 +420,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     }
 
     public void contentsChanged(VirtualFileEvent event){
-      if (event.getRequestor() instanceof FileDocumentManager){ // commit
+      if (event.isFromSave()){ // commit
         assertThread();
         VirtualFile file = event.getFile();
         LOG.assertTrue(file.isValid());

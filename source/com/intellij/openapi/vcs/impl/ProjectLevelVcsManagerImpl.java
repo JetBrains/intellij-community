@@ -434,7 +434,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
     public void beforeContentsChange(VirtualFileEvent event) {
-      if (event.getRequestor() == null) {
+      if (event.isFromRefresh()) {
         resetTracker(event.getFile());
       }
     }

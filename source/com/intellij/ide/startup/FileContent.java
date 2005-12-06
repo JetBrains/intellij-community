@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class FileContent implements UserDataHolder {
     }
 
     if (myCachedBytes == null) {
-      myCachedBytes = myVirtualFile.physicalContentsToByteArray();
+      myCachedBytes = LocalFileSystem.getInstance().physicalContentsToByteArray(myVirtualFile);
     }
 
     return myCachedBytes;

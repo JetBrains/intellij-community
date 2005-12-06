@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -127,7 +128,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
       assertNotNull(vFile);
       byte[] content = vFile.getFileType().isBinary() ? vFile.contentsToByteArray(): null;
-      final String fileText =  vFile.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(new String(vFile.contentsToCharArray()), "\n");
+      final String fileText =  vFile.getFileType().isBinary() ? null: FileDocumentManager.getInstance().getDocument(vFile).getText();
       
       String newFileText = null;
       RangeMarker caretMarker = null;
@@ -222,15 +223,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                        final List<Writer> writersToClose,
                        final byte[] content,
                        final List<OutputStream> streamsToClose) throws IOException {
-    if (newFileText != null) {
-      Writer writer = newVFile.getWriter(this);
-      writer.write(newFileText);
-      writersToClose.add(writer);
-    } else {
-      final OutputStream outputStream = newVFile.getOutputStream(this);
-      outputStream.write(content);
-      streamsToClose.add(outputStream);
+    if (newFileText != null){
+      FileDocumentManager.getInstance().getDocument(newVFile).setText(newFileText);
+      PsiDocumentManager.getInstance(getProject()).commitDocument(FileDocumentManager.getInstance().getDocument(newVFile));
     }
+    else
+      newVFile.setBinaryContent(content);
   }
 
   protected File createTempDirectory() throws IOException {
@@ -326,7 +324,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("Cannot find file " + fullPath, vFile);
-    String fileText = new String(vFile.contentsToCharArray());
+    String fileText = new String(vFile.contentsToByteArray()); // [TODO] please change filename to something not binary
     fileText = StringUtil.convertLineSeparators(fileText, "\n");
     Document document = EditorFactory.getInstance().createDocument(fileText);
 
@@ -357,8 +355,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
 
     String text = myFile.getText();
-    text = StringUtil.convertLineSeparators(text, "\n");
-
     assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 
     if (caretMarker != null) {

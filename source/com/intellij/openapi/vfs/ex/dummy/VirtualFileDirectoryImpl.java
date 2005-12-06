@@ -41,10 +41,6 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
     throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
-  public char[] contentsToCharArray() throws IOException {
-    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
-  }
-
   public long getModificationStamp() {
     return -1;
   }

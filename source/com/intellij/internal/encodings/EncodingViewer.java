@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -47,7 +48,7 @@ public class EncodingViewer extends DialogWrapper {
 
   private void loadFrom(VirtualFile virtualFile) {
     try {
-      myBytes = virtualFile.physicalContentsToByteArray();
+      myBytes = LocalFileSystem.getInstance().physicalContentsToByteArray(virtualFile);
     } catch (IOException e) {
       LOG.error(e);
       return;

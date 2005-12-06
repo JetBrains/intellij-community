@@ -106,19 +106,11 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException();
   }
 
-  public char[] contentsToCharArray() throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
   public long getModificationStamp() {
     return 0;
   }
 
   public long getTimeStamp() {
-    return 0;
-  }
-
-  public long getActualTimeStamp() {
     return 0;
   }
 

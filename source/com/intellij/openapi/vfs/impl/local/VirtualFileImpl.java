@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
@@ -258,7 +257,7 @@ public class VirtualFileImpl extends VirtualFile {
     };
   }
 
-  private InputStream getPhysicalFileInputStream() throws IOException {
+  protected InputStream getPhysicalFileInputStream() throws IOException {
     getTimeStamp();
     return getPhysicalFile().createInputStream();
   }
@@ -274,8 +273,8 @@ public class VirtualFileImpl extends VirtualFile {
     }
     ourFileSystem.fireBeforeContentsChange(requestor, this);
     final OutputStream out = new BufferedOutputStream(physicalFile.createOutputStream());
-    if (myBOM != null) {
-      out.write(myBOM);
+    if (getBOM() != null) {
+      out.write(getBOM());
     }
     return new OutputStream() {
       public void write(int b) throws IOException {
@@ -322,18 +321,6 @@ public class VirtualFileImpl extends VirtualFile {
       in.close();
     }
     return bytes;
-  }
-
-  public char[] contentsToCharArray() throws IOException {
-    Reader reader = getReader();
-    char[] chars;
-    try {
-      chars = FileUtil.loadText(reader, (int)getLength());
-    }
-    finally {
-      reader.close();
-    }
-    return chars;
   }
 
   public long getModificationStamp() {
@@ -420,18 +407,6 @@ public class VirtualFileImpl extends VirtualFile {
 
   public boolean nameEquals(String name) {
     return SystemInfo.isFileSystemCaseSensitive ? getName().equals(name) : getName().equalsIgnoreCase(name);
-  }
-
-  public byte[] physicalContentsToByteArray() throws IOException {
-    InputStream inputStream = getPhysicalFileInputStream();
-    try {
-      int physicalFileLength = getPhysicalFileLength();
-      LOG.assertTrue(physicalFileLength >= 0);
-      return FileUtil.loadBytes(inputStream, physicalFileLength);
-    }
-    finally {
-      inputStream.close();
-    }
   }
 
   public int getPhysicalFileLength() {

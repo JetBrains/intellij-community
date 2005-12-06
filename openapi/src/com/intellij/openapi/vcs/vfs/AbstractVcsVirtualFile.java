@@ -97,19 +97,11 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   public abstract byte[] contentsToByteArray() throws IOException;
 
-  public char[] contentsToCharArray() throws IOException {
-    return new String(contentsToByteArray(), getCharset().name()).toCharArray();
-  }
-
   public long getModificationStamp() {
     return myModificationStamp;
   }
 
   public long getTimeStamp() {
-    return myModificationStamp;
-  }
-
-  public long getActualTimeStamp() {
     return myModificationStamp;
   }
 

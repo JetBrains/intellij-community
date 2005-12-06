@@ -12,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,8 +24,6 @@ import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -72,10 +71,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     }
 
     final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-    final Writer out = new OutputStreamWriter(vFile.getOutputStream(myPsiManager));
-    out.write(text.toCharArray());
-    out.close();
-
+    FileDocumentManager.getInstance().getDocument(vFile).setText(text);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     assertNotNull(vFile);
@@ -88,7 +84,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
     assertNotNull("file " + filePath + " not found", vFile);
 
-    String fileText = new String(vFile.contentsToCharArray());
+    String fileText = FileDocumentManager.getInstance().getDocument(vFile) != null ? FileDocumentManager.getInstance().getDocument(vFile).getText() : "";
     fileText = StringUtil.convertLineSeparators(fileText, "\n");
 
     int offset = fileText.indexOf(marker);

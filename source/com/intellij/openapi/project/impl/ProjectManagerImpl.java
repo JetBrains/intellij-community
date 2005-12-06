@@ -42,8 +42,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
 import java.util.*;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
@@ -368,7 +366,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       public void contentsChanged(VirtualFileEvent event) {
-        if (event.getRequestor() == null && myIsInRefresh) { // external change
+        if (event.isFromRefresh() && myIsInRefresh) { // external change
           saveChangedProjectFile(event.getFile());
         }
       }
@@ -413,7 +411,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     try {
       final byte[] bytes = file.contentsToByteArray();
       mySavedCopies.put(file, bytes);
-      mySavedTimestamps.put(file, file.getActualTimeStamp());
+      mySavedTimestamps.put(file, file.getTimeStamp());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -428,9 +426,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final byte[] bytes = mySavedCopies.get(file);
       if (bytes != null) {
         try {
-          final OutputStream stream = file.getOutputStream(this, -1, mySavedTimestamps.get(file));
-          stream.write(bytes);
-          stream.close();
+          file.setBinaryContent(bytes, -1, mySavedTimestamps.get(file));
         }
         catch (IOException e) {
           Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", file.getPresentableUrl()),
@@ -522,10 +518,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             if (oldProject == null) {
               oldProject = projectDir.createChildData(this, oldProjectName);
             }
-            Writer writer = oldProject.getWriter(this);
-            writer.write(projectFile.contentsToCharArray());
-            writer.close();
-
+            FileDocumentManager.getInstance().getDocument(oldProject).setText(FileDocumentManager.getInstance().getDocument(projectFile).getCharsSequence());
             VirtualFile workspaceFile = project.getWorkspaceFile();
             if (workspaceFile != null) {
               final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
@@ -534,9 +527,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               if (oldWorkspace == null) {
                 oldWorkspace = projectDir.createChildData(this, oldWorkspaceName);
               }
-              writer = oldWorkspace.getWriter(this);
-              writer.write(workspaceFile.contentsToCharArray());
-              writer.close();
+              FileDocumentManager.getInstance().getDocument(oldWorkspace).setText(FileDocumentManager.getInstance().getDocument(workspaceFile).getCharsSequence());
             }
           }
           catch (IOException e) {

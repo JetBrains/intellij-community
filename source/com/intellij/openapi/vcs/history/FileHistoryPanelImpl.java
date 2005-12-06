@@ -710,20 +710,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
 
-    private void writeContentToFile(final byte[] revision) {
-
-      try {
-        OutputStream output = getVirtualFile().getOutputStream(this);
-        try {
-          output.write(revision);
-        }
-        finally {
-          output.close();
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    private void writeContentToFile(final byte[] revision) throws IOException{
+      getVirtualFile().setBinaryContent(revision);
     }
 
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws Exception {

@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.Patches;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ReadOnlyModificationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +43,21 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
-  private Charset myCharset;
-  protected byte[] myBOM;
+  private Charset myCharset = null;
+  private byte[] myBOM = null;
 
   protected VirtualFile() {
   }
 
   private THashMap myUserMap = null;
+
+  /**
+   * Gets the name of this file.
+   *
+   * @return file name
+   */
+  @NotNull
+  public abstract String getName();
 
   /**
    * Gets the {@link VirtualFileSystem} this file belongs to.
@@ -113,14 +123,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   @NonNls public static final String PROP_WRITABLE = "writable";
 
   /**
-   * Gets the name of this file.
-   *
-   * @return file name
-   */
-  @NotNull
-  public abstract String getName();
-
-  /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
    * to the end of the name, otherwise extension is null.
    *
@@ -148,7 +150,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     if (index < 0) return name;
     return name.substring(0, index);
   }
-
 
 
   /**
@@ -341,7 +342,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   public void delete(Object requestor) throws IOException {
     LOG.assertTrue(isValid());
     getFileSystem().deleteFile(requestor, this);
-  };
+  }
 
   /**
    * Moves this file to another directory. This method should be only called within write-action.
@@ -355,32 +356,36 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public void move(Object requestor, VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
-    }
+         throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+       }
 
-    getFileSystem().moveFile(requestor, this, newParent);
+       getFileSystem().moveFile(requestor, this, newParent);
+   }
+
+  public final void setBinaryContent(byte[] content) throws IOException{
+    setBinaryContent(content, -1, -1);
   }
 
   /**
-   * Gets the <code>InputStream</code> for this file.
-   *
-   * @return <code>InputStream</code>
-   * @throws IOException if an I/O error occurs
-   * @see #contentsToByteArray
+   * @return Retreive the charset file have been loaded with (if loaded) and would be saved with (if would).
    */
-  public abstract InputStream getInputStream() throws IOException;
+  public Charset getCharset() {
+    if (myCharset == null) {
+      myCharset = CharsetToolkit.getIDEOptionsCharset();
+    }
+    return myCharset;
+  }
 
-  /**
-   * Gets the <code>OutputStream</code> for this file.
-   *
-   * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
-   * @return <code>OutputStream</code>
-   * @throws IOException if an I/O error occurs
-   */
-  public final OutputStream getOutputStream(Object requestor) throws IOException{
-    return getOutputStream(requestor, -1, -1);
+  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException{
+    OutputStream outputStream = null;
+    try{
+      outputStream = getOutputStream(this, newModificationStamp, newTimeStamp);
+      outputStream.write(content);
+      outputStream.flush();
+    }
+    finally{
+      if(outputStream != null) outputStream.close();
+    }
   }
 
   /**
@@ -396,141 +401,9 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param newTimeStamp new time stamp or -1 if no special value should be set
    * @return <code>OutputStream</code>
    * @throws IOException if an I/O error occurs
-   * @see #getOutputStream(Object)
    * @see #getModificationStamp()
    */
   public abstract OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException;
-
-  /**
-   * @return Retreive the charset file have been loaded with (if loaded) and would be saved with (if would).
-   */
-  public Charset getCharset() {
-    if (myCharset == null) {
-      myCharset = CharsetToolkit.getIDEOptionsCharset();
-    }
-    return myCharset;
-  }
-
-  /**
-   * Gets the <code>Reader</code> for this file.
-   *
-   * @return <code>Reader</code>
-   * @throws IOException if an I/O error occurs
-   * @see #contentsToCharArray
-   */
-  public Reader getReader() throws IOException{
-    return getReader(getInputStream());
-  }
-
-  public static Reader getReader(byte [] bytes) throws IOException {
-    final Reader reader;
-    if (CharsetSettings.getInstance().isUseUTFGuessing()) {
-      SmartEncodingInputStream seis = new SmartEncodingInputStream(null/*stream*/,
-                                                                   bytes,
-                                                                   CharsetToolkit.getIDEOptionsCharset(),
-                                                                   true);
-      reader = seis.getReader();
-    } else {
-      InputStream stream = new ByteArrayInputStream(bytes);
-      Charset charset = CharsetToolkit.getIDEOptionsCharset();
-      if (charset != null) {
-        reader = new InputStreamReader(stream, charset);
-      } else {
-        reader = new InputStreamReader(stream);
-      }
-    }
-
-    return reader;
-  }
-
-  private Reader getReader(InputStream stream) throws IOException {
-    final Reader reader;
-
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(this);
-    String charsetName = fileType.getCharset(this);
-    if (charsetName != null) {
-      myCharset = Charset.forName(charsetName);
-      reader = new BufferedReader(new InputStreamReader(stream, myCharset));
-      skipUTF8BOM(reader);
-      return reader;
-    }
-
-    CharsetSettings settings = CharsetSettings.getInstance();
-    if (settings != null && settings.isUseUTFGuessing()) {
-      SmartEncodingInputStream seis = new SmartEncodingInputStream(stream,
-                                                                   SmartEncodingInputStream.BUFFER_LENGTH_4KB,
-                                                                   CharsetToolkit.getIDEOptionsCharset(),
-                                                                   true);
-      myCharset = seis.getEncoding();
-      reader = seis.getReader();
-      if (Patches.SUN_BUG_ID_4508058) {
-        myBOM = seis.detectUTF8_BOM();
-      }
-    }
-    else {
-      myCharset = CharsetToolkit.getIDEOptionsCharset();
-      if (myCharset != null) {
-        reader = new BufferedReader(new InputStreamReader(stream, myCharset));
-        skipUTF8BOM(reader);
-      }
-      else {
-        reader = new BufferedReader(new InputStreamReader(stream));
-      }
-    }
-
-    return reader;
-  }
-
-  private void skipUTF8BOM(final Reader reader) throws IOException {
-    if (Patches.SUN_BUG_ID_4508058) {
-      //noinspection HardCodedStringLiteral
-      if (myCharset != null && myCharset.name().contains("UTF-8")) {
-        reader.mark(1);
-        char c = (char)reader.read();
-        if (c == '\uFEFF') {
-          myBOM = CharsetToolkit.UTF8_BOM;
-        }
-        else {
-          reader.reset();
-        }
-      }
-    }
-  }
-
-  /**
-   * Gets the <code>Writer</code> for this file.
-   *
-   * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
-   * @return <code>Writer</code>
-   * @throws IOException if an I/O error occurs
-   */
-  public final Writer getWriter(Object requestor) throws IOException{
-    return getWriter(requestor, -1, -1);
-  }
-
-  /**
-   * Gets the <code>Writer</code> for this file and sets modification stamp and time stamp to the specified values
-   * after closing the Writer.<p>
-   *
-   * Normally you should not use this method.
-   *
-   * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
-   * @param newModificationStamp new modification stamp or -1 if no special value should be set
-   * @param newTimeStamp new time stamp or -1 if no special value should be set
-   * @return <code>Writer</code>
-   * @throws IOException if an I/O error occurs
-   * @see #getWriter(Object)
-   * @see #getModificationStamp()
-   */
-  public Writer getWriter(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException{
-    Charset charset = getCharset();
-    OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp);
-    return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
-  }
 
   /**
    * Returns file content as an array of bytes.
@@ -541,14 +414,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public abstract byte[] contentsToByteArray() throws IOException;
 
-  /**
-   * Returns file content as an array of characters.
-   *
-   * @return file content
-   * @throws IOException  if an I/O error occurs
-   * @see #getReader()
-   */
-  public abstract char[] contentsToCharArray() throws IOException;
+  public final boolean isModified(){
+    final Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(this);
+    return cachedDocument != null && cachedDocument.getModificationStamp() != getModificationStamp();
+  }
 
   /**
    * Gets modification stamp value. Modification stamp is a value changed by any modification
@@ -557,25 +426,18 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return modification stamp
    * @see #getTimeStamp()
    */
-  public abstract long getModificationStamp();
+  public long getModificationStamp() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Gets the timestamp for this file. Note that this value may be cached and may differ from
    * the timestamp of the physical file.
    *
    * @return timestamp
-   * @see #getActualTimeStamp()
    * @see java.io.File#lastModified
    */
   public abstract long getTimeStamp();
-
-  /**
-   * Gets the file timestamp. Unlike value returned by {@link #getTimeStamp} returns the actual timestamp for this file.
-   *
-   * @return the actual timestamp
-   * @see #getTimeStamp
-   */
-  public abstract long getActualTimeStamp();
 
   /**
    * File length in bytes.
@@ -611,6 +473,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   public <T> T getUserData(Key<T> key){
     synchronized(this){
       if (myUserMap == null) return null;
+      //noinspection unchecked
       return (T)myUserMap.get(key);
     }
   }
@@ -622,6 +485,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
         myUserMap = new THashMap();
       }
       if (value != null){
+        //noinspection unchecked
         myUserMap.put(key, value);
       }
       else{
@@ -631,10 +495,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
         }
       }
     }
-  }
-
-  public byte[] physicalContentsToByteArray() throws IOException {
-    return contentsToByteArray();
   }
 
   public String getPresentableName() {
@@ -651,7 +511,28 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */
-  public boolean nameEquals(String name) {
+  protected boolean nameEquals(String name) {
     return getName().equals(name);
+  }
+
+  /**
+   * Gets the <code>InputStream</code> for this file.
+   *
+   * @return <code>InputStream</code>
+   * @throws IOException if an I/O error occurs
+   * @see #contentsToByteArray
+   */
+  public abstract InputStream getInputStream() throws IOException;
+
+  public void setCharset(final Charset charset) {
+    myCharset = charset;
+  }
+
+  public byte[] getBOM() {
+    return myBOM;
+  }
+
+  public void setBOM(final byte[] BOM) {
+    myBOM = BOM;
   }
 }

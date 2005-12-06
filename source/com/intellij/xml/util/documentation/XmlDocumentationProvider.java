@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
@@ -32,7 +33,6 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NonNls;
@@ -162,11 +162,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
               );
 
               if (fileByIoFile != null) {
-                try {
-                  return new String(fileByIoFile.contentsToCharArray());
-                } catch(IOException ex) {
-                  //ignore exception
-                }
+                return FileDocumentManager.getInstance().getDocument(fileByIoFile).getText();
               }
             }
           }

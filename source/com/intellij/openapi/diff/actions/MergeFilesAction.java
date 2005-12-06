@@ -40,9 +40,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.peer.PeerFactory;
-
-import java.io.IOException;
 
 public class MergeFilesAction extends AnAction{
   public void update(AnActionEvent e) {
@@ -68,26 +67,27 @@ public class MergeFilesAction extends AnAction{
     DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
 
     VirtualFile file = files[1];
-    try {
-      String originalText = createValidContent(new String(file.contentsToCharArray()));
-      String leftText = new String(files[0].contentsToCharArray());
-      String rightText = new String(files[2].contentsToCharArray());
+    if(FileDocumentManager.getInstance().getDocument(files[0]) != null && FileDocumentManager.getInstance().getDocument(files[1]) != null && FileDocumentManager.getInstance().getDocument(files[2]) != null){
+      String originalText = createValidContent(FileDocumentManager.getInstance().getDocument(file).getText());
+      String leftText = FileDocumentManager.getInstance().getDocument(files[0]).getText();
+      String rightText = FileDocumentManager.getInstance().getDocument(files[2]).getText();
 
       Project project = (Project)context.getData(DataConstants.PROJECT);
       final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,
                                                                           ActionButtonPresentation.createApplyButton());
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
-                                             files[1].getPresentableUrl(),
-                                             files[2].getPresentableUrl()});
+        files[1].getPresentableUrl(),
+        files[2].getPresentableUrl()});
       diffData.setWindowTitle(DiffBundle.message("merge.files.dialog.title"));
       diffData.setHelpId("cvs.merge");
       DiffManager.getInstance().getDiffTool().show(diffData);
     }
-    catch (IOException e1) {
-      Messages.showErrorDialog(DiffBundle.message("merge.dialog.cannot.load.file.error.message", e1.getLocalizedMessage()),
+    else {
+      Messages.showErrorDialog(DiffBundle.message("merge.dialog.cannot.load.file.error.message", ""),
                                DiffBundle.message("merge.files.dialog.title"));
     }
   }
+
   private String createValidContent(String str) {
     String[] strings = LineTokenizer.tokenize(str.toCharArray(), false, false);
     StringBuffer result = new StringBuffer();

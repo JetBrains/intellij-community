@@ -5,8 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  *
  */
@@ -57,10 +55,6 @@ abstract class VirtualFileImpl extends VirtualFile {
   }
 
   public long getTimeStamp() {
-    return -1;
-  }
-
-  public long getActualTimeStamp() {
     return -1;
   }
 

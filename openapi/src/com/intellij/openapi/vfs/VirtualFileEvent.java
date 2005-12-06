@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+
 import java.util.EventObject;
 
 public class VirtualFileEvent extends EventObject {
@@ -73,5 +75,13 @@ public class VirtualFileEvent extends EventObject {
 
   public long getNewModificationStamp(){
     return myNewModificationStamp;
+  }
+
+  public boolean isFromRefresh() {
+    return myRequestor == null;
+  }
+
+  public boolean isFromSave() {
+    return myRequestor instanceof FileDocumentManager;
   }
 }

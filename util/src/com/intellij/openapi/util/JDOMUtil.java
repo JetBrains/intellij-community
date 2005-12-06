@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharSequenceReader;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -82,6 +83,11 @@ public class JDOMUtil {
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
     SAXBuilder builder = createBuilder();
     return builder.build(new CharArrayReader(chars, 0, length));
+  }
+
+  public static Document loadDocument(CharSequence seq) throws IOException, JDOMException {
+    SAXBuilder builder = createBuilder();
+    return builder.build(new CharSequenceReader(seq));
   }
 
   public static Document loadDocument(File file) throws JDOMException, IOException {

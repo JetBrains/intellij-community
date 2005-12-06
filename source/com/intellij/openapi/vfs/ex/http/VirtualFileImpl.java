@@ -85,19 +85,7 @@ class VirtualFileImpl extends VirtualFile {
     throw new UnsupportedOperationException();
   }
 
-  public char[] contentsToCharArray() throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  public long getModificationStamp() {
-    throw new UnsupportedOperationException();
-  }
-
   public long getTimeStamp() {
-    throw new UnsupportedOperationException();
-  }
-
-  public long getActualTimeStamp() {
     throw new UnsupportedOperationException();
   }
 

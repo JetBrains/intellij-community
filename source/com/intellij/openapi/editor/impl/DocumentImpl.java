@@ -13,10 +13,12 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.psi.PsiExternalChangeAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -608,6 +610,22 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     };
     setCharArray(charArray);
+  }
+
+  public void setText(final CharSequence text) {
+    if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+      CommandProcessor.getInstance().executeCommand(
+        new Runnable() {
+          public void run() {
+            replaceString(0, getTextLength(), text);
+          }
+        },
+        "file text set",
+        null
+      );
+
+    }
+    else replaceString(0, getTextLength(), text);
   }
 }
 

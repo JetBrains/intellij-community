@@ -32,6 +32,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -41,7 +42,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.IOException;
 import java.util.Vector;
 
 import org.jetbrains.annotations.NotNull;
@@ -279,13 +279,8 @@ public class FileTemplateConfigurable implements Configurable {
     if (description == null) {
       description = "";
     }
-    if ((description.length() == 0) && (myDefaultDescription != null)) {
-      try {
-        description = new String(myDefaultDescription.contentsToCharArray());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    if ((description.length() == 0) && (myDefaultDescription != null) && FileDocumentManager.getInstance().getDocument(myDefaultDescription) != null) {
+      description = FileDocumentManager.getInstance().getDocument(myDefaultDescription).getText();
     }
     boolean adjust = (myTemplate != null) && myTemplate.isAdjust();
     setHighlighter();

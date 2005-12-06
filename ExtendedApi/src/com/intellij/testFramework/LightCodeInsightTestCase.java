@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +22,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -115,6 +115,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     setupFileEditorAndDocument(fileName, newFileText);
     setupCaret(caretMarker, newFileText);
     setupSelection(selStartMarker, selEndMarker);
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
   private void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
@@ -141,10 +142,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     deleteVFile();
     myVFile = getSourceRoot().createChildData(this, fileName);
-    Writer writer = myVFile.getWriter(this);
-    writer.write(fileText);
-    writer.close();
-
+    FileDocumentManager.getInstance().getDocument(myVFile).setText(fileText);
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     ((PsiFileImpl) myFile).setIsPhysicalExplicitly(true);
@@ -272,8 +270,6 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     }
 
     String text = myFile.getText();
-    text = StringUtil.convertLineSeparators(text, "\n");
-
     assertEquals(getMessage("Text mismatch", message), newFileText1, text);
 
     checkCaretPosition(caretMarker, newFileText, message);

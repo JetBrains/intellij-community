@@ -5,10 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -95,14 +95,8 @@ public class TempFiles {
   }
 
   public VirtualFile createVFile(VirtualFile parentDir, String name, String text) throws IOException {
-    VirtualFile virtualFile = parentDir.createChildData(this, name);
-    PrintStream stream = null;
-    try {
-      stream = new PrintStream(virtualFile.getOutputStream(this));
-      stream.println(text);
-    } finally{
-      if (stream != null) stream.close();
-    }
+    final VirtualFile virtualFile = parentDir.createChildData(this, name);
+    FileDocumentManager.getInstance().getDocument(virtualFile).setText(text + "\n");
     return virtualFile;
   }
 }

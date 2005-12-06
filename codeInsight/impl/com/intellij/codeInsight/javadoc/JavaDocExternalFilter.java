@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -15,13 +16,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.HttpConfigurable;
 
 import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.net.URL;
+import java.net.URLConnection;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -148,7 +147,7 @@ private static abstract class RefConvertor {
   }
 
   public static boolean isJavaDocURL(String url) {
-    final InputStream stream = getStreamByUrl(url);
+    final Reader stream = getReaderByUrl(url);
 
     if (stream == null) {
       return false;
@@ -184,7 +183,7 @@ private static abstract class RefConvertor {
         try {
           BufferedReader reader = null;
           try {
-            reader = new BufferedReader(new InputStreamReader(stream));
+            reader = new BufferedReader(stream);
             int lookUp = 6;
 
             while (lookUp > 0) {
@@ -239,7 +238,7 @@ private static abstract class RefConvertor {
   }
 
 
-  private static InputStream getStreamByUrl(final String surl) {
+  private static Reader getReaderByUrl(final String surl) {
     try {
       if (surl.startsWith(JAR_PROTOCOL)) {
         VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(surl));
@@ -248,12 +247,15 @@ private static abstract class RefConvertor {
           return null;
         }
 
-        return file.getInputStream();
+        return new StringReader(FileDocumentManager.getInstance().getDocument(file).getText());
       }
 
       URL url = BrowserUtil.getURL(surl);
       HttpConfigurable.getInstance().prepareURL(url.toString());
-      return url.openStream();
+      final URLConnection urlConnection = url.openConnection();
+      final String contentEncoding = urlConnection.getContentEncoding();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      return new InputStreamReader(urlConnection.getInputStream(), contentEncoding);
     }
     catch (final IOException e) {
       showErrorMessage(e);
@@ -291,24 +293,17 @@ private static abstract class RefConvertor {
 
     final String root = ourAnchorsuffix.matcher(surl).replaceAll("");
 
-    InputStream stream = getStreamByUrl(surl);
+    final Reader stream = getReaderByUrl(surl);
 
     if (stream == null) {
       return null;
     }
 
-    BufferedReader buf = null;
+    BufferedReader buf = new BufferedReader(stream);
 
     StringBuffer data = new StringBuffer();
-
     data.append("<HTML>\n");
-
-
-
     try {
-
-      buf = new BufferedReader(new InputStreamReader(stream));
-
       String read;
 
       do {

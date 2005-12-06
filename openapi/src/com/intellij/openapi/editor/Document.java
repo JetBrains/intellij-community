@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 
 import java.beans.PropertyChangeListener;
+import java.io.Writer;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -307,4 +308,6 @@ public interface Document extends UserDataHolder {
    * @param bufferSize the cyclic buffer size, or 0 if the document should not use a cyclic buffer.
    */
   void setCyclicBufferSize(int bufferSize);
+
+  void setText(final CharSequence text);
 }

@@ -44,9 +44,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     if (file != null){
       myName = null;
       if (myContents != null){
-        OutputStream out = myFile.getOutputStream(myManager);
-        out.write(myContents);
-        out.close();
+        file.setBinaryContent(myContents);
         myContents = null;
       }
     }

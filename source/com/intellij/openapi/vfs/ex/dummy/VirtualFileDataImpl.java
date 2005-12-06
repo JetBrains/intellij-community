@@ -65,21 +65,6 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     return myContents;
   }
 
-  public char[] contentsToCharArray() throws IOException {
-    Reader reader = getReader();
-    char[] chars = new char[myContents.length];
-    int count = reader.read(chars, 0, chars.length);
-    reader.close();
-    if (count == chars.length){
-      return chars;
-    }
-    else{
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
-    }
-  }
-
   public long getModificationStamp() {
     return myModificationStamp;
   }
