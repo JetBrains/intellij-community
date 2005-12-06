@@ -61,7 +61,7 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
             }
             final PsiExpressionList argumentList = call.getArgumentList();
             final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length == 0 || ExpressionUtils.isNullLiteral(args[0])) {
+            if (args.length == 0 || !ExpressionUtils.isNullLiteral(args[0])) {
                 return;
             }
             registerError(args[0]);
