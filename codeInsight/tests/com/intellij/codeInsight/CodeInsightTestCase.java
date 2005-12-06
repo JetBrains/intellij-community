@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.roots.ContentEntry;
@@ -40,11 +39,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected Editor createEditor(VirtualFile file) {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
-    
+
     if (file.getFileType() != null && file.getFileType().isBinary()) {
       return null;
     }
-    
+
     return instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
@@ -123,30 +122,30 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     List<Writer> writersToClose = new ArrayList<Writer>(vFiles.length);
     List<OutputStream> streamsToClose = new ArrayList<OutputStream>(0);
-    
+
     for (int i = 0; i < vFiles.length; i++) {
       VirtualFile vFile = vFiles[i];
 
       assertNotNull(vFile);
       byte[] content = vFile.getFileType().isBinary() ? vFile.contentsToByteArray(): null;
-      final String fileText = vFile.getFileType().isBinary() ? null : VfsUtil.loadText(vFile);
-      
+      final String fileText =  vFile.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+
       String newFileText = null;
       RangeMarker caretMarker = null;
       RangeMarker selStartMarker = null;
       RangeMarker selEndMarker = null;
-      
+
       if (fileText != null) {
         Document document = EditorFactory.getInstance().createDocument(fileText);
-  
+
         int caretIndex = fileText.indexOf(CARET_MARKER);
         int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
         int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-  
+
         caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
         selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
         selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-  
+
         if (caretMarker != null) {
           document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
         }
@@ -156,7 +155,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         if (selEndMarker != null) {
           document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
         }
-  
+
         newFileText = document.getText();
       }
 
@@ -186,11 +185,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     for(int i = writersToClose.size() -1; i >= 0 ; --i) {
       writersToClose.get(i).close();
     }
-    
+
     for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
       streamsToClose.get(i).close();
     }
-    
+
     final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
     if (isAddDirToSource()) contentEntry.addSourceFolder(vDir, false);
     rootModel.commit();
@@ -224,12 +223,13 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                        final List<Writer> writersToClose,
                        final byte[] content,
                        final List<OutputStream> streamsToClose) throws IOException {
-    if (newFileText != null){
-      FileDocumentManager.getInstance().getDocument(newVFile).setText(newFileText);
-      PsiDocumentManager.getInstance(getProject()).commitDocument(FileDocumentManager.getInstance().getDocument(newVFile));
+    if (newFileText != null) {
+      VfsUtil.saveText(newVFile, newFileText);
+    } else {
+      final OutputStream outputStream = newVFile.getOutputStream(this, -1, -1);
+      outputStream.write(content);
+      streamsToClose.add(outputStream);
     }
-    else
-      newVFile.setBinaryContent(content);
   }
 
   protected File createTempDirectory() throws IOException {
@@ -325,8 +325,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("Cannot find file " + fullPath, vFile);
-    String fileText = new String(vFile.contentsToByteArray()); // [TODO] please change filename to something not binary
-    fileText = StringUtil.convertLineSeparators(fileText, "\n");
+    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
     Document document = EditorFactory.getInstance().createDocument(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -356,6 +355,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
 
     String text = myFile.getText();
+    text = StringUtil.convertLineSeparators(text, "\n");
+
     assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 
     if (caretMarker != null) {

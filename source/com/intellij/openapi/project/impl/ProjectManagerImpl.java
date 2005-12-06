@@ -26,10 +26,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -518,7 +515,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             if (oldProject == null) {
               oldProject = projectDir.createChildData(this, oldProjectName);
             }
-            FileDocumentManager.getInstance().getDocument(oldProject).setText(FileDocumentManager.getInstance().getDocument(projectFile).getCharsSequence());
+            VfsUtil.saveText(oldProject, VfsUtil.loadText(projectFile));
             VirtualFile workspaceFile = project.getWorkspaceFile();
             if (workspaceFile != null) {
               final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
@@ -527,7 +524,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               if (oldWorkspace == null) {
                 oldWorkspace = projectDir.createChildData(this, oldWorkspaceName);
               }
-              FileDocumentManager.getInstance().getDocument(oldWorkspace).setText(FileDocumentManager.getInstance().getDocument(workspaceFile).getCharsSequence());
+              VfsUtil.saveText(oldWorkspace, VfsUtil.loadText(workspaceFile));
             }
           }
           catch (IOException e) {

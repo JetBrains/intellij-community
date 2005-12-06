@@ -3,9 +3,9 @@ package com.intellij.openapi.roots.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class TempFiles {
 
   public VirtualFile createVFile(VirtualFile parentDir, String name, String text) throws IOException {
     final VirtualFile virtualFile = parentDir.createChildData(this, name);
-    FileDocumentManager.getInstance().getDocument(virtualFile).setText(text + "\n");
+    VfsUtil.saveText(virtualFile, text + "\n");
     return virtualFile;
   }
 }
