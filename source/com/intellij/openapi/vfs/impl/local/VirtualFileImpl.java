@@ -24,6 +24,8 @@ public class VirtualFileImpl extends VirtualFile {
 
   private static final LocalFileSystemImpl ourFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
 
+  private static char[] myBuffer = new char[1024];
+
   private VirtualFileImpl myParent;
   private String myName;
   private VirtualFileImpl[] myChildren = null;  // null, if not defined yet
@@ -84,7 +86,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   PhysicalFile getPhysicalFile() {
-    String path = getPath(File.separatorChar, 1024);
+    String path = getPath(File.separatorChar);
     return new IoFile(path);
   }
 
@@ -94,21 +96,20 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public String getPath() {
-    return getPath('/', 1024);
+    return getPath('/');
   }
 
-  private String getPath(char separatorChar, int bufferLength) {
+  private String getPath(char separatorChar) {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
-    try {
-      char[] buffer = new char[bufferLength];
-      int length;
-      synchronized (ourFileSystem.LOCK) {
-        length = appendPath(buffer, separatorChar);
+    synchronized (ourFileSystem.LOCK) {
+      try {
+        int length = appendPath(myBuffer, separatorChar);
+        return new String(myBuffer, 0, length);
       }
-      return StringFactory.createStringFromConstantArray(buffer, 0, length);
-    }
-    catch(ArrayIndexOutOfBoundsException aiob) {
-      return getPath(separatorChar, bufferLength * 2);
+      catch (ArrayIndexOutOfBoundsException aiob) {
+        myBuffer = new char[myBuffer.length * 2];
+        return getPath(separatorChar);
+      }
     }
   }
 
@@ -124,7 +125,7 @@ public class VirtualFileImpl extends VirtualFile {
 
     name.getChars(0, nameLength, buffer, currentLength);
     int newLength = currentLength + nameLength;
-    if (currentLength == 0) {
+    if (currentLength == 0 && separatorChar != '/' ) {
       StringUtil.replaceChar(buffer, '/', separatorChar, currentLength, newLength); // root may contain '/' char
     }
     return newLength;
@@ -466,7 +467,8 @@ public class VirtualFileImpl extends VirtualFile {
         int index = -1;
         if (i < children.length && children[i].myName.equals(name)) {
           index = i;
-        } else {
+        }
+        else {
           for (int j = 0; j < children.length; j++) {
             VirtualFileImpl child = myChildren[j];
             if (child.myName.equals(name)) index = j;
