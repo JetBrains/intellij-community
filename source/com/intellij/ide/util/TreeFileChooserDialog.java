@@ -1,5 +1,6 @@
 package com.intellij.ide.util;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
@@ -12,7 +13,6 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
@@ -27,6 +27,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -58,12 +59,15 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private BaseProjectTreeBuilder myBuilder;
   private TabbedPaneWrapper myTabbedPane;
   private ChooseByNamePanel myGotoByNamePanel;
-  private final PsiFile myInitialFile;
-  private final PsiFileFilter myFilter;
-  private final FileType myFileType;
+  @Nullable private final PsiFile myInitialFile;
+  @Nullable private final PsiFileFilter myFilter;
+  @Nullable private final FileType myFileType;
 
   public TreeFileChooserDialog(final Project project,
-                               String title, final PsiFile initialFile, FileType fileType, PsiFileFilter filter) {
+                               String title,
+                               @Nullable final PsiFile initialFile,
+                               @Nullable FileType fileType,
+                               @Nullable PsiFileFilter filter) {
     super(project, true);
     myInitialFile = initialFile;
     myFilter = filter;

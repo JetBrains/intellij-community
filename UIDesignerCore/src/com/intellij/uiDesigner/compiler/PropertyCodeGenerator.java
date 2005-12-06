@@ -5,11 +5,7 @@ import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 22.11.2005
- * Time: 17:25:48
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public abstract class PropertyCodeGenerator {
   public abstract void generatePushValue(final GeneratorAdapter generator, final Object value);

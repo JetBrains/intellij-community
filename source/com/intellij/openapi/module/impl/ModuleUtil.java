@@ -18,10 +18,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.psi.*;
 import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -162,5 +160,41 @@ public class ModuleUtil {
     for (Module dependency : dependencies) {
       getDependencies(dependency, modules);
     }
+  }
+
+  @Nullable
+  public static <T extends PsiFile> T findResourceFile(final String name, final Module inModule, final Class<T> aClass) {
+    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(inModule).getSourceRoots();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(inModule.getProject()).getFileIndex();
+    for (final VirtualFile sourceRoot : sourceRoots) {
+      final String packagePrefix = fileIndex.getPackageNameByDirectory(sourceRoot);
+      final String prefix = packagePrefix == null || packagePrefix.length() == 0 ? null : packagePrefix.replace('.', '/') + "/";
+      final String relPath = prefix != null && name.startsWith(prefix) && name.length() > prefix.length() ? name.substring(prefix.length()) : name;
+      final String fullPath = sourceRoot.getPath() + "/" + relPath;
+      final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
+      if (fileByPath != null) {
+        final PsiFile psiFile = PsiManager.getInstance(inModule.getProject()).findFile(fileByPath);
+        if (aClass.isInstance(psiFile)) {
+          //noinspection unchecked
+          return (T)psiFile;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static <T extends PsiFile> T findResourceFileInDependents(final Module searchFromModule,
+                                                                    final String fileName,
+                                                                    final Class<T> aClass) {
+    final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
+    getDependencies(searchFromModule, dependentModules);
+    for(Module m: dependentModules) {
+      final T file = findResourceFile(fileName, m, aClass);
+      if (file != null) {
+        return file;
+      }
+    }
+    return null;
   }
 }

@@ -59,6 +59,7 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put("java.awt.Rectangle", new RectanglePropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Color", new ColorPropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Font", new FontPropertyCodeGenerator());
+    myPropertyCodeGenerators.put("javax.swing.Icon", new IconPropertyCodeGenerator());
   }
 
   public AsmCodeGenerator(final LwRootContainer rootContainer,

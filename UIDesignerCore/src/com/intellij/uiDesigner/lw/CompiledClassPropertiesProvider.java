@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.Utils;
 
+import javax.swing.*;
 import java.awt.*;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -116,6 +117,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       }
       else if (Font.class.equals(propertyType)) {
         property = new LwIntroFontProperty(name);
+      }
+      else if (Icon.class.equals(propertyType)) {
+        property = new LwIntroIconProperty(name);
       }
       else if (propertyType.isAssignableFrom(Component.class)) {
         property = new LwIntroComponentProperty(name);

@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.lw.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 
@@ -35,7 +36,8 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
-    final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
+    final PsiClass aClass = psiManager.findClass(className, scope);
     if (aClass == null) {
       return null;
     }
@@ -99,11 +101,12 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       else if (Font.class.getName().equals(propertyClassName)) {
         property = new LwIntroFontProperty(name);
       }
+      else if (Icon.class.getName().equals(propertyClassName)) {
+        property = new LwIntroIconProperty(name);
+      }
       else {
-        PsiClass propClass = psiManager.findClass(propertyClassName,
-                                                  GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
-        PsiClass componentClass = psiManager.findClass("java.awt.Component",
-                                                       GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+        PsiClass propClass = psiManager.findClass(propertyClassName, scope);
+        PsiClass componentClass = psiManager.findClass("java.awt.Component", scope);
         if (componentClass != null && propClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
           property = new LwIntroComponentProperty(name);
         }

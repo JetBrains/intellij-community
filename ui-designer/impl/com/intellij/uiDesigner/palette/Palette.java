@@ -776,6 +776,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if (Font.class.equals(propertyType)) {
           property = new IntroFontProperty(name, readMethod, writeMethod);
         }
+        else if (Icon.class.equals(propertyType)) {
+          property = new IntroIconProperty(name, readMethod, writeMethod);
+        }
         else {
           // other types are not supported (yet?)
           continue;

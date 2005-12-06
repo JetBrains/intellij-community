@@ -362,6 +362,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Font.class.getName())) {
         pushFont((FontDescriptor) value);
       }
+      else if (propertyClass.equals(Icon.class.getName())) {
+        pushIcon((IconDescriptor) value);
+      }
       else {
         //noinspection HardCodedStringLiteral
         throw new RuntimeException("unexpected property class: " + propertyClass);
@@ -534,6 +537,14 @@ public final class FormSourceCodeGenerator {
     else {
       throw new IllegalStateException("Unknown font type");
     }
+  }
+
+  private void pushIcon(final IconDescriptor iconDescriptor) {
+    startConstructor(ImageIcon.class.getName());
+    startMethodCall("getClass()", "getResource");
+    push("/" + iconDescriptor.getIconPath());
+    endMethod();
+    endMethod();
   }
 
   private boolean isAssignableFrom(final String className, final String fromName, final GlobalSearchScope scope) {
