@@ -77,28 +77,29 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (anchor == null){
-      if (before == null || before.booleanValue()){
-        anchor = findChildByRole(ChildRole.LPARENTH);
-        before = Boolean.TRUE;
-      }
-      else{
-        anchor = findChildByRole(ChildRole.RPARENTH);
-        before = Boolean.FALSE;
-      }
-    }
 
     if (first.getElementType() == NAME_VALUE_PAIR && last.getElementType() == NAME_VALUE_PAIR) {
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       ASTNode lparenth = findChildByRole(ChildRole.LPARENTH);
       if (lparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(COMMA, new char[]{'('}, 0, 1, treeCharTab, getManager());
+        LeafElement created = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getFirstChildNode(), true);
       }
-      ASTNode rparenth = findChildByRole(ChildRole.LPARENTH);
+      ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
       if (rparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(COMMA, new char[]{')'}, 0, 1, treeCharTab, getManager());
+        LeafElement created = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getLastChildNode(), false);
+      }
+
+      if (anchor == null) {
+        if (before == null || before.booleanValue()) {
+          anchor = findChildByRole(ChildRole.LPARENTH);
+          before = Boolean.FALSE;
+        }
+        else {
+          anchor = findChildByRole(ChildRole.RPARENTH);
+          before = Boolean.TRUE;
+        }
       }
 
       final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
