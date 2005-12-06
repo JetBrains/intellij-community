@@ -29,6 +29,7 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 
 /**
@@ -52,9 +53,10 @@ public final class IfsUtil {
         SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
         if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
             try {
-                InputStream inputStream = file.getInputStream();
-                ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-                try {
+              final byte[] content = file.contentsToByteArray();
+              InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
+              ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
+              try {
                     Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
                     if (imageReaders.hasNext()) {
                         ImageReader imageReader = imageReaders.next();
