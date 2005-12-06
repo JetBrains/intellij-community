@@ -35,7 +35,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
   }
 
   public void fileCreated(VirtualFileEvent event) {
-    if (event.getRequestor() != null) {
+    if (!event.isFromRefresh()) {
       return;
     }
     final VirtualFile file = event.getFile();
@@ -49,7 +49,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
   }
 
   public void contentsChanged(VirtualFileEvent event) {
-    if (event.getRequestor() != null) {
+    if (!event.isFromRefresh()) {
       return;
     }
     final VirtualFile file = event.getFile();
@@ -66,7 +66,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
   }
 
   public void fileDeleted(VirtualFileEvent event) {
-    if (event.getRequestor() != null) {
+    if (!event.isFromRefresh()) {
       return;
     }
     final VirtualFile file = event.getFile();
