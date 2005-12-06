@@ -13,4 +13,5 @@ import java.lang.annotation.ElementType;
 public @interface SubTag {
   String value() default "";
   int index() default 0;
+  boolean indicator() default false;
 }

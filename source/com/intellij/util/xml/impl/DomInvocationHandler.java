@@ -385,7 +385,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     if (myFixedChildrenClasses.containsKey(qname)) {
       type = getFixedChildrenClass(qname);
     }
-    return new IndexedElementInvocationHandler(type, subTag, this, qname, index, converter);
+    final SubTag annotationDFS = DomUtil.findAnnotationDFS(method, SubTag.class);
+    final boolean indicator = annotationDFS != null && annotationDFS.indicator();
+    return new IndexedElementInvocationHandler(type, subTag, this, qname, index, converter, indicator);
   }
 
   protected final Class getFixedChildrenClass(final String tagName) {
@@ -467,6 +469,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final DomManagerImpl getManager() {
     return myManager;
+  }
+
+  boolean isIndicator() {
+    return false;
   }
 
   protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {

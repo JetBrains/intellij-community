@@ -28,10 +28,18 @@ public abstract class SetInvocation implements Invocation {
     final DomManagerImpl manager = handler.getManager();
     final boolean changing = manager.setChanging(true);
     try {
-      if (args[0] == null) {
-        handler.undefine();
+      if (handler.isIndicator()) {
+        if ((Boolean)args[0]) {
+          handler.ensureTagExists();
+        } else {
+          handler.undefine();
+        }
       } else {
-        setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler)));
+        if (args[0] == null) {
+          handler.undefine();
+        } else {
+          setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler)));
+        }
       }
     }
     finally {

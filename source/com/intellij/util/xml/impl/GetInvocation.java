@@ -20,6 +20,10 @@ public abstract class GetInvocation implements Invocation {
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     assert handler.isValid();
     final XmlTag tag = handler.getXmlTag();
+    if (handler.isIndicator()) {
+      return tag != null;
+    }
+
     final String tagValue = tag != null ? getValue(tag, handler) : null;
     return myConverter.fromString(tagValue, new ConvertContextImpl(handler));
   }

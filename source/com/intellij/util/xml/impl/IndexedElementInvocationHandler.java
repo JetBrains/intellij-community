@@ -18,15 +18,22 @@ import java.lang.reflect.Type;
 public class IndexedElementInvocationHandler extends DomInvocationHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
+  private final boolean myIndicator;
 
   public IndexedElementInvocationHandler(final Type aClass,
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
                                          final String tagName,
                                          final int index,
-                                         final Converter genericConverter) {
+                                         final Converter genericConverter,
+                                         final boolean indicator) {
     super(aClass, tag, parent, tagName, parent.getManager(), genericConverter);
     myIndex = index;
+    myIndicator = indicator;
+  }
+
+  boolean isIndicator() {
+    return myIndicator;
   }
 
   public final int getIndex() {
