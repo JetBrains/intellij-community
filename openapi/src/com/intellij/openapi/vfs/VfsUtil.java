@@ -37,17 +37,20 @@ import java.util.*;
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
+  private static final char[] READ_BUF = new char[8 * 1024];
+
   public static String loadText(VirtualFile file) throws IOException{
     final BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), file.getCharset()));
     try {
       StringBuilder builder = new StringBuilder((int)file.getLength());
 
-      do {
-        final String line = reader.readLine();
-        if (line == null) break;
-        builder.append(line);
-        //builder.append('\n');
-      } while (true);
+      synchronized (READ_BUF) {
+        do {
+          final int read = reader.read(READ_BUF);
+          if (read < 0) break;
+          builder.append(READ_BUF, 0, read);
+        } while (true);
+      }
 
       return builder.toString();
     }
