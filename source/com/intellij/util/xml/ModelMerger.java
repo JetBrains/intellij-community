@@ -23,9 +23,16 @@ public class ModelMerger {
   }
 
   public static class MergingInvocationHandler<T> implements InvocationHandler {
-    private final T[] myImplementations;
+    private T[] myImplementations;
 
     public MergingInvocationHandler(final T... implementations) {
+      setImplementations(implementations);
+    }
+
+    public MergingInvocationHandler() {
+    }
+
+    public void setImplementations(final T[] implementations) {
       myImplementations = implementations;
     }
 
@@ -56,7 +63,7 @@ public class ModelMerger {
     }
 
 
-    public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+    public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
       if (Object.class.equals(method.getDeclaringClass())) {
         @NonNls String methodName = method.getName();
         if ("toString".equals(methodName)) {
@@ -136,13 +143,7 @@ public class ModelMerger {
         }
 
         for (final Object primaryKey : orderedPrimaryKeys) {
-          final List<Object> objects = map.get(primaryKey);
-          if (objects.size() == 1) {
-            results.add(objects.get(0));
-          }
-          else {
-            results.add(mergeImplementations(returnType, objects.toArray()));
-          }
+          results.add(mergeImplementations(returnType, map.get(primaryKey).toArray()));
         }
       }
       else {
@@ -160,7 +161,10 @@ public class ModelMerger {
       return results;
     }
 
-    protected Object mergeImplementations(final Class returnType, final Object[] implementations) {
+    protected Object mergeImplementations(final Class returnType, final Object... implementations) {
+      if (implementations.length == 1) {
+        return implementations[0];
+      }
       return mergeModels(returnType, implementations);
     }
 
