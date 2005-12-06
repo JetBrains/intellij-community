@@ -139,10 +139,10 @@ public class DomUtil {
   }
 
   private static boolean hasTagValueAnnotation(final Method method) {
-    return getAnnotation(method, TagValue.class) != null;
+    return findAnnotationDFS(method, TagValue.class) != null;
   }
 
-  public static <T extends Annotation> T getAnnotation(final Method method, final Class<T> annotationClass) {
+  public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
     return MethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
   }
 

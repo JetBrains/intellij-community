@@ -397,7 +397,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       final Class aClass = DomUtil.extractParameterClassFromGenericType(method.getGenericReturnType());
       if (aClass == null) return null;
 
-      final Convert convertAnnotation = DomUtil.getAnnotation(method, Convert.class);
+      final Convert convertAnnotation = DomUtil.findAnnotationDFS(method, Convert.class);
       if (convertAnnotation != null) {
         return myManager.getConverterManager().getConverter(convertAnnotation.value());
       }
