@@ -57,12 +57,13 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return new GetAttributeValueInvocation(converter);
   }
 
-  public void undefine() {
+  public void undefineInternal() {
     final XmlTag tag = getXmlTag();
+    setDefined(false);
+    setXmlTagToNull();
     if (tag != null) {
       try {
         tag.setAttribute(getXmlElementName(), null);
-        setDefined(false);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

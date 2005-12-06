@@ -8,12 +8,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class DomRootInvocationHandler extends DomInvocationHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
   private DomFileElementImpl myParent;
 
   public DomRootInvocationHandler(final Class aClass,
@@ -23,6 +25,20 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   ) {
     super(aClass, tag, null, tagName, fileElement.getManager(), null);
     myParent = fileElement;
+  }
+
+  public void undefineInternal() {
+    try {
+      final XmlTag tag = getXmlTag();
+      if (tag != null) {
+        deleteTag(tag);
+        undefineChildren();
+        fireUndefinedEvent();
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   public DomFileElementImpl getRoot() {

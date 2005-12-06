@@ -22,6 +22,7 @@ import net.sf.cglib.core.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
@@ -56,6 +57,7 @@ import java.util.*;
  * For an almost drop-in replacement for
  * <code>java.lang.reflect.Proxy</code>, see the {@link Proxy} class.
  */
+
 public class AdvancedEnhancer extends AbstractClassGenerator
 {
     private static final CallbackFilter ALL_ZERO = new CallbackFilter(){
@@ -141,6 +143,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     private Long serialVersionUID;
     private boolean interceptDuringConstruction = true;
 
+  //Changes by Peter Gromov
+  private Set<Method> myAdditionalMethods = Collections.emptySet();
+
 
     /**
      * Create a new <code>Enhancer</code>. A new <code>Enhancer</code>
@@ -206,7 +211,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         setCallbacks(new Callback[]{ callback });
     }
 
-    /**
+  //Changes by Peter Gromov
+  public void setAdditionalMethods(final Set<Method> additionalMethods) {
+    myAdditionalMethods = additionalMethods;
+  }
+
+  /**
      * Set the array of callbacks to use.
      * Ignored if you use {@link #createClass}.
      * You must use a {@link CallbackFilter} to specify the index into this
@@ -356,14 +366,14 @@ public class AdvancedEnhancer extends AbstractClassGenerator
             filter = ALL_ZERO;
         }
         if (interfaces != null) {
-            for (int i = 0; i < interfaces.length; i++) {
-                if (interfaces[i] == null) {
-                    throw new IllegalStateException("Interfaces cannot be null");
-                }
-                if (!interfaces[i].isInterface()) {
-                    throw new IllegalStateException(interfaces[i] + " is not an interface");
-                }
+          for (Class anInterface : interfaces) {
+            if (anInterface == null) {
+              throw new IllegalStateException("Interfaces cannot be null");
             }
+            if (!anInterface.isInterface()) {
+              throw new IllegalStateException(anInterface + " is not an interface");
+            }
+          }
         }
     }
 
@@ -411,21 +421,21 @@ public class AdvancedEnhancer extends AbstractClassGenerator
      * @param interfaces the list of interfaces that will be implemented, or null
      * @param methods the list into which to copy the applicable methods
      */
-    public static void getMethods(Class superclass, Class[] interfaces, List methods)
+    public static void getMethods(Class superclass, Class[] interfaces, List<Method> methods)
     {
         getMethods(superclass, interfaces, methods, null, null);
     }
 
-    private static void getMethods(Class superclass, Class[] interfaces, List methods, List interfaceMethods, Set forcePublic)
+    private static void getMethods(Class superclass, Class[] interfaces, List<Method> methods, List<Method> interfaceMethods, Set forcePublic)
     {
         ReflectUtils.addAllMethods(superclass, methods);
-        List target = (interfaceMethods != null) ? interfaceMethods : methods;
+        List<Method> target = (interfaceMethods != null) ? interfaceMethods : methods;
         if (interfaces != null) {
-            for (int i = 0; i < interfaces.length; i++) {
-                if (interfaces[i] != Factory.class) {
-                    ReflectUtils.addAllMethods(interfaces[i], target);
-                }
+          for (Class anInterface : interfaces) {
+            if (anInterface != Factory.class) {
+              ReflectUtils.addAllMethods(anInterface, target);
             }
+          }
         }
         if (interfaceMethods != null) {
             if (forcePublic != null) {
@@ -445,21 +455,22 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       if (TypeUtils.isFinal(sc.getModifiers())) {
         throw new IllegalArgumentException("Cannot subclass final class " + sc);
       }
-        List constructors = new ArrayList(Arrays.asList(sc.getDeclaredConstructors()));
+        List<Constructor> constructors = new ArrayList<Constructor>(Arrays.asList(sc.getDeclaredConstructors()));
         filterConstructors(sc, constructors);
 
         // Order is very important: must add superclass, then
         // its superclass chain, then each interface and
         // its superinterfaces.
         final Set forcePublic = new HashSet();
-        List actualMethods = new ArrayList();
-        List interfaceMethods = new ArrayList();
+        List<Method> actualMethods = new ArrayList<Method>();
+        List<Method> interfaceMethods = new ArrayList<Method>();
         getMethods(sc, interfaces, actualMethods, interfaceMethods, forcePublic);
 
+      //Changes by Peter Gromov
       Class aClass = sc;
       while (!Object.class.equals(aClass)) {
         for (final Method method : aClass.getDeclaredMethods()) {
-          if ((method.getModifiers() & Constants.ACC_ABSTRACT) == 0) {
+          if ((method.getModifiers() & Constants.ACC_ABSTRACT) == 0 && !(myAdditionalMethods.contains(method))) {
             actualMethods.remove(method);
           }
         }
@@ -537,7 +548,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
      * @param constructors the list of all declared constructors from the superclass
      * @throws IllegalArgumentException if there are no non-private constructors
      */
-    protected void filterConstructors(Class sc, List constructors) {
+    protected void filterConstructors(Class sc, List<Constructor> constructors) {
         CollectionUtils.filter(constructors, new VisibilityPredicate(sc, true));
       if (constructors.size() == 0) {
         throw new IllegalArgumentException("No visible constructors in " + sc);
@@ -553,7 +564,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
 
     protected Object nextInstance(Object instance) {
-        Class protoclass = (instance instanceof Class) ? (Class)instance : instance.getClass();
+        Class protoclass = (instance instanceof Class) ? (Class) instance : instance.getClass();
         if (classOnly) {
             return protoclass;
         } else if (instance instanceof Factory) {
@@ -626,7 +637,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         // TODO: optimize
         try {
             Method setter = getCallbacksSetter(type, methodName);
-            setter.invoke(null, new Object[]{ callbacks });
+            setter.invoke(null, callbacks);
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException(type + " is not an enhanced class");
         } catch (IllegalAccessException e) {
@@ -637,7 +648,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
 
     private static Method getCallbacksSetter(Class type, String methodName) throws NoSuchMethodException {
-        return type.getDeclaredMethod(methodName, new Class[]{ Callback[].class });
+        return type.getDeclaredMethod(methodName, Callback[].class);
     }
 
     private Object createUsingReflection(Class type) {
@@ -709,24 +720,24 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
     private void emitConstructors(ClassEmitter ce, List constructors) {
         boolean seenNull = false;
-        for (Iterator it = constructors.iterator(); it.hasNext();) {
-            MethodInfo constructor = (MethodInfo)it.next();
-            CodeEmitter e = EmitUtils.begin_method(ce, constructor, Constants.ACC_PUBLIC);
-            e.load_this();
-            e.dup();
-            e.load_args();
-            Signature sig = constructor.getSignature();
-            seenNull = seenNull || sig.getDescriptor().equals("()V");
-            e.super_invoke_constructor(sig);
-            e.invoke_static_this(BIND_CALLBACKS);
-            if (!interceptDuringConstruction) {
-                e.load_this();
-                e.push(1);
-                e.putfield(CONSTRUCTED_FIELD);
-            }
-            e.return_value();
-            e.end_method();
+      for (final Object constructor1 : constructors) {
+        MethodInfo constructor = (MethodInfo)constructor1;
+        CodeEmitter e = EmitUtils.begin_method(ce, constructor, Constants.ACC_PUBLIC);
+        e.load_this();
+        e.dup();
+        e.load_args();
+        Signature sig = constructor.getSignature();
+        seenNull = seenNull || sig.getDescriptor().equals("()V");
+        e.super_invoke_constructor(sig);
+        e.invoke_static_this(BIND_CALLBACKS);
+        if (!interceptDuringConstruction) {
+          e.load_this();
+          e.push(1);
+          e.putfield(CONSTRUCTED_FIELD);
         }
+        e.return_value();
+        e.end_method();
+      }
       if (!classOnly && !seenNull && arguments == null) {
         throw new IllegalArgumentException("Superclass has no null constructors but no arguments were given");
       }
@@ -881,53 +892,52 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         e.end_method();
     }
 
-    private void emitMethods(final ClassEmitter ce, List methods, List actualMethods) {
+    private void emitMethods(final ClassEmitter ce, List methods, List<Method> actualMethods) {
         CallbackGenerator[] generators = CallbackInfo.getGenerators(callbackTypes);
 
-        Map groups = new HashMap();
-        final Map indexes = new HashMap();
-        final Map originalModifiers = new HashMap();
+        Map<CallbackGenerator,List<MethodInfo>> groups = new HashMap<CallbackGenerator, List<MethodInfo>>();
+        final Map<MethodInfo,Integer> indexes = new HashMap<MethodInfo, Integer>();
+        final Map<MethodInfo,Integer> originalModifiers = new HashMap<MethodInfo, Integer>();
         final Map positions = CollectionUtils.getIndexMap(methods);
 
         Iterator it1 = methods.iterator();
-        Iterator it2 = (actualMethods != null) ? actualMethods.iterator() : null;
+        Iterator<Method> it2 = (actualMethods != null) ? actualMethods.iterator() : null;
 
         while (it1.hasNext()) {
             MethodInfo method = (MethodInfo)it1.next();
-            Method actualMethod = (it2 != null) ? (Method)it2.next() : null;
+            Method actualMethod = (it2 != null) ? it2.next() : null;
             int index = filter.accept(actualMethod);
             if (index >= callbackTypes.length) {
                 throw new IllegalArgumentException("Callback filter returned an index that is too large: " + index);
             }
-            originalModifiers.put(method, new Integer((actualMethod != null) ? actualMethod.getModifiers() : method.getModifiers()));
-            indexes.put(method, new Integer(index));
-            List group = (List)groups.get(generators[index]);
+            originalModifiers.put(method, (actualMethod != null) ? actualMethod.getModifiers() : method.getModifiers());
+            indexes.put(method, index);
+            List<MethodInfo> group = groups.get(generators[index]);
             if (group == null) {
-                groups.put(generators[index], group = new ArrayList(methods.size()));
+                groups.put(generators[index], group = new ArrayList<MethodInfo>(methods.size()));
             }
             group.add(method);
         }
 
-        Set seenGen = new HashSet();
+        Set<CallbackGenerator> seenGen = new HashSet<CallbackGenerator>();
         CodeEmitter se = ce.getStaticHook();
         se.new_instance(THREAD_LOCAL);
         se.dup();
         se.invoke_constructor(THREAD_LOCAL, CSTRUCT_NULL);
         se.putfield(THREAD_CALLBACKS_FIELD);
 
-        final Object[] state = new Object[1];
         CallbackGenerator.Context context = new CallbackGenerator.Context() {
             public int getOriginalModifiers(MethodInfo method) {
-                return ((Integer)originalModifiers.get(method)).intValue();
+                return originalModifiers.get(method);
             }
             public int getIndex(MethodInfo method) {
-                return ((Integer)indexes.get(method)).intValue();
+                return indexes.get(method);
             }
             public void emitCallback(CodeEmitter e, int index) {
                 emitCurrentCallback(e, index);
             }
             public Signature getImplSignature(MethodInfo method) {
-                return rename(method.getSignature(), ((Integer)positions.get(method)).intValue());
+                return rename(method.getSignature(), (Integer)positions.get(method));
             }
             public CodeEmitter beginMethod(ClassEmitter ce, MethodInfo method) {
                 CodeEmitter e = EmitUtils.begin_method(ce, method);
@@ -950,7 +960,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
             CallbackGenerator gen = generators[i];
             if (!seenGen.contains(gen)) {
                 seenGen.add(gen);
-                final List fmethods = (List)groups.get(gen);
+                final List<MethodInfo> fmethods = groups.get(gen);
                 if (fmethods != null) {
                     try {
                         gen.generate(ce, context, fmethods);

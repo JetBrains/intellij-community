@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,7 +138,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private DomElement doCreateDomElement(final Class<? extends DomElement> concreteInterface, final DomInvocationHandler handler) {
     final Implementation implementationClass = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
     if (implementationClass != null) {
-      return AdvancedProxy.createProxy(implementationClass.value(), new Class[]{concreteInterface}, handler);
+      return AdvancedProxy.createProxy(implementationClass.value(), new Class[]{concreteInterface}, handler, new Method[0]);
     }
     return AdvancedProxy.createProxy(concreteInterface, handler);
   }

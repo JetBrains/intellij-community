@@ -51,7 +51,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     return newTag;
   }
 
-  public void undefine() {
+  public void undefineInternal() {
     final DomInvocationHandler parent = getParentHandler();
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
@@ -78,6 +78,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     } finally {
       getManager().setChanging(changing);
     }
+    undefineChildren();
     fireUndefinedEvent();
   }
 

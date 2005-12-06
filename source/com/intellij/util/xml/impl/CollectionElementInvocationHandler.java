@@ -26,7 +26,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     return (XmlTag) getParent().ensureTagExists().add(tag);
   }
 
-  public final void undefine() {
+  public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
     detach(true);

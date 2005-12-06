@@ -32,11 +32,11 @@ public abstract class SetInvocation implements Invocation {
         if ((Boolean)args[0]) {
           handler.ensureTagExists();
         } else {
-          handler.undefine();
+          handler.undefineInternal();
         }
       } else {
         if (args[0] == null) {
-          handler.undefine();
+          handler.undefineInternal();
         } else {
           setValue(handler, myConverter.toString(args[0], new ConvertContextImpl(handler)));
         }

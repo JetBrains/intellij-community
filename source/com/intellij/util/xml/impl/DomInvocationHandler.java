@@ -130,21 +130,19 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myGenericInfoImpl;
   }
 
-  public void undefine() {
-    try {
-      final XmlTag tag = getXmlTag();
-      if (tag != null) {
-        deleteTag(tag);
-        fireUndefinedEvent();
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  protected abstract void undefineInternal();
+
+  public final void undefine() {
+    undefineInternal();
   }
 
-  public final DomInvocationHandler getDomInvocationHandler() {
-    return this;
+  protected final void undefineChildren() {
+    for (final AttributeChildInvocationHandler handler : myAttributeChildren.values()) {
+      handler.detach(false);
+    }
+    for (final IndexedElementInvocationHandler handler : myFixedChildren.values()) {
+      handler.detach(false);
+    }
   }
 
   protected final void deleteTag(final XmlTag tag) {
@@ -157,6 +155,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     } finally {
       myManager.setChanging(changing);
     }
+    setXmlTagToNull();
+  }
+
+  protected final void setXmlTagToNull() {
     myXmlTag = null;
   }
 
@@ -220,6 +222,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   protected final XmlFile getFile() {
+    assert isValid();
     if (myFile == null) {
       myFile = getRoot().getFile();
     }
@@ -448,7 +451,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
       myInitialized = false;
       removeFromCache();
-      myXmlTag = null;
+      setXmlTagToNull();
     }
   }
 
