@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.xml.XmlBundle;
 
 /**
  * User: anna
@@ -62,4 +63,5 @@ public interface GroupNames {
   String DECLARATION_REDUNDANCY = InspectionsBundle.message("group.names.declaration.redundancy");
 
   String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
+  String HTML_INSPECTIONS = XmlBundle.message("html.inspections.group.name");
 }

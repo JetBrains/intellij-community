@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -36,10 +37,10 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -58,7 +59,7 @@ public class RequiredAttributesInspection extends BaseLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "RequiredAttributes";
 
   public String getGroupDisplayName() {
-    return "";
+    return GroupNames.HTML_INSPECTIONS;
   }
 
   public String getDisplayName() {
