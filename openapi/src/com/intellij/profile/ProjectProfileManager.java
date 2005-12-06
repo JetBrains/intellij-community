@@ -27,14 +27,14 @@ import java.util.Map;
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class ProjectProfileFactory implements JDOMExternalizable {
+public abstract class ProjectProfileManager implements JDOMExternalizable {
 
   @Nullable
-  public static ProjectProfileFactory getProjectProfileFactory(Project project, String profileType){
-    final ProjectProfileFactory[] components = project.getComponents(ProjectProfileFactory.class);
-    for (ProjectProfileFactory factory : components) {
-      if (factory.getProfileType().compareTo(profileType) == 0){
-        return factory;
+  public static ProjectProfileManager getProjectProfileFactory(Project project, String profileType){
+    final ProjectProfileManager[] components = project.getComponents(ProjectProfileManager.class);
+    for (ProjectProfileManager manager : components) {
+      if (manager.getProfileType().compareTo(profileType) == 0){
+        return manager;
       }
     }
     return null;
@@ -50,7 +50,7 @@ public abstract class ProjectProfileFactory implements JDOMExternalizable {
 
   public abstract boolean isProperProfile(ProfileScope scope);
 
-  public abstract Map<ProfileScope,String> getUsedProfiles();
+  public abstract Map<ProfileScope,String> getProfilesUsedInProject();
 
   public abstract String getProfileType();
 

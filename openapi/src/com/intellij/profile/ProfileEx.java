@@ -19,6 +19,9 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * User: anna
@@ -26,19 +29,24 @@ import org.jdom.Element;
  */
 public class ProfileEx implements Profile {
   public String myName;
-  public boolean myLocal;
+  protected File myFile;
 
-  public ProfileEx(final String name, final boolean local) {
+  public ProfileEx(String name) {
     myName = name;
-    myLocal = local;
   }
 
-  public boolean isLocal() {
-    return myLocal;
+  public ProfileEx(final String name, final File file) {
+    myName = name;
+    myFile = file;
   }
 
   public String getName() {
     return myName;
+  }
+
+  @Nullable
+  public File getFile() {
+    return myFile;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -47,5 +55,20 @@ public class ProfileEx implements Profile {
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ProfileEx)) return false;
+
+    final ProfileEx profileEx = (ProfileEx)o;
+
+    if (!myName.equals(profileEx.myName)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myName.hashCode();
   }
 }

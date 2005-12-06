@@ -1,12 +1,8 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -162,13 +158,4 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected abstract String getBasePath();
-
-  protected void initializeInspection(LocalInspectionTool tool){
-    final DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    final InspectionProfileImpl localProfile = new InspectionProfileImpl("TestProfile");
-    localProfile.addInspectionTool(new LocalInspectionToolWrapper(tool));
-    localProfile.enableTool(tool.getShortName());
-    settings.setInspectionProfile(localProfile);
-  }
-
 }

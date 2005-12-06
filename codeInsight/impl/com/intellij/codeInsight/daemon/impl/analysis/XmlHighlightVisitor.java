@@ -2,7 +2,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
@@ -11,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
@@ -21,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -53,7 +58,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
   private RefCountHolder myRefCountHolder;
-  private DaemonCodeAnalyzerSettings mySettings;
 
   private static boolean ourDoJaxpTesting;
 
@@ -63,10 +67,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private static final @NonNls String TAGDIR_ATT = "tagdir";
   private static final @NonNls String ID_ATT = "id";
   private static final @NonNls String LOCATION_ATT_SUFFIX = "Location";
-
-  public XmlHighlightVisitor(DaemonCodeAnalyzerSettings settings) {
-    mySettings = settings;
-  }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
@@ -366,7 +366,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME);
-    if (requiredAttributes != null && mySettings.getInspectionProfile(tag).isToolEnabled(key)) {
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+    if (requiredAttributes != null && profile.isToolEnabled(key)) {
       for (final String attrName : requiredAttributes) {
         if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
           if (!(elementDescriptor instanceof JspElementDescriptor) ||
@@ -375,7 +376,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             final InsertRequiredAttributeIntention insertRequiredAttributeIntention = new InsertRequiredAttributeIntention(
                 tag, attrName, null);
             final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-            addElementsForTag(tag, localizedMessage, mySettings.getInspectionProfile(tag).getErrorLevel(key) == HighlightDisplayLevel.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.ERROR, insertRequiredAttributeIntention);
+            addElementsForTag(tag, localizedMessage, profile.getErrorLevel(key) == HighlightDisplayLevel.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.ERROR, insertRequiredAttributeIntention);
           }
         }
       }

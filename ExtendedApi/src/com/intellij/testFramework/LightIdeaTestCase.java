@@ -1,7 +1,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -48,10 +48,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A testcase that provides IDEA application and project. Note both are reused for each test run in the session so
@@ -62,7 +59,6 @@ import java.util.Map;
  * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this is real mock
  * so it contains classes that is really needed in order to speed up tests startup.
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "HardCodedStringLiteral"})
 @NonNls public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
@@ -213,7 +209,7 @@ import java.util.Map;
       enableInspectionTool(tool);
     }
 
-    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(new InspectionProfileImpl("Configurable"){
+    final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
       public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
         final Collection<LocalInspectionTool> tools = myAvailableTools.values();
         return tools.toArray(new LocalInspectionTool[tools.size()]);
@@ -231,13 +227,16 @@ import java.util.Map;
 
 
       public InspectionTool getInspectionTool(String shortName) {
-        if (myAvailableTools.containsKey(shortName)){
+        if (myAvailableTools.containsKey(shortName)) {
           return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
         }
         return null;
       }
 
-    });
+    };
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    inspectionProfileManager.addProfile(profile);
+    inspectionProfileManager.setRootProfile(profile.getName());
 
     assertFalse(getPsiManager().isDisposed());
 
@@ -245,6 +244,9 @@ import java.util.Map;
 
   }
 
+  protected Set<String> getAvailableInspections(){
+    return myAvailableTools.keySet();
+  }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
     final String shortName = tool.getShortName();

@@ -18,8 +18,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 public class IntentionManagerSettings implements ApplicationComponent, NamedJDOMExternalizable {

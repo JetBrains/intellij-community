@@ -18,6 +18,8 @@ package com.intellij.profile;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
+
 /**
  * User: anna
  * Date: 20-Nov-2005
@@ -25,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public interface Profile extends JDOMExternalizable {
   @NonNls String INSPECTION = "INSPECTION";
   @NonNls String CODE_STYLE = "CODE_STYLE";
-  boolean isLocal();
   String getName();
+  File getFile();
 }

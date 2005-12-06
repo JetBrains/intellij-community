@@ -28,7 +28,7 @@ public class InspectionMain implements ApplicationStarter {
     myApplication = new InspectionApplication();
 
     myApplication.myProjectPath = args[1];
-    myApplication.myProfilePath = args[2];
+    myApplication.myProfileName = args[2];
     myApplication.myOutPath = args[3];
 
     try {

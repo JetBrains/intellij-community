@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
@@ -41,7 +40,6 @@ import java.util.Map;
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
-  private final DaemonCodeAnalyzerSettings mySettings;
   private PsiResolveHelper myResolveHelper;
 
   /**
@@ -76,10 +74,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void projectClosed() {}
 
-  public HighlightVisitorImpl(DaemonCodeAnalyzerSettings settings, PsiManager manager) {
-    mySettings = settings;
-
-    myXmlVisitor = new XmlHighlightVisitor(settings);
+  public HighlightVisitorImpl(PsiManager manager) {
+    myXmlVisitor = new XmlHighlightVisitor();
 
     myResolveHelper = manager.getResolveHelper();
   }
@@ -312,7 +308,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant, mySettings));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumConstantForConstructorProblems(enumConstant));
     if (!myHolder.hasErrorResults()) registerConstructorCall(enumConstant);
   }
 
@@ -566,7 +562,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNewOfStaticClass(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkNewExpression(expression, mySettings));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkNewExpression(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);

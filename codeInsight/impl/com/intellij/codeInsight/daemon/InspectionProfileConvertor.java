@@ -3,10 +3,12 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -89,12 +91,10 @@ public class InspectionProfileConvertor {
 
   public void storeEditorHighlightingProfile(Element element) {
     if (retrieveOldSettings(element)) {
-      final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-      final InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE,
-                                                                            inspectionProfileManager);
+      final InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE);
 
       final InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
-      editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
+
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
     }
@@ -119,7 +119,7 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    final File profileDirectory = InspectionProfileManager.getProfileDirectory();
+    final File profileDirectory = InspectionProfileManager.getProfileDirectory(InspectionProfileManager.INSPECTION_DIR_NAME);
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);
@@ -169,6 +169,10 @@ public class InspectionProfileConvertor {
       }
       profile.setErrorLevel(key, level);
     }
+    //javadoc attributes
+    final InspectionTool inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
+    JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+    inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 
 

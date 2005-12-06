@@ -1,38 +1,34 @@
 package com.intellij.uiDesigner.i18n;
 
-import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.LwComponent;
-import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.FileCheckingInspection;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,7 +91,7 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
   }
 
   public boolean isActive(PsiElement psiRoot) {
-    final InspectionProfile profile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiRoot);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getProfile(psiRoot);
     HighlightDisplayKey key = HighlightDisplayKey.find("UnresolvedPropertyKey");
     if (key == null) {
       return false;

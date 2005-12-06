@@ -1,19 +1,17 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
@@ -26,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -39,6 +38,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
@@ -86,7 +86,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final boolean myCompiled;
 
   private Collection<HighlightInfo> myHighlights;
-  private DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   private boolean myHasRedundantImports;
   private final CodeStyleManagerEx myStyleManager;
   private int myCurentEntryIndex;
@@ -242,7 +241,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfileImpl profile = (InspectionProfileImpl)mySettings.getInspectionProfile(identifier);
+    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
     PsiElement parent = identifier.getParent();
@@ -437,7 +436,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
-    if (!mySettings.getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
+    if (!InspectionProjectProfileManager.getInstance(myProject).getProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
 
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;

@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -13,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 
 public class CodeInspectionOnEditorAction extends AnAction {
@@ -33,7 +33,8 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
     inspectionManagerEx.setCurrentScope(scope);
-    final InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiFile);
+    final InspectionProfile inspectionProfile =
+      InspectionProjectProfileManager.getInstance(project).getProfile(psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

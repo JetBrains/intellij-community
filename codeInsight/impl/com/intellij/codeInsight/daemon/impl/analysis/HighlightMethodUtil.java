@@ -6,7 +6,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -1025,7 +1024,7 @@ public class HighlightMethodUtil {
   }
 
   //@top
-  static HighlightInfo checkNewExpression(PsiNewExpression expression, DaemonCodeAnalyzerSettings settings) {
+  static HighlightInfo checkNewExpression(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (!(type instanceof PsiClassType)) return null;
     PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
@@ -1038,14 +1037,13 @@ public class HighlightMethodUtil {
       if (aClass == null) return null;
     }
 
-    return checkConstructorCall(typeResult, expression, type, settings, expression.getClassReference());
+    return checkConstructorCall(typeResult, expression, type, expression.getClassReference());
   }
 
   //@top
   public static HighlightInfo checkConstructorCall(PsiClassType.ClassResolveResult typeResolveResult,
                                                    PsiConstructorCall constructorCall,
                                                    PsiType type,
-                                                   DaemonCodeAnalyzerSettings settings,
                                                    PsiJavaCodeReferenceElement classReference) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return null;

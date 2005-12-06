@@ -17,28 +17,27 @@ package com.intellij.profile;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.scope.ProfileScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * User: anna
  * Date: 29-Nov-2005
  */
-public abstract class ProfileFactory {
+public abstract class ProfileManager {
 
   @Nullable
-  public static ProfileFactory getProfileFactory(String type) {
-    final ProfileFactory[] components = ApplicationManager.getApplication().getComponents(ProfileFactory.class);
-    for (ProfileFactory factory : components) {
-      if (factory.getProfileType().compareTo(type) == 0) {
-        return factory;
+  public static ProfileManager getProfileManager(String type) {
+    final ProfileManager[] components = ApplicationManager.getApplication().getComponents(ProfileManager.class);
+    for (ProfileManager manager : components) {
+      if (manager.getProfileType().compareTo(type) == 0) {
+        return manager;
       }
     }
     return null;
@@ -46,9 +45,9 @@ public abstract class ProfileFactory {
 
   public static Set<String> getRegisteredProfileTypes() {
     final Set<String> result = new HashSet<String>();
-    final ProfileFactory[] components = ApplicationManager.getApplication().getComponents(ProfileFactory.class);
-    for (ProfileFactory factory : components) {
-      result.add(factory.getProfileType());
+    final ProfileManager[] components = ApplicationManager.getApplication().getComponents(ProfileManager.class);
+    for (ProfileManager manager : components) {
+      result.add(manager.getProfileType());
     }
     return result;
   }
@@ -65,11 +64,11 @@ public abstract class ProfileFactory {
 
   public abstract void fireProfileChanged(Profile oldProfile, Profile profile, ProfileScope scope);
 
-  public abstract List<Profile> getLocalProfiles();
+  public abstract Collection<Profile> getProfiles();
 
   public abstract void setRootProfile(String rootProfile);
 
-  public abstract List<Profile> getProjectProfiles();
+  public abstract String [] getAvailableProfileNames();
 
   @Nullable
   //profile was removed
@@ -77,13 +76,11 @@ public abstract class ProfileFactory {
 
   public abstract Profile getRootProfile();
 
-  public abstract void deleteProfile(Profile profile);
+  public abstract void deleteProfile(String profile);
 
   public abstract void addProfile(Profile profile);
 
   public abstract void readProfiles(Element element) throws InvalidDataException;
 
-  public abstract void writeProfiles(Element element, boolean isLocal) throws WriteExternalException;
-
-
+  public abstract void updateProfile(Profile profile);
 }

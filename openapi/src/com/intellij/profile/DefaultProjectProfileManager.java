@@ -15,7 +15,9 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +32,7 @@ import java.util.*;
  * User: anna
  * Date: 30-Nov-2005
  */
-public class DefaultProjectProfileFactory extends ProjectProfileFactory {
+public class DefaultProjectProfileManager extends ProjectProfileManager {
   private static Set<ProfileScope> ourProfileScopeTypes = new HashSet<ProfileScope>();
 
   static {
@@ -44,13 +46,17 @@ public class DefaultProjectProfileFactory extends ProjectProfileFactory {
   @NonNls private static final String SCOPES = "scopes";
   @NonNls private static final String SCOPE = "scope";
   @NonNls private static final String PROFILE = "profile";
+  @NonNls private static final String CURRENT_PROFILE = "current_profile";
 
 
   private Project myProject;
   private Map<ProfileScope, String> myScopeToProfileMap = new HashMap<ProfileScope, String>();
   private String myProfileType;
 
-  public DefaultProjectProfileFactory(final Project project,
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
+  @NonNls private static final String PROFILES = "profiles";
+
+  public DefaultProjectProfileManager(final Project project,
                                       final String profileType) {
     myProject = project;
     myProfileType = profileType;
@@ -65,7 +71,7 @@ public class DefaultProjectProfileFactory extends ProjectProfileFactory {
   }
 
   public String getProfile(VirtualFile vFile) {
-    return getProfile(ProfileScopeFactory.getInstance().findProfileScopeForFile(vFile, myProject));
+    return getProfile(ProfileScopeFactory.getInstance(myProject).findProfileScopeForFile(vFile));
   }
 
   public String getProfile(final ProfileScope scope) {
@@ -80,40 +86,57 @@ public class DefaultProjectProfileFactory extends ProjectProfileFactory {
       }
       parentScope = parentScope.getParentScope(myProject);
     }
-    final ProfileFactory profileFactory = ProfileFactory.getProfileFactory(myProfileType);
-    assert profileFactory != null;
-    return profileFactory.getRootProfile().getName();
+    final ProfileManager profileManager = ProfileManager.getProfileManager(myProfileType);
+    LOG.assertTrue(profileManager != null);
+    return profileManager.getRootProfile().getName();
   }
 
   public boolean isProperProfile(ProfileScope scope) {
     return scope instanceof ApplicationProfileScope || myScopeToProfileMap.containsKey(scope);
   }
 
-  public Map<ProfileScope, String> getUsedProfiles() {
+  public Map<ProfileScope, String> getProfilesUsedInProject() {
     return myScopeToProfileMap;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final ProfileFactory profileFactory = ProfileFactory.getProfileFactory(myProfileType);
-    assert profileFactory != null;
-    profileFactory.readProfiles(element);
-    final List scopes = element.getChildren(SCOPES);
+    final ProfileManager profileManager = ProfileManager.getProfileManager(myProfileType);
+    LOG.assertTrue(profileManager != null);
+    final Element profiles = element.getChild(PROFILES);
+    if (profiles != null) {
+      profileManager.readProfiles(profiles);
+    }
+    final Element scopes = element.getChild(SCOPES);
     if (scopes != null) {
-      for (Object s : scopes) {
-        Element scopeElement = (Element)s;
-        final String profile = scopeElement.getAttributeValue(PROFILE);
-        if (profile != null) {
-          assignProfileToScope(profile, getProfileScope(scopeElement));
+      final List children = scopes.getChildren(SCOPE);
+      if (children != null) {
+        for (Object s : children) {
+          Element scopeElement = (Element)s;
+          final String profile = scopeElement.getAttributeValue(PROFILE);
+          if (profile != null) {
+            assignProfileToScope(profile, getProfileScope(scopeElement));
+          }
         }
+      }
+    }
+    final Element currentProfile = element.getChild(CURRENT_PROFILE);
+    if (currentProfile != null){
+      final String projectProfile = currentProfile.getAttributeValue(PROFILE);
+      if (!Comparing.strEqual(profileManager.getRootProfile().getName(), projectProfile)){
+         final Profile profile = profileManager.createProfile();
+         profile.readExternal(currentProfile);
+         profileManager.addProfile(profile);
+         assignProfileToScope(projectProfile, ProfileScopeFactory.getInstance(myProject).getProfileScope());
       }
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final ProfileFactory profileFactory = ProfileFactory.getProfileFactory(myProfileType);
-    assert profileFactory != null;
-    profileFactory.writeProfiles(element, false);
-    final Map<ProfileScope, String> usedProfiles = getUsedProfiles();
+    final ProfileManager profileManager = ProfileManager.getProfileManager(myProfileType);
+    LOG.assertTrue(profileManager != null);
+    final Map<ProfileScope, String> usedProfiles = getProfilesUsedInProject();
+    final Set<String> differentUsedProfiles = new HashSet<String>();
+    differentUsedProfiles.addAll(usedProfiles.values());
     if (!usedProfiles.isEmpty()) {
       final Element assignedScopes = new Element(SCOPES);
       for (ProfileScope scope : usedProfiles.keySet()) {
@@ -123,6 +146,27 @@ public class DefaultProjectProfileFactory extends ProjectProfileFactory {
         assignedScopes.addContent(scopeElement);
       }
       element.addContent(assignedScopes);
+      final Element profiles = new Element(PROFILES);
+      for (String profile : differentUsedProfiles) {
+        final Profile projectProfile = profileManager.getProfile(profile);
+        if (projectProfile != null) {
+          final Element profileElement = new Element(PROFILE);
+          projectProfile.writeExternal(profileElement);
+          profiles.addContent(profileElement);
+        }
+      }
+      element.addContent(profiles);
+    }
+    final ProfileScope profileScope = ProfileScopeFactory.getInstance(myProject).getProfileScope();
+    if (!isProperProfile(profileScope)){
+      final Element currentProjectProfile = new Element(CURRENT_PROFILE);
+      final Profile rootProfile = profileManager.getRootProfile();
+      final String name = rootProfile.getName();
+      currentProjectProfile.setAttribute(PROFILE, name);
+      if (!differentUsedProfiles.contains(name)){
+        rootProfile.writeExternal(currentProjectProfile);
+      }
+      element.addContent(currentProjectProfile);
     }
   }
 
@@ -144,11 +188,12 @@ public class DefaultProjectProfileFactory extends ProjectProfileFactory {
     myScopeToProfileMap.clear();
   }
 
-  public ProjectProfileFactory copy() {
-    final DefaultProjectProfileFactory copy = new DefaultProjectProfileFactory(myProject, myProfileType);
+  public ProjectProfileManager copy() {
+    final DefaultProjectProfileManager copy = new DefaultProjectProfileManager(myProject, myProfileType);
     for (ProfileScope scope : myScopeToProfileMap.keySet()) {
       copy.assignProfileToScope(myScopeToProfileMap.get(scope), scope);
     }
     return copy;
   }
+
 }

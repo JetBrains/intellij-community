@@ -9,8 +9,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.io.File;
-
 /**
  * User: anna
  * Date: Dec 7, 2004
@@ -26,10 +24,6 @@ public interface InspectionProfile {
   InspectionTool[] getInspectionTools();
 
   LocalInspectionTool[] getHighlightingLocalInspectionTools();
-
-  File getFile();
-
-  InspectionProfileManager getManager();
 
   void cleanup();
 
@@ -73,25 +67,9 @@ public interface InspectionProfile {
 
     boolean isProperSetting(HighlightDisplayKey key);
 
-    void setAdditionalJavadocTags(String tags);
-    
-    void setAdditionalHtmlTags(String tags);
-    
-    void setAdditionalHtmlAttributes(String attributes);
-    
-    void setAdditionalNotRequiredHtmlAttributes(String attributes);
-
     void resetToBase();
 
     InspectionTool[] getInspectionTools();
-
-    String getAdditionalJavadocTags();
-    
-    String getAdditionalHtmlTags();
-    
-    String getAdditionalHtmlAttributes();
-    
-    String getAdditionalNotRequiredHtmlAttributes();
 
     void copyFrom(InspectionProfileImpl profile);
 
@@ -102,6 +80,8 @@ public interface InspectionProfile {
     void setUnusedSymbolSettings(UnusedSymbolSettings settings);
 
     boolean isDefault();
+
+    InspectionTool getInspectionTool(String shortName);
   }
 
   static class UnusedSymbolSettings implements JDOMExternalizable{

@@ -16,13 +16,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.Profile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 import java.io.*;
-import java.text.MessageFormat;
 
 /**
  * @author max
@@ -33,12 +33,12 @@ public class InspectionApplication {
   public String myProjectPath = null;
   public String myOutPath = null;
   public String mySourceDirectory = null;
-  public String myProfilePath = null;
+  public String myProfileName = null;
   private Project myProject;
   private int myVerboseLevel = 0;
 
   public void startup() {
-    if (myProjectPath == null || myOutPath == null || myProfilePath == null) {
+    if (myProjectPath == null || myOutPath == null || myProfileName == null) {
       InspectionMain.printHelp();
     }
 
@@ -72,9 +72,9 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      File profileFile = new File(myProfilePath);
-      if (!profileFile.exists()) {
-        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfilePath));
+      final Profile inspectionProfile = com.intellij.profile.codeInspection.InspectionProfileManager.getInstance().getProfile(myProfileName);
+      if (inspectionProfile == null) {
+        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfileName));
         InspectionMain.printHelp();
       }
 
@@ -87,8 +87,7 @@ public class InspectionApplication {
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       final AnalysisScope scope;
 
-      InspectionProfileImpl profile = new InspectionProfileImpl(profileFile, null);
-      im.setProfile(profile);
+      im.setProfile((InspectionProfile)inspectionProfile);
 
       if (mySourceDirectory == null) {
         scope = new AnalysisScope(myProject);

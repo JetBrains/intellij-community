@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -16,6 +15,8 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
@@ -52,7 +53,8 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(file);
+    InspectionProfileImpl inspectionProfile =
+      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
     editToolSettings(project, inspectionProfile, true);
   }
 
@@ -95,7 +97,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                              myPanel.apply();
                                                                              final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile().getParentProfile();
                                                                              if (editorHighlighting){
-                                                                               DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(editedProfile);
+                                                                               InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
                                                                              }
                                                                              inspectionProfile.copyFrom(editedProfile);
                                                                            }

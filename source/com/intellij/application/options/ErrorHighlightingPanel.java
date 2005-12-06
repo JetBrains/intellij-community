@@ -2,11 +2,11 @@ package com.intellij.application.options;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +20,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
   private JCheckBox mySuppressWay;
 
   public ErrorHighlightingPanel() {
-    super(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName(), null);
+    super(InspectionProfileManager.getInstance().getRootProfile().getName(), null);
     add(getAutoreparsePanel(), BorderLayout.NORTH);
   }
 
@@ -43,7 +43,6 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
   public void apply() throws ConfigurationException {
     super.apply();
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    settings.setInspectionProfile((InspectionProfileImpl)mySelectedProfile.getParentProfile());
 
     settings.AUTOREPARSE_DELAY = getAutoReparseDelay();
     settings.setImportHintEnabled(myCbShowImportPopup.isSelected());
@@ -54,10 +53,10 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     settings.SUPPRESS_WARNINGS = mySuppressWay.isSelected();
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < projects.length; i++) {
-      DaemonCodeAnalyzer.getInstance(projects[i]).settingsChanged();
+    for (Project project : projects) {
+      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
-
+    InspectionProfileManager.getInstance().setRootProfile(mySelectedProfile.getName());
   }
 
   private int getErrorStripeMarkMinHeight() {

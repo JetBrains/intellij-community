@@ -1,7 +1,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import junit.framework.TestCase;
@@ -125,7 +125,7 @@ import java.util.Map;
       enableInspectionTool(tool);
     }
 
-    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(new InspectionProfileImpl("Configurable"){
+    final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
       public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
         final Collection<LocalInspectionTool> tools = myAvailableTools.values();
         return tools.toArray(new LocalInspectionTool[tools.size()]);
@@ -142,13 +142,15 @@ import java.util.Map;
       }
 
       public InspectionTool getInspectionTool(String shortName) {
-        if (myAvailableTools.containsKey(shortName)){
+        if (myAvailableTools.containsKey(shortName)) {
           return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
         }
         return null;
       }
-    });
-
+    };
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    inspectionProfileManager.addProfile(profile);
+    inspectionProfileManager.setRootProfile(profile.getName());
   }
 
   public Project getProject() {

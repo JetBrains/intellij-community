@@ -1,20 +1,21 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -409,7 +410,7 @@ public abstract class GenericsHighlightUtil {
    */
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
     if (elementToHighlight.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     if (!isGenericToRaw(lType, rType)) return null;
     String description = JavaErrorMessages.message("generics.unchecked.assignment",
                                                    HighlightUtil.formatType(rType),
@@ -436,7 +437,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
     if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(typeCast).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getProfile(typeCast).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
     if (typeElement == null) return null;
     final PsiType castType = typeElement.getType();
@@ -535,7 +536,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
     if (call.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(call).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getProfile(call).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
 
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -821,7 +822,7 @@ public abstract class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant, DaemonCodeAnalyzerSettings settings) {
+  static HighlightInfo checkEnumConstantForConstructorProblems(PsiEnumConstant enumConstant) {
     PsiClass containingClass = enumConstant.getContainingClass();
     if (enumConstant.getInitializingClass() == null) {
       HighlightInfo highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
@@ -831,7 +832,7 @@ public abstract class GenericsHighlightUtil {
     }
     PsiClassType type = enumConstant.getManager().getElementFactory().createType(containingClass);
 
-    return HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, settings, null);
+    return HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
   }
 
   public static HighlightInfo checkEnumSuperConstructorCall(PsiMethodCallExpression expr) {
@@ -934,7 +935,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(overrider).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getProfile(overrider).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {
       PsiMethod baseMethod = signature.getMethod();
       PsiSubstitutor substitutor = signature.getSubstitutor();

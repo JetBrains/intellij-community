@@ -1,18 +1,13 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileManager;
-import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiElement;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -48,58 +43,14 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
 
-  private InspectionProfileImpl myInspectionProfile;
-
-  @NotNull public InspectionProfile getInspectionProfile() {
-    if (myInspectionProfile == null) {
-      final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-      final String[] avaliableProfileNames = inspectionProfileManager.getAvaliableProfileNames();
-      if (avaliableProfileNames == null || avaliableProfileNames.length == 0){
-        //can't be but ...
-        return inspectionProfileManager.createDefaultProfile();
-      } else {
-        myInspectionProfile = inspectionProfileManager.getProfile(avaliableProfileNames[0]);
-      }
-    }
-    if (!myInspectionProfile.wasInitialized()) {
-      myInspectionProfile.load();
-    }
-    return myInspectionProfile;
-  }
-
-  @NotNull public InspectionProfile getInspectionProfile(PsiElement psiRoot) {
-    InspectionProfileImpl inspectionProfile = null;
-    if (psiRoot != null) {
-      final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiRoot.getProject())
-        .getInspectionProfile(psiRoot);
-      if (inspectionProfilePair != null && inspectionProfilePair.second) {
-        inspectionProfile = InspectionProfileManager.getInstance().getProfile(inspectionProfilePair.first);
-      }
-    }
-    return inspectionProfile != null ? inspectionProfile : getInspectionProfile();
-  }
-
-  //set in error settings to hightlight only
-  public void setInspectionProfile(InspectionProfileImpl inspectionProfile) {
-    myInspectionProfile = inspectionProfile;
-  }
-
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     try {
       Element rootNew = new Element(ROOT_TAG);
       writeExternal(rootNew);
-
       Element rootOld = new Element(ROOT_TAG);
       oldSettings.writeExternal(rootOld);
 
-      if (JDOMUtil.areElementsEqual(rootOld, rootNew)) {
-        oldSettings.myInspectionProfile.writeExternal(rootOld);
-        myInspectionProfile.writeExternal(rootNew);
-        return !JDOMUtil.areElementsEqual(rootOld, rootNew);
-      }
-      else {
-        return true;
-      }
+      return !(JDOMUtil.areElementsEqual(rootOld, rootNew));
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -123,9 +74,6 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings();
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(PROFILE_COPY_NAME, InspectionProfileManager.getInstance());
-    inspectionProfile.copyFrom((InspectionProfileImpl)getInspectionProfile());
-    settings.myInspectionProfile = inspectionProfile;
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
@@ -136,25 +84,12 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
-    String profileName = element.getAttributeValue(PROFILE_ATT);
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    if (profileName != null) {
-      myInspectionProfile = inspectionProfileManager.getProfile(profileName);
-    }
-    else {
-      myInspectionProfile = inspectionProfileManager.createDefaultProfile();
-    }
+    InspectionProfileManager.getInstance().setRootProfile(element.getAttributeValue(PROFILE_ATT));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    //clone
-    if (myInspectionProfile != null) {
-      element.setAttribute(PROFILE_ATT, myInspectionProfile.getName());
-    }
-    else {
-      element.setAttribute(PROFILE_ATT, DEFAULT_PROFILE_ATT);
-    }
+    element.setAttribute(PROFILE_ATT, InspectionProfileManager.getInstance().getRootProfile().getName());
   }
 
   public boolean isImportHintEnabled() {

@@ -1,15 +1,11 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.profile.codeInspection.InspectionProfileFactory</implementation-class>
+      <implementation-class>com.intellij.profile.codeInspection.InspectionProfileManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProfileFactory</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.profile.scope.ProfileScopeFactory</interface-class>
-      <implementation-class>com.intellij.profile.scope.ProfileScopeFactoryImpl</implementation-class>
-    </component>
+      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProfileManager</implementation-class>
+    </component>      
     <component>
       <interface-class>com.intellij.profile.ui.ProfileUIFactory</interface-class>
       <implementation-class>com.intellij.profile.ui.ProfileUIFactoryImpl</implementation-class>
@@ -17,13 +13,17 @@
   </application-components>
   <project-components>
     <component>
-      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileFactory</implementation-class>
+      <interface-class>com.intellij.profile.scope.ProfileScopeFactory</interface-class>
+      <implementation-class>com.intellij.profile.scope.ProfileScopeFactoryImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileFactory</implementation-class>
+      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
     </component>
-    <!--<component>
+    <component>
+      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileManager</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.profile.ui.InspectionProfileConfigurable</implementation-class>
-    </component>-->
+    </component>
   </project-components>
 </components>

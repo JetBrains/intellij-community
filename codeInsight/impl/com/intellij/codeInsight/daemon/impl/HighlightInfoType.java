@@ -1,15 +1,17 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 
 public interface HighlightInfoType {
@@ -101,8 +103,8 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-      HighlightDisplayLevel level = (psiElement != null ? settings.getInspectionProfile(psiElement) : settings.getInspectionProfile()).getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = (psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getProfile(psiElement) :
+                                    ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile())).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }
@@ -132,8 +134,7 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-      HighlightDisplayLevel level = settings.getInspectionProfile(psiElement).getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getProfile(psiElement).getErrorLevel(mySeverityKey) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }

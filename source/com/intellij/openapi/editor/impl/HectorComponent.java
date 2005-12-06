@@ -1,12 +1,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.codeInspection.ui.ApplyAction;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -25,11 +23,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.*;
-import com.intellij.CommonBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +125,7 @@ public class HectorComponent extends JPanel {
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
         analyzer.resetImportHintsEnabledForProject();
         analyzer.restart();
-        myProfilesCombo.getComboBox().setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName());
+        myProfilesCombo.getComboBox().setSelectedItem(((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getName());
         myProfilesCombo.setEnabled(false);
         myUsePerFileProfile.setSelected(false);
         for (int i = 0; i < mySliders.length; i++) {
@@ -196,7 +195,8 @@ public class HectorComponent extends JPanel {
       }
     });
     reloadProfiles(inspectionManager,
-                   inspectionProfile == null ? DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName() : inspectionProfile.first);
+                   inspectionProfile == null ? ((InspectionProfile)InspectionProjectProfileManager.getInstance(myFile.getProject())
+                     .getProfile(myFile)).getName() : inspectionProfile.first);
     myProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myHint != null && myHint.isVisible()) myHint.hide();
@@ -212,7 +212,7 @@ public class HectorComponent extends JPanel {
   }
 
   private void reloadProfiles(final InspectionProfileManager inspectionManager, final String selectedProfile) {
-    final String[] avaliableProfileNames = inspectionManager.getAvaliableProfileNames();
+    final String[] avaliableProfileNames = inspectionManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myProfilesCombo.getComboBox().getModel();
     model.removeAllElements();
     for (String profile : avaliableProfileNames) {
@@ -302,7 +302,9 @@ public class HectorComponent extends JPanel {
     }
     if (myUseProfile != myUsePerFileProfile.isSelected()) return true;
     if (myUseProfile) {
-      return !Comparing.equal(myProfile, DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile));
+      return !Comparing.equal(myProfile,
+                              ((InspectionProfile)InspectionProjectProfileManager.getInstance(myFile.getProject()).getProfile(myFile))
+      );
     }
     return false;
   }

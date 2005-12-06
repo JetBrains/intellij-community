@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -13,8 +12,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.IntentionQuickFixWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +27,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -94,7 +94,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
 
-    final LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getHighlightingLocalInspectionTools();
+    final LocalInspectionTool[] tools = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile).getHighlightingLocalInspectionTools();
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : workSet) {
@@ -191,7 +191,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
+    InspectionProfile inspectionProfile = ((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile));
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
@@ -235,7 +235,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
+      InspectionProfile inspectionProfile = ((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile));
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 

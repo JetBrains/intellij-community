@@ -1,16 +1,19 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -122,8 +125,11 @@ public class JavaDocCompletionData extends CompletionData {
         ret.add(info.getName());
       }
 
-      InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(position);
-      final StringTokenizer tokenizer = new StringTokenizer(inspectionProfile.getAdditionalJavadocTags(), ", ");
+      InspectionProfileImpl inspectionProfile =
+        (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(position.getProject()).getProfile(position);
+      final InspectionTool inspectionTool = inspectionProfile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
+      JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+      final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());
       }
