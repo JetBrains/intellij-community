@@ -19,10 +19,12 @@ import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +42,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public InspectionProfile getProfile(@NotNull final PsiElement psiElement){
+    final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiElement.getProject()).getInspectionProfile(psiElement);
+    if (inspectionProfilePair != null && inspectionProfilePair.second) {
+      InspectionProfile inspectionProfile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(inspectionProfilePair.first);
+      if (inspectionProfile != null){
+        return inspectionProfile;
+      }
+    }
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final VirtualFile virtualFile = psiFile.getVirtualFile();
