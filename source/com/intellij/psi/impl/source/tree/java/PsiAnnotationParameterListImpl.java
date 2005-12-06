@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -27,6 +26,7 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
     myCachedMembers = null;
   }
 
+  @NotNull
   public PsiNameValuePair[] getAttributes() {
     if (myCachedMembers == null) {
       myCachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
@@ -74,5 +74,71 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
 
   public void accept(PsiElementVisitor visitor) {
     visitor.visitAnnotationParameterList(this);
+  }
+
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (anchor == null){
+      if (before == null || before.booleanValue()){
+        anchor = findChildByRole(ChildRole.LPARENTH);
+        before = Boolean.TRUE;
+      }
+      else{
+        anchor = findChildByRole(ChildRole.RPARENTH);
+        before = Boolean.FALSE;
+      }
+    }
+
+    if (first.getElementType() == NAME_VALUE_PAIR && last.getElementType() == NAME_VALUE_PAIR) {
+      final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      ASTNode lparenth = findChildByRole(ChildRole.LPARENTH);
+      if (lparenth == null) {
+        LeafElement created = Factory.createSingleLeafElement(COMMA, new char[]{'('}, 0, 1, treeCharTab, getManager());
+        super.addInternal(created, created, getFirstChildNode(), true);
+      }
+      ASTNode rparenth = findChildByRole(ChildRole.LPARENTH);
+      if (rparenth == null) {
+        LeafElement created = Factory.createSingleLeafElement(COMMA, new char[]{')'}, 0, 1, treeCharTab, getManager());
+        super.addInternal(created, created, getLastChildNode(), false);
+      }
+
+      final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+
+      for (ASTNode child = ((ASTNode)first).getTreeNext(); child != null; child = child.getTreeNext()) {
+        if (child.getElementType() == COMMA) break;
+        if (child.getElementType() == NAME_VALUE_PAIR) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          super.addInternal(comma, comma, first, Boolean.FALSE);
+          break;
+        }
+      }
+
+      for (ASTNode child = ((ASTNode)first).getTreePrev(); child != null; child = child.getTreePrev()) {
+        if (child.getElementType() == COMMA) break;
+        if (child.getElementType() == NAME_VALUE_PAIR) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          super.addInternal(comma, comma, child, Boolean.FALSE);
+          break;
+        }
+      }
+      return firstAdded;
+    }
+
+    return super.addInternal(first, last, anchor, before);
+  }
+
+  public void deleteChildInternal(ASTNode child) {
+    if (child.getElementType() == NAME_VALUE_PAIR) {
+      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+      if (next != null && next.getElementType() == COMMA) {
+        deleteChildInternal(next);
+      }
+      else {
+        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
+        if (prev != null && prev.getElementType() == COMMA) {
+          deleteChildInternal(prev);
+        }
+      }
+    }
+    super.deleteChildInternal(child);
   }
 }
