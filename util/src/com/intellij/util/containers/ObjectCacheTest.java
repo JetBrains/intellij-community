@@ -1,7 +1,7 @@
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
 import junit.framework.Assert;
+import junit.framework.TestCase;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,7 +44,7 @@ public class ObjectCacheTest extends TestCase {
   final private static HashMap removedPairs = new HashMap();
 
   private class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
-    public void ObjectRemoved(Object key, Object value) {
+    public void objectRemoved(Object key, Object value) {
       removedPairs.put(key, value);
     }
   }
@@ -59,8 +59,8 @@ public class ObjectCacheTest extends TestCase {
     cache.put("IDEA 4.5", "better IDEA");
     cache.put("IDEA 5.0", "perfect IDEA");
     cache.put("IDEA 6.0", "IDEAL");
-    Assert.assertEquals( "Sucking IDE", removedPairs.get( "Eclipse" ) );
-    Assert.assertEquals( "Sucking IDEs", removedPairs.get( "Eclipses" ) );
+    Assert.assertEquals("Sucking IDE", removedPairs.get("Eclipse"));
+    Assert.assertEquals("Sucking IDEs", removedPairs.get("Eclipses"));
   }
 
   public void testIntCacheFiniteness() {

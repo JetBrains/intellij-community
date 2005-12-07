@@ -6,13 +6,6 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lvo
- * Date: Oct 21, 2005
- * Time: 1:29:49 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ObjectCache<K,V> implements Iterable {
 
   public static final int defaultSize = 8192;
@@ -203,7 +196,7 @@ public class ObjectCache<K,V> implements Iterable {
   }
 
   private void removeEntryFromHashTable(int index) {
-    int hash_index = (myCache[index].key.hashCode()  & 0x7fffffff) % myHashTableSize;
+    int hash_index = (myCache[index].key.hashCode() & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[hash_index];
     int previous = 0;
     int next;
@@ -268,7 +261,7 @@ public class ObjectCache<K,V> implements Iterable {
   // start of listening features
 
   public interface DeletedPairsListener extends EventListener {
-    void ObjectRemoved(Object key, Object value);
+    void objectRemoved(Object key, Object value);
   }
 
   public void addDeletedPairsListener(DeletedPairsListener listener) {
@@ -281,7 +274,7 @@ public class ObjectCache<K,V> implements Iterable {
 
   private void fireListenersAboutDeletion(int index) {
     final CacheEntry cacheEntry = myCache[index];
-    myEventDispatcher.getMulticaster().ObjectRemoved(cacheEntry.key, cacheEntry.value);
+    myEventDispatcher.getMulticaster().objectRemoved(cacheEntry.key, cacheEntry.value);
   }
 
   // end of listening features
