@@ -39,20 +39,29 @@ public class AdvancedProxy {
                                   final Set<MethodSignature> additionalMethods,
                                   final Object... constructorArgs) {
     try {
+      final Callback[] callbacks = new Callback[]{handler};
+
       final ProxyDescription key = new ProxyDescription(superClass, interfaces, additionalMethods);
       Factory factory = ourFactories.get(key);
       if (factory != null) {
         final Class<? extends Factory> aClass = factory.getClass();
-        return (T) factory.newInstance(findConstructor(aClass, constructorArgs).getParameterTypes(), constructorArgs, new Callback[]{handler});
+        return (T) factory.newInstance(findConstructor(aClass, constructorArgs).getParameterTypes(), constructorArgs, callbacks);
       }
 
       AdvancedEnhancer e = new AdvancedEnhancer();
       e.setAdditionalMethods(additionalMethods);
       e.setSuperclass(superClass);
       e.setInterfaces(interfaces);
-      e.setCallbackTypes(new Class[]{InvocationHandler.class});
-      factory = (Factory)findConstructor(e.createClass(), constructorArgs).newInstance(constructorArgs);
-      factory.setCallback(0, handler);
+      e.setCallbacks(callbacks);
+      if (superClass != null) {
+        factory = (Factory)e.create(findConstructor(superClass, constructorArgs).getParameterTypes(), constructorArgs);
+      } else {
+        assert constructorArgs.length == 0;
+        factory = (Factory)e.create();
+      }
+
+      //factory = (Factory)findConstructor(, constructorArgs).newInstance(constructorArgs);
+      //factory.setCallback(0, handler);
       ourFactories.put(key, factory);
       return (T)factory;
     }
@@ -63,7 +72,7 @@ public class AdvancedProxy {
 
   @NotNull
   private static Constructor findConstructor(final Class aClass, final Object... constructorArgs) {
-    loop: for (final Constructor constructor : aClass.getConstructors()) {
+    loop: for (final Constructor constructor : aClass.getDeclaredConstructors()) {
       final Class[] parameterTypes = constructor.getParameterTypes();
       if (parameterTypes.length == constructorArgs.length) {
         for (int i = 0; i < parameterTypes.length; i++) {

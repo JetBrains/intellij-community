@@ -444,10 +444,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
             }
             methods.addAll(interfaceMethods);
         }
-        CollectionUtils.filter(methods, new RejectModifierPredicate(Constants.ACC_STATIC));
+        CollectionUtils.filter(methods, new RejectModifierPredicate(Constants.ACC_STATIC | Constants.ACC_FINAL));
         CollectionUtils.filter(methods, new VisibilityPredicate(superclass, true));
         CollectionUtils.filter(methods, new DuplicatesPredicate());
-        CollectionUtils.filter(methods, new RejectModifierPredicate(Constants.ACC_FINAL));
     }
 
     public void generateClass(ClassVisitor v) throws Exception {
@@ -464,15 +463,21 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         // its superinterfaces.
         final Set forcePublic = new HashSet();
         List<Method> actualMethods = new ArrayList<Method>();
-        List<Method> interfaceMethods = new ArrayList<Method>();
-        getMethods(sc, interfaces, actualMethods, interfaceMethods, forcePublic);
+      getMethods(sc, interfaces, actualMethods, new ArrayList<Method>(), forcePublic);
 
       //Changes by Peter Gromov
+
+      final Set<MethodSignature> finalMethods = new HashSet<MethodSignature>();
       Class aClass = sc;
       while (!Object.class.equals(aClass)) {
         for (final Method method : aClass.getDeclaredMethods()) {
-          if ((method.getModifiers() & Constants.ACC_ABSTRACT) == 0
-              && !(myAdditionalMethods.contains(MethodSignature.getSignature(method)))) {
+          final int modifiers = method.getModifiers();
+          final MethodSignature signature = MethodSignature.getSignature(method);
+          if ((modifiers & Constants.ACC_FINAL) != 0) {
+            finalMethods.add(signature);
+            actualMethods.remove(method);
+          } else if ((modifiers & Constants.ACC_ABSTRACT) == 0 && !(myAdditionalMethods.contains(signature))
+              || finalMethods.contains(signature)) {
             actualMethods.remove(method);
           }
         }
@@ -639,7 +644,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         // TODO: optimize
         try {
             Method setter = getCallbacksSetter(type, methodName);
-            setter.invoke(null, callbacks);
+            setter.invoke(null, (Object)callbacks);
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException(type + " is not an enhanced class");
         } catch (IllegalAccessException e) {

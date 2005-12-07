@@ -5,8 +5,10 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.impl.AdvancedProxy;
+import com.intellij.util.xml.impl.MethodSignature;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,6 +25,7 @@ public class ModelMerger {
   }
 
   public static class MergingInvocationHandler<T> implements InvocationHandler {
+    private static final Map<Class,Method> ourPrimaryKeyMethods = new HashMap<Class, Method>();
     private T[] myImplementations;
 
     public MergingInvocationHandler(final T... implementations) {
@@ -36,30 +39,35 @@ public class ModelMerger {
       myImplementations = implementations;
     }
 
-    private Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
-      return getPrimaryKey(implementation.getClass(), implementation);
+    protected Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
+      final Method method = getPrimaryKeyMethod(implementation.getClass());
+      if (method == null) return null;
+
+      final Object o = method.invoke(implementation);
+      return GenericValue.class.isAssignableFrom(method.getReturnType()) ? ((GenericValue)o).getValue() : o;
     }
 
-    private Object getPrimaryKey(final Class aClass, final Object implementation) throws IllegalAccessException, InvocationTargetException {
-      for (final Method method : aClass.getMethods()) {
-        final Class<?> returnType = method.getReturnType();
-        if (isPrimaryKey(method, returnType)) {
-          final Object o = method.invoke(implementation);
-          return GenericValue.class.isAssignableFrom(returnType) ? ((GenericValue)o).getValue() : o;
+    @Nullable
+    private Method getPrimaryKeyMethod(final Class aClass) {
+      Method method = ourPrimaryKeyMethods.get(aClass);
+      if (method == null) {
+        if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
+
+        for (final Method method1 : aClass.getMethods()) {
+          if (isPrimaryKey(method1, aClass)) {
+            method = method1;
+            break;
+          }
         }
+        ourPrimaryKeyMethods.put(aClass, method);
       }
-
-      for (final Class aClass1 : aClass.getInterfaces()) {
-        final Object primaryKey = getPrimaryKey(aClass1, implementation);
-        if (primaryKey != null) return primaryKey;
-      }
-
-      return null;
+      return method;
     }
 
-    private boolean isPrimaryKey(final Method method, final Class<?> returnType) {
-      return DomUtil.findAnnotationDFS(method, PrimaryKey.class) != null && returnType != void.class &&
-             method.getParameterTypes().length == 0;
+    private boolean isPrimaryKey(final Method method, final Class aClass) {
+      return method.getReturnType() != void.class
+             && method.getParameterTypes().length == 0
+             && MethodSignature.getSignature(method).findAnnotation(PrimaryKey.class, aClass) != null;
     }
 
 
