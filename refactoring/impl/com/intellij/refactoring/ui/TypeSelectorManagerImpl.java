@@ -55,7 +55,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
     myOccurrenceClassProvider = createOccurrenceClassProvider();
     myTypesForAll = getTypesForAll();
-    myTypesForMain = null;
+    myTypesForMain = PsiType.EMPTY_ARRAY;
     myIsOneSuggestion = true;
     myTypeSelector = new TypeSelector();
     myTypeSelector.setTypes(myTypesForAll);
