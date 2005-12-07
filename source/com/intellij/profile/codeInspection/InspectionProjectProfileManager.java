@@ -131,7 +131,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (myUseProjectLevelSettings){
+    if (USE_PROJECT_LEVEL_SETTINGS){
       Element hector = new Element(HECTOR);
       HighlightingSettingsPerFile.getInstance(myProject).writeHectorProfiles(hector, true);
       element.addContent(hector);

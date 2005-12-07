@@ -4,9 +4,11 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.j2ee.J2EERolesUtil;
@@ -17,6 +19,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
@@ -781,7 +784,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       else {
         myAdditionalJavadocTags = myTag.getName();
       }
-      //todo commit changes to profile
+      final InspectionProfileImpl inspectionProfile =
+        ((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProfile(myTag));
+      //correct save settings
+      inspectionProfile.isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
+      inspectionProfile.save();
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
   }

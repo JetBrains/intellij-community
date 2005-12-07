@@ -301,21 +301,21 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     return myTools.get(shortName);
   }
 
-  private void save(File file, String name) {
-    try {
-      Element root = new Element(ROOT_ELEMENT_TAG);
-      root.setAttribute(PROFILE_NAME_TAG, name);
-      writeExternal(root);
-      myVisibleTreeState.writeExternal(root);
-      if (file != null) {
-        JDOMUtil.writeDocument(new Document(root), file, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+  public void save() {
+    if (myFile != null) {
+      try {
+        Element root = new Element(ROOT_ELEMENT_TAG);
+        root.setAttribute(PROFILE_NAME_TAG, myName);
+        writeExternal(root);
+        myVisibleTreeState.writeExternal(root);
+        JDOMUtil.writeDocument(new Document(root), myFile, CodeStyleSettingsManager.getSettings(null).getLineSeparator());        
       }
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
-      LOG.error(e);
+      catch (WriteExternalException e) {
+        LOG.error(e);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -521,7 +521,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     myTools = inspectionProfile.myTools;
 
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
-    if (myFile != null) save(myFile, myName);
+    save();
   }
 
   private static class ToolState {
