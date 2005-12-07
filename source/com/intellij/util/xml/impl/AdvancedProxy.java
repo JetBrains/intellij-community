@@ -8,11 +8,13 @@ import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
 import net.sf.cglib.proxy.InvocationHandler;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -26,29 +28,30 @@ public class AdvancedProxy {
 
   public static <T> T createProxy(final Class<T> superClassOrInterface, final InvocationHandler handler) {
     if (superClassOrInterface.isInterface()) {
-      return createProxy((Class<T>)null, new Class[]{superClassOrInterface}, handler, new Method[0]);
+      return (T) createProxy(null, new Class[]{superClassOrInterface}, handler, Collections.EMPTY_SET);
     }
-    return createProxy(superClassOrInterface, (Class[])null, handler, new Method[0]);
+    return (T) createProxy(superClassOrInterface, (Class[])null, handler, Collections.EMPTY_SET);
   }
 
   public static <T> T createProxy(final Class<T> superClass,
                                   final Class[] interfaces,
                                   final InvocationHandler handler,
-                                  final Method[] additionalMethods,
+                                  final Set<MethodSignature> additionalMethods,
                                   final Object... constructorArgs) {
     try {
       final ProxyDescription key = new ProxyDescription(superClass, interfaces, additionalMethods);
       Factory factory = ourFactories.get(key);
       if (factory != null) {
-        return (T) factory.newInstance(factory.getClass().getConstructors()[0].getParameterTypes(), constructorArgs, new Callback[]{handler});
+        final Class<? extends Factory> aClass = factory.getClass();
+        return (T) factory.newInstance(findConstructor(aClass, constructorArgs).getParameterTypes(), constructorArgs, new Callback[]{handler});
       }
 
       AdvancedEnhancer e = new AdvancedEnhancer();
-      e.setAdditionalMethods(new HashSet<Method>(Arrays.asList(additionalMethods)));
+      e.setAdditionalMethods(additionalMethods);
       e.setSuperclass(superClass);
       e.setInterfaces(interfaces);
       e.setCallbackTypes(new Class[]{InvocationHandler.class});
-      factory = (Factory)e.createClass().getConstructors()[0].newInstance(constructorArgs);
+      factory = (Factory)findConstructor(e.createClass(), constructorArgs).newInstance(constructorArgs);
       factory.setCallback(0, handler);
       ourFactories.put(key, factory);
       return (T)factory;
@@ -58,12 +61,30 @@ public class AdvancedProxy {
     }
   }
 
+  @NotNull
+  private static Constructor findConstructor(final Class aClass, final Object... constructorArgs) {
+    loop: for (final Constructor constructor : aClass.getConstructors()) {
+      final Class[] parameterTypes = constructor.getParameterTypes();
+      if (parameterTypes.length == constructorArgs.length) {
+        for (int i = 0; i < parameterTypes.length; i++) {
+          Class parameterType = parameterTypes[i];
+          final Object constructorArg = constructorArgs[i];
+          if (!parameterType.isInstance(constructorArg) && constructorArg != null) {
+            continue loop;
+          }
+        }
+        return constructor;
+      }
+    }
+    throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));
+  }
+
   private static class ProxyDescription {
     private final Class mySuperClass;
     private final Class[] myInterfaces;
-    private final Method[] myAdditionalMethods;
+    private final Set<MethodSignature> myAdditionalMethods;
 
-    public ProxyDescription(final Class superClass, final Class[] interfaces, final Method[] additionalMethods) {
+    public ProxyDescription(final Class superClass, final Class[] interfaces, final Set<MethodSignature> additionalMethods) {
       mySuperClass = superClass;
       myInterfaces = interfaces;
       myAdditionalMethods = additionalMethods;
@@ -75,7 +96,7 @@ public class AdvancedProxy {
 
       final ProxyDescription that = (ProxyDescription)o;
 
-      if (!Arrays.equals(myAdditionalMethods, that.myAdditionalMethods)) return false;
+      if (myAdditionalMethods != null ? !myAdditionalMethods.equals(that.myAdditionalMethods) : that.myAdditionalMethods != null) return false;
       if (!Arrays.equals(myInterfaces, that.myInterfaces)) return false;
       if (mySuperClass != null ? !mySuperClass.equals(that.mySuperClass) : that.mySuperClass != null) return false;
 
@@ -83,7 +104,10 @@ public class AdvancedProxy {
     }
 
     public int hashCode() {
-      return (mySuperClass != null ? mySuperClass.hashCode() : 0);
+      int result;
+      result = (mySuperClass != null ? mySuperClass.hashCode() : 0);
+      result = 29 * result + (myAdditionalMethods != null ? myAdditionalMethods.hashCode() : 0);
+      return result;
     }
   }
 
