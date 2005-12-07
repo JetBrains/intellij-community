@@ -30,7 +30,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   public final static int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
   private SearchScope scope;
-  private String searchCriteria;
+  private String searchCriteria = "";
   private HashMap<String,MatchVariableConstraint> variableConstraints;
 
   @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
