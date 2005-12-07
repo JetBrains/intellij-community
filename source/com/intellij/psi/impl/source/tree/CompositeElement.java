@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -318,7 +319,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
         anchorBefore = null;
       }
     }
-    return CodeEditUtil.addChildren(this, first, last, anchorBefore);
+    TreeElement firstAdded = CodeEditUtil.addChildren(this, first, last, anchorBefore);
+    return SharedPsiElementImplUtil.findFirstChildAfterAddition(firstAdded, first);
   }
 
   public void deleteChildInternal(ASTNode child) {

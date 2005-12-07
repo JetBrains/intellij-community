@@ -140,7 +140,6 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    TreeElement firstAdded = null;
     boolean needToAddNewline = false;
     if (first == last && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
@@ -162,7 +161,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
         newLine.getTreeParent().addChild(leadingAsterisk);
         newLine.getTreeParent().addChild(commentData);
-        firstAdded = super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
+        super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
 
         anchor = commentData;
         before = Boolean.FALSE;
@@ -172,12 +171,8 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       }
     }
 
-    if (firstAdded == null) {
-      firstAdded = super.addInternal(first, last, anchor, before);
-    }
-    else {
-      super.addInternal(first, last, anchor, before);
-    }
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+
     if (needToAddNewline) {
       if (first.getTreePrev() != null && first.getTreePrev().getElementType() == DOC_TAG) {
         addNewLineToTag((CompositeElement)first.getTreePrev(), getProject());

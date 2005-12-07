@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
@@ -60,14 +61,13 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    TreeElement firstAdded = null;
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (anchor == null) {
       if (before == null || before.booleanValue()) {
         anchor = findChildByRole(ChildRole.RPARENTH);
         if (anchor == null) {
           LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
-          firstAdded = super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
+          super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
           LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
           super.addInternal(rparenth, rparenth, null, Boolean.TRUE);
           anchor = findChildByRole(ChildRole.RPARENTH);
@@ -79,7 +79,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
         anchor = findChildByRole(ChildRole.LPARENTH);
         if (anchor == null) {
           LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
-          firstAdded = super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
+          super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
           LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
           super.addInternal(rparenth, rparenth, null, Boolean.TRUE);
           anchor = findChildByRole(ChildRole.LPARENTH);
@@ -88,8 +88,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
         before = Boolean.FALSE;
       }
     }
-    if(firstAdded != null) firstAdded = super.addInternal(first, last, anchor, before);
-    else firstAdded = super.addInternal(first, last, anchor, before);
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
       ASTNode element = first;
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {

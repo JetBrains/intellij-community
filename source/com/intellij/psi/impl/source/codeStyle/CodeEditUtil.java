@@ -54,7 +54,8 @@ public class CodeEditUtil {
       return (TreeElement) first;
     } else {
       checkAllWhiteSpaces(parent);
-      return addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent, parent.getPsi().getContainingFile());
+      TreeElement element = addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent, parent.getPsi().getContainingFile());
+      return element;
     }
   }
 

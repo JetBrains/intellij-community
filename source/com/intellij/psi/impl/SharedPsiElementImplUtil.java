@@ -103,15 +103,14 @@ public class SharedPsiElementImplUtil {
     return element.replace(newNameIdentifier);
   }
 
-  //Hack, but no better idea comes to my mind
-  public static PsiElement findAndDecodeFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
-    final PsiElement psi = toFind.getPsi();
-    if(psi.isValid() && psi.getContainingFile() == firstAdded.getPsi().getContainingFile()) return ChangeUtil.decodeInformation(toFind).getPsi();
 
+  //Hack, but no better idea comes to my mind
+  public static TreeElement findFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
     final IElementType elementType = toFind.getElementType();
-    while(firstAdded != null) {
-      if (firstAdded.getElementType() == elementType) return ChangeUtil.decodeInformation(firstAdded).getPsi();
-      firstAdded = firstAdded.getTreeNext();
+    TreeElement run = firstAdded;
+    while(run != null) {
+      if (run.getElementType() == elementType) return run;
+      run = run.getTreeNext();
     }
 
     LOG.assertTrue(false, "Could not find element of added class");
