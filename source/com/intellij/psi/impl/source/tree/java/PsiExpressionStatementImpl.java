@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionStatementImpl extends CompositePsiElement implements PsiExpressionStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionStatementImpl");
@@ -16,6 +17,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     super(EXPRESSION_STATEMENT);
   }
 
+  @NotNull
   public PsiExpression getExpression() {
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findChild(this, EXPRESSION_BIT_SET));
   }
