@@ -1017,7 +1017,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s2 = "'_map:[exprtype( *java\\.util\\.Map )].put('_key:[ exprtype( *Object ) ], '_value:[ exprtype( *AppPreferences ) ]);";
 
     assertEquals(
-      "static block search",
+      "expr type with object",
       4,
       findMatchesCount(s1,s2,true)
     );

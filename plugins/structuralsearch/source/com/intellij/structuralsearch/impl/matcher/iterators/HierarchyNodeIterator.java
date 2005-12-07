@@ -24,7 +24,9 @@ public class HierarchyNodeIterator extends NodeIterator {
   private void build(PsiElement current, Set<PsiElement> visited) {
 
     if (current!=null) {
-      if (MatchUtils.compareWithNoDifferenceToPackage(current.getText(),"Object")) {
+      final String str = current instanceof PsiClass ? ((PsiClass)current).getName():current.getText();
+
+      if (MatchUtils.compareWithNoDifferenceToPackage(str,"Object")) {
         if(objectTaken) return;
         objectTaken = true;
       }
