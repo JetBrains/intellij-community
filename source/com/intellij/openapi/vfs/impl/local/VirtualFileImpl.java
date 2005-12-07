@@ -310,7 +310,12 @@ public class VirtualFileImpl extends VirtualFile {
 
   public byte[] contentsToByteArray() throws IOException {
     InputStream in = getInputStream();
-    return FileUtil.adaptiveLoadBytes(in);
+    try {
+      return FileUtil.adaptiveLoadBytes(in);
+    }
+    finally {
+      in.close();
+    }
   }
 
   public long getModificationStamp() {

@@ -480,8 +480,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
           }
 
           final Writer writer = LoadTextUtil.getWriter(newVFile, myManager, -1, -1);
-          writer.write(text);
-          writer.close();
+          try {
+            writer.write(text);
+          }
+          finally {
+            writer.close();
+          }
         }
         else {
           byte[] storedContents = ((PsiBinaryFileImpl)originalFile).getStoredContents();
