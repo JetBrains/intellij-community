@@ -690,9 +690,12 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     } else if (expr.getExpression() instanceof PsiReferenceExpression &&
                (context.pattern.isRealTypedVar(expr.getExpression()))) {
       // search for statement
-      SubstitutionHandler handler = (SubstitutionHandler) context.pattern.getHandler(expr);
-      handler.setFilter( new StatementFilter() );
-      handler.setMatchHandler( new StatementHandler() );
+      final Handler exprHandler = context.pattern.getHandler(expr);
+      if (exprHandler instanceof SubstitutionHandler) {
+        SubstitutionHandler handler = (SubstitutionHandler) exprHandler;
+        handler.setFilter( new StatementFilter() );
+        handler.setMatchHandler( new StatementHandler() );
+      }
     }
 
     super.visitExpressionStatement(expr);
