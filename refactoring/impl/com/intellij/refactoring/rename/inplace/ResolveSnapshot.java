@@ -41,6 +41,7 @@ public class ResolveSnapshot {
             myReferencesMap.put(key, value);
           }
         }
+        super.visitReferenceExpression(refExpr);
       }
     });
   }
