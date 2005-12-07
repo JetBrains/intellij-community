@@ -32,11 +32,11 @@ public class ModelMerger {
     public MergingInvocationHandler() {
     }
 
-    public void setImplementations(final T[] implementations) {
+    protected final void setImplementations(final T[] implementations) {
       myImplementations = implementations;
     }
 
-    private final Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
+    private Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
       return getPrimaryKey(implementation.getClass(), implementation);
     }
 
