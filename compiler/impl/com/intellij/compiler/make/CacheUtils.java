@@ -3,6 +3,7 @@ package com.intellij.compiler.make;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
@@ -149,7 +150,15 @@ public class CacheUtils {
   }
 
   public static String getMethodSignature(String name, String descriptor) {
-    return name + descriptor.substring(0, descriptor.indexOf(')') + 1);
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(name);
+      builder.append(descriptor.substring(0, descriptor.indexOf(')') + 1));
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   public static boolean areArraysContentsEqual(int[] exceptions1, int[] exceptions2) {

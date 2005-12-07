@@ -10,13 +10,14 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -24,17 +25,16 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
+import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class CompilerConfiguration implements JDOMExternalizable, ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 41;
+  public static final int DEPENDENCY_FORMAT_VERSION = 42;
   @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   public String DEFAULT_COMPILER;
@@ -46,7 +46,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   private List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
   private List<String> myWildcardPatterns = new ArrayList<String>();
-  private List<Matcher> myWildcardCompiledPatterns = new ArrayList<Matcher>();
+  private List<Pattern> myWildcardCompiledPatterns = new ArrayList<Pattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
 
@@ -59,6 +59,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   private BackendCompiler JIKES_BACKEND;
   private BackendCompiler ECLIPSE_BACKEND;
   private BackendCompiler ECLIPSE_EMBEDDED_BACKEND;
+  private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
   {
     loadDefaultWildcardPatterns();
@@ -72,28 +73,40 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     if (!myWildcardPatterns.isEmpty()) {
       removeWildcardPatterns();
     }
-    addWildcardResourcePattern("?*.properties");
-    addWildcardResourcePattern("?*.xml");
-    addWildcardResourcePattern("?*.gif");
-    addWildcardResourcePattern("?*.png");
-    addWildcardResourcePattern("?*.jpeg");
-    addWildcardResourcePattern("?*.jpg");
-    addWildcardResourcePattern("?*.html");
-    addWildcardResourcePattern("?*.dtd");
-    addWildcardResourcePattern("?*.tld");
+    try {
+      addWildcardResourcePattern("?*.properties");
+      addWildcardResourcePattern("?*.xml");
+      addWildcardResourcePattern("?*.gif");
+      addWildcardResourcePattern("?*.png");
+      addWildcardResourcePattern("?*.jpeg");
+      addWildcardResourcePattern("?*.jpg");
+      addWildcardResourcePattern("?*.html");
+      addWildcardResourcePattern("?*.dtd");
+      addWildcardResourcePattern("?*.tld");
+    }
+    catch (MalformedPatternException e) {
+      LOG.error(e);
+    }
   }
 
   private static List<Pattern> getDefaultRegexpPatterns() {
-    return Arrays.asList(compilePattern(".+\\.(properties|xml|html|dtd|tld)"), compilePattern(".+\\.(gif|png|jpeg|jpg)"));
+    try {
+      return Arrays.asList(compilePattern(".+\\.(properties|xml|html|dtd|tld)"), compilePattern(".+\\.(gif|png|jpeg|jpg)"));
+    }
+    catch (MalformedPatternException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
   }
 
-  private static Pattern compilePattern(@NonNls String s) throws PatternSyntaxException {
+  private static Pattern compilePattern(@NonNls String s) throws MalformedPatternException {
+    final PatternCompiler compiler = new Perl5Compiler();
     final Pattern pattern;
     if (SystemInfo.isFileSystemCaseSensitive) {
-      pattern = Pattern.compile(s);
+      pattern = compiler.compile(s);
     }
     else {
-      pattern = Pattern.compile(s, Pattern.CASE_INSENSITIVE);
+      pattern = compiler.compile(s, Perl5Compiler.CASE_INSENSITIVE_MASK);
     }
     return pattern;
   }
@@ -151,7 +164,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     String[] patterns = new String[myRegexpResourcePaterns.size()];
     int index = 0;
     for (final Pattern myRegexpResourcePatern : myRegexpResourcePaterns) {
-      patterns[index++] = myRegexpResourcePatern.pattern();
+      patterns[index++] = myRegexpResourcePatern.getPattern();
     }
     return patterns;
   }
@@ -160,23 +173,23 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     return myWildcardPatterns.toArray(new String[myWildcardPatterns.size()]);
   }
 
-  public void addResourceFilePattern(String namePattern) throws PatternSyntaxException {
+  public void addResourceFilePattern(String namePattern) throws MalformedPatternException {
     addWildcardResourcePattern(namePattern);
   }
 
   // need this method only for handling patterns in old regexp format
-  private void addRegexpPattern(String namePattern) {
+  private void addRegexpPattern(String namePattern) throws MalformedPatternException {
     Pattern pattern = compilePattern(namePattern);
     if (pattern != null) {
       myRegexpResourcePaterns.add(pattern);
     }
   }
 
-  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) {
+  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
     if (pattern != null) {
       myWildcardPatterns.add(wildcardPattern);
-      myWildcardCompiledPatterns.add(pattern.matcher(""));
+      myWildcardCompiledPatterns.add(pattern);
     }
   }
 
@@ -214,10 +227,8 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
 
   public boolean isResourceFile(String name) {
     int idx = 0;
-    for (Iterator<Matcher> it = myWildcardCompiledPatterns.iterator(); it.hasNext(); idx++) {
-      final Matcher matcher = it.next();
-      matcher.reset(name);
-      final boolean matches = matcher.matches();
+    for (Iterator<Pattern> it = myWildcardCompiledPatterns.iterator(); it.hasNext(); idx++) {
+      final boolean matches = myPatternMatcher.matches(name, it.next());
       if (isPatternNegated(myWildcardPatterns.get(idx))? !matches : matches) {
         return true;
       }
@@ -269,29 +280,34 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       }
     }
 
-    removeRegexpPatterns();
-    node = parentNode.getChild(RESOURCE_EXTENSIONS);
-    if (node != null) {
-      for (final Object o : node.getChildren(ENTRY)) {
-        Element element = (Element)o;
-        String pattern = element.getAttributeValue(NAME);
-        if (pattern != null && !"".equals(pattern)) {
-          addRegexpPattern(pattern);
+    try {
+      removeRegexpPatterns();
+      node = parentNode.getChild(RESOURCE_EXTENSIONS);
+      if (node != null) {
+        for (final Object o : node.getChildren(ENTRY)) {
+          Element element = (Element)o;
+          String pattern = element.getAttributeValue(NAME);
+          if (pattern != null && !"".equals(pattern)) {
+            addRegexpPattern(pattern);
+          }
+        }
+      }
+
+      removeWildcardPatterns();
+      node = parentNode.getChild(WILDCARD_RESOURCE_PATTERNS);
+      if (node != null) {
+        myWildcardPatternsInitialized = true;
+        for (final Object o : node.getChildren(ENTRY)) {
+          final Element element = (Element)o;
+          String pattern = element.getAttributeValue(NAME);
+          if (pattern != null && !"".equals(pattern)) {
+            addWildcardResourcePattern(pattern);
+          }
         }
       }
     }
-
-    removeWildcardPatterns();
-    node = parentNode.getChild(WILDCARD_RESOURCE_PATTERNS);
-    if (node != null) {
-      myWildcardPatternsInitialized = true;
-      for (final Object o : node.getChildren(ENTRY)) {
-        final Element element = (Element)o;
-        String pattern = element.getAttributeValue(NAME);
-        if (pattern != null && !"".equals(pattern)) {
-          addWildcardResourcePattern(pattern);
-        }
-      }
+    catch (MalformedPatternException e) {
+      throw new InvalidDataException(e);
     }
 
   }
@@ -396,7 +412,13 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       return;
     }
     try {
-      boolean ok = doConvertPatterns();
+      boolean ok;
+      try {
+        ok = doConvertPatterns();
+      }
+      catch (MalformedPatternException e) {
+        ok = false;
+      }
       if (!ok) {
         final String initialPatternString = patternsToString(getRegexpPatterns());
         final String message = CompilerBundle.message(
@@ -420,7 +442,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
               try {
                 addWildcardResourcePattern(pattern);
               }
-              catch (PatternSyntaxException e) {
+              catch (MalformedPatternException e) {
                 malformedPatterns.append("\n\n");
                 malformedPatterns.append(pattern);
                 malformedPatterns.append(": ");
@@ -451,23 +473,26 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     return !myWildcardPatternsInitialized && !myRegexpResourcePaterns.isEmpty();
   }
 
-  private boolean doConvertPatterns() {
+  private boolean doConvertPatterns() throws MalformedPatternException {
     final String[] regexpPatterns = getRegexpPatterns();
     final List<String> converted = new ArrayList<String>();
     final Pattern multipleExtensionsPatternPattern = compilePattern("\\.\\+\\\\\\.\\((\\w+(?:\\|\\w+)*)\\)");
     final Pattern singleExtensionPatternPattern = compilePattern("\\.\\+\\\\\\.(\\w+)");
+    final Perl5Matcher matcher = new Perl5Matcher();
     for (final String regexpPattern : regexpPatterns) {
-      final Matcher multipleExtensionsMatcher = multipleExtensionsPatternPattern.matcher(regexpPattern);
-      if (multipleExtensionsMatcher.matches()) {
-        final StringTokenizer tokenizer = new StringTokenizer(multipleExtensionsMatcher.group(1), "|", false);
+      //final Matcher multipleExtensionsMatcher = multipleExtensionsPatternPattern.matcher(regexpPattern);
+      if (matcher.matches(regexpPattern, multipleExtensionsPatternPattern)) {
+        final MatchResult match = matcher.getMatch();
+        final StringTokenizer tokenizer = new StringTokenizer(match.group(1), "|", false);
         while (tokenizer.hasMoreTokens()) {
           converted.add("?*." + tokenizer.nextToken());
         }
       }
       else {
-        final Matcher singleExtensionMatcher = singleExtensionPatternPattern.matcher(regexpPattern);
-        if (singleExtensionMatcher.matches()) {
-          converted.add("?*." + singleExtensionMatcher.group(1));
+        //final Matcher singleExtensionMatcher = singleExtensionPatternPattern.matcher(regexpPattern);
+        if (matcher.matches(regexpPattern, singleExtensionPatternPattern)) {
+          final MatchResult match = matcher.getMatch();
+          converted.add("?*." + match.group(1));
         }
         else {
           return false;

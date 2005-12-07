@@ -5,6 +5,7 @@
 package com.intellij.compiler.classParsing;
 
 import com.intellij.compiler.SymbolTable;
+import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -16,8 +17,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 public class ClassFileReader {
   private File myFile;
@@ -81,7 +82,7 @@ public class ClassFileReader {
     count = ClsUtil.readU2(ptr); // field count
     while (count-- > 0) {
       FieldInfo field = (FieldInfo)readMemberStructure(ptr, true);
-      String name = mySymbolTable.getSymbol(field.getName());
+      String name = getSymbol(field.getName());
       if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic fields
         myFields.add(field);
       }
@@ -89,7 +90,7 @@ public class ClassFileReader {
     count = ClsUtil.readU2(ptr); // method count
     while (count-- > 0) {
       MethodInfo method = (MethodInfo)readMemberStructure(ptr, false);
-      String name = mySymbolTable.getSymbol(method.getName());
+      String name = getSymbol(method.getName());
       if (name.indexOf('$') < 0 && name.indexOf('<') < 0) { // skip synthetic methods
         myMethods.add(method);
       }
@@ -106,6 +107,15 @@ public class ClassFileReader {
     myRuntimeInvisibleAnnotations = attributeTable.runtimeInvisibleAnnotations;
   }
 
+  private String getSymbol(final int id) throws ClsFormatException {
+    try {
+      return mySymbolTable.getSymbol(id);
+    }
+    catch (CacheCorruptedException e) {
+      throw new ClsFormatException(e.getLocalizedMessage());
+    }
+  }
+
   private MemberInfo readMemberStructure(BytePointer ptr, boolean isField) throws ClsFormatException {
     int flags = ClsUtil.readU2(ptr);
     int nameIndex = ClsUtil.readU2(ptr);
@@ -119,9 +129,9 @@ public class ClassFileReader {
     if (isField) {
       final ClsAttributeTable attributeTable = readAttributes(ptr);
       return new FieldInfo(
-        mySymbolTable.getId(name),
-        mySymbolTable.getId(descriptor),
-        attributeTable.genericSignature != null? mySymbolTable.getId(attributeTable.genericSignature) : -1,
+        getSymbolId(name),
+        getSymbolId(descriptor),
+        attributeTable.genericSignature != null? getSymbolId(attributeTable.genericSignature) : -1,
         flags,
         attributeTable.constantValue,
         attributeTable.runtimeVisibleAnnotations,
@@ -134,13 +144,13 @@ public class ClassFileReader {
       if (attributeTable.exceptions != null) {
         intExceptions = new int[attributeTable.exceptions.length];
         for (int idx = 0; idx < intExceptions.length; idx++) {
-          intExceptions[idx]  = mySymbolTable.getId(attributeTable.exceptions[idx]);
+          intExceptions[idx]  = getSymbolId(attributeTable.exceptions[idx]);
         }
       }
       return new MethodInfo(
-        mySymbolTable.getId(name),
-        mySymbolTable.getId(descriptor),
-        attributeTable.genericSignature != null? mySymbolTable.getId(attributeTable.genericSignature) : -1,
+        getSymbolId(name),
+        getSymbolId(descriptor),
+        attributeTable.genericSignature != null? getSymbolId(attributeTable.genericSignature) : -1,
         flags,
         intExceptions,
         CONSTRUCTOR_NAME.equals(name),
@@ -150,6 +160,15 @@ public class ClassFileReader {
         attributeTable.runtimeInvisibleParameterAnnotations,
         attributeTable.annotationDefault
       );
+    }
+  }
+
+  private int getSymbolId(final String symbol)  throws ClsFormatException{
+    try {
+      return mySymbolTable.getId(symbol);
+    }
+    catch (CacheCorruptedException e) {
+      throw new ClsFormatException(e.getLocalizedMessage());
     }
   }
 
@@ -295,7 +314,7 @@ public class ClassFileReader {
       else if (tag == ClsUtil.CONSTANT_Class) {
         ptr.offset -= 1; // position to the beginning of the structure
         String className = readClassInfo(ptr);
-        myReferences.add(new ReferenceInfo(mySymbolTable.getId(className)));
+        myReferences.add(new ReferenceInfo(getSymbolId(className)));
       }
       iterator.next();
     }
@@ -335,8 +354,8 @@ public class ClassFileReader {
     ptr.offset = getOffsetInConstantPool(descriptorIndex);
     String descriptor = ClsUtil.readUtf8Info(ptr);
 
-    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? new FieldInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor)) : new MethodInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor), CONSTRUCTOR_NAME.equals(memberName));
-    return new MemberReferenceInfo(mySymbolTable.getId(className), info);
+    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? new FieldInfo(getSymbolId(memberName), getSymbolId(descriptor)) : new MethodInfo(getSymbolId(memberName), getSymbolId(descriptor), CONSTRUCTOR_NAME.equals(memberName));
+    return new MemberReferenceInfo(getSymbolId(className), info);
   }
 
   public int getAccessFlags(){
@@ -577,9 +596,9 @@ public class ClassFileReader {
       final int memberNameIndex = ClsUtil.readU2(ptr);
       final String memberName = ClsUtil.readUtf8Info(ptr.bytes, getOffsetInConstantPool(memberNameIndex));
       final ConstantValue memberValue = readAnnotationMemberValue(ptr);
-      memberValues.add(new AnnotationNameValuePair(mySymbolTable.getId(memberName), memberValue));
+      memberValues.add(new AnnotationNameValuePair(getSymbolId(memberName), memberValue));
     }
-    return new AnnotationConstantValue(mySymbolTable.getId(qName), memberValues.toArray(new AnnotationNameValuePair[memberValues.size()]));
+    return new AnnotationConstantValue(getSymbolId(qName), memberValues.toArray(new AnnotationNameValuePair[memberValues.size()]));
   }
 
   private String readAnnotationClassName(BytePointer ptr) throws ClsFormatException {
@@ -620,7 +639,7 @@ public class ClassFileReader {
         final int constantNameIndex = ClsUtil.readU2(ptr);
         final String typeName = ClsUtil.readUtf8Info(ptr.bytes, getOffsetInConstantPool(typeNameIndex));
         final String constantName = ClsUtil.readUtf8Info(ptr.bytes, getOffsetInConstantPool(constantNameIndex));
-        return new EnumConstantValue(mySymbolTable.getId(typeName), mySymbolTable.getId(constantName));
+        return new EnumConstantValue(getSymbolId(typeName), getSymbolId(constantName));
       }
       case 'c' : {
         final int classInfoIndex = ClsUtil.readU2(ptr);
@@ -631,7 +650,7 @@ public class ClassFileReader {
         }
         p.offset += 2; //Skip length
         final String className = ClsUtil.getTypeText(p.bytes, p.offset);
-        return new ClassInfoConstantValue(mySymbolTable.getId(className));
+        return new ClassInfoConstantValue(getSymbolId(className));
       }
       case '@' : {
         return readAnnotation(ptr);

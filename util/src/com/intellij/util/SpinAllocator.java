@@ -20,8 +20,8 @@ public class SpinAllocator<T> {
 
   private AtomicBoolean myEmployed[] = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
   private Object myObjects[] = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
-  private final ICreator<T> myCreator;
-  private final IDisposer<T> myDisposer;
+  protected final ICreator<T> myCreator;
+  protected final IDisposer<T> myDisposer;
 
   public SpinAllocator(ICreator<T> creator, IDisposer<T> disposer) {
     myCreator = creator;

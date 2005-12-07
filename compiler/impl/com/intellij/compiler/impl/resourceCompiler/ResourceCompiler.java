@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -80,11 +81,17 @@ public class ResourceCompiler implements TranslatingCompiler {
           }
           final String packagePrefix = fileIndex.getPackageNameByDirectory(fileRoot);
           final String targetPath;
-          if (packagePrefix != null && packagePrefix.length() > 0) {
-            targetPath = outputPath + "/" + packagePrefix.replace('.', '/') + "/" + relativePath;
+          final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+          try {
+            if (packagePrefix != null && packagePrefix.length() > 0) {
+              targetPath = builder.append(outputPath).append("/").append(packagePrefix.replace('.', '/')).append("/").append(relativePath).toString();
+            }
+            else {
+              targetPath = builder.append(outputPath).append("/").append(relativePath).toString();
+            }
           }
-          else {
-            targetPath = outputPath + "/" + relativePath;
+          finally {
+            StringBuilderSpinAllocator.dispose(builder);
           }
           if (!sourcePath.equals(targetPath)) {
             copyCommands.add(new CopyCommand(outputPath, sourcePath, targetPath, file));

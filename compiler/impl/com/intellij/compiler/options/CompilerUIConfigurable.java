@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Options;
+import org.apache.oro.text.regex.MalformedPatternException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-import java.util.regex.PatternSyntaxException;
 
 public class CompilerUIConfigurable implements Configurable {
   private JPanel myPanel;
@@ -138,7 +138,7 @@ public class CompilerUIConfigurable implements Configurable {
       try {
         configuration.addResourceFilePattern(namePattern);
       }
-      catch (PatternSyntaxException e) {
+      catch (MalformedPatternException e) {
         errors.add(new String[]{namePattern, e.getLocalizedMessage()});
       }
     }

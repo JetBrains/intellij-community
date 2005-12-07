@@ -5,6 +5,8 @@
 package com.intellij.compiler.classParsing;
 
 import com.intellij.compiler.SymbolTable;
+import com.intellij.compiler.make.CacheCorruptedException;
+import com.intellij.compiler.make.CacheUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsUtil;
@@ -124,16 +126,16 @@ public class MethodInfo extends MemberInfo {
     return myThrownExceptions;
   }
 
-  public String getDescriptor(SymbolTable symbolTable) {
+  public String getDescriptor(SymbolTable symbolTable) throws CacheCorruptedException {
     if (mySignature == null) {
-      String descriptor = symbolTable.getSymbol(getDescriptor());
-      String name = symbolTable.getSymbol(getName());
-      mySignature = name + descriptor.substring(0, descriptor.indexOf(')') + 1);
+      final String descriptor = symbolTable.getSymbol(getDescriptor());
+      final String name = symbolTable.getSymbol(getName());
+      mySignature = CacheUtils.getMethodSignature(name, descriptor);
     }
     return mySignature;
   }
 
-  public String getReturnTypeDescriptor(SymbolTable symbolTable) {
+  public String getReturnTypeDescriptor(SymbolTable symbolTable) throws CacheCorruptedException {
     if (myReturnTypeSignature == null) {
       String descriptor = symbolTable.getSymbol(getDescriptor());
       myReturnTypeSignature = descriptor.substring(descriptor.indexOf(')') + 1, descriptor.length());
@@ -141,7 +143,7 @@ public class MethodInfo extends MemberInfo {
     return myReturnTypeSignature;
   }
 
-  public String[] getParameterDescriptors(SymbolTable symbolTable) {
+  public String[] getParameterDescriptors(SymbolTable symbolTable) throws CacheCorruptedException {
     if (myParameterDescriptors == null) {
       String descriptor = symbolTable.getSymbol(getDescriptor());
       int endIndex = descriptor.indexOf(')');

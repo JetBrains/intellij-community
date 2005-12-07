@@ -316,6 +316,7 @@ public class CompileDriver {
       throw new RuntimeException(ex);
     }
     finally {
+      dropDependencyCache(compileContext);
       compileContext.getProgressIndicator().popState();
       final ExitStatus _status = status;
       if (compileContext.isRebuildRequested()) {
@@ -435,9 +436,6 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        // free memory earlier to leave other compilers more space
-        dropDependencyCache(context);
-
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
           return myExitStatus;
@@ -462,6 +460,7 @@ public class CompileDriver {
         }
       }
       finally {
+        // drop in case it has not been dropped yet.
         dropDependencyCache(context);
       }
 
@@ -508,7 +507,11 @@ public class CompileDriver {
         myExitStatus = ExitStatus.CANCELLED;
         return false;
       }
+
       final boolean generatedSomething = generateOutput(context, sourceGenerator, forceCompile);
+
+      dropInternalCache(sourceGenerator);
+
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         myExitStatus = ExitStatus.ERRORS;
         return false;
@@ -541,6 +544,10 @@ public class CompileDriver {
 
       final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies);
 
+      // free memory earlier to leave other compilers more space
+      dropDependencyCache(context);
+      dropInternalCache(translator);
+
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         myExitStatus = ExitStatus.ERRORS;
         return false;
@@ -568,6 +575,8 @@ public class CompileDriver {
           }
 
           final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile);
+
+          dropInternalCache(compiler);
 
           if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
             myExitStatus = ExitStatus.ERRORS;
@@ -1317,6 +1326,10 @@ public class CompileDriver {
       myCompilerToCacheMap.put(compiler, cache);
     }
     return (StateCache<ValidityState>)cache;
+  }
+
+  private void dropInternalCache(Compiler compiler) {
+    myCompilerToCacheMap.remove(compiler);
   }
 
   private static String getIdPrefix(Compiler compiler) {

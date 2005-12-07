@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -191,15 +192,20 @@ public class BackendCompilerWrapper {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final Module[] modules = chunk.getModules();
-          StringBuffer names = new StringBuffer();
-          for (int idx = 0; idx < modules.length; idx++) {
-            Module module = modules[idx];
-            if (idx > 0) {
-              names.append(", ");
+          final StringBuilder names = StringBuilderSpinAllocator.alloc();
+          try {
+            for (int idx = 0; idx < modules.length; idx++) {
+              Module module = modules[idx];
+              if (idx > 0) {
+                names.append(", ");
+              }
+              names.append(module.getName());
             }
-            names.append(module.getName());
+            myModuleName = names.toString();
           }
-          myModuleName = names.toString();
+          finally {
+            StringBuilderSpinAllocator.dispose(names);
+          }
         }
       });
 

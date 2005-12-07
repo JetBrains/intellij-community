@@ -4,17 +4,14 @@
  */
 package com.intellij.compiler.make;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
@@ -22,7 +19,7 @@ import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.*;
+import java.io.File;
 import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -607,23 +604,11 @@ public class DependencyCache {
     }
     try {
       if (mySymbolTable != null) {
-        // important: compact symbol table only after all caches and indices are updated
-        // [jeka] switched off
-        //compactSymbolTable(mySymbolTable);
-        final File symbolTableFile = new File(mySymbolTableFilePath);
-        symbolTableFile.createNewFile();
-
-        DataOutputStream symTableStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(symbolTableFile)));
-        try {
-          mySymbolTable.save(symTableStream);
-        }
-        finally {
-          symTableStream.close();
-          mySymbolTable = null;
-        }
+        mySymbolTable.dispose();
+        mySymbolTable = null;
       }
     }
-    catch (IOException e) {
+    catch (CacheCorruptedException e) {
       LOG.error(e); // todo
     }
   }
@@ -631,7 +616,7 @@ public class DependencyCache {
 
   public SymbolTable getSymbolTable() throws CacheCorruptedException {
     if (mySymbolTable == null) {
-      mySymbolTable = loadSymbolTable();
+      mySymbolTable = new SymbolTable(new File(mySymbolTableFilePath));
     }
     return mySymbolTable;
   }
@@ -655,34 +640,6 @@ public class DependencyCache {
   */
   public boolean wasRemote(int qName) {
     return myPreviouslyRemoteClasses.contains(qName);
-  }
-
-  private SymbolTable loadSymbolTable() throws CacheCorruptedException {
-    SymbolTable symbolTable = null;
-    File symbolTableFile = new File(mySymbolTableFilePath);
-    try {
-      try {
-        final byte[] buf = FileUtil.loadFileBytes(symbolTableFile);
-        DataInputStream stream = new DataInputStream(new ByteArrayInputStream(buf));
-        try {
-          symbolTable = new SymbolTable(stream);
-          if (symbolTable.getVersion() != CompilerConfiguration.DEPENDENCY_FORMAT_VERSION || symbolTable.isFull()) {
-            throw new CacheCorruptedException(CompilerBundle.message("error.caches.old.format"));
-          }
-        }
-        finally {
-          stream.close();
-        }
-      }
-      catch (FileNotFoundException e) {
-        symbolTable = new SymbolTable();
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      throw new CacheCorruptedException(e);
-    }
-    return symbolTable;
   }
 
   private class DeclaringClassFinder implements ClassInfoProcessor {
