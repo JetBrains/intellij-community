@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,7 +124,7 @@ public class FileUtil {
     InputStream stream = new FileInputStream(file);
     byte[] bytes;
     try{
-      bytes = loadBytes(stream, (int)file.length());
+      bytes = adaptiveLoadBytes(stream);
     }
     finally{
       stream.close();
@@ -131,6 +132,22 @@ public class FileUtil {
     return bytes;
   }
 
+  public static byte[] adaptiveLoadBytes(InputStream stream) throws IOException{
+    byte[] bytes = new byte[4096];
+    int count = 0;
+    while(true) {
+      int n = stream.read(bytes, count, bytes.length-count);
+      if (n <= 0) break;
+      count += n;
+      if (count == bytes.length) {
+        bytes = ArrayUtil.realloc(bytes, bytes.length * 2);
+      }
+    }
+    if (count < bytes.length) {
+      bytes = ArrayUtil.realloc(bytes, count);
+    }
+    return bytes;
+  }
   public static byte[] loadBytes(InputStream stream, int length) throws IOException{
     byte[] bytes = new byte[length];
     int count = 0;
@@ -246,7 +263,6 @@ public class FileUtil {
 
     for (int i = 0; i < 10; i++){
       if (file.delete() || !file.exists()) return true;
-      if (!file.exists()) return true;
       try {
         Thread.sleep(10);
       } catch (InterruptedException e) {

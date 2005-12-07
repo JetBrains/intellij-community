@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
@@ -189,7 +190,7 @@ public class VirtualFileImpl extends VirtualFile {
       if (myChildren == null) {
         PhysicalFile file = getPhysicalFile();
         PhysicalFile[] files = file.listFiles();
-        final int length = files.length;
+        final int length = files == null ? 0 : files.length;
         if (length == 0) {
           myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
         }
@@ -309,19 +310,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   public byte[] contentsToByteArray() throws IOException {
     InputStream in = getInputStream();
-    byte[] bytes = new byte[(int)getLength()];
-    try {
-      int count = 0;
-      while (true) {
-        int n = in.read(bytes, count, bytes.length - count);
-        if (n <= 0) break;
-        count += n;
-      }
-    }
-    finally {
-      in.close();
-    }
-    return bytes;
+    return FileUtil.adaptiveLoadBytes(in);
   }
 
   public long getModificationStamp() {
@@ -359,7 +348,7 @@ public class VirtualFileImpl extends VirtualFile {
           Runnable runnable = new Runnable() {
             public void run() {
               if (!isValid()) return;
-              VirtualFileImpl parent = (VirtualFileImpl)getParent();
+              VirtualFileImpl parent = getParent();
               if (parent != null) {
                 ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
                 parent.removeChild(VirtualFileImpl.this);
@@ -428,22 +417,29 @@ public class VirtualFileImpl extends VirtualFile {
       LOG.debug("refreshInternal recursive = " + recursive + " asynchronous = " + asynchronous + " file = " + myName);
     }
 
-    PhysicalFile physicalFile = getPhysicalFile();
+    final PhysicalFile physicalFile = getPhysicalFile();
+    PhysicalFile[] childFiles = null;
 
-    final boolean isDirectory = physicalFile.isDirectory();
+    final boolean isDirectory;
+    if (myChildren == null) {
+      isDirectory = physicalFile.isDirectory();
+    }
+    else {
+      childFiles = physicalFile.listFiles();
+      isDirectory = childFiles != null;
+    }
     if (isDirectory != myDirectoryFlag) {
-      final PhysicalFile _physicalFile = physicalFile;
       ourFileSystem.getManager().addEventToFireByRefresh(
         new Runnable() {
           public void run() {
             if (!isValid()) return;
-            VirtualFileImpl parent = (VirtualFileImpl)getParent();
+            VirtualFileImpl parent = getParent();
             if (parent == null) return;
 
             ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
             parent.removeChild(VirtualFileImpl.this);
             ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, myDirectoryFlag, parent);
-            VirtualFileImpl newChild = new VirtualFileImpl(parent, _physicalFile, isDirectory);
+            VirtualFileImpl newChild = new VirtualFileImpl(parent, physicalFile, isDirectory);
             parent.addChild(newChild);
             ourFileSystem.fireFileCreated(null, newChild);
           }
@@ -456,13 +452,12 @@ public class VirtualFileImpl extends VirtualFile {
 
     if (isDirectory) {
       if (myChildren == null) return;
-      PhysicalFile[] files = physicalFile.listFiles();
 
       final boolean[] found = new boolean[myChildren.length];
 
       VirtualFileImpl[] children = myChildren;
-      for (int i = 0; i < files.length; i++) {
-        final PhysicalFile file = files[i];
+      for (int i = 0; i < childFiles.length; i++) {
+        final PhysicalFile file = childFiles[i];
         final String name = file.getName();
         int index = -1;
         if (i < children.length && children[i].myName.equals(name)) {

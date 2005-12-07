@@ -328,9 +328,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
     InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
     try {
-      int physicalFileLength = virtualFileImpl.getPhysicalFileLength();
-      LOG.assertTrue(physicalFileLength >= 0);
-      return FileUtil.loadBytes(inputStream, physicalFileLength);
+      return FileUtil.adaptiveLoadBytes(inputStream);
     }
     finally {
       inputStream.close();
@@ -971,8 +969,10 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private static void delete(PhysicalFile physicalFile) throws IOException {
     PhysicalFile[] list = physicalFile.listFiles();
-    for (PhysicalFile aList : list) {
-      delete(aList);
+    if (list != null) {
+      for (PhysicalFile aList : list) {
+        delete(aList);
+      }
     }
     if (!physicalFile.delete()) {
       throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
