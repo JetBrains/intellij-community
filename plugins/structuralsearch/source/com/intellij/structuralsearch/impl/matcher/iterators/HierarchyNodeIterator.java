@@ -1,7 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
+import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -46,9 +48,15 @@ public class HierarchyNodeIterator extends NodeIterator {
           final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
           final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
 
-          if (extendsList!=null) {
+          if (extendsList != null) {
             for (PsiElement anExtendsList : extendsList) {
               build(anExtendsList,visited);
+            }
+
+            if (!objectTaken) {
+              final Project project = clazz.getProject();
+              final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+              build( javaLangObject.resolve(), visited);
             }
           }
         }

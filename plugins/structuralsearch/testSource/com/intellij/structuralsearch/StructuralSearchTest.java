@@ -3,6 +3,8 @@ package com.intellij.structuralsearch;
 import com.intellij.idea.IdeaTestUtil;
 
 import java.util.Calendar;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -591,7 +593,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s1001 = "lastTest = '_Descr; " +
                          "      matches = testMatcher.findMatches('_In,'_Pattern, options);\n" +
                          "      if (matches.size()!='_Number ) return false;";
-    
+
     assertEquals("several operators 5",findMatchesCount(s1000,s1001),2);
 
     assertEquals(
@@ -998,6 +1000,29 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
+  public void testExprTypeWithObject() {
+    String s1 = "import java.util.*;\n" +
+                "class A {\n" +
+                "  void b() {\n" +
+                "    Map map = new HashMap();" +
+                "    class AppPreferences {}\n" +
+                "    String key = \"key\";\n" +
+                "    AppPreferences value = new AppPreferences();\n" +
+                "    map.put(key, value );\n" +
+                "    map.put(value, value );\n" +
+                "    map.put(\"key\", value );\n" +
+                "    map.put(\"key\", new AppPreferences());\n" +
+                "  }\n" +
+                "}";
+    String s2 = "'_map:[exprtype( *java\\.util\\.Map )].put('_key:[ exprtype( *Object ) ], '_value:[ exprtype( *AppPreferences ) ]);";
+
+    assertEquals(
+      "static block search",
+      4,
+      findMatchesCount(s1,s2,true)
+    );
+  }
+
   public void testInterfaceImplementationsSearch() {
     String in = "class A implements Cloneable {\n" +
                 "    \n" +
@@ -1028,11 +1053,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String what = "class 'A implements '_B:*Serializable , '_C:*Cloneable {}";
     assertEquals(
       "search interface within hierarchy",
-      5, 
+      5,
       findMatchesCount(in, what)
     );
   }
-  
+
   public void testSearchBacktracking() {
     assertEquals(
       "backtracking greedy regexp",
@@ -2171,14 +2196,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Find annotated methods",2,findMatchesCount(s5,s6));
     assertEquals("Find annotated methods, 2",2,findMatchesCount(s5,s6_2));
-    
+
     //String s7 = "class A { void message(@NonNls String msg); }\n" +
     //            "class B { void message2(String msg); }\n" +
     //            "class C { void message2(String msg); }";
     //String s8 = "class 'A { void '_b( @'_Ann{0,0}:NonNls String  '_); }";
     //assertEquals("Find not annotated methods, 2",2,findMatchesCount(s7,s8));
   }
-  
+
   public void testBoxingAndUnboxing() {
     String s1 = " class A { void b(Integer i); void b2(int i); void c(int d); void c2(Integer d); }\n" +
                 "A a;\n" +
@@ -2219,9 +2244,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find field by dcl with comment",2,findMatchesCount(s1,s2));
     assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));
   }
-  
+
   public void testSearchingEmptyModifiers() {
-    
+
     String s1 = "class A {\n" +
                 "  int a;\n" +
                 "  private char b;\n" +
@@ -2232,17 +2257,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s2 = "@Modifier(\"packageLocal\") '_Type '_Variable = '_Value?;";
     String s2_2 = "@Modifier({\"packageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
     String s2_3 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
-    
+
     assertEquals("Finding package local dcls",1,findMatchesCount(s1,s2));
     assertEquals("Finding package local dcls",3,findMatchesCount(s1,s2_2));
-    
+
     try {
       findMatchesCount(s1,s2_3);
-      assertTrue("Finding package local dcls",false);  
+      assertTrue("Finding package local dcls",false);
     } catch(MalformedPatternException ex) {
-    
+
     }
-    
+
     String s3 = "class A {\n" +
                 "  int a;\n" +
                 "  static char b;\n" +
@@ -2253,7 +2278,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Finding instance fields",1,findMatchesCount(s3,s4));
     assertEquals("Finding all fields",3,findMatchesCount(s3,s4_2));
   }
-  
+
   public void test() {
     String s1 = "if (LOG.isDebugEnabled()) {\n" +
                 "  int a = 1;\n" +
