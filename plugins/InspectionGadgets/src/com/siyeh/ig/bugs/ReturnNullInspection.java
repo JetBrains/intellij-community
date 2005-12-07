@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,8 @@ public class ReturnNullInspection extends StatementInspection {
     public boolean m_reportObjectMethods = true;
     /** @noinspection PublicField*/
     public boolean m_reportArrayMethods = true;
+    /** @noinspection PublicField*/
+    public boolean m_reportCollectionMethods = true;
 
     public String getID() {
         return "ReturnOfNull";
@@ -117,11 +120,22 @@ public class ReturnNullInspection extends StatementInspection {
                 InspectionGadgetsBundle.message(
                         "return.of.null.objects.option"),
                 m_reportObjectMethods);
-        final ButtonModel model = objectCheckBox.getModel();
-        model.addChangeListener(new ChangeListener() {
+        final ButtonModel objectModel = objectCheckBox.getModel();
+        objectModel.addChangeListener(new ChangeListener() {
 
             public void stateChanged(ChangeEvent e) {
-                m_reportObjectMethods = model.isSelected();
+                m_reportObjectMethods = objectModel.isSelected();
+            }
+        });
+        final JCheckBox collectionCheckBox = new JCheckBox(
+                InspectionGadgetsBundle.message(
+                        "return.of.null.collections.option"),
+                m_reportCollectionMethods);
+        final ButtonModel collectionModel = collectionCheckBox.getModel();
+        collectionModel.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                m_reportCollectionMethods = collectionModel.isSelected();
             }
         });
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -130,9 +144,9 @@ public class ReturnNullInspection extends StatementInspection {
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         panel.add(arrayCheckBox, constraints);
-
-        constraints.gridx = 0;
         constraints.gridy = 1;
+        panel.add(collectionCheckBox, constraints);
+        constraints.gridy = 2;
         constraints.weighty = 1.0;
         panel.add(objectCheckBox, constraints);
         return panel;
@@ -152,10 +166,9 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             PsiElement parent = value.getParent();
-            while (parent != null &&
-                   (parent instanceof PsiParenthesizedExpression ||
+            while (parent instanceof PsiParenthesizedExpression ||
                     parent instanceof PsiConditionalExpression ||
-                    parent instanceof PsiTypeCastExpression)) {
+                   parent instanceof PsiTypeCastExpression) {
                 parent = parent.getParent();
             }
             if (parent == null || !(parent instanceof PsiReturnStatement)) {
@@ -175,10 +188,12 @@ public class ReturnNullInspection extends StatementInspection {
                     false)) {
                 return;
             }
-            if (m_reportArrayMethods && isArray) {
+            if (m_reportCollectionMethods &&
+                CollectionUtils.isCollectionClassOrInterface(returnType)) {
                 registerError(value);
-            }
-            if (m_reportObjectMethods && !isArray) {
+            } else if (m_reportArrayMethods && isArray) {
+                registerError(value);
+            } else if (m_reportObjectMethods && !isArray) {
                 registerError(value);
             }
         }
