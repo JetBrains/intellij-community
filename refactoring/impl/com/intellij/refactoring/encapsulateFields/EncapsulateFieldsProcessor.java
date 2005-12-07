@@ -275,6 +275,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)usage.getElement();
+      if (expr == null) return;
       final PsiElement parent = expr.getParent();
       if (parent instanceof PsiAssignmentExpression && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
