@@ -12,9 +12,7 @@ import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
@@ -111,10 +109,34 @@ public class GenericInfoImpl implements DomGenericInfo {
     myInitialized = true;
 
     final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
+    final Set<MethodSignature> removedSignatures = new HashSet<MethodSignature>();
+
+
+    final Implementation implAnno = myClass.getAnnotation(Implementation.class);
+    final Class implClass = implAnno != null? implAnno.value():null;
+    if (implClass != null) {
+      for (Method method : implClass.getMethods()) {
+        if (!Modifier.isAbstract(method.getModifiers())) {
+          removedSignatures.add(MethodSignature.getSignature(method));
+        }
+      }
+      for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
+        final Method method = iterator.next();
+        try {
+          if (!Modifier.isAbstract(implClass.getMethod(method.getName(), method.getParameterTypes()).getModifiers())) {
+            iterator.remove();
+          }
+        }
+        catch (NoSuchMethodException e) {
+        }
+      }
+    }
+
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
       if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) ||
           isCustomMethod(MethodSignature.getSignature(method))) {
+        removedSignatures.add(MethodSignature.getSignature(method));
         iterator.remove();
       }
     }
@@ -122,6 +144,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
       if (DomUtil.isGetter(method) && processGetterMethod(method)) {
+        removedSignatures.add(MethodSignature.getSignature(method));
         iterator.remove();
       }
     }
@@ -131,13 +154,26 @@ public class GenericInfoImpl implements DomGenericInfo {
       final MethodSignature signature = MethodSignature.getSignature(method);
       if (isAddMethod(method, signature)) {
         myCollectionChildrenAdditionMethods.put(signature, extractTagName(signature, "add"));
+        removedSignatures.add(MethodSignature.getSignature(method));
+        iterator.remove();
+      }
+    }
+    for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
+      Method method = iterator.next();
+      final MethodSignature signature = MethodSignature.getSignature(method);
+      if (removedSignatures.contains(signature)) {
         iterator.remove();
       }
     }
 
     if (false) {
       if (!methods.isEmpty()) {
-        throw new AssertionError("No implementation for methods: " + methods);
+        StringBuffer sb = new StringBuffer(myClass + " should provide the following implementations:");
+        for (Method method : methods) {
+          sb.append("\n  "+method);
+        }
+        System.out.println(sb);
+        //throw new AssertionError("No implementation for methods: " + sb.toString());
       }
     }
 
