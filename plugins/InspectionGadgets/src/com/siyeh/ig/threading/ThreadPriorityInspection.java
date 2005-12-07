@@ -17,61 +17,106 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ThreadPriorityInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "CallToThreadSetPriority";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThreadSetPriorityVisitor();
-  }
-
-  private static class ThreadSetPriorityVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      if (!isThreadSetPriority(expression)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getID() {
+        return "CallToThreadSetPriority";
     }
 
-    private static boolean isThreadSetPriority(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
-      final String methodName = methodExpression.getReferenceName();
-      @NonNls final String setPriority = "setPriority";
-      if (!setPriority.equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return false;
-      }
-      final String className = aClass.getQualifiedName();
-      if (className == null) {
-        return false;
-      }
-      return "java.lang.Thread".equals(className);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("thread.priority.display.name");
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "thread.priority.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThreadSetPriorityVisitor();
+    }
+
+    private static class ThreadSetPriorityVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression methodCallExpression) {
+            super.visitMethodCallExpression(methodCallExpression);
+            if (!isThreadSetPriority(methodCallExpression)) {
+                return;
+            }
+            if (hasNormalPriorityArgument(methodCallExpression)) {
+                return;
+            }
+            registerMethodCallError(methodCallExpression);
+        }
+
+        private static boolean isThreadSetPriority(
+                @NotNull PsiMethodCallExpression methodCallExpression) {
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String setPriority = "setPriority";
+            if (!setPriority.equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
+            final String className = aClass.getQualifiedName();
+            return "java.lang.Thread".equals(className);
+        }
+
+        private static boolean hasNormalPriorityArgument(
+                @NotNull PsiMethodCallExpression methodCallExpression) {
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] expressions = argumentList.getExpressions();
+            if (expressions.length != 1) {
+                return false;
+            }
+            final PsiExpression expression = expressions[0];
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)expression;
+            final String referenceName = referenceExpression.getReferenceName();
+            @NonNls final String normPriority = "NORM_PRIORITY";
+            if (!normPriority.equals(referenceName)) {
+                return false;
+            }
+            final PsiExpression qualifierExpression =
+                    referenceExpression.getQualifierExpression();
+            if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression classReferenceExpression =
+                    (PsiReferenceExpression)qualifierExpression;
+            final PsiElement element = classReferenceExpression.resolve();
+            if (!(element instanceof PsiClass)) {
+                return false;
+            }
+            final PsiClass aClass = (PsiClass)element;
+            final String className = aClass.getQualifiedName();
+            return "java.lang.Thread".equals(className);
+        }
+    }
 }

@@ -18,12 +18,12 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ import java.util.Set;
 public class OverlyComplexBooleanExpressionInspection
         extends ExpressionInspection {
 
-    private static Set<String> s_booleanOperators =
+    private static final Set<String> s_booleanOperators =
             new HashSet<String>(5);
 
     static {
@@ -58,6 +58,7 @@ public class OverlyComplexBooleanExpressionInspection
     /** @noinspection PublicField*/
     public int m_limit = 3;
 
+    /** @noinspection PublicField*/
     public boolean m_ignorePureConjunctionsDisjunctions = true;
 
     private final InspectionGadgetsFix fix = new ExtractMethodFix();
