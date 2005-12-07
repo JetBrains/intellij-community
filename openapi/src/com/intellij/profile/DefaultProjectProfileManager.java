@@ -57,7 +57,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
   @NonNls private static final String PROFILES = "profiles";
 
-  public boolean myUseProjectLevelSettings = false;
+  public boolean USE_PROJECT_LEVEL_SETTINGS = false;
 
   public DefaultProjectProfileManager(final Project project,
                                       final String profileType) {
@@ -171,7 +171,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       element.addContent(profiles);
     }
     final ProfileScope profileScope = ProfileScopeFactory.getInstance(myProject).getProfileScope();
-    if (myUseProjectLevelSettings && !isProperProfile(profileScope)){
+    if (USE_PROJECT_LEVEL_SETTINGS && !isProperProfile(profileScope)){
       final Element currentProjectProfile = new Element(CURRENT_PROFILE);
       final Profile rootProfile = profileManager.getRootProfile();
       final String name = rootProfile.getName();
@@ -203,11 +203,11 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public boolean useProjectLevelProfileSettings() {
-    return myUseProjectLevelSettings;
+    return USE_PROJECT_LEVEL_SETTINGS;
   }
 
   public void useProjectLevelProfileSettings(boolean useProjectLevelSettings) {
-    myUseProjectLevelSettings = useProjectLevelSettings;
+    USE_PROJECT_LEVEL_SETTINGS = useProjectLevelSettings;
   }
 
   public boolean isModified(ProjectProfileManager manager) {
@@ -217,7 +217,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     for (ProfileScope scope : usedProfiles.keySet()) {
       if (!Comparing.strEqual(currentUsedProfiles.get(scope), usedProfiles.get(scope))) return true;
     }
-    return myUseProjectLevelSettings != manager.useProjectLevelProfileSettings();
+    return USE_PROJECT_LEVEL_SETTINGS != manager.useProjectLevelProfileSettings();
   }
 
   public void copy(ProjectProfileManager manager) {
