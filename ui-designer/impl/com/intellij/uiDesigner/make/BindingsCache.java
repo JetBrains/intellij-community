@@ -13,10 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
-
-import org.jetbrains.annotations.NonNls;
 
 final class BindingsCache {
   @NonNls
@@ -25,7 +24,7 @@ final class BindingsCache {
 
   public BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
-    myCache = (cacheStoreDirectory != null)? new StateCache<MyState>(cacheStoreDirectory + File.separator + BINDINGS_FILE_NAME) {
+    myCache = cacheStoreDirectory != null ? new StateCache<MyState>(cacheStoreDirectory + File.separator + BINDINGS_FILE_NAME) {
       public MyState read(final DataInputStream stream) throws IOException {
         return new MyState(stream.readLong(), stream.readUTF());
       }

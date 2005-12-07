@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -88,6 +89,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
+  @NotNull
   public OrderEntry[] getOrderEntriesForFile(VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return OrderEntry.EMPTY_ARRAY;

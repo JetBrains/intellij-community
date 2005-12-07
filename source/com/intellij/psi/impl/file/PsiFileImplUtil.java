@@ -21,7 +21,7 @@ public class PsiFileImplUtil {
       vFile.rename(manager, newName);
     }
     catch(IOException e){
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e.toString(),e);
     }
     return manager.findFile(vFile);
   }
@@ -44,7 +44,7 @@ public class PsiFileImplUtil {
       vFile.delete(manager);
     }
     catch(IOException e){
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e.toString(),e);
     }
   }
 

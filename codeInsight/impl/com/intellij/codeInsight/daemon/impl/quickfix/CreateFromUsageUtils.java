@@ -118,7 +118,7 @@ public class CreateFromUsageUtils {
       methodText = FileTemplateUtil.indent(methodText, method.getProject(), fileType);
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template");
+      throw new IncorrectOperationException("Failed to parse file template",e);
     }
 
     if (methodText != null) {

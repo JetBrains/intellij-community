@@ -169,7 +169,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     }
 
     getFileSystem().renameFile(requestor, this, newName);
-  };
+  }
 
   /**
    * Checks whether this file has write permission. Note that this value may be cached and may differ from

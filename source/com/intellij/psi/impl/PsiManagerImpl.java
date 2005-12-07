@@ -911,7 +911,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       dir.getVirtualFile().move(this, newParent.getVirtualFile());
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e.toString(),e);
     }
   }
 
@@ -924,7 +924,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       virtualFile.move(this, newParent.getVirtualFile());
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e.toString(),e);
     }
   }
 

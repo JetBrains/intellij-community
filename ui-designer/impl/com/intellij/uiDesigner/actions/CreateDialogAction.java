@@ -213,7 +213,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       }
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", resource));
+      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", resource),e);
     }
 
     String s = buffer.toString();

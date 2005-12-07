@@ -579,10 +579,8 @@ public class BackendCompilerWrapper {
       if (child.isDirectory()) {
         buildOutputItemsList(outputDir, child, typeManager, compiledWithErrors, sourceRoot, packagePrefix);
       }
-      else {
-        if (StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
-          updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
-        }
+      else if (StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
+        updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
       }
     }
   }

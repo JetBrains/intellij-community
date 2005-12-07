@@ -19,12 +19,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class ResourceCompiler implements TranslatingCompiler {
@@ -37,6 +37,7 @@ public class ResourceCompiler implements TranslatingCompiler {
     myConfiguration = compilerConfiguration;
   }
 
+  @NotNull
   public String getDescription() {
     return CompilerBundle.message("resource.compiler.description");
   }
@@ -59,12 +60,10 @@ public class ResourceCompiler implements TranslatingCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        for (int idx = 0; idx < files.length; idx++) {
-          final VirtualFile file = files[idx];
+        for (final VirtualFile file : files) {
           if (context.getProgressIndicator().isCanceled()) {
             break;
           }
-          context.getProgressIndicator().setFraction(((double)(idx)) / ((double)files.length));
           final Module module = context.getModuleByFile(file);
           if (module == null) {
             continue; // looks like file invalidated
@@ -99,8 +98,12 @@ public class ResourceCompiler implements TranslatingCompiler {
 
     final List<File> filesToRefresh = new ArrayList<File>();
     // do actual copy outside of read action to reduce the time the application is locked on it
-    for (Iterator<CopyCommand> it = copyCommands.iterator(); it.hasNext();) {
-      final CopyCommand command = it.next();
+    for (int i = 0; i < copyCommands.size(); i++) {
+      CopyCommand command = copyCommands.get(i);
+      if (context.getProgressIndicator().isCanceled()) {
+        break;
+      }
+      context.getProgressIndicator().setFraction(i * 1.0 / copyCommands.size());
       try {
         final MyOutputItem outputItem = command.copy(filesToRefresh);
         processed.add(outputItem);

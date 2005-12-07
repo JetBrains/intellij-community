@@ -52,7 +52,7 @@ public class RenameFileFix implements IntentionAction {
       vFile.rename(file.getManager(), newName);
     }
     catch(IOException e){
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(null,e);
     }
 
     DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);

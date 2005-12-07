@@ -32,7 +32,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the module instance or null if the file does not belong to content of any module.
    */
   @Nullable
-  Module getModuleForFile(VirtualFile file);
+  Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
@@ -40,7 +40,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the array of order entries containing the file.
    */
   @NotNull
-  OrderEntry[] getOrderEntriesForFile(VirtualFile file);
+  OrderEntry[] getOrderEntriesForFile(@NotNull VirtualFile file);
 
   /**
    * Returns a classpath entry to which the specified file or directory belongs.
@@ -50,7 +50,7 @@ public interface ProjectFileIndex extends FileIndex {
    *         class file or directory belonging to a library.
    */
   @Nullable
-  VirtualFile getClassRootForFile(VirtualFile file);
+  VirtualFile getClassRootForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the module source root or library source root to which the specified file
@@ -61,7 +61,7 @@ public interface ProjectFileIndex extends FileIndex {
    *         of the source roots for the module.
    */
   @Nullable
-  VirtualFile getSourceRootForFile(VirtualFile file);
+  VirtualFile getSourceRootForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the module content root to which the specified file or directory belongs.
@@ -70,7 +70,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the file for the content root, or null if the file does not belong to this project.
    */
   @Nullable
-  VirtualFile getContentRootForFile(VirtualFile file);
+  VirtualFile getContentRootForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the name of the package corresponding to the specified directory.
@@ -79,7 +79,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the package name, or null if the directory does not correspond to any package.
    */
   @Nullable
-  String getPackageNameByDirectory(VirtualFile dir); //Q: move to FileIndex?
+  String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
 
   /**
    * Returns true if <code>file</code> is a Java source file which is treated as source
@@ -88,7 +88,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @param file the file to check.
    * @return true if the file is a Java source file belonging to project or library sources, false otherwise.
    */
-  boolean isJavaSourceFile(VirtualFile file);
+  boolean isJavaSourceFile(@NotNull VirtualFile file);
 
   /**
    * Returns true if <code>file</code> is a compiled class file which belongs to some library.
@@ -96,7 +96,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @param file the file to check.
    * @return true if the file belongs to library classes, false otherwise.
    */
-  boolean isLibraryClassFile(VirtualFile file);
+  boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the content source or library sources.
@@ -104,7 +104,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to project or library sources, false otherwise.
    */
-  boolean isInSource(VirtualFile fileOrDir);
+  boolean isInSource(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from library classes.
@@ -112,7 +112,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file belongs to library classes, false otherwise.
    */
-  boolean isInLibraryClasses(VirtualFile fileOrDir);
+  boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from library source.
@@ -120,7 +120,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return true if the file belongs to library sources, false otherwise.
    */
-  boolean isInLibrarySource(VirtualFile fileOrDir);
+  boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is ignored (either excluded by exclude roots
@@ -129,5 +129,5 @@ public interface ProjectFileIndex extends FileIndex {
    * @param file the file to check.
    * @return true if <code>file</code> is ignored, false otherwise.
    */
-  boolean isIgnored(VirtualFile file);
+  boolean isIgnored(@NotNull VirtualFile file);
 }

@@ -148,7 +148,7 @@ public class ModuleUtil {
   }
 
   @Nullable
-  public static Module getModuleForFile(final Project project, final VirtualFile file) {
+  public static Module getModuleForFile(@NotNull final Project project, @NotNull final VirtualFile file) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return fileIndex.getModuleForFile(file);
   }

@@ -451,7 +451,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       codeBlockFromText = createCodeBlockFromText("{\n" + catchBody + "\n}", null);
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template");
+      throw new IncorrectOperationException("Incorrect file template",e);
     }
     psiCatchSection.getCatchBlock().replace(codeBlockFromText);
   }

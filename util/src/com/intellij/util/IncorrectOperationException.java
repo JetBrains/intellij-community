@@ -18,18 +18,15 @@ package com.intellij.util;
 import org.jetbrains.annotations.NonNls;
 
 public class IncorrectOperationException extends Exception {
-  protected String myMessage;
-
   public IncorrectOperationException() {
     this(null);
   }
 
   public IncorrectOperationException(@NonNls String message) {
     super(message);
-    myMessage = message;
   }
 
-  public String getMessage(){
-    return myMessage;
+  public IncorrectOperationException(@NonNls String message, Exception e) {
+    super(message, e);
   }
 }

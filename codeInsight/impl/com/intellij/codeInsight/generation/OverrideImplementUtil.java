@@ -309,7 +309,7 @@ public class OverrideImplementUtil {
       methodText = "void foo () {\n" + bodyText + "}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
     } catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template");
+      throw new IncorrectOperationException("Failed to parse file template",e);
     }
     if (methodText != null) {
       PsiMethod m;

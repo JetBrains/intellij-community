@@ -505,7 +505,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         return newFile;
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(e.toString());
+        throw new IncorrectOperationException(e.toString(),e);
       }
     }
     else if (element instanceof PsiClass) {
@@ -582,7 +582,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       myFile.delete(myManager);
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e.toString(),e);
     }
 
     /*
