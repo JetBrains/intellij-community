@@ -580,6 +580,7 @@ public class TemplateState implements Disposable {
     replaceString(newValue, start, end, segmentNumber);
 
     if (result instanceof PsiTypeResult) {
+      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       PsiTypeElement t = PsiTreeUtil.getParentOfType(psiFile.findElementAt(start), PsiTypeElement.class);
       if (t != null && t.getTextRange().getStartOffset() == start) {
         try {
@@ -602,15 +603,12 @@ public class TemplateState implements Disposable {
     }
 
     toProcessChangedUpdate = true;
-    LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).isUncommited(myDocument));
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
     String oldText = myDocument.getCharsSequence().subSequence(start, end).toString();
     if (!oldText.equals(newValue)) {
       myDocument.replaceString(start, end, newValue);
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-
       mySegments.replaceSegmentAt(segmentNumber, start, start + newValue.length());
     }
   }
@@ -697,7 +695,7 @@ public class TemplateState implements Disposable {
     if (endSegmentNumber >= 0) {
       offset = mySegments.getSegmentStart(endSegmentNumber);
     } else {
-      if (!myTemplate.isSelectionTemplate()) { //do not move caret to the end of range for selection templates
+      if (!myTemplate.isSelectionTemplate() && !myTemplate.isInline()) { //do not move caret to the end of range for selection templates
         offset = myTemplateRange.getEndOffset();
       }
     }

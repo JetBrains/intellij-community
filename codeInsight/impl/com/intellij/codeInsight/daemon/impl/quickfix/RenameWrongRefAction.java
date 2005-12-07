@@ -8,20 +8,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -163,7 +159,6 @@ public class RenameWrongRefAction implements IntentionAction {
       LookupItem[] items = collectItems();
       ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
-      Document document = editor.getDocument();
       TemplateBuilder builder = new TemplateBuilder(element);
       for (PsiReferenceExpression expr : refs) {
         if (!expr.equals(myRefExpr)) {
@@ -177,23 +172,15 @@ public class RenameWrongRefAction implements IntentionAction {
       final float proportion = EditorUtil.calcVerticalScrollProportion(editor);
       editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
 
-      for (int i = refs.length - 1; i >= 0; i--) {
+      /*for (int i = refs.length - 1; i >= 0; i--) {
         TextRange range = refs[i].getReferenceNameElement().getTextRange();
         document.deleteString(range.getStartOffset(), range.getEndOffset());
       }
-
+*/
       Template template = builder.buildInlineTemplate();
       editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
 
-      TemplateManager.getInstance(project).startTemplate(editor, template,
-                                                         new TemplateStateListener() {
-                                                           public void templateFinished(Template template) {
-                                                             TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-                                                             int offset = templateState.getVariableRange(INPUT_VARIABLE_NAME).getEndOffset();
-                                                             editor.getCaretModel().moveToOffset(offset);
-                                                             EditorUtil.setVerticalScrollProportion(editor, proportion);
-                                                           }
-                                                         });
+      TemplateManager.getInstance(project).startTemplate(editor, template);
 
       EditorUtil.setVerticalScrollProportion(editor, proportion);
     }

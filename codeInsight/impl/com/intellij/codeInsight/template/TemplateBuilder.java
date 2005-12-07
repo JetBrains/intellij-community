@@ -1,7 +1,13 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ApplicationManager;
 
 import java.util.*;
 
@@ -9,6 +15,7 @@ import java.util.*;
  * @author mike
  */
 public class TemplateBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.TemplateBuilder");
   private PsiElement myContainerElement;
   private Map<PsiElement,Expression> myExpressions = new HashMap<PsiElement, Expression>();
   private Map<PsiElement,String> myVariableExpressions = new HashMap<PsiElement, String>();
@@ -68,6 +75,26 @@ public class TemplateBuilder {
   public Template buildInlineTemplate() {
     Template template = buildTemplate();
     template.setInline(true);
+
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    //delete through document
+    PsiFile file = myContainerElement.getContainingFile();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+    Document document = documentManager.getDocument(file);
+    LOG.assertTrue(!documentManager.isUncommited(document));
+
+    //this is kinda hacky way of doing things, but have not got a better idea
+    PsiElement[] elements = myElements.toArray(new PsiElement[myElements.size()]);
+    Arrays.sort(elements, new Comparator<PsiElement>() {
+      public int compare(PsiElement e1, PsiElement e2) {
+        return e2.getTextRange().getStartOffset() - e1.getTextRange().getStartOffset();
+      }
+    });
+    for (PsiElement element : elements) {
+      TextRange range = element.getTextRange();
+      document.deleteString(range.getStartOffset(), range.getEndOffset());
+    }
+
     return template;
   }
 

@@ -68,8 +68,7 @@ public class TemplateImpl implements Template {
   public static final @NonNls String SELECTION_END = "SELECTION_END";
 
   public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
-      new String[] {END, SELECTION, SELECTION_START, SELECTION_END}
-  ));
+      END, SELECTION, SELECTION_START, SELECTION_END));
 
   private boolean isDeactivated = false;
 
