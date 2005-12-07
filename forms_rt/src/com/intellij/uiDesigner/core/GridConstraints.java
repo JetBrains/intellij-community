@@ -113,6 +113,12 @@ public final class GridConstraints implements Cloneable {
    */
   public final Dimension myMaximumSize;
 
+  /**
+   * Additonal offset of the component from the left part of its cell boundary, expressed in multiples
+   * of the HIG-specified indent step.
+   */
+  private int myIndent;
+
   public GridConstraints(){
     myRowSpan = 1;
     myColSpan = 1;
@@ -123,6 +129,7 @@ public final class GridConstraints implements Cloneable {
     myMinimumSize = new Dimension(-1, -1);
     myPreferredSize = new Dimension(-1, -1);
     myMaximumSize = new Dimension(-1, -1);
+    myIndent = 0;
   }
 
   public GridConstraints(
@@ -136,8 +143,7 @@ public final class GridConstraints implements Cloneable {
     final int VSizePolicy,
     final Dimension minimumSize,
     final Dimension preferredSize,
-    final Dimension maximumSize
-  ){
+    final Dimension maximumSize) {
     myRow = row;
     myColumn = column;
     myRowSpan = rowSpan;
@@ -148,7 +154,35 @@ public final class GridConstraints implements Cloneable {
     myVSizePolicy = VSizePolicy;
     myMinimumSize = minimumSize != null ? new Dimension(minimumSize) : new Dimension(-1,-1);
     myPreferredSize = preferredSize != null ? new Dimension(preferredSize) : new Dimension(-1,-1);
-    myMaximumSize = maximumSize != null ? new Dimension(maximumSize) : new Dimension(-1,-1); 
+    myMaximumSize = maximumSize != null ? new Dimension(maximumSize) : new Dimension(-1,-1);
+    myIndent = 0;
+  }
+
+  public GridConstraints(
+    final int row,
+    final int column,
+    final int rowSpan,
+    final int colSpan,
+    final int anchor,
+    final int fill,
+    final int HSizePolicy,
+    final int VSizePolicy,
+    final Dimension minimumSize,
+    final Dimension preferredSize,
+    final Dimension maximumSize,
+    final int indent){
+    myRow = row;
+    myColumn = column;
+    myRowSpan = rowSpan;
+    myColSpan = colSpan;
+    myAnchor = anchor;
+    myFill = fill;
+    myHSizePolicy = HSizePolicy;
+    myVSizePolicy = VSizePolicy;
+    myMinimumSize = minimumSize != null ? new Dimension(minimumSize) : new Dimension(-1,-1);
+    myPreferredSize = preferredSize != null ? new Dimension(preferredSize) : new Dimension(-1,-1);
+    myMaximumSize = maximumSize != null ? new Dimension(maximumSize) : new Dimension(-1,-1);
+    myIndent = indent;
   }
 
   /**
@@ -157,7 +191,7 @@ public final class GridConstraints implements Cloneable {
   public Object clone() {
     return new GridConstraints(
       getRow(), getColumn(), getRowSpan(), getColSpan(), getAnchor(), getFill(), getHSizePolicy(), getVSizePolicy(),
-      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMinimumSize)
+      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMinimumSize), 0
     );
   }
 
@@ -254,6 +288,14 @@ public final class GridConstraints implements Cloneable {
     myFill = fill;
   }
 
+  public int getIndent() {
+    return myIndent;
+  }
+
+  public void setIndent(final int indent) {
+    myIndent = indent;
+  }
+
   public GridConstraints store() {
     final GridConstraints copy = new GridConstraints();
 
@@ -265,6 +307,7 @@ public final class GridConstraints implements Cloneable {
     copy.setHSizePolicy(myHSizePolicy);
     copy.setFill(myFill);
     copy.setAnchor(myAnchor);
+    copy.setIndent(myIndent);
 
     copy.myMinimumSize.setSize(myMinimumSize);
     copy.myPreferredSize.setSize(myPreferredSize);
@@ -282,6 +325,7 @@ public final class GridConstraints implements Cloneable {
     myVSizePolicy = constraints.myVSizePolicy;
     myFill = constraints.myFill;
     myAnchor = constraints.myAnchor;
+    myIndent = constraints.myIndent;
 
     // Restore sizes
     myMinimumSize.setSize(constraints.myMinimumSize);
@@ -306,6 +350,7 @@ public final class GridConstraints implements Cloneable {
     if (myMaximumSize != null ? !myMaximumSize.equals(gridConstraints.myMaximumSize) : gridConstraints.myMaximumSize != null) return false;
     if (myMinimumSize != null ? !myMinimumSize.equals(gridConstraints.myMinimumSize) : gridConstraints.myMinimumSize != null) return false;
     if (myPreferredSize != null ? !myPreferredSize.equals(gridConstraints.myPreferredSize) : gridConstraints.myPreferredSize != null) return false;
+    if (myIndent != gridConstraints.myIndent) return false;
 
     return true;
   }
@@ -323,6 +368,7 @@ public final class GridConstraints implements Cloneable {
     result = 29 * result + (myMinimumSize != null ? myMinimumSize.hashCode() : 0);
     result = 29 * result + (myPreferredSize != null ? myPreferredSize.hashCode() : 0);
     result = 29 * result + (myMaximumSize != null ? myMaximumSize.hashCode() : 0);
+    result = 29 * result + myIndent;
     return result;
   }
 

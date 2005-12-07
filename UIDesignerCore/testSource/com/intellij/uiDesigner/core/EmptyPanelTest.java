@@ -27,7 +27,8 @@ public final class EmptyPanelTest extends TestCase{
     // add component 
     final JButton button = new JButton();
     button.setPreferredSize(new Dimension(100,20));
-    panel.add(button, new GridConstraints(0,1,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,GridConstraints.SIZEPOLICY_CAN_GROW,GridConstraints.SIZEPOLICY_FIXED,null,null,null));
+    panel.add(button, new GridConstraints(0,1,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,GridConstraints.SIZEPOLICY_CAN_GROW,GridConstraints.SIZEPOLICY_FIXED,null,null,null,
+                                          0));
     
     // wisdom
     layoutManager.invalidateLayout(panel);

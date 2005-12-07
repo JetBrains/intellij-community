@@ -24,15 +24,15 @@ public final class Layout8Test extends TestCase{
 
     panel.add(label1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_SHRINK + GridConstraints.SIZEPOLICY_CAN_GROW,
-      GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     panel.add(label2, new GridConstraints(0,1,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_SHRINK,
-      GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     panel.add(new JLabel(), new GridConstraints(1,0,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_SHRINK + GridConstraints.SIZEPOLICY_CAN_GROW + GridConstraints.SIZEPOLICY_WANT_GROW,
-      GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null));
+      GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0));
 
     assertEquals(20, panel.getMinimumSize().width);
     assertEquals(200, panel.getPreferredSize().width);

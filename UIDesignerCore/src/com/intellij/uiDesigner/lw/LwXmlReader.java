@@ -68,6 +68,19 @@ public final class LwXmlReader {
     }
   }
 
+  public static int getOptionalInt(final Element element, final String attributeName, final int defaultValue) {
+    final String str = element.getAttributeValue(attributeName);
+    if (str == null) {
+      return defaultValue;
+    }
+    try {
+      return Integer.parseInt(str);
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper integer: " + str);
+    }
+  }
+
   public static boolean getOptionalBoolean(final Element element, final String attributeName, final boolean defaultValue) {
     final String str = element.getAttributeValue(attributeName);
     if (str == null) {

@@ -87,6 +87,7 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.newDimensionOrNull(constraints.myMinimumSize);
     generator.newDimensionOrNull(constraints.myPreferredSize);
     generator.newDimensionOrNull(constraints.myMaximumSize);
+    generator.push(constraints.getIndent());
     generator.endConstructor();
   }
 

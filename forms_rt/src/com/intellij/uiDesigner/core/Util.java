@@ -20,20 +20,33 @@ import java.util.ArrayList;
 
 public final class Util {
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+  public static final int DEFAULT_INDENT = 10;
 
-  public static Dimension getMinimumSize(final Component component, final GridConstraints constraints){
-    return getSize(constraints.myMinimumSize, component.getMinimumSize());
+  public static Dimension getMinimumSize(final Component component, final GridConstraints constraints, final boolean addIndent){
+    final Dimension size = getSize(constraints.myMinimumSize, component.getMinimumSize());
+    if (addIndent) {
+      size.width += DEFAULT_INDENT * constraints.getIndent();
+    }
+    return size;
   }
 
-  public static Dimension getMaximumSize(final Component component, final GridConstraints constraints){
+  public static Dimension getMaximumSize(final Component component, final GridConstraints constraints, final boolean addIndent){
     //[anton] we use only our property for maximum size.
     // JButton reports that its max size = pref size, so it is impossible to make a column of same sized buttons.
     // Probably there are other bad cases...
-    return getSize(constraints.myMaximumSize, MAX_SIZE);
+    final Dimension size = getSize(constraints.myMaximumSize, MAX_SIZE);
+    if (addIndent && size.width < MAX_SIZE.width) {
+      size.width += DEFAULT_INDENT * constraints.getIndent();
+    }
+    return size;
   }
 
-  public static Dimension getPreferredSize(final Component component, final GridConstraints constraints){
-    return getSize(constraints.myPreferredSize, component.getPreferredSize());
+  public static Dimension getPreferredSize(final Component component, final GridConstraints constraints, final boolean addIndent) {
+    final Dimension size = getSize(constraints.myPreferredSize, component.getPreferredSize());
+    if (addIndent) {
+      size.width += DEFAULT_INDENT * constraints.getIndent();
+    }
+    return size;
   }
 
   private static Dimension getSize(final Dimension overridenSize, final Dimension ownSize){
@@ -43,8 +56,8 @@ public final class Util {
   }
 
   public static void adjustSize(final Component component, final GridConstraints constraints, final Dimension size) {
-    final Dimension minimumSize = getMinimumSize(component, constraints);
-    final Dimension maximumSize = getMaximumSize(component, constraints);
+    final Dimension minimumSize = getMinimumSize(component, constraints, false);
+    final Dimension maximumSize = getMaximumSize(component, constraints, false);
 
     size.width = Math.max(size.width, minimumSize.width);
     size.height = Math.max(size.height, minimumSize.height);

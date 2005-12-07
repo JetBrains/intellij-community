@@ -494,6 +494,10 @@ public final class GridLayoutManager extends AbstractLayout {
         dy = (cellHeight - componentSize.height) / 2;
       }
 
+      int indent = Util.DEFAULT_INDENT * c.getIndent();
+      componentSize.width -= indent;
+      dx += indent;
+
       component.setBounds(myXs[column] + dx, myYs[row] + dy, componentSize.width, componentSize.height);
     }
   }

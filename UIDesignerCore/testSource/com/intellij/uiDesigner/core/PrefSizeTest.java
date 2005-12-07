@@ -22,10 +22,10 @@ public final class PrefSizeTest extends TestCase{
     field2.setPreferredSize(new Dimension(225,10));
 
     panel.add(field1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
-      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     panel.add(field2, new GridConstraints(0,1,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
-      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(345, preferredSize.width);
@@ -35,16 +35,16 @@ public final class PrefSizeTest extends TestCase{
 
     panel.setSize(preferredSize.width, preferredSize.height);
     panel.doLayout();
-    
+
     assertEquals(120, field1.getWidth());
     assertEquals(225, field2.getWidth());
-    
+
     panel.setSize(400, panel.getWidth());
     panel.invalidate(); // to invalidate layout
     panel.doLayout();
-    
+
   }
-  
+
   public void test2() {
     final GridLayoutManager layoutManager = new GridLayoutManager(1,3); // min cell size should
     layoutManager.setHGap(0);
@@ -53,15 +53,15 @@ public final class PrefSizeTest extends TestCase{
 
     final JTextField field1 = new JTextField();
     field1.setPreferredSize(new Dimension(100,10));
-    
+
     final JTextField field2 = new JTextField();
     field2.setPreferredSize(new Dimension(200,10));
 
     panel.add(field1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
-      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     panel.add(field2, new GridConstraints(0,1,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
-      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
+      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(300 + 20, preferredSize.width);

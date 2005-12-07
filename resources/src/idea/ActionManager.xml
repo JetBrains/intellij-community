@@ -1255,6 +1255,8 @@
       <reference ref="EditSource"/>
       <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction"/>
       <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction"/>
+      <action id="GuiDesigner.IncreaseIndent" class="com.intellij.uiDesigner.actions.IncreaseIndentAction"/>
+      <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>

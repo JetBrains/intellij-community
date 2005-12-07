@@ -348,11 +348,11 @@ public abstract class RadComponent implements IComponent {
   }
 
   public final Dimension getMinimumSize(){
-    return Util.getMinimumSize(myDelegee, myConstraints);
+    return Util.getMinimumSize(myDelegee, myConstraints, false);
   }
 
   public final Dimension getPreferredSize(){
-    return Util.getPreferredSize(myDelegee, myConstraints);
+    return Util.getPreferredSize(myDelegee, myConstraints, false);
   }
 
   /**

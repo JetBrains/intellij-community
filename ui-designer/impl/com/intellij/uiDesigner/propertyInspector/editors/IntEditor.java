@@ -8,7 +8,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -19,10 +18,10 @@ public final class IntEditor extends PropertyEditor{
   private final JTextField myTf;
 
   /**
-   * @param lowBondary minimal integer value that editor accepts.
+   * @param lowBoundary minimal integer value that editor accepts.
    */
-  public IntEditor(final int lowBondary){
-    myLowBoundary = lowBondary;
+  public IntEditor(final int lowBoundary){
+    myLowBoundary = lowBoundary;
     myTf = new JTextField();
     myTf.addActionListener(new MyActionListener());
   }

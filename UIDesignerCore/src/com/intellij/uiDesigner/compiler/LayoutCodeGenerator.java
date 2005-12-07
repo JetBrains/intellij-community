@@ -17,14 +17,21 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.awt.*;
 
 /**
  * @author yole
+ * @noinspection HardCodedStringLiteral
  */
 public abstract class LayoutCodeGenerator {
+  protected static final Method ourSetLayoutMethod = Method.getMethod("void setLayout(java.awt.LayoutManager)");
+  protected static final Type ourContainerType = Type.getType(Container.class);
+  protected static final Method ourAddMethod = Method.getMethod("void add(java.awt.Component,java.lang.Object)");
+
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
   }
 

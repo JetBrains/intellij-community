@@ -146,7 +146,8 @@ public final class GridChangeUtilTest extends LightIdeaTestCase{
     
     private static void addComponent(final int idx, final int cell, final int span, final RadContainer grid, final Module module) {
       final RadHSpacer component = new RadHSpacer(module, Integer.toString(idx));
-      component.getConstraints().restore(new GridConstraints(idx, cell, 1, span, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 0,0,null,null,null));
+      component.getConstraints().restore(new GridConstraints(idx, cell, 1, span, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 0,0,null,null,null,
+                                                             0));
       grid.addComponent(component);
     }
   }

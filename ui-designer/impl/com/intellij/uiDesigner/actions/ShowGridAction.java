@@ -6,11 +6,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2005
- * Time: 18:33:22
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class ShowGridAction extends ToggleAction {
   public void update(final AnActionEvent e) {

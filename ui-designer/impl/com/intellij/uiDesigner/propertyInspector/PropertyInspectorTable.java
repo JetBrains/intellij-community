@@ -28,6 +28,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -97,6 +98,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final AnchorProperty myAnchorProperty;
   private final RowSpanProperty myRowSpanProperty;
   private final ColumnSpanProperty myColumnSpanProperty;
+  private final IndentProperty myIndentProperty = new IndentProperty();
   private final MinimumSizeProperty myMinimumSizeProperty;
   private final PreferredSizeProperty myPreferredSizeProperty;
   private final MaximumSizeProperty myMaximumSizeProperty;
@@ -112,10 +114,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private SimpleTextAttributes myModifiedErrorPropertyNameAttrs;
   private boolean myInsideSynch;
 
-  PropertyInspectorTable(final GuiEditor editor,final ComponentTree componentTree){
-    LOG.assertTrue(editor != null);
-    LOG.assertTrue(componentTree != null);
-
+  PropertyInspectorTable(@NotNull final GuiEditor editor, @NotNull final ComponentTree componentTree){
     myClassToBindProperty = new ClassToBindProperty(editor);
     myBindingProperty = new BindingProperty(editor);
     myBorderProperty = new BorderProperty();
@@ -455,6 +454,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
         if (myColumnSpanProperty.appliesTo(component)){
           result.add(myColumnSpanProperty);
+        }
+        if (myIndentProperty.appliesTo(component)) {
+          result.add(myIndentProperty);
         }
         result.add(myMinimumSizeProperty);
         result.add(myPreferredSizeProperty);
@@ -1075,6 +1077,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myAnchorProperty);
       updateUI(myRowSpanProperty);
       updateUI(myColumnSpanProperty);
+      updateUI(myIndentProperty);
       updateUI(myMinimumSizeProperty);
       updateUI(myPreferredSizeProperty);
       updateUI(myMaximumSizeProperty);

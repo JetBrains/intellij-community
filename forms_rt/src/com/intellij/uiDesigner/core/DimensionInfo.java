@@ -161,7 +161,7 @@ public abstract class DimensionInfo {
   protected final Dimension getPreferredSize(final int componentIndex){
     Dimension size = myLayoutState.myPreferredSizes[componentIndex];
     if (size == null) {
-      size = Util.getPreferredSize(myLayoutState.getComponent(componentIndex), myLayoutState.getConstraints(componentIndex));
+      size = Util.getPreferredSize(myLayoutState.getComponent(componentIndex), myLayoutState.getConstraints(componentIndex), true);
       myLayoutState.myPreferredSizes[componentIndex] = size;
     }
     return size;
@@ -170,7 +170,7 @@ public abstract class DimensionInfo {
   protected final Dimension getMinimumSize(final int componentIndex){
     Dimension size = myLayoutState.myMinimumSizes[componentIndex];
     if (size == null) {
-      size = Util.getMinimumSize(myLayoutState.getComponent(componentIndex), myLayoutState.getConstraints(componentIndex));
+      size = Util.getMinimumSize(myLayoutState.getComponent(componentIndex), myLayoutState.getConstraints(componentIndex), true);
       myLayoutState.myMinimumSizes[componentIndex] = size;
     }
     return size;

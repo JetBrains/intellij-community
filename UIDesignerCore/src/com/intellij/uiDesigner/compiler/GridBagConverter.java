@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwHSpacer;
@@ -237,13 +238,15 @@ public class GridBagConverter {
     int endCol = constraints.getColumn() + constraints.getColSpan()-1;
     myLastCol = Math.max(myLastCol, endCol);
 
+    int indent = Util.DEFAULT_INDENT * constraints.getIndent();
+
     result.constraints.gridx = constraints.getColumn();
     result.constraints.gridy = constraints.getRow();
     result.constraints.gridwidth = constraints.getColSpan();
     result.constraints.gridheight = constraints.getRowSpan();
     result.constraints.weightx = getWeight(constraints, true);
     result.constraints.weighty = getWeight(constraints, false);
-    result.constraints.insets = new Insets(myInsets.top, myInsets.left, myInsets.bottom, myInsets.right);
+    result.constraints.insets = new Insets(myInsets.top, myInsets.left + indent, myInsets.bottom, myInsets.right);
     switch(constraints.getFill()) {
       case GridConstraints.FILL_HORIZONTAL: result.constraints.fill = GridBagConstraints.HORIZONTAL; break;
       case GridConstraints.FILL_VERTICAL:   result.constraints.fill = GridBagConstraints.VERTICAL; break;

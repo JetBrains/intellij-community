@@ -571,6 +571,7 @@ public class RadContainer extends RadComponent implements IContainer {
       writer.addAttribute("hsize-policy",constraints.getHSizePolicy());
       writer.addAttribute("anchor",constraints.getAnchor());
       writer.addAttribute("fill",constraints.getFill());
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_INDENT, constraints.getIndent());
 
       // preferred size
       writer.writeDimension(constraints.myMinimumSize,"minimum-size");

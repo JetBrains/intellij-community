@@ -31,12 +31,12 @@ import java.util.Map;
  * @author yole
  */
 public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
-  private static Type myGridBagLayoutType = Type.getType(GridBagLayout.class);
-  private static Type myGridBagConstraintsType = Type.getType(GridBagConstraints.class);
+  private static Type ourGridBagLayoutType = Type.getType(GridBagLayout.class);
+  private static Type ourGridBagConstraintsType = Type.getType(GridBagConstraints.class);
+  private static Method ourDefaultConstructor = Method.getMethod("void <init> ()");
 
   private Map myIdToConstraintsMap = new HashMap();
-  private Method myDefaultConstructor = Method.getMethod("void <init> ()");
-  private Type myPanelType = Type.getType(JPanel.class);
+  private static Type myPanelType = Type.getType(JPanel.class);
 
   public String mapComponentClass(final String componentClassName) {
     if (componentClassName.equals(Spacer.class.getName())) {
@@ -51,11 +51,11 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
       if (container.isGrid()) {
         generator.loadLocal(componentLocal);
 
-        generator.newInstance(myGridBagLayoutType);
+        generator.newInstance(ourGridBagLayoutType);
         generator.dup();
-        generator.invokeConstructor(myGridBagLayoutType, Method.getMethod("void <init> ()"));
+        generator.invokeConstructor(ourGridBagLayoutType, ourDefaultConstructor);
 
-        generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void setLayout(java.awt.LayoutManager)"));
+        generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
 
         GridBagConverter.prepareConstraints(container, myIdToConstraintsMap);
       }
@@ -67,7 +67,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
     generator.newInstance(myPanelType);
     generator.dup();
-    generator.invokeConstructor(myPanelType, myDefaultConstructor);
+    generator.invokeConstructor(myPanelType, ourDefaultConstructor);
     generator.storeLocal(panelLocal);
 
     generateConversionResult(generator, result, panelLocal, parentLocal);
@@ -90,11 +90,11 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
     checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
 
-    int gbcLocal = generator.newLocal(myGridBagConstraintsType);
+    int gbcLocal = generator.newLocal(ourGridBagConstraintsType);
 
-    generator.newInstance(myGridBagConstraintsType);
+    generator.newInstance(ourGridBagConstraintsType);
     generator.dup();
-    generator.invokeConstructor(myGridBagConstraintsType, myDefaultConstructor);
+    generator.invokeConstructor(ourGridBagConstraintsType, ourDefaultConstructor);
     generator.storeLocal(gbcLocal);
 
     GridBagConstraints defaults = new GridBagConstraints();
@@ -132,14 +132,14 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     if (!defaults.insets.equals(constraints.insets)) {
       generator.loadLocal(gbcLocal);
       AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", constraints.insets);
-      generator.putField(myGridBagConstraintsType, "insets", Type.getType(Insets.class));
+      generator.putField(ourGridBagConstraintsType, "insets", Type.getType(Insets.class));
     }
 
     generator.loadLocal(parentLocal);
     generator.loadLocal(componentLocal);
     generator.loadLocal(gbcLocal);
 
-    generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
+    generator.invokeVirtual(ourContainerType, ourAddMethod);
   }
 
   private void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
@@ -154,12 +154,12 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private void setIntField(final GeneratorAdapter generator, final int local, final String fieldName, final int value) {
     generator.loadLocal(local);
     generator.push(value);
-    generator.putField(myGridBagConstraintsType, fieldName, Type.INT_TYPE);
+    generator.putField(ourGridBagConstraintsType, fieldName, Type.INT_TYPE);
   }
 
   private void setDoubleField(final GeneratorAdapter generator, final int local, final String fieldName, final double value) {
     generator.loadLocal(local);
     generator.push(value);
-    generator.putField(myGridBagConstraintsType, fieldName, Type.DOUBLE_TYPE);
+    generator.putField(ourGridBagConstraintsType, fieldName, Type.DOUBLE_TYPE);
   }
 }

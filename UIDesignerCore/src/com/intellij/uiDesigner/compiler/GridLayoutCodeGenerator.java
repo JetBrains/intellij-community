@@ -23,16 +23,14 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
-import java.awt.*;
-
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2005
- * Time: 19:59:51
- * To change this template use File | Settings | File Templates.
+ * @author yole
+ * @noinspection HardCodedStringLiteral
  */
 public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
+  private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
+  private static final Method ourGridLayoutManagerConstructor = Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)");
+
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
       LwContainer container = (LwContainer) lwComponent;
@@ -53,9 +51,9 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
         generator.push(layout.getVGap());
         generator.push(layout.isSameSizeHorizontally());
         generator.push(layout.isSameSizeVertically());
-        generator.invokeConstructor(gridLayoutManagerType, Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)"));
+        generator.invokeConstructor(gridLayoutManagerType, ourGridLayoutManagerConstructor);
 
-        generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void setLayout(java.awt.LayoutManager)"));
+        generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
       }
     }
   }
@@ -67,7 +65,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.loadLocal(parentLocal);
     generator.loadLocal(componentLocal);
     addNewGridConstraints(generator, lwComponent);
-    generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
+    generator.invokeVirtual(ourContainerType, ourAddMethod);
   }
 
   private void addNewGridConstraints(final GeneratorAdapter generator, final LwComponent lwComponent) {
@@ -87,9 +85,8 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
     newDimensionOrNull(generator, constraints.myMinimumSize);
     newDimensionOrNull(generator, constraints.myPreferredSize);
     newDimensionOrNull(generator, constraints.myMaximumSize);
+    generator.push(constraints.getIndent());
 
-    generator.invokeConstructor(gridConstraintsType,
-                                Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)"));
+    generator.invokeConstructor(gridConstraintsType, myInitConstraintsMethod);
   }
-
 }
