@@ -16,10 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectComponent {
   @NonNls private static final String PROFILES_TAG = "profiles";
@@ -97,6 +94,11 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
         myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlighingSetting[settings.size()]));
       }
     }
+    readHectorProfiles(element);
+  }
+
+  public void readHectorProfiles(final Element element) {
+    final List children;
     children = element.getChildren(PROFILES_TAG);
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
@@ -123,9 +125,13 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       }
       element.addContent(child);
     }
+    writeHectorProfiles(element, false);
+  }
+
+  public void writeHectorProfiles(final Element element, boolean activeOnly) {
     for (Map.Entry<VirtualFile, Pair<String,Boolean>> entry : myProfileSettings.entrySet()) {
       final Pair<String, Boolean> value = entry.getValue();
-      if (value != null) {
+      if (value != null && (!activeOnly || value.second.booleanValue())) {
         final String name = value.first;
         final Element child = new Element(PROFILES_TAG);
         final VirtualFile vFile = entry.getKey();
@@ -155,8 +161,40 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
      }
   }
 
+  public void setInspectionProfile(String name, VirtualFile file){
+    myProfileSettings.put(file, Pair.create(name, Boolean.TRUE));
+  }
+
   public void resetAllFilesToUseGlobalSettings(){
     myProfileSettings.clear();
     myHighlightSettings.clear();
+  }
+
+  public void correctProfileSettings(Map<VirtualFile, String> hectorActiveSettings) {
+    Set<VirtualFile> removed = new HashSet<VirtualFile>();
+    for (VirtualFile file : myProfileSettings.keySet()) {
+      final Pair<String, Boolean> pair = myProfileSettings.get(file);
+      if (pair.second.booleanValue() && !hectorActiveSettings.containsKey(file)){
+        removed.add(file);
+      }
+    }
+    for (VirtualFile file : removed) {
+      myProfileSettings.remove(file);
+    }
+    for (VirtualFile file : hectorActiveSettings.keySet()) {
+      final Pair<String, Boolean> pair = myProfileSettings.get(file);
+      myProfileSettings.put(file, Pair.create(hectorActiveSettings.get(file), pair.second));
+    }
+  }
+
+  public Map<VirtualFile, String> getHectorSettings() {
+    final Map<VirtualFile, String> result = new HashMap<VirtualFile, String>();
+    for (VirtualFile file : myProfileSettings.keySet()) {
+      final Pair<String, Boolean> pair = myProfileSettings.get(file);
+      if (pair.second.booleanValue()){
+        result.put(file, pair.first);
+      }
+    }
+    return result;
   }
 }

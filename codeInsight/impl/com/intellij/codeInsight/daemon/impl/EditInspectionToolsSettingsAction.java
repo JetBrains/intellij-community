@@ -62,14 +62,14 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     return editToolSettings(project, inspectionProfile, editorHighlighting, myShortName);
   }
 
-  public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting, final String selectedToolShortName) {
+  public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final boolean isOK = ShowSettingsUtil.getInstance().editConfigurable(project,
                                                                          "#com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction",
                                                                          new Configurable(){
                                                                            private InspectionToolsPanel myPanel = new InspectionToolsPanel(inspectionProfile.getName(),
                                                                                                                                            project,
-                                                                                                                                           editorHighlighting);
+                                                                                                                                           canChooseDifferentProfile);
                                                                            public String getDisplayName() {
                                                                              return ApplicationBundle.message("title.errors");
                                                                            }
@@ -96,7 +96,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                            public void apply() throws ConfigurationException {
                                                                              myPanel.apply();
                                                                              final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile().getParentProfile();
-                                                                             if (editorHighlighting){
+                                                                             if (canChooseDifferentProfile){
                                                                                InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
                                                                              }
                                                                              inspectionProfile.copyFrom(editedProfile);

@@ -55,4 +55,8 @@ public abstract class ProjectProfileManager implements JDOMExternalizable {
   public abstract String getProfileType();
 
   public abstract void clearProfileScopeAssignments();
+
+  public abstract boolean useProjectLevelProfileSettings();
+
+  public abstract void useProjectLevelProfileSettings(boolean useProjectLevelSettings);
 }

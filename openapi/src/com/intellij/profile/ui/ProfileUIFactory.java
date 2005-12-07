@@ -18,6 +18,11 @@ package com.intellij.profile.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+
+import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.List;
 
 /**
  * User: anna
@@ -32,5 +37,6 @@ public abstract class ProfileUIFactory implements ApplicationComponent {
                                                                       String profileColumnTitle,
                                                                       String scopeColumnTitle,
                                                                       Project project,
-                                                                      Runnable openEditProfilesDialog);
+                                                                      Condition<String> openEditProfilesDialog,
+                                                                      List<Computable<DefaultMutableTreeNode>> additionalNodes);
 }

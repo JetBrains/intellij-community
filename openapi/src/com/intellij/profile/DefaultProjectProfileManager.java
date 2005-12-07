@@ -18,6 +18,7 @@ package com.intellij.profile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,12 +50,14 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   @NonNls private static final String CURRENT_PROFILE = "current_profile";
 
 
-  private Project myProject;
+  protected Project myProject;
   private Map<ProfileScope, String> myScopeToProfileMap = new HashMap<ProfileScope, String>();
   private String myProfileType;
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProjectProfileManager");
   @NonNls private static final String PROFILES = "profiles";
+
+  public boolean myUseProjectLevelSettings = false;
 
   public DefaultProjectProfileManager(final Project project,
                                       final String profileType) {
@@ -129,23 +132,33 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
          assignProfileToScope(projectProfile, ProfileScopeFactory.getInstance(myProject).getProfileScope());
       }
     }
+    DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     final ProfileManager profileManager = ProfileManager.getProfileManager(myProfileType);
     LOG.assertTrue(profileManager != null);
     final Map<ProfileScope, String> usedProfiles = getProfilesUsedInProject();
-    final Set<String> differentUsedProfiles = new HashSet<String>();
-    differentUsedProfiles.addAll(usedProfiles.values());
+    final List<String> differentUsedProfiles = new ArrayList<String>(new HashSet<String>(usedProfiles.values()));
+    Collections.sort(differentUsedProfiles);
     if (!usedProfiles.isEmpty()) {
       final Element assignedScopes = new Element(SCOPES);
-      for (ProfileScope scope : usedProfiles.keySet()) {
+      List<ProfileScope> scopes = new ArrayList<ProfileScope>(usedProfiles.keySet());
+      Collections.sort(scopes, new Comparator<ProfileScope>() {
+        public int compare(final ProfileScope o1, final ProfileScope o2) {
+          LOG.assertTrue(o1 != null);
+          LOG.assertTrue(o2 != null);
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+      for (ProfileScope scope : scopes) {
         final Element scopeElement = new Element(SCOPE);
         scope.write(scopeElement);
         scopeElement.setAttribute(PROFILE, usedProfiles.get(scope));
         assignedScopes.addContent(scopeElement);
       }
       element.addContent(assignedScopes);
+
       final Element profiles = new Element(PROFILES);
       for (String profile : differentUsedProfiles) {
         final Profile projectProfile = profileManager.getProfile(profile);
@@ -158,7 +171,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       element.addContent(profiles);
     }
     final ProfileScope profileScope = ProfileScopeFactory.getInstance(myProject).getProfileScope();
-    if (!isProperProfile(profileScope)){
+    if (myUseProjectLevelSettings && !isProperProfile(profileScope)){
       final Element currentProjectProfile = new Element(CURRENT_PROFILE);
       final Profile rootProfile = profileManager.getRootProfile();
       final String name = rootProfile.getName();
@@ -168,6 +181,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       }
       element.addContent(currentProjectProfile);
     }
+    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   private ProfileScope getProfileScope(Element element) {
@@ -188,12 +202,37 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     myScopeToProfileMap.clear();
   }
 
-  public ProjectProfileManager copy() {
-    final DefaultProjectProfileManager copy = new DefaultProjectProfileManager(myProject, myProfileType);
-    for (ProfileScope scope : myScopeToProfileMap.keySet()) {
-      copy.assignProfileToScope(myScopeToProfileMap.get(scope), scope);
-    }
-    return copy;
+  public boolean useProjectLevelProfileSettings() {
+    return myUseProjectLevelSettings;
   }
 
+  public void useProjectLevelProfileSettings(boolean useProjectLevelSettings) {
+    myUseProjectLevelSettings = useProjectLevelSettings;
+  }
+
+  public boolean isModified(ProjectProfileManager manager) {
+    final Map<ProfileScope, String> usedProfiles = manager.getProfilesUsedInProject();
+    final Map<ProfileScope, String> currentUsedProfiles = getProfilesUsedInProject();
+    if (usedProfiles.size() != currentUsedProfiles.size()) return true;
+    for (ProfileScope scope : usedProfiles.keySet()) {
+      if (!Comparing.strEqual(currentUsedProfiles.get(scope), usedProfiles.get(scope))) return true;
+    }
+    return myUseProjectLevelSettings != manager.useProjectLevelProfileSettings();
+  }
+
+  public void copy(ProjectProfileManager manager) {
+    clearProfileScopeAssignments();
+    final Map<ProfileScope, String> profilesUsedInProject = manager.getProfilesUsedInProject();
+    for (ProfileScope scope : profilesUsedInProject.keySet()) {
+      assignProfileToScope(profilesUsedInProject.get(scope), scope);
+    }
+    useProjectLevelProfileSettings(manager.useProjectLevelProfileSettings());
+  }
+
+  public ProjectProfileManager getModifiableModel() {
+    return new DefaultProjectProfileManager(myProject, getProfileType());
+  }
+
+  public void updateAdditionalSettings() {
+  }
 }

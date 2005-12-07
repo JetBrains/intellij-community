@@ -16,6 +16,9 @@
 package com.intellij.profile.ui;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.util.Condition;
+
+import javax.swing.*;
 
 /**
  * User: anna
@@ -24,5 +27,18 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 public interface AbstractProfileMapping extends UnnamedConfigurable {
   String getProfileColumnTitle();
   String getScopeColumnTitle();
-  Runnable openEditProfilesDialog();
+  Condition<String> openEditProfilesDialog();
+
+  interface MapRule {
+    String getProfile();
+    String getScopeName();
+    boolean isProperProfile();
+    void assignProfile(String profile);
+    void setProfile(String profile);
+    void deassignProfile();
+    Icon getIcon(final boolean expanded);
+    boolean canBeEdited();
+    void reset();
+    boolean isRoot();
+  }
 }
