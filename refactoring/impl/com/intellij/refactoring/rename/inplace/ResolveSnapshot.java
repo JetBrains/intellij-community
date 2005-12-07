@@ -52,10 +52,10 @@ public class ResolveSnapshot {
     }
   }
 
-  private void qualify(PsiElement referent, PsiElement referee, String hidingLocaName) {
+  private void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
     if (referent instanceof PsiReferenceExpression && referee instanceof PsiField) {
       PsiReferenceExpression ref = ((PsiReferenceExpression) referent);
-      if (!ref.isQualified() && hidingLocaName.equals(ref.getReferenceName())) {
+      if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
         PsiClass refereeClass = ((PsiField) referee).getContainingClass();
         PsiClass referentClass = PsiTreeUtil.getParentOfType(referent, PsiClass.class);
         if (refereeClass != null && referentClass != null &&
