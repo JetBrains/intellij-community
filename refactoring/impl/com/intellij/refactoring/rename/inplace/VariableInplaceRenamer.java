@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -31,7 +32,7 @@ import java.util.List;
  * @author ven
  */
 public class VariableInplaceRenamer {
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   private PsiVariable myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
@@ -41,6 +42,7 @@ public class VariableInplaceRenamer {
   }
 
   public void performInplaceRename(@NotNull final Editor editor) {
+
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
     myElementToRename.getContainingFile();
     ResolveSnapshot snapshot = null;
@@ -55,16 +57,12 @@ public class VariableInplaceRenamer {
 
     final Project project = myElementToRename.getProject();
     final PsiIdentifier nameIdentifier = myElementToRename.getNameIdentifier();
-    if (nameIdentifier != null) {
-      MyExpression expression = new MyExpression(myElementToRename.getName());
-      builder.replaceElement(nameIdentifier, PRIMARY_VARIABLE_NAME, expression, true);
-    }
+    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, editor.getCaretModel().getOffset());
+
+    if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
-      PsiElement element = ref.getElement();
-      builder.replaceElement(element, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+      addVariable(ref.getElement(), selectedElement, builder);
     }
-
-
     final ResolveSnapshot snapshot1 = snapshot;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -96,6 +94,36 @@ public class VariableInplaceRenamer {
     }, RefactoringBundle.message("rename.title"), null);
 
 
+  }
+
+  private PsiElement getSelectedInEditorElement(final PsiIdentifier nameIdentifier, final Collection<PsiReference> refs, final int offset) {
+    if (nameIdentifier != null) {
+      final TextRange range = nameIdentifier.getTextRange();
+      if (contains(range, offset)) return nameIdentifier;
+    }
+
+    for (PsiReference ref : refs) {
+      final PsiElement element = ref.getElement();
+      final TextRange range = element.getTextRange();
+      if (contains(range, offset)) return element;
+    }
+
+    LOG.assertTrue(false);
+    return null;
+  }
+
+  private boolean contains(final TextRange range, final int offset) {
+    return range.getStartOffset() <= offset && offset <= range.getEndOffset();
+  }
+
+  private void addVariable(final PsiElement element, final PsiElement selectedElement, final TemplateBuilder builder) {
+    if (element == selectedElement) {
+      MyExpression expression = new MyExpression(myElementToRename.getName());
+      builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
+    }
+    else {
+      builder.replaceElement(element, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
+    }
   }
 
   public static boolean mayRenameInplace(PsiVariable elementToRename) {
