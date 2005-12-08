@@ -1,17 +1,10 @@
 package com.intellij.application.options;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInspection.ex.InspectionToolsPanel;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 
 import javax.swing.*;
-import java.awt.*;
 
-public class ErrorHighlightingPanel extends InspectionToolsPanel {
+public class ErrorHighlightingPanel {
   private JTextField myAutoreparseDelayField;
   private JCheckBox myCbShowImportPopup;
   private JTextField myMarkMinHeight;
@@ -19,17 +12,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
   private JCheckBox myNextErrorGoesToErrorsFirst;
   private JCheckBox mySuppressWay;
 
-  public ErrorHighlightingPanel() {
-    super(InspectionProfileManager.getInstance().getRootProfile().getName(), null);
-    add(getAutoreparsePanel(), BorderLayout.NORTH);
-  }
-
-  private JPanel getAutoreparsePanel() {
-    return myPanel;
-  }
-
   public void reset() {
-    super.reset();
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     myAutoreparseDelayField.setText(Integer.toString(settings.AUTOREPARSE_DELAY));
 
@@ -40,8 +23,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     mySuppressWay.setSelected(settings.SUPPRESS_WARNINGS);
   }
 
-  public void apply() throws ConfigurationException {
-    super.apply();
+  public void apply(){
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
 
     settings.AUTOREPARSE_DELAY = getAutoReparseDelay();
@@ -51,12 +33,10 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
 
     settings.SUPPRESS_WARNINGS = mySuppressWay.isSelected();
+  }
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
-    }
-    InspectionProfileManager.getInstance().setRootProfile(mySelectedProfile.getName());
+  public JPanel getPanel(){
+    return myPanel;
   }
 
   private int getErrorStripeMarkMinHeight() {
@@ -71,7 +51,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
     isModified |= mySuppressWay.isSelected() != settings.SUPPRESS_WARNINGS;
     if (isModified) return true;
-    return super.isModified();
+    return false;
   }
 
 

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -12,7 +13,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
@@ -96,6 +96,8 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
+  private JPanel myHighlightSettingsPanel;
+  private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
  
@@ -149,6 +151,8 @@ public class EditorOptionsPanel {
       new Integer(UISettings.TABS_NONE),
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
+    myHighlightSettingsPanel.setLayout(new BorderLayout());
+    myHighlightSettingsPanel.add(myErrorHighlightingPanel.getPanel(), BorderLayout.CENTER);
     myTabbedPaneWrapper = new TabbedPaneWrapper();
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.behavior"), myBehaviourPanel);
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.appearance"), myAppearancePanel);
@@ -300,6 +304,7 @@ public class EditorOptionsPanel {
 
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
+    myErrorHighlightingPanel.reset();
   }
 
   public void apply() {
@@ -412,11 +417,6 @@ public class EditorOptionsPanel {
       ((EditorEx)editor).reinitSettings();
     }
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
-    }
-
     if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR)) uiSettingsChanged = true;
     uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
 
@@ -453,6 +453,11 @@ public class EditorOptionsPanel {
     }
     if(uiSettingsChanged){
       uiSettings.fireUISettingsChanged();
+    }
+    myErrorHighlightingPanel.apply();
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
 
@@ -559,6 +564,7 @@ public class EditorOptionsPanel {
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
 
+    isModified |= myErrorHighlightingPanel.isModified();
     return isModified;
   }
 

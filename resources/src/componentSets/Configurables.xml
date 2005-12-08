@@ -21,10 +21,6 @@
       <implementation-class>com.intellij.application.options.CodeCompletionOptions</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.application.options.ErrorHighlightingOptions</interface-class>
-      <implementation-class>com.intellij.application.options.ErrorHighlightingOptions</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.application.options.colors.ColorAndFontOptions</interface-class>
       <implementation-class>com.intellij.application.options.colors.ColorAndFontOptions</implementation-class>
     </component>
