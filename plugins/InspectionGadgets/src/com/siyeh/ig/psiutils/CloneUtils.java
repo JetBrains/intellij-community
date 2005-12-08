@@ -21,6 +21,7 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneUtils{
+
     private CloneUtils(){
         super();
     }
@@ -67,6 +68,9 @@ public class CloneUtils{
     public static boolean onlyThrowsCloneNotSupportedException(
             @NotNull PsiMethod method){
         final PsiCodeBlock body = method.getBody();
+        if(body == null){
+            return false;
+        }
         final PsiStatement[] statements = body.getStatements();
         if(statements.length != 1){
             return false;
