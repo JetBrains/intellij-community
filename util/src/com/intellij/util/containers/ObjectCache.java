@@ -221,7 +221,7 @@ public class ObjectCache<K,V> implements Iterable {
     int index = (key.hashCode() & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[index];
     myCache[0].key = key;
-    while (key != myCache[current].key) {
+    while (!key.equals( myCache[current].key )) {
       current = myCache[current].hash_next;
     }
     return current;
