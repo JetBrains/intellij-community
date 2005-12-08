@@ -32,6 +32,7 @@ import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -80,6 +81,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         return NAME;
     }
 
+    @NotNull
     public FileEditorState getState(FileEditorStateLevel level) {
         ImageZoomModel zoomModel = imageEditor.getZoomModel();
         return new ImageFileEditorState(

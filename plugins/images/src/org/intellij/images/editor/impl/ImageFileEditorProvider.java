@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Image editor provider.
@@ -61,6 +62,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
         fileEditor.dispose();
     }
 
+    @NotNull
     public FileEditorState readState(Element sourceElement, Project project, VirtualFile file) {
         return new FileEditorState() {
             public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
