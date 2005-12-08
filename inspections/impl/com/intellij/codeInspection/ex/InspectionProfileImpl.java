@@ -317,6 +317,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
         LOG.error(e);
       }
     }
+    InspectionProfileManager.getInstance().fireProfileChanged(myName);
   }
 
   public void load() {

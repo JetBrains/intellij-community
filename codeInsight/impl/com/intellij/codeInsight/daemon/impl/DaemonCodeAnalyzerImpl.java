@@ -59,6 +59,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.scope.ProfileScope;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -115,6 +119,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
   private final AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
   private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
+  private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
   private final WindowFocusListener myIdeFrameFocusListener = new MyWindowFocusListener();
 
@@ -237,6 +242,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     CommandProcessor.getInstance().addCommandListener(myCommandListener);
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
+    InspectionProfileManager.getInstance().addProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
     ExternalResourceManagerEx.getInstanceEx().addExteralResourceListener(myExternalResourceListener);
@@ -281,6 +287,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     CommandProcessor.getInstance().removeCommandListener(myCommandListener);
     ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
     EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
+    InspectionProfileManager.getInstance().removeProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
     ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
@@ -709,6 +716,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         restart();
       }
+    }
+  }
+
+  private class MyProfileChangeListener extends ProfileChangeAdapter{
+    public void profileChanged(Profile profile) {
+      restart();
+    }
+
+    public void profileActivated(ProfileScope scope, Profile oldProfile, Profile profile) {
+      restart();
     }
   }
 

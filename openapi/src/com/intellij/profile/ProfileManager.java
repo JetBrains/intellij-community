@@ -60,9 +60,9 @@ public abstract class ProfileManager {
 
   public abstract void removeProfileChangeListener(ProfileChangeAdapter listener);
 
-  public abstract void fireProfileChanged(Profile profile);
+  public abstract void fireProfileChanged(String profile);
 
-  public abstract void fireProfileChanged(Profile oldProfile, Profile profile, ProfileScope scope);
+  public abstract void fireProfileChanged(String oldProfile, String profile, ProfileScope scope);
 
   public abstract Collection<Profile> getProfiles();
 

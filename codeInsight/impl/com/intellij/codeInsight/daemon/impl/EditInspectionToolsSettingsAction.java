@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -113,11 +112,6 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                              }
                                                                            }
                                                                          });
-    if (isOK) {
-      for (Project project1 : projects) {
-        DaemonCodeAnalyzer.getInstance(project1).restart();
-      }
-    }
     return isOK;
   }
 

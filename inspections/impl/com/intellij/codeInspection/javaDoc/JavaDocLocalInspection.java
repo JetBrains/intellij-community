@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -789,7 +788,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       //correct save settings
       inspectionProfile.isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       inspectionProfile.save();
-      DaemonCodeAnalyzer.getInstance(project).restart();
     }
   }
 }
