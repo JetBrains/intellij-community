@@ -7,15 +7,12 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 14, 2005
- * Time: 6:44:02 PM
- * To change this template use File | Settings | File Templates.
+ * @author cdr
  */
 public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(PsiElement psiElement) {
@@ -43,7 +40,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   }
 
   public boolean mayHaveReferences(IElementType token, final short searchContext) {
-    return false;
+    return (searchContext & (UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES)) != 0;
   }
 
   public WordsScanner getWordsScanner() {
