@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -43,10 +44,12 @@ public final class HGapProperty extends Property{
     layoutManager.setHGap(((Integer)value).intValue());
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

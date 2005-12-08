@@ -6,6 +6,7 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -23,6 +24,7 @@ public class PartialWhitespaceBlock extends SimpleJavaBlock {
     myRange = range;
   }
 
+  @NotNull
   @Override
   public TextRange getTextRange() {
     return myRange;

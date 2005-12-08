@@ -4,6 +4,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludedOutputFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -27,10 +28,12 @@ public class ExcludedOutputFolderImpl implements ExcludedOutputFolder {
     }
   }
 
+  @NotNull
   public ContentEntry getContentEntry() {
     return myContentEntry;
   }
 
+  @NotNull
   public String getUrl() {
     return myOutputPath.getUrl();
   }

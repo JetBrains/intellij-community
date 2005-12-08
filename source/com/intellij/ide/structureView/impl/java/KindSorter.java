@@ -38,6 +38,7 @@ import com.intellij.psi.PsiMethod;
 import java.util.Comparator;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class KindSorter implements Sorter {
   public static final Sorter INSTANCE = new KindSorter();
@@ -81,10 +82,12 @@ public class KindSorter implements Sorter {
     return COMPARATOR;
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return null;
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }

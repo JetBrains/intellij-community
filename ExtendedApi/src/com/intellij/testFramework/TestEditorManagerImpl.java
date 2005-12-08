@@ -114,6 +114,7 @@ import java.util.Map;
 
       }
 
+      @NotNull
       public FileEditorState readState(Element sourceElement, Project project, VirtualFile file) {
         return null;
       }

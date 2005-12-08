@@ -46,11 +46,14 @@ import com.intellij.psi.PsiDirectory;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PackageViewProjectNode extends AbstractProjectNode {
   public PackageViewProjectNode(Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (getSettings().isShowModules()) {
       final List<Module> allModules = new ArrayList<Module>(Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));

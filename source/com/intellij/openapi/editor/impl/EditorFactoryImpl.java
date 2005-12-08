@@ -23,6 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
 
@@ -79,10 +81,12 @@ public class EditorFactoryImpl extends EditorFactory {
   public void disposeComponent() {
   }
 
+  @NotNull
   public Document createDocument(char[] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
+  @NotNull
   public Document createDocument(CharSequence text) {
     DocumentImpl document = new DocumentImpl(text);
     myEditorEventMulticaster.registerDocument(document);
@@ -179,6 +183,7 @@ public class EditorFactoryImpl extends EditorFactory {
     myEditorFactoryEventDispatcher.removeListener(listener);
   }
 
+  @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return myEditorEventMulticaster;
   }

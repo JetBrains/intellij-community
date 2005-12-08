@@ -13,6 +13,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.RectangleRenderer;
 import java.awt.*;
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -40,10 +42,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
     writer.addAttribute("height",r.height);
   }
 
+  @NotNull
   public Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }
@@ -76,10 +80,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       getParent().setValue(component,r);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -113,10 +119,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       getParent().setValue(component,r);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -150,10 +158,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       getParent().setValue(component,r);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -187,10 +197,12 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       getParent().setValue(component,r);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }

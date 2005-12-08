@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -17,6 +18,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
     super(ANNOTATION_ARRAY_INITIALIZER);
   }
 
+  @NotNull
   public PsiAnnotationMemberValue[] getInitializers() {
     return getChildrenAsPsiElements(ANNOTATION_MEMBER_VALUE_BIT_SET, PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR);
   }

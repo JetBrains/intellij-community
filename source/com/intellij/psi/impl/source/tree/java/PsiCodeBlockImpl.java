@@ -16,6 +16,8 @@ import com.intellij.psi.tree.IElementType;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
 
@@ -31,6 +33,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     myClassesSet = null;
   }
 
+  @NotNull
   public PsiStatement[] getStatements() {
     return getChildrenAsPsiElements(STATEMENT_BIT_SET, PSI_STATEMENT_ARRAY_CONSTRUCTOR);
   }

@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -51,6 +52,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myInitializers;
   }
@@ -63,6 +65,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     visitor.visitAnnotationArrayInitializer(this);
   }
 
+  @NotNull
   public PsiAnnotationMemberValue[] getInitializers() {
     return myInitializers;
   }

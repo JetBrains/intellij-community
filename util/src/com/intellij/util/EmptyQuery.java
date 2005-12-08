@@ -3,6 +3,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -19,6 +21,7 @@ public class EmptyQuery<R> implements Query<R> {
     // ignore
   }
 
+  @NotNull
   public Collection<R> findAll() {
     return Collections.emptyList();
   }

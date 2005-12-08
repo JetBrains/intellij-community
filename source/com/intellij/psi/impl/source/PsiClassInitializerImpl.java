@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implements PsiClassInitializer {
   private PsiModifierListImpl myRepositoryModifierList = null;
@@ -60,6 +61,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return getModifierList().hasModifierProperty(name);
   }
 
+  @NotNull
   public PsiCodeBlock getBody(){
     return (PsiCodeBlock)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsReferenceListImpl extends ClsElementImpl implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceListImpl");
@@ -30,6 +31,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     myReferences = references;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myReferences;
   }
@@ -38,10 +40,12 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     return myParent;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return myReferences;
   }
 
+  @NotNull
   public PsiClassType[] getReferencedTypes() {
   synchronized (PsiLock.LOCK) {
     if (myTypes == null) {

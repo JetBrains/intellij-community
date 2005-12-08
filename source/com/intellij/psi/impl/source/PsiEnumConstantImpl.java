@@ -16,6 +16,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -145,6 +146,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     return (PsiMethod)resolveResult.getElement();
   }
 
+  @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
@@ -254,12 +256,14 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     public void processVariants(PsiScopeProcessor processor) {
     }
 
+    @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
       PsiManager manager = getManager();
       PsiClassType type = manager.getElementFactory().createType(getContainingClass());
       return manager.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
+    @NotNull
     public JavaResolveResult advancedResolve(boolean incompleteCode) {
       final JavaResolveResult[] results = multiResolve(incompleteCode);
       if (results.length == 1) return results[0];
@@ -277,9 +281,9 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
     public boolean isReferenceTo(PsiElement element) {
       return element instanceof PsiMethod
-        && ((PsiMethod)element).isConstructor()
-        && ((PsiMethod)element).getContainingClass() == getContainingClass()
-        && getManager().areElementsEquivalent(resolve(), element);
+             && ((PsiMethod)element).isConstructor()
+             && ((PsiMethod)element).getContainingClass() == getContainingClass()
+             && getManager().areElementsEquivalent(resolve(), element);
     }
   }
 

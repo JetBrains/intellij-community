@@ -31,29 +31,33 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class UnknownFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
 
+  @NotNull
   public String getName() {
     return "UNKNOWN";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.unknown");
   }
 
+  @NotNull
   public String getDefaultExtension() {
-    return null;
+    return "";
   }
 
   public Icon getIcon() {

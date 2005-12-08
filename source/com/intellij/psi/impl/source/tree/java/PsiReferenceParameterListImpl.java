@@ -11,6 +11,7 @@ import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -22,10 +23,12 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     super(REFERENCE_PARAMETER_LIST);
   }
 
+  @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return getChildrenAsPsiElements(TYPES_BIT_SET, PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByReferenceParameterList(this);
   }
@@ -82,7 +85,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
 
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-    
+
     if (getFirstChildNode()== null || getFirstChildNode().getElementType() != LT){
       TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
       super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
@@ -91,7 +94,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
       super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
     }
-    
+
     if (anchor == null){
       if (before == null || before.booleanValue()){
         anchor = findChildByRole(ChildRole.GT_IN_TYPE_LIST);

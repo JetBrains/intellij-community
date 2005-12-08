@@ -66,14 +66,17 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return myQualifiedName.hashCode();
   }
 
+  @NotNull
   public String getQualifiedName() {
     return myQualifiedName;
   }
 
+  @NotNull
   public PsiDirectory[] getDirectories() {
     return getDirectories(GlobalSearchScope.allScope(myManager.getProject()));
   }
 
+  @NotNull
   public PsiDirectory[] getDirectories(GlobalSearchScope scope) {
     FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     VirtualFile[] dirs = projectFileIndex.getDirectoriesByPackageName(myQualifiedName, false);
@@ -337,10 +340,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return "PsiPackage:" + getQualifiedName();
   }
 
+  @NotNull
   public PsiClass[] getClasses() {
     return getClasses(GlobalSearchScope.allScope(myManager.getProject()));
   }
 
+  @NotNull
   public PsiClass[] getClasses(GlobalSearchScope scope) {
     return myManager.getClasses(this, scope);
   }
@@ -353,10 +358,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return myAnnotationList.getValue().get();
   }
 
+  @NotNull
   public PsiPackage[] getSubPackages() {
     return getSubPackages(GlobalSearchScope.allScope(myManager.getProject()));
   }
 
+  @NotNull
   public PsiPackage[] getSubPackages(GlobalSearchScope scope) {
     return myManager.getSubPackages(this, scope);
   }

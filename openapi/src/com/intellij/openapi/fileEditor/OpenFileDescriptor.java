@@ -104,6 +104,7 @@ public class OpenFileDescriptor implements Navigatable {
       final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget(SelectInManager.PROJECT);
       if (projectSelector != null) {
         projectSelector.selectIn(new SelectInContext() {
+          @NotNull
           public Project getProject() {
             return myProject;
           }

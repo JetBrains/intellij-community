@@ -11,6 +11,8 @@ import com.intellij.psi.tree.IElementType;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiTryStatementImpl extends CompositePsiElement implements PsiTryStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTryStatementImpl");
   private PsiParameter[] myCachedCatchParameters = null;
@@ -28,6 +30,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.TRY_BLOCK);
   }
 
+  @NotNull
   public PsiCodeBlock[] getCatchBlocks() {
     ASTNode tryBlock = SourceTreeToPsiMap.psiElementToTree(getTryBlock());
     if (tryBlock != null) {
@@ -43,6 +46,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return PsiCodeBlock.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiParameter[] getCatchBlockParameters() {
     if (myCachedCatchParameters == null) {
       PsiCatchSection[] catchSections = getCatchSections();
@@ -59,6 +63,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     return myCachedCatchParameters;
   }
 
+  @NotNull
   public PsiCatchSection[] getCatchSections() {
     return getChildrenAsPsiElements(CATCH_SECTION_BIT_SET, PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR);
   }

@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,6 +72,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
 
+  @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     final ArrayList result = new ArrayList();
     if (OrderRootType.SOURCES.equals(type)) {
@@ -91,6 +93,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return new VirtualFilePointer[0];
   }
 
+  @NotNull
   public String[] getUrls(OrderRootType type) {
     final ArrayList result = new ArrayList();
     if (OrderRootType.SOURCES.equals(type)) {

@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
   private final DocumentImpl myDocument;
@@ -42,6 +44,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myHighlighterList.dispose();
   }
 
+  @NotNull
   public RangeHighlighter addLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) return null;
@@ -92,6 +95,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return highlighter;
   }
 
+  @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCachedHighlighters == null) {
@@ -118,6 +122,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   }
 
+  @NotNull
   public RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
                                               int layer,
@@ -145,6 +150,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myCachedHighlighters = null;
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }

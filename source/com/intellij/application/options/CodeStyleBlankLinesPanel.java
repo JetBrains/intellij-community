@@ -14,6 +14,8 @@ import com.intellij.ui.OptionGroup;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
   private JTextField myKeepBlankLinesInDeclarations;
   private JTextField myKeepBlankLinesInCode;
@@ -195,6 +197,7 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
     return 37;
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.JAVA;
   }

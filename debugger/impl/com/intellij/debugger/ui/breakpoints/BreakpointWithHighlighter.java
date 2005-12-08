@@ -35,6 +35,7 @@ import com.intellij.CommonBundle;
 import com.intellij.xml.util.XmlUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -374,6 +375,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private void setupGutterRenderer() {
     getHighlighter().setGutterIconRenderer(new GutterIconRenderer() {
+      @NotNull
       public Icon getIcon() {
         return BreakpointWithHighlighter.this.getIcon();
       }

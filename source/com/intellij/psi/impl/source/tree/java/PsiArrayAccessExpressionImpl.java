@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements PsiArrayAccessExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayAccessExpressionImpl");
@@ -15,6 +16,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
     super(ARRAY_ACCESS_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression getArrayExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ARRAY);
   }

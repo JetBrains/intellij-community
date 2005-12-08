@@ -42,17 +42,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class WorkspaceFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
 
+  @NotNull
   public String getName() {
     return "IDEA_WORKSPACE";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.workspace");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "iws";
   }

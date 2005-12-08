@@ -20,11 +20,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.text.MessageFormat;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   public SummaryNode(Project project, ToDoSummary value, TodoTreeBuilder builder) {
     super(project, value, builder);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
 

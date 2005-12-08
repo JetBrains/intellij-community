@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,6 +25,7 @@ public class DTDLanguage extends Language {
     super("DTD", "text/dtd", "text/x-dtd");
   }
 
+  @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     //TODO: should be antoher?
     return new XmlFileHighlighter(true);
@@ -33,6 +35,7 @@ public class DTDLanguage extends Language {
     return new DTDParserDefinition();
   }
 
+  @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return new XmlFindUsagesProvider() {
       public boolean mayHaveReferences(IElementType token, final short searchContext) {

@@ -270,10 +270,12 @@ public final class RadTabbedPane extends RadContainer{
       getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(getModule(), descriptor));
     }
 
+    @NotNull
     public Property[] getChildren() {
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer() {
       throw new UnsupportedOperationException();
     }

@@ -44,6 +44,8 @@ import com.intellij.openapi.options.OptionsBundle;
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XMLColorsPage implements ColorSettingsPage {
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
@@ -56,6 +58,7 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), HighlighterColors.XML_TAG_DATA),
   };
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.xml.display.name");
   }
@@ -64,18 +67,22 @@ public class XMLColorsPage implements ColorSettingsPage {
     return StdFileTypes.XML.getIcon();
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLORS;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new XmlFileHighlighter();
   }
 
+  @NotNull
   public String getDemoText() {
     return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
            "<!DOCTYPE index>\n" +

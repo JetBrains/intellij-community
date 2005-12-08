@@ -11,10 +11,11 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaSourceTransformingCompiler;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
-/**
+/**          
  * @author Eugene Zhuravlev
  *         Date: Jul 10, 2004
  */
@@ -49,6 +50,7 @@ public class DummyTransformingCompiler implements JavaSourceTransformingCompiler
     return false;
   }
 
+  @NotNull
   public String getDescription() {
     return "a dummy compiler for testing";
   }

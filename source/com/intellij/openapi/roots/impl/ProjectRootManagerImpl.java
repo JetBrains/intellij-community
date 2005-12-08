@@ -40,6 +40,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -121,6 +122,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myVirtualFilePointerListener;
   }
 
+  @NotNull
   public ProjectFileIndex getFileIndex() {
     return myProjectFileIndex;
   }
@@ -191,6 +193,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return null;
   }
 
+  @NotNull
   public VirtualFile[] getContentRoots() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getModules();

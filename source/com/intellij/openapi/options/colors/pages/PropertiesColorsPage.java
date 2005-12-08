@@ -43,6 +43,8 @@ import com.intellij.openapi.options.OptionsBundle;
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PropertiesColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.property.key"), PropertiesHighlighter.PROPERTY_KEY),
@@ -55,6 +57,7 @@ public class PropertiesColorsPage implements ColorSettingsPage {
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("properties.options.display.name");
   }
@@ -63,18 +66,22 @@ public class PropertiesColorsPage implements ColorSettingsPage {
     return PropertiesFileType.FILE_ICON;
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLORS;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new PropertiesHighlighter();
   }
 
+  @NotNull
   public String getDemoText() {
     return "# Comment on keys and values\n" +
            "key1=value1\n" +

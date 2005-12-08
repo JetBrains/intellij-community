@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRendere
 import java.awt.*;
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -37,10 +39,12 @@ public final class IntroInsetsProperty extends IntrospectedProperty{
     writer.addAttribute("right",insets.right);
   }
 
+  @NotNull
   public Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

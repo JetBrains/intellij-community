@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -40,11 +41,13 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
     myCachedTypes = null;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(Constants.JAVA_CODE_REFERENCE_BIT_SET,
-                                                                                      PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
+                                                      PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @NotNull
   public PsiClassType[] getReferencedTypes() {
     synchronized (PsiLock.LOCK) {
       if (myCachedTypes == null) {

@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public LibraryGroupNode(Project project, LibraryGroupElement value, ViewSettings viewSettings) {
@@ -28,6 +30,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     this(project, (LibraryGroupElement)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(getValue().getModule());
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();

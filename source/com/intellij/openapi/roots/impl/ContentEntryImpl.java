@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -74,6 +75,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
+  @NotNull
   public String getUrl() {
     return myRoot.getUrl();
   }

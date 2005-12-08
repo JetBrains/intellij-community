@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
   public PsiWhiteSpaceImpl(char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
@@ -20,6 +21,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
     return "PsiWhiteSpace";
   }
 
+  @NotNull
   public Language getLanguage() {
     PsiElement master = getNextSibling();
     if (master == null) master = getParent();

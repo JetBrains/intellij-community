@@ -50,6 +50,8 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
   private JTextField myKeepBlankLines;
@@ -319,6 +321,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.HTML;
   }

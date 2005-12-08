@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
@@ -24,6 +25,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     setState(lexerState);
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
@@ -80,6 +82,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
@@ -178,6 +181,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     return getManager().getSearchHelper().getUseScope(this);
   }
@@ -187,6 +191,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     return manager != null ? manager.getProject() : null;
   }
 
+  @NotNull
   public Language getLanguage() {
     return getElementType().getLanguage();
   }

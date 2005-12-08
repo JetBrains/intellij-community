@@ -104,6 +104,7 @@ public abstract class CopyingCompiler implements PackagingCompiler{
       myInfo = new DestinationFileInfo(destinationPath, new File(destinationPath).exists());
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return myFile;
     }

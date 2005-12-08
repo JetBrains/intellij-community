@@ -19,6 +19,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
@@ -26,6 +28,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     super(project, value, viewSettings);
   }
 
+  @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
     PsiElement value = getPsiElement();
     if (value == null) return new ArrayList<AbstractTreeNode>();
@@ -128,8 +131,8 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
   public static VirtualFile getVirtualFile(PsiElement element) {
     return element instanceof PsiDirectory
-      ? ((PsiDirectory)element).getVirtualFile()
-      : element.getContainingFile().getVirtualFile();
+           ? ((PsiDirectory)element).getVirtualFile()
+           : element.getContainingFile().getVirtualFile();
   }
 
   protected PsiElement getPsiElement(){

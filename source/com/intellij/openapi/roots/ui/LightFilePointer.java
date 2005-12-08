@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -26,10 +27,12 @@ public class LightFilePointer extends UserDataHolderBase implements VirtualFileP
     return myFile;
   }
 
+  @NotNull
   public String getUrl() {
     return myUrl;
   }
 
+  @NotNull
   public String getFileName() {
     if (myFile != null) {
       return myFile.getName();
@@ -39,6 +42,7 @@ public class LightFilePointer extends UserDataHolderBase implements VirtualFileP
     }
   }
 
+  @NotNull
   public String getPresentableUrl() {
     VirtualFile file = getFile();
     if (file != null) return file.getPresentableUrl();

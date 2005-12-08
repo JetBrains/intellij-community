@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   protected final Project myProject;
 
@@ -43,6 +45,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     }
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return (AbstractTreeNode)element;
   }

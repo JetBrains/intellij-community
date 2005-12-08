@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MockVirtualFile extends VirtualFile {
   public String myContent = "";
   protected String myName = "";
@@ -37,6 +39,7 @@ public class MockVirtualFile extends VirtualFile {
     myListener = listener;
   }
 
+  @NotNull
   public VirtualFileSystem getFileSystem() {
     return null;
   }
@@ -45,6 +48,7 @@ public class MockVirtualFile extends VirtualFile {
     return "/" + getName();
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }

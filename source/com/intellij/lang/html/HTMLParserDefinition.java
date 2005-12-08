@@ -10,11 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.xml.XmlElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,6 +26,7 @@ import com.intellij.psi.xml.XmlElementType;
  * To change this template use File | Settings | File Templates.
  */
 public class HTMLParserDefinition implements ParserDefinition {
+  @NotNull
   public Lexer createLexer(Project project) {
     return new HtmlLexer();
   }
@@ -32,20 +35,24 @@ public class HTMLParserDefinition implements ParserDefinition {
     return XmlElementType.HTML_FILE;
   }
 
+  @NotNull
   public TokenSet getWhitespaceTokens() {
     return XmlTokenType.WHITESPACES;
   }
 
+  @NotNull
   public TokenSet getCommentTokens() {
     return XmlTokenType.COMMENTS;
   }
 
+  @NotNull
   public PsiParser createParser(final Project project) {
-    return null;
+    return PsiUtil.NULL_PARSER;
   }
 
+  @NotNull
   public PsiElement createElement(ASTNode node) {
-    return null;
+    return PsiUtil.NULL_PSI_ELEMENT;
   }
 
   public PsiFile createFile(final Project project, VirtualFile file) {

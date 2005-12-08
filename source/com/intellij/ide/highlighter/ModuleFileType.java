@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ModuleFileType implements FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
@@ -50,14 +51,17 @@ public class ModuleFileType implements FileType {
 
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaModule.png");
 
+  @NotNull
   public String getName() {
     return "IDEA_MODULE";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.module");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "iml";
   }

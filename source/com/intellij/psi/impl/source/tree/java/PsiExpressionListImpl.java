@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl");
@@ -17,6 +18,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     super(EXPRESSION_LIST);
   }
 
+  @NotNull
   public PsiExpression[] getExpressions() {
     return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }

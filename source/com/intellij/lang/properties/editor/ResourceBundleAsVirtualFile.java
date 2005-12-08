@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ResourceBundleAsVirtualFile extends VirtualFile {
   private final ResourceBundle myResourceBundle;
 
@@ -28,6 +30,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return ResourceBundle.ICON;
   }
 
+  @NotNull
   public VirtualFileSystem getFileSystem() {
     return DummyFileSystem.getInstance();
   }
@@ -36,6 +39,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return getName();
   }
 
+  @NotNull
   public String getName() {
     return myResourceBundle.getBaseName();
   }

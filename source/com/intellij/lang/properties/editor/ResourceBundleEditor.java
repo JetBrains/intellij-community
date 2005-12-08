@@ -486,6 +486,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return "Resource Bundle";
   }
 
+  @NotNull
   public FileEditorState getState(FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }

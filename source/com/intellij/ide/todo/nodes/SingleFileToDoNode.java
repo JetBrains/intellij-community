@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   private final TodoFileNode myFileNode = new TodoFileNode(getProject(), getValue(), myBuilder, true);
 
@@ -17,6 +19,7 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
     super(project, value, builder);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(myFileNode));
   }

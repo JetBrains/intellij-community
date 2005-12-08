@@ -203,6 +203,7 @@ public class PsiImmediateClassType extends PsiClassType {
 
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return myClass.getResolveScope();
   }

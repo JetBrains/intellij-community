@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.diff.Diff;
+import org.jetbrains.annotations.NotNull;
 
 public class DocumentEventImpl extends DocumentEvent {
   private final int myOffset;
@@ -68,6 +69,7 @@ public class DocumentEventImpl extends DocumentEvent {
     return myNewString;
   }
 
+  @NotNull
   public Document getDocument() {
     return (Document) getSource();
   }

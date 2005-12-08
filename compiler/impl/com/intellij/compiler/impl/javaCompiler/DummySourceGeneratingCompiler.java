@@ -4,21 +4,23 @@
  */
 package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.SourceGeneratingCompiler;
+import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.io.File;
-import java.util.List;
+import java.io.IOException;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -77,6 +79,7 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
     return success.toArray(new GenerationItem[success.size()]);
   }
 
+  @NotNull
   public String getDescription() {
     return "Dummy Source Generator";
   }

@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
@@ -35,10 +36,12 @@ public final class IntroStringProperty extends IntrospectedProperty{
     myEditor = new StringEditor();
   }
 
+  @NotNull
   public Property[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer() {
     return myRenderer;
   }

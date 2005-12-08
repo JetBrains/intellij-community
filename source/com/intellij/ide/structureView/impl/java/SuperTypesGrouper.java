@@ -16,11 +16,13 @@ import java.util.Map;
 import java.util.Collections;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
+  @NotNull
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
     Map<Group, SuperTypeGroup> groups = new THashMap<Group, SuperTypeGroup>();
@@ -68,11 +70,13 @@ public class SuperTypesGrouper implements Grouper{
 
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.group.methods.by.defining.type"), null,
                                       IconLoader.getIcon("/general/implementingMethod.png"));
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }

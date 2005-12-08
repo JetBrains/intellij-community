@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class LightModifierList extends LightElement implements PsiModifierList{
   public LightModifierList(PsiManager manager){
@@ -24,6 +25,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     throw new IncorrectOperationException();
   }
 
+  @NotNull
   public PsiAnnotation[] getAnnotations() {
     return PsiAnnotation.EMPTY_ARRAY;
   }

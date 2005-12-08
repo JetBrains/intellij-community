@@ -24,6 +24,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -103,6 +105,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return null;
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
@@ -186,12 +189,14 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return "PsiImportStaticReferenceElement:" + getText();
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
     return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);

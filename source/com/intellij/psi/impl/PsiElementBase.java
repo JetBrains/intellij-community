@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class PsiElementBase extends ElementBase implements PsiElement,NavigationItem {
   public PsiElement getFirstChild() {
@@ -45,6 +46,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
@@ -98,6 +100,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     return getManager().getSearchHelper().getUseScope(this);
   }

@@ -21,6 +21,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.BindingRenderer;
 
 import java.text.MessageFormat;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -38,6 +40,7 @@ public final class BindingProperty extends Property {
     myEditor = new BindingEditor(editor);
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
@@ -46,6 +49,7 @@ public final class BindingProperty extends Property {
     return myEditor;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

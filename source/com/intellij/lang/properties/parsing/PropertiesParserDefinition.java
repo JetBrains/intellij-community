@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IFileElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,6 +28,7 @@ import com.intellij.psi.tree.IFileElementType;
 public class PropertiesParserDefinition implements ParserDefinition {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertiesParserDefinition");
 
+  @NotNull
   public Lexer createLexer(Project project) {
     return new PropertiesLexer();
   }
@@ -35,14 +37,17 @@ public class PropertiesParserDefinition implements ParserDefinition {
     return PropertiesElementTypes.FILE;
   }
 
+  @NotNull
   public TokenSet getWhitespaceTokens() {
     return PropertiesTokenTypes.WHITESPACES;
   }
 
+  @NotNull
   public TokenSet getCommentTokens() {
     return PropertiesTokenTypes.COMMENTS;
   }
 
+  @NotNull
   public PsiParser createParser(final Project project) {
     return new PropertiesParser();
   }
@@ -55,6 +60,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
     return new PropertiesFileImpl(project, name, text);
   }
 
+  @NotNull
   public PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == PropertiesElementTypes.PROPERTY) {

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -521,6 +522,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.JAVA;
   }

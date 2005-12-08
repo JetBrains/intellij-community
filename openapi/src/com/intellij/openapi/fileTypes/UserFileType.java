@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -40,10 +41,12 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     }
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
+  @NotNull
   public String getDescription() {
     return myDescription;
   }
@@ -56,8 +59,9 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     myDescription = description;
   }
 
+  @NotNull
   public String getDefaultExtension() {
-    return null;
+    return "";
   }
 
   public Icon getIcon() {

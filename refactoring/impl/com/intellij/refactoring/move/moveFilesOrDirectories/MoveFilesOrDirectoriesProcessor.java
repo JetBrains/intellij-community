@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -56,6 +57,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     );
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
     List<UsageInfo> result = new ArrayList<UsageInfo>();

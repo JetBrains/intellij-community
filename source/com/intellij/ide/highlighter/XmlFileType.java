@@ -36,6 +36,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -48,14 +49,17 @@ public class XmlFileType extends LanguageFileType {
     super(new XMLLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "XML";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.xml");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }

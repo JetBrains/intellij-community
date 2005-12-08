@@ -44,6 +44,8 @@ import com.intellij.openapi.options.OptionsBundle;
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class HTMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.comment"), HighlighterColors.HTML_COMMENT),
@@ -55,6 +57,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.html.display.name");
   }
@@ -63,18 +66,22 @@ public class HTMLColorsPage implements ColorSettingsPage {
     return StdFileTypes.HTML.getIcon();
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLORS;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new HtmlFileHighlighter();
   }
 
+  @NotNull
   public String getDemoText() {
     return "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n" +
            "<!--\n" +

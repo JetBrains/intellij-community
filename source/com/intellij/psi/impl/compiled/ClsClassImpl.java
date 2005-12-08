@@ -24,6 +24,7 @@ import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -116,6 +117,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return parent.getContainingFile();
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     PsiIdentifier name = getNameIdentifier();
     PsiDocComment docComment = getDocComment();
@@ -401,10 +403,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
                return myImplementsList;
   }
 
+  @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
+  @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassImplUtil.getImplementsListTypes(this);
   }
@@ -417,10 +421,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return PsiClassImplUtil.getInterfaces(this);
   }
 
+  @NotNull
   public PsiClass[] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
@@ -485,6 +491,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return list;
   }
 
+  @NotNull
   public PsiField[] getFields() {
   synchronized (PsiLock.LOCK) {
     if (myFields == null) {
@@ -553,6 +560,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return (flags & ClsUtil.ACC_ENUM) != 0;
   }
 
+  @NotNull
   public PsiMethod[] getMethods() {
   synchronized (PsiLock.LOCK) {
     if (myMethods == null) {
@@ -605,6 +613,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
                return myMethods;
   }
 
+  @NotNull
   public PsiMethod[] getConstructors() {
     if (myConstructors == null) {
       myConstructors = PsiImplUtil.getConstructors(this);
@@ -612,6 +621,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return myConstructors;
   }
 
+  @NotNull
   public PsiClass[] getInnerClasses() {
   synchronized (PsiLock.LOCK) {
     if (myInnerClasses == null) {
@@ -652,23 +662,28 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
                return myInnerClasses;
   }
 
+  @NotNull
   public PsiClassInitializer[] getInitializers() {
     //Diagnostic.methodNotImplemented();
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
 
+  @NotNull
   public PsiField[] getAllFields() {
     return PsiClassImplUtil.getAllFields(this);
   }
 
+  @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiClassImplUtil.getAllMethods(this);
   }
 
+  @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
@@ -691,10 +706,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     if (!checkBases) {
       if (myCachedMethodsMap == null) {
@@ -720,10 +737,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiMethod.class);
   }

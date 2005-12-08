@@ -21,6 +21,8 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileTreeStructure");
   private final RootFileElement myRootElement;
@@ -108,7 +110,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       if (parent != null && parent.getFileSystem() instanceof JarFileSystem && parent.getParent() == null) {
         // parent of jar contents should be local jar file
         String localPath = parent.getPath().substring(0,
-            parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
+                                                      parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
         parent = LocalFileSystem.getInstance().findFileByPath(localPath);
       }
       if (parent == null) {
@@ -130,6 +132,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
     PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.toString(myShownHiddens));
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     LOG.assertTrue(element instanceof FileElement, element.getClass().getName());
     VirtualFile file = ((FileElement)element).getFile();

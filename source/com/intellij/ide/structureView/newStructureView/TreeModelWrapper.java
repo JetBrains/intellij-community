@@ -8,6 +8,8 @@ import com.intellij.ide.structureView.ModelListener;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TreeModelWrapper implements StructureViewModel {
   private final StructureViewModel myModel;
   private final TreeActionsOwner myStructureView;
@@ -17,10 +19,12 @@ public class TreeModelWrapper implements StructureViewModel {
     myStructureView = structureView;
   }
 
+  @NotNull
   public StructureViewTreeElement getRoot() {
     return myModel.getRoot();
   }
 
+  @NotNull
   public Grouper[] getGroupers() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getGroupers());
     return filtered.toArray(new Grouper[filtered.size()]);
@@ -34,11 +38,13 @@ public class TreeModelWrapper implements StructureViewModel {
     return filtered;
   }
 
+  @NotNull
   public Sorter[] getSorters() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getSorters());
     return filtered.toArray(new Sorter[filtered.size()]);
   }
 
+  @NotNull
   public Filter[] getFilters() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getFilters());
     return filtered.toArray(new Filter[filtered.size()]);

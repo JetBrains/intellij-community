@@ -69,6 +69,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   public FavoritesTreeStructure(Project project) {
     super(project);
     myRoot = new AbstractTreeNode<String>(myProject, "") {
+      @NotNull
       public Collection<AbstractTreeNode> getChildren() {
         return myFavorites;
       }
@@ -154,6 +155,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   private AbstractTreeNode<String> getEmptyScreen() {
     return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")){
+                                @NotNull
                                 public Collection<AbstractTreeNode> getChildren() {
                                   return Collections.emptyList();
                                 }

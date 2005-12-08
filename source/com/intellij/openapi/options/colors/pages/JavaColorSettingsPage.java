@@ -43,6 +43,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -129,6 +130,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   }
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.java.display.name");
   }
@@ -137,18 +139,22 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     return StdFileTypes.JAVA.getIcon();
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ourDescriptors;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ourColorDescriptors;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 
+  @NotNull
   public String getDemoText() {
     return
       "/* Block comment */\n" +

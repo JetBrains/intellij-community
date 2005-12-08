@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlockStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBlockStatementImpl");
@@ -17,6 +18,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     super(BLOCK_STATEMENT);
   }
 
+  @NotNull
   public PsiCodeBlock getCodeBlock() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.BLOCK);
   }

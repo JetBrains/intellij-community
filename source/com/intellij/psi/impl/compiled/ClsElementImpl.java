@@ -11,12 +11,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
   protected TreeElement myMirror = null;
 
+  @NotNull
   public Language getLanguage() {
     return StdFileTypes.JAVA.getLanguage();
   }
@@ -169,6 +171,7 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     return myMirror != null ? myMirror.getText() : null;
   }
 
+  @NotNull
   public char[] textToCharArray() {
     return getText().toCharArray();
   }

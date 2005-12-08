@@ -22,6 +22,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,6 +143,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     final PsiElement parent = getParent();
     if (!(parent instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;

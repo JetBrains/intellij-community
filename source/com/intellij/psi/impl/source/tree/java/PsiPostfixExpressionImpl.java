@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiPostfixExpressionImpl extends CompositePsiElement implements PsiPostfixExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPostfixExpressionImpl");
@@ -15,10 +16,12 @@ public class PsiPostfixExpressionImpl extends CompositePsiElement implements Psi
     super(POSTFIX_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }

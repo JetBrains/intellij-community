@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.CollectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -440,6 +441,7 @@ class RootModelImpl implements ModifiableRootModel {
     return result;
   }
 
+  @NotNull
   public ContentEntry addContentEntry(VirtualFile file) {
     ContentEntry entry = new ContentEntryImpl(file, this);
     myContent.add(entry);
@@ -672,6 +674,7 @@ class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @NotNull
   public Module getModule() {
     return myModuleRootManager.getModule();
   }

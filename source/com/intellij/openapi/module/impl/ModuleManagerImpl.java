@@ -514,6 +514,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       LOG.assertTrue(myIsWritable, "Attempt to modify commited ModifiableModuleModel");
     }
 
+    @NotNull
     public Module[] getModules() {
       Collection<Module> modules = myPath2ModelMap.values();
       return modules.toArray(new Module[modules.size()]);
@@ -525,6 +526,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return allModules;
     }
 
+    @NotNull
     public Module newModule(String filePath) {
       assertWritable();
       return newModule(filePath, ModuleType.JAVA);
@@ -563,6 +565,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return myModulesToNewNamesMap.get(module);
     }
 
+    @NotNull
     public Module newModule(String filePath, ModuleType moduleType) {
       assertWritable();
       try {
@@ -594,6 +597,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return null;
     }
 
+    @NotNull
     public Module loadModule(String filePath) throws InvalidDataException,
                                                      IOException,
                                                      JDOMException,

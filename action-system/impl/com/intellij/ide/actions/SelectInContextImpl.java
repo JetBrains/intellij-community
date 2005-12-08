@@ -19,6 +19,8 @@ import com.intellij.psi.jsp.JspFile;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 
+import org.jetbrains.annotations.NotNull;
+
 abstract class SelectInContextImpl implements SelectInContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SelectInContextImpl");
   protected final PsiFile myPsiFile;
@@ -27,8 +29,10 @@ abstract class SelectInContextImpl implements SelectInContext {
     myPsiFile = psiFile;
   }
 
+  @NotNull
   public Project getProject() { return myPsiFile.getProject(); }
 
+  @NotNull
   public VirtualFile getVirtualFile() { return myPsiFile.getVirtualFile(); }
 
   public Object getSelectorInFile() {

@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Used in Generify refactoring
@@ -47,6 +48,7 @@ public class Bottom extends PsiType {
     return visitor.visitType(this);
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     throw new UnsupportedOperationException();
   }

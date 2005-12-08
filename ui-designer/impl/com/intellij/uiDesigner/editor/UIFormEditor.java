@@ -20,6 +20,8 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -41,7 +43,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public JComponent getComponent(){
     return myEditor;
   }
-  
+
   void dispose() {
     myEditor.dispose();
   }
@@ -65,7 +67,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   public boolean isValid(){
     //TODO[anton,vova] fire when changed
-    return 
+    return
       FileDocumentManager.getInstance().getDocument(myFile) != null &&
       FileTypeManager.getInstance().getFileTypeByFile(myFile) == StdFileTypes.GUI_DESIGNER_FORM;
   }
@@ -93,6 +95,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return null;
   }
 
+  @NotNull
   public FileEditorState getState(final FileEditorStateLevel ignored) {
     final Document document = FileDocumentManager.getInstance().getDocument(myFile);
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);

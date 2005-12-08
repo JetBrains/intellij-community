@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -47,6 +49,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     return new ChangeClassSigntaureViewDescriptor(myClass);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     PsiSearchHelper searchHelper = myClass.getManager().getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);

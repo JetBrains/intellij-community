@@ -35,6 +35,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
@@ -79,7 +81,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       }
     }
 
-    protected void registerInDocument() {      
+    protected void registerInDocument() {
     }
   }
 
@@ -305,6 +307,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return null;
   }
 
+  @NotNull
   public int[] getBlockSelectionStarts() {
     if (hasSelection()) {
       return new int[]{getSelectionStart()};
@@ -326,6 +329,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return res;
   }
 
+  @NotNull
   public int[] getBlockSelectionEnds() {
     if (hasSelection()) {
       return new int[]{getSelectionEnd()};

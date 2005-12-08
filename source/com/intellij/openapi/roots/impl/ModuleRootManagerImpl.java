@@ -24,6 +24,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -55,10 +56,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @NotNull
   public ModuleFileIndex getFileIndex() {
     return myFileIndex;
   }
@@ -114,6 +117,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myRootModel.writeExternal(element);
   }
 
+  @NotNull
   public ModifiableRootModel getModifiableModel() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return new RootModelImpl(myRootModel, this, true, null, myFilePointerManager, myProjectRootManager);

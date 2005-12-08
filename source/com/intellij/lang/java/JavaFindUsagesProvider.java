@@ -14,6 +14,7 @@ import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -62,6 +63,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
+  @NotNull
   public String getType(PsiElement element) {
     if (element instanceof PsiDirectory) {
       return LangBundle.message("terms.directory");
@@ -113,6 +115,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
+  @NotNull
   public String getDescriptiveName(final PsiElement element) {
     if (ThrowSearchUtil.isSearchable(element)) {
       return ThrowSearchUtil.getSearchableTypeName(element);
@@ -187,6 +190,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
   }
 
+  @NotNull
   public String getNodeText(PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
       return UsageViewUtil.getPackageName((PsiDirectory)element, false);

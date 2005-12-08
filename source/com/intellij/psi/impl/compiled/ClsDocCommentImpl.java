@@ -11,6 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTokenType, PsiJavaToken {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocCommentImpl");
@@ -42,6 +43,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     myMirror = element;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return getTags();
   }

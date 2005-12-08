@@ -31,30 +31,33 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.Language;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ArchiveFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/archive.png");
 
+  @NotNull
   public String getName() {
     return "ARCHIVE";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.archive.files");
   }
 
+  @NotNull
   public String getDefaultExtension() {
-    return null;
+    return "";
   }
 
   public Icon getIcon() {
@@ -78,10 +81,6 @@ public class ArchiveFileType implements FileType {
   }
 
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
-    return null;
-  }
-
-  public Language getLanguage() {
     return null;
   }
 }

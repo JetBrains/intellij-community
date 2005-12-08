@@ -11,6 +11,8 @@ import com.intellij.xml.util.XmlUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -85,6 +87,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return "HtmlTag:" + getName();
   }
 
+  @NotNull
   public Language getLanguage() {
     return StdFileTypes.HTML.getLanguage();
   }

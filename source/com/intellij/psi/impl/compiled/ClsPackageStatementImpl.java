@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsPackageStatementImpl");
@@ -51,6 +52,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   /**
    * @not_implemented
    */
+  @NotNull
   public PsiElement[] getChildren() {
     LOG.error("method not implemented");
     return null;

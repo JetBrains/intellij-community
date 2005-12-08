@@ -9,6 +9,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
+import org.jetbrains.annotations.NotNull;
 
 public class FoldRegionImpl extends PersistentRangeMarker implements FoldRegion {
   private boolean myIsExpanded;
@@ -21,7 +22,7 @@ public class FoldRegionImpl extends PersistentRangeMarker implements FoldRegion 
     myEditor = editor;
     myPlaceholderText = placeholder;
   }
-            
+
   public boolean isExpanded() {
     return myIsExpanded;
   }
@@ -44,6 +45,7 @@ public class FoldRegionImpl extends PersistentRangeMarker implements FoldRegion 
     myIsExpanded = toExpand;
   }
 
+  @NotNull
   public String getPlaceholderText() {
     return myPlaceholderText;
   }

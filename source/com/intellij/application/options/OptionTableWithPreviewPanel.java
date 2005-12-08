@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -546,6 +547,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.JAVA;
   }

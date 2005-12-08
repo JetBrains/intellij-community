@@ -78,6 +78,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     super.clearCaches();
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     ProgressManager.getInstance().checkCanceled();
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);

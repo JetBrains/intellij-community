@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 public class MockDocumentEvent extends DocumentEvent {
   private int myOffset;
@@ -27,6 +28,7 @@ public class MockDocumentEvent extends DocumentEvent {
     myTimestamp = document.getModificationStamp();
   }
 
+  @NotNull
   public Document getDocument() {
     return (Document)getSource();
   }

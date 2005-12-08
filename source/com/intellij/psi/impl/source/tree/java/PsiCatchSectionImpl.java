@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -34,6 +35,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return parameter.getType();
   }
 
+  @NotNull
   public PsiTryStatement getTryStatement() {
     return (PsiTryStatement)getParent();
   }

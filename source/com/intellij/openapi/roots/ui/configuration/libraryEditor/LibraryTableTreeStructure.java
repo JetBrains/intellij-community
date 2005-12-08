@@ -11,6 +11,8 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 class LibraryTableTreeStructure extends AbstractTreeStructure {
   private final Object myRootElement = new Object();
   private NodeDescriptor myRootElementDescriptor;
@@ -148,6 +150,7 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
     return myRootElement;
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return myRootElementDescriptor;

@@ -27,6 +27,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     myIdx = idx;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{getModifierList(), getTypeElement()};
   }
@@ -193,6 +194,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return false;
   }
 
+  @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     return ((ClsMethodImpl)myParent.getParent()).getParameterAnnotations(myIdx);
   }

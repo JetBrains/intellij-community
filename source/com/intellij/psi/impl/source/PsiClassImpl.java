@@ -307,10 +307,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiClassImplUtil.getInterfaces(this);
   }
 
+  @NotNull
   public PsiClass[] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
@@ -325,6 +327,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
+  @NotNull
   public PsiField[] getFields() {
       if (myCachedFields == null){
         if (getTreeElement() != null){
@@ -343,6 +346,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       return myCachedFields;
     }
 
+  @NotNull
   public PsiMethod[] getMethods() {
       if (myCachedMethods == null){
         if (getTreeElement() != null){
@@ -361,6 +365,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       return myCachedMethods;
     }
 
+  @NotNull
   public PsiMethod[] getConstructors() {
       if (myCachedConstructors == null){
         myCachedConstructors = PsiImplUtil.getConstructors(this);
@@ -368,6 +373,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       return myCachedConstructors;
     }
 
+  @NotNull
   public PsiClass[] getInnerClasses() {
       if (myCachedInners == null){
         if (getTreeElement() != null){
@@ -386,6 +392,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       return myCachedInners;
     }
 
+  @NotNull
   public PsiClassInitializer[] getInitializers(){
       if (getTreeElement() != null){
         return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
@@ -406,14 +413,17 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiImplUtil.getTypeParameters(this);
   }
 
+  @NotNull
   public PsiField[] getAllFields() {
     return PsiClassImplUtil.getAllFields(this);
   }
 
+  @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiClassImplUtil.getAllMethods(this);
   }
 
+  @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClassImplUtil.getAllInnerClasses(this);
   }

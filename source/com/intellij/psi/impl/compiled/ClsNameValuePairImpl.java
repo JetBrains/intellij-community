@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -40,6 +41,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
       ((ClsElementImpl)getValue()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getValue()));
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myNameIdentifier, myMemberValue};
   }

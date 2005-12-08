@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -53,6 +54,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myAttributes;
   }
@@ -65,6 +67,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     visitor.visitAnnotationParameterList(this);
   }
 
+  @NotNull
   public PsiNameValuePair[] getAttributes() {
     return myAttributes;
   }

@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -17,6 +18,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     super(FOREACH_STATEMENT);
   }
 
+  @NotNull
   public PsiParameter getIterationParameter() {
     return (PsiParameter) findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
   }
@@ -29,6 +31,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return (PsiStatement) findChildByRoleAsPsiElement(ChildRole.LOOP_BODY);
   }
 
+  @NotNull
   public PsiJavaToken getLParenth() {
     return (PsiJavaToken) findChildByRoleAsPsiElement(ChildRole.LPARENTH);
   }

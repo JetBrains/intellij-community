@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -124,6 +125,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     return myBuilder.getTodoTreeStructure();
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final Project project = getProject();

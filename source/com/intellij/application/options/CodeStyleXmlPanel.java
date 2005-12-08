@@ -40,6 +40,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
   private JComboBox myWrapAttributes;
@@ -161,6 +163,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     return readFromFile("preview.xml.template");
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.XML;
   }

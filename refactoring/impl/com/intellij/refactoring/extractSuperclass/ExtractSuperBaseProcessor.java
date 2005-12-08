@@ -18,6 +18,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -80,6 +82,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     return false;
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     PsiReference[] refs = mySearchHelper.findReferences(myClass, GlobalSearchScope.projectScope(myProject), false);
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();

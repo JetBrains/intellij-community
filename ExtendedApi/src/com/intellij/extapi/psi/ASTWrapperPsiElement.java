@@ -29,6 +29,8 @@ import com.intellij.pom.Navigatable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -53,6 +55,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     return parent != null ? parent.getManager() : null;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     List<PsiElement> result = new ArrayList<PsiElement>();
     ASTNode child = getNode().getFirstChildNode();
@@ -119,6 +122,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     return myNode.getText();
   }
 
+  @NotNull
   public char[] textToCharArray() {
     return myNode.getText().toCharArray();
   }
@@ -218,6 +222,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
@@ -241,6 +246,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     return getManager().getSearchHelper().getUseScope(this);
   }
@@ -286,6 +292,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
     return myNode;
   }
 
+  @NotNull
   public Language getLanguage() {
     return myNode.getElementType().getLanguage();
   }

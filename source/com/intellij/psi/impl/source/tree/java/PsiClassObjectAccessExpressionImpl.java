@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement implements PsiClassObjectAccessExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl");
@@ -24,6 +25,7 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
     return PsiImplUtil.getType(this);
   }
 
+  @NotNull
   public PsiTypeElement getOperand() {
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }

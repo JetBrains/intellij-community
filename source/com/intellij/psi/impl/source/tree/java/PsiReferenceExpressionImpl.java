@@ -32,6 +32,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -194,6 +195,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiManager manager = getManager();
     if (manager == null) {
@@ -301,6 +303,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
@@ -495,6 +498,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return this;
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList == null) return PsiType.EMPTY_ARRAY;

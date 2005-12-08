@@ -15,6 +15,8 @@ import com.intellij.util.ArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ViewerTreeStructure extends AbstractTreeStructure {
 
   private boolean myShowWhiteSpaces = true;
@@ -87,6 +89,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return false;
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new NodeDescriptor(myProject, null) {

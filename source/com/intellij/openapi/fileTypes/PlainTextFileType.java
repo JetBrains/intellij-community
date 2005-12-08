@@ -39,17 +39,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PlainTextFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
 
+  @NotNull
   public String getName() {
     return "PLAIN_TEXT";
   }
 
+  @NotNull
   public String getDescription() {
     return FileTypesBundle.message("filetype.plaintext.description");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "txt";
   }

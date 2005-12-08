@@ -48,6 +48,8 @@ import com.intellij.psi.xml.XmlTokenType;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class JavaFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourMap1;
   private static Map<IElementType, TextAttributesKey> ourMap2;
@@ -133,10 +135,12 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
+  @NotNull
   public Lexer getHighlightingLexer() {
     return new JavaHighlightingLexer(myLanguageLevel);
   }
 
+  @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ourMap1.get(tokenType), ourMap2.get(tokenType));
   }

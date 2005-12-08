@@ -46,6 +46,7 @@ import javax.swing.*;
 import java.util.Map;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class CustomColorsPage implements ColorSettingsPage {
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
@@ -78,6 +79,7 @@ public class CustomColorsPage implements ColorSettingsPage {
     SYNTAX_TABLE.addKeyword4("anotherKeyword4");
   }
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.custom.display.name");
   }
@@ -86,18 +88,22 @@ public class CustomColorsPage implements ColorSettingsPage {
     return Icons.CUSTOM_FILE_ICON;
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLORS;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new CustomFileHighlighter(SYNTAX_TABLE);
   }
 
+  @NotNull
   public String getDemoText() {
     return "# Line comment\n"
            + "aKeyword1 variable = 123;\n"

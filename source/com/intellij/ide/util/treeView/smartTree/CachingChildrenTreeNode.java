@@ -9,6 +9,8 @@ import gnu.trove.THashMap;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
   protected List<CachingChildrenTreeNode> myOldChildren = null;
@@ -19,6 +21,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     myTreeModel = treeModel;
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ensureChildrenAreInitialized();
     return new ArrayList<AbstractTreeNode>(myChildren);

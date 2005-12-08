@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import java.awt.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -31,10 +32,12 @@ public abstract class AbstractInsetsProperty extends Property{
     myRenderer=new InsetsPropertyRenderer();
   }
 
+  @NotNull
   public final Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public final PropertyRenderer getRenderer(){
     return myRenderer;
   }
@@ -67,10 +70,12 @@ public abstract class AbstractInsetsProperty extends Property{
       getParent().setValue(component,new Insets(top, insets.left, insets.bottom, insets.right));
     }
 
+    @NotNull
     public Property[] getChildren(){
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -104,10 +109,12 @@ public abstract class AbstractInsetsProperty extends Property{
       getParent().setValue(component,new Insets(insets.top, left, insets.bottom, insets.right));
     }
 
+    @NotNull
     public Property[] getChildren(){
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -141,10 +148,12 @@ public abstract class AbstractInsetsProperty extends Property{
       getParent().setValue(component,new Insets(insets.top, insets.left, bottom, insets.right));
     }
 
+    @NotNull
     public Property[] getChildren(){
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -178,10 +187,12 @@ public abstract class AbstractInsetsProperty extends Property{
       getParent().setValue(component,new Insets(insets.top, insets.left, insets.bottom, right));
     }
 
+    @NotNull
     public Property[] getChildren(){
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }

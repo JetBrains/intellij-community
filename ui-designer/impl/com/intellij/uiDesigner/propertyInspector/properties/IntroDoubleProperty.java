@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.DoubleRenderer;
 
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -24,10 +26,12 @@ public final class IntroDoubleProperty extends IntrospectedProperty{
     myEditor = new DoubleEditor();
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

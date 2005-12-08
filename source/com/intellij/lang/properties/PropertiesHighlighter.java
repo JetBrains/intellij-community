@@ -1,28 +1,26 @@
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
+import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 11:22:04 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
   private static Map<IElementType, TextAttributesKey> keys2;
 
+  @NotNull
   public Lexer getHighlightingLexer() {
     return new PropertiesHighlightingLexer();
   }
@@ -70,6 +68,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PROPERTIES_INVALID_STRING_ESCAPE);
   }
 
+  @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(keys1.get(tokenType), keys2.get(tokenType));
   }

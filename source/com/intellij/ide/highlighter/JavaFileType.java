@@ -39,6 +39,7 @@ import com.intellij.ide.IdeBundle;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
@@ -49,14 +50,17 @@ public class JavaFileType extends LanguageFileType {
     super(new JavaLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "JAVA";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.java");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }

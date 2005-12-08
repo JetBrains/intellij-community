@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -24,6 +25,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof JspFile;
   }
 
+  @NotNull
   public String getType(PsiElement element) {
     if (element instanceof XmlElementDecl || element instanceof XmlTag) {
       return LangBundle.message("xml.terms.tag");
@@ -42,10 +44,12 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
+  @NotNull
   public String getDescriptiveName(PsiElement element) {
     return ((PsiNamedElement)element).getName();
   }
 
+  @NotNull
   public String getNodeText(PsiElement element, boolean useFullName) {
     return ((PsiNamedElement)element).getName();
   }

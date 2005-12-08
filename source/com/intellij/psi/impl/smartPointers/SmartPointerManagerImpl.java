@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SmartPointerManagerImpl extends SmartPointerManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
@@ -100,6 +102,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
+  @NotNull
   public SmartPsiElementPointer createSmartPsiElementPointer(PsiElement element) {
     if (!element.isValid()) {
       LOG.assertTrue(false, "Invalid element:" + element);
@@ -138,10 +141,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
+  @NotNull
   public SmartTypePointer createSmartTypePointer(PsiType type) {
     return type.accept(new SmartTypeCreatingVisitor());
   }
 
+  @NotNull
   public SmartPsiElementPointer createLazyPointer(PsiElement element) {
     LazyPointerImpl pointer = new LazyPointerImpl(element);
     initPointer(element, pointer);

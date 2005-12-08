@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BorderTypeRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.shared.BorderType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -46,10 +47,12 @@ public final class BorderProperty extends Property{
     }
   }
 
+  @NotNull
   public Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }
@@ -82,10 +85,12 @@ public final class BorderProperty extends Property{
       container.setBorderType(type);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -127,10 +132,12 @@ public final class BorderProperty extends Property{
       container.setBorderTitle(title);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }

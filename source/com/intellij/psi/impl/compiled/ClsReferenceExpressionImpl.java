@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceExpressionImpl");
@@ -53,6 +54,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return null;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     if (myQualifier != null){
       return new PsiElement[]{myQualifier, myNameElement};
@@ -78,10 +80,12 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return myPatternExpression.resolve();
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     return myPatternExpression.advancedResolve(incompleteCode);
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
     if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
@@ -151,6 +155,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return "PsiReferenceExpression:" + getText();
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }

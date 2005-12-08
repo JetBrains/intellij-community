@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -50,6 +51,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     }
   }
 
+  @NotNull
   public ContentEntry getContentEntry() {
     return myContentEntry;
   }
@@ -59,6 +61,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     element.setAttribute(URL_ATTR, myFilePointer.getUrl());
   }
 
+  @NotNull
   public String getUrl() {
     return myFilePointer.getUrl();
   }

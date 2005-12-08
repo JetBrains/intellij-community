@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
@@ -71,6 +73,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return false;
   }
 
+  @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     return myRootContainers.get(type).getDirectories();
   }
@@ -82,6 +85,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   public abstract boolean isValid();
 
+  @NotNull
   public String[] getUrls(OrderRootType type) {
     LOG.assertTrue(!myRootModel.getModule().isDisposed());
     return myRootContainers.get(type).getUrls();
@@ -116,7 +120,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
   protected void addListenerToWrapper(final RootProvider wrapper,
-                                    final RootProvider.RootSetChangedListener rootSetChangedListener) {
+                                      final RootProvider.RootSetChangedListener rootSetChangedListener) {
     myProjectRootManagerImpl.addRootSetChangedListener(rootSetChangedListener, wrapper);
   }
 

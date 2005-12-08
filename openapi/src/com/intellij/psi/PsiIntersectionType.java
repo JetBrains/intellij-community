@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -72,6 +73,7 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts[0].getResolveScope();
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     return myConjuncts;
   }

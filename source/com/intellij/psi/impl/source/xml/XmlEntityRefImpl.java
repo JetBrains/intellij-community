@@ -14,6 +14,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -157,6 +158,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,XmlEntityRef.class);
   }

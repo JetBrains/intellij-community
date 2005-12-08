@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
@@ -61,10 +63,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return false;
   }
 
+  @NotNull
   public PsiField[] getFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
@@ -73,6 +77,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
@@ -81,14 +86,17 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiMethod.class);
   }
@@ -155,6 +163,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return calcTreeElement();
   }
 
+  @NotNull
   public PsiTypeParameterListOwner getOwner() {
     final PsiElement parent = getParent();
     if (parent == null) return null;
@@ -198,6 +207,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return this;
   }
 
+  @NotNull
   public PsiMethod[] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
@@ -216,6 +226,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     myParsedFromRepository = null;
   }
 
+  @NotNull
   public PsiReferenceList getExtendsList() {
     if (myOwner != null) {
       if (myExtendsBoundsList == null) {
@@ -243,26 +254,32 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return myLightEmptyImplementsList;
   }
 
+  @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
+  @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiField[] getAllFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
@@ -279,10 +296,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     }
   }
 
+  @NotNull
   public PsiClassInitializer[] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
@@ -295,10 +314,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return PsiClassImplUtil.getInterfaces(this);
   }
 
+  @NotNull
   public PsiClass[] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }

@@ -16,6 +16,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class LeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
@@ -25,6 +26,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     setState(lexerState);
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
@@ -81,6 +83,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
@@ -179,6 +182,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     return getManager().getSearchHelper().getUseScope(this);
   }
@@ -188,6 +192,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return manager != null ? manager.getProject() : null;
   }
 
+  @NotNull
   public Language getLanguage() {
     return getElementType().getLanguage();
   }

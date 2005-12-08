@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
@@ -93,6 +94,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     if (getLabelIdentifier() == null)
       return PsiReference.EMPTY_ARRAY;

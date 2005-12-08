@@ -14,6 +14,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -84,6 +85,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return myRootModel.getModule();
   }
 
+  @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     return getFiles(type, new HashSet<Module>());
   }
@@ -98,6 +100,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     }
   }
 
+  @NotNull
   public String[] getUrls(OrderRootType rootType) {
     return getUrls(rootType, new HashSet<Module>());
   }

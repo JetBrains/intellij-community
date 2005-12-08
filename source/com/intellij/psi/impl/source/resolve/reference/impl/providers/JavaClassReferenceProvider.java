@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -297,10 +298,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         return result;
       }
 
+      @NotNull
       public JavaResolveResult advancedResolve(boolean incompleteCode) {
         if (!myElement.isValid()) return JavaResolveResult.EMPTY;
         String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
-        
+
         if (myIndex == myReferences.length - 1) {
           final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
           if (aClass != null) {
@@ -318,18 +320,18 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
             containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
             if(processor.getResult().length == 1) {
               final JavaResolveResult javaResolveResult = processor.getResult()[0];
-              
+
               if (javaResolveResult != JavaResolveResult.EMPTY && options != null) {
                 final Boolean value = RESOLVE_QUALIFIED_CLASS_NAME.getValue(options);
                 if (value != null && value.booleanValue()) {
                   final String qualifiedName = ((PsiClass)javaResolveResult.getElement()).getQualifiedName();
-  
+
                   if (!qName.equals(qualifiedName)) {
                     return JavaResolveResult.EMPTY;
                   }
                 }
               }
-              
+
               return javaResolveResult;
             }
           }
@@ -339,6 +341,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
                JavaResolveResult.EMPTY;
       }
 
+      @NotNull
       public JavaResolveResult[] multiResolve(boolean incompleteCode) {
         final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
         if(javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;

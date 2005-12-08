@@ -8,12 +8,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement {
   public PsiDeclarationStatementImpl() {
     super(DECLARATION_STATEMENT);
   }
 
+  @NotNull
   public PsiElement[] getDeclaredElements() {
     return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }

@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -86,7 +88,7 @@ public class PsiTypeVariableFactory {
 
                                if (aClass != null) {
                                  final PsiManager manager = aClass.getManager();
-                                 
+
                                  if (aClass instanceof PsiTypeParameter) {
                                    final PsiTypeParameterListOwner owner =
                                    PsiTreeUtil.getParentOfType(myContext, PsiTypeParameterListOwner.class);
@@ -160,6 +162,7 @@ public class PsiTypeVariableFactory {
         return null;
       }
 
+      @NotNull
       public PsiType[] getSuperTypes() {
         return new PsiType[0];
       }

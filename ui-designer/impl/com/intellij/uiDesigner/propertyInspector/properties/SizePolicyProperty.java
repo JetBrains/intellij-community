@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.SizePolicyRenderer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -41,10 +42,12 @@ public abstract class SizePolicyProperty extends Property{
     setValueImpl(component.getConstraints(),policy);
   }
 
+  @NotNull
   public final Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public final PropertyRenderer getRenderer(){
     return myRenderer;
   }
@@ -84,10 +87,12 @@ public abstract class SizePolicyProperty extends Property{
       SizePolicyProperty.this.setValueImpl(component.getConstraints(),newValue);
     }
 
+    @NotNull
     public final Property[] getChildren(){
       return Property.EMPTY_ARRAY;
     }
 
+    @NotNull
     public final PropertyRenderer getRenderer(){
       return myRenderer;
     }

@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.util.Comparator;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class VisibilitySorter implements Sorter{
 
@@ -66,10 +67,12 @@ public class VisibilitySorter implements Sorter{
     return VisibilityComparator.IMSTANCE;
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return PRESENTATION;
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }

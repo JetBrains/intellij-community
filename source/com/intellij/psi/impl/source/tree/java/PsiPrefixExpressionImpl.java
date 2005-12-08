@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiPrefixExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPrefixExpressionImpl");
@@ -22,6 +23,7 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
+  @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
+
 public final class ToDoRootNode extends BaseToDoNode{
   private SummaryNode mySummaryNode;
 
@@ -23,6 +25,7 @@ public final class ToDoRootNode extends BaseToDoNode{
     return false;
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));
   }

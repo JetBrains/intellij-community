@@ -45,6 +45,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     myProject = project;
   }
 
+  @NotNull
   public String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.bytecode.compiler");
   }
@@ -72,6 +73,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
   }
 
+  @NotNull
   public FileProcessingCompiler.ProcessingItem[] getProcessingItems(final CompileContext context) {
     if (!GuiDesignerConfiguration.getInstance(myProject).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -358,6 +360,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return myClassFile;
     }

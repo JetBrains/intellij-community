@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
@@ -38,6 +39,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     myFlags = flags;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return getAnnotations();
   }
@@ -69,6 +71,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @NotNull
   public PsiAnnotation[] getAnnotations() {
     if (myAnnotations == null) {
       myAnnotations = myParent.getAnnotations();

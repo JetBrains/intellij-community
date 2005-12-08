@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 public class SmartTreeStructure extends AbstractTreeStructure {
 
@@ -28,6 +29,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return ((AbstractTreeNode)element);
   }

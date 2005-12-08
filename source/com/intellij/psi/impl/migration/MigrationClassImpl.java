@@ -13,6 +13,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -73,10 +75,12 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return null;
   }
 
+  @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
@@ -89,10 +93,12 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getSupers() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
@@ -105,38 +111,47 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return Collections.emptySet();
   }
 
+  @NotNull
   public PsiField[] getFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClassInitializer[] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiField[] getAllFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] getAllMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
@@ -149,18 +164,22 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return null;
   }
 
+  @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
   }

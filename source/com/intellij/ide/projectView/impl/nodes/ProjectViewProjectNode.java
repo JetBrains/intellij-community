@@ -8,12 +8,15 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ProjectViewProjectNode extends AbstractProjectNode {
 
   public ProjectViewProjectNode(Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     return modulesAndGroups(modules);

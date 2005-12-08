@@ -15,6 +15,8 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
@@ -112,6 +114,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return new ErrorTreeNodeDescriptor(myProject, parentDescriptor, (ErrorTreeElement)element);
   }

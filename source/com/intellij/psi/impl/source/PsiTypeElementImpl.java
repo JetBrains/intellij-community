@@ -9,7 +9,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.lang.ASTNode;
-
+import org.jetbrains.annotations.NotNull;
+             
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
   private PsiType myCachedType = null;
@@ -33,6 +34,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return "PsiTypeElement:" + getText();
   }
 
+  @NotNull
   public PsiType getType() {
     if (myCachedType != null) return myCachedType;
 

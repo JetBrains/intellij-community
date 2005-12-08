@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import java.awt.*;
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -33,10 +35,12 @@ public final class IntroDimensionProperty extends IntrospectedProperty {
     writer.addAttribute("height", dimension.height);
   }
 
+  @NotNull
   public Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

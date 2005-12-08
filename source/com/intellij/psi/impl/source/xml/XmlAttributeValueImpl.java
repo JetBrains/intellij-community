@@ -9,13 +9,14 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue{
   private static final Class ourReferenceClass = XmlAttributeValue.class;
-  
+
   public XmlAttributeValueImpl() {
     super(XML_ATTRIBUTE_VALUE);
   }
@@ -28,6 +29,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return StringUtil.stripQuotesAroundValue(getText());
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
   }

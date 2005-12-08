@@ -39,6 +39,7 @@ import com.intellij.ide.IdeBundle;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class HtmlFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "html";
@@ -49,14 +50,17 @@ public class HtmlFileType extends LanguageFileType {
     super(new HTMLLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "HTML";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.html");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "html";
   }

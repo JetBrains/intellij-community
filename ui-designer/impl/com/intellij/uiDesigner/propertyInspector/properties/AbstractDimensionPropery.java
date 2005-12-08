@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import java.awt.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is a base for implementing such properties
@@ -32,10 +33,12 @@ public abstract class AbstractDimensionPropery extends Property{
     myRenderer=new DimensionRenderer();
   }
 
+  @NotNull
   public final Property[] getChildren(){
     return myChildren;
   }
 
+  @NotNull
   public final PropertyRenderer getRenderer(){
     return myRenderer;
   }
@@ -71,10 +74,12 @@ public abstract class AbstractDimensionPropery extends Property{
       getParent().setValue(component, dimension);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -108,10 +113,12 @@ public abstract class AbstractDimensionPropery extends Property{
       getParent().setValue(component, dimension);
     }
 
+    @NotNull
     public Property[] getChildren(){
       return EMPTY_ARRAY;
     }
 
+    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }

@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -60,6 +61,7 @@ public class PsiCapturedWildcardType extends PsiType {
     return myExistential.getResolveScope();
   }
 
+  @NotNull
   public PsiType[] getSuperTypes() {
     return myExistential.getSuperTypes();
   }
@@ -72,7 +74,7 @@ public class PsiCapturedWildcardType extends PsiType {
 
   public PsiType getUpperBound () {
     return myExistential.isExtends() ? myExistential.getBound()
-    : myExistential.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+           : myExistential.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
   public PsiWildcardType getWildcard() {

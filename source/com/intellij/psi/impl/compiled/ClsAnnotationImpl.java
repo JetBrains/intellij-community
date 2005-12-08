@@ -6,6 +6,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -58,6 +59,7 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
       ((ClsElementImpl)getNameReferenceElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameReferenceElement()));
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myReferenceElement, myParameterList};
   }
@@ -70,6 +72,7 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
     visitor.visitAnnotation(this);
   }
 
+  @NotNull
   public PsiAnnotationParameterList getParameterList() {
     return myParameterList;
   }

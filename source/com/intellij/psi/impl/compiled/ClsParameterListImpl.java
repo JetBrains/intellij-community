@@ -8,6 +8,7 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsParameterListImpl extends ClsElementImpl implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterListImpl");
@@ -20,6 +21,7 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     myParameters = parameters;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myParameters;
   }

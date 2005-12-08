@@ -40,6 +40,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
@@ -49,6 +51,7 @@ public class PackageViewModuleNode extends AbstractModuleNode{
     this(project, (Module)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots()), myProject, getSettings(), getValue(), false);
     if (getSettings().isShowLibraryContents()) {

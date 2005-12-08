@@ -21,6 +21,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.StringCharacterIterator;
 import java.util.Set;
@@ -60,6 +61,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     PsiDocComment docComment = getDocComment();
     PsiModifierList modifierList = getModifierList();

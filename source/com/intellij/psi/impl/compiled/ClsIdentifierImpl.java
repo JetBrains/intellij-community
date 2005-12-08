@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJavaToken {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsIdentifierImpl");
@@ -25,6 +26,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
     return myText;
   }
 
+  @NotNull
   public PsiElement[] getChildren(){
     return PsiElement.EMPTY_ARRAY;
   }

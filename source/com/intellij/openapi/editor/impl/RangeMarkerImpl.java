@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
@@ -66,6 +67,7 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
     isValid = false;
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }

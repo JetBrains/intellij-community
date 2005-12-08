@@ -7,6 +7,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsLiteralExpressionImpl");
@@ -53,6 +54,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     myMirror = element;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }

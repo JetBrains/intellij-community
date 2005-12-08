@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 public class TemplateEditorUtil {
   public static Editor createEditor(boolean isReadOnly) {
@@ -99,10 +100,12 @@ public class TemplateEditorUtil {
       };
     }
 
+    @NotNull
     public Lexer getHighlightingLexer() {
       return myLexer;
     }
 
+    @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
       if (tokenType == TemplateTokenType.VARIABLE) {
         return pack(myOriginalHighlighter.getTokenHighlights(tokenType), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);

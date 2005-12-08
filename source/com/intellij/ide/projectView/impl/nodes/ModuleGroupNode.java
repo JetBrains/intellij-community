@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
   private static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
@@ -28,6 +30,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   protected abstract Class<? extends AbstractTreeNode> getModuleNodeClass();
   protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
@@ -49,7 +52,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
     presentation.setOpenIcon(OPEN_ICON);
-    presentation.setClosedIcon(CLOSED_ICON);    
+    presentation.setClosedIcon(CLOSED_ICON);
   }
 
   public String getTestPresentation() {

@@ -255,6 +255,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return false;
   }
 
+  @NotNull
   public String[] getAssociatedExtensions(FileType type) {
     Map<String, FileType> extMap = myExtToFileTypeMap;
     return getAssociatedExtensions(extMap, type);

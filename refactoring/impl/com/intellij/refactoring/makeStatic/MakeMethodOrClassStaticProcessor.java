@@ -30,6 +30,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
 
@@ -155,7 +157,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       final PsiField field = inaccessible.get(0);
       return RefactoringBundle.message("field.0.is.not.accessible",
                                        CommonRefactoringUtil.htmlEmphasize(field.getName()),
-                                        ConflictsUtil.getDescription(container, true));
+                                       ConflictsUtil.getDescription(container, true));
     } else {
       StringBuffer fieldsBuffer = new StringBuffer();
       for (int j = 0; j < inaccessible.size(); j++) {
@@ -173,6 +175,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     }
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     PsiManager manager = myMember.getManager();

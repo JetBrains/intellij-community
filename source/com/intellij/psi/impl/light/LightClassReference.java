@@ -7,6 +7,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class LightClassReference extends LightElement implements PsiJavaCodeReferenceElement {
   private final String myText;
@@ -73,6 +74,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     }
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     final PsiElement resolved = resolve();
     PsiSubstitutor substitutor = mySubstitutor;
@@ -86,6 +88,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return new CandidateInfo(resolved, substitutor);
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
     if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
@@ -220,6 +223,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return myRefClass == null || myRefClass.isValid();
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class LightClassReferenceExpression extends LightClassReference implements PsiReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.light.LightClassReferenceExpression");
@@ -50,6 +51,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
     return null;
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }

@@ -10,14 +10,16 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public abstract class FakeFileType implements FileType {
   public abstract boolean isMyFileType(VirtualFile file);
 
+  @NotNull
   public String getDefaultExtension() {
-    return null;
+    return "fakeExtension";
   }
 
   public Icon getIcon() {

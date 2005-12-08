@@ -12,6 +12,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocTagImpl");
@@ -38,6 +39,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return myNameElement.getText();
   }
 
+  @NotNull
   public char[] textToCharArray(){
     return myNameElement.textToCharArray();
   }
@@ -58,6 +60,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return myNameElement.getTextLength();
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myNameElement};
   }
@@ -97,10 +100,12 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
       return myText;
     }
 
+    @NotNull
     public char[] textToCharArray(){
       return myText.toCharArray();
     }
 
+    @NotNull
     public PsiElement[] getChildren(){
       return PsiElement.EMPTY_ARRAY;
     }

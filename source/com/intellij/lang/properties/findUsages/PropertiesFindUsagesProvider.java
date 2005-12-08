@@ -8,6 +8,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,15 +26,18 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
+  @NotNull
   public String getType(PsiElement element) {
     if (element instanceof Property) return LangBundle.message("terms.property");
     return "";
   }
 
+  @NotNull
   public String getDescriptiveName(PsiElement element) {
     return ((PsiNamedElement)element).getName();
   }
 
+  @NotNull
   public String getNodeText(PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }

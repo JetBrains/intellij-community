@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lex
@@ -201,6 +203,7 @@ public class PositionHighlighter {
 
       if(eventsOutOfLine.size() > 0) {
         highlighter.setGutterIconRenderer(new GutterIconRenderer() {
+          @NotNull
           public Icon getIcon() {
             return eventsOutOfLine.get(0).getFirst().getIcon();
           }

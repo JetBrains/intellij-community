@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeImpl");
@@ -35,6 +36,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     myParent = parent;
   }
 
+  @NotNull
   public PsiElement[] getChildren(){
     loadChild();
     if (myChild == null) return PsiElement.EMPTY_ARRAY;
@@ -112,6 +114,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return myTypeText.endsWith("...");
   }
 
+  @NotNull
   public PsiType getType() {
     if (myCachedType == null) {
       myCachedType = calculateType();

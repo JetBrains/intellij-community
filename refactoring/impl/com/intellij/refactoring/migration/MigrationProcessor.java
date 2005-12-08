@@ -20,6 +20,8 @@ import com.intellij.usageView.UsageViewDescriptor;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -75,6 +77,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
       });
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usagesVector = new ArrayList<UsageInfo>();
     PsiManager psiManager = PsiManager.getInstance(myProject);

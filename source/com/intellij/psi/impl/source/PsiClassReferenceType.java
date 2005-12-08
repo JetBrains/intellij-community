@@ -27,6 +27,7 @@ public class PsiClassReferenceType extends PsiClassType {
     return Comparing.equal(text, getCanonicalText());
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return myReference.getResolveScope();
   }

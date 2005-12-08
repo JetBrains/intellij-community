@@ -14,6 +14,8 @@ import com.intellij.lang.ASTNode;
 
 import java.lang.ref.Reference;
 
+import org.jetbrains.annotations.NotNull;
+
 public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiReferenceListImpl");
 
@@ -53,10 +55,12 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
   private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(new IElementType[]{JAVA_CODE_REFERENCE});
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @NotNull
   public PsiClassType[] getReferencedTypes() {
     PsiClassType[] types;
     synchronized (PsiLock.LOCK) {

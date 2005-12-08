@@ -74,6 +74,7 @@ public class JavaLanguage extends Language {
     return new JavaFindUsagesProvider();
   }
 
+  @NotNull
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return new JavaRefactoringSupportProvier();
   }

@@ -20,6 +20,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -40,6 +42,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return new InlineViewDescriptor(myField);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     PsiManager manager = myField.getManager();
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
@@ -156,14 +159,14 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       PsiElement element = info.getElement();
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
         String message = RefactoringBundle.message("0.is.used.for.writing.in.1", ConflictsUtil.getDescription(myField, true),
-                                              ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+                                                   ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
         conflicts.add(message);
       }
 
       for (PsiMember member : referencedWithVisibility) {
         if (!resolveHelper.isAccessible(member, element, null)) {
           String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", ConflictsUtil.getDescription(member, true),
-                                                ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+                                                     ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
           conflicts.add(message);
         }
       }

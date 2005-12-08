@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -54,6 +55,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     return null;
   }
 
+  @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }

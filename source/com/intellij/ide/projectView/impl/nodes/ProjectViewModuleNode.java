@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ProjectViewModuleNode extends AbstractModuleNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
 
@@ -26,6 +28,7 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     this(project, (Module)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(getValue());
     ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();

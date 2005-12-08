@@ -20,6 +20,8 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Vladimir Kondratyev
  */
@@ -53,6 +55,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     return getActiveEditor().getContentComponent();
   }
 
+  @NotNull
   public Editor getEditor(){
     return getActiveEditor();
   }
@@ -68,6 +71,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     return "Text";
   }
 
+  @NotNull
   public FileEditorState getState(FileEditorStateLevel level) {
     if (level == null) {
       throw new IllegalArgumentException("level cannot be null");

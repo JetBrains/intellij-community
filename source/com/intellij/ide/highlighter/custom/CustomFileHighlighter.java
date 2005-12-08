@@ -40,6 +40,8 @@ import com.intellij.psi.tree.IElementType;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CustomFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourKeys;
   private SyntaxTable myTable;
@@ -59,13 +61,15 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
     ourKeys.put(CustomHighlighterTokenType.STRING, CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES);
     ourKeys.put(CustomHighlighterTokenType.MULTI_LINE_COMMENT,
-                                     CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES);
+                CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES);
   }
 
+  @NotNull
   public Lexer getHighlightingLexer() {
     return new CustomFileTypeLexer(myTable);
   }
 
+  @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ourKeys.get(tokenType));
   }

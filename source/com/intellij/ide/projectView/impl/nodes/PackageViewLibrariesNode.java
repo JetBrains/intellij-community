@@ -49,6 +49,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   public PackageViewLibrariesNode(final Project project, Module module, final ViewSettings viewSettings) {
     super(project, new LibrariesElement(module, project), viewSettings);
@@ -58,6 +60,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     return someChildContainsFile(file);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     if (getValue().getModule() == null) {

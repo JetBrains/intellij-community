@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsPrefixExpressionImpl");
@@ -23,6 +24,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return myOperand;
   }
 
+  @NotNull
   public PsiJavaToken getOperationSign() {
     if (mySign == null){
       mySign = new MySign();
@@ -38,6 +40,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return myParent;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{getOperationSign(), getOperand()};
   }
@@ -69,6 +72,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
       return MINUS;
     }
 
+    @NotNull
     public PsiElement[] getChildren() {
       return PsiElement.EMPTY_ARRAY;
     }

@@ -13,6 +13,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -73,22 +74,27 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     return (PsiMethod)getMethodExpression().resolve();
   }
 
+  @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     return getMethodExpression().advancedResolve(false);
   }
 
+  @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
     return getMethodExpression().getParameterList();
   }
 
+  @NotNull
   public PsiType[] getTypeArguments() {
     return getMethodExpression().getTypeParameters();
   }
 
+  @NotNull
   public PsiReferenceExpression getMethodExpression() {
     return (PsiReferenceExpression)findChildByRoleAsPsiElement(ChildRole.METHOD_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpressionList getArgumentList() {
     return (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }

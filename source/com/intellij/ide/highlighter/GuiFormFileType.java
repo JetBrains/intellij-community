@@ -41,16 +41,21 @@ import com.intellij.util.Icons;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GuiFormFileType implements FileType {
 
+  @NotNull
   public String getName() {
     return "GUI_DESIGNER_FORM";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.gui.designer.form");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "form";
   }

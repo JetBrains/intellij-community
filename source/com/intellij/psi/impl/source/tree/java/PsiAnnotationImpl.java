@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -32,6 +33,7 @@ public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifie
     return "PsiAnnotation";
   }
 
+  @NotNull
   public PsiAnnotationParameterList getParameterList() {
     return (PsiAnnotationParameterList)findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
   }

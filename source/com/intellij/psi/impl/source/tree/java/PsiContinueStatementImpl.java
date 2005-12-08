@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiContinueStatementImpl extends CompositePsiElement implements PsiContinueStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiContinueStatementImpl");
@@ -96,6 +97,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     if (getLabelIdentifier() == null)
       return PsiReference.EMPTY_ARRAY;

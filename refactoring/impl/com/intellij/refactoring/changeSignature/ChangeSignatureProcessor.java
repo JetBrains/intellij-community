@@ -43,6 +43,8 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
 
@@ -112,6 +114,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod());
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     final PsiMethod method = myChangeInfo.getMethod();

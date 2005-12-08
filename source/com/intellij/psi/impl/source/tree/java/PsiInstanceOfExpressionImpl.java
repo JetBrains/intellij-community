@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiInstanceOfExpressionImpl extends CompositePsiElement implements PsiInstanceOfExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInstanceOfExpressionImpl");
@@ -13,6 +14,7 @@ public class PsiInstanceOfExpressionImpl extends CompositePsiElement implements 
     super(INSTANCE_OF_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }

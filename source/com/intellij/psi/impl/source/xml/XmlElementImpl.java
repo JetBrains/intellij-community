@@ -20,6 +20,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class XmlElementImpl extends CompositePsiElement implements XmlElement {
   public XmlElementImpl(IElementType type) {
@@ -62,6 +63,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return new TextRange(textOffset, textOffset + getTextLength());
   }
 
+  @NotNull
   public Language getLanguage() {
     final FileType fileType = getContainingFile().getFileType();
     return ((LanguageFileType)fileType).getLanguage();

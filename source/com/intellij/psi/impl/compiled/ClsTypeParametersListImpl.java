@@ -8,6 +8,7 @@ import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.PsiImplUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -58,6 +59,7 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myParameters;
   }

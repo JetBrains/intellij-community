@@ -38,6 +38,8 @@ import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XHtmlFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
 
@@ -45,14 +47,17 @@ public class XHtmlFileType extends LanguageFileType {
     super(new XHTMLLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "XHTML";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.xhtml");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "xhtml";
   }

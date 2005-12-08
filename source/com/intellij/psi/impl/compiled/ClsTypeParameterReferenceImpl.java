@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -66,16 +67,19 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return null;
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     return new CandidateInfo(resolve(), PsiSubstitutor.EMPTY);
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
     if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }
@@ -110,6 +114,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return this;
   }
 
+  @NotNull
   public PsiElement[] getChildren(){
     return PsiElement.EMPTY_ARRAY;
   }

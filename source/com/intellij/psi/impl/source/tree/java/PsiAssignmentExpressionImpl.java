@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiAssignmentExpressionImpl extends CompositePsiElement implements PsiAssignmentExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssignmentExpressionImpl");
@@ -14,6 +15,7 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     super(ASSIGNMENT_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression getLExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
   }
@@ -22,6 +24,7 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ROPERAND);
   }
 
+  @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }

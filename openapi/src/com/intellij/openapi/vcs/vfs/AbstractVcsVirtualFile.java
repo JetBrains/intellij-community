@@ -21,6 +21,8 @@ import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   protected final String myName;
@@ -41,6 +43,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       myParent = null;
   }
 
+  @NotNull
   public VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
@@ -53,6 +56,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     return myPath;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }

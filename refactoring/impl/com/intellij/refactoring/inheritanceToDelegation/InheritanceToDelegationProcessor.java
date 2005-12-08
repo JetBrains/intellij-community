@@ -34,6 +34,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import java.util.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -129,6 +130,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return new InheritanceToDelegationViewDescriptor(myClass);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     PsiSearchHelper searchHelper = myManager.getSearchHelper();

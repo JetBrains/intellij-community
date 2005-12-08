@@ -24,6 +24,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
@@ -324,12 +325,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(final boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManager manager = getManager();
     if (manager == null) {
@@ -866,6 +869,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     final PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList == null) return PsiType.EMPTY_ARRAY;

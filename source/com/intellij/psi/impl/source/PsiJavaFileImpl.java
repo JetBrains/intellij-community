@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(Project project, VirtualFile file) {
@@ -26,6 +27,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
     return new JavaLexer(manager.getEffectiveLanguageLevel());
   }
 
+  @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;
   }

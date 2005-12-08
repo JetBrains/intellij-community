@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -54,10 +55,12 @@ public final class SameSizeHorizontallyProperty extends Property{
     gridLayoutManager.setSameSizeHorizontally(((Boolean)value).booleanValue());
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

@@ -36,6 +36,7 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.text.StringSearcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -146,10 +147,12 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     return true;
   }
 
+  @NotNull
   public FindModel getFindInFileModel() {
     return myFindInFileModel;
   }
 
+  @NotNull
   public FindModel getFindInProjectModel() {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
@@ -174,6 +177,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     myFindNextModel = findNextModel;
   }
 
+  @NotNull
   public FindResult findString(CharSequence text, int offset, FindModel model){
     if (LOG.isDebugEnabled()) {
       LOG.debug("offset="+offset);

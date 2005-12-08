@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -20,6 +21,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     myAllowEllipsis = allowEllipsis;
   }
 
+  @NotNull
   public PsiType getType()
     throws TypeSyntaxException, NoTypeException {
     PsiType type;

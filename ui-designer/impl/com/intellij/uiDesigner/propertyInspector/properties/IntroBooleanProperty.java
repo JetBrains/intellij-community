@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -24,6 +26,7 @@ public final class IntroBooleanProperty extends IntrospectedProperty {
     myEditor = new BooleanEditor();
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
@@ -36,6 +39,7 @@ public final class IntroBooleanProperty extends IntrospectedProperty {
     writer.addAttribute("value", value.toString());
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

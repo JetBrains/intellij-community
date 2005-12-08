@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -327,6 +328,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return true;
   }
 
+  @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.unmodifiableMap(mySubstitutionMap);
   }

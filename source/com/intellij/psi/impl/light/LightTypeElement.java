@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -34,6 +35,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
     return new LightTypeElement(myManager, myType);
   }
 
+  @NotNull
   public PsiType getType() {
     return myType;
   }

@@ -6,6 +6,8 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GutterActionRenderer extends GutterIconRenderer {
   private final AnAction myAction;
   public static final Icon REPLACE_ARROW = IconLoader.getIcon("/diff/arrow.png");
@@ -15,6 +17,7 @@ public class GutterActionRenderer extends GutterIconRenderer {
     myAction = action;
   }
 
+  @NotNull
   public Icon getIcon() { return myAction.getTemplatePresentation().getIcon(); }
   public AnAction getClickAction() { return myAction; }
   public String getTooltipText() { return myAction.getTemplatePresentation().getText(); }

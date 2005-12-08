@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
@@ -48,6 +49,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     return null;
   }
 
+  @NotNull
   public PsiExpression[] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ARRAY_DIMENSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
     PsiExpression qualifier = getQualifier();
@@ -70,6 +72,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     return resolveConstructor();
   }
 
+  @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     if (classRef != null){
@@ -104,10 +107,12 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
+  @NotNull
   public PsiReferenceParameterList getTypeArgumentList() {
     return (PsiReferenceParameterList) findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
+  @NotNull
   public PsiType[] getTypeArguments() {
     return getTypeArgumentList().getTypeArguments();
   }

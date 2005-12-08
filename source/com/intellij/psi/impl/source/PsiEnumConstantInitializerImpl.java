@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiEnumConstantInitializer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl");
@@ -43,6 +44,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     return ((PsiEnumConstant)parent).getArgumentList();
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     PsiClass containingClass = getBaseClass();
     return new LightClassReference(getManager(), containingClass.getName(), containingClass);
@@ -60,10 +62,12 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     return getDefaultParentByRepository();
   }
 
+  @NotNull
   public PsiEnumConstant getEnumConstant() {
     return (PsiEnumConstant) getParent();
   }
 
+  @NotNull
   public PsiClassType getBaseClassType() {
     if (myCachedBaseType == null) {
       myCachedBaseType = myManager.getElementFactory().createType(getBaseClass());
@@ -95,6 +99,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     return null;
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return new PsiClassType[]{getBaseClassType()};
   }

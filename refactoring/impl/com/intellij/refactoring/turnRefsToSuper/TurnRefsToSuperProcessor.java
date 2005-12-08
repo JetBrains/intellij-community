@@ -16,6 +16,8 @@ import com.intellij.refactoring.RefactoringBundle;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
 
@@ -43,6 +45,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     final PsiReference[] refs = mySearchHelper.findReferences(myClass, GlobalSearchScope.projectScope(myProject), false);
 

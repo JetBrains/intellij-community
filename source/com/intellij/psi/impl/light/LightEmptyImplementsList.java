@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -26,10 +27,12 @@ public class LightEmptyImplementsList extends LightElement implements PsiReferen
     return this;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClassType[] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }

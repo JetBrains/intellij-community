@@ -13,10 +13,12 @@ import java.util.Map;
 import java.util.Collections;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class PropertiesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_PROPERTIES";
 
+  @NotNull
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
     Map<Group,Group> result = new THashMap<Group, Group>();
@@ -44,10 +46,12 @@ public class PropertiesGrouper implements Grouper{
     return result.values();
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, Icons.PROPERTY_ICON);
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }

@@ -6,6 +6,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -34,6 +35,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
       ((ClsElementImpl)getOperand()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getOperand()));
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return new PsiElement[]{myTypeElement};
   }
@@ -46,6 +48,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     visitor.visitClassObjectAccessExpression(this);
   }
 
+  @NotNull
   public PsiTypeElement getOperand() {
     return myTypeElement;
   }

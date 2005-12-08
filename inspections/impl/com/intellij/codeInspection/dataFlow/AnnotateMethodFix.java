@@ -2,19 +2,21 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * @author cdr
@@ -35,11 +37,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
     final PsiElement psiElement = descriptor.getPsiElement();
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
-    PsiMethod superMethod = method.findDeepestSuperMethod();
-    if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false)) {
-      superMethod = SuperMethodWarningUtil.checkSuperMethod(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
-      if (superMethod != null && superMethod != method) {
-        annotateMethod(superMethod);
+    List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false)) {
+        superMethod = SuperMethodWarningUtil.checkSuperMethod(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
+        if (superMethod != null && superMethod != method) {
+          annotateMethod(superMethod);
+        }
+        break;
       }
     }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager implements ApplicationComponent {
   private TypedAction myTypedAction = new TypedAction();
@@ -31,6 +32,7 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
   public void disposeComponent() {
   }
 
+  @NotNull
   public TypedAction getTypedAction() {
     return myTypedAction;
   }

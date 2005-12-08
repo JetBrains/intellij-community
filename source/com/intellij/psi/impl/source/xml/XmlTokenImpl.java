@@ -16,6 +16,7 @@ import com.intellij.util.CharTable;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ide.util.EditSourceUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
@@ -49,6 +50,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     return getElementType();
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     if (getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
       return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);

@@ -10,6 +10,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,18 +40,22 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
     return myGroupByWordPrefixes.getSeparator();
   }
 
+  @NotNull
   public StructureViewTreeElement getRoot() {
     return new ResourceBundleFileStructureViewElement(myProject, myResourceBundle);
   }
 
+  @NotNull
   public Grouper[] getGroupers() {
     return new Grouper[]{myGroupByWordPrefixes};
   }
 
+  @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER};
   }
 
+  @NotNull
   public Filter[] getFilters() {
     return Filter.EMPTY_ARRAY;
   }

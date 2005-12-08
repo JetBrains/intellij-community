@@ -42,6 +42,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XmlFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
   private static Map<IElementType, TextAttributesKey> keys2;
@@ -115,6 +117,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     myIsXHtml = xhtml;
   }
 
+  @NotNull
   public Lexer getHighlightingLexer() {
     if (myIsDtd) {
       return new DtdHighlightingLexer();
@@ -125,12 +128,13 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
+  @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 
   public static final void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                  Map<IElementType, TextAttributesKey> _keys2) {
+                                                           Map<IElementType, TextAttributesKey> _keys2) {
     if (_keys1!=null) {
       for (Iterator<IElementType> iterator = _keys1.keySet().iterator(); iterator.hasNext();) {
         IElementType iElementType = iterator.next();

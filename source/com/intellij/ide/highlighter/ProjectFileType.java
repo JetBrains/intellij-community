@@ -43,20 +43,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectFileType implements FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "ipr";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaProject.png");
 
+  @NotNull
   public String getName() {
     return "IDEA_PROJECT";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.project");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }

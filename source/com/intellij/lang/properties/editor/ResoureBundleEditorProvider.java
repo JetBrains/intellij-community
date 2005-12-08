@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class ResoureBundleEditorProvider implements FileEditorProvider, ApplicationComponent {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
@@ -43,6 +44,7 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
     ((ResourceBundleEditor)editor).dispose();
   }
 
+  @NotNull
   public FileEditorState readState(Element element, Project project, VirtualFile file){
     return null;
   }

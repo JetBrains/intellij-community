@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -20,6 +21,7 @@ public abstract class LightElement extends PsiElementBase {
     myManager = manager;
   }
 
+  @NotNull
   public Language getLanguage() {
     return StdFileTypes.JAVA.getLanguage();
   }
@@ -32,6 +34,7 @@ public abstract class LightElement extends PsiElementBase {
     return null;
   }
 
+  @NotNull
   public PsiElement[] getChildren(){
     return PsiElement.EMPTY_ARRAY;
   }
@@ -53,6 +56,7 @@ public abstract class LightElement extends PsiElementBase {
     return text != null ? text.length() : 0;
   }
 
+  @NotNull
   public char[] textToCharArray(){
     return getText().toCharArray();
   }

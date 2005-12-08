@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class LightPackageReference extends LightElement implements PsiJavaCodeReferenceElement {
   private final String myPackageName;
@@ -31,10 +32,12 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     }
   }
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     return new CandidateInfo(resolve(), PsiSubstitutor.EMPTY);
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode){
     final JavaResolveResult result = advancedResolve(incompleteCode);
     if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
@@ -135,6 +138,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     return myRefPackage == null || myRefPackage.isValid();
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     return PsiType.EMPTY_ARRAY;
   }

@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedRegionProvider {
   private ArrayList myHighlightedRegions;
 
@@ -32,6 +34,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     myHighlightedRegions = new ArrayList(2);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (myToDoSettings.getIsPackagesShown()) {

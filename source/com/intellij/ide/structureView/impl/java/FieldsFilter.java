@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldsFilter implements Filter{
   @NonNls public static final String ID = "SHOW_FIELDS";
@@ -16,10 +17,12 @@ public class FieldsFilter implements Filter{
     return !(treeNode instanceof PsiFieldTreeElement);
   }
 
+  @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.fields"), null, Icons.FIELD_ICON);
   }
 
+  @NotNull
   public String getName() {
     return ID;
   }

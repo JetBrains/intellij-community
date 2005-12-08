@@ -26,6 +26,8 @@ import gnu.trove.THashSet;
 
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
 
@@ -242,6 +244,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return "PsiLocalVariable:" + getName();
   }
 
+  @NotNull
   public SearchScope getUseScope() {
     final PsiFile file = getContainingFile();
     if (file instanceof JspxFileImpl) {

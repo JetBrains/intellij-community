@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiLabeledStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLabeledStatementImpl");
@@ -20,6 +21,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     super(LABELED_STATEMENT);
   }
 
+  @NotNull
   public PsiIdentifier getLabelIdentifier() {
     return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL_NAME);
   }

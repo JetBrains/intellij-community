@@ -21,6 +21,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -75,6 +76,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   }
 
   private FileType myType = null;
+  @NotNull
   public FileType getFileType() {
     if (myType == null) {
       PsiFile originalFile = getOriginalFile();
@@ -91,10 +93,10 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   public Lexer createLexer() {
     return new XmlPsiLexer();
   }
-  
+
   public void subtreeChanged() {
     super.subtreeChanged();
-    
+
     if (isWebFileType()) {
       ScriptSupportUtil.clearCaches(this);
     }
@@ -109,7 +111,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
     if (isWebFileType())
       return ScriptSupportUtil.processDeclarations(this, processor, substitutor, lastParent, place);
-    
+
     return true;
   }
 }

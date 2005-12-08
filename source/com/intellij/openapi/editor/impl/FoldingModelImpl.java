@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   private boolean myIsFoldingEnabled;
@@ -105,6 +107,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     mySavedCaretShift = -1;
   }
 
+  @NotNull
   public FoldRegion[] getAllFoldRegions() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myFoldTree.fetchAllRegions();

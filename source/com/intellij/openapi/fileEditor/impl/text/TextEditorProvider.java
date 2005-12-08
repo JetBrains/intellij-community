@@ -22,6 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -72,6 +73,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     ((TextEditorImpl)editor).dispose();
   }
 
+  @NotNull
   public FileEditorState readState(Element element, Project project, VirtualFile file) {
     TextEditorState state = new TextEditorState();
 
@@ -212,6 +214,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
                                 : new TextEditorBackgroundHighlighter(myEditor.getProject(), myEditor);
     }
 
+    @NotNull
     public Editor getEditor() {
       return myEditor;
     }
@@ -233,6 +236,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
       return file.getFileType().getStructureViewBuilder(file, myEditor.getProject());
     }
 
+    @NotNull
     public FileEditorState getState(FileEditorStateLevel level) {
       TextEditorState state = new TextEditorState();
       TextEditorImpl.getStateImpl(null, myEditor, state, level);

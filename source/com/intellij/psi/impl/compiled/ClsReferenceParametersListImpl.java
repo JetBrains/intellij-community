@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -47,14 +48,17 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return myTypeElements;
   }
 
+  @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return myTypeElements;
   }
 
+  @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);
   }

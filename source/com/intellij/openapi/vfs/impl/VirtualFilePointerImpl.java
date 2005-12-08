@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.SmartVirtualFilePointerImpl");
@@ -51,6 +52,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     myVirtualFileManager = virtualFileManager;
   }
 
+  @NotNull
   public String getFileName() {
     LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
@@ -69,6 +71,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return myFile;
   }
 
+  @NotNull
   public String getUrl() {
     LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
@@ -79,6 +82,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     }
   }
 
+  @NotNull
   public String getPresentableUrl() {
     LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();

@@ -16,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
 import java.util.ArrayList;
@@ -131,6 +132,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myParent = parent;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
@@ -188,12 +190,14 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
 
+  @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
     return resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
@@ -300,6 +304,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return myTypeParameters;
   }
 
+  @NotNull
   public PsiType[] getTypeParameters() {
     if (myTypeParametersCachedTypes == null) {
       myTypeParametersCachedTypes = new PsiType[myTypeParameters.length];

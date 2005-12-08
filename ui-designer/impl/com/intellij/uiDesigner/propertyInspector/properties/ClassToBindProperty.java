@@ -26,6 +26,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -42,6 +44,7 @@ public final class ClassToBindProperty extends Property {
     myEditor = new MyEditor(editor.getProject());
   }
 
+  @NotNull
   public Property[] getChildren(){
     return EMPTY_ARRAY;
   }
@@ -50,6 +53,7 @@ public final class ClassToBindProperty extends Property {
     return myEditor;
   }
 
+  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

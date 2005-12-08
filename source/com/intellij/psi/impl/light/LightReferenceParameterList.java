@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -11,7 +12,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
   private final String myText;
 
   public LightReferenceParameterList(PsiManager manager,
-                            PsiTypeElement[] referenceElements) {
+                                     PsiTypeElement[] referenceElements) {
     super(manager);
     myTypeElements = referenceElements;
     myText = calculateText();
@@ -53,10 +54,12 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     return new LightReferenceParameterList(myManager, elements);
   }
 
+  @NotNull
   public PsiTypeElement[] getTypeParameterElements() {
     return myTypeElements;
   }
 
+  @NotNull
   public PsiType[] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);
   }

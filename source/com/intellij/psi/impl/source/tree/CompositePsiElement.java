@@ -32,6 +32,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     super(type);
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     return getChildrenAsPsiElements(null, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
@@ -94,6 +95,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
@@ -239,6 +241,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return manager != null ? manager.getProject() : null;
   }
 
+  @NotNull
   public Language getLanguage() {
     return getElementType().getLanguage();
   }

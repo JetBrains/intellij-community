@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NotNull;
+
 public class FormNode extends ProjectViewNode<Form>{
   private final Collection<AbstractTreeNode> myChildren;
   public FormNode(Project project, Form value, ViewSettings viewSettings,
@@ -25,6 +27,7 @@ public class FormNode extends ProjectViewNode<Form>{
     myChildren = children;
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return myChildren;
   }
@@ -67,9 +70,9 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public static AbstractTreeNode constructFormNode(final PsiManager psiManager,
-                                             final PsiClass classToBind,
-                                             final Project project,
-                                             final ViewSettings settings) {
+                                                   final PsiClass classToBind,
+                                                   final Project project,
+                                                   final ViewSettings settings) {
     final PsiFile[] formsBoundToClass = psiManager.getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
     final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
     for (int i = 0; i < formsBoundToClass.length; i++) {

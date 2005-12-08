@@ -46,6 +46,8 @@ import com.intellij.openapi.options.OptionsBundle;
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GeneralColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATT_DESCRIPTORS = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
@@ -77,6 +79,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.modified.lines"), EditorColors.MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
   };
 
+  @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.general.display.name");
   }
@@ -85,18 +88,22 @@ public class GeneralColorsPage implements ColorSettingsPage {
     return StdFileTypes.PLAIN_TEXT.getIcon();
   }
 
+  @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATT_DESCRIPTORS;
   }
 
+  @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return COLOR_DESCRIPTORS;
   }
 
+  @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new PlainSyntaxHighlighter();
   }
 
+  @NotNull
   public String getDemoText() {
     return
       "IntelliJ IDEA is a full-featured Java IDE\n" +

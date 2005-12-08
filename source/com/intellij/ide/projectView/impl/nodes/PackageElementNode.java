@@ -52,6 +52,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(final Project project,
                             final PackageElement value,
@@ -91,6 +93,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     return getValue().isLibraryElement();
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
 

@@ -48,17 +48,22 @@ import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class JavaClassFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/javaClass.png");
 
+  @NotNull
   public String getName() {
     return "CLASS";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.class");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "class";
   }

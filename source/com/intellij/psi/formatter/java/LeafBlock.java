@@ -8,6 +8,8 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class LeafBlock implements Block{
 
   private final ASTNode myNode;
@@ -17,8 +19,8 @@ public class LeafBlock implements Block{
   private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<Block>();
   private final Indent myIndent;
 
-  public LeafBlock(final ASTNode node, 
-                   final Wrap wrap, 
+  public LeafBlock(final ASTNode node,
+                   final Wrap wrap,
                    final Alignment alignment,
                    Indent indent) {
     myNode = node;
@@ -27,10 +29,12 @@ public class LeafBlock implements Block{
     myIndent = indent;
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
+  @NotNull
   public List<Block> getSubBlocks() {
     return EMPTY_SUB_BLOCKS;
   }
@@ -55,6 +59,7 @@ public class LeafBlock implements Block{
     return myNode;
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(getIndent(), null);
   }

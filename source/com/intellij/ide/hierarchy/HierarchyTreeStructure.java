@@ -8,6 +8,8 @@ import com.intellij.util.ArrayUtil;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   protected HierarchyNodeDescriptor myBaseDescriptor;
   private HierarchyNodeDescriptor myRoot;
@@ -31,6 +33,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     }
   }
 
+  @NotNull
   public final NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;

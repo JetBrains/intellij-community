@@ -41,6 +41,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DTDFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/dtd.png");
 
@@ -48,14 +50,17 @@ public class DTDFileType extends LanguageFileType {
     super(new DTDLanguage());
   }
 
+  @NotNull
   public String getName() {
     return "DTD";
   }
 
+  @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.dtd");
   }
 
+  @NotNull
   public String getDefaultExtension() {
     return "dtd";
   }

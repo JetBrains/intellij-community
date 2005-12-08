@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiConditionalExpressionImpl extends CompositePsiElement implements PsiConditionalExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiConditionalExpressionImpl");
@@ -16,6 +17,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
     super(CONDITIONAL_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression getCondition() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
