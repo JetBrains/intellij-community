@@ -18,17 +18,19 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class InstanceVariableInitializationInspection extends FieldInspection{
 
@@ -45,7 +47,8 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.display.name");
+        return InspectionGadgetsBundle.message(
+                "instance.variable.may.not.be.initialized.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -53,11 +56,22 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
     }
 
     public String buildErrorString(PsiElement location){
-      return InspectionGadgetsBundle.message("instance.variable.may.not.be.initialized.problem.descriptor");
+        final PsiElement parent = location.getParent();
+        if (parent instanceof PsiField) {
+            final PsiField field = (PsiField)parent;
+            final PsiClass containingClass = field.getContainingClass();
+            if (TestUtils.isJUnitTestClass(containingClass)) {
+      return InspectionGadgetsBundle.message(
+                        "instance.Variable.may.not.be.initialized.problem.descriptor.junit");
+            }
+        }
+        return InspectionGadgetsBundle.message(
+              "instance.variable.may.not.be.initialized.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
                                               this, "m_ignorePrimitives");
     }
 
@@ -94,16 +108,23 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
             if(searchHelper.isFieldBoundToForm(field)){
                 return;
             }
+            if (TestUtils.isJUnitTestClass(aClass)) {
+                checkInitializationInSetup(field, aClass);
+            } else {
+                checkInitializationInConstructors(field, aClass);
+            }
+        }
+
+        private void checkInitializationInConstructors(PsiField field,
+                                                       PsiClass aClass) {
             if(isInitializedInInitializer(field)){
                 return;
             }
-
             final PsiMethod[] constructors = aClass.getConstructors();
-            if(constructors == null || constructors.length == 0){
+            if(constructors.length == 0){
                 registerFieldError(field);
                 return;
             }
-
             for(final PsiMethod constructor : constructors){
                 final PsiCodeBlock body = constructor.getBody();
                 if(!InitializationUtils.blockAssignsVariableOrFails(body,
@@ -112,6 +133,41 @@ public class InstanceVariableInitializationInspection extends FieldInspection{
                     return;
                 }
             }
+        }
+
+        private void checkInitializationInSetup(PsiField field,
+                                                PsiClass aClass) {
+            final PsiMethod setupMethod = getSetupMethod(aClass);
+            if (setupMethod == null) {
+                return;
+            }
+            final PsiCodeBlock body = setupMethod.getBody();
+            if (InitializationUtils.blockAssignsVariableOrFails(body,
+                    field)) {
+                return;
+            }
+            registerFieldError(field);
+        }
+
+        @Nullable
+        private PsiMethod getSetupMethod(@NotNull PsiClass aClass) {
+            final PsiMethod[] methods =
+                    aClass.findMethodsByName("setUp", false);
+            for (PsiMethod method : methods) {
+                if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
+                }
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                final PsiParameter[] parameters = parameterList.getParameters();
+                if (parameters.length != 0) {
+                    continue;
+                }
+                if (PsiType.VOID.equals(method.getReturnType())) {
+                    return method;
+                }
+            }
+            return null;
         }
 
         private boolean isInitializedInInitializer(@NotNull PsiField field){
