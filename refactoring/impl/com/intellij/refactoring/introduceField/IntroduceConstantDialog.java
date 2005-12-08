@@ -113,6 +113,8 @@ class IntroduceConstantDialog extends DialogWrapper {
     } else {
       myRbPrivate.setSelected(true);
     }
+
+    updateVisibilityPanel();
   }
 
   public String getEnteredName() {
@@ -293,8 +295,6 @@ class IntroduceConstantDialog extends DialogWrapper {
     bg.add(myRbProtected);
     bg.add(myRbPublic);
 
-
-    updateVisibilityPanel();
     return myPanel;
   }
 
