@@ -11,7 +11,7 @@ import java.util.Vector;
 
 /**
  * Before rename or move
- *  @see com.intellij.execution.junit.JUnitConfiguration.JUNIT_START_CLASS
+ *  @see com.intellij.execution.junit.JUnitConfiguration#JUNIT_START_CLASS
  *  @noinspection HardCodedStringLiteral
  */
 public class JUnitStarter {

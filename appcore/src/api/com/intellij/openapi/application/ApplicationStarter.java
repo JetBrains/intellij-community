@@ -18,7 +18,7 @@ package com.intellij.openapi.application;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Implementors of this interface declared via {@link com.intellij.ExtensionPoints.APPLICATION_STARTER} contribute a
+ * Implementors of this interface declared via {@link com.intellij.ExtensionPoints#APPLICATION_STARTER} contribute a
  * command line application based on IDEA platform.
  * @author max
  */
@@ -40,7 +40,7 @@ public interface ApplicationStarter {
 
   /**
    * Called when application have been initialized. Invoked in awt dispatch thread. An application starter should take care terminating
-   * JVM itself when appropriate by calling {@link java.lang.System.exit(0);}
+   * JVM itself when appropriate by calling {@link java.lang.System#exit}(0);
    * @param args cmdline arguments including declared selector. For example <code>"idea.exe inspect myproject.ipr"</code>
    * will pass <code>{"inspect", "myproject.ipr"}</code>
    */

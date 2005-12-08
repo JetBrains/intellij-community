@@ -158,7 +158,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
   @Nullable PsiMethod findDeepestSuperMethod();
 
   /**
-   * Returns the {@link com.intellij.pom POM} representation of the method.
+   * Returns the {@link com.intellij.pom.java.PomMethod} representation of the method.
    *
    * @return the POM representation.
    */

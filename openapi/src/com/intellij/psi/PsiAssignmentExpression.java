@@ -40,8 +40,8 @@ public interface PsiAssignmentExpression extends PsiExpression {
   PsiExpression getRExpression();
 
   /**
-   * Returns the token representing the assignment operation ({@link JavaTokenType.EQ} for a simple
-   * assignment, {@link JavaTokenType.PLUSEQ} etc. for a compound assignment).
+   * Returns the token representing the assignment operation ({@link JavaTokenType#EQ} for a simple
+   * assignment, {@link JavaTokenType#PLUSEQ} etc. for a compound assignment).
    *
    * @return the assignment operation token.
    */

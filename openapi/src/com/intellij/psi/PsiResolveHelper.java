@@ -33,7 +33,7 @@ public interface PsiResolveHelper {
    * @param type              the class containing the constructor
    * @param argumentList      list of arguments of the call or new expression
    * @param place             place where constructor is invoked (used for checking access)
-   * @return the result of the resolve, or {@link JavaResolveResult.EMPTY} if the resolve failed.
+   * @return the result of the resolve, or {@link JavaResolveResult#EMPTY} if the resolve failed.
    */
   @NotNull
   JavaResolveResult resolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
@@ -46,7 +46,7 @@ public interface PsiResolveHelper {
    * @param type              the class containing the constructor
    * @param argumentList      list of arguments of the call or new expression
    * @param place             place where constructor is invoked (used for checking access)
-   * @return the result of the resolve, or {@link JavaResolveResult.EMPTY} if the resolve failed.
+   * @return the result of the resolve, or {@link JavaResolveResult#EMPTY} if the resolve failed.
    */
   @NotNull
   JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);

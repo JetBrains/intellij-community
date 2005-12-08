@@ -163,7 +163,7 @@ public class FindUsagesUtil {
       return ((PsiVariable)element).getName();
     }
     else{
-      LOG.error("Unknown element type");
+      LOG.error("Unknown element type: "+element);
       return null;
     }
   }

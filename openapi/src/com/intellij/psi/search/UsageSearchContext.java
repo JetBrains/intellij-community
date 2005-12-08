@@ -19,31 +19,31 @@ public interface UsageSearchContext {
   /**
    * Element's usages in its language code are requested
    */
-  public static final short IN_CODE        = 0x1;
+  short IN_CODE        = 0x1;
 
   /**
    * Usages in comments are requested
    */
-  public static final short IN_COMMENTS    = 0x2;
+  short IN_COMMENTS    = 0x2;
 
   /**
    * Usages in string literals are requested
    */
-  public static final short IN_STRINGS     = 0x4;
+  short IN_STRINGS     = 0x4;
 
   /**
    * Element's usages in other languages are requested,
    * e.g. usages of java class in jsp attribute value
    */
-  public static final short IN_FOREIGN_LANGUAGES = 0x8;
+  short IN_FOREIGN_LANGUAGES = 0x8;
 
   /**
    * Plain text occurences are requested
    */
-  public static final short IN_PLAIN_TEXT  = 0x10;
+  short IN_PLAIN_TEXT  = 0x10;
 
   /**
    * Any of above
    */
-  public static final short ANY            = 0xFF;
+  short ANY            = 0xFF;
 }

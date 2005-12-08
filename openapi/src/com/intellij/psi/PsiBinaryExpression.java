@@ -39,7 +39,7 @@ public interface PsiBinaryExpression extends PsiExpression {
   PsiExpression getROperand();
 
   /**
-   * Returns the token representing the operation (for example, {@link JavaTokenType.PLUS} for an
+   * Returns the token representing the operation (for example, {@link JavaTokenType#PLUS} for an
    * addition operation).
    *
    * @return the operation token.

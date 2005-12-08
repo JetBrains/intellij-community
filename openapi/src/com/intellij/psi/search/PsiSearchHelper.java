@@ -319,7 +319,7 @@ public interface PsiSearchHelper {
   boolean isFieldBoundToForm(PsiField field);
 
   /**
-   * Passes all files containing the specified word in {@link UsageSearchContext.IN_CODE code}
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_CODE code}
    * context to the specified processor.
    *
    * @param word      the word to search.
@@ -330,7 +330,7 @@ public interface PsiSearchHelper {
   void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor, final boolean caseSensitively);
 
   /**
-   * Passes all files containing the specified word in {@link UsageSearchContext.IN_COMMENTS comments}
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
    * context to the specified processor.
    *
    * @param word      the word to search.
@@ -340,7 +340,7 @@ public interface PsiSearchHelper {
   void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
 
   /**
-   * Passes all files containing the specified word in {@link UsageSearchContext.IN_STRINGS string literal}
+   * Passes all files containing the specified word in {@link UsageSearchContext#IN_STRINGS string literal}
    * context to the specified processor.
    *
    * @param word      the word to search.

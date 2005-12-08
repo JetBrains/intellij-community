@@ -31,7 +31,7 @@ public interface PsiPostfixExpression extends PsiExpression {
 
   /**
    * Returns the token representing the operation performed (of type {@link JavaTokenType.PLUSPLUS} or
-   * {@link JavaTokenType.MINUSMINUS}).
+   * {@link JavaTokenType#MINUSMINUS}).
    *
    * @return the token for the operation performed.
    */

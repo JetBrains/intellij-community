@@ -22,8 +22,8 @@ import com.intellij.psi.tree.IElementType;
  */
 public interface PsiComment extends PsiElement {
   /**
-   * Returns the token type of the comment (for example, {@link JavaTokenType.END_OF_LINE_COMMENT} or
-   * {@link JavaTokenType.C_STYLE_COMMENT}).
+   * Returns the token type of the comment (for example, {@link JavaTokenType#END_OF_LINE_COMMENT} or
+   * {@link JavaTokenType#C_STYLE_COMMENT}).
    *
    * @return the token type of the comment.
    */

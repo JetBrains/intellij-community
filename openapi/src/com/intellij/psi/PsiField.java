@@ -29,7 +29,7 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
   PsiField[] EMPTY_ARRAY = new PsiField[0];
 
   /**
-   * Returns the {@link com.intellij.pom POM} representation of the field.
+   * Returns the {@link com.intellij.pom.java.PomField} representation of the field.
    *
    * @return the POM representation.
    */

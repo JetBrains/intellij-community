@@ -151,14 +151,14 @@ public final class LoadTextUtil {
    * Normally you should not use this method.
    *
    * @param virtualFile
-     * @param requestor any object to control who called this method. Note that
+   * @param requestor any object to control who called this method. Note that
    * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    * See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp new time stamp or -1 if no special value should be set
    * @return <code>Writer</code>
    * @throws java.io.IOException if an I/O error occurs
-   * @see #getModificationStamp()
+   * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException{

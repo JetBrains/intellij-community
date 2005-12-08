@@ -307,9 +307,9 @@ public interface PsiClass
    * @return true if the class is an inheritor, false otherwise
    */
   boolean isInheritor(PsiClass baseClass, boolean checkDeep);
-
+                                                     
   /**
-   * Returns the {@link com.intellij.pom POM} representation of the class.
+   * Returns the {@link com.intellij.pom.java.PomMemberOwner} representation of the class.
    *
    * @return the POM representation.
    */

@@ -109,8 +109,8 @@ public interface Module extends ComponentManager, AreaInstance {
    */
   @Nullable String getOptionValue(@NotNull String optionName);
 
-  /**
-   * Returns the {@link com.intellij.pom POM} representation of this module.
+  /**                                             
+   * Returns the {@link com.intellij.pom.PomModule} representation of this module.
    *
    * @return the POM module instance.
    */

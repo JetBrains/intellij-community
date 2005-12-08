@@ -42,7 +42,7 @@ public interface PsiCall extends PsiElement {
    * Resolves the reference to the called method and returns the resolve result
    * containing the method and the substitutor for generic type parameters.
    *
-   * @return the resolve result, or {@link JavaResolveResult.EMPTY} if unresolved
+   * @return the resolve result, or {@link JavaResolveResult#EMPTY} if unresolved
    */
   @NotNull
   JavaResolveResult resolveMethodGenerics();
