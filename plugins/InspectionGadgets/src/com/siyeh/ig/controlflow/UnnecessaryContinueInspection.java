@@ -16,95 +16,92 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryContinueInspection extends StatementInspection {
 
-  private final UnnecessaryContinueFix fix = new UnnecessaryContinueFix();
+    private final InspectionGadgetsFix fix =
+            new DeleteUnnecessaryStatementFix("continue");
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryContinueVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class UnnecessaryContinueFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.continue.remove.quickfix");
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.continue.display.name");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement returnKeywordElement = descriptor.getPsiElement();
-      final PsiElement continueStatement =
-        returnKeywordElement.getParent();
-      assert continueStatement != null;
-      deleteElement(continueStatement);
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-  }
 
-  private static class UnnecessaryContinueVisitor
-    extends StatementInspectionVisitor {
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.continue.problem.descriptor");
+    }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
 
-    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryContinueVisitor();
+    }
 
-      if (statement.getContainingFile() instanceof JspFile) {
-        return;
-      }
-      final PsiStatement continuedStatement =
-        statement.findContinuedStatement();
-      PsiStatement body = null;
-      if (continuedStatement instanceof PsiForeachStatement) {
-        body = ((PsiForeachStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiForStatement) {
-        body = ((PsiForStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        body = ((PsiDoWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        body = ((PsiWhileStatement)continuedStatement).getBody();
-      }
-      if (body == null) {
-        return;
-      }
-      if (body instanceof PsiBlockStatement) {
-        final PsiCodeBlock block =
-          ((PsiBlockStatement)body).getCodeBlock();
-        if (ControlFlowUtils.blockCompletesWithStatement(block,
-                                                         statement)) {
-          registerStatementError(statement);
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
+    }
+
+    private static class UnnecessaryContinueVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitContinueStatement(
+                @NotNull PsiContinueStatement statement) {
+            if (statement.getContainingFile() instanceof JspFile) {
+                return;
+            }
+            final PsiStatement continuedStatement =
+                    statement.findContinuedStatement();
+            PsiStatement body = null;
+            if (continuedStatement instanceof PsiForeachStatement) {
+                final PsiForeachStatement foreachStatement =
+                        (PsiForeachStatement)continuedStatement;
+                body = foreachStatement.getBody();
+            } else if (continuedStatement instanceof PsiForStatement) {
+                final PsiForStatement forStatement =
+                        (PsiForStatement)continuedStatement;
+                body = forStatement.getBody();
+            } else if (continuedStatement instanceof PsiDoWhileStatement) {
+                final PsiDoWhileStatement doWhileStatement =
+                        (PsiDoWhileStatement)continuedStatement;
+                body = doWhileStatement.getBody();
+            } else if (continuedStatement instanceof PsiWhileStatement) {
+                final PsiWhileStatement whileStatement =
+                        (PsiWhileStatement)continuedStatement;
+                body = whileStatement.getBody();
+            }
+            if (body == null) {
+                return;
+            }
+            if (body instanceof PsiBlockStatement) {
+                final PsiCodeBlock block =
+                        ((PsiBlockStatement)body).getCodeBlock();
+                if (ControlFlowUtils.blockCompletesWithStatement(block,
+                        statement)) {
+                    registerStatementError(statement);
+                }
+            } else if (ControlFlowUtils.statementCompletesWithStatement(body,
+                    statement)) {
+                registerStatementError(statement);
+            }
         }
-      }
-      else {
-        if (ControlFlowUtils.statementCompletesWithStatement(body,
-                                                             statement)) {
-          registerStatementError(statement);
-        }
-      }
     }
-  }
 }
