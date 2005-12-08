@@ -48,6 +48,7 @@ public class AdvancedProxy {
         return (T) factory.newInstance(findConstructor(aClass, constructorArgs).getParameterTypes(), constructorArgs, callbacks);
       }
 
+      //System.out.println("key = " + key);
       AdvancedEnhancer e = new AdvancedEnhancer();
       e.setAdditionalMethods(additionalMethods);
       e.setSuperclass(superClass);
@@ -70,6 +71,15 @@ public class AdvancedProxy {
 
   @NotNull
   private static Constructor findConstructor(final Class aClass, final Object... constructorArgs) {
+    if (constructorArgs.length == 0) {
+      try {
+        return aClass.getConstructor();
+      }
+      catch (NoSuchMethodException e) {
+        throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));
+      }
+    }
+
     loop: for (final Constructor constructor : aClass.getDeclaredConstructors()) {
       final Class[] parameterTypes = constructor.getParameterTypes();
       if (parameterTypes.length == constructorArgs.length) {
