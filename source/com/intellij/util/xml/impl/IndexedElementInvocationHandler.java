@@ -32,7 +32,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     myIndicator = indicator;
   }
 
-  boolean isIndicator() {
+  final boolean isIndicator() {
     return myIndicator;
   }
 

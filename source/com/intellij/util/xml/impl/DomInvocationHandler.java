@@ -478,6 +478,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return false;
   }
 
+  public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
+    checkInitialized();
+    return addCollectionElement(type, addEmptyTag(tagName, index));
+  }
+
   protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
     checkInitialized();
     final XmlTag tag = ensureTagExists();
@@ -492,11 +497,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     for (int i = existing; i < count; i++) {
       tag.add(createEmptyTag(tagName));
     }
-  }
-
-  public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
-    createFixedChildrenTags(tagName, myGenericInfoImpl.getFixedChildrenCount(tagName));
-    return addCollectionElement(type, addEmptyTag(tagName, index));
   }
 
   private DomElement addCollectionElement(final Type type, final XmlTag tag) {
@@ -518,7 +518,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         if (subTags.length == 0) {
           return (XmlTag)tag.add(newTag);
         }
-        
+
         return (XmlTag)tag.addBefore(newTag, subTags[0]);
       }
 

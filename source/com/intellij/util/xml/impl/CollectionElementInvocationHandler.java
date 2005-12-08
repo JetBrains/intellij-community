@@ -23,7 +23,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   }
 
   protected final XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
-    return (XmlTag) getParent().ensureTagExists().add(tag);
+    throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called");
   }
 
   public final void undefineInternal() {

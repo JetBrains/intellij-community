@@ -15,11 +15,9 @@ import java.util.List;
  */
 public class GetCollectionChildInvocation implements Invocation {
   private final String myQname;
-  private final int myStartIndex;
 
-  public GetCollectionChildInvocation(final String qname, final int startIndex) {
+  public GetCollectionChildInvocation(final String qname) {
     myQname = qname;
-    myStartIndex = startIndex;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -29,11 +27,11 @@ public class GetCollectionChildInvocation implements Invocation {
 
     handler.checkInitialized();
     final XmlTag[] subTags = tag.findSubTags(myQname);
-    if (subTags.length <= myStartIndex) return Collections.emptyList();
+    if (subTags.length == 0) return Collections.emptyList();
 
-    List<DomElement> elements = new ArrayList<DomElement>(subTags.length - myStartIndex);
-    for (int i = myStartIndex; i < subTags.length; i++) {
-      final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTags[i]);
+    List<DomElement> elements = new ArrayList<DomElement>(subTags.length);
+    for (XmlTag subTag : subTags) {
+      final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
       if (element != null) {
         elements.add(element.getProxy());
       }

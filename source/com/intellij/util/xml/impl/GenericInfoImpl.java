@@ -277,13 +277,13 @@ public class GenericInfoImpl implements DomGenericInfo {
 
     String qname = myCollectionChildrenGetterMethods.get(signature);
     if (qname != null) {
-      return new GetCollectionChildInvocation(qname, getFixedChildrenCount(qname));
+      return new GetCollectionChildInvocation(qname);
     }
 
     qname = myCollectionChildrenAdditionMethods.get(signature);
     if (qname != null) {
       return new AddChildInvocation(getTypeGetter(method),
-                                    getIndexGetter(method, getFixedChildrenCount(qname)),
+                                    getIndexGetter(method),
                                     qname,
                                     myCollectionChildrenClasses.get(qname));
     }
@@ -369,12 +369,12 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
 
-  private Function<Object[], Integer> getIndexGetter(final Method method, final int startIndex) {
+  private Function<Object[], Integer> getIndexGetter(final Method method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
       return new Function<Object[], Integer>() {
         public Integer fun(final Object[] s) {
-          return (Integer)s[0] + startIndex;
+          return (Integer)s[0];
         }
       };
     }
@@ -382,7 +382,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
       return new Function<Object[], Integer>() {
         public Integer fun(final Object[] s) {
-          return (Integer)s[1] + startIndex;
+          return (Integer)s[1];
         }
       };
     }
