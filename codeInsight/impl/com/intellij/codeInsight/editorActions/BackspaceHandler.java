@@ -14,6 +14,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.pom.java.LanguageLevel;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private EditorActionHandler myOriginalHandler;
@@ -50,13 +52,19 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     CharSequence chars = editor.getDocument().getCharsSequence();
     char c = chars.charAt(offset);
 
+    boolean toDeleteGt = c =='<' &&
+                        fileType == StdFileTypes.JAVA &&
+                        PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
+                        && BraceMatchingUtil.isAfterClassLikeIdentifier(offset, editor);
     myOriginalHandler.execute(editor, dataContext);
 
     if (offset >= editor.getDocument().getTextLength()) return true;
     chars = editor.getDocument().getCharsSequence();
-    if (c == '(' || c == '['){
+    if (c == '(' || c == '[' || toDeleteGt){
       char c1 = chars.charAt(offset);
-      if (c == '(' ? c1 != ')' : c1 != ']') return true;
+      if (c == '(' && c1 != ')') return true;
+      if (c == '[' && c1 != ']') return true;
+      if (c == '<' && c1 != '>') return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
@@ -66,7 +74,8 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         return true;
       }
 
-      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, braceMatcher.getTokenType(c == '(' ? ')' : ']', iterator),chars,fileType);
+      final char closingBrace = c == '(' ? ')' : c =='[' ? ']' : '>';
+      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, braceMatcher.getTokenType(closingBrace, iterator),chars,fileType);
       if (rparenOffset >= 0){
         iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
         boolean matched = BraceMatchingUtil.matchBrace(chars, fileType, iterator, false);

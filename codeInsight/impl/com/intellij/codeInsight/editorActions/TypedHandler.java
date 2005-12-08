@@ -41,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -381,6 +382,10 @@ public class TypedHandler implements TypedActionHandler {
       if (file instanceof XmlFile){
         if(handleXmlGreater(project, editor, fileType)) return;
       }
+      else if (fileType == StdFileTypes.JAVA && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+        PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        if (handleRParen(editor, fileType, '>', '<')) return;
+      }
     }
     else if (')' == charTyped){
       if (handleRParen(editor, fileType, ')', '(')) return;
@@ -405,9 +410,18 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
+    int offsetBefore = editor.getCaretModel().getOffset();
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
+    if ('<' == charTyped) {
+      if (fileType == StdFileTypes.JAVA && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+        PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        if (BraceMatchingUtil.isAfterClassLikeIdentifier(offsetBefore, editor)) {
+          handleAfterLParen(editor, fileType, '<');
+        }
+      }
+    }
+    else if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
       handleAfterLParen(editor, fileType, '(');
     }
     else if ('[' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
@@ -682,6 +696,9 @@ public class TypedHandler implements TypedActionHandler {
       else if (lparenChar == '[') {
         text = "]";
       }
+      else if (lparenChar == '<') {
+        text = ">";
+      }
       else {
         LOG.assertTrue(false);
 
@@ -708,6 +725,8 @@ public class TypedHandler implements TypedActionHandler {
 
     int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getTokenType(leftParen, iterator),  editor.getDocument().getCharsSequence(),fileType);
     if (lparenthOffset < 0) return false;
+
+    if (leftParen == '<' && !BraceMatchingUtil.isAfterClassLikeIdentifier(lparenthOffset, editor)) return false;
 
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);

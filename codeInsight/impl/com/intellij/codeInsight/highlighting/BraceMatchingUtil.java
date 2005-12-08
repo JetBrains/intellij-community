@@ -6,6 +6,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -34,6 +36,24 @@ public class BraceMatchingUtil {
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
   private static final int JSP_TOKEN_GROUP = 3;
   private static final int DOC_TOKEN_GROUP = 5;
+
+  public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    iterator.retreat();
+    final IElementType tokenType = iterator.getTokenType();
+    if (tokenType == JavaTokenType.IDENTIFIER) {
+      final CharSequence chars = editor.getDocument().getCharsSequence();
+      final char startChar = chars.charAt(iterator.getStart());
+      if (!Character.isUpperCase(startChar)) return false;
+      final CharSequence word = chars.subSequence(iterator.getStart(), iterator.getEnd());
+      if (word.length() == 1) return true; 
+      for (int i = 1; i < word.length(); i++) {
+        if (Character.isLowerCase(word.charAt(i))) return true;
+      }
+    }
+
+    return false;
+  }
 
   public interface BraceMatcher {
     int getTokenGroup(IElementType tokenType);
@@ -116,6 +136,7 @@ public class BraceMatchingUtil {
       PAIRING_TOKENS.put(JavaTokenType.LPARENTH, JavaTokenType.RPARENTH);
       PAIRING_TOKENS.put(JavaTokenType.LBRACE, JavaTokenType.RBRACE);
       PAIRING_TOKENS.put(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
+      PAIRING_TOKENS.put(JavaTokenType.LT, JavaTokenType.GT);
       PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);
       PAIRING_TOKENS.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlTokenType.XML_START_TAG_START);
       PAIRING_TOKENS.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
@@ -163,6 +184,7 @@ public class BraceMatchingUtil {
       return tokenType == JavaTokenType.LPARENTH ||
              tokenType == JavaTokenType.LBRACE ||
              tokenType == JavaTokenType.LBRACKET ||
+             tokenType == JavaTokenType.LT ||
              tokenType == XmlTokenType.XML_START_TAG_START ||
              tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
              tokenType == JspTokenType.JSP_SCRIPTLET_START ||
@@ -187,6 +209,7 @@ public class BraceMatchingUtil {
       if (tokenType == JavaTokenType.RPARENTH ||
           tokenType == JavaTokenType.RBRACE ||
           tokenType == JavaTokenType.RBRACKET ||
+          tokenType == JavaTokenType.GT ||
           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
           tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ||
           tokenType == JspTokenType.JSP_SCRIPTLET_END ||
@@ -283,6 +306,8 @@ public class BraceMatchingUtil {
         if (ch == '[') return JavaTokenType.LBRACKET;
         if (ch == ')') return JavaTokenType.RPARENTH;
         if (ch == '(') return JavaTokenType.LPARENTH;
+        if (ch == '<') return JavaTokenType.LT;
+        if (ch == '>') return JavaTokenType.GT;
       } else if(tokenType instanceof IJspElementType) {
         if (ch == ']') return ELTokenType.JSP_EL_RBRACKET;
         if (ch == '[') return ELTokenType.JSP_EL_LBRACKET;
