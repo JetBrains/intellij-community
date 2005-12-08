@@ -10,10 +10,12 @@ import java.util.Map;
  * @author peter
  */
 public class EnumConverter<T extends Enum> implements Converter<T>{
+  private final Class<T> myType;
   private final boolean myIsNamedEnum;
   private final Map<String,T> myCachedElements = new HashMap<String, T>();
 
   public EnumConverter(final Class<T> aClass) {
+    myType = aClass;
     myIsNamedEnum = NamedEnum.class.isAssignableFrom(aClass);
     for (T anEnum : aClass.getEnumConstants()) {
       myCachedElements.put(getStringValue(anEnum), anEnum);
@@ -30,5 +32,9 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
 
   public String toString(final T t, final ConvertContext context) {
     return getStringValue(t);
+  }
+
+  public Class<T> getDestinationType() {
+    return myType;
   }
 }

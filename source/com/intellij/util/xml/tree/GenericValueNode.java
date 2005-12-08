@@ -31,10 +31,16 @@ public class GenericValueNode extends AbstractDomElementNode {
   protected boolean doUpdate() {
     setUniformIcon(getNodeIcon());
     clearColoredText();
-    if (myModelElement.getStringValue() != null) {
+    final String stringValue = myModelElement.getStringValue();
+    final Object value = myModelElement.getValue();
+    if (value instanceof Boolean) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       addColoredFragment("=", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      addColoredFragment("\"" + myModelElement.getStringValue() + "\"", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+      addColoredFragment(String.valueOf(value), SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+    } else if (stringValue != null) {
+      addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      addColoredFragment("=", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      addColoredFragment("\"" + stringValue + "\"", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
     } else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }

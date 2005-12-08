@@ -225,7 +225,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (DomUtil.isDomElement(method.getReturnType())) {
       final String qname = getSubTagName(signature);
       if (qname != null) {
-        assert !myCollectionChildrenClasses.containsKey(qname) : "Collection and fixed children cannot intersect: " + qname;
+        assert !isCollectionChild(qname) : "Collection and fixed children cannot intersect: " + qname;
         int index = 0;
         final SubTag subTagAnnotation = signature.findAnnotation(SubTag.class, myClass);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
@@ -244,7 +244,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (DomUtil.isDomElement(type)) {
       final String qname = getSubTagNameForCollection(signature);
       if (qname != null) {
-        assert !myFixedChildrenCounts.containsKey(qname) : "Collection and fixed children cannot intersect: " + qname;
+        assert !isFixedChild(qname) : "Collection and fixed children cannot intersect: " + qname;
         myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(signature, qname);
         return true;
@@ -497,5 +497,13 @@ public class GenericInfoImpl implements DomGenericInfo {
       result.add(new AttributeChildDescriptionImpl(entry.getValue(), entry.getKey().findMethod(myClass)));
     }
     return result;
+  }
+
+  final boolean isFixedChild(final String qname) {
+    return myFixedChildrenCounts.containsKey(qname);
+  }
+
+  final boolean isCollectionChild(final String qname) {
+    return myCollectionChildrenClasses.containsKey(qname);
   }
 }

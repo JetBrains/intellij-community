@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 public interface Converter<T> {
   T fromString(String s, final ConvertContext context);
   String toString(T t, final ConvertContext context);
+  Class<T> getDestinationType();
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
@@ -24,6 +25,10 @@ public interface Converter<T> {
 
     public String toString(final Integer t, final ConvertContext context) {
       return t.toString();
+    }
+
+    public Class<Integer> getDestinationType() {
+      return Integer.class;
     }
   };
 
@@ -41,6 +46,10 @@ public interface Converter<T> {
     public String toString(final Boolean t, final ConvertContext context) {
       return t.toString();
     }
+
+    public Class<Boolean> getDestinationType() {
+      return Boolean.class;
+    }
   };
 
   Converter<String> EMPTY_CONVERTER = new Converter<String>() {
@@ -51,6 +60,10 @@ public interface Converter<T> {
     public String toString(final String t, final ConvertContext context) {
       return t;
     }
+
+    public Class<String> getDestinationType() {
+      return String.class;
+    }
   };
 
   Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
@@ -60,6 +73,10 @@ public interface Converter<T> {
 
     public String toString(final PsiClass t, final ConvertContext context) {
       return t.getQualifiedName();
+    }
+
+    public Class<PsiClass> getDestinationType() {
+      return PsiClass.class;
     }
   };
 
