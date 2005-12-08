@@ -515,7 +515,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     try {
       XmlTag newTag = createEmptyTag(tagName);
       if (index == 0) {
-        return (XmlTag)tag.add(newTag);
+        if (subTags.length == 0) {
+          return (XmlTag)tag.add(newTag);
+        }
+        
+        return (XmlTag)tag.addBefore(newTag, subTags[0]);
       }
 
       return (XmlTag)tag.addAfter(newTag, subTags[index - 1]);
