@@ -60,8 +60,6 @@ public class AdvancedProxy {
         factory = (Factory)e.create();
       }
 
-      //factory = (Factory)findConstructor(, constructorArgs).newInstance(constructorArgs);
-      //factory.setCallback(0, handler);
       ourFactories.put(key, factory);
       return (T)factory;
     }
@@ -97,6 +95,10 @@ public class AdvancedProxy {
       mySuperClass = superClass;
       myInterfaces = interfaces;
       myAdditionalMethods = additionalMethods;
+    }
+
+    public String toString() {
+      return mySuperClass + " " + (myInterfaces != null ? Arrays.asList(myInterfaces)  + " ": "") + myAdditionalMethods;
     }
 
     public boolean equals(final Object o) {
