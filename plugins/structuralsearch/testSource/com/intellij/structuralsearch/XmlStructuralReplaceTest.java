@@ -28,7 +28,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "<a/>";
     String s3 = "<a><b/></a>";
 
-    String expectedResult = "    <a><b/></a>";
+    String expectedResult = "<a><b/></a>";
     String actualResult = replacer.testReplace(s1,s2,s3,xmlOptions);
 
     assertEquals(
@@ -52,13 +52,13 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
     actualResult = replacer.testReplace(s4,s5,s6,xmlOptions);
     expectedResult = "<group id=\"EditorTabPopupMenu\">\n" +
-                     "    <reference ref=\"Compile\"/>\n" +
-                     "    <reference ref=\"RunContextPopupGroup\"/>\n" +
-                     "    <reference ref=\"ValidateXml\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"VersionControlsGroup\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"ExternalToolsGroup\"/>\n" +
+                     "      <reference ref=\"Compile\"/>\n" +
+                     "      <reference ref=\"RunContextPopupGroup\"/>\n" +
+                     "      <reference ref=\"ValidateXml\"/>\n" +
+                     "      <separator/>\n" +
+                     "      <reference ref=\"VersionControlsGroup\"/>\n" +
+                     "      <separator/>\n" +
+                     "      <reference ref=\"ExternalToolsGroup\"/>\n" +
                      "</group>";
     assertEquals(
       "Replace tag",
@@ -72,8 +72,8 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String s9 = "<h5>$Content$</h5>";
 
     actualResult = replacer.testReplace(s7,s8,s9,xmlOptions);
-    expectedResult = "    <h5>My title <aaa>ZZZZ</aaa>  My title 3</h5>\n" +
-                     "    <h4>My title 2</h4>";
+    expectedResult = "<h5>My title <aaa>ZZZZ</aaa>  My title 3</h5>\n" +
+                     "<h4>My title 2</h4>";
 
     assertEquals(
       "Replace tag saving content",

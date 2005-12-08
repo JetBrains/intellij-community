@@ -10,13 +10,16 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
-import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
@@ -155,6 +158,62 @@ public class ReplacerImpl {
                          final String replacementToMake,
                          final ReplacementInfoImpl info,
                          final PsiElement elementParent) {
+    PsiManager.getInstance(project).performActionWithFormatterDisabled(
+      new Runnable() {
+        public void run() {
+          doReplacement(info, elementToReplace, replacementToMake, elementParent);
+        }
+      }
+    );
+
+    try {
+
+      CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
+      final PsiFile containingFile = elementParent.getContainingFile();
+
+      if (containingFile !=null) {
+
+        if (options.isToShortenFQN()) {
+          if (containingFile.getVirtualFile() != null) {
+            PsiDocumentManager.getInstance(project).commitDocument(
+              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+            );
+          }
+
+          final int paretOffset = elementParent.getTextRange().getStartOffset();
+
+          codeStyleManager.shortenClassReferences(
+            containingFile,
+            paretOffset,
+            paretOffset + elementParent.getTextLength()
+          );
+        }
+
+        if (options.isToReformatAccordingToStyle()) {
+          if (containingFile.getVirtualFile() != null) {
+            PsiDocumentManager.getInstance(project).commitDocument(
+              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+            );
+          }
+
+          final int paretOffset = elementParent.getTextRange().getStartOffset();
+          codeStyleManager.reformatRange(
+            containingFile,
+            paretOffset,
+            paretOffset + elementParent.getTextLength(),
+            true
+          );
+        }
+      }
+    } catch(IncorrectOperationException ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  private void doReplacement(final ReplacementInfoImpl info,
+                             final PsiElement elementToReplace,
+                             final String replacementToMake,
+                             final PsiElement elementParent) {
     boolean listContext = false;
 
     try {
@@ -167,8 +226,8 @@ public class ReplacerImpl {
       PsiElement[] statements = MatcherImplUtil.createTreeFromText(
         replacementToMake,
         el instanceof PsiMember && !isSymbolReplacement(el, context)?
-          MatcherImplUtil.TreeContext.Class :
-          MatcherImplUtil.TreeContext.Block,
+        MatcherImplUtil.TreeContext.Class :
+        MatcherImplUtil.TreeContext.Block,
         options.getMatchOptions().getFileType(),
         project
       );
@@ -203,6 +262,7 @@ public class ReplacerImpl {
                 replacement.addAfter(
                   catchSection, catches[catches.length-1]
                 );
+                replacement.addBefore(createWhiteSpace(replacement), replacement.getLastChild());
               }
             }
           }
@@ -251,6 +311,7 @@ public class ReplacerImpl {
                   queryClazz.getExtendsList().getTextLength() == 0 &&
                   clazz.getExtendsList().getTextLength() != 0
                   ) {
+                replaceClazz.addBefore(clazz.getExtendsList().getPrevSibling(),replaceClazz.getExtendsList()); // whitespace
                 replaceClazz.getExtendsList().addRange(
                   clazz.getExtendsList().getFirstChild(),clazz.getExtendsList().getLastChild()
                 );
@@ -260,6 +321,7 @@ public class ReplacerImpl {
                   queryClazz.getImplementsList().getTextLength() == 0 &&
                   clazz.getImplementsList().getTextLength() != 0
                   ) {
+                replaceClazz.addBefore(clazz.getImplementsList().getPrevSibling(),replaceClazz.getImplementsList()); // whitespace
                 replaceClazz.getImplementsList().addRange(
                   clazz.getImplementsList().getFirstChild(),
                   clazz.getImplementsList().getLastChild()
@@ -283,7 +345,11 @@ public class ReplacerImpl {
           el.replace(replacement);
         }
       } else {
+        final PsiElement nextSibling = el.getNextSibling();
         el.delete();
+        if (nextSibling instanceof PsiWhiteSpace) {
+          nextSibling.delete();
+        }
       }
 
     } catch(IncorrectOperationException ex) {
@@ -296,69 +362,34 @@ public class ReplacerImpl {
           PsiElement element = findRealSubstitutionElement(
             aMatchesPtrList.getElement()
           );
-          element.delete();
-          //PsiElement firstToDelete = element;
-          //PsiElement lastToDelete = element;
-          //final PsiElement prevSibling = element.getPrevSibling();
-          //
-          //if (prevSibling instanceof PsiWhiteSpace) {
-          //  firstToDelete = prevSibling;
-          //}
-          //
-          //final PsiElement nextSibling = element.getNextSibling();
-          //if (nextSibling instanceof PsiWhiteSpace) {
-          //  lastToDelete = nextSibling;
-          //}
 
-          //element.getParent().deleteChildRange(firstToDelete,lastToDelete);
+          PsiElement firstToDelete = element;
+          PsiElement lastToDelete = element;
+          PsiElement prevSibling = element.getPrevSibling();
+          PsiElement nextSibling = element.getNextSibling();
+
+          if (prevSibling instanceof PsiWhiteSpace) {
+            firstToDelete = prevSibling;
+            prevSibling = prevSibling != null ? prevSibling.getPrevSibling(): null;
+          } else if (prevSibling == null && nextSibling instanceof PsiWhiteSpace) {
+            lastToDelete = nextSibling;
+          }
+
+          if (element instanceof PsiExpression) {
+            if (element.getParent().getParent() instanceof PsiCall &&
+                prevSibling instanceof PsiJavaToken &&
+                ((PsiJavaToken)prevSibling).getTokenType() == ElementType.COMMA
+               ) {
+              firstToDelete = prevSibling;
+            }
+          }
+
+          element.getParent().deleteChildRange(firstToDelete,lastToDelete);
         }
         catch (IncorrectOperationException ex) {
           ex.printStackTrace();
         }
       }
-    }
-
-    try {
-
-      CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
-      final PsiFile containingFile = elementParent.getContainingFile();
-
-      if (containingFile !=null) {
-
-        if (options.isToShortenFQN()) {
-          if (containingFile.getVirtualFile() != null) {
-            PsiDocumentManager.getInstance(project).commitDocument(
-              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-            );
-          }
-
-          final int paretOffset = elementParent.getTextRange().getStartOffset();
-
-          codeStyleManager.shortenClassReferences(
-            containingFile,
-            paretOffset,
-            paretOffset + elementParent.getTextLength()
-          );
-        }
-
-        if (options.isToReformatAccordingToStyle()) {
-          if (containingFile.getVirtualFile() != null) {
-            PsiDocumentManager.getInstance(project).commitDocument(
-              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-            );
-          }
-
-          final int paretOffset = elementParent.getTextRange().getStartOffset();
-          codeStyleManager.reformatRange(
-            containingFile,
-            paretOffset,
-            paretOffset + elementParent.getTextLength(),
-            true
-          );
-        }
-      }
-    } catch(IncorrectOperationException ex) {
-      ex.printStackTrace();
     }
   }
 
@@ -542,8 +573,10 @@ public class ReplacerImpl {
       if (comment!=null && replacementNamedElement instanceof PsiDocCommentOwner &&
           !(replacementNamedElement.getFirstChild() instanceof PsiDocComment)
          ) {
-        replacementNamedElement.addBefore(
+        final PsiElement nextSibling = comment.getNextSibling();
+        replacementNamedElement.addRangeBefore(
           comment,
+          nextSibling instanceof PsiWhiteSpace ? nextSibling:comment,
           replacementNamedElement.getFirstChild()
         );
       }
@@ -555,14 +588,36 @@ public class ReplacerImpl {
         
         if (searchNamedElement instanceof PsiModifierListOwner && 
             ((PsiModifierListOwner)searchNamedElement).getModifierList().getTextLength() == 0 &&
-            ((PsiModifierListOwner)replacementNamedElement).getModifierList().getTextLength() == 0
+            ((PsiModifierListOwner)replacementNamedElement).getModifierList().getTextLength() == 0 &&
+            modifierList.getTextLength() > 0
            ) {
-          ((PsiModifierListOwner)replacementNamedElement).getModifierList().replace(
+          final PsiModifierListOwner modifierListOwner = ((PsiModifierListOwner)replacementNamedElement);
+          PsiElement space = modifierList.getNextSibling();
+          if (!(space instanceof PsiWhiteSpace)) {
+            space = createWhiteSpace(space);
+          }
+
+          modifierListOwner.getModifierList().replace(
             modifierList
           );
+          // copy space after modifier list
+          if (space instanceof PsiWhiteSpace) {
+            modifierListOwner.addRangeAfter(space,space,modifierListOwner.getModifierList());
+          }
         }
       }
     }
+  }
+
+  private static PsiElement createWhiteSpace(final PsiElement space) {
+    return Factory.createSingleLeafElement(
+      ElementType.WHITE_SPACE,
+      new char[] {' '},
+      0,
+      1,
+      SharedImplUtil.findCharTableByTree(space.getNode()),
+      space.getManager()
+    ).getPsi();
   }
 
   public static void checkSupportedReplacementPattern(Project project, String search,
