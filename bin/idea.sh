@@ -36,7 +36,7 @@ if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
 fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
-JVM_ARGS=`cat "$IDEA_HOME/bin/idea.vmoptions | tr '\n' ' '`"
+JVM_ARGS=`tr '\n' ' ' < "$IDEA_HOME/bin/idea.vmoptions"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
 CLASSPATH=../lib/idea.jar
