@@ -149,6 +149,7 @@ public final class FormSourceCodeGenerator {
                                   class2variableIndex,
                                   id2component, scope);
     generateComponentReferenceProperties(topComponent, component2variable, class2variableIndex, id2component);
+    generateButtonGroups(rootContainer, component2variable, class2variableIndex, id2component);
 
     final String methodText = myBuffer.toString();
 
@@ -192,8 +193,7 @@ public final class FormSourceCodeGenerator {
     codeStyleManager.reformat(initializer);
   }
 
-  @NonNls
-  public final static String METHOD_NAME = "$$$setupUI$$$";
+  @NonNls public final static String METHOD_NAME = "$$$setupUI$$$";
 
   public static void cleanup(final PsiClass aClass) throws IncorrectOperationException{
     final PsiMethod[] methods = aClass.findMethodsByName(METHOD_NAME, false);
@@ -471,6 +471,31 @@ public final class FormSourceCodeGenerator {
       final LwContainer container = (LwContainer)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateComponentReferenceProperties((LwComponent)container.getComponent(i), component2variable, class2variableIndex, id2component);
+      }
+    }
+  }
+
+  private void generateButtonGroups(final LwRootContainer rootContainer,
+                                    final HashMap<LwComponent, String> component2variable,
+                                    final TObjectIntHashMap<String> class2variableIndex,
+                                    final HashMap<String, LwComponent> id2component) {
+    LwButtonGroup[] groups = rootContainer.getButtonGroups();
+    if (groups.length > 0) {
+      append("javax.swing.ButtonGroup buttonGroup;");
+      for(LwButtonGroup group: groups) {
+        String[] ids = group.getComponentIds();
+        if (ids.length > 0) {
+          append("buttonGroup = new javax.swing.ButtonGroup();");
+          for(String id: ids) {
+            LwComponent target = id2component.get(id);
+            if (target != null) {
+              String targetVariable = getVariable(target, component2variable, class2variableIndex);
+              startMethodCall("buttonGroup", "add");
+              pushVar(targetVariable);
+              endMethod();
+            }
+          }
+        }
       }
     }
   }

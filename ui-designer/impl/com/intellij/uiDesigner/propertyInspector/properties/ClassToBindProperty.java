@@ -15,18 +15,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -42,11 +44,6 @@ public final class ClassToBindProperty extends Property {
     myUiEditor = editor;
     myRenderer = new ClassToBindRenderer();
     myEditor = new MyEditor(editor.getProject());
-  }
-
-  @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
   }
 
   public PropertyEditor getEditor(){

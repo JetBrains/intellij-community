@@ -2,7 +2,6 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
@@ -33,11 +32,6 @@ public final class IntroIntProperty extends IntrospectedProperty {
     super(name, readMethod, writeMethod);
     myRenderer = renderer;
     myEditor = editor;
-  }
-
-  @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
   }
 
   @NotNull

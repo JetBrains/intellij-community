@@ -7,11 +7,10 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
-
-import java.awt.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * This class is a base for implementing such properties
@@ -75,11 +74,6 @@ public abstract class AbstractDimensionPropery extends Property{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -111,11 +105,6 @@ public abstract class AbstractDimensionPropery extends Property{
       final Dimension dimension = (Dimension)getParent().getValue(component);
       dimension.height = ((Integer)value).intValue();
       getParent().setValue(component, dimension);
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
     }
 
     @NotNull

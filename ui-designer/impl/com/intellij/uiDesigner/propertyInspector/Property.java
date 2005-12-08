@@ -85,8 +85,9 @@ public abstract class Property {
   /**
    * @return child properties.
    */
-  @NotNull
-  public abstract Property[] getChildren();
+  @NotNull public Property[] getChildren() {
+    return EMPTY_ARRAY;
+  }
 
   /**
    * @return property's renderer.

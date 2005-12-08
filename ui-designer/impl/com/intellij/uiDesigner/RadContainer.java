@@ -635,11 +635,6 @@ public class RadContainer extends RadComponent implements IContainer {
     }
 
     @NotNull
-    public Property[] getChildren() {
-      return Property.EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer() {
       return null;
     }

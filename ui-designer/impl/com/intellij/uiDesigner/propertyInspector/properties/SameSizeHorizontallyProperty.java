@@ -56,11 +56,6 @@ public final class SameSizeHorizontallyProperty extends Property{
   }
 
   @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
-  }
-
-  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

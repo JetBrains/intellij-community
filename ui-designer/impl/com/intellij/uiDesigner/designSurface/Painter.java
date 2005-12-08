@@ -1,8 +1,6 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -12,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -112,10 +111,7 @@ public final class Painter {
    * Method does nothing if the <code>component</code> is not an instance
    * of <code>RadContainer</code>.
    */
-  private static void paintComponentBoundsImpl(final GuiEditor editor, final RadComponent component, final Graphics g){
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
     if (!(component instanceof RadContainer)){
       return;
     }
@@ -166,9 +162,6 @@ public final class Painter {
   public static void paintGridOutline(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
     if (!editor.isShowGrid()) {
       return;
-    }
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
       return;
@@ -270,11 +263,7 @@ public final class Painter {
   /**
    * Paints selection for the specified <code>component</code>.
    */
-  public static void paintSelectionDecoration(final RadComponent component, final Graphics g){
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public static void paintSelectionDecoration(@NotNull final RadComponent component, final Graphics g){
     if (component.isSelected()) {
       g.setColor(Color.BLUE);
       final Point[] points = getPoints(component.getWidth(), component.getHeight());
@@ -289,10 +278,6 @@ public final class Painter {
    * @param y in component's coord system
    */
   public static int getResizeMask(@NotNull final RadComponent component, final int x, final int y) {
-    //noinspection ConstantConditions
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
     if (component.getParent() == null || !component.isSelected()) {
       return 0;
     }
@@ -386,5 +371,56 @@ public final class Painter {
     points[W] = new Point(GAP, height / 2); // W
 
     return points;
+  }
+
+  public static void paintButtonGroupLines(RadRootContainer rootContainer, RadButtonGroup group, Graphics g) {
+    List<RadComponent> components = rootContainer.getGroupContents(group);
+    if (components.size() < 2) return;
+    Rectangle[] allBounds = new Rectangle[components.size()];
+    int lastTop = -1;
+    int minLeft = Integer.MAX_VALUE;
+    for(int i=0; i<components.size(); i++) {
+      final Rectangle rc = SwingUtilities.convertRectangle(
+        components.get(i).getParent().getDelegee(),
+        components.get(i).getBounds(),
+        rootContainer.getDelegee()
+      );
+      allBounds [i] = rc;
+
+      minLeft = Math.min(minLeft, rc.x);
+      if (i == 0) {
+        lastTop = rc.y;
+      }
+      else if (lastTop != rc.y) {
+        lastTop = Integer.MIN_VALUE;
+      }
+    }
+
+    Graphics2D g2d = (Graphics2D) g;
+    Stroke oldStroke = g2d.getStroke();
+    g2d.setStroke(new BasicStroke(2.0f));
+    g2d.setColor(new Color(104, 107, 130));
+    if (lastTop != Integer.MIN_VALUE) {
+      // all items in group have same Y
+      int left = Integer.MAX_VALUE, right = Integer.MIN_VALUE;
+      for(Rectangle rc: allBounds) {
+        final int midX = (int)rc.getCenterX();
+        left = Math.min(left, midX);
+        right = Math.max(right, midX);
+        g2d.drawLine(midX, lastTop-8, midX, lastTop);
+      }
+      g2d.drawLine(left, lastTop-8, right, lastTop-8);
+    }
+    else {
+      int top = Integer.MAX_VALUE, bottom = Integer.MIN_VALUE;
+      for(Rectangle rc: allBounds) {
+        final int midY = (int)rc.getCenterY();
+        top = Math.min(top, midY);
+        bottom = Math.max(bottom, midY);
+        g2d.drawLine(minLeft-8, midY, rc.x, midY);
+      }
+      g2d.drawLine(minLeft-8, top, minLeft-8, bottom);
+    }
+    g2d.setStroke(oldStroke);
   }
 }

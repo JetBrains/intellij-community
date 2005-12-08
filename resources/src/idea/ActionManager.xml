@@ -1257,6 +1257,8 @@
       <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction"/>
       <action id="GuiDesigner.IncreaseIndent" class="com.intellij.uiDesigner.actions.IncreaseIndentAction"/>
       <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction"/>
+      <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
+      <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>

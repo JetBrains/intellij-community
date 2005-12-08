@@ -3,19 +3,26 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.lw.LwButtonGroup;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class RadRootContainer extends RadContainer implements IRootContainer{
+public final class RadRootContainer extends RadContainer implements IRootContainer {
   private String myClassToBind;
   private String myMainComponentBinding;
   private String myLayoutManager;
+  private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
 
-  public RadRootContainer(final Module module, final Class aClass, final String id){
+  public RadRootContainer(final Module module, final Class aClass, final String id) {
     super(module, aClass, id);
   }
 
@@ -76,6 +83,13 @@ public final class RadRootContainer extends RadContainer implements IRootContain
         writer.addAttribute("layout-manager", myLayoutManager);
       }
       writeChildrenImpl(writer);
+      if (myButtonGroups.size() > 0) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_BUTTON_GROUPS);
+        for(RadButtonGroup group: myButtonGroups) {
+          group.write(writer);
+        }
+        writer.endElement();
+      }
     }finally{
       writer.endElement(); // form
     }
@@ -84,5 +98,71 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   @Override @Nullable
   protected AbstractLayout createInitialLayout() {
     return new XYLayoutManagerImpl();
+  }
+
+  @Nullable public RadButtonGroup findGroupForComponent(@NotNull final RadComponent component) {
+    for(RadButtonGroup group: myButtonGroups) {
+      if (group.contains(component)) {
+        return group;
+      }
+    }
+    return null;
+  }
+
+  public void setGroupForComponent(@NotNull RadComponent component, @Nullable RadButtonGroup value) {
+    for(RadButtonGroup group: myButtonGroups) {
+      if (group == value) {
+        group.add(component);
+      }
+      else {
+        group.remove(component);
+      }
+    }
+  }
+
+  public RadButtonGroup[] getAllGroups() {
+    return myButtonGroups.toArray(new RadButtonGroup[myButtonGroups.size()]);
+  }
+
+  public String suggestGroupName() {
+    int groupNumber = 1;
+    group: while(true) {
+      @NonNls String suggestedName = "buttonGroup" + groupNumber;
+      for(RadButtonGroup group: myButtonGroups) {
+        if (group.getName().equals(suggestedName)) {
+          groupNumber++;
+          continue group;
+        }
+      }
+      return suggestedName;
+    }
+  }
+
+  public RadButtonGroup createGroup(final String groupName) {
+    RadButtonGroup group = new RadButtonGroup(groupName);
+    myButtonGroups.add(group);
+    return group;
+  }
+
+  public void setButtonGroups(final LwButtonGroup[] buttonGroups) {
+    myButtonGroups.clear();
+    for(LwButtonGroup lwGroup: buttonGroups) {
+      final String[] componentIds = lwGroup.getComponentIds();
+      if (componentIds.length > 0) {
+        RadButtonGroup group = createGroup(lwGroup.getName());
+        group.addComponentIds(componentIds);
+      }
+    }
+  }
+
+  public List<RadComponent> getGroupContents(final RadButtonGroup group) {
+    ArrayList<RadComponent> result = new ArrayList<RadComponent>();
+    for(String id: group.getComponentIds()) {
+      RadComponent component = FormEditingUtil.findComponent(this, id);
+      if (component != null) {
+        result.add(component);
+      }
+    }
+    return result;
   }
 }

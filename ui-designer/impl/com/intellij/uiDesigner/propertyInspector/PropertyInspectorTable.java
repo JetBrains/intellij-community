@@ -103,6 +103,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final PreferredSizeProperty myPreferredSizeProperty;
   private final MaximumSizeProperty myMaximumSizeProperty;
   private final LayoutManagerProperty myLayoutManagerProperty;
+  private final ButtonGroupProperty myButtonGroupProperty = new ButtonGroupProperty();
 
   /**
    * This two attributes exist here only for performance reason
@@ -461,6 +462,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         result.add(myMinimumSizeProperty);
         result.add(myPreferredSizeProperty);
         result.add(myMaximumSizeProperty);
+      }
+      if (component.getDelegee() instanceof AbstractButton &&
+        !(component.getDelegee() instanceof JButton)) {
+        result.add(myButtonGroupProperty);
       }
 
       if (!isSpacer && !(component instanceof RadErrorComponent)){
@@ -1081,6 +1086,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myMinimumSizeProperty);
       updateUI(myPreferredSizeProperty);
       updateUI(myMaximumSizeProperty);
+      updateUI(myButtonGroupProperty);
     }
   }
 

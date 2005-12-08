@@ -4,7 +4,6 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
@@ -34,11 +33,6 @@ public final class IntroStringProperty extends IntrospectedProperty{
     super(name, readMethod, writeMethod);
     myRenderer = new StringRenderer();
     myEditor = new StringEditor();
-  }
-
-  @NotNull
-  public Property[] getChildren() {
-    return EMPTY_ARRAY;
   }
 
   @NotNull

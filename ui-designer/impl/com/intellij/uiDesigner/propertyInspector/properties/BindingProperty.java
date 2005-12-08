@@ -40,11 +40,6 @@ public final class BindingProperty extends Property {
     myEditor = new BindingEditor(editor);
   }
 
-  @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
-  }
-
   public PropertyEditor getEditor(){
     return myEditor;
   }

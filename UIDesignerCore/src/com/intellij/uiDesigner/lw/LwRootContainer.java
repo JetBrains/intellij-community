@@ -17,9 +17,12 @@ package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 
 /**
@@ -30,6 +33,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   private String myClassToBind;
   private String myMainComponentBinding;
   private String myLayoutManager;
+  private ArrayList myButtonGroups = new ArrayList();
 
   public LwRootContainer() throws Exception{
     super(JPanel.class.getName());
@@ -58,7 +62,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     if(!"form".equals(element.getName())){
       throw new IllegalArgumentException("unexpected element: "+element);
     }
-    
+
     if (!Utils.FORM_NAMESPACE.equals(element.getNamespace().getURI())) {
       throw new AlienFormFileException();
     }
@@ -67,10 +71,33 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
 
     myClassToBind = element.getAttributeValue("bind-to-class");
     myLayoutManager = element.getAttributeValue("layout-manager");
-    
+
     // Constraints and properties
-    readChildrenImpl(element, provider);
+    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
+      final Element child = (Element)i.next();
+      if (child.getName().equals(UIFormXmlConstants.ELEMENT_BUTTON_GROUPS)) {
+        readButtonGroups(child);
+      }
+      else {
+        final LwComponent component = createComponentFromTag(child);
+        addComponent(component);
+        component.read(child, provider);
+      }
+    }
 
     myMainComponentBinding = element.getAttributeValue("stored-main-component-binding");
+  }
+
+  private void readButtonGroups(final Element element) {
+    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
+      final Element child = (Element)i.next();
+      LwButtonGroup group = new LwButtonGroup();
+      group.read(child);
+      myButtonGroups.add(group);
+    }
+  }
+
+  public LwButtonGroup[] getButtonGroups() {
+    return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[myButtonGroups.size()]);
   }
 }

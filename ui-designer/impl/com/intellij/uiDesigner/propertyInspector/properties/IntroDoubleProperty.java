@@ -27,11 +27,6 @@ public final class IntroDoubleProperty extends IntrospectedProperty{
   }
 
   @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
-  }
-
-  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

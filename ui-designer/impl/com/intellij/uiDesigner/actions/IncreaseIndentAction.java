@@ -34,9 +34,7 @@ public class IncreaseIndentAction extends AnAction {
     }
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
+  @Override public void update(AnActionEvent e) {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
       final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);

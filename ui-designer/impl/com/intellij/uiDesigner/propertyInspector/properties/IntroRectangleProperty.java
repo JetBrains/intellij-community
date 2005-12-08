@@ -81,11 +81,6 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -117,11 +112,6 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       final Rectangle r=(Rectangle)getParent().getValue(component);
       r.y=((Integer)value).intValue();
       getParent().setValue(component,r);
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
     }
 
     @NotNull
@@ -159,11 +149,6 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -195,11 +180,6 @@ public final class IntroRectangleProperty extends IntrospectedProperty{
       final Rectangle r=(Rectangle)getParent().getValue(component);
       r.height=((Integer)value).intValue();
       getParent().setValue(component,r);
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
     }
 
     @NotNull

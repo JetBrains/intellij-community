@@ -44,10 +44,6 @@ public class IntroFontProperty extends IntrospectedProperty {
     }
   }
 
-  @NotNull public Property[] getChildren() {
-    return EMPTY_ARRAY;
-  }
-
   @NotNull public PropertyRenderer getRenderer() {
     return myFontRenderer;
   }

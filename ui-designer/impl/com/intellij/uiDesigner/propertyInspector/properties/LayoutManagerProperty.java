@@ -47,10 +47,6 @@ public class LayoutManagerProperty extends Property {
     ((RadRootContainer) component).setLayoutManager((String) value);
   }
 
-  @NotNull public Property[] getChildren() {
-    return EMPTY_ARRAY;
-  }
-
   @NotNull public PropertyRenderer getRenderer() {
     return myRenderer;
   }

@@ -7,11 +7,10 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
-
-import java.awt.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -71,11 +70,6 @@ public abstract class AbstractInsetsProperty extends Property{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return Property.EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -107,11 +101,6 @@ public abstract class AbstractInsetsProperty extends Property{
       final Insets insets=(Insets)getParent().getValue(component);
       final int left=((Integer)value).intValue();
       getParent().setValue(component,new Insets(insets.top, left, insets.bottom, insets.right));
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return Property.EMPTY_ARRAY;
     }
 
     @NotNull
@@ -149,11 +138,6 @@ public abstract class AbstractInsetsProperty extends Property{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return Property.EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -185,11 +169,6 @@ public abstract class AbstractInsetsProperty extends Property{
       final Insets insets=(Insets)getParent().getValue(component);
       final int right=((Integer)value).intValue();
       getParent().setValue(component,new Insets(insets.top, insets.left, insets.bottom, right));
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return Property.EMPTY_ARRAY;
     }
 
     @NotNull

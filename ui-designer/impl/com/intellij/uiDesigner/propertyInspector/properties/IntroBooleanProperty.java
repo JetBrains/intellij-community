@@ -26,11 +26,6 @@ public final class IntroBooleanProperty extends IntrospectedProperty {
     myEditor = new BooleanEditor();
   }
 
-  @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
-  }
-
   public PropertyEditor getEditor(){
     return myEditor;
   }

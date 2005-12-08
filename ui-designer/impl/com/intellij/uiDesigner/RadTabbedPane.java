@@ -271,11 +271,6 @@ public final class RadTabbedPane extends RadContainer{
     }
 
     @NotNull
-    public Property[] getChildren() {
-      return Property.EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer() {
       throw new UnsupportedOperationException();
     }

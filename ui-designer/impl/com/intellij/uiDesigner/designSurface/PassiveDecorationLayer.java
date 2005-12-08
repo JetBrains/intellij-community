@@ -4,10 +4,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.RadButtonGroup;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
 
 /**
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
@@ -23,11 +26,6 @@ class PassiveDecorationLayer extends JComponent{
   private static Icon ourDragIcon;
 
   public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
-    //noinspection ConstantConditions
-    if (editor == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
     myEditor = editor;
   }
 
@@ -38,6 +36,9 @@ class PassiveDecorationLayer extends JComponent{
     // Paint component bounds and grid markers
     Painter.paintComponentDecoration(myEditor, component, g);
 
+    final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
+    final RadRootContainer rootContainer = myEditor.getRootContainer();
+
     // Paint selection and dragger
     FormEditingUtil.iterate(
       component,
@@ -47,8 +48,15 @@ class PassiveDecorationLayer extends JComponent{
             component.getDelegee(),
             0,
             0,
-            myEditor.getRootContainer().getDelegee()
+            rootContainer.getDelegee()
           );
+          if (component.isSelected()) {
+            RadButtonGroup group = rootContainer.findGroupForComponent(component);
+            if (group != null && !paintedGroups.contains(group)) {
+              paintedGroups.add(group);
+              Painter.paintButtonGroupLines(rootContainer, group, g);
+            }
+          }
           g.translate(point.x, point.y);
           try{
             Painter.paintSelectionDecoration(component, g);
@@ -70,7 +78,7 @@ class PassiveDecorationLayer extends JComponent{
     if (ourDragIcon == null) {
       ourDragIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
     }
-    return ourDragIcon;   
+    return ourDragIcon;
   }
 
   public void paint(final Graphics g){

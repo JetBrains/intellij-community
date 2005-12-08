@@ -232,11 +232,7 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   protected final void readChildren(final Element element, final PropertiesProvider provider) throws Exception{
     final Element childrenElement = LwXmlReader.getRequiredChild(element, "children");
-    readChildrenImpl(childrenElement, provider);
-  }
-
-  protected final void readChildrenImpl(final Element element, final PropertiesProvider provider) throws Exception {
-    for(Iterator i=element.getChildren().iterator(); i.hasNext();){
+    for(Iterator i=childrenElement.getChildren().iterator(); i.hasNext();){
       final Element child = (Element)i.next();
       final LwComponent component = createComponentFromTag(child);
       addComponent(component);

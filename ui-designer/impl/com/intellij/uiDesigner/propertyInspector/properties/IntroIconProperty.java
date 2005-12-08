@@ -43,10 +43,6 @@ public class IntroIconProperty extends IntrospectedProperty {
     myEditor = new IconEditor();
   }
 
-  @NotNull public Property[] getChildren() {
-    return Property.EMPTY_ARRAY;
-  }
-
   public void write(@NotNull Object value, XmlWriter writer) {
     IconDescriptor descriptor = (IconDescriptor) value;
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, descriptor.getIconPath());

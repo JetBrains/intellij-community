@@ -27,10 +27,6 @@ public class IntroComponentProperty extends IntrospectedProperty {
     super(name, readMethod, writeMethod);
   }
 
-  @NotNull public Property[] getChildren() {
-    return Property.EMPTY_ARRAY;
-  }
-
   @NotNull public PropertyRenderer getRenderer() {
     return myRenderer;
   }

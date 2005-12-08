@@ -86,11 +86,6 @@ public final class BorderProperty extends Property{
     }
 
     @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
-    }
-
-    @NotNull
     public PropertyRenderer getRenderer(){
       return myRenderer;
     }
@@ -130,11 +125,6 @@ public final class BorderProperty extends Property{
         title=null;
       }
       container.setBorderTitle(title);
-    }
-
-    @NotNull
-    public Property[] getChildren(){
-      return EMPTY_ARRAY;
     }
 
     @NotNull

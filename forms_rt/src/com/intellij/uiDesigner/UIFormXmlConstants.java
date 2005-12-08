@@ -37,6 +37,10 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_STYLE = "style";
   public static final String ATTRIBUTE_SWING_FONT = "swing-font";
   public static final String ATTRIBUTE_INDENT = "indent";
+  public static final String ATTRIBUTE_ID = "id";
+  public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
+  public static final String ELEMENT_GROUP = "group";
+  public static final String ELEMENT_MEMBER = "member";
 
   private UIFormXmlConstants() {
   }

@@ -45,11 +45,6 @@ public final class VGapProperty extends Property{
   }
 
   @NotNull
-  public Property[] getChildren(){
-    return EMPTY_ARRAY;
-  }
-
-  @NotNull
   public PropertyRenderer getRenderer(){
     return myRenderer;
   }

@@ -30,10 +30,6 @@ public class IntroColorProperty extends IntrospectedProperty {
     myColorEditor = new ColorEditor(name);
   }
 
-  @NotNull public Property[] getChildren() {
-    return EMPTY_ARRAY;
-  }
-
   @NotNull public PropertyRenderer getRenderer() {
     return myColorRenderer;
   }

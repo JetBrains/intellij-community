@@ -88,11 +88,6 @@ public abstract class SizePolicyProperty extends Property{
     }
 
     @NotNull
-    public final Property[] getChildren(){
-      return Property.EMPTY_ARRAY;
-    }
-
-    @NotNull
     public final PropertyRenderer getRenderer(){
       return myRenderer;
     }

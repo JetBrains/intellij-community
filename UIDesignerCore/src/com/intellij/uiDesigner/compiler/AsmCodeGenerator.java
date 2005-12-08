@@ -47,6 +47,7 @@ public class AsmCodeGenerator {
   private static Map myComponentLayoutCodeGenerators = new HashMap();
   private static Map myPropertyCodeGenerators = new HashMap();
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
+  private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
 
   static {
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
@@ -252,6 +253,7 @@ public class AsmCodeGenerator {
         final LwComponent topComponent = (LwComponent)myRootContainer.getComponent(0);
         generateSetupCodeForComponent(topComponent, generator, -1);
         generateComponentReferenceProperties(topComponent, generator);
+        generateButtonGroups(myRootContainer, generator);
       }
       catch (CodeGenerationException e) {
         myErrors.add(e.getMessage());
@@ -386,6 +388,32 @@ public class AsmCodeGenerator {
 
         for(int i=0; i<container.getComponentCount(); i++) {
           generateComponentReferenceProperties((LwComponent) container.getComponent(i), generator);
+        }
+      }
+    }
+
+    private void generateButtonGroups(final LwRootContainer rootContainer, final GeneratorAdapter generator) {
+      LwButtonGroup[] groups = rootContainer.getButtonGroups();
+      if (groups.length > 0) {
+        int groupLocal = generator.newLocal(ourButtonGroupType);
+        for(int groupIndex=0; groupIndex<groups.length; groupIndex++) {
+          String[] ids = groups [groupIndex].getComponentIds();
+
+          if (ids.length > 0) {
+            generator.newInstance(ourButtonGroupType);
+            generator.dup();
+            generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
+            generator.storeLocal(groupLocal);
+
+            for(int i = 0; i<ids.length; i++) {
+              Integer localInt = (Integer) myIdToLocalMap.get(ids [i]);
+              if (localInt != null) {
+                generator.loadLocal(groupLocal);
+                generator.loadLocal(localInt.intValue());
+                generator.invokeVirtual(ourButtonGroupType, Method.getMethod("void add(javax.swing.AbstractButton)"));
+              }
+            }
+          }
         }
       }
     }
