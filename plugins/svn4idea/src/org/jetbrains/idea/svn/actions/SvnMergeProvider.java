@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -44,6 +45,7 @@ public class SvnMergeProvider implements MergeProvider {
     myProject = project;
   }
 
+  @NotNull
   public MergeData loadRevisions(VirtualFile file) throws VcsException {
     MergeData data = new MergeData();
     SvnVcs vcs = SvnVcs.getInstance(myProject);
