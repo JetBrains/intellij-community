@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Pair;
+
 /**
  * @author peter
  */
@@ -14,7 +16,10 @@ public class GetFixedChildInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    handler.checkInitialized();
-    return handler.getFixedChild(myMethodSignature).getProxy();
+    final Pair<String, Integer> info = handler.getGenericInfo().getFixedChildInfo(myMethodSignature);
+    handler.checkInitialized(info.getFirst());
+    final DomInvocationHandler fixedChild = handler.getFixedChild(info);
+    assert fixedChild != null : myMethodSignature;
+    return fixedChild.getProxy();
   }
 }

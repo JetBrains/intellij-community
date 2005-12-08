@@ -14,7 +14,7 @@ public class GetAttributeChildInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    handler.checkInitialized();
+    handler.checkAttributesInitialized();
     return handler.getAttributeChild(myMethodSignature).getProxy();
   }
 }

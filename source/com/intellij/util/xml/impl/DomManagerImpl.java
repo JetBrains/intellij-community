@@ -103,7 +103,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
-  static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
+  public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     return (DomInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
   }
 

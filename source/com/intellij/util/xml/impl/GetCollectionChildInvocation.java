@@ -25,7 +25,7 @@ public class GetCollectionChildInvocation implements Invocation {
     XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    handler.checkInitialized();
+    handler.checkInitialized(myQname);
     final XmlTag[] subTags = tag.findSubTags(myQname);
     if (subTags.length == 0) return Collections.emptyList();
 

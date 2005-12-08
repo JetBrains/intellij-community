@@ -29,6 +29,7 @@ import java.util.*;
  */
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
+  private static final String ATTRIBUTES = "@";
 
   private Type myType;
   private final DomInvocationHandler myParent;
@@ -39,7 +40,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private XmlFile myFile;
   private DomElement myProxy;
-  private boolean myInitialized = false;
+  private final Set<String> myInitializedChildren = new com.intellij.util.containers.HashSet<String>();
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private GenericInfoImpl myGenericInfoImpl;
@@ -77,10 +78,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   final DomInvocationHandler getParentHandler() {
     return myParent;
-  }
-
-  final IndexedElementInvocationHandler getFixedChild(String tagName, int index) {
-    return myFixedChildren.get(new Pair<String, Integer>(tagName, index));
   }
 
   public final Type getDomElementType() {
@@ -187,19 +184,32 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private Collection<DomInvocationHandler> getAllChildren() {
-    checkInitialized();
+    initializeAllChildren();
     Set<DomInvocationHandler> result = new HashSet<DomInvocationHandler>(myFixedChildren.values());
-    result.addAll(getCollectionChildren(result));
+    result.addAll(getCollectionChildren());
     return result;
   }
 
-  private List<CollectionElementInvocationHandler> getCollectionChildren(final Set<DomInvocationHandler> fixedChildren) {
+  public final void initializeAllChildren() {
+    myGenericInfoImpl.buildMethodMaps();
+    for (final String s : myGenericInfoImpl.getFixedChildrenNames()) {
+      checkInitialized(s);
+    }
+    for (final String s : myGenericInfoImpl.getCollectionChildrenNames()) {
+      checkInitialized(s);
+    }
+    for (final String s : myGenericInfoImpl.getAttributeChildrenNames()) {
+      checkInitialized(s);
+    }
+  }
+
+  private List<CollectionElementInvocationHandler> getCollectionChildren() {
     final List<CollectionElementInvocationHandler> collectionChildren = new ArrayList<CollectionElementInvocationHandler>();
     final XmlTag tag = getXmlTag();
     if (tag != null) {
       for (XmlTag xmlTag : tag.getSubTags()) {
         final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(xmlTag);
-        if (cachedElement != null && !fixedChildren.contains(cachedElement)) {
+        if (cachedElement instanceof CollectionElementInvocationHandler) {
           collectionChildren.add((CollectionElementInvocationHandler)cachedElement);
         }
       }
@@ -279,10 +289,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  final DomInvocationHandler getFixedChild(final MethodSignature method) {
-    final DomInvocationHandler domElement = myFixedChildren.get(myGenericInfoImpl.getFixedChildInfo(method));
-    assert domElement != null : method.toString();
-    return domElement;
+  final IndexedElementInvocationHandler getFixedChild(final Pair<String, Integer> info) {
+    return myFixedChildren.get(info);
   }
 
   @NotNull
@@ -318,40 +326,38 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myType.toString() + " @" + hashCode();
   }
 
-  final void checkInitialized() {
+  final void checkAttributesInitialized() {
+    checkInitialized(ATTRIBUTES);
+  }
+
+  final void checkInitialized(final String qname) {
     assert isValid();
     synchronized (PsiLock.LOCK) {
-      if (myInitialized) return;
+      if (myInitializedChildren.contains(qname)) return;
       try {
         myGenericInfoImpl.buildMethodMaps();
-        for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
-          getOrCreateAttributeChild(entry.getKey().findMethod(myType), entry.getValue());
+
+        if (ATTRIBUTES.equals(qname)) {
+          for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
+            getOrCreateAttributeChild(entry.getKey().findMethod(myType), entry.getValue());
+          }
         }
 
-        final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
         final XmlTag tag = getXmlTag();
-        for (Map.Entry<MethodSignature, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
-          final Pair<String, Integer> pair = entry.getValue();
-          final XmlTag subTag = findSubTag(tag, pair.getFirst(), pair.getSecond());
-          getOrCreateIndexedChild(entry.getKey().findMethod(myType), subTag, pair);
-          usedTags.add(subTag);
-        }
-
-        if (tag != null) {
-          for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getCollectionChildrenEntries()) {
-            String qname = entry.getValue();
-            for (XmlTag subTag : tag.findSubTags(qname)) {
-              if (!usedTags.contains(subTag)) {
-                createCollectionElement(myGenericInfoImpl.getCollectionChildrenType(qname), subTag);
-                usedTags.add(subTag);
-              }
-            }
+        if (myGenericInfoImpl.isFixedChild(qname)) {
+          final int count = myGenericInfoImpl.getFixedChildrenCount(qname);
+          for (int i = 0; i < count; i++) {
+            getOrCreateIndexedChild(findSubTag(tag, qname, i), new Pair<String, Integer>(qname, i));
+          }
+        } else if (tag != null && myGenericInfoImpl.isCollectionChild(qname)) {
+          for (XmlTag subTag : tag.findSubTags(qname)) {
+            createCollectionElement(myGenericInfoImpl.getCollectionChildrenType(qname), subTag);
           }
         }
 
       }
       finally {
-        myInitialized = true;
+        myInitializedChildren.add(qname);
       }
     }
   }
@@ -367,10 +373,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
-  private IndexedElementInvocationHandler getOrCreateIndexedChild(final Method method, final XmlTag subTag, final Pair<String, Integer> pair) {
+  private IndexedElementInvocationHandler getOrCreateIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
     IndexedElementInvocationHandler handler = myFixedChildren.get(pair);
     if (handler == null) {
-      handler = createIndexedChild(method, subTag, pair.getFirst(), pair.getSecond());
+      handler = createIndexedChild(subTag, pair);
       myFixedChildren.put(pair, handler);
       myManager.createDomElement(handler);
     } else {
@@ -379,18 +385,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return handler;
   }
 
-  private IndexedElementInvocationHandler createIndexedChild(final Method method,
-                                                             final XmlTag subTag,
-                                                             final String qname,
-                                                             final Integer index) {
+  private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag,
+                                                             final Pair<String, Integer> pair) {
+    final MethodSignature signature = myGenericInfoImpl.getFixedChildGetter(pair);
+    final String qname = pair.getFirst();
+    final Class<?> rawType = DomUtil.getRawType(myType);
+    final Method method = signature.findMethod(rawType);
     Converter converter = getConverterForChild(method);
     Type type = method.getGenericReturnType();
     if (myFixedChildrenClasses.containsKey(qname)) {
       type = getFixedChildrenClass(qname);
     }
-    final SubTag annotationDFS = DomUtil.findAnnotationDFS(method, SubTag.class);
+    final SubTag annotationDFS = signature.findAnnotation(SubTag.class, rawType);
     final boolean indicator = annotationDFS != null && annotationDFS.indicator();
-    return new IndexedElementInvocationHandler(type, subTag, this, qname, index, converter, indicator);
+    return new IndexedElementInvocationHandler(type, subTag, this, qname, pair.getSecond(), converter, indicator);
   }
 
   protected final Class getFixedChildrenClass(final String tagName) {
@@ -439,17 +447,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     synchronized (PsiLock.LOCK) {
       if (myXmlTag == null) return;
       myInvalidated = invalidate;
-      if (myInitialized) {
+      if (!myInitializedChildren.isEmpty()) {
         Set<DomInvocationHandler> fixedChildren = new HashSet<DomInvocationHandler>(myFixedChildren.values());
         for (DomInvocationHandler handler : fixedChildren) {
           handler.detach(invalidate);
         }
-        for (CollectionElementInvocationHandler handler : getCollectionChildren(fixedChildren)) {
+        for (CollectionElementInvocationHandler handler : getCollectionChildren()) {
           handler.detach(true);
         }
       }
 
-      myInitialized = false;
+      myInitializedChildren.clear();
       removeFromCache();
       setXmlTagToNull();
     }
@@ -479,23 +487,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
-    checkInitialized();
+    checkInitialized(tagName);
     return addCollectionElement(type, addEmptyTag(tagName, index));
   }
 
   protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
-    checkInitialized();
+    checkInitialized(tagName);
     final XmlTag tag = ensureTagExists();
-    for (Map.Entry<MethodSignature, Pair<String, Integer>> entry : myGenericInfoImpl.getFixedChildrenEntries()) {
-      final Pair<String, Integer> pair = entry.getValue();
-      if (tagName.equals(pair.getFirst()) && pair.getSecond() < count) {
-        getFixedChild(entry.getKey()).ensureTagExists();
-      }
-    }
-
-    final int existing = tag.findSubTags(tagName).length;
-    for (int i = existing; i < count; i++) {
-      tag.add(createEmptyTag(tagName));
+    final XmlTag[] subTags = tag.findSubTags(tagName);
+    if (subTags.length < count) {
+      getFixedChild(new Pair<String, Integer>(tagName, count - 1)).ensureTagExists();
     }
   }
 
@@ -529,15 +530,25 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public final boolean isInitialized() {
+  public final boolean isInitialized(final String qname) {
     synchronized (PsiLock.LOCK) {
-      return myInitialized;
+      return myInitializedChildren.contains(qname);
     }
+  }
+
+  public final boolean isAnythingInitialized() {
+    synchronized (PsiLock.LOCK) {
+      return !myInitializedChildren.isEmpty();
+    }
+  }
+
+  public final boolean areAttributesInitialized() {
+    return isInitialized(ATTRIBUTES);
   }
 
   public void setFixedChildClass(final String tagName, final Class<? extends DomElement> aClass) {
     synchronized (PsiLock.LOCK) {
-      assert !myInitialized;
+      assert !myInitializedChildren.contains(tagName);
       myFixedChildrenClasses.put(tagName, aClass);
     }
   }

@@ -56,7 +56,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
 
-    parent.checkInitialized();
+    parent.checkInitialized(getXmlElementName());
     final XmlTag[] subTags = parentTag.findSubTags(getXmlElementName());
     if (subTags.length <= myIndex) {
       return;

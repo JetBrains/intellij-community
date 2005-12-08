@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import java.util.*;
  */
 public class GenericInfoImpl implements DomGenericInfo {
   private final Class<? extends DomElement> myClass;
-  private final Map<MethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<MethodSignature, Pair<String, Integer>>();
+  private final BidirectionalMap<MethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<MethodSignature, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
   private final Map<MethodSignature, String> myCollectionChildrenGetterMethods = new HashMap<MethodSignature, String>();
   private final Map<MethodSignature, String> myCollectionChildrenAdditionMethods = new HashMap<MethodSignature, String>();
@@ -39,6 +40,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     return integer == null ? 0 : (integer);
   }
 
+  final MethodSignature getFixedChildGetter(final Pair<String, Integer> pair) {
+    return myFixedChildrenMethods.getKeysByValue(pair).get(0);
+  }
+
   final Set<Map.Entry<MethodSignature, String>> getCollectionChildrenEntries() {
     return myCollectionChildrenGetterMethods.entrySet();
   }
@@ -51,8 +56,16 @@ public class GenericInfoImpl implements DomGenericInfo {
     return myAttributeChildrenMethods.entrySet();
   }
 
-  final Set<Map.Entry<MethodSignature, Pair<String, Integer>>> getFixedChildrenEntries() {
-    return myFixedChildrenMethods.entrySet();
+  final Set<String> getFixedChildrenNames() {
+    return myFixedChildrenCounts.keySet();
+  }
+
+  final Set<String> getCollectionChildrenNames() {
+    return myCollectionChildrenClasses.keySet();
+  }
+
+  final Collection<String> getAttributeChildrenNames() {
+    return myAttributeChildrenMethods.values();
   }
 
   final Pair<String, Integer> getFixedChildInfo(MethodSignature method) {
