@@ -13,6 +13,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
@@ -43,10 +44,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -381,8 +380,12 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         }
       }
       else {
-        if (o instanceof ProjectViewNode && ((ProjectViewNode)o).getChildren().size() == 0) {
-          continue;
+       if (o instanceof ProjectViewNode) {
+         final Collection<AbstractTreeNode> children = ((ProjectViewNode)o).getChildren();
+         final Object[] array = children.toArray(new Object[children.size()]);
+          if (filterFiles(array).length == 0) {
+            continue;
+          }
         }
       }
       result.add(o);
