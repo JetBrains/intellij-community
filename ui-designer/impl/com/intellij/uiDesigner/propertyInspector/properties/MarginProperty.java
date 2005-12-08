@@ -17,6 +17,8 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class MarginProperty extends AbstractInsetsProperty{
+  private static final Insets DEFAULT_INSETS = new Insets(0, 0, 0, 0);
+
   public MarginProperty(){
     super("margins");
   }
@@ -46,5 +48,9 @@ public final class MarginProperty extends AbstractInsetsProperty{
     final Insets insets=(Insets)value;
     final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
     layoutManager.setMargin(insets);
+  }
+
+  @Override public boolean isModified(final RadComponent component) {
+    return !getValue(component).equals(DEFAULT_INSETS);
   }
 }

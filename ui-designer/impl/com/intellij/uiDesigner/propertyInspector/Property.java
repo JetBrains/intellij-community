@@ -105,4 +105,8 @@ public abstract class Property {
   public boolean appliesTo(RadComponent component) {
     return true;
   }
+
+  public boolean isModified(final RadComponent component) {
+    return false;
+  }
 }

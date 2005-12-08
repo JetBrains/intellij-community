@@ -63,4 +63,8 @@ public final class SameSizeVerticallyProperty extends Property{
   public PropertyEditor getEditor(){
     return myEditor;
   }
+
+  @Override public boolean isModified(final RadComponent component) {
+    return ((Boolean) getValue(component)).booleanValue();
+  }
 }

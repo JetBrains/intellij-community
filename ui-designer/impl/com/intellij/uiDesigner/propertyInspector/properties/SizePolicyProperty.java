@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -42,18 +44,23 @@ public abstract class SizePolicyProperty extends Property{
     setValueImpl(component.getConstraints(),policy);
   }
 
-  @NotNull
-  public final Property[] getChildren(){
+  @NotNull public final Property[] getChildren(){
     return myChildren;
   }
 
-  @NotNull
-  public final PropertyRenderer getRenderer(){
+  @NotNull public final PropertyRenderer getRenderer(){
     return myRenderer;
   }
 
   public final PropertyEditor getEditor(){
     return null;
+  }
+
+  @Override public boolean isModified(final RadComponent component) {
+    final Palette palette = Palette.getInstance(component.getModule().getProject());
+    final ComponentItem item = palette.getItem(component.getComponentClassName());
+    assert item != null;
+    return getValueImpl(component.getConstraints()) != getValueImpl(item.getDefaultConstraints());
   }
 
   /**

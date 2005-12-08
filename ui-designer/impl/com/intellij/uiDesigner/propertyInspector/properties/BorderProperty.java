@@ -61,6 +61,11 @@ public final class BorderProperty extends Property{
     return null;
   }
 
+  @Override public boolean isModified(final RadComponent component) {
+    final RadContainer container=(RadContainer)component;
+    return !container.getBorderType().equals(BorderType.NONE) || container.getBorderTitle() != null;
+  }
+
   /**
    * Border type subproperty
    */
@@ -92,6 +97,10 @@ public final class BorderProperty extends Property{
 
     public PropertyEditor getEditor(){
       return myEditor;
+    }
+
+    @Override public boolean isModified(final RadComponent component) {
+      return !getValue(component).equals(BorderType.NONE);
     }
   }
 
@@ -134,6 +143,10 @@ public final class BorderProperty extends Property{
 
     public PropertyEditor getEditor(){
       return myEditor;
+    }
+
+    @Override public boolean isModified(final RadComponent component) {
+      return getValue(component) != null;
     }
   }
 }

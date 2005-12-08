@@ -29,6 +29,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -270,14 +271,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * Standard JTable's UI has non convenient keybinding for
    * editing. Therefore we have to replace some standard actions.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setUI(final TableUI ui){
     super.setUI(ui);
 
     // Customize action and input maps
-    final ActionMap actionMap=getActionMap();
-    final InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
-    final InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    @NonNls final ActionMap actionMap=getActionMap();
+    @NonNls final InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
+    @NonNls final InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     actionMap.put("selectPreviousRow",new MySelectPreviousRowAction());
 
@@ -804,10 +804,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final boolean hasErrors = getErrorForRow(row) != null;
         SimpleTextAttributes attrs;
         if (hasErrors) {
-          attrs = myComponent.isMarkedAsModified(property) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
+          attrs = property.isModified(myComponent) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
         }
         else {
-          attrs = myComponent.isMarkedAsModified(property) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
+          attrs = property.isModified(myComponent) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
         }
         myPropertyNameRenderer.append(property.getName(), attrs);
 
@@ -836,8 +836,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         if (!selected) {
           component.setBackground(background);
         }
-        if (myComponent.isMarkedAsModified(property)) {
+        if (property.isModified(myComponent)) {
           component.setFont(table.getFont().deriveFont(Font.BOLD));
+        }
+        else {
+          component.setFont(table.getFont());
         }
         return component;
       }

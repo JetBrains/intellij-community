@@ -60,6 +60,10 @@ public class ButtonGroupProperty extends Property {
     return myEditor;
   }
 
+  @Override public boolean isModified(final RadComponent component) {
+    return getValue(component) != null;
+  }
+
   private static class MyPropertyEditor extends ComboBoxPropertyEditor {
     private RadRootContainer myRootContainer;
     private RadComponent myComponent;

@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.core.GridConstraints;
 
 import java.awt.*;
 
@@ -13,8 +14,8 @@ public final class MinimumSizeProperty extends AbstractDimensionPropery{
     super("Minimum Size");
   }
 
-  public Object getValue(final RadComponent component){
-    return component.getConstraints().myMinimumSize;
+  protected Dimension getValueImpl(final GridConstraints constraints) {
+    return constraints.myMinimumSize;
   }
 
   protected void setValueImpl(final RadComponent component, final Object value) throws Exception{

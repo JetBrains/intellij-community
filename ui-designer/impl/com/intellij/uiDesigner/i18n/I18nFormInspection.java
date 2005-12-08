@@ -32,11 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 31.10.2005
- * Time: 14:27:07
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class I18nFormInspection implements FormInspectionTool, FileCheckingInspection {
   private static BorderProperty myBorderProperty = new BorderProperty();

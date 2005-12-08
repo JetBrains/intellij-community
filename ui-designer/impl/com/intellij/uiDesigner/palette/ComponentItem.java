@@ -5,15 +5,16 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.awt.*;
+import java.util.HashMap;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
- */ 
+ */
 public final class ComponentItem implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
 
@@ -49,13 +50,10 @@ public final class ComponentItem implements Cloneable{
     final String className,
     final String iconPath,
     final String toolTipText,
-    final GridConstraints defaultConstraints,
-    final HashMap<String, StringDescriptor> propertyName2intitialValue,
+    @NotNull final GridConstraints defaultConstraints,
+    @NotNull final HashMap<String, StringDescriptor> propertyName2intitialValue,
     final boolean removable
   ){
-    LOG.assertTrue(defaultConstraints != null);
-    LOG.assertTrue(propertyName2intitialValue != null);
-
     setClassName(className);
     setIconPath(iconPath);
 
@@ -73,9 +71,7 @@ public final class ComponentItem implements Cloneable{
     return myRemovable;
   }
 
-  private static String calcToolTipText(final String className) {
-    LOG.assertTrue(className != null);
-
+  private static String calcToolTipText(@NotNull final String className) {
     final int lastDotIndex = className.lastIndexOf('.');
     if (lastDotIndex != -1 && lastDotIndex != className.length() - 1/*not the last char in class name*/) {
       return className.substring(lastDotIndex + 1) + " (" + className.substring(0, lastDotIndex) + ")";
@@ -161,9 +157,8 @@ public final class ComponentItem implements Cloneable{
 
   /**
    * @return name of component's class which is represented by the item.
-   * This method never returns <code>null</code>.
    */
-  public String getClassName() {
+  @NotNull public String getClassName() {
     return myClassName;
   }
 
@@ -174,8 +169,7 @@ public final class ComponentItem implements Cloneable{
    * it's not a subclass of JComponent, etc) then placeholder component will be
    * added to the form.
    */
-  public void setClassName(final String className){
-    LOG.assertTrue(className != null);
+  public void setClassName(@NotNull final String className){
     myClassName = className;
   }
 
@@ -183,10 +177,7 @@ public final class ComponentItem implements Cloneable{
     return myToolTipText != null ? myToolTipText : calcToolTipText(myClassName);
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
-  public GridConstraints getDefaultConstraints() {
+  @NotNull public GridConstraints getDefaultConstraints() {
     return myDefaultConstraints;
   }
 

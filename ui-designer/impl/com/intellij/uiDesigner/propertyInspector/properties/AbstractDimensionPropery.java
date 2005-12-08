@@ -1,12 +1,13 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class AbstractDimensionPropery extends Property{
+public abstract class AbstractDimensionPropery extends Property {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
 
@@ -49,17 +50,25 @@ public abstract class AbstractDimensionPropery extends Property{
     return null;
   }
 
+  public Object getValue(RadComponent component) {
+    return getValueImpl(component.getConstraints());
+  }
+
+  protected abstract Dimension getValueImpl(final GridConstraints constraints);
+
+  @Override public boolean isModified(final RadComponent component) {
+    final Palette palette = Palette.getInstance(component.getModule().getProject());
+    final ComponentItem item = palette.getItem(component.getComponentClassName());
+    assert item != null;
+    return !getValueImpl(component.getConstraints()).equals(getValueImpl(item.getDefaultConstraints()));
+  }
+
   /**
    * Child sub property which describe dimension's width
    */
-  public final static class MyWidthProperty extends Property{
-    private final IntRenderer myRenderer;
-    private final IntEditor myEditor;
-
+  public final static class MyWidthProperty extends AbstractIntProperty {
     public MyWidthProperty(final Property parent){
-      super(parent, "width");
-      myRenderer = new IntRenderer();
-      myEditor = new IntEditor(-1);
+      super(parent, "width", -1);
     }
 
     public Object getValue(final RadComponent component){
@@ -72,28 +81,14 @@ public abstract class AbstractDimensionPropery extends Property{
       dimension.width = ((Integer)value).intValue();
       getParent().setValue(component, dimension);
     }
-
-    @NotNull
-    public PropertyRenderer getRenderer(){
-      return myRenderer;
-    }
-
-    public PropertyEditor getEditor(){
-      return myEditor;
-    }
   }
 
   /**
    * Child sub property which describe dimension's height
    */
-  public final static class MyHeightProperty extends Property{
-    private final IntRenderer myRenderer;
-    private final IntEditor myEditor;
-
-    public MyHeightProperty(final Property parent){
-      super(parent, "height");
-      myRenderer = new IntRenderer();
-      myEditor = new IntEditor(-1);
+  public final static class MyHeightProperty extends AbstractIntProperty {
+    public MyHeightProperty(final Property parent) {
+      super(parent, "height", -1);
     }
 
     public Object getValue(final RadComponent component){
@@ -105,15 +100,6 @@ public abstract class AbstractDimensionPropery extends Property{
       final Dimension dimension = (Dimension)getParent().getValue(component);
       dimension.height = ((Integer)value).intValue();
       getParent().setValue(component, dimension);
-    }
-
-    @NotNull
-    public PropertyRenderer getRenderer(){
-      return myRenderer;
-    }
-
-    public PropertyEditor getEditor(){
-      return myEditor;
     }
   }
 }

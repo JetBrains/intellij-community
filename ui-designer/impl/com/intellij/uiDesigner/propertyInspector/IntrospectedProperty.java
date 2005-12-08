@@ -61,4 +61,8 @@ public abstract class IntrospectedProperty extends Property{
    * here or add some subtags.
    */
   public abstract void write(@NotNull Object value, XmlWriter writer);
+
+  @Override public boolean isModified(final RadComponent component) {
+    return component.isMarkedAsModified(this);
+  }
 }

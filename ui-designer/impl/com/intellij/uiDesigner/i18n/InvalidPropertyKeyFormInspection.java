@@ -31,11 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 31.10.2005
- * Time: 13:44:52
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class InvalidPropertyKeyFormInspection implements FormInspectionTool, FileCheckingInspection {
   private static BorderProperty myBorderProperty = new BorderProperty();

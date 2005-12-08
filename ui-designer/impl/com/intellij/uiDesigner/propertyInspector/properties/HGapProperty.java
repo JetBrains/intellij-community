@@ -3,25 +3,14 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class HGapProperty extends Property{
-  private final IntRenderer myRenderer;
-  private final IntEditor myEditor;
-
+public final class HGapProperty extends AbstractIntProperty {
   public HGapProperty(){
-    super(null, "Horizontal Gap");
-    myRenderer = new IntRenderer();
-    myEditor = new IntEditor(-1);
+    super(null, "Horizontal Gap", -1);
   }
 
   public Object getValue(final RadComponent component){
@@ -42,14 +31,5 @@ public final class HGapProperty extends Property{
     final RadContainer container=(RadContainer)component;
     final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
     layoutManager.setHGap(((Integer)value).intValue());
-  }
-
-  @NotNull
-  public PropertyRenderer getRenderer(){
-    return myRenderer;
-  }
-
-  public PropertyEditor getEditor(){
-    return myEditor;
   }
 }
