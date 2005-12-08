@@ -243,7 +243,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (!isToCheckMemberInAnnotation(owner, inspectionToolID)){
       return false;
     }
-    PsiDocCommentOwner classContainer = owner.getContainingClass();
+    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);;
     while (classContainer != null) {
       if (!isToCheckMemberInDocComment(classContainer, inspectionToolID)){
         return false;
