@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.util;
 
-
+import java.util.Arrays;
 
 
 /**
  *
  */
-public class Pair<A, B> {
+public final class Pair<A, B> {
   public final A first;
   public final B second;
 
@@ -30,11 +30,11 @@ public class Pair<A, B> {
     this.second = second;
   }
 
-  public A getFirst() {
+  public final A getFirst() {
     return first;
   }
 
-  public B getSecond() {
+  public final B getSecond() {
     return second;
   }
 
@@ -49,12 +49,16 @@ public class Pair<A, B> {
   public final int hashCode(){
     int hashCode = 0;
     if (first != null){
-      hashCode += first.hashCode();
+      hashCode += hashCode(first);
     }
     if (second != null){
-      hashCode += second.hashCode();
+      hashCode += hashCode(second);
     }
     return hashCode;
+  }
+
+  private int hashCode(final Object o) {
+    return (o instanceof Object[]) ? Arrays.asList((Object[])o).hashCode(): o.hashCode();
   }
 
   public String toString() {
