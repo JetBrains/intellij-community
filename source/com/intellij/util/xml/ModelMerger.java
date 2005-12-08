@@ -54,8 +54,7 @@ public class ModelMerger {
         if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
 
         for (final Method method1 : aClass.getMethods()) {
-          if (isPrimaryKey(method1, aClass)) {
-            method = method1;
+          if ((method = findPrimaryKeyAnnotatedMethod(method1, aClass)) != null) {
             break;
           }
         }
@@ -64,10 +63,10 @@ public class ModelMerger {
       return method;
     }
 
-    private boolean isPrimaryKey(final Method method, final Class aClass) {
+    private Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
       return method.getReturnType() != void.class
-             && method.getParameterTypes().length == 0
-             && MethodSignature.getSignature(method).findAnnotation(PrimaryKey.class, aClass) != null;
+             && method.getParameterTypes().length == 0?
+             MethodSignature.getSignature(method).findAnnotatedMethod(PrimaryKey.class, aClass): null;
     }
 
 
