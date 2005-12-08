@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class TestUtils{
+
     private TestUtils(){
         super();
     }
@@ -57,9 +58,6 @@ public class TestUtils{
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        if(parameterList == null){
-            return false;
-        }
         final PsiParameter[] parameters = parameterList.getParameters();
         if(parameters == null){
             return false;
@@ -68,11 +66,11 @@ public class TestUtils{
             return false;
         }
         final PsiClass targetClass = method.getContainingClass();
-        return !isJUnitTestClass(targetClass);
+        return isJUnitTestClass(targetClass);
     }
 
     private static boolean isJUnitTestClass(PsiClass targetClass){
-        return targetClass == null ||
-               !ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
+        return targetClass != null && ClassUtils.isSubclass(targetClass,
+                "junit.framework.TestCase");
     }
 }

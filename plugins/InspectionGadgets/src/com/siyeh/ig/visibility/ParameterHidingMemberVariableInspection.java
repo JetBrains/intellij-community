@@ -18,21 +18,20 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
+import javax.swing.JComponent;
 
 public class ParameterHidingMemberVariableInspection extends MethodInspection{
+
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
     /** @noinspection PublicField*/
@@ -50,7 +49,8 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("parameter.hides.member.variable.display.name");
+        return InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -66,7 +66,29 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.problem.descriptor");
+    }
+
+    public JComponent createOptionsPanel(){
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.ignore.setters.option"),
+                "m_ignoreForPropertySetters");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.ignore.superclass.option"),
+                "m_ignoreInvisibleFields");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.ignore.constructors.option"),
+                "m_ignoreForConstructors");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.ignore.abstract.methods.option"),
+                "m_ignoreForAbstractMethods");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "parameter.hides.member.variable.ignore.static.parameters.option"),
+                "m_ignoreStaticMethodParametersHidingInstanceFields");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -83,17 +105,21 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(variable,
-                                                            PsiMethod.class);
+                            PsiMethod.class);
             if(method == null){
                 return;
             }
             if(m_ignoreForConstructors && method.isConstructor()){
                 return;
             }
-            if(m_ignoreForAbstractMethods &&
-                       (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                       method.getContainingClass().isInterface())){
-                return;
+            if(m_ignoreForAbstractMethods) {
+                if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
+                    return;
+                }
+                final PsiClass containingClass = method.getContainingClass();
+                if(containingClass.isInterface()){
+                    return;
+                }
             }
             if(m_ignoreForPropertySetters){
                 final String methodName = method.getName();
@@ -103,7 +129,6 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
                     return;
                 }
             }
-
             final PsiClass aClass =
                     ClassUtils.getContainingClass(variable);
             if(aClass == null){
@@ -136,86 +161,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
                 return false;
             }
             return !m_ignoreInvisibleFields ||
-                           ClassUtils.isFieldVisible(field, aClass);
+                    ClassUtils.isFieldVisible(field, aClass);
         }
-    }
-
-    public JComponent createOptionsPanel(){
-        final GridBagLayout layout = new GridBagLayout();
-        final JPanel panel = new JPanel(layout);
-        final JCheckBox settersCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.setters.option"),
-                              m_ignoreForPropertySetters);
-        final ButtonModel settersModel = settersCheckBox.getModel();
-        settersModel.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e){
-                m_ignoreForPropertySetters = settersModel.isSelected();
-            }
-        });
-        final JCheckBox ignoreInvisibleFieldsCheck =
-                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
-                              m_ignoreInvisibleFields);
-
-        final ButtonModel invisibleFieldsModel =
-                ignoreInvisibleFieldsCheck.getModel();
-        invisibleFieldsModel.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e){
-                m_ignoreInvisibleFields = invisibleFieldsModel.isSelected();
-            }
-        });
-
-        final JCheckBox constructorCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.constructors.option"),
-                              m_ignoreForConstructors);
-        final ButtonModel constructorModel = constructorCheckBox.getModel();
-        constructorModel.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e){
-                m_ignoreForConstructors = constructorModel.isSelected();
-            }
-        });
-        final JCheckBox abstractMethodsCheckbox =
-                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.abstract.methods.option"),
-                              m_ignoreForAbstractMethods);
-        final ButtonModel abstractMethodsModel =
-                abstractMethodsCheckbox.getModel();
-        abstractMethodsModel.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e){
-                m_ignoreForAbstractMethods = abstractMethodsModel.isSelected();
-            }
-        });
-
-        final JCheckBox staticMethodsCheckbox =
-                new JCheckBox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.static.parameters.option"),
-                              m_ignoreStaticMethodParametersHidingInstanceFields);
-        final ButtonModel staticMethodsModel = staticMethodsCheckbox.getModel();
-        staticMethodsModel.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e){
-                m_ignoreStaticMethodParametersHidingInstanceFields = staticMethodsModel.isSelected();
-            }
-        });
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        panel.add(settersCheckBox, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 1;
-        panel.add(constructorCheckBox, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 2;
-        panel.add(ignoreInvisibleFieldsCheck, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 3;
-        panel.add(staticMethodsCheckbox, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 4;
-        panel.add(abstractMethodsCheckbox, constraints);
-        return panel;
     }
 }

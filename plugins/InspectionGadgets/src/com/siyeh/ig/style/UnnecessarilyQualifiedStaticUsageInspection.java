@@ -21,17 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
+import javax.swing.JComponent;
 
 public class UnnecessarilyQualifiedStaticUsageInspection
         extends ExpressionInspection {
@@ -47,7 +45,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             new UnnecessarilyQualifiedStaticCallFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.display.name");
+        return InspectionGadgetsBundle.message(
+                "unnecessarily.qualified.static.usage.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -57,58 +56,27 @@ public class UnnecessarilyQualifiedStaticUsageInspection
     public String buildErrorString(PsiElement location) {
         final PsiElement parent = location.getParent();
         if (parent instanceof PsiMethodCallExpression) {
-            return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "unnecessarily.qualified.static.usage.problem.descriptor");
         } else {
-            return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor1");
+            return InspectionGadgetsBundle.message(
+                    "unnecessarily.qualified.static.usage.problem.descriptor1");
         }
     }
 
     public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final JCheckBox ignoreFieldAccessesCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.field.option"),
-                              m_ignoreStaticFieldAccesses);
-        final ButtonModel ignoreFieldAccessesModel =
-                ignoreFieldAccessesCheckBox.getModel();
-        ignoreFieldAccessesModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreStaticFieldAccesses =
-                        ignoreFieldAccessesModel.isSelected();
-            }
-        });
-        final JCheckBox ignoreMethodCallsCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.method.option"),
-                m_ignoreStaticMethodCalls);
-        final ButtonModel ignoreMethodCallsModel =
-                ignoreMethodCallsCheckBox.getModel();
-        ignoreMethodCallsModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreStaticMethodCalls = ignoreMethodCallsModel.isSelected();
-            }
-        });
-        final JCheckBox ignoreStaticContextCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message("only.report.qualified.static.usages.option"),
-                              m_ignoreStaticAccessFromStaticContext);
-        final ButtonModel ignoreStaticContextModel =
-                ignoreStaticContextCheckBox.getModel();
-        ignoreStaticContextModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreStaticAccessFromStaticContext =
-                        ignoreStaticContextModel.isSelected();
-            }
-        });
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.CENTER;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(ignoreFieldAccessesCheckBox, constraints);
-        constraints.gridy = 1;
-        panel.add(ignoreMethodCallsCheckBox, constraints);
-        constraints.gridy = 2;
-        panel.add(ignoreStaticContextCheckBox, constraints);
-        return panel;
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unnecessarily.qualified.static.usage.ignore.field.option"),
+                "m_ignoreStaticFieldAccesses");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unnecessarily.qualified.static.usage.ignore.method.option"),
+                "m_ignoreStaticMethodCalls");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "only.report.qualified.static.usages.option"),
+                "m_ignoreStaticAccessFromStaticContext");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -123,7 +91,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             extends InspectionGadgetsFix {
 
         public String getName() {
-            return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.qualifier.for.this.remove.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -185,13 +154,14 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             }
             if (m_ignoreStaticAccessFromStaticContext) {
                 final PsiMember containingMember =
-                        PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiMember.class);
                 if (containingMember != null &&
-                        !containingMember.hasModifierProperty(PsiModifier.STATIC)) {
+                        !containingMember.hasModifierProperty(
+                                PsiModifier.STATIC)) {
                     return false;
                 }
             }
-
             final String referenceName = expression.getReferenceName();
             if(referenceName == null) {
                 return false;
@@ -200,7 +170,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiVariable variable =
                     resolveHelper.resolveReferencedVariable(referenceName,
-                                                            expression);
+                            expression);
             if (variable == null || !variable.equals(member)) {
                 return false;
             }
@@ -231,13 +201,14 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             }
             if (m_ignoreStaticAccessFromStaticContext) {
                 final PsiMember containingMember =
-                        PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiMember.class);
                 if (containingMember != null &&
-                        !containingMember.hasModifierProperty(PsiModifier.STATIC)) {
+                        !containingMember.hasModifierProperty(
+                                PsiModifier.STATIC)) {
                     return false;
                 }
             }
-
             final PsiElement qualifierElement =
                     ((PsiReference) qualifierExpression).resolve();
             if (!(qualifierElement instanceof PsiClass)) {

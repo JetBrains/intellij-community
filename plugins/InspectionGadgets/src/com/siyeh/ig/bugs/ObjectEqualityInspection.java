@@ -22,26 +22,26 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
+import javax.swing.JComponent;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreEnums = true;
+    
     /** @noinspection PublicField*/
     public boolean m_ignoreClassObjects = false;
 
@@ -51,7 +51,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("object.comparison.display.name");
+        return InspectionGadgetsBundle.message(
+                "object.comparison.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -59,52 +60,22 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     public JComponent createOptionsPanel() {
-        final GridBagLayout layout = new GridBagLayout();
-        final JPanel panel = new JPanel(layout);
-      final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), m_ignoreEnums);
-        final ButtonModel enumeratedObjectModel = arrayCheckBox.getModel();
-        enumeratedObjectModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreEnums = enumeratedObjectModel.isSelected();
-            }
-        });
-      final JCheckBox classObjectCheckbox = new JCheckBox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), m_ignoreClassObjects);
-        final ButtonModel classObjectModel = classObjectCheckbox.getModel();
-        classObjectModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreClassObjects = classObjectModel.isSelected();
-            }
-        });
-
-        final JCheckBox privateConstructorCheckBox =
-                new JCheckBox(InspectionGadgetsBundle.message(
-                  "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"),
-                              m_ignorePrivateConstructors);
-        final ButtonModel privateConstructorModel =
-                privateConstructorCheckBox.getModel();
-        privateConstructorModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignorePrivateConstructors =
-                        privateConstructorModel.isSelected();
-            }
-        });
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(arrayCheckBox, constraints);
-
-        constraints.gridy = 1;
-        panel.add(classObjectCheckbox, constraints);
-
-        constraints.gridy = 2;
-        panel.add(privateConstructorCheckBox, constraints);
-        return panel;
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "object.comparison.enumerated.ignore.option"), "m_ignoreEnums");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "object.comparison.klass.ignore.option"),
+                "m_ignoreClassObjects");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"),
+                "m_ignorePrivateConstructors");
+        return optionsPanel;
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("object.comparison.problem.description");
+        return InspectionGadgetsBundle.message(
+                "object.comparison.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -118,7 +89,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
 
         public String getName() {
-            return InspectionGadgetsBundle.message("object.comparison.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "object.comparison.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -136,12 +108,18 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression strippedLhs =
                     ParenthesesUtils.stripParentheses(lhs);
+            if (strippedLhs == null) {
+                return;
+            }
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
                 return;
             }
             final PsiExpression strippedRhs =
                     ParenthesesUtils.stripParentheses(rhs);
+            if (strippedRhs == null) {
+                return;
+            }
             @NonNls final String expString;
             if (ParenthesesUtils.getPrecendence(strippedLhs) >
                     ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
@@ -166,7 +144,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            if(!(expression.getROperand() != null)) {
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
@@ -176,7 +154,6 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (!isObjectType(rhs)) {
                 return;
             }
-
             final PsiExpression lhs = expression.getLOperand();
             if (!isObjectType(lhs)) {
                 return;
@@ -187,24 +164,23 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (m_ignoreClassObjects && (isClass(rhs) || isClass(lhs))) {
                 return;
             }
-            if (m_ignorePrivateConstructors && (typeHasPrivateConstructor(lhs) ||
-                    typeHasPrivateConstructor(rhs))) {
+            if (m_ignorePrivateConstructors &&
+                    (typeHasPrivateConstructor(lhs) ||
+                            typeHasPrivateConstructor(rhs))) {
                 return;
             }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(expression,
-                                                            PsiMethod.class);
-            if(method != null) {
-                final String methodName = method.getName();
-                if (HardcodedMethodConstants.EQUALS.equals(methodName)) {
-                    return;
-                }
+                            PsiMethod.class);
+            if (method != null && MethodUtils.isEquals(method)) {
+                return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
             registerError(sign);
         }
 
-        private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {
+        private boolean typeHasPrivateConstructor(
+                @Nullable PsiExpression expression) {
             if (expression == null) {
                 return false;
             }
@@ -279,8 +255,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             if (type == null) {
                 return false;
             }
-	        if (type instanceof PsiArrayType) {
-	            return false;
+            if (type instanceof PsiArrayType) {
+                return false;
             }
             return !(type instanceof PsiPrimitiveType)
                     && !TypeUtils.isJavaLangString(type);

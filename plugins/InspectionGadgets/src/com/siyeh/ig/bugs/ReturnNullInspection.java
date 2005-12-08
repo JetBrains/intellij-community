@@ -28,18 +28,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.ButtonModel;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 
 public class ReturnNullInspection extends StatementInspection {
 
@@ -103,53 +97,16 @@ public class ReturnNullInspection extends StatementInspection {
     }
 
     public JComponent createOptionsPanel() {
-        final GridBagLayout layout = new GridBagLayout();
-        final JPanel panel = new JPanel(layout);
-        final JCheckBox arrayCheckBox = new JCheckBox(
-                InspectionGadgetsBundle.message(
-                        "return.of.null.arrays.option"),
-                m_reportArrayMethods);
-        final ButtonModel arrayModel = arrayCheckBox.getModel();
-        arrayModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_reportArrayMethods = arrayModel.isSelected();
-            }
-        });
-        final JCheckBox objectCheckBox = new JCheckBox(
-                InspectionGadgetsBundle.message(
-                        "return.of.null.objects.option"),
-                m_reportObjectMethods);
-        final ButtonModel objectModel = objectCheckBox.getModel();
-        objectModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_reportObjectMethods = objectModel.isSelected();
-            }
-        });
-        final JCheckBox collectionCheckBox = new JCheckBox(
-                InspectionGadgetsBundle.message(
-                        "return.of.null.collections.option"),
-                m_reportCollectionMethods);
-        final ButtonModel collectionModel = collectionCheckBox.getModel();
-        collectionModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_reportCollectionMethods = collectionModel.isSelected();
-            }
-        });
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        panel.add(arrayCheckBox, constraints);
-        constraints.gridy = 1;
-        panel.add(collectionCheckBox, constraints);
-        constraints.gridy = 2;
-        constraints.weighty = 1.0;
-        panel.add(objectCheckBox, constraints);
-        return panel;
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "return.of.null.arrays.option"), "m_reportArrayMethods");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "return.of.null.collections.option"),
+                "m_reportCollectionMethods");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "return.of.null.objects.option"), "m_reportObjectMethods");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -168,7 +125,7 @@ public class ReturnNullInspection extends StatementInspection {
             PsiElement parent = value.getParent();
             while (parent instanceof PsiParenthesizedExpression ||
                     parent instanceof PsiConditionalExpression ||
-                   parent instanceof PsiTypeCastExpression) {
+                    parent instanceof PsiTypeCastExpression) {
                 parent = parent.getParent();
             }
             if (parent == null || !(parent instanceof PsiReturnStatement)) {
@@ -189,7 +146,7 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             if (m_reportCollectionMethods &&
-                CollectionUtils.isCollectionClassOrInterface(returnType)) {
+                    CollectionUtils.isCollectionClassOrInterface(returnType)) {
                 registerError(value);
             } else if (m_reportArrayMethods && isArray) {
                 registerError(value);

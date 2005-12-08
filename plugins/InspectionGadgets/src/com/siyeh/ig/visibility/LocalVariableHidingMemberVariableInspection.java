@@ -18,20 +18,20 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
+import javax.swing.JComponent;
 
-public class LocalVariableHidingMemberVariableInspection extends MethodInspection {
+public class LocalVariableHidingMemberVariableInspection
+        extends MethodInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
     /** @noinspection PublicField*/
@@ -43,7 +43,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("local.variable.hides.member.variable.display.name");
+        return InspectionGadgetsBundle.message(
+                "local.variable.hides.member.variable.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -59,53 +60,35 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("local.variable.hides.member.variable.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "local.variable.hides.member.variable.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final JCheckBox ignoreInvisibleCheckBox = new JCheckBox(InspectionGadgetsBundle.message("field.name.hides.in.superclass.ignore.option"),
-                m_ignoreInvisibleFields);
-        final JCheckBox ignoreStaticCheckBox = new JCheckBox(InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option"),
-                m_ignoreStaticMethods);
-
-        final ButtonModel ignoreInvisibleModel = ignoreInvisibleCheckBox.getModel();
-        ignoreInvisibleModel.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreInvisibleFields = ignoreInvisibleModel.isSelected();
-            }
-        });
-        final ButtonModel ignoreStaticModel = ignoreStaticCheckBox.getModel();
-        ignoreStaticModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                m_ignoreStaticMethods = ignoreStaticModel.isSelected();
-            }
-        });
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.CENTER;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(ignoreInvisibleCheckBox, constraints);
-        constraints.gridy = 1;
-        panel.add(ignoreStaticCheckBox, constraints);
-        return panel;
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "field.name.hides.in.superclass.ignore.option"),
+                "m_ignoreInvisibleFields");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "local.variable.hides.member.variable.ignore.option"),
+                "m_ignoreStaticMethods");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new LocalVariableHidingMemberVariableVisitor();
     }
 
-    private class LocalVariableHidingMemberVariableVisitor extends BaseInspectionVisitor {
+    private class LocalVariableHidingMemberVariableVisitor
+            extends BaseInspectionVisitor {
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
                 final PsiMethod aMethod =
                         PsiTreeUtil.getParentOfType(variable,
-                                                                PsiMethod.class);
+                                PsiMethod.class);
                 if (aMethod == null) {
                     return;
                 }
@@ -146,7 +129,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             }
         }
 
-        private boolean checkFieldName(PsiField field, String variableName, PsiClass aClass) {
+        private boolean checkFieldName(PsiField field, String variableName,
+                                       PsiClass aClass) {
             if (field == null) {
                 return false;
             }
@@ -158,9 +142,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
                 return false;
             }
             return !m_ignoreInvisibleFields ||
-                           ClassUtils.isFieldVisible(field, aClass);
+                    ClassUtils.isFieldVisible(field, aClass);
         }
-
     }
-
 }
