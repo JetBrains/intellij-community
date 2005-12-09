@@ -504,7 +504,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final PsiMethod[] implementations = EjbUtil.findEjbImplementations(method);
       if (implementations.length == 0) return;
 
-      final String[] names = EjbDeclMethodRole.suggestImplNames(newName, role.getType(), role.getEjb());
+      final String[] names = EjbDeclMethodRole.suggestImplNames(newName, role.getType(), role.getEnterpriseBean());
       for (int i = 0; i < implementations.length; i++) {
         if (i < names.length && names[i] != null) {
           myAllRenames.put(implementations[i], names[i]);

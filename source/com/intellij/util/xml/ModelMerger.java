@@ -93,18 +93,18 @@ public class ModelMerger {
 
       if (GenericValue.class.isAssignableFrom(returnType)) {
         return new ReadOnlyGenericValue() {
-          public Object getValue() {
+          private GenericValue findGenericValue() {
             for (final T t : myImplementations) {
               try {
                 GenericValue genericValue = (GenericValue)method.invoke(t, args);
                 if (genericValue != null) {
                   final Object value = genericValue.getValue();
                   if (value != null) {
-                    return value;
+                    return genericValue;
                   }
                 }
               }
-              catch (IllegalAccessException e) {
+                catch (IllegalAccessException e) {
                 LOG.error(e);
               }
               catch (InvocationTargetException e) {
@@ -112,6 +112,16 @@ public class ModelMerger {
               }
             }
             return null;
+          }
+
+          public Object getValue() {
+            final GenericValue genericValue = findGenericValue();
+            return genericValue != null ? genericValue.getValue() : null;
+          }
+
+          public String getStringValue() {
+            final GenericValue genericValue = findGenericValue();
+            return genericValue != null ? genericValue.getStringValue() : super.getStringValue();
           }
         };
       }

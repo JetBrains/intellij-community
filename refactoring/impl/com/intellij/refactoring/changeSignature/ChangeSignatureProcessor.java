@@ -40,10 +40,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
@@ -963,7 +962,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           if (oldMethod.getName().equals(method.getName())) {
             PsiMethod newDeclMethod = (PsiMethod) method.copy();
             newDeclMethod.getNameIdentifier().replace(myChangeInfo.newNameIdentifier);
-            EjbDeclMethodRole newDeclRole = new EjbDeclMethodRole(newDeclMethod, declRole.getEjb(), declRole.getType());
+            EjbDeclMethodRole newDeclRole = new EjbDeclMethodRole(newDeclMethod, declRole.getEjb(), declRole.getEnterpriseBean(), declRole.getType());
 
             newName = newDeclRole.suggestImplementations()[i].getName();
             break;
