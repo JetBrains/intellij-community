@@ -9,7 +9,7 @@ import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.deductive.builder.Result;
-import com.intellij.refactoring.typeCook.deductive.builder.System;
+import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
@@ -42,12 +42,12 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
 
-    final System commonSystem = systemBuilder.build(myElements);
+    final ReductionSystem commonSystem = systemBuilder.build(myElements);
     myResult = new Result(commonSystem);
 
-    final System[] systems = commonSystem.isolate();
+    final ReductionSystem[] systems = commonSystem.isolate();
 
-    for (final System system : systems) {
+    for (final ReductionSystem system : systems) {
       if (system != null) {
         final ResolverTree tree = new ResolverTree(system);
 

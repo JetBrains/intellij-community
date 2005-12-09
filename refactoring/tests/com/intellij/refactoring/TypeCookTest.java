@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
+import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.pom.java.LanguageLevel;
@@ -665,19 +666,17 @@ public class TypeCookTest extends MultiFileTestCase {
                                           }
                                         });
 
-    final com.intellij.refactoring.typeCook.deductive.builder.System commonSystem = b.build(new PsiElement[]{aClass});
+    final ReductionSystem commonSystem = b.build(aClass);
 
     System.out.println("System built:\n" + commonSystem);
 
-    final com.intellij.refactoring.typeCook.deductive.builder.System[] systems = commonSystem.isolate();
+    final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem[] systems = commonSystem.isolate();
 
     System.out.println("Systems isolated:\n" + commonSystem);
 
-    com.intellij.refactoring.typeCook.deductive.builder.System system = null;
+    com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system = null;
 
-    for (int i = 0; i < systems.length; i++) {
-      com.intellij.refactoring.typeCook.deductive.builder.System s = systems[i];
-
+    for (ReductionSystem s : systems) {
       if (s != null && system == null) {
         System.out.println(s);
         system = s;

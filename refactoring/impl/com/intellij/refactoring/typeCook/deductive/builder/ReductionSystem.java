@@ -15,16 +15,12 @@ import java.util.*;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jul 20, 2004
- * Time: 6:03:14 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
-public class System {
+public class ReductionSystem {
   final HashSet<Constraint> myConstraints = new HashSet<Constraint>();
   final HashSet<PsiElement> myElements;
-  final HashSet<PsiTypeCastExpression> myCasts;
+  final HashMap<PsiTypeCastExpression, PsiType> myCastToOperandType;
   final HashMap<PsiElement, PsiType> myTypes;
   final PsiTypeVariableFactory myTypeVariableFactory;
   final Project myProject;
@@ -32,18 +28,18 @@ public class System {
 
   HashSet<PsiTypeVariable> myBoundVariables;
 
-  public System(final Project project,
-                final HashSet<PsiElement> elements,
-                final HashMap<PsiElement, PsiType> types,
-                final PsiTypeVariableFactory factory,
-                final Settings settings) {
+  public ReductionSystem(final Project project,
+                         final HashSet<PsiElement> elements,
+                         final HashMap<PsiElement, PsiType> types,
+                         final PsiTypeVariableFactory factory,
+                         final Settings settings) {
     myProject = project;
     myElements = elements;
     myTypes = types;
     myTypeVariableFactory = factory;
     myBoundVariables = null;
     mySettings = settings;
-    myCasts = new HashSet<PsiTypeCastExpression> ();
+    myCastToOperandType = new HashMap<PsiTypeCastExpression, PsiType>();
   }
 
   public Project getProject() {
@@ -54,8 +50,8 @@ public class System {
     return myConstraints;
   }
 
-  public void addCast (final PsiTypeCastExpression cast){
-    myCasts.add(cast);
+  public void addCast(final PsiTypeCastExpression cast, final PsiType operandType){
+    myCastToOperandType.put(cast, operandType);
   }
 
   public void addSubtypeConstraint(final PsiType left, final PsiType right) {
@@ -146,7 +142,7 @@ public class System {
     return buffer.toString();
   }
 
-  public System[] isolate() {
+  public ReductionSystem[] isolate() {
     class Node {
       int myComponent = -1;
       Constraint myConstraint;
@@ -303,7 +299,7 @@ public class System {
       }
     }
 
-    final System[] systems = new System[currComponent];
+    final ReductionSystem[] systems = new ReductionSystem[currComponent];
 
     for (int i = 0; i < constraintNodes.length; i++) {
       final Node node = constraintNodes[i];
@@ -311,7 +307,7 @@ public class System {
       final int index = node.myComponent;
 
       if (systems[index] == null) {
-        systems[index] = new System(myProject, myElements, myTypes, myTypeVariableFactory, mySettings);
+        systems[index] = new ReductionSystem(myProject, myElements, myTypes, myTypeVariableFactory, mySettings);
       }
 
       systems[index].addConstraint(constraint, boundVariables.get(constraint));

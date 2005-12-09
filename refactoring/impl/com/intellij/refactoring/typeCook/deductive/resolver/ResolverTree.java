@@ -40,7 +40,7 @@ public class ResolverTree {
 
   private HashSet<Constraint> myConstraints;
 
-  public ResolverTree(final com.intellij.refactoring.typeCook.deductive.builder.System system) {
+  public ResolverTree(final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system) {
     myBindingFactory = new BindingFactory(system);
     mySolutions = new SolutionHolder();
     myCurrentBinding = myBindingFactory.create();

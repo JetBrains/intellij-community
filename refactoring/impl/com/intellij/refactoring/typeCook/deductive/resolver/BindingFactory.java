@@ -1113,7 +1113,7 @@ public class BindingFactory {
     return list;
   }
 
-  public BindingFactory(final com.intellij.refactoring.typeCook.deductive.builder.System system) {
+  public BindingFactory(final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system) {
     myBoundVariables = system.getBoundVariables();
     myProject = system.getProject();
     myFactory = system.getVariableFactory();

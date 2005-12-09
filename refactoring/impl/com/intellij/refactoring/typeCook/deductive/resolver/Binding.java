@@ -6,11 +6,7 @@ import com.intellij.psi.PsiTypeVariable;
 import java.util.HashSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jan 13, 2005
- * Time: 3:44:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public abstract class Binding {
   public abstract PsiType apply(PsiType type);

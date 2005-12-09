@@ -89,7 +89,7 @@ public class SystemBuilder {
       }
 
       final PsiElement e =
-        parameter == null ? (PsiElement)superMethod : superMethod.getParameterList().getParameters()[index];
+        parameter == null ? superMethod : superMethod.getParameterList().getParameters()[index];
 
       if (!victims.contains(e)) {
         myMethodCache.put(superMethod, new Boolean(false));
@@ -126,7 +126,7 @@ public class SystemBuilder {
     final PsiMethod[] overriders = helper.findOverridingMethods(keyMethod, keyMethod.getUseScope(), true);
 
     for (final PsiMethod overrider : overriders) {
-      final PsiElement e = parameter == null ? (PsiElement)overrider : overrider.getParameterList().getParameters()[index];
+      final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
 
       if (!victims.contains(e)) {
         myMethodCache.put(keyMethod, new Boolean(false));
@@ -135,7 +135,7 @@ public class SystemBuilder {
     }
 
     for (final PsiMethod overrider : overriders) {
-      final PsiElement e = parameter == null ? (PsiElement)overrider : overrider.getParameterList().getParameters()[index];
+      final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
 
       mySuper.put(overrider, keyMethod);
       myMethods.put(overrider, keyMethod);
@@ -195,7 +195,7 @@ public class SystemBuilder {
                                                  PsiExpression[] arguments,
                                                  PsiSubstitutor partialSubstitutor,
                                                  PsiElement parent,
-                                                 System system) {
+                                                 ReductionSystem system) {
     PsiType substitution = PsiType.NULL;
     PsiResolveHelper helper = typeParameter.getManager().getResolveHelper();
     if (parameters.length > 0) {
@@ -246,7 +246,7 @@ public class SystemBuilder {
   private PsiType inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
                                                      PsiElement parent,
-                                                     System system) {
+                                                     ReductionSystem system) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     PsiType substitution = PsiType.NULL;
     if (owner instanceof PsiMethod) {
@@ -262,7 +262,7 @@ public class SystemBuilder {
                                                      PsiMethodCallExpression methodCall,
                                                      final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
-                                                     System system) {
+                                                     ReductionSystem system) {
     PsiType type = null;
 
     if (parent instanceof PsiVariable && methodCall.equals(((PsiVariable)parent).getInitializer())) {
@@ -314,7 +314,7 @@ public class SystemBuilder {
     return guess;
   }
 
-  PsiType evaluateType(final PsiExpression expr, final System system) {
+  PsiType evaluateType(final PsiExpression expr, final ReductionSystem system) {
     if (expr instanceof PsiArrayAccessExpression && !mySettings.preserveRawArrays()) {
       final PsiType at = evaluateType(((PsiArrayAccessExpression)expr).getArrayExpression(), system);
 
@@ -591,7 +591,7 @@ public class SystemBuilder {
   }
 
 
-  private void addUsage(final System system, final PsiElement element) {
+  private void addUsage(final ReductionSystem system, final PsiElement element) {
 
     if (element instanceof PsiVariable) {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
@@ -718,7 +718,7 @@ public class SystemBuilder {
                         if (operandType == null || castType == null) return;
 
                         if (Util.bindsTypeVariables(operandType)) {
-                          system.addCast(expression);
+                          system.addCast(expression, operandType);
                         }
 
                         if (operandType.getDeepComponentType() instanceof PsiTypeVariable || castType.getDeepComponentType() instanceof PsiTypeVariable) {
@@ -794,7 +794,7 @@ public class SystemBuilder {
     return rExpression;
   }
 
-  PsiType replaceWildCards(final PsiType type, final System system, final PsiSubstitutor definedSubst) {
+  PsiType replaceWildCards(final PsiType type, final ReductionSystem system, final PsiSubstitutor definedSubst) {
     if (type instanceof PsiWildcardType) {
       final PsiWildcardType wildcard = ((PsiWildcardType)type);
       final PsiType var = myTypeVariableFactory.create();
@@ -830,7 +830,7 @@ public class SystemBuilder {
     return type;
   }
 
-  private void addBoundConstraintsImpl(final PsiType defined, final PsiType type, final System system) {
+  private void addBoundConstraintsImpl(final PsiType defined, final PsiType type, final ReductionSystem system) {
     final PsiClassType.ClassResolveResult resultDefined = Util.resolveType(defined);
     final PsiClassType.ClassResolveResult resultType = Util.resolveType(type);
     final PsiClass definedClass = resultDefined.getElement();
@@ -860,7 +860,7 @@ public class SystemBuilder {
   }
 
 
-  private void addBoundConstraints(final System system, final PsiType definedType, final PsiElement element) {
+  private void addBoundConstraints(final ReductionSystem system, final PsiType definedType, final PsiElement element) {
     final PsiType elemenType = Util.getType(element);
 
     if (elemenType != null) {
@@ -872,14 +872,14 @@ public class SystemBuilder {
     }
   }
 
-  public System build(final PsiElement[] scopes) {
+  public ReductionSystem build(final PsiElement... scopes) {
     return build(collect(scopes));
   }
 
-  public System build(final HashSet<PsiElement> victims) {
+  public ReductionSystem build(final HashSet<PsiElement> victims) {
     final PsiSearchHelper helper = myManager.getSearchHelper();
 
-    System system = new System(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
+    ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 
     for (final PsiElement element : victims) {
       if (element instanceof PsiParameter) {

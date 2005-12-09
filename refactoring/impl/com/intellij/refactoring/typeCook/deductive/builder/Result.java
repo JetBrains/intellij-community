@@ -11,13 +11,10 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Feb 7, 2005
- * Time: 7:40:34 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public class Result {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Result");
@@ -25,7 +22,7 @@ public class Result {
   private final HashSet<PsiElement> myVictims;
   private final HashMap<PsiElement, PsiType> myTypes;
   private final Settings mySettings;
-  private final HashSet<PsiTypeCastExpression> myCasts;
+  private final HashMap<PsiTypeCastExpression, PsiType> myCastToOperandType;
 
   private int myCookedNumber = -1;
   private int myCastsRemoved = -1;
@@ -33,12 +30,12 @@ public class Result {
 
   private Binding myBinding;
 
-  public Result(final System system) {
+  public Result(final ReductionSystem system) {
     myVictims = system.myElements;
     myTypes = system.myTypes;
     mySettings = system.mySettings;
-    myCasts = system.myCasts;
-    myCastsNumber = myCasts.size();
+    myCastToOperandType = system.myCastToOperandType;
+    myCastsNumber = myCastToOperandType.size();
   }
 
   public void incorporateSolution(final Binding binding) {
@@ -96,17 +93,22 @@ public class Result {
 
     if (mySettings.dropObsoleteCasts()) {
       myCastsRemoved = 0;
-      for (final PsiTypeCastExpression cast : myCasts) {
-        cast.accept(new PsiRecursiveElementVisitor() {
+      for (final Map.Entry<PsiTypeCastExpression,PsiType> entry : myCastToOperandType.entrySet()) {
+        final PsiTypeCastExpression cast = entry.getKey();
+        final PsiType operandType = myBinding.apply(entry.getValue());
+        if (operandType.isAssignableFrom(cast.getType())) {
+          set.add(cast);
+        }
+        /*cast.accept(new PsiRecursiveElementVisitor() {
           public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
-            if (myCasts.contains(expression)) {
-              if (expression.getType().equals(expression.getOperand().getType())) {
+            if (myCastToOperandType.containsKey(expression)) {
+              if (operandType.isAssignableFrom(expression.getType())) {
                 set.add(cast);
               }
             }
           }
-        });
+        });*/
       }
     }
 
