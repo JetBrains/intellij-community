@@ -441,7 +441,9 @@ public class ReplacerImpl {
 
     PsiElement lastChild = el.getLastChild();
     if (lastChild instanceof PsiComment &&
-        replacementInfo.elementToVariableNameMap.get(lastChild) == null) {
+        replacementInfo.elementToVariableNameMap.get(lastChild) == null &&
+        !(replacement.getLastChild() instanceof PsiComment)
+      ) {
       PsiElement firstElementAfterStatementEnd = lastChild;
       for(PsiElement curElement=firstElementAfterStatementEnd.getPrevSibling();curElement!=null;curElement = curElement.getPrevSibling()) {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;

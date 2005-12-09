@@ -540,6 +540,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testReplaceWithComments() {
+    String s1 = "map.put(key, value); // line 1";
+    String s2 = "map.put(key, value); // line 1";
+    String s3 = "map.put(key, value); // line 1";
+    String expectedResult = "map.put(key, value); // line 1";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+
+    assertEquals(
+      "replace self with comment after",
+      expectedResult,
+      actualResult
+    );
+  }
+
   public void testSeveralStatements() {
     String s1 = "{\n" +
                 "        System.out.println(1);\n" +
