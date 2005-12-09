@@ -73,8 +73,8 @@ public class TestCaseLoader {
    * Determine if we should load this test case.
    */
   private boolean shouldAddTestCase(final Class testCaseClass) {
-    boolean shouldAdd = false;
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
+    boolean shouldAdd = false;
     if ((TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) &&
         testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
       if (shouldExcludeTestClass(testCaseClass)) return false;
@@ -105,36 +105,21 @@ public class TestCaseLoader {
   }
 
   public static boolean isBombed(final Method method) {
-    try {
-      final Bombed bombedAnnotation = (Bombed)method.getAnnotation(Bombed.class);
-      return isBombed(bombedAnnotation);
-
-    }
-    catch (Exception e) {
-      return false;
-    }
-  }
-
-  public static boolean isBombed(final Class testCaseClass) {
-    try {
-      final Bombed bombedAnnotation = (Bombed)testCaseClass.getAnnotation(Bombed.class);
-      return isBombed(bombedAnnotation);
-
-    }
-    catch (Exception e) {
-      return false;
-    }
-  }
-
-  private static boolean isBombed(final Bombed bombedAnnotation) {
+    final Bombed bombedAnnotation = method.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    return !IdeaTestUtil.bombExplodes(bombedAnnotation.year(),
-                                      bombedAnnotation.month(),
-                                      bombedAnnotation.day(),
-                                      bombedAnnotation.time(),
-                                      0,
-                                      bombedAnnotation.user(),
-                                      bombedAnnotation.description());
+    if (IdeaTestUtil.isRotten(bombedAnnotation)) {
+      System.err.println("Disarm the stale bomb for '"+method+"' in class '"+method.getDeclaringClass()+"'");
+    }
+    return !IdeaTestUtil.bombExplodes(bombedAnnotation);
+  }
+
+  public static boolean isBombed(final Class<?> testCaseClass) {
+    final Bombed bombedAnnotation = testCaseClass.getAnnotation(Bombed.class);
+    if (bombedAnnotation == null) return false;
+    if (IdeaTestUtil.isRotten(bombedAnnotation)) {
+      System.err.println("Disarm the stale bomb for '"+testCaseClass+"'");
+    }
+    return !IdeaTestUtil.bombExplodes(bombedAnnotation);
   }
 
   public void loadTestCases(final Iterator classNamesIterator) {
