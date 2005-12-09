@@ -64,12 +64,21 @@ public abstract class Property {
    */
   public final void setValue(final RadComponent component, final Object value) throws Exception{
     setValueImpl(component, value);
+    markTopmostModified(component, true);
+    component.getDelegee().invalidate();
+  }
+
+  protected void markTopmostModified(final RadComponent component, final boolean modified) {
     Property topmostParent = this;
     while (topmostParent.getParent() != null) {
       topmostParent = topmostParent.getParent();
     }
-    component.markPropertyAsModified(topmostParent);
-    component.getDelegee().invalidate();
+    if (modified) {
+      component.markPropertyAsModified(topmostParent);
+    }
+    else {
+      component.removeModifiedProperty(topmostParent);      
+    }
   }
 
   /**
@@ -108,5 +117,8 @@ public abstract class Property {
 
   public boolean isModified(final RadComponent component) {
     return false;
+  }
+
+  public void resetValue(RadComponent component) throws Exception {
   }
 }

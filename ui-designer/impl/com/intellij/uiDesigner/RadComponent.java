@@ -395,6 +395,10 @@ public abstract class RadComponent implements IComponent {
     myModifiedPropertyNames.add(property.getName());
   }
 
+  public final void removeModifiedProperty(final Property property) {
+    myModifiedPropertyNames.remove(property.getName());
+  }
+
   /**
    * @param x in delegee coordinates
    * @param y in delegee coordinates

@@ -53,4 +53,8 @@ public final class MarginProperty extends AbstractInsetsProperty{
   @Override public boolean isModified(final RadComponent component) {
     return !getValue(component).equals(DEFAULT_INSETS);
   }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValueImpl(component, DEFAULT_INSETS);
+  }
 }

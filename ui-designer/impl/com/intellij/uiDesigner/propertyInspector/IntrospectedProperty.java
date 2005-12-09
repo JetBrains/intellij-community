@@ -2,9 +2,12 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
 /**
  * @author Anton Katilin
@@ -64,5 +67,13 @@ public abstract class IntrospectedProperty extends Property{
 
   @Override public boolean isModified(final RadComponent component) {
     return component.isMarkedAsModified(this);
+  }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    final Constructor constructor = component.getComponentClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+    constructor.setAccessible(true);
+    JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    myWriteMethod.invoke(component.getDelegee(), myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY));
+    markTopmostModified(component, false);
   }
 }

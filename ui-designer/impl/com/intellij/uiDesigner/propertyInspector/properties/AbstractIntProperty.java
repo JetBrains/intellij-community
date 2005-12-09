@@ -36,4 +36,8 @@ public abstract class AbstractIntProperty extends Property {
     Integer intValue = (Integer) getValue(component);
     return intValue != null && intValue.intValue() != myDefaultValue;
   }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValue(component, new Integer(myDefaultValue));
+  }
 }

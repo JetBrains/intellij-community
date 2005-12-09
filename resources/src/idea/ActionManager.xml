@@ -1279,6 +1279,7 @@
     <group id="GuiDesigner.PropertyInspectorPopupMenu">
       <action id="GuiDesigner.QuickJavadoc" class="com.intellij.uiDesigner.actions.ShowJavadocAction"/>
       <reference ref="EditSource"/>
+      <action id="GuiDesigner.ResetValue" class="com.intellij.uiDesigner.actions.ResetValueAction"/>
     </group>
 
     <!-- ****************************************************************** -->

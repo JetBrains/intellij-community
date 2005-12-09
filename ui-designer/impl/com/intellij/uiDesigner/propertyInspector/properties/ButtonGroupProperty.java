@@ -64,6 +64,10 @@ public class ButtonGroupProperty extends Property {
     return getValue(component) != null;
   }
 
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValueImpl(component, null);
+  }
+
   private static class MyPropertyEditor extends ComboBoxPropertyEditor {
     private RadRootContainer myRootContainer;
     private RadComponent myComponent;

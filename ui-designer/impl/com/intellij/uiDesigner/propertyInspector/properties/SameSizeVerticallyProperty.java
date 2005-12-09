@@ -67,4 +67,8 @@ public final class SameSizeVerticallyProperty extends Property{
   @Override public boolean isModified(final RadComponent component) {
     return ((Boolean) getValue(component)).booleanValue();
   }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValueImpl(component, Boolean.FALSE);
+  }
 }

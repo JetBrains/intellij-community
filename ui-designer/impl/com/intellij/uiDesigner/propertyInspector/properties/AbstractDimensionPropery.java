@@ -1,8 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -57,10 +56,12 @@ public abstract class AbstractDimensionPropery extends Property {
   protected abstract Dimension getValueImpl(final GridConstraints constraints);
 
   @Override public boolean isModified(final RadComponent component) {
-    final Palette palette = Palette.getInstance(component.getModule().getProject());
-    final ComponentItem item = palette.getItem(component.getComponentClassName());
-    assert item != null;
-    return !getValueImpl(component.getConstraints()).equals(getValueImpl(item.getDefaultConstraints()));
+    final Dimension defaultValue = getValueImpl(FormEditingUtil.getDefaultConstraints(component));
+    return !getValueImpl(component.getConstraints()).equals(defaultValue);
+  }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValueImpl(component, getValueImpl(FormEditingUtil.getDefaultConstraints(component)));
   }
 
   /**

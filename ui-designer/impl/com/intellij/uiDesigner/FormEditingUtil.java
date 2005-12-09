@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -350,6 +352,14 @@ public final class FormEditingUtil {
 
   private static boolean isNullOrRoot(final RadComponent component) {
     return component == null || component instanceof RadRootContainer;
+  }
+
+  public static GridConstraints getDefaultConstraints(final RadComponent component) {
+    final Palette palette = Palette.getInstance(component.getModule().getProject());
+    final ComponentItem item = palette.getItem(component.getComponentClassName());
+    assert item != null;
+    final GridConstraints defaultConstraints = item.getDefaultConstraints();
+    return defaultConstraints;
   }
 
   public static interface ComponentVisitor <Type extends IComponent>{

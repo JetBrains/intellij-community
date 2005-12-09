@@ -169,6 +169,15 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   @Nullable
   public IntrospectedProperty getSelectedIntrospectedProperty(){
+    Property property = getSelectedProperty();
+    if (property == null || !(property instanceof IntrospectedProperty)) {
+      return null;
+    }
+
+    return (IntrospectedProperty)property;
+  }
+
+  @Nullable public Property getSelectedProperty() {
     final int selectedRow = getSelectedRow();
     if(selectedRow < 0 || selectedRow >= getRowCount()){
       return null;
@@ -185,12 +194,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return null;
     }
 
-    final Property property = myProperties.get(selectedRow);
-    if (!(property instanceof IntrospectedProperty)) {
-      return null;
-    }
-
-    return (IntrospectedProperty)property;
+    return myProperties.get(selectedRow);
   }
 
   /**
