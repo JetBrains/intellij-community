@@ -17,10 +17,15 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class LibraryUtil {
+
+    @NonNls
+    private static final String JAVA = ".java";
+
     private LibraryUtil() {
         super();
     }
@@ -28,8 +33,25 @@ public class LibraryUtil {
     public static boolean classIsInLibrary(@NotNull PsiClass aClass) {
         final PsiFile file = aClass.getContainingFile();
         final String fileName = file.getName();
-        @NonNls final String java = ".java";
-        return !fileName.endsWith(java);
+        if (fileName == null) {
+            return false;
+        }
+        return !fileName.endsWith(JAVA);
     }
-}
 
+    public static boolean isOverrideOfLibraryMethod(PsiMethod method){
+		final PsiMethod[] superMethods = method.findSuperMethods();
+		for(PsiMethod superMethod : superMethods){
+			final PsiClass containingClass =
+					superMethod.getContainingClass();
+			if(containingClass != null &&
+					classIsInLibrary(containingClass)){
+				return true;
+			}
+            if(isOverrideOfLibraryMethod(superMethod)){
+                return true;
+            }
+        }
+		return false;
+	}
+}

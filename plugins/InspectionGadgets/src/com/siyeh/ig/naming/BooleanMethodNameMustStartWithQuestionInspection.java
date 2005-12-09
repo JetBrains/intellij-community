@@ -22,20 +22,22 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -44,7 +46,9 @@ import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInspection{
     /** @noinspection PublicField*/
-    @NonNls public String nameCheckString = "is,can,has,should";
+    @NonNls public String nameCheckString =
+            "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
+                    "remove,startsWith,endsWith";
     private final RenameFix fix = new RenameFix();
 
     private List<Object> nameList = new ArrayList<Object>(32);
@@ -92,7 +96,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.display.name");
+        return InspectionGadgetsBundle.message(
+                "boolean.method.name.must.start.with.question.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -113,7 +118,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "boolean.method.name.must.start.with.question.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -144,7 +150,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
                     }
                 }
             }
-            if(isOverrideOfLibraryMethod(method)){
+            if(LibraryUtil.isOverrideOfLibraryMethod(method)){
                 return;
             }
             registerMethodError(method);
@@ -159,22 +165,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             super.visitClass(aClass);
             inClass = wasInClass;
         }
-
-        private boolean isOverrideOfLibraryMethod(PsiMethod method){
-          final PsiMethod[] superMethods =
-                  method.findSuperMethods();
-
-            for(PsiMethod superMethod : superMethods){
-                final PsiClass containingClass =
-                        superMethod.getContainingClass();
-                if(containingClass != null &&
-                        LibraryUtil.classIsInLibrary(containingClass)){
-                    return true;
                 }
-            }
-            return false;
-        }
-    }
 
     private class Form{
         JPanel contentPanel;
@@ -186,7 +177,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             final NameListTableModel model =
             new NameListTableModel();
             table.setModel(model);
@@ -201,12 +193,15 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
 
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect =
+                                    table.getCellRect(listSize, 0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
+                            final TableCellEditor editor =
+                                    table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
                         }
                     });
@@ -255,7 +250,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
         }
 
         public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.column.name");
+            return InspectionGadgetsBundle.message(
+                    "boolean.method.name.must.start.with.question.table.column.name");
         }
 
         public Class getColumnClass(int columnIndex){

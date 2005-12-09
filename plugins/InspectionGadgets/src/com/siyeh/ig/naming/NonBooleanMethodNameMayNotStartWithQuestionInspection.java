@@ -22,20 +22,22 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -44,7 +46,10 @@ import java.util.List;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends MethodInspection{
     /** @noinspection PublicField*/
-    @NonNls public String nameCheckString = "is,can,has,should";
+    @NonNls public String nameCheckString =
+            "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
+            "remove,startsWith,endsWith";
+
     private final RenameFix fix = new RenameFix();
 
     private List<Object> nameList = new ArrayList<Object>(32);
@@ -92,7 +97,8 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.boolean.method.name.must.not.start.with.question.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -121,6 +127,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
+
         private boolean inClass = false;
 
         public void visitMethod(@NotNull PsiMethod method){
@@ -153,7 +160,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
             if(!startsWithQuestionWord){
                 return;
             }
-            if(isOverrideOfLibraryMethod(method)){
+            if(LibraryUtil.isOverrideOfLibraryMethod(method)){
                 return;
             }
             registerMethodError(method);
@@ -168,24 +175,10 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
             super.visitClass(aClass);
             inClass = wasInClass;
         }
-
-        private boolean isOverrideOfLibraryMethod(PsiMethod method){
-          final PsiMethod[] superMethods =
-                  method.findSuperMethods();
-
-            for(PsiMethod superMethod : superMethods){
-                final PsiClass containingClass =
-                        superMethod.getContainingClass();
-                if(containingClass != null &&
-                        LibraryUtil.classIsInLibrary(containingClass)){
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 
     private class Form{
+
         JPanel contentPanel;
         JButton addButton;
         JButton deleteButton;
@@ -197,7 +190,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
             table.setRowSelectionAllowed(true);
             table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             final NameListTableModel model =
-            new NameListTableModel();
+                    new NameListTableModel();
             table.setModel(model);
             addButton.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e){
@@ -253,6 +246,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
     }
 
     private class NameListTableModel extends AbstractTableModel{
+
         public int getRowCount(){
             synchronized(lock) {
                 return nameList.size();
