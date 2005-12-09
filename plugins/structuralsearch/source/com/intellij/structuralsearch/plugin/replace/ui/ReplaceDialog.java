@@ -139,7 +139,6 @@ public class ReplaceDialog extends SearchDialog {
           final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
 
           if (isValid(usage, replaceContext)) {
-            ensureFileWritable(usage);
             replaceOne(usage, replaceContext, searchContext.getProject(), false);
           }
         }
@@ -170,8 +169,6 @@ public class ReplaceDialog extends SearchDialog {
           UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)selection.iterator().next();
 
           if (isValid(usage, replaceContext)) {
-            ensureFileWritable(usage);
-
             replaceOne(usage, replaceContext, searchContext.getProject(), true);
           }
         }
@@ -186,11 +183,11 @@ public class ReplaceDialog extends SearchDialog {
     super.configureActions(context);
   }
 
-  private void ensureFileWritable(final UsageInfo2UsageAdapter usage) {
+  private static void ensureFileWritable(final UsageInfo2UsageAdapter usage) {
     final VirtualFile file = usage.getFile();
 
     if (!file.isWritable()) {
-      ReadonlyStatusHandler.getInstance(searchContext.getProject()).ensureFilesWritable(file);
+      ReadonlyStatusHandler.getInstance(usage.getElement().getProject()).ensureFilesWritable(file);
     }
   }
 
@@ -213,6 +210,7 @@ public class ReplaceDialog extends SearchDialog {
     }
 
     if (approved) {
+      ensureFileWritable(info);
       context.getUsageView().removeUsage(info);
       context.getReplacer().replace(replacementInfo);
 
