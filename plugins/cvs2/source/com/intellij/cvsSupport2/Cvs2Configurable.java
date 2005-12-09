@@ -19,7 +19,6 @@ class Cvs2Configurable implements Configurable {
     myProject = project;
   }
 
-
   @NonNls public String getDisplayName() {
     return "CVS2";
   }
