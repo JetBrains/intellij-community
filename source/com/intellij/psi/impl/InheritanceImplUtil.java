@@ -19,7 +19,7 @@ public class InheritanceImplUtil {
     if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
 
     final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
-    if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEjb().getEjbClass().getPsiClass())) {
+    if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEnterpriseBean().getEjbClass().getValue())) {
       return !classRole.getEjb().acceptInterfaces(new J2EEElementsVisitor() {
         public boolean visitInterface(PsiClass anInterface) {
           return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
