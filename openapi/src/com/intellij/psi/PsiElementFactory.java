@@ -683,4 +683,13 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
   XmlTag createXHTMLTagFromText(@NonNls String s) throws IncorrectOperationException;
+
+  /**
+   * Creates an PsiWhiteSpace with the specified text.
+   *
+   * @param s the text of whitespace
+   * @return the created whitespace instance.
+   * @throws IncorrectOperationException if the text does not specify a valid whitespace.
+   */
+  PsiElement createWhiteSpaceFromText(@NonNls String s) throws IncorrectOperationException;
 }

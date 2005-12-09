@@ -467,6 +467,20 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return ((XmlFile)createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
+  public PsiElement createWhiteSpaceFromText(@NonNls String text) throws IncorrectOperationException {
+    final FileElement holderElement = new DummyHolder(myManager, null).getTreeElement();
+    final LeafElement newElement = Factory.createLeafElement(
+      ElementType.WHITE_SPACE,
+      text.toCharArray(),
+      0,
+      text.length(),
+      -1,
+      holderElement.getCharTable()
+    );
+    TreeUtil.addChildren(holderElement, newElement);
+    return newElement.getPsi();
+  }
+
   public PsiJavaCodeReferenceElement createPackageReferenceElement(String packageName)
     throws IncorrectOperationException {
     if (packageName.length() == 0) {
