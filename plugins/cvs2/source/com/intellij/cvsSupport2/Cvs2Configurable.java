@@ -24,6 +24,7 @@ class Cvs2Configurable implements Configurable {
   }
 
   public Icon getIcon() {
+    
     return null;
   }
 
