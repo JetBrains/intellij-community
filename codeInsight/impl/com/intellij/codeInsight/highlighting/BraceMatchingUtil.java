@@ -423,7 +423,7 @@ public class BraceMatchingUtil {
     final BraceMatcher defaultBraceMatcher = new DefaultBraceMatcher();
     registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
     registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
-    
+
     HtmlBraceMatcher braceMatcher = new HtmlBraceMatcher();
     registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
     registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
@@ -556,6 +556,14 @@ public class BraceMatchingUtil {
 
     if (braceMatcher!=null) return braceMatcher.isLBraceToken(iterator, fileText, fileType);
     return false;
+  }
+
+  public static boolean isLBraceTokenToHighlight(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
+    return iterator.getTokenType() != JavaTokenType.LT && isLBraceToken(iterator, fileText, fileType);
+  }
+
+  public static boolean isRBraceTokenToHighlight(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
+    return iterator.getTokenType() != JavaTokenType.GT && isRBraceToken(iterator, fileText, fileType); 
   }
 
   public static boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
