@@ -58,7 +58,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                            int startOffset, LookupData data, LookupItem item,
                            final boolean signatureSelected, final char completionChar) {
     DefaultInsertHandler delegate = this;
-    
+
     if (isTemplateToBeCompleted(item)) {
       try {
         delegate = (DefaultInsertHandler)clone();
@@ -67,8 +67,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       catch (CloneNotSupportedException e) {
         e.printStackTrace();
       }
-    } 
-    
+    }
+
     boolean toClear = true;
     try{
       toClear = delegate.handleInsertInner(context, startOffset, data, item, signatureSelected, completionChar);
@@ -91,7 +91,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myContext = null;
   }
 
-  public boolean handleInsertInner(final CompletionContext context,
+  public boolean handleInsertInner(CompletionContext context,
                            int startOffset, LookupData data, LookupItem item,
                            final boolean signatureSelected, final char completionChar) {
 
@@ -152,7 +152,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myEditor.getSelectionModel().removeSelection();
 
     try{
-      addImportForItem(myFile, myStartOffset, myLookupItem);
+      myStartOffset = addImportForItem(myFile, myStartOffset, myLookupItem);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -178,14 +178,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
       return false;
     }
-    
+
     if (insertingAnnotation()) {
       final Document document = context.editor.getDocument();
       PsiDocumentManager.getInstance(context.project).commitDocument(document);
-      final PsiElement elementAt = myFile.findElementAt(myStartOffset);
-      final PsiElement prevSibling = elementAt != null? elementAt.getParent().getPrevSibling():null;
-      
-      if(prevSibling == null || !"@".equals(prevSibling.getText())) {
+      final PsiElement elementAt = myFile.findElementAt(myStartOffset - 1 );
+
+      if(!"@".equals(elementAt.getText())) {
         document.insertString(myStartOffset, "@");
       }
     }
@@ -302,7 +301,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     else if (myLookupItem.getObject() instanceof PsiMethod){
       PsiElement place = myFile.findElementAt(myStartOffset);
       if (myLookupItem.getObject() instanceof PsiAnnotationMethod) {
-        if (place instanceof PsiIdentifier && (place.getParent() instanceof PsiNameValuePair 
+        if (place instanceof PsiIdentifier && (place.getParent() instanceof PsiNameValuePair
                                             || place.getParent().getParent() instanceof PsiNameValuePair)) return false;
       }
       needParens = place == null || !(place.getParent() instanceof PsiImportStaticReferenceElement);
@@ -653,12 +652,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     int existingRParenthOffset = -1;
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
       final IElementType tokenType = iterator.getTokenType();
-      
+
       if (tokenType instanceof IJavaElementType && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType) ||
           tokenType == TokenType.WHITE_SPACE) {
         continue;
       }
-      
+
       if (tokenType == JavaTokenType.RPARENTH){
         existingRParenthOffset = iterator.getStart();
       }
@@ -927,14 +926,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
+  private static int addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
       int length = aClass.getName().length();
-      addImportForClass(file, startOffset, startOffset + length, aClass);
+      return addImportForClass(file, startOffset, startOffset + length, aClass);
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -942,7 +941,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         PsiClass refClass = ((PsiClassType) type).resolve();
         if (refClass != null){
           int length = refClass.getName().length();
-          addImportForClass(file, startOffset, startOffset + length, refClass);
+          return addImportForClass(file, startOffset, startOffset + length, refClass);
         }
       }
     }
@@ -955,13 +954,15 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
         if (aClass != null){
           int length = method.getName().length();
-          addImportForClass(file, startOffset, startOffset + length, aClass);
+          return addImportForClass(file, startOffset, startOffset + length, aClass);
         }
       }
     }
+
+    return startOffset;
   }
 
-  private static void addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
+  private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
     SmartPsiElementPointer pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(aClass);
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     LOG.assertTrue(ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
@@ -973,11 +974,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     CharSequence chars = document.getCharsSequence();
     int length = document.getTextLength();
+    int newStartOffset = startOffset;
+
     PsiElement element = file.findElementAt(startOffset);
     String refText = chars.subSequence(startOffset, endOffset).toString();
     PsiClass refClass = helper.resolveReferencedClass(refText, element);
     if (refClass != null && (refClass.getQualifiedName() == null/* local classes and parameters*/
-                             || manager.areElementsEquivalent(aClass, refClass))) return;
+                             || manager.areElementsEquivalent(aClass, refClass))) return newStartOffset;
     boolean insertSpace = endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset));
 
     if (insertSpace){
@@ -998,11 +1001,15 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         if(pointerElement instanceof PsiClass){
           if (!(ref instanceof PsiImportStaticReferenceElement)) {
             PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
-            endOffset = newRef.getTextRange().getEndOffset();
+            final TextRange textRange = newRef.getTextRange();
+            endOffset = textRange.getEndOffset();
+            newStartOffset = textRange.getStartOffset();
           }
           else {
             final PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
-            endOffset = statement.getTextRange().getEndOffset();
+            final TextRange textRange = statement.getTextRange();
+            endOffset = textRange.getEndOffset();
+            newStartOffset = textRange.getStartOffset();
           }
         }
       }
@@ -1011,6 +1018,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (insertSpace){
       document.deleteString(endOffset, endOffset + 1);
     }
+
+    return newStartOffset;
   }
 
   private static class InsertHandlerState{
