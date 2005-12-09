@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.xml.XmlTag;
@@ -609,15 +607,8 @@ public class ReplacerImpl {
     }
   }
 
-  private static PsiElement createWhiteSpace(final PsiElement space) {
-    return Factory.createSingleLeafElement(
-      ElementType.WHITE_SPACE,
-      new char[] {' '},
-      0,
-      1,
-      SharedImplUtil.findCharTableByTree(space.getNode()),
-      space.getManager()
-    ).getPsi();
+  private static PsiElement createWhiteSpace(final PsiElement space) throws IncorrectOperationException {
+    return space.getManager().getElementFactory().createWhiteSpaceFromText(" ");
   }
 
   public static void checkSupportedReplacementPattern(Project project, String search,
