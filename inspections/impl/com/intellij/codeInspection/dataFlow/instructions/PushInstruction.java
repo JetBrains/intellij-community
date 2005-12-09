@@ -16,7 +16,7 @@ public class PushInstruction extends Instruction {
   private final DfaValue myValue;
 
   public PushInstruction(DfaValue value) {
-    this.myValue = value != null ? value : DfaUnknownValue.getInstance();
+    myValue = value != null ? value : DfaUnknownValue.getInstance();
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
@@ -24,7 +24,6 @@ public class PushInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1),memState)};
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PUSH " + myValue;
   }

@@ -26,7 +26,7 @@ public class TypeCastInstruction extends Instruction {
     PsiExpression expr = castExpression.getOperand();
     PsiType castType = castExpression.getCastType().getType();
 
-    if (expr == null || castType == null) return null;
+    if (expr == null) return null;
 
     if (RedundantCastUtil.isTypeCastSemantical(castExpression)) {
       return new TypeCastInstruction();

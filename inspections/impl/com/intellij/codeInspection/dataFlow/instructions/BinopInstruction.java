@@ -13,12 +13,11 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class BinopInstruction extends BranchingInstruction {
   private final String myOperationSign;
@@ -48,7 +47,6 @@ public class BinopInstruction extends BranchingInstruction {
     DfaValue dfaLeft = memState.pop();
 
     if (myOperationSign != null) {
-      ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
       final DfaValueFactory factory = runner.getFactory();
       if (("==".equals(myOperationSign) || "!=".equals(myOperationSign)) &&
           dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
@@ -67,6 +65,7 @@ public class BinopInstruction extends BranchingInstruction {
       DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, myOperationSign, false);
       if (dfaRelation != null) {
         myCanBeNullInInstanceof = true;
+        ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
 
         final DfaMemoryState trueCopy = memState.createCopy();
         if (trueCopy.applyCondition(dfaRelation)) {
@@ -125,7 +124,6 @@ public class BinopInstruction extends BranchingInstruction {
     return myCanBeNullInInstanceof;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "BINOP " + myOperationSign;
   }

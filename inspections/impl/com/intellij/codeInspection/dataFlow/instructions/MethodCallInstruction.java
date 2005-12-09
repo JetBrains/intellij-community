@@ -35,7 +35,7 @@ public class MethodCallInstruction extends Instruction {
   public MethodCallInstruction(PsiCallExpression call, DfaValueFactory factory) {
     myCall = call;
     myFactory = factory;
-    final PsiMethod callee = call.resolveMethod();
+    final PsiMethod callee = myCall.resolveMethod();
     final PsiExpressionList argList = myCall.getArgumentList();
     myArgs = argList != null ? argList.getExpressions() : new PsiExpression[0];
 
@@ -54,7 +54,7 @@ public class MethodCallInstruction extends Instruction {
     myType = myCall.getType();
 
     myShouldFlushFields = true;
-    if (call instanceof PsiNewExpression) {
+    if (myCall instanceof PsiNewExpression) {
       myIsNullable = false;
       myIsNotNull = true;
       if (myType != null && myType.getArrayDimensions() > 0) {
@@ -63,7 +63,7 @@ public class MethodCallInstruction extends Instruction {
     }
   }
 
-  private boolean isNotNullParameter(PsiParameter parameter) {
+  private static boolean isNotNullParameter(PsiParameter parameter) {
     final PsiAnnotation[] annotations = parameter.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       if (AnnotationUtil.NOT_NULL.equals(annotation.getQualifiedName())) return true;
@@ -118,7 +118,6 @@ public class MethodCallInstruction extends Instruction {
     return myCall;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "CALL_METHOD: " + myCall.getText();
   }

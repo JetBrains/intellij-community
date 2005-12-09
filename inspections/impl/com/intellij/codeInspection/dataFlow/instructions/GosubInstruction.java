@@ -21,7 +21,6 @@ public class GosubInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, memState)};
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "GOSUB: " + mySubprogramOffset;
   }

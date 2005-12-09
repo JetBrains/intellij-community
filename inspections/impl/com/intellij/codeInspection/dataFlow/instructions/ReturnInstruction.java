@@ -15,7 +15,6 @@ public class ReturnInstruction extends Instruction {
     return new DfaInstructionState[0];
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "RETURN";
   }

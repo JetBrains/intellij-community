@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithIfSurrounder extends JavaStatementsSurrounder{
+public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.if.template");
   }
@@ -36,7 +36,8 @@ class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     TextRange range = ifStatement.getCondition().getTextRange();
+    TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    return textRange;
   }
 }

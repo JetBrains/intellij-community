@@ -8,19 +8,18 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.GroupNames;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class RedundantCastInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastInspection");
@@ -34,7 +33,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
 
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    if (initializers == null || initializers.length == 0) return null;
+    if (initializers.length == 0) return null;
     List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);

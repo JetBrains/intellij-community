@@ -11,6 +11,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -25,8 +26,7 @@ public abstract class Instruction {
   public abstract DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState dfaBeforeMemoryState);
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
-    for (int i = 0; i < myProcessedStates.size(); i++) {
-      DfaMemoryState state = myProcessedStates.get(i);
+    for (DfaMemoryState state : myProcessedStates) {
       if (dfaMemState.equals(state)) return true;
     }
 
@@ -45,5 +45,10 @@ public abstract class Instruction {
 
   public int getIndex() {
     return myIndex;
+  }
+
+  @NonNls
+  public String toString() {
+    return super.toString();
   }
 }

@@ -193,4 +193,10 @@ public class DataFlowTest extends InspectionTestCase {
   public void testForeachFlow() throws Exception {
     doTest15();
   }
+  public void testForEachNPE() throws Exception {
+    doTest15();
+  }
+  public void testArrayAccessNPE() throws Exception {
+    doTest15();
+  }
 }
