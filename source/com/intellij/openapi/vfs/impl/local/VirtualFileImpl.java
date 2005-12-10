@@ -126,7 +126,7 @@ public class VirtualFileImpl extends VirtualFile {
 
     name.getChars(0, nameLength, buffer, currentLength);
     int newLength = currentLength + nameLength;
-    if (currentLength == 0 && separatorChar != '/' ) {
+    if (currentLength == 0 && separatorChar != '/') {
       StringUtil.replaceChar(buffer, '/', separatorChar, currentLength, newLength); // root may contain '/' char
     }
     return newLength;
@@ -186,34 +186,26 @@ public class VirtualFileImpl extends VirtualFile {
 
   public VirtualFile[] getChildren() {
     if (!isDirectory()) return null;
-    synchronized (ourFileSystem.LOCK) {
-      if (myChildren == null) {
-        PhysicalFile file = getPhysicalFile();
-        PhysicalFile[] files = file.listFiles();
-        final int length = files == null ? 0 : files.length;
-        if (length == 0) {
-          myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
-        }
-        else {
-          myChildren = new VirtualFileImpl[ length ];
-          for (int i = 0; i < length; ++i) {
-            PhysicalFile f = files[i];
-            myChildren[i] = new VirtualFileImpl(this, f, f.isDirectory());
+    if (myChildren == null) {
+      synchronized (ourFileSystem.LOCK) {
+        if (myChildren == null) {
+          PhysicalFile file = getPhysicalFile();
+          PhysicalFile[] files = file.listFiles();
+          final int length = files == null ? 0 : files.length;
+          if (length == 0) {
+            myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
+          }
+          else {
+            myChildren = new VirtualFileImpl[ length ];
+            for (int i = 0; i < length; ++i) {
+              PhysicalFile f = files[i];
+              myChildren[i] = new VirtualFileImpl(this, f, f.isDirectory());
+            }
           }
         }
       }
     }
     return myChildren;
-  }
-
-  void replaceChild(VirtualFileImpl oldChild, VirtualFileImpl newChild) {
-    for (int i = 0; i < myChildren.length; i++) {
-      VirtualFileImpl child = myChildren[i];
-      if (child == oldChild) {
-        myChildren[i] = newChild;
-        return;
-      }
-    }
   }
 
   public InputStream getInputStream() throws IOException {
