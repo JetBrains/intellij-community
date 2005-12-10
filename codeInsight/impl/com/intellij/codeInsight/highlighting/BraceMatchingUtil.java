@@ -245,8 +245,7 @@ public class BraceMatchingUtil {
     public boolean isPairBraces(IElementType tokenType1, IElementType tokenType2) {
       if (tokenType2.equals(PAIRING_TOKENS.get(tokenType1))) return true;
       List<IElementType> keys = PAIRING_TOKENS.getKeysByValue(tokenType1);
-      if (keys != null && keys.contains(tokenType2)) return true;
-      return false;
+      return keys != null && keys.contains(tokenType2);
     }
 
     public boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType) {
@@ -324,7 +323,7 @@ public class BraceMatchingUtil {
     private static BraceMatcher ourStyleBraceMatcher;
     private static BraceMatcher ourScriptBraceMatcher;
 
-    public static final void setStyleBraceMatcher(BraceMatcher braceMatcher) {
+    public static void setStyleBraceMatcher(BraceMatcher braceMatcher) {
       ourStyleBraceMatcher = braceMatcher;
     }
 
