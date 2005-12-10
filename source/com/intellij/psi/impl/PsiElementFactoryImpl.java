@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -449,6 +450,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     try {
       String catchBody = catchBodyTemplate.getText(props);
       codeBlockFromText = createCodeBlockFromText("{\n" + catchBody + "\n}", null);
+    }
+    catch (ProcessCanceledException ce) {
+      throw ce;
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template",e);
