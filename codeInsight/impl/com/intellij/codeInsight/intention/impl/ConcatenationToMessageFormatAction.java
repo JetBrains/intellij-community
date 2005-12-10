@@ -152,16 +152,15 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
         final String boxedQName = PsiPrimitiveType.ourUnboxedToQName.get(primitiveType);
         if (boxedQName != null) {
           final GlobalSearchScope resolveScope = arg.getResolveScope();
-          final PsiClass boxedClass = manager.findClass(boxedQName, resolveScope);
-          if (boxedClass != null) {
-            final PsiJavaCodeReferenceElement ref = factory.createReferenceExpression(boxedClass);
-            final PsiMethodCallExpression valueOfExpr = (PsiMethodCallExpression)factory.createExpressionFromText("A.valueOf(b)", null);
-            final PsiElement qualifier = valueOfExpr.getMethodExpression().getQualifier();
-            assert qualifier != null;
-            qualifier.replace(ref);
-            valueOfExpr.getArgumentList().getExpressions()[0].replace(arg);
-            return valueOfExpr;
-          }
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceElementByFQClassName(boxedQName, resolveScope);
+          final PsiNewExpression newExpr = (PsiNewExpression)factory.createExpressionFromText("new A(b)", null);
+          final PsiElement classRef = newExpr.getClassReference();
+          assert classRef != null;
+          classRef.replace(ref);
+          final PsiExpressionList argumentList = newExpr.getArgumentList();
+          assert argumentList != null;
+          argumentList.getExpressions()[0].replace(arg);
+          return newExpr;
         }
       }
     }
