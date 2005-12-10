@@ -237,7 +237,13 @@ public class FileUtil {
   }
 
   private static File renameToTempFile(File file) {
-    File parent = file.getParentFile();
+    File parent;
+    try {
+      parent = new File(getTempDirectory());
+    }
+    catch (IOException e) {
+      return null;
+    }
 
     File tempFile;
     for (int i = 0; ; i++) {
