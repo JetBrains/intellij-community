@@ -55,6 +55,12 @@ public class BraceMatchingUtil {
     return false;
   }
 
+  public static boolean isTokenInvalidInsideReference(final IElementType tokenType) {
+    return tokenType == JavaTokenType.SEMICOLON ||
+           tokenType == JavaTokenType.LBRACE ||
+           tokenType == JavaTokenType.RBRACE;
+  }
+
   public interface BraceMatcher {
     int getTokenGroup(IElementType tokenType);
 
@@ -136,7 +142,6 @@ public class BraceMatchingUtil {
       PAIRING_TOKENS.put(JavaTokenType.LPARENTH, JavaTokenType.RPARENTH);
       PAIRING_TOKENS.put(JavaTokenType.LBRACE, JavaTokenType.RBRACE);
       PAIRING_TOKENS.put(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
-      PAIRING_TOKENS.put(JavaTokenType.LT, JavaTokenType.GT);
       PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);
       PAIRING_TOKENS.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlTokenType.XML_START_TAG_START);
       PAIRING_TOKENS.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
@@ -184,7 +189,6 @@ public class BraceMatchingUtil {
       return tokenType == JavaTokenType.LPARENTH ||
              tokenType == JavaTokenType.LBRACE ||
              tokenType == JavaTokenType.LBRACKET ||
-             tokenType == JavaTokenType.LT ||
              tokenType == XmlTokenType.XML_START_TAG_START ||
              tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
              tokenType == JspTokenType.JSP_SCRIPTLET_START ||
@@ -209,7 +213,6 @@ public class BraceMatchingUtil {
       if (tokenType == JavaTokenType.RPARENTH ||
           tokenType == JavaTokenType.RBRACE ||
           tokenType == JavaTokenType.RBRACKET ||
-          tokenType == JavaTokenType.GT ||
           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
           tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ||
           tokenType == JspTokenType.JSP_SCRIPTLET_END ||
@@ -306,8 +309,6 @@ public class BraceMatchingUtil {
         if (ch == '[') return JavaTokenType.LBRACKET;
         if (ch == ')') return JavaTokenType.RPARENTH;
         if (ch == '(') return JavaTokenType.LPARENTH;
-        if (ch == '<') return JavaTokenType.LT;
-        if (ch == '>') return JavaTokenType.GT;
       } else if(tokenType instanceof IJspElementType) {
         if (ch == ']') return ELTokenType.JSP_EL_RBRACKET;
         if (ch == '[') return ELTokenType.JSP_EL_LBRACKET;
@@ -556,14 +557,6 @@ public class BraceMatchingUtil {
 
     if (braceMatcher!=null) return braceMatcher.isLBraceToken(iterator, fileText, fileType);
     return false;
-  }
-
-  public static boolean isLBraceTokenToHighlight(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
-    return iterator.getTokenType() != JavaTokenType.LT && isLBraceToken(iterator, fileText, fileType);
-  }
-
-  public static boolean isRBraceTokenToHighlight(HighlighterIterator iterator, CharSequence fileText, FileType fileType){
-    return iterator.getTokenType() != JavaTokenType.GT && isRBraceToken(iterator, fileText, fileType); 
   }
 
   public static boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType){

@@ -384,7 +384,7 @@ public class TypedHandler implements TypedActionHandler {
       }
       else if (fileType == StdFileTypes.JAVA && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
         PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-        if (handleRParen(editor, fileType, '>', '<')) return;
+        if (handleJavaGT(editor)) return;
       }
     }
     else if (')' == charTyped){
@@ -417,7 +417,7 @@ public class TypedHandler implements TypedActionHandler {
       if (fileType == StdFileTypes.JAVA && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
         PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
         if (BraceMatchingUtil.isAfterClassLikeIdentifier(offsetBefore, editor)) {
-          handleAfterLParen(editor, fileType, '<');
+          handleAfterJavaLT(editor);
         }
       }
     }
@@ -446,6 +446,80 @@ public class TypedHandler implements TypedActionHandler {
       if (originalFileType == StdFileTypes.JSP) {
         handleJspEqual(project, editor);
       }
+    }
+  }
+
+  //need custom handler, since brace matcher cannot be used
+  private boolean handleJavaGT(final Editor editor) {
+    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
+
+    int offset = editor.getCaretModel().getOffset();
+
+    if (offset == editor.getDocument().getTextLength()) return false;
+
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    if (iterator.getTokenType() != JavaTokenType.GT) return false;
+    while (!iterator.atEnd() && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+      iterator.advance();
+    }
+
+    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
+
+    int balance = 0;
+    while (!iterator.atEnd() && balance >= 0) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (tokenType == JavaTokenType.LT) {
+        balance--;
+      }
+      else if (tokenType == JavaTokenType.GT) {
+        balance++;
+      }
+      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+        break;
+      }
+
+      iterator.retreat();
+    }
+
+    if (balance == 0) {
+      editor.getCaretModel().moveToOffset(offset + 1);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      return true;
+    }
+
+    return false;
+  }
+
+  //need custom handler, since brace matcher cannot be used
+  private void handleAfterJavaLT(final Editor editor) {
+    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return;
+
+    int offset = editor.getCaretModel().getOffset();
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+      iterator.retreat();
+    }
+
+    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+
+    int balance = 0;
+    while (!iterator.atEnd() && balance >= 0) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (tokenType == JavaTokenType.LT) {
+        balance++;
+      }
+      else if (tokenType == JavaTokenType.GT) {
+        balance--;
+      }
+      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+        break;
+      }
+
+      iterator.advance();
+    }
+
+    if (balance == 1) {
+      editor.getDocument().insertString(offset, ">");
     }
   }
 

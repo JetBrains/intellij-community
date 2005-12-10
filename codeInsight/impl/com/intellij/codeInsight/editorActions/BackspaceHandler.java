@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.pom.java.LanguageLevel;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
@@ -64,7 +66,11 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       char c1 = chars.charAt(offset);
       if (c == '(' && c1 != ')') return true;
       if (c == '[' && c1 != ']') return true;
-      if (c == '<' && c1 != '>') return true;
+
+      if (c == '<') {
+        if (c1 != '>') return true;
+        return handleLTDeletion(editor, offset);
+      }
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
@@ -74,7 +80,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         return true;
       }
 
-      final char closingBrace = c == '(' ? ')' : c =='[' ? ']' : '>';
+      final char closingBrace = c == '(' ? ')' : ']';
       int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, braceMatcher.getTokenType(closingBrace, iterator),chars,fileType);
       if (rparenOffset >= 0){
         iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
@@ -98,6 +104,38 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         if (isClosed) return true;
       }
 
+      editor.getDocument().deleteString(offset, offset + 1);
+    }
+
+    return true;
+  }
+
+  //need custom handler since cannot use brace matcher
+  private boolean handleLTDeletion(final Editor editor, final int offset) {
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+      iterator.retreat();
+    }
+
+    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+
+    int balance = 0;
+    while (!iterator.atEnd() && balance >= 0) {
+      final IElementType tokenType = iterator.getTokenType();
+      if (tokenType == JavaTokenType.LT) {
+        balance++;
+      }
+      else if (tokenType == JavaTokenType.GT) {
+        balance--;
+      }
+      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+        break;
+      }
+
+      iterator.advance();
+    }
+
+    if (balance < 0) {
       editor.getDocument().deleteString(offset, offset + 1);
     }
 
