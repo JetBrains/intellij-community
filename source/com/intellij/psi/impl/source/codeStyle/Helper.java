@@ -1,11 +1,13 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.formatting.FormatterImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -541,11 +543,25 @@ public class Helper {
         String newIndentString = indentWhitespace(ws, indentLevelsDiff, indentSpacesDiff);
 
         if( !ws.equals(newIndentString) ) {
-          ASTNode newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
-                                                                  newIndentString.toCharArray(),
-                                                                  0, newIndentString.length(), table, SharedImplUtil.getManagerByTree(tree));
-          tree.replaceChild(son, newWSElem);
-          son = newWSElem;
+          boolean skipWSChange = false;
+
+          if (tree instanceof XmlText &&
+              ( myFileType == StdFileTypes.HTML ||
+                myFileType == StdFileTypes.XHTML ||
+                myFileType == StdFileTypes.JSP ||
+                myFileType == StdFileTypes.JSPX
+              )
+            ) {
+            skipWSChange = FormatterImpl.getInstance().isDisabled();
+          }
+
+          if (!skipWSChange) {
+            ASTNode newWSElem = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
+                                                                newIndentString.toCharArray(),
+                                                                0, newIndentString.length(), table, SharedImplUtil.getManagerByTree(tree));
+            tree.replaceChild(son, newWSElem);
+            son = newWSElem;
+          }
         }
       }
       else if( son instanceof CompositeElement ) {
