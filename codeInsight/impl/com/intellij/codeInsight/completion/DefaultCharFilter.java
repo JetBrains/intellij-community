@@ -10,6 +10,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 
 public class DefaultCharFilter implements CharFilter {
@@ -19,7 +20,7 @@ public class DefaultCharFilter implements CharFilter {
   public DefaultCharFilter(PsiFile file) {
     myFile = file;
 
-    if (myFile instanceof XmlFile) {
+    if (myFile instanceof XmlFile && !(myFile instanceof JspFile)) {
       myDelegate = new XmlCharFilter();
     }
   }
