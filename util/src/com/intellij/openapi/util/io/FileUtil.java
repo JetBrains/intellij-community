@@ -191,12 +191,8 @@ public class FileUtil {
     }
   }
 
-  public static String getTempDirectory() throws IOException {
-    //noinspection HardCodedStringLiteral
-    final File file = File.createTempFile("idea", "idea");
-    File parent = file.getParentFile();
-    file.delete();
-    return parent.getAbsolutePath();
+  public static String getTempDirectory() {
+    return System.getProperty("java.io.tmpdir");
   }
 
   public static void asyncDelete(File file) {
@@ -237,26 +233,29 @@ public class FileUtil {
   }
 
   private static File renameToTempFile(File file) {
-    File parent;
-    try {
-      parent = new File(getTempDirectory());
-    }
-    catch (IOException e) {
-      return null;
-    }
-
-    File tempFile;
-    for (int i = 0; ; i++) {
-      @NonNls String name = "___" + file.getName() + i + ".__del__";
-      tempFile = new File(parent, name);
-      if (!tempFile.exists()) break;
-    }
+    File parent = new File(getTempDirectory());
+    final String originalFileName = file.getName();
+    File tempFile = getTempFile(originalFileName, parent);
 
     if (!file.renameTo(tempFile)) {
-      delete(file);
-      return null;
+      //second chance: try to move to the same directory - may fire events in case of file watcher
+      parent = file.getParentFile();
+      tempFile = getTempFile(originalFileName, parent);
+      if (!file.renameTo(tempFile)) {
+        delete(file);
+        return null;
+      }
     }
     return tempFile;
+  }
+
+  private static File getTempFile(String originalFileName, File parent) {
+    File tempFile;
+    for (int i = 0; ; i++) {
+      @NonNls String name = "___" + originalFileName + i + ".__del__";
+      tempFile = new File(parent, name);
+      if (!tempFile.exists()) return tempFile;
+    }
   }
 
   public static boolean delete(File file){
