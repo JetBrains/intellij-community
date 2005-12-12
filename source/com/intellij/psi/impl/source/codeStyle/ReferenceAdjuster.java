@@ -101,7 +101,7 @@ class ReferenceAdjuster implements Constants {
 
     if (element instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(element);
-      for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         child = process(child, addImports, uncompleteCode);
       }
     }
@@ -136,7 +136,7 @@ class ReferenceAdjuster implements Constants {
     if (parent instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(parent);
       int offset = 0;
-      for (TreeElement child = (TreeElement)parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         int length = child.getTextLength();
         if (startOffset <= offset + length && offset <= endOffset) {
           if (startOffset <= offset && offset + length <= endOffset) {
