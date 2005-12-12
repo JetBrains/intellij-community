@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.ExtensionPoints;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,6 +119,20 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     return PsiManager.getInstance(manager.getProject()).isInProject(elt);
   }
 
+  @Override @Nullable
+  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+    final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL).getExtensions();
+    for(Object obj: fileCheckingInspections) {
+      FileCheckingInspection inspection = (FileCheckingInspection) obj;
+      ProblemDescriptor[] descriptors = inspection.checkFile(file, manager, isOnTheFly);
+      if (descriptors != null) {
+        return descriptors;
+      }
+    }
+
+    return null;
+  }
+
   private static class MyVisitor extends PsiRecursiveElementVisitor {
     private List<PsiElement> results = null;
 
@@ -137,23 +153,10 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
       final PsiElement resolved = reference.resolve();
 
       if (resolved instanceof PsiCompiledElement && resolved instanceof PsiMember) {
-        if (checkMember((PsiMember)resolved)) {
+        if (isJava15APIUsage((PsiMember)resolved)) {
           registerError(reference);
         }
       }
-    }
-
-    private boolean checkMember(final PsiMember member) {
-      if (member == null) return false;
-
-      // Annotations caught by special inspection if necessary
-      if (member instanceof PsiClass && ((PsiClass)member).isAnnotationType()) return false;
-
-      if (member instanceof PsiAnonymousClass) return false;
-      if (member.getContainingClass() instanceof PsiAnonymousClass) return false;
-      if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return false;
-
-      return ourForbiddenAPI.contains(getSignature(member)) || checkMember(member.getContainingClass());
     }
 
     private void registerError(PsiJavaCodeReferenceElement reference) {
@@ -166,6 +169,19 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     public List<PsiElement> getResults() {
       return results;
     }
+  }
+
+  public static boolean isJava15APIUsage(final PsiMember member) {
+    if (member == null) return false;
+
+    // Annotations caught by special inspection if necessary
+    if (member instanceof PsiClass && ((PsiClass)member).isAnnotationType()) return false;
+
+    if (member instanceof PsiAnonymousClass) return false;
+    if (member.getContainingClass() instanceof PsiAnonymousClass) return false;
+    if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return false;
+
+    return ourForbiddenAPI.contains(getSignature(member)) || isJava15APIUsage(member.getContainingClass());
   }
 
   private static String getSignature(PsiMember member) {

@@ -25,11 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.Collection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 12.08.2005
- * Time: 18:34:04
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public abstract class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.i18n.I18nizeFormQuickFix");

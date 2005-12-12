@@ -26,11 +26,17 @@ public class ResetValueAction extends AnAction {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
+    final RadComponent component = selectedComponents.get(0);
+    doResetValue(component, property, editor);
+  }
+
+  public static void doResetValue(final RadComponent component, final Property property, final GuiEditor editor) {
     try {
-      property.resetValue(selectedComponents.get(0));
-      selectedComponents.get(0).getDelegee().invalidate();
+      if (!editor.ensureEditable()) return;
+      property.resetValue(component);
+      component.getDelegee().invalidate();
       editor.refreshAndSave(false);
-      inspector.repaint();
+      editor.getPropertyInspector().repaint();
     }
     catch (Exception e1) {
       LOG.error(e1);

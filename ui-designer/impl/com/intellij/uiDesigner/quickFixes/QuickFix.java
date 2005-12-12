@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -12,23 +13,15 @@ public abstract class QuickFix {
   protected final GuiEditor myEditor;
   private final String myName;
 
-  public QuickFix(final GuiEditor editor, final String name){
-    if (editor == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-    if (name == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("name cannot be null");
-    }
+  public QuickFix(@NotNull final GuiEditor editor, @NotNull final String name){
     myEditor = editor;
     myName = name;
   }
 
   /**
-   * @return name of the quick fix. Never <code>null</code>.
+   * @return name of the quick fix.
    */
-  public final String getName() {
+  @NotNull public final String getName() {
     return myName;
   }
 
