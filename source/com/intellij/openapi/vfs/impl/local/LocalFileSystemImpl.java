@@ -548,51 +548,41 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         dirtyFiles = myDirtyFiles.toArray(new String[myDirtyFiles.size()]);
         myDirtyFiles.clear();
       }
-      Runnable action = new Runnable() {
-        public void run() {
-          for (String path : dirtyFiles) {
-            path = path.replace(File.separatorChar, '/');
-            VirtualFile file = findFileByPath(path, false, false);
-            if (file != null) {
-              synchronized (myRefreshStatusMap) {
-                if (myRefreshStatusMap.get(file) == null) {
-                  myRefreshStatusMap.put(file, DIRTY_STATUS);
-                }
-              }
+      for (String path : dirtyFiles) {
+        path = path.replace(File.separatorChar, '/');
+        VirtualFile file = findFileByPath(path, false, false);
+        if (file != null) {
+          synchronized (myRefreshStatusMap) {
+            if (myRefreshStatusMap.get(file) == null) {
+              myRefreshStatusMap.put(file, DIRTY_STATUS);
             }
           }
         }
-      };
-      ApplicationManager.getApplication().runReadAction(action);
+      }
 
       final String[] deletedFiles;
       synchronized (myDeletedFiles) {
         deletedFiles = myDeletedFiles.toArray(new String[myDeletedFiles.size()]);
         myDeletedFiles.clear();
       }
-      Runnable action1 = new Runnable() {
-        public void run() {
-          for (String path : deletedFiles) {
-            path = path.replace(File.separatorChar, '/');
-            VirtualFile file = findFileByPath(path, false, false);
-            if (file != null) {
-              synchronized (myRefreshStatusMap) {
-                myRefreshStatusMap.put(file, DELETED_STATUS);
-              }
-              // when moving file in Explorer FILE_MODIFIED is not fired for the parent...
-              VirtualFile parent = file.getParent();
-              if (parent != null) {
-                synchronized (myRefreshStatusMap) {
-                  if (myRefreshStatusMap.get(parent) == null) {
-                    myRefreshStatusMap.put(parent, DIRTY_STATUS);
-                  }
-                }
+      for (String path : deletedFiles) {
+        path = path.replace(File.separatorChar, '/');
+        VirtualFile file = findFileByPath(path, false, false);
+        if (file != null) {
+          synchronized (myRefreshStatusMap) {
+            myRefreshStatusMap.put(file, DELETED_STATUS);
+          }
+          // when moving file in Explorer FILE_MODIFIED is not fired for the parent...
+          VirtualFile parent = file.getParent();
+          if (parent != null) {
+            synchronized (myRefreshStatusMap) {
+              if (myRefreshStatusMap.get(parent) == null) {
+                myRefreshStatusMap.put(parent, DIRTY_STATUS);
               }
             }
           }
         }
-      };
-      ApplicationManager.getApplication().runReadAction(action1);
+      }
     }
   }
 
