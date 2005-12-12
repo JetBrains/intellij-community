@@ -12,15 +12,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -97,13 +96,14 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   @NotNull
   public FileEditorState getState(final FileEditorStateLevel ignored) {
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+    long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
     final String[] ids = new String[selection.size()];
     for (int i = ids.length - 1; i >= 0; i--) {
       ids[i] = selection.get(i).getId();
     }
-    return new MyEditorState(document.getModificationStamp(), ids);
+    return new MyEditorState(modificationStamp, ids);
   }
 
   public void setState(final FileEditorState state){
