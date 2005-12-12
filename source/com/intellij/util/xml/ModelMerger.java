@@ -52,6 +52,7 @@ public class ModelMerger {
     }
 
     protected Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
+      if (implementation instanceof GenericValue) return ((GenericValue)implementation).getValue();
       final Method method = getPrimaryKeyMethod(implementation.getClass());
       if (method == null) return null;
 
@@ -126,7 +127,7 @@ public class ModelMerger {
 
       final List<Object> results = new ArrayList<Object>();
 
-      if (returnType.isInterface() && !GenericValue.class.isAssignableFrom(returnType)) {
+      if (returnType.isInterface() /*&& !GenericValue.class.isAssignableFrom(returnType)*/) {
         final List<Object> orderedPrimaryKeys = new ArrayList<Object>();
         final Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
         for (final T t : myImplementations) {
@@ -147,16 +148,18 @@ public class ModelMerger {
         }
       }
       else {
+        HashSet<Object> map = new HashSet<Object>();
         for (final T t : myImplementations) {
           final Object o = method.invoke(t, args);
           if (o instanceof Collection) {
-            results.addAll((Collection)o);
+            map.addAll((Collection<Object>)o);
           }
           else if (o != null) {
-            results.add(o);
+            map.add(o);
             break;
           }
         }
+        results.addAll(map);
       }
       return results;
     }
