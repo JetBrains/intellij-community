@@ -113,7 +113,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
     @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
-    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseCompilerSettings.getInstance(myProject), false);
+    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseCompilerSettings.getInstance(myProject), false, false);
 
     Process process = new Process() {
       public OutputStream getOutputStream() {

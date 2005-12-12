@@ -58,11 +58,6 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   private final BlockingQueue<CompilationResult> myCompilationResults = new LinkedBlockingQueue<CompilationResult>();
   private FileSystem classPath;
 
-  public static void main(String[] args) throws Exception {
-    IEclipseCompilerDriver d = new EclipseCompilerDriver();
-    d.parseCommandLineAndCompile(args);
-  }
-
   private void parseCommandLine(String[] args) throws InvalidInputException {
     StringWriter err = new StringWriter();
     Main driver = new Main(null, new PrintWriter(err), false);

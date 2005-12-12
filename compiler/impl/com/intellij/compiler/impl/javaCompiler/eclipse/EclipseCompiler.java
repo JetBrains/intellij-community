@@ -128,14 +128,15 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(PATH_TO_COMPILER_JAR);
     commandLine.add(getCompilerClass());
 
-    addCommandLineOptions(commandLine, chunk, outputPath, compilerSettings, useTempFile);
+    addCommandLineOptions(commandLine, chunk, outputPath, compilerSettings, useTempFile, true);
   }
 
   public void addCommandLineOptions(@NonNls final ArrayList<String> commandLine,
                                     final ModuleChunk chunk,
                                     final String outputPath,
                                     final EclipseCompilerSettings compilerSettings,
-                                    final boolean useTempFile) throws IOException {
+                                    final boolean useTempFile,
+                                    boolean quoteBootClasspath) throws IOException {
     final ProjectJdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
@@ -162,7 +163,7 @@ public class EclipseCompiler extends ExternalCompiler {
 
     commandLine.add("-bootclasspath");
     // important: need to quote boot classpath if path to jdk contain spaces
-    commandLine.add(CompilerUtil.quotePath(bootCp));
+    commandLine.add(quoteBootClasspath ? CompilerUtil.quotePath(bootCp) : bootCp);
 
     commandLine.add("-classpath");
     commandLine.add(classPath);
@@ -210,13 +211,13 @@ public class EclipseCompiler extends ExternalCompiler {
     LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel();
 
     if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!(isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0"))) {
+      if (!isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0") && !isOfVersion(versionString, "1.6.")) {
         languageLevel = LanguageLevel.JDK_1_4;
       }
     }
 
     if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.4") && !isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0")) {
+      if (!isOfVersion(versionString, "1.4") && !isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0") && !isOfVersion(versionString, "1.6.")) {
         languageLevel = LanguageLevel.JDK_1_3;
       }
     }
