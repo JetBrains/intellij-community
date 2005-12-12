@@ -223,7 +223,7 @@ public final class ErrorAnalyzer {
     try {
       // Run inspections for form elements
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
-      if (formPsiFile != null) {
+      if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
         for(Object object: Extensions.getRootArea().getExtensionPoint(ExtensionPoints.FORM_INSPECTION_TOOL).getExtensions()) {
           final FormInspectionTool formInspectionTool = (FormInspectionTool)object;
