@@ -1,8 +1,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.j2ee.J2EERolesUtil;
+import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
-import com.intellij.j2ee.j2eeDom.J2EEElementsVisitor;
+import com.intellij.j2ee15.model.common.EnterpriseBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -19,12 +20,16 @@ public class InheritanceImplUtil {
     if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
 
     final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
-    if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEnterpriseBean().getEjbClass().getValue())) {
-      return !classRole.getEjb().acceptInterfaces(new J2EEElementsVisitor() {
-        public boolean visitInterface(PsiClass anInterface) {
-          return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
+    if (classRole != null) {
+      final EnterpriseBean enterpriseBean = classRole.getEnterpriseBean();
+      if (candidateClass.getManager().areElementsEquivalent(candidateClass, enterpriseBean.getEjbClass().getValue())) {
+        for (final PsiClass anInterface : EjbUtil.getInterfaces(enterpriseBean)) {
+          if (!InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep)) {
+            return true;
+          }
         }
-      });
+        return false;
+      }
     }
 
     return false;
