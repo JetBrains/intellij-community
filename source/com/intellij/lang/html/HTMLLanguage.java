@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HTMLLanguage extends XMLLanguage {
   private final FormattingModelBuilder myFormattingModelBuilder;
+  private HtmlFileHighlighter myHighlighter;
+
   public HTMLLanguage() {
     super("HTML", "text/html","text/htmlh");
     myFormattingModelBuilder = new FormattingModelBuilder() {
@@ -43,7 +45,8 @@ public class HTMLLanguage extends XMLLanguage {
 
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
-    return new HtmlFileHighlighter();
+    if (myHighlighter == null) myHighlighter = new HtmlFileHighlighter();
+    return myHighlighter;
   }
 
   public XmlPsiPolicy getPsiPolicy() {
