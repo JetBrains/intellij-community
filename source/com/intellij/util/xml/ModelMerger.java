@@ -20,8 +20,20 @@ import java.util.*;
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
 
+  public interface MergedObject {
+    public <T> T findImplementation(Class<T> clazz);
+  }
+
+
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
-    return AdvancedProxy.createProxy(aClass, new MergingInvocationHandler<T>(implementations));
+    return AdvancedProxy.createProxy(new MergingInvocationHandler<T>(implementations), aClass, MergedObject.class);
+  }
+
+  @Nullable
+  public static <T> T getImplementation(Object element, Class<T> clazz) {
+    return element instanceof ModelMerger.MergedObject ?
+           ((ModelMerger.MergedObject)element).findImplementation(clazz) :
+           element != null && clazz.isAssignableFrom(element.getClass())? (T)element: null;
   }
 
   public static class MergingInvocationHandler<T> implements InvocationHandler {
@@ -84,7 +96,9 @@ public class ModelMerger {
         }
         return null;
       }
-
+      if (MergedObject.class.equals(method.getDeclaringClass())) {
+        return findImplementation((Class<Object>)args[0]);
+      }
       final Class returnType = method.getReturnType();
       if (Collection.class.isAssignableFrom(returnType)) {
         return getMergedImplementations(method, args,
@@ -92,38 +106,7 @@ public class ModelMerger {
       }
 
       if (GenericValue.class.isAssignableFrom(returnType)) {
-        return new ReadOnlyGenericValue() {
-          private GenericValue findGenericValue() {
-            for (final T t : myImplementations) {
-              try {
-                GenericValue genericValue = (GenericValue)method.invoke(t, args);
-                if (genericValue != null) {
-                  final Object value = genericValue.getValue();
-                  if (value != null) {
-                    return genericValue;
-                  }
-                }
-              }
-                catch (IllegalAccessException e) {
-                LOG.error(e);
-              }
-              catch (InvocationTargetException e) {
-                LOG.error(e);
-              }
-            }
-            return null;
-          }
-
-          public Object getValue() {
-            final GenericValue genericValue = findGenericValue();
-            return genericValue != null ? genericValue.getValue() : null;
-          }
-
-          public String getStringValue() {
-            final GenericValue genericValue = findGenericValue();
-            return genericValue != null ? genericValue.getStringValue() : super.getStringValue();
-          }
-        };
+        return new MergedGenericValue(method, args);
       }
 
       if (void.class == returnType) {
@@ -207,6 +190,74 @@ public class ModelMerger {
 
       results.add(o);
       return true;
+    }
+
+    public <V> V findImplementation(final Class<V> clazz) {
+      for (final T t : myImplementations) {
+        if (clazz.isAssignableFrom(t.getClass())) {
+          return (V) t;
+        }
+      }
+      return null;
+    }
+
+    public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject {
+      private final Method myMethod;
+      private final Object[] myArgs;
+
+      public MergedGenericValue(final Method method, final Object[] args) {
+        myMethod = method;
+        myArgs = args;
+      }
+
+      public <V> V findImplementation(Class<V> clazz) {
+        for (final T t : myImplementations) {
+          try {
+            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+            if (genericValue!=null && clazz.isAssignableFrom(genericValue.getClass())) {
+              return (V) genericValue;
+            }
+          }
+          catch (IllegalAccessException e) {
+            LOG.error(e);
+          }
+          catch (InvocationTargetException e) {
+            LOG.error(e);
+          }
+        }
+        return null;
+      }
+
+      private GenericValue findGenericValue() {
+        for (final T t : myImplementations) {
+          try {
+            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+            if (genericValue != null) {
+              final Object value = genericValue.getValue();
+              if (value != null) {
+                return genericValue;
+              }
+            }
+          }
+            catch (IllegalAccessException e) {
+            LOG.error(e);
+          }
+          catch (InvocationTargetException e) {
+            LOG.error(e);
+          }
+        }
+        return null;
+      }
+
+      public Object getValue() {
+        final GenericValue genericValue = findGenericValue();
+        return genericValue != null ? genericValue.getValue() : null;
+      }
+
+      public String getStringValue() {
+        final GenericValue genericValue = findGenericValue();
+        return genericValue != null ? genericValue.getStringValue() : super.getStringValue();
+      }
     }
   }
 }

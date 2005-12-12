@@ -136,7 +136,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     if (implementationClass != null) {
       return AdvancedProxy.createProxy(implementationClass.value(), new Class[]{concreteInterface}, handler, Collections.EMPTY_SET);
     }
-    return AdvancedProxy.createProxy(concreteInterface, handler);
+    return AdvancedProxy.createProxy(handler, concreteInterface);
   }
 
   public Project getProject() {

@@ -26,11 +26,14 @@ public class AdvancedProxy {
     return (InvocationHandler)((Factory) proxy).getCallback(0);
   }
 
-  public static <T> T createProxy(final Class<T> superClassOrInterface, final InvocationHandler handler) {
+  public static <T> T createProxy(final InvocationHandler handler, final Class<T> superClassOrInterface, final Class... otherInterfaces) {
     if (superClassOrInterface.isInterface()) {
-      return (T) createProxy(null, new Class[]{superClassOrInterface}, handler, Collections.EMPTY_SET);
+      Class[] interfaces = new Class[otherInterfaces.length+1];
+      interfaces [0] = superClassOrInterface;
+      System.arraycopy(otherInterfaces, 0, interfaces, 1, otherInterfaces.length);
+      return (T) createProxy(null, interfaces, handler, Collections.EMPTY_SET);
     }
-    return (T) createProxy(superClassOrInterface, (Class[])null, handler, Collections.EMPTY_SET);
+    return (T) createProxy(superClassOrInterface, otherInterfaces, handler, Collections.EMPTY_SET);
   }
 
   public static <T> T createProxy(final Class<T> superClass,
