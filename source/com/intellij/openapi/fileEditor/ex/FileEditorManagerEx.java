@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class FileEditorManagerEx extends FileEditorManager {
   public static FileEditorManagerEx getInstanceEx(Project project) {
     return (FileEditorManagerEx)getInstance(project);
@@ -20,7 +22,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   /**
    * @return <code>JComponent</code> which represent the place where all editors are located
-   */ 
+   */
   public abstract JComponent getComponent();
 
   /**
@@ -31,14 +33,14 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    * @see EditorComposite#getPreferredFocusedComponent()
    */
   public abstract JComponent getPreferredFocusedComponent();
-  
-  public abstract Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(VirtualFile file);
+
+  public abstract Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
   /**
    * @param editor never null
    * 
    * @return can be null
-   */ 
+   */
   public abstract VirtualFile getFile(FileEditor editor);
 
   /**
@@ -87,7 +89,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract VirtualFile getCurrentFile();
 
-  public abstract Pair <FileEditor, FileEditorProvider> getSelectedEditorWithProvider(VirtualFile file);
+  public abstract Pair <FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file);
 
   public abstract void closeAllFiles();
 
@@ -97,7 +99,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor);
 
-  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(VirtualFile file, boolean focusEditor);
+  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor);
 
   public abstract boolean isChanged(EditorComposite editor);
 

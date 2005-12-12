@@ -63,7 +63,7 @@ public interface FileEditor extends UserDataHolder {
    * @return editor's internal state. Method should never return <code>null</code>.
    */
   @NotNull
-  FileEditorState getState(FileEditorStateLevel level);
+  FileEditorState getState(@NotNull FileEditorStateLevel level);
 
   /**
    * Applies given state to the editor.
@@ -99,14 +99,14 @@ public interface FileEditor extends UserDataHolder {
    *
    * @param listener to be added
    */
-  void addPropertyChangeListener(PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /**
    * Adds specified listener
    *
    * @param listener to be removed
    */
-  void removePropertyChangeListener(PropertyChangeListener listener);
+  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   /**
    * @return highlighter object to perform background analysis and highlighting activities.

@@ -31,13 +31,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
   private final TextEditorComponent myComponent;
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
-  TextEditorImpl(final Project project, final VirtualFile file) {
-    if(project==null){
-      throw new IllegalArgumentException("project cannot be null");
-    }
-    if(file==null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file) {
     myProject = project;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = new TextEditorComponent(project, file, this);
@@ -72,22 +66,13 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
   }
 
   @NotNull
-  public FileEditorState getState(FileEditorStateLevel level) {
-    if (level == null) {
-      throw new IllegalArgumentException("level cannot be null");
-    }
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     getStateImpl(myProject, getActiveEditor(), state, level);
     return state;
   }
 
-  static void getStateImpl(final Project project, final Editor editor, final TextEditorState state, FileEditorStateLevel level){
-    if (state == null) {
-      throw new IllegalArgumentException("state cannot be null");
-    }
-    if (level == null) {
-      throw new IllegalArgumentException("level cannot be null");
-    }
+  static void getStateImpl(final Project project, final Editor editor, @NotNull final TextEditorState state, @NotNull FileEditorStateLevel level){
     state.LINE = editor.getCaretModel().getLogicalPosition().line;
     state.COLUMN = editor.getCaretModel().getLogicalPosition().column;
     state.SELECTION_START = editor.getSelectionModel().getSelectionStart();
@@ -111,10 +96,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
   }
 
-  public void setState(final FileEditorState state) {
-    if (state == null){
-      throw new IllegalArgumentException("state cannot be null");
-    }
+  public void setState(@NotNull final FileEditorState state) {
     setStateImpl(myProject, getActiveEditor(), (TextEditorState)state);
   }
 
@@ -174,17 +156,11 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
-  public void addPropertyChangeListener(final PropertyChangeListener listener) {
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myChangeSupport.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(final PropertyChangeListener listener) {
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
     myChangeSupport.removePropertyChangeListener(listener);
   }
 

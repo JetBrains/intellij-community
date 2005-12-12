@@ -246,7 +246,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   public void moveFocusToNextEditor() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    //TODO
   }
 
   public void createSplitter(final int orientation) {
@@ -323,10 +323,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   //============================= EditorManager methods ================================
-  public void closeFile(final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public void closeFile(@NotNull final VirtualFile file) {
     assertThread();
 
     final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
@@ -355,10 +352,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return null;
   }
 
-  private void closeFileImpl(final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  private void closeFileImpl(@NotNull final VirtualFile file) {
     assertThread();
     ++mySplitters.myInsideChange;
     try {
@@ -393,10 +387,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
 //-------------------------------------- Open File ----------------------------------------
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(final VirtualFile file, final boolean focusEditor) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file, final boolean focusEditor) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -622,10 +613,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   @NotNull
-  public java.util.List<FileEditor> openEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
-    if (descriptor == null) {
-      throw new IllegalArgumentException("descriptor cannot be null");
-    }
+  public java.util.List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor,
+                                               final boolean focusEditor) {
     assertThread();
 
     final java.util.List<FileEditor> result = new ArrayList<FileEditor>();
@@ -720,11 +709,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
 
-  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
-
+  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull final VirtualFile file) {
     final EditorWithProviderComposite[] composites = getEditorComposites(file);
     if (composites != null) {
       return composites[0].getSelectedEditorWithProvider();
@@ -734,10 +719,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
     assertThread();
 
     final EditorWithProviderComposite[] composites = getEditorComposites(file);
@@ -749,10 +731,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
-  public FileEditor[] getEditors(final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public FileEditor[] getEditors(@NotNull final VirtualFile file) {
     assertThread();
 
     final EditorComposite[] composites = getEditorComposites(file);
@@ -781,18 +760,12 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return result.toArray(new FileEditor[result.size()]);
   }
 
-  public void addFileEditorManagerListener(final FileEditorManagerListener listener) {
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
     myDispatcher.addListener(listener);
   }
 
-  public void removeFileEditorManagerListener(final FileEditorManagerListener listener) {
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
     myDispatcher.removeListener(listener);
   }
@@ -1100,11 +1073,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
     }
 
-    public void fileStatusChanged(final VirtualFile file) { // update color of the file (if necessary)
+    public void fileStatusChanged(@NotNull final VirtualFile file) { // update color of the file (if necessary)
       assertThread();
-      if (file == null) {
-        throw new IllegalArgumentException("file cannot be null");
-      }
       if (isFileOpen(file)) {
         updateFileStatus(file);
       }

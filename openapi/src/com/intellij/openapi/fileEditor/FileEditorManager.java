@@ -40,7 +40,7 @@ public abstract class FileEditorManager {
    * 
    * @param file file to be closed. Cannot be null. 
    */
-  public abstract void closeFile(VirtualFile file);
+  public abstract void closeFile(@NotNull VirtualFile file);
 
   /**
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor. 
@@ -92,7 +92,7 @@ public abstract class FileEditorManager {
    *
    * @return all editors for the specified <code>file</code>
    */
-  public abstract FileEditor[] getEditors(VirtualFile file);
+  public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
@@ -102,19 +102,19 @@ public abstract class FileEditorManager {
   /**
    * Adds specified <code>listener</code>
    *
-   * @param listener listener to be added; cannot be null
+   * @param listener listener to be added
    */
-  public abstract void addFileEditorManagerListener(FileEditorManagerListener listener);
+  public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
    * Removes specified <code>listener</code>
    *
-   * @param listener listener to be removed; cannot be null
+   * @param listener listener to be removed
    */
-  public abstract void removeFileEditorManagerListener(FileEditorManagerListener listener);
+  public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   @NotNull
-  public abstract List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor);
+  public abstract List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
    * Returns the project with which the file editor manager is associated.

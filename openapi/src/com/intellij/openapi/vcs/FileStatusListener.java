@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -26,5 +27,5 @@ public interface FileStatusListener {
    * it's depenedend on.
    */
   void fileStatusesChanged();
-  void fileStatusChanged(VirtualFile virtualFile);
+  void fileStatusChanged(@NotNull VirtualFile virtualFile);
 }
