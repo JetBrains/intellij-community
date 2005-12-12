@@ -1,19 +1,18 @@
 package com.intellij.j2ee.make;
 
+import com.intellij.j2ee.J2EEBundle;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -71,7 +70,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
 
   public void makeJar(CompileContext context, File jarFile, FileFilter fileFilter) throws IOException {
     if (jarFile.equals(myJarFile)) return;
-    if (myJarFile != null) {
+    if (myJarFile != null && myJarFile.exists()) {
       // optimization: file already jarred, copy it over
       MakeUtil.getInstance().copyFile(myJarFile, jarFile, context, null, fileFilter);
     }
