@@ -29,6 +29,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -185,9 +186,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
 
     if ((startElement != null || formatFromStart)
-      && (endElement != null || formatToEnd)) {
+        && (endElement != null || formatToEnd)) {
       postProcessText(file, new TextRange(formatFromStart ? 0 : startElement.getTextRange().getStartOffset(),
-        formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
+                                          formatToEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
     }
   }
 
@@ -355,22 +356,20 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
-    LOG.assertTrue(fileLanguage != null, file.getClass().getName());
     final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
     final Language elementLanguage = element.getLanguage();
-    LOG.assertTrue(elementLanguage != null, element.getClass().getName());
     final FormattingModelBuilder elementBuilder = elementLanguage.getFormattingModelBuilder();
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
-      
+
       int result = FormatterEx.getInstanceEx().adjustLineIndent(model,
-                                                            settings,
-                                                            indentOptions,
-                                                            offset,
-                                                            significantRange);
+                                                                settings,
+                                                                indentOptions,
+                                                                offset,
+                                                                significantRange);
       return result;
 
     } else {
@@ -387,9 +386,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final FormattingModel model = builder.createModel(file, settings);
 
       FormatterEx.getInstanceEx().adjustLineIndentsForRange(model,
-                                                        settings,
-                                                        indentOptions,
-                                                        rangeToAdjust);
+                                                            settings,
+                                                            indentOptions,
+                                                            rangeToAdjust);
     }
   }
 
@@ -414,10 +413,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final FormattingModel model = builder.createModel(file, settings);
 
       return FormatterEx.getInstanceEx().getLineIndent(model,
-                                                   settings,
-                                                   indentOptions,
-                                                   offset,
-                                                   significantRange);
+                                                       settings,
+                                                       indentOptions,
+                                                       offset,
+                                                       significantRange);
     } else {
       return null;
     }
@@ -797,7 +796,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         PsiClass componentClass = ((PsiClassType)componentTypeParameter).resolve();
         if (componentClass instanceof PsiTypeParameter) {
           if (collectionClass.getManager().areElementsEquivalent(((PsiTypeParameter)componentClass).getOwner(),
-                                                                                                   element)) {
+                                                                 element)) {
             PsiType componentType = resolved.getSubstitutor().substitute((PsiTypeParameter)componentClass);
             if( componentType == null )
             {
@@ -1319,6 +1318,20 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         return name;
       }
     }
+  }
+
+  public SuggestedNameInfo suggestUniqueVariableName(final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
+    final String[] names = baseNameInfo.names;
+    Set<String> uniqueNames = new HashSet<String>(names.length);
+    for (String name : names) {
+      uniqueNames.add(suggestUniqueVariableName(name, place, false));
+    }
+
+    return new SuggestedNameInfo(uniqueNames.toArray(new String[uniqueNames.size()])) {
+      public void nameChoosen(String name) {
+        baseNameInfo.nameChoosen(name);
+      }
+    };
   }
 
   private void sortVariableNameSuggestions(String[] names,

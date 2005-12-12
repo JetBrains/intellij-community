@@ -295,6 +295,16 @@ public abstract class CodeStyleManager {
   public abstract String suggestUniqueVariableName(@NonNls String baseName, PsiElement place, boolean lookForward);
 
   /**
+   * Suggests a unique name for the variable used at the specified location.
+   *
+   * @param baseNameInfo    the base name info for the variable.
+   * @param place       the location where the variable will be used.
+   * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
+   * @return the generated unique name,
+   */
+  public abstract SuggestedNameInfo suggestUniqueVariableName(SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward);
+
+  /**
    * Replaces all references to Java classes in the contents of the specified element,
    * except for references to classes in the same package or in implicitly imported packages,
    * with full-qualified references.

@@ -92,8 +92,10 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   public boolean isReplaceLValues() {
     if (myOccurrencesCount <= 1 || !myAnyLValueOccurences || myCbReplaceWrite == null) {
       return true;
-    } else
+    }
+    else {
       return myCbReplaceWrite.isSelected();
+    }
   }
 
   public PsiType getSelectedType() {
@@ -145,7 +147,9 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
             new NameSuggestionsGenerator() {
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
+                final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+                final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
+                return codeStyleManager.suggestUniqueVariableName(nameInfo, myExpression, false);
               }
 
               public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
@@ -197,7 +201,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     final Boolean createFinals = RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
-                     createFinals.booleanValue();
+                     createFinals;
 
     gbConstraints.insets = new Insets(0, 0, 0, 0);
     gbConstraints.gridy++;
@@ -245,7 +249,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     if (!myValidator.isOK(this)) return;
     myNameSuggestionsManager.nameSelected();
     if (myCbFinal.isEnabled()) {
-      RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = new Boolean(myCbFinalState);
+      RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinalState;
     }
     super.doOKAction();
   }
