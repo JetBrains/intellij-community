@@ -1174,7 +1174,7 @@ public class ControlFlowUtil {
       if (nextOffset > myFlow.getSize()) nextOffset = myFlow.getSize();
       CopyOnWriteList readVars = readVariables[nextOffset];
       final PsiVariable variable = instruction.variable;
-      if (!(variable instanceof PsiParameter) && readVars != null) {
+      if (readVars != null && (!(variable instanceof PsiParameter) || ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         readVars = readVars.remove(new VariableInfo(variable, null));
       }
       merge(offset, readVars, readVariables);
