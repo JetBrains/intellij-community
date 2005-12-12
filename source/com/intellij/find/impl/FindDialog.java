@@ -93,8 +93,8 @@ final class FindDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    if (!myModel.isMultipleFiles() && !myModel.isReplaceState()) {
-      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction() };
+    if (!myModel.isMultipleFiles() && !myModel.isReplaceState() && myModel.isFindAllEnabled()) {
+      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction() };      
     }
     return super.createActions();
   }

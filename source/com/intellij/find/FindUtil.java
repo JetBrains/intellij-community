@@ -108,6 +108,7 @@ public class FindUtil {
     }
 
     model.setReplaceState(false);
+    model.setFindAllEnabled(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) != null);
 
     if (!findManager.showFindDialog(model)) {
       return;

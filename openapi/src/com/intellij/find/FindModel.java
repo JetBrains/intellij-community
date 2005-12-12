@@ -40,6 +40,7 @@ public class FindModel implements Cloneable {
   private boolean isOpenNewTabVisible = false;
   private boolean isProjectScope = true;
   private boolean isFindAll = false;
+  private boolean isFindAllEnabled = false;
   private String moduleName;
   private String directoryName = null;
   private boolean isWithSubdirectories = true;
@@ -307,7 +308,7 @@ public class FindModel implements Cloneable {
    * @param replaceAll the value of the Replace All flag.
    */
   public void setReplaceAll(boolean replaceAll) {
-    this.isReplaceAll = replaceAll;
+    isReplaceAll = replaceAll;
   }
 
   /**
@@ -536,5 +537,23 @@ public class FindModel implements Cloneable {
    */
   public void setFindAll(final boolean findAll) {
     isFindAll = findAll;
+  }
+
+  /**
+   * Gets the flag indicating whether "Find All" button is allowed for the operation.
+   *
+   * @return true if "Find All" is enabled, false otherwise.
+   */
+  public boolean isFindAllEnabled() {
+    return isFindAllEnabled;
+  }
+
+  /**
+   * Sets the flag indicating whether "Find All" button is allowed for the operation.
+   *
+   * @param findAllEnabled true if "Find All" is enabled, false otherwise.
+   */
+  public void setFindAllEnabled(final boolean findAllEnabled) {
+    isFindAllEnabled = findAllEnabled;
   }
 }
