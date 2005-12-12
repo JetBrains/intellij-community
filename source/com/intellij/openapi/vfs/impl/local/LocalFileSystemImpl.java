@@ -288,17 +288,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return findFileByPath(path, true, true);
   }
 
-  private static String getParentPath(String path) {
-    int index = path.lastIndexOf('/');
-    if (index < 0) return null;
-    if (index == path.length() - 1) return null; // "c:/" or "/"
-    path = path.substring(0, index);
-    if (path.indexOf('/') < 0) {
-      path += "/"; // "c:/" or "/"
-    }
-    return path;
-  }
-
   public VirtualFile findFileByIoFile(File file) {
     String path = getCanonicalPath(file);
     if (path == null) return null;
