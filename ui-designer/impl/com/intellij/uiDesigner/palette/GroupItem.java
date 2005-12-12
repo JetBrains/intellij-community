@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -10,10 +11,10 @@ import java.util.ArrayList;
 public final class GroupItem implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.GroupItem");
 
-  private String myName;
-  private final ArrayList<ComponentItem> myItems;
+  @NotNull private String myName;
+  @NotNull private final ArrayList<ComponentItem> myItems;
 
-  public GroupItem(final String name) {
+  public GroupItem(@NotNull final String name) {
     setName(name);
     myItems = new ArrayList<ComponentItem>();
   }
@@ -24,67 +25,63 @@ public final class GroupItem implements Cloneable{
   public GroupItem clone(){
     final GroupItem result = new GroupItem(myName);
 
-    for(int i = 0; i < myItems.size(); i++){
-      result.addItem(myItems.get(i).clone());
+    for(ComponentItem myItem : myItems) {
+      result.addItem(myItem.clone());
     }
 
     return result;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
-  public String getName() {
+  @NotNull public String getName() {
     return myName;
   }
 
-  /**
-   * @param name cannot be <code>null</code>.
-   */
-  public void setName(final String name){
-    LOG.assertTrue(name != null);
+  public void setName(@NotNull final String name){
     myName = name;
   }
 
   /**
    * @return read-only list of items that belong to the group.
-   * The method never returns <code>null</code>.
    */
-  public ArrayList<ComponentItem> getItems() {
+  @NotNull public ArrayList<ComponentItem> getItems() {
     return myItems;
   }
 
   /** Adds specified {@link ComponentItem} to the group.*/
-  public void addItem(final ComponentItem item){
-    LOG.assertTrue(item != null);
+  public void addItem(@NotNull final ComponentItem item){
     LOG.assertTrue(!myItems.contains(item));
 
     myItems.add(item);
   }
 
   /** Replaces specified item with the new one. */
-  public void replaceItem(final ComponentItem itemToBeReplaced, final ComponentItem replacement){
-    LOG.assertTrue(itemToBeReplaced != null);
+  public void replaceItem(@NotNull final ComponentItem itemToBeReplaced, @NotNull final ComponentItem replacement) {
     LOG.assertTrue(myItems.contains(itemToBeReplaced));
-    LOG.assertTrue(replacement != null);
 
     final int index = myItems.indexOf(itemToBeReplaced);
     myItems.set(index, replacement);
   }
 
   /** Removed specified {@link ComponentItem} from the group.*/
-  public void removeItem(final ComponentItem item){
-    LOG.assertTrue(item != null);
+  public void removeItem(@NotNull final ComponentItem item){
     LOG.assertTrue(myItems.contains(item));
 
     myItems.remove(item);
   }
 
-  public boolean containsItem(final ComponentItem item){
-    LOG.assertTrue(item != null);
-
+  public boolean containsItemClass(@NotNull final String className){
     for(int i = myItems.size() - 1; i >= 0; i--){
-      if(item.equals(myItems.get(i))){
+      if(className.equals(myItems.get(i).getClassName())){
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean containsItemCopy(@NotNull final ComponentItem originalItem, final String className) {
+    for(int i = myItems.size() - 1; i >= 0; i--){
+      if(className.equals(myItems.get(i).getClassName()) && originalItem != myItems.get(i)) {
         return true;
       }
     }

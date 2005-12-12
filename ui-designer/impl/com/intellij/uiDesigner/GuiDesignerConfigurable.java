@@ -283,7 +283,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     for(int i = groups.size() - 1; i >= 0; i--){
       if(groupName.equals(groups.get(i).getName())){
         Messages.showErrorDialog(myPaletteUI.myPanel,
-                                 UIDesignerBundle.message("error.group.name.should.be.unique"),
+                                 UIDesignerBundle.message("error.group.name.unique"),
                                  CommonBundle.getErrorTitle());
         return;
       }
@@ -454,7 +454,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     final GroupItem groupItem = (GroupItem)groupNode.getUserObject();
 
     // If the itemToBeAdded is already in palette do nothing
-    if(groupItem.containsItem(itemToBeAdded)){
+    if(groupItem.containsItemClass(itemToBeAdded.getClassName())){
       return;
     }
 
@@ -490,6 +490,12 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     /*Replace selected item with the edited one*/
     final DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode)lastNode.getParent();
     final GroupItem group = (GroupItem)groupNode.getUserObject();
+    if (group.containsItemCopy(selectedItem, itemToBeEdited.getClassName())) {
+      Messages.showErrorDialog(myPaletteUI.myPanel,
+                               UIDesignerBundle.message("error.component.should.be.unique"),
+                               CommonBundle.getErrorTitle());
+      return;
+    }
     group.replaceItem(selectedItem, itemToBeEdited);
 
     lastNode.setUserObject(itemToBeEdited);
