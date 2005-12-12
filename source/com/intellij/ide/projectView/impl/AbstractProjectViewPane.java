@@ -26,7 +26,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -83,8 +82,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
-    for (int i = 0; i < paths.length; i++) {
-      TreePath path = paths[i];
+    for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
@@ -102,8 +100,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
-      for (int i = 0; i < paths.length; i++) {
-        TreePath path = paths[i];
+      for (TreePath path : paths) {
         Object lastPathComponent = path.getLastPathComponent();
         if (lastPathComponent instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
@@ -123,8 +120,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       final List<TreeStructureProvider> providers = ((AbstractTreeStructureBase)myTreeStructure).getProviders();
       if (providers != null) {
         final List<AbstractTreeNode> selectedNodes = getSelectedNodes();
-        for (Iterator<TreeStructureProvider> iterator = providers.iterator(); iterator.hasNext();) {
-          TreeStructureProvider treeStructureProvider = iterator.next();
+        for (TreeStructureProvider treeStructureProvider : providers) {
           final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
           if (fromProvider != null) {
             return fromProvider;
@@ -170,17 +166,16 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public final Object getSelectedElement() {
     final Object[] elements = getSelectedElements();
-    if (elements.length == 1) return elements[0];
-    return null;
+    return elements.length == 1 ? elements[0] : null;
   }
+
   public final PsiElement[] getSelectedPSIElements() {
-    final Object[] elements = getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
-    for (int i = 0; i < elements.length; i++) {
-      Object element = elements[i];
+    for (Object element : getSelectedElements()) {
       if (element instanceof PsiElement) {
         psiElements.add((PsiElement)element);
-      } else if (element instanceof PackageElement) {
+      }
+      else if (element instanceof PackageElement) {
         PsiPackage aPackage = ((PackageElement)element).getPackage();
         if (aPackage != null) {
           psiElements.add(aPackage);
@@ -193,8 +188,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
     ArrayList<Object> list = new ArrayList<Object>(paths.length);
-    for (int i = 0; i < paths.length; i++) {
-      TreePath path = paths[i];
+    for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
@@ -203,7 +197,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
           AbstractTreeNode descriptor = (AbstractTreeNode)userObject;
           Object element = descriptor.getValue();
           list.add(element);
-        } else if (userObject instanceof NodeDescriptor) {
+        }
+        else if (userObject instanceof NodeDescriptor) {
           NodeDescriptor descriptor = (NodeDescriptor)userObject;
           Object element = descriptor.getElement();
           list.add(element);
