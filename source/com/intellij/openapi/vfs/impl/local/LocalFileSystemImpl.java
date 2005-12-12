@@ -226,10 +226,10 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
 
-    return findFileByPath(path, true);
+    return findFileByPath(path, true, false);
   }
 
-  private VirtualFile findFileByPath(String path, boolean createIfNoCache) {
+  private VirtualFile findFileByPath(String path, boolean createIfNoCache, final boolean refreshIfNotFound) {
     if (SystemInfo.isWindows || SystemInfo.isOS2) {
       if (path.endsWith(":/")) { // instead of getting canonical path - see below
         path = Character.toUpperCase(path.charAt(0)) + path.substring(1);
@@ -258,12 +258,23 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           if (".".equals(name)) continue;
           if ("..".equals(name)) {
             root = root.getParent();
+            if (root == null) return null;
           }
           else {
             if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
-            root = root.findChild(name);
+            VirtualFile child = root.findChild(name);
+            if (child == null) {
+              if (refreshIfNotFound) {
+                root.refresh(false, false);
+                child = root.findChild(name);
+                if (child == null) return null;
+              }
+              else {
+                return null;
+              }
+            }
+            root = child;
           }
-          if (root == null) return null;
         }
         return root;
       }
@@ -274,28 +285,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   public VirtualFile refreshAndFindFileByPath(String path) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    VirtualFile file = findFileByPath(path);
-    if (file != null) return file;
-
-    if (!new File(path.replace('/', File.separatorChar)).exists()) return null;
-
-    String parentPath = getParentPath(path);
-    if (parentPath == null) return null;
-    VirtualFile parent = refreshAndFindFileByPath(parentPath);
-    if (parent == null) return null;
-
-    if (FileWatcher.isAvailable()) {
-      synchronized (myRefreshStatusMap) { // changes might not be processed yet
-        if (myRefreshStatusMap.get(parent) == null) {
-          myRefreshStatusMap.put(parent, DIRTY_STATUS);
-        }
-      }
-    }
-    parent.refresh(false, false);
-
-    file = findFileByPath(path);
-    return file;
+    return findFileByPath(path, true, true);
   }
 
   private static String getParentPath(String path) {
@@ -573,7 +563,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         public void run() {
           for (String path : dirtyFiles) {
             path = path.replace(File.separatorChar, '/');
-            VirtualFile file = findFileByPath(path, false);
+            VirtualFile file = findFileByPath(path, false, false);
             if (file != null) {
               synchronized (myRefreshStatusMap) {
                 if (myRefreshStatusMap.get(file) == null) {
@@ -595,7 +585,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         public void run() {
           for (String path : deletedFiles) {
             path = path.replace(File.separatorChar, '/');
-            VirtualFile file = findFileByPath(path, false);
+            VirtualFile file = findFileByPath(path, false, false);
             if (file != null) {
               synchronized (myRefreshStatusMap) {
                 myRefreshStatusMap.put(file, DELETED_STATUS);
