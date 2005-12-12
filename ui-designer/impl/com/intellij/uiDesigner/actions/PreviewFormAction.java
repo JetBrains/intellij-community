@@ -289,7 +289,14 @@ public final class PreviewFormAction extends AnAction{
       JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
       RunStrategy.getInstance().execute(
         new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl())),
-        dataContext,
+        new DataContext() {   // IDEADEV-3596
+          public Object getData(String dataId) {
+            if (dataId.equals(DataConstants.PROJECT)) {
+              return module.getProject();
+            }
+            return dataContext.getData(dataId);
+          }
+        },
         defaultRunner, null, null);
     }
     catch (ExecutionException e) {
