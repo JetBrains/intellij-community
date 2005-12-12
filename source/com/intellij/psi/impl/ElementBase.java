@@ -3,9 +3,9 @@ package com.intellij.psi.impl;
 import com.intellij.ant.PsiAntElement;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IconUtilEx;
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -75,7 +75,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
+      final EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
       Icon methodIcon;
       if (role == null) {
         methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
@@ -188,7 +188,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static int getClassKindImpl(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
 
-    final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
+    final EjbClassRole role = EjbRolesUtil.getEjbRole(aClass);
     if (role != null) return role.getType();
     if (aClass.isAnnotationType()) {
       return CLASS_KIND_ANNOTATION;
@@ -243,7 +243,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon getClassBaseIcon(final PsiClass aClass) {
-    final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
+    final EjbClassRole role = EjbRolesUtil.getEjbRole(aClass);
     if (role != null) return role.getIcon();
     final int classKind = getClassKind(aClass);
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);

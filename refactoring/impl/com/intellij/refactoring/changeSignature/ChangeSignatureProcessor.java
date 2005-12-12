@@ -5,7 +5,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.j2ee.J2EERolesUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
@@ -951,7 +951,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     if (myChangeInfo.isNameChanged) {
-      final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
+      final EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
       if (role instanceof EjbImplMethodRole && myChangeInfo.ejbRole instanceof EjbDeclMethodRole) {
         EjbDeclMethodRole declRole = (EjbDeclMethodRole) myChangeInfo.ejbRole;
 

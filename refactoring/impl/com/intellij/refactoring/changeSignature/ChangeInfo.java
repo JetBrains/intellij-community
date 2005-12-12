@@ -4,16 +4,16 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.j2ee.J2EERolesUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 
 class ChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfo");
@@ -150,7 +150,7 @@ class ChangeInfo {
       retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
     }
 
-    ejbRole = J2EERolesUtil.getEjbRole(method);
+    ejbRole = EjbRolesUtil.getEjbRole(method);
   }
 
   private void setupExceptions(ThrownExceptionInfo[] newExceptions, final PsiMethod method) {

@@ -1,7 +1,7 @@
 package com.intellij.psi.impl;
 
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +54,7 @@ public class PsiSuperMethodImplUtil {
     final boolean myStatic = method.hasModifierProperty(PsiModifier.STATIC);
     List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
 
-    final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
+    final EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
     if (role instanceof EjbImplMethodRole) {
       final PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
       for (PsiMethod ejbDeclaration : ejbDeclarations) {

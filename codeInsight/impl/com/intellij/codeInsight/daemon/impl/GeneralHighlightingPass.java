@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -279,7 +279,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element.getParent();
       int offset = element.getTextRange().getStartOffset();
-      EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
+      EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
 
       if (role instanceof EjbImplMethodRole && EjbUtil.findEjbDeclarations(method).length != 0) {
         LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);

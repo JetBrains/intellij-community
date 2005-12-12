@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -159,7 +159,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
       for (int i = 0; i < modifiers.length; i++) {
-        sliderLabels.put(new Integer(i + 1), new JLabel(modifiers[i]));
+        sliderLabels.put(i + 1, new JLabel(modifiers[i]));
       }
 
       final JSlider slider = new JSlider(JSlider.VERTICAL, 1, modifiers.length, 1);
@@ -175,14 +175,14 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           options.ACCESS_JAVADOC_REQUIRED_FOR = modifiers[value - 1];
           for (Enumeration<Integer> enumeration = sliderLabels.keys(); enumeration.hasMoreElements();) {
             Integer key = enumeration.nextElement();
-            sliderLabels.get(key).setForeground(key.intValue() <= value ? Color.black : new Color(100, 100, 100));
+            sliderLabels.get(key).setForeground(key <= value ? Color.black : new Color(100, 100, 100));
           }
         }
       });
 
       Color fore = Color.black;
       for (int i = 0; i < modifiers.length; i++) {
-        sliderLabels.get(new Integer(i + 1)).setForeground(fore);
+        sliderLabels.get(i + 1).setForeground(fore);
 
         if (modifiers[i].equals(options.ACCESS_JAVADOC_REQUIRED_FOR)) {
           slider.setValue(i + 1);
@@ -386,7 +386,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (isJavaDocRequired(psiMethod)) {
         PsiMethod[] superMethods = psiMethod.findSuperMethods();
         if (superMethods.length > 0) return null;
-        if (J2EERolesUtil.getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
+        if (EjbRolesUtil.getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
         return superMethods.length == 0
                ? new ProblemDescriptor[]{createDescriptor(psiMethod.getNameIdentifier(), JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT)}
                : null;

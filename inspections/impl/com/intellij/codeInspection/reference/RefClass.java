@@ -10,8 +10,8 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -94,31 +94,24 @@ public class RefClass extends RefElement {
 
     setUtilityClass(psiMethods.length > 0 || psiFields.length > 0);
 
-    HashSet<PsiField> allFields = new HashSet<PsiField>();
-
-    for (int i = 0; i < psiFields.length; i++) {
-      PsiField psiField = psiFields[i];
-        getRefManager().getFieldReference(this, psiField);
-      allFields.add(psiField);
+    for (PsiField psiField : psiFields) {
+      getRefManager().getFieldReference(this, psiField);
     }
 
     if (!isApplet()) setServlet(getRefManager().getServlet() != null && psiClass.isInheritor(getRefManager().getServlet(), true));
     if (!isApplet() && !isServlet()) {
       setTestCase(JUnitUtil.isTestCaseClass(psiClass));
-      for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
-        RefClass refBase = iterator.next();
+      for (RefClass refBase : getBaseClasses()) {
         refBase.setTestCase(true);
       }
     }
 
-    for (int i = 0; i < psiMethods.length; i++) {
-      PsiMethod psiMethod = psiMethods[i];
-        RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
+    for (PsiMethod psiMethod : psiMethods) {
+      RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
 
       if (refMethod != null) {
         if (psiMethod.isConstructor()) {
-          if (psiMethod.getParameterList().getParameters().length > 0 ||
-              !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+          if (psiMethod.getParameterList().getParameters().length > 0 || !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
             setUtilityClass(false);
           }
 
@@ -126,7 +119,8 @@ public class RefClass extends RefElement {
           if (psiMethod.getParameterList().getParameters().length == 0) {
             setDefaultConstructor(refMethod);
           }
-        } else {
+        }
+        else {
           if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
             setUtilityClass(false);
           }
@@ -161,11 +155,9 @@ public class RefClass extends RefElement {
 
   private void initializeSuperReferences(PsiClass psiClass) {
     if (!isSelfInheritor(psiClass)) {
-      PsiClass[] supers = psiClass.getSupers();
-      for (int i = 0; i < supers.length; i++) {
-        PsiClass psiSuperClass = supers[i];
+      for (PsiClass psiSuperClass : psiClass.getSupers()) {
         if (RefUtil.belongsToScope(psiSuperClass, getRefManager())) {
-            RefClass refClass = (RefClass) getRefManager().getReference(psiSuperClass);
+          RefClass refClass = (RefClass)getRefManager().getReference(psiSuperClass);
           if (refClass != null) {
             myBases.add(refClass);
             refClass.markOverriden(this);
@@ -176,17 +168,14 @@ public class RefClass extends RefElement {
   }
 
   private static boolean isSelfInheritor(PsiClass psiClass) {
-    ArrayList<PsiClass> visited = new ArrayList<PsiClass>();
-    return isSelfInheritor(psiClass, visited);
+    return isSelfInheritor(psiClass, new ArrayList<PsiClass>());
   }
 
   private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<PsiClass> visited) {
     if (visited.contains(psiClass)) return true;
 
     visited.add(psiClass);
-    PsiClass[] supers = psiClass.getSupers();
-    for (int i = 0; i < supers.length; i++) {
-      PsiClass aSuper = supers[i];
+    for (PsiClass aSuper : psiClass.getSupers()) {
       if (isSelfInheritor(aSuper, visited)) return true;
     }
     visited.remove(psiClass);
@@ -196,8 +185,7 @@ public class RefClass extends RefElement {
 
   private void setDefaultConstructor(RefMethod defaultConstructor) {
     if (defaultConstructor != null) {
-      for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
-        RefClass superClass = iterator.next();
+      for (RefClass superClass : getBaseClasses()) {
         RefMethod superDefaultConstructor = superClass.getDefaultConstructor();
 
         if (superDefaultConstructor != null) {
@@ -219,27 +207,23 @@ public class RefClass extends RefElement {
     PsiClass psiClass = (PsiClass) getElement();
 
     if (psiClass != null) {
-      final PsiClassInitializer[] initializers = psiClass.getInitializers();
-      for (int i = 0; i < initializers.length; i++) {
-        PsiClassInitializer classInitializer = initializers[i];
+      for (PsiClassInitializer classInitializer : psiClass.getInitializers()) {
         RefUtil.addReferences(psiClass, this, classInitializer.getBody());
       }
 
       PsiMethod[] psiMethods = psiClass.getMethods();
       PsiField[] psiFields = psiClass.getFields();
 
-      HashSet<PsiField> allFields = new HashSet<PsiField>();
+      HashSet<PsiVariable> allFields = new HashSet<PsiVariable>();
 
-      for (int i = 0; i < psiFields.length; i++) {
-        PsiField psiField = psiFields[i];
-          getRefManager().getFieldReference(this, psiField);
+      for (PsiField psiField : psiFields) {
+        getRefManager().getFieldReference(this, psiField);
         allFields.add(psiField);
       }
 
       ArrayList<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
       boolean hasInitializers = false;
-      for (int i = 0; i < initializers.length; i++) {
-        PsiClassInitializer initializer = initializers[i];
+      for (PsiClassInitializer initializer : psiClass.getInitializers()) {
         PsiCodeBlock body = initializer.getBody();
         if (body != null) {
           hasInitializers = true;
@@ -259,13 +243,13 @@ public class RefClass extends RefElement {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {
                 allFields.remove(psiVariable);
                 instanceInitializerInitializedFields.remove(psiVariable);
-              } else {
+              }
+              else {
                 instanceInitializerInitializedFields.add(psiVariable);
               }
             }
           }
-          for (int j = 0; j < writtenVariables.length; j++) {
-            PsiVariable psiVariable = writtenVariables[j];
+          for (PsiVariable psiVariable : writtenVariables) {
             if (!instanceInitializerInitializedFields.contains(psiVariable)) {
               allFields.remove(psiVariable);
             }
@@ -273,9 +257,8 @@ public class RefClass extends RefElement {
         }
       }
 
-      for (int i = 0; i < psiMethods.length; i++) {
-        PsiMethod psiMethod = psiMethods[i];
-          RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
+      for (PsiMethod psiMethod : psiMethods) {
+        RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
 
         if (refMethod != null) {
           if (psiMethod.isConstructor()) {
@@ -292,8 +275,7 @@ public class RefClass extends RefElement {
               }
 
               PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-              for (int j = 0; j < writtenVariables.length; j++) {
-                PsiVariable psiVariable = writtenVariables[j];
+              for (PsiVariable psiVariable : writtenVariables) {
                 if (instanceInitializerInitializedFields.contains(psiVariable)) {
                   allFields.remove(psiVariable);
                   instanceInitializerInitializedFields.remove(psiVariable);
@@ -307,7 +289,8 @@ public class RefClass extends RefElement {
                 ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(Arrays.asList(ssaVariables));
                 good.addAll(instanceInitializerInitializedFields);
                 allFields.retainAll(good);
-              } else {
+              }
+              else {
                 allFields.removeAll(Arrays.asList(writtenVariables));
               }
             }
@@ -315,15 +298,14 @@ public class RefClass extends RefElement {
         }
       }
 
-      for (int i = 0; i < psiFields.length; i++) {
-        PsiField psiField = psiFields[i];
+      for (PsiField psiField : psiFields) {
         if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
-            RefField refField = (RefField) getRefManager().getReference(psiField);
+          RefField refField = (RefField)getRefManager().getReference(psiField);
           refField.setCanBeFinal(false);
         }
       }
 
-      EjbClassRole role = J2EERolesUtil.getEjbRole(psiClass);
+      EjbClassRole role = EjbRolesUtil.getEjbRole(psiClass);
       if (role != null) {
         setEjb(true);
         setCanBeStatic(false);
@@ -331,11 +313,9 @@ public class RefClass extends RefElement {
         if (role.getType() == EjbClassRole.EJB_CLASS_ROLE_HOME_INTERFACE ||
             role.getType() == EjbClassRole.EJB_CLASS_ROLE_REMOTE_INTERFACE) {
           PsiClassType remoteExceptionType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.rmi.RemoteException", psiClass.getResolveScope());
-          PsiMethod[] allMethods = psiClass.getAllMethods();
-          for (int i = 0; i < allMethods.length; i++) {
-            PsiMethod psiMethod = allMethods[i];
+          for (PsiMethod psiMethod : psiClass.getAllMethods()) {
             if (!RefUtil.belongsToScope(psiMethod, getRefManager())) continue;
-              RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
+            RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
             if (refMethod != null) {
               refMethod.updateThrowsList(remoteExceptionType);
             }
@@ -441,13 +421,11 @@ public class RefClass extends RefElement {
   public void referenceRemoved() {
     super.referenceRemoved();
 
-    for (Iterator<RefClass> iterator = getSubClasses().iterator(); iterator.hasNext();) {
-      RefClass subClass = iterator.next();
+    for (RefClass subClass : getSubClasses()) {
       subClass.removeBase(this);
     }
 
-    for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
-      RefClass superClass = iterator.next();
+    for (RefClass superClass : getBaseClasses()) {
       superClass.getSubClasses().remove(this);
     }
   }
@@ -490,8 +468,7 @@ public class RefClass extends RefElement {
   }
 
   public boolean isCanBeStatic() {
-    for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
-      RefClass refBase = iterator.next();
+    for (RefClass refBase : getBaseClasses()) {
       if (!refBase.isCanBeStatic()) {
         setCanBeStatic(false);
         return false;

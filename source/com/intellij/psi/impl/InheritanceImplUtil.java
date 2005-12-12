@@ -1,7 +1,7 @@
 package com.intellij.psi.impl;
 
-import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee15.model.common.EnterpriseBean;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ public class InheritanceImplUtil {
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
     if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
 
-    final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
+    final EjbClassRole classRole = EjbRolesUtil.getEjbRole(candidateClass);
     if (classRole != null) {
       final EnterpriseBean enterpriseBean = classRole.getEnterpriseBean();
       if (candidateClass.getManager().areElementsEquivalent(candidateClass, enterpriseBean.getEjbClass().getValue())) {
