@@ -1154,7 +1154,7 @@ public class ControlFlowUtil {
       CopyOnWriteList readVars = readVariables[nextOffset];
       PsiElement element = myFlow.getElement(offset);
       final PsiVariable variable = instruction.variable;
-      if (!(variable instanceof PsiParameter)) {
+      if (!(variable instanceof PsiParameter) || ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
         PsiReferenceExpression expression = getEnclosingReferenceExpression(element, variable);
         if (expression != null) {
           VariableInfo variableInfo = new VariableInfo(variable, expression);
