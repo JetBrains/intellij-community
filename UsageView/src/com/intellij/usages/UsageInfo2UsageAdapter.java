@@ -244,7 +244,12 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   }
 
   public int compareTo(final UsageInfo2UsageAdapter o) {
-    if (!Comparing.equal(getElement().getContainingFile(), o.getElement().getContainingFile())) {
+    final PsiElement element = getElement();
+    final PsiFile containingFile = element == null ? null : element.getContainingFile();
+    final PsiElement oElement = o.getElement();
+    final PsiFile oContainingFile = oElement == null ? null : oElement.getContainingFile();
+    if ((containingFile == null && oContainingFile == null) ||
+        !Comparing.equal(containingFile, oContainingFile)) {
       return 0;
     }
     return getRangeMarker().getStartOffset() - o.getRangeMarker().getStartOffset();
