@@ -93,22 +93,14 @@ public class Result {
 
     if (mySettings.dropObsoleteCasts()) {
       myCastsRemoved = 0;
-      for (final Map.Entry<PsiTypeCastExpression,PsiType> entry : myCastToOperandType.entrySet()) {
-        final PsiTypeCastExpression cast = entry.getKey();
-        final PsiType operandType = myBinding.apply(entry.getValue());
-        if (operandType.isAssignableFrom(cast.getType())) {
-          set.add(cast);
-        }
-        /*cast.accept(new PsiRecursiveElementVisitor() {
-          public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
-            super.visitTypeCastExpression(expression);
-            if (myCastToOperandType.containsKey(expression)) {
-              if (operandType.isAssignableFrom(expression.getType())) {
-                set.add(cast);
-              }
-            }
+      if (myBinding != null) {
+        for (final Map.Entry<PsiTypeCastExpression,PsiType> entry : myCastToOperandType.entrySet()) {
+          final PsiTypeCastExpression cast = entry.getKey();
+          final PsiType operandType = myBinding.apply(entry.getValue());
+          if (operandType.isAssignableFrom(cast.getType())) {
+            set.add(cast);
           }
-        });*/
+        }
       }
     }
 
