@@ -28,7 +28,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
        ) {
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
-      IdCacheUtil.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
+      IdTableBuilding.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
     } else if (tokenType.getLanguage() != StdLanguages.XML &&
       tokenType.getLanguage() != Language.ANY         
     ) {
@@ -36,7 +36,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
 
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 (inComments)?UsageSearchContext.IN_COMMENTS:UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
-      IdCacheUtil.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
+      IdTableBuilding.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
       
       if (inComments) advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
     } else {

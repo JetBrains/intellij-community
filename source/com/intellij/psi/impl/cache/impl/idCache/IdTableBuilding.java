@@ -48,6 +48,26 @@ public class IdTableBuilding {
 
   private static final int FILE_SIZE_LIMIT = 1000000; // ignore files of size > 1Mb
 
+  public static void processPossibleComplexFileName(char[] chars, int startOffset, int endOffset, TIntIntHashMap table) {
+    int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
+    offset = Math.min(offset, endOffset);
+    int start = startOffset;
+    while(start < endOffset) {
+      IdCacheUtil.addOccurrence(table, chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      start = offset + 1;
+      offset = Math.min(endOffset, findCharsWithinRange(chars, start, endOffset, "/\\"));
+    }
+  }
+
+  private static int findCharsWithinRange(char[] chars, int startOffset, int endOffset, String charsToFind) {
+    while(startOffset < endOffset) {
+      if (charsToFind.indexOf(chars[startOffset]) != -1) return startOffset;
+      ++startOffset;
+    }
+
+    return startOffset;
+  }
+
   public static class Result {
     final Runnable runnable;
     final TIntIntHashMap wordsMap;
