@@ -12,8 +12,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
@@ -58,19 +58,20 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting){
-    return editToolSettings(project, inspectionProfile, editorHighlighting, myShortName);
+    return editToolSettings(project, inspectionProfile, editorHighlighting, myShortName, InspectionProjectProfileManager.getInstance(project));
   }
 
-  public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName) {
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+  public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName, final ProfileManager manager) {
     final boolean isOK = ShowSettingsUtil.getInstance().editConfigurable(project,
                                                                          "#com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction",
                                                                          new Configurable(){
                                                                            private InspectionToolsPanel myPanel = new InspectionToolsPanel(inspectionProfile.getName(),
                                                                                                                                            project,
-                                                                                                                                           canChooseDifferentProfile);
+                                                                                                                                           canChooseDifferentProfile,
+                                                                                                                                           manager);
                                                                            public String getDisplayName() {
-                                                                             return ApplicationBundle.message("title.errors");
+                                                                             final String title = ApplicationBundle.message("title.errors");
+                                                                             return canChooseDifferentProfile ? title : (title + ": \'" + inspectionProfile.getName() + "\' inspection profile");
                                                                            }
 
                                                                            public Icon getIcon() {
@@ -94,7 +95,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
                                                                            public void apply() throws ConfigurationException {
                                                                              myPanel.apply();
-                                                                             final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile().getParentProfile();
+                                                                             final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
                                                                              if (canChooseDifferentProfile){
                                                                                InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
                                                                              }

@@ -40,7 +40,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -161,7 +161,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     InspectionProfile profile = (InspectionProfile)inspectionProfileManager.getProfile(myCurrentProfileName);
     if (profile == null) {
       final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();

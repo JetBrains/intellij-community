@@ -29,4 +29,5 @@ public interface Profile extends JDOMExternalizable {
   @NonNls String CODE_STYLE = "CODE_STYLE";
   String getName();
   File getFile();
+  void copyFrom(Profile profile);
 }

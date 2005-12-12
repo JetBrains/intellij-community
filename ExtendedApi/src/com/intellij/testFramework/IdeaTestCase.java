@@ -59,7 +59,7 @@ import java.util.Map;
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends TestCase implements DataProvider {
-  private static final String PROFILE = "Configurable";
+  protected static final String PROFILE = "Configurable";
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
   }

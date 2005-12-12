@@ -15,72 +15,26 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.profile.scope.ProfileScope;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: anna
- * Date: 29-Nov-2005
+ * Date: 09-Dec-2005
  */
-public abstract class ProfileManager {
+public interface ProfileManager {
+  String getProfileType();
 
-  @Nullable
-  public static ProfileManager getProfileManager(String type) {
-    final ProfileManager[] components = ApplicationManager.getApplication().getComponents(ProfileManager.class);
-    for (ProfileManager manager : components) {
-      if (manager.getProfileType().compareTo(type) == 0) {
-        return manager;
-      }
-    }
-    return null;
-  }
+  Collection<Profile> getProfiles();
 
-  public static Set<String> getRegisteredProfileTypes() {
-    final Set<String> result = new HashSet<String>();
-    final ProfileManager[] components = ApplicationManager.getApplication().getComponents(ProfileManager.class);
-    for (ProfileManager manager : components) {
-      result.add(manager.getProfileType());
-    }
-    return result;
-  }
+  @Nullable 
+  Profile getProfile(@NotNull String name);
 
-  public abstract Profile createProfile();
+  void updateProfile(Profile profile);
 
-  public abstract String getProfileType();
+  String[] getAvailableProfileNames();
 
-  public abstract void addProfileChangeListener(ProfileChangeAdapter listener);
-
-  public abstract void removeProfileChangeListener(ProfileChangeAdapter listener);
-
-  public abstract void fireProfileChanged(String profile);
-
-  public abstract void fireProfileChanged(String oldProfile, String profile, ProfileScope scope);
-
-  public abstract Collection<Profile> getProfiles();
-
-  public abstract void setRootProfile(String rootProfile);
-
-  public abstract String [] getAvailableProfileNames();
-
-  @Nullable
-  //profile was removed
-  public abstract Profile getProfile(@NotNull String name);
-
-  public abstract Profile getRootProfile();
-
-  public abstract void deleteProfile(String profile);
-
-  public abstract void addProfile(Profile profile);
-
-  public abstract void readProfiles(Element element) throws InvalidDataException;
-
-  public abstract void updateProfile(Profile profile);
+  void deleteProfile(String name);
 }

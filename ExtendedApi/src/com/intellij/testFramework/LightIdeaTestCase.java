@@ -60,7 +60,7 @@ import java.util.*;
  * so it contains classes that is really needed in order to speed up tests startup.
  */
 @NonNls public class LightIdeaTestCase extends TestCase implements DataProvider {
-  private static final String PROFILE = "Configurable";
+  protected static final String PROFILE = "Configurable";
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
   private static Module ourModule;

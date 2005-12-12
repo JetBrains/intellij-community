@@ -15,10 +15,12 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -29,7 +31,8 @@ import java.io.File;
  */
 public class ProfileEx implements Profile {
   public String myName;
-  protected File myFile;
+  public File myFile;
+  private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
 
   public ProfileEx(String name) {
     myName = name;
@@ -47,6 +50,20 @@ public class ProfileEx implements Profile {
   @Nullable
   public File getFile() {
     return myFile;
+  }
+
+  public void copyFrom(Profile profile) {
+    try {
+      @NonNls final Element config = new Element("config");
+      profile.writeExternal(config);
+      readExternal(config);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {

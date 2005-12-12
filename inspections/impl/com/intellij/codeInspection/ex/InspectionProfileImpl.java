@@ -31,7 +31,6 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class InspectionProfileImpl extends ProfileEx implements InspectionProfile.ModifiableModel, InspectionProfile {
-  @NonNls public static final InspectionProfileImpl EMPTY_PROFILE = new InspectionProfileImpl("Default");
   @NonNls public static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
   static {
     final InspectionTool[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
@@ -97,7 +96,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     super(inspectionProfile, file);
   }
 
-  public InspectionProfileImpl(String name) {
+  public InspectionProfileImpl(@NonNls String name) {
     super(name);
     myInitialized = true;
     setDefaultErrorLevels();
@@ -228,7 +227,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     final String version = element.getAttributeValue(VERSION_TAG);
     if (myFile != null && (version == null || !version.equals(VALID_VERSION))) {
       try {
-        element = InspectionProfileConvertor.convertToNewFormat(new File(InspectionProfileManager.getProfileDirectory(InspectionProfileManager.INSPECTION_DIR_NAME), myName + CONFIG_FILE_EXTENSION), this);
+        element = InspectionProfileConvertor.convertToNewFormat(new File(InspectionProfileManager.getInstance().getProfileDirectory(), myName + CONFIG_FILE_EXTENSION), this);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -317,7 +316,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
         LOG.error(e);
       }
     }
-    InspectionProfileManager.getInstance().fireProfileChanged(myName);
+    InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
   public void load() {

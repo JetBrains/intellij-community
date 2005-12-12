@@ -22,7 +22,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.profile.DefaultProfileManager;
+import com.intellij.profile.DefaultApplicationProfileManager;
 import com.intellij.profile.Profile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -38,12 +38,10 @@ import java.io.IOException;
  * User: anna
  * Date: 29-Nov-2005
  */
-public class InspectionProfileManager extends DefaultProfileManager implements ExportableApplicationComponent {
+public class InspectionProfileManager extends DefaultApplicationProfileManager implements ExportableApplicationComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
-
-  @NonNls public static final String INSPECTION_DIR_NAME = "inspection";
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
@@ -52,11 +50,13 @@ public class InspectionProfileManager extends DefaultProfileManager implements E
   @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
 
   public InspectionProfileManager() {
-    super(Profile.INSPECTION, new Computable<Profile>() {
-      public Profile compute() {
-        return InspectionProfileImpl.EMPTY_PROFILE;
-      }
-    });
+    super(Profile.INSPECTION, 
+          new Computable<Profile>() {
+            public Profile compute() {
+              return new InspectionProfileImpl("Default");
+            }
+          },
+          "inspection");
     initProfiles();
   }
 
@@ -70,7 +70,7 @@ public class InspectionProfileManager extends DefaultProfileManager implements E
 
 
   public File[] getExportFiles() {
-    return new File[]{getProfileDirectory(INSPECTION_DIR_NAME)};
+    return new File[]{getProfileDirectory()};
   }
 
   public String getPresentableName() {
@@ -78,7 +78,7 @@ public class InspectionProfileManager extends DefaultProfileManager implements E
   }
 
   void initProfiles() {
-    File dir = getProfileDirectory(INSPECTION_DIR_NAME);
+    File dir = getProfileDirectory();
     File[] files = dir.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         @NonNls final String name = pathname.getName();
@@ -109,8 +109,7 @@ public class InspectionProfileManager extends DefaultProfileManager implements E
 
   public InspectionProfileImpl createDefaultProfile() {
     final InspectionProfileImpl defaultProfile;
-    @NonNls final String defaultProfileName = "Default";
-    defaultProfile = new InspectionProfileImpl(defaultProfileName);
+    defaultProfile = (InspectionProfileImpl)createProfile();
     defaultProfile.setBaseProfile(InspectionProfileImpl.DEFAULT_PROFILE);
     addProfile(defaultProfile);
     return defaultProfile;

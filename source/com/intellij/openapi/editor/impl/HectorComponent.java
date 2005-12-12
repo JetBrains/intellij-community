@@ -187,7 +187,7 @@ public class HectorComponent extends JPanel {
     myUsePerFileProfile.setSelected(myUseProfile);
     profilePanel.add(myUsePerFileProfile, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                                  new Insets(0, 0, 0, 0), 0, 0));
-    final InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
+    final InspectionProjectProfileManager inspectionManager = InspectionProjectProfileManager.getInstance(myFile.getProject());
 
     myProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -211,7 +211,7 @@ public class HectorComponent extends JPanel {
     return profilePanel;
   }
 
-  private void reloadProfiles(final InspectionProfileManager inspectionManager, final String selectedProfile) {
+  private void reloadProfiles(final InspectionProjectProfileManager inspectionManager, final String selectedProfile) {
     final String[] avaliableProfileNames = inspectionManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myProfilesCombo.getComboBox().getModel();
     model.removeAllElements();
@@ -325,9 +325,7 @@ public class HectorComponent extends JPanel {
 
     public ErrorsDialog(String initialProfileName, Project project) {
       super(true);
-      myPanel = new InspectionToolsPanel(initialProfileName, project) {
-        //just panel
-      };
+      myPanel = new InspectionToolsPanel(initialProfileName, project, InspectionProjectProfileManager.getInstance(project));
       setTitle(EditorBundle.message("hector.inspection.profiles.title"));
       init();
     }

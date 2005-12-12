@@ -5,8 +5,8 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
 import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.PopupHandler;
@@ -287,7 +288,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null)){
+      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))){
         InspectionResultsView.this.update();
       }
     }

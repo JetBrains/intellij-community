@@ -12,7 +12,7 @@ import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
@@ -33,7 +33,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    final InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     LabeledComponent component = new LabeledComponent();
     component.setText(InspectionsBundle.message("inspection.action.profile.label"));
@@ -41,7 +40,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
     component.setComponent(comboboxWithBrowseButton);
     final JComboBox profiles = comboboxWithBrowseButton.getComboBox();
-    reloadProfiles(profiles, inspectionManager, manager);
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    reloadProfiles(profiles, projectProfileManager, manager);
     comboboxWithBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, (String)profiles.getSelectedItem()){
@@ -52,10 +52,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         };
         inspectCodeDialog.show();
         if (inspectCodeDialog.isOK()){
-          reloadProfiles(profiles, inspectionManager, manager);
+          reloadProfiles(profiles, projectProfileManager, manager);
         } else {
           //if profile was disabled and cancel after apply was pressed
-          final InspectionProfileImpl profile = (InspectionProfileImpl)inspectionManager.getProfile((String)profiles.getSelectedItem());
+          final InspectionProfileImpl profile = (InspectionProfileImpl)projectProfileManager.getProfile((String)profiles.getSelectedItem());
           final boolean canExecute = profile != null && profile.isExecutable();
           dialog.setOKActionEnabled(canExecute);
         }
@@ -63,7 +63,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     profiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final InspectionProfileImpl profile = (InspectionProfileImpl)inspectionManager.getProfile((String)profiles.getSelectedItem());
+        final InspectionProfileImpl profile = (InspectionProfileImpl)projectProfileManager.getProfile((String)profiles.getSelectedItem());
         final boolean canExecute = profile != null && profile.isExecutable();
         dialog.setOKActionEnabled(canExecute);
         if (canExecute){
@@ -71,16 +71,16 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final InspectionProfileImpl profile = (InspectionProfileImpl)inspectionManager.getProfile((String)profiles.getSelectedItem());
+    final InspectionProfileImpl profile = (InspectionProfileImpl)projectProfileManager.getProfile((String)profiles.getSelectedItem());
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
     return panel;
   }
 
-  private void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfilesManager, InspectionManagerEx inspectionManager){
+  private void reloadProfiles(JComboBox profiles, InspectionProjectProfileManager inspectionProjectProfileManager, InspectionManagerEx inspectionManager){
     final String selectedProfile = inspectionManager.getCurrentProfile().getName();
-    final String[] avaliableProfileNames = inspectionProfilesManager.getAvailableProfileNames();
+    final String[] avaliableProfileNames = inspectionProjectProfileManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)profiles.getModel();
     model.removeAllElements();
     for (String profile : avaliableProfileNames) {

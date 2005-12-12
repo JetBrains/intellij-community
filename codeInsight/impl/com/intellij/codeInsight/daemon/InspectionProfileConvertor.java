@@ -119,7 +119,7 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    final File profileDirectory = InspectionProfileManager.getProfileDirectory(InspectionProfileManager.INSPECTION_DIR_NAME);
+    final File profileDirectory = InspectionProfileManager.getInstance().getProfileDirectory();
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);

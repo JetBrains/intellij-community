@@ -60,7 +60,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   public InspectionProfile getProfile(@NotNull final PsiElement psiElement){
     final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiElement.getProject()).getInspectionProfile(psiElement);
     if (inspectionProfilePair != null && inspectionProfilePair.second) {
-      InspectionProfile inspectionProfile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(inspectionProfilePair.first);
+      InspectionProfile inspectionProfile = (InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(inspectionProfilePair.first);
       if (inspectionProfile != null){
         return inspectionProfile;
       }
@@ -93,6 +93,11 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void changeHectorSettingsForFile(VirtualFile file, String profile){
+    if (!myProfiles.containsKey(profile)){
+      final Profile projectProfile = myApplicationProfileManager.createProfile();
+      projectProfile.copyFrom(myApplicationProfileManager.getProfile(profile));
+      myProfiles.put(profile, projectProfile);
+    }
     myHectorSettings.put(file, profile);
   }
 

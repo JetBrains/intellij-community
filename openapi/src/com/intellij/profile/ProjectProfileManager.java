@@ -27,7 +27,7 @@ import java.util.Map;
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class ProjectProfileManager implements JDOMExternalizable {
+public abstract class ProjectProfileManager implements ProfileManager, JDOMExternalizable {
 
   @Nullable
   public static ProjectProfileManager getProjectProfileFactory(Project project, String profileType){
@@ -51,8 +51,6 @@ public abstract class ProjectProfileManager implements JDOMExternalizable {
   public abstract boolean isProperProfile(ProfileScope scope);
 
   public abstract Map<ProfileScope,String> getProfilesUsedInProject();
-
-  public abstract String getProfileType();
 
   public abstract void clearProfileScopeAssignments();
 
