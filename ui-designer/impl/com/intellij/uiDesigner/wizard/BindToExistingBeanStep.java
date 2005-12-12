@@ -196,7 +196,11 @@ final class BindToExistingBeanStep extends StepAdapter{
         if(ArrayUtil.find(wProps, propName) != -1){
           LOG.assertTrue(!rwProps.contains(propName));
           final PsiMethod getter = PropertyUtil.findPropertyGetter(myData.myBeanClass, propName, false, true);
-          LOG.assertTrue(getter != null);
+          if (getter == null) {
+            // possible if the getter is static: getReadableProperties() does not filter out static methods, and
+            // findPropertyGetter() checks for static/non-static
+            continue;
+          }
           final PsiType returnType = getter.getReturnType();
           LOG.assertTrue(returnType != null);
 
