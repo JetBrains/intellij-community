@@ -178,9 +178,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       final XmlElementDescriptor[] rootElementsDescriptors = descr.getRootElementsDescriptors(this);
       if (rootElementsDescriptors.length == 0) descr = null;
     }
-    
-    if (doctype.getDtdUri() != null){
-      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, doctype.getDtdUri());
+
+    final String dtdUri = doctype.getDtdUri();
+    if (dtdUri != null && dtdUri.length() > 0){
+      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, dtdUri);
       final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
       if (descr != null && descr1 != null){
         descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
