@@ -87,6 +87,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public String getProfile(final ProfileScope scope) {
+    if (!USE_PROJECT_LEVEL_SETTINGS) return myApplicationProfileManager.getRootProfile().getName();
     final String profile = myScopeToProfileMap.get(scope);
     if (profile != null) {
       return profile;
@@ -98,7 +99,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       }
       parentScope = parentScope.getParentScope(myProject);
     }
-    return myApplicationProfileManager.getRootProfile().getName();
+    return null;
   }
 
   public Profile getProfile(String name) {
