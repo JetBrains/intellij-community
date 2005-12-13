@@ -214,9 +214,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   public void useProjectLevelProfileSettings(boolean useProjectLevelSettings) {
     if (useProjectLevelSettings){
       ProfileScope projectScope = ProfileScopeFactory.getInstance(myProject).getProfileScope();
-      if (!myScopeToProfileMap.containsKey(projectScope)){
-        assignProfileToScope(getProfile(projectScope), projectScope);
-      }
+      assignProfileToScope(getProfile(projectScope), projectScope);
     }
     USE_PROJECT_LEVEL_SETTINGS = useProjectLevelSettings;
   }
