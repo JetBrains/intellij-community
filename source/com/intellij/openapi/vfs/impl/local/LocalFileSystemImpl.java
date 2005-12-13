@@ -284,7 +284,16 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   public VirtualFile refreshAndFindFileByPath(String path) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    return findFileByPath(path, true, true);
+    final VirtualFile file = findFileByPath(path, true, true);
+    if (file == null){
+      String canonicalPath = getCanonicalPath(new File(path.replace('/', File.separatorChar)));
+      if (canonicalPath == null) return null;
+      String path1 = canonicalPath.replace(File.separatorChar, '/');
+      if (!path.equals(path1)){
+        return findFileByPath(path1, true, true);
+      }
+    }
+    return file;
   }
 
   public VirtualFile findFileByIoFile(File file) {
