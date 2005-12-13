@@ -22,6 +22,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.i18n.I18nUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -445,7 +447,24 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
-    registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
+    registerReferenceProvider(
+      new ElementFilter() {
+        public boolean isAcceptable(Object element, PsiElement context) {
+          if (context instanceof PsiLiteralExpression) {
+            PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
+            final Map<String, Object> annotationParams = new HashMap<String, Object>();
+            annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
+            if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+              return false;
+            }
+          }
+          return true;
+        }
+
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      }, PsiLiteralExpression.class, filePathReferenceProvider);
 
     final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
     registerXmlAttributeValueReferenceProvider(

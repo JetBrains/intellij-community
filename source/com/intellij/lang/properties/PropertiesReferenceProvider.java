@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -32,8 +33,10 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
       if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
-        if (resourceBundleName instanceof PsiLiteralExpression) {
-          bundleName = ((PsiLiteralExpression)resourceBundleName).getValue().toString();
+        if (resourceBundleName instanceof PsiExpression) {
+          PsiExpression expr = (PsiExpression) resourceBundleName;
+          final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+          bundleName = bundleValue == null ? null : bundleValue.toString();
         }
       }
 
