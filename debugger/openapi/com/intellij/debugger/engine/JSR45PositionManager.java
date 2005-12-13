@@ -88,7 +88,7 @@ public abstract class JSR45PositionManager implements PositionManager {
       String sourcePath = getRelativePath(location.sourcePath(JSP_STRATUM));
       PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject(), myScope);
       if(file == null) throw new NoDataException();
-      int lineNumber = location.lineNumber(JSP_STRATUM);
+      int lineNumber = getLineNumber(location);
       sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
     }
     catch (AbsentInformationException e) {
@@ -97,6 +97,10 @@ public abstract class JSR45PositionManager implements PositionManager {
     if(sourcePosition == null) throw new NoDataException();
 
     return sourcePosition;
+  }
+
+  protected int getLineNumber(final Location location) {
+    return location.lineNumber(JSP_STRATUM);
   }
 
   public List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException {
@@ -137,13 +141,12 @@ public abstract class JSR45PositionManager implements PositionManager {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<Location>>() {
       public List<Location> compute() {
         try {
-          //noinspection HardCodedStringLiteral
           final List<String> paths = type.sourcePaths(JSP_STRATUM);
           for (String path : paths) {
-            final PsiFile file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject(), myScope);
+            final String relativePath = getRelativePath(path);
+            final PsiFile file = myHelper.getDeployedJspSource(relativePath, myDebugProcess.getProject(), myScope);
             if(file != null && file.equals(position.getFile())) {
-              //noinspection HardCodedStringLiteral
-              return type.locationsOfLine(JSP_STRATUM, file.getName(), position.getLine() + 1);
+              return getLocationsOfLine(type, file.getName(), relativePath, position.getLine() + 1);
             }
           }
         }
@@ -158,6 +161,11 @@ public abstract class JSR45PositionManager implements PositionManager {
         return null;
       }
     });
+  }
+
+  protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,
+                                              final String relativePath, final int lineNumber) throws AbsentInformationException {
+    return type.locationsOfLine(JSP_STRATUM, fileName, lineNumber);
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
