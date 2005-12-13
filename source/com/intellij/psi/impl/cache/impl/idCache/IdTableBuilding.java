@@ -16,11 +16,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -386,11 +385,20 @@ public class IdTableBuilding {
       todoCounts = null;
     }
 
-    final PsiFile psiFile = manager.getFile(fileContent);
-    if (psiFile == null) return null;
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    final char[] chars;
+    final int textLength;
+    if (PsiDocumentManager.getInstance(manager.getProject()).isUncommited(document)) {
+      final PsiFile psiFile = manager.getFile(fileContent);
+      if (psiFile == null) return null;
 
-    final char[] chars = psiFile.textToCharArray();
-    final int textLength = psiFile.getTextLength();
+      chars = psiFile.textToCharArray();
+      textLength = psiFile.getTextLength();
+    }
+    else {
+      chars = document.getChars();
+      textLength = document.getTextLength();
+    }
 
     final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject());
 
