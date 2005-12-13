@@ -13,7 +13,7 @@ public class ObjectCache<K,V> implements Iterable {
 
   protected int myTop;
   protected int myBack;
-  final protected CacheEntry[] myCache;
+  final protected CacheEntry<K, V>[] myCache;
   final protected int[] myHashTable;
   protected int myHashTableSize;
   protected int myCount;
@@ -28,9 +28,9 @@ public class ObjectCache<K,V> implements Iterable {
   private long myAttempts;
   private long myHits;
 
-  protected static class CacheEntry {
-    public Object key;
-    public Object value;
+  protected static class CacheEntry<K, V> {
+    public K key;
+    public V value;
     public int prev;
     public int next;
     public int hash_next;
@@ -47,7 +47,7 @@ public class ObjectCache<K,V> implements Iterable {
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
-      myCache[i] = new CacheEntry();
+      myCache[i] = new CacheEntry<K, V>();
     }
     myHashTableSize = cacheSize;
     int i = 0;
@@ -99,7 +99,7 @@ public class ObjectCache<K,V> implements Iterable {
     final ArrayList<K> keys = new ArrayList<K>(count());
     for (int current = myTop; current > 0;) {
       if (myCache[current].value != null) {
-        keys.add((K)myCache[current].key);
+        keys.add(myCache[current].key);
       }
       current = myCache[current].next;
     }
@@ -143,11 +143,24 @@ public class ObjectCache<K,V> implements Iterable {
       return null;
     }
     ++myHits;
-    if (index != myTop) {
-      removeEntry(index);
-      add2Top(index);
+    final CacheEntry<K, V> cacheEntry = myCache[index];
+    final int top = myTop;
+    if (index != top) {
+      final int prev = cacheEntry.prev;
+      final int next = cacheEntry.next;
+      if (index == myBack) {
+        myBack = prev;
+      }
+      else {
+        myCache[next].prev = prev;
+      }
+      myCache[prev].next = next;
+      cacheEntry.next = top;
+      cacheEntry.prev = 0;
+      myCache[top].prev = index;
+      myTop = index;
     }
-    return (V)myCache[index].value;
+    return myCache[index].value;
   }
 
   final public boolean isCached(K key) {
@@ -221,7 +234,7 @@ public class ObjectCache<K,V> implements Iterable {
     int index = (key.hashCode() & 0x7fffffff) % myHashTableSize;
     int current = myHashTable[index];
     myCache[0].key = key;
-    while (!key.equals( myCache[current].key )) {
+    while (!key.equals(myCache[current].key)) {
       current = myCache[current].hash_next;
     }
     return current;
