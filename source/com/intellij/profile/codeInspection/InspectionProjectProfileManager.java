@@ -71,7 +71,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     if (virtualFile == null){
       return (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
     }
-    return (InspectionProfile)InspectionProfileManager.getInstance().getProfile(getProfile(virtualFile));
+    return (InspectionProfile)getProfile(getProfile(virtualFile));
   }
 
   public void copy(ProjectProfileManager manager) {
