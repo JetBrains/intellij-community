@@ -5,14 +5,14 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -126,7 +126,8 @@ public class VariableInplaceRenamer {
     }
   }
 
-  public static boolean mayRenameInplace(PsiVariable elementToRename) {
+  public static boolean mayRenameInplace(PsiVariable elementToRename, final Editor editor) {
+    if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter)) return false;
     SearchScope useScope = elementToRename.getUseScope();
     if (!(useScope instanceof LocalSearchScope)) return false;

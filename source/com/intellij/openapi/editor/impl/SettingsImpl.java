@@ -52,6 +52,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsDndEnabled = null;
   private Boolean myIsWheelFontChangeEnabled = null;
   private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
+  private Boolean myIsRenameVariablesInplace = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -297,6 +298,16 @@ public class SettingsImpl implements EditorSettings {
 
   public void setMouseClickSelectionHonorsCamelWords(boolean val) {
     myIsMouseClickSelectionHonorsCamelWords = val ? Boolean.TRUE : Boolean.FALSE;
+  }
+
+  public boolean isVariableInplaceRenameEnabled() {
+    return myIsRenameVariablesInplace != null
+           ? myIsRenameVariablesInplace.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled();
+  }
+
+  public void setVariableInplaceRenameEnabled(boolean val) {
+    myIsRenameVariablesInplace = val? Boolean.TRUE : Boolean.FALSE;
   }
 
   private void fireEditorRefresh() {

@@ -87,4 +87,8 @@ public interface EditorSettings {
 
   boolean isMouseClickSelectionHonorsCamelWords();
   void setMouseClickSelectionHonorsCamelWords(boolean val);
+
+
+  boolean isVariableInplaceRenameEnabled();
+  void setVariableInplaceRenameEnabled(boolean val);
 }

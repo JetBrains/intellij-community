@@ -20,8 +20,8 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -147,7 +147,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     if (editor != null) {
-      if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable) elementToRename)) {
+      if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable) elementToRename, editor)) {
         new VariableInplaceRenamer((PsiVariable) elementToRename).performInplaceRename(editor);
         return;
       }

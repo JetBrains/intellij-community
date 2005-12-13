@@ -17,8 +17,6 @@ package com.intellij.openapi.compiler;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.*;
-
 /**
  * Base interface for a custom compiler which participates in the IDEA build process.
  *
@@ -26,6 +24,7 @@ import java.lang.*;
  * @see CompilerManager#removeCompiler(Compiler)
  */
 public interface Compiler {
+  
   /**
    * Returns the description of the compiler. All registered compilers should have unique description.
    *

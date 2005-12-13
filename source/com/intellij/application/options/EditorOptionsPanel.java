@@ -96,6 +96,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
+  private JCheckBox myCbRenameLocalVariablesInplace;
   private JPanel myHighlightSettingsPanel;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
 
@@ -285,6 +286,9 @@ public class EditorOptionsPanel {
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
     myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
 
+    // Refactoring
+    myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
+
     // Editor Tabs
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
     myEditorTabPlacement.setSelectedItem(new Integer(uiSettings.EDITOR_TAB_PLACEMENT));
@@ -409,6 +413,7 @@ public class EditorOptionsPanel {
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
+    editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
 
@@ -551,6 +556,9 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
+
+    // Refactoring
+    isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);

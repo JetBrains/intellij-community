@@ -1,15 +1,15 @@
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetSettings;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.lang.properties.PropertiesFilesManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,6 +41,8 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
     public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
+
+    public boolean RENAME_VARIABLES_INPLACE = true;
 
     public Object clone() {
       try {
@@ -300,4 +302,13 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setDefaultPropertiesCharsetName(final String defaultPropertiesCharsetName) {
     myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME = defaultPropertiesCharsetName;
   }
+
+  public boolean isVariableInplaceRenameEnabled() {
+    return myOptions.RENAME_VARIABLES_INPLACE;
+  }
+
+  public void setVariableInplaceRenameEnabled(final boolean val) {
+    myOptions.RENAME_VARIABLES_INPLACE = val;
+  }
+
 }
