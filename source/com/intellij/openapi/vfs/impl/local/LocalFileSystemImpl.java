@@ -236,51 +236,50 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       }
     }
 
-    synchronized (LOCK) {
-      initRoots();
-      for (VirtualFile root : myFSRootsToPaths.keySet()) {
-        String rootPath = root.getPath();
-        if (!FileUtil.startsWith(path, rootPath)) continue;
-        if (path.length() == rootPath.length()) return root;
-        String tail;
-        if (path.charAt(rootPath.length()) == '/') {
-          tail = path.substring(rootPath.length() + 1);
-        }
-        else if (StringUtil.endsWithChar(rootPath, '/')) {
-          tail = path.substring(rootPath.length());
+    initRoots();
+    for (VirtualFile root : myFSRootsToPaths.keySet()) {
+      String rootPath = root.getPath();
+      if (!FileUtil.startsWith(path, rootPath)) continue;
+      if (path.length() == rootPath.length()) return root;
+      String tail;
+      if (path.charAt(rootPath.length()) == '/') {
+        tail = path.substring(rootPath.length() + 1);
+      }
+      else if (StringUtil.endsWithChar(rootPath, '/')) {
+        tail = path.substring(rootPath.length());
+      }
+      else {
+        continue;
+      }
+      StringTokenizer tokenizer = new StringTokenizer(tail, "/");
+      while (tokenizer.hasMoreTokens()) {
+        final String name = tokenizer.nextToken();
+        if (".".equals(name)) continue;
+        if ("..".equals(name)) {
+          root = root.getParent();
+          if (root == null) return null;
         }
         else {
-          continue;
-        }
-        StringTokenizer tokenizer = new StringTokenizer(tail, "/");
-        while (tokenizer.hasMoreTokens()) {
-          final String name = tokenizer.nextToken();
-          if (".".equals(name)) continue;
-          if ("..".equals(name)) {
-            root = root.getParent();
-            if (root == null) return null;
-          }
-          else {
-            if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
-            VirtualFile child = root.findChild(name);
-            if (child == null) {
-              if (refreshIfNotFound) {
-                root.refresh(false, false);
-                child = root.findChild(name);
-                if (child == null) return null;
-              }
-              else {
-                return null;
-              }
+          if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
+          VirtualFile child = root.findChild(name);
+          if (child == null) {
+            if (refreshIfNotFound) {
+              root.refresh(false, false);
+              child = root.findChild(name);
+              if (child == null) return null;
             }
-            root = child;
+            else {
+              return null;
+            }
           }
+          root = child;
         }
-        return root;
       }
 
-      return null;
+      return root;
     }
+
+    return null;
   }
 
   public VirtualFile refreshAndFindFileByPath(String path) {
