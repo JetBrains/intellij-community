@@ -8,20 +8,20 @@ package com.intellij.compiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.PersistentTrie;
+import com.intellij.util.io.PersistentTrieImpl;
 
 import java.io.File;
 import java.io.IOException;
 
 public class SymbolTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.SymbolTable");
-  private final PersistentTrie myTrie;
+  private final PersistentTrieImpl myTrie;
   private static final int CACHE_SIZE = 5 * 1024 * 1024; // 5 mbytes
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
       final boolean isNewFile = file.length() == 0;
-      myTrie = new PersistentTrie(file, CACHE_SIZE);
+      myTrie = new PersistentTrieImpl(file, CACHE_SIZE);
       if (!isNewFile && !myTrie.isTrieComplete()) {
         try {
           throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"));
