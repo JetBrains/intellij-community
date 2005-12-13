@@ -65,7 +65,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private static final @NonNls String TAGLIB_DIRECTIVE = "taglib";
   private static final @NonNls String URI_ATT = "uri";
   private static final @NonNls String TAGDIR_ATT = "tagdir";
-  private static final @NonNls String ID_ATT = "id";
   private static final @NonNls String LOCATION_ATT_SUFFIX = "Location";
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -581,31 +580,27 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       final String unquotedValue = getUnquotedValue(value, tag);
 
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
-        XmlTag xmlTag = refCountHolder.getTagById(unquotedValue);
+        final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
 
-        if (xmlTag == null ||
-            !xmlTag.isValid() ||
-            xmlTag == tag
+        if (attributeById == null ||
+            !attributeById.isValid() ||
+            attributeById == attribute
            ) {
-          refCountHolder.registerTagWithId(unquotedValue,tag);
+          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
         } else {
-          XmlAttribute anotherTagIdValue = xmlTag.getAttribute(ID_ATT, null);
-
-          if (anotherTagIdValue!=null &&
-              getUnquotedValue(anotherTagIdValue.getValueElement(), xmlTag).equals(unquotedValue)
-             ) {
+          if (getUnquotedValue(attributeById.getValueElement(), tag).equals(unquotedValue)) {
             addToResults(HighlightInfo.createHighlightInfo(
               HighlightInfoType.WRONG_REF,
               value,
               XmlErrorMessages.message("duplicate.id.reference")));
             addToResults(HighlightInfo.createHighlightInfo(
               HighlightInfoType.WRONG_REF,
-              xmlTag.getAttribute(ID_ATT,null).getValueElement(),
+              attributeById.getValueElement(),
               XmlErrorMessages.message("duplicate.id.reference")));
             return;
           } else {
-            // tag previously has that id
-            refCountHolder.registerTagWithId(unquotedValue,tag);
+            // attribute previously has that id
+            refCountHolder.registerAttributeWithId(unquotedValue,attributeById);
           }
         }
       }
@@ -634,9 +629,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
        ) {
       String unquotedValue = getUnquotedValue(value, tag);
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
-        XmlTag xmlTag = holder.getTagById(unquotedValue);
+        XmlAttribute xmlAttribute = holder.getAttributeById(unquotedValue);
 
-        if (xmlTag == null || !xmlTag.isValid()) {
+        if (xmlAttribute == null || !xmlAttribute.isValid()) {
           return HighlightInfo.createHighlightInfo(
             HighlightInfoType.WRONG_REF,
             value,

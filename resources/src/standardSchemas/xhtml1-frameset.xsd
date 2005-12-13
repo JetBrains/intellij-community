@@ -1554,7 +1554,7 @@
           <xs:attributeGroup ref="focus"/>
           <xs:attribute name="charset" type="Charset"/>
           <xs:attribute name="type" type="ContentType"/>
-          <xs:attribute name="name" type="xs:NMTOKEN"/>
+          <xs:attribute name="name" type="xs:ID"/>
           <xs:attribute name="href" type="URI"/>
           <xs:attribute name="hreflang" type="LanguageCode"/>
           <xs:attribute name="rel" type="LinkTypes"/>

@@ -7,7 +7,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
@@ -23,7 +23,7 @@ public class RefCountHolder {
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new THashMap<PsiNamedElement, Boolean>();
-  private final Map<String, XmlTag> myXmlId2TagMap = new THashMap<String, XmlTag>();
+  private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
 
@@ -35,7 +35,7 @@ public class RefCountHolder {
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
-    myXmlId2TagMap.clear();
+    myXmlId2AttributeMap.clear();
     myUsedElements.clear();
   }
 
@@ -56,12 +56,12 @@ public class RefCountHolder {
     }
   }
 
-  public synchronized void registerTagWithId(@NotNull String id, XmlTag tag) {
-    myXmlId2TagMap.put(id,tag);
+  public synchronized void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
+    myXmlId2AttributeMap.put(id,attr);
   }
 
-  public synchronized XmlTag getTagById(String id) {
-    return myXmlId2TagMap.get(id);
+  public synchronized XmlAttribute getAttributeById(String id) {
+    return myXmlId2AttributeMap.get(id);
   }
 
   public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
