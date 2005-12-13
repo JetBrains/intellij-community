@@ -23,7 +23,6 @@ class RunConfigurable extends BaseConfigurable {
   private final Project myProject;
   private final RunDialog myRunDialog;
 
-  private JPanel myPanel;
   private TabbedPaneWrapper myTabbedPane;
   private ConfigurationTab[] myTabs;
   private JCheckBox myCbShowSettingsBeforeRunning;
@@ -45,7 +44,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new BorderLayout());
+    final JPanel mainPanel = new JPanel(new BorderLayout());
 
     myTabbedPane = new TabbedPaneWrapper();
 
@@ -62,7 +61,7 @@ class RunConfigurable extends BaseConfigurable {
       myTabbedPane.setIconAt(i, type.getIcon());
     }
 
-    myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    mainPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new GridLayout(1, 2, 5, 0));
     myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
@@ -71,7 +70,7 @@ class RunConfigurable extends BaseConfigurable {
     myCbCompileBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.make.module.before.running.checkbox"));
     bottomPanel.add(myCbCompileBeforeRunning);
 
-    myPanel.add(bottomPanel, BorderLayout.SOUTH);
+    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
@@ -88,7 +87,7 @@ class RunConfigurable extends BaseConfigurable {
     myCbShowSettingsBeforeRunning.addItemListener(cbListener);
 
     updateDialog();
-    return myPanel;
+    return mainPanel;
   }
 
   public Icon getIcon() {
@@ -96,8 +95,8 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    for (int i = 0; i < myTabs.length; i++) {
-      myTabs[i].reset();
+    for (ConfigurationTab myTab : myTabs) {
+      myTab.reset();
     }
 
     final RunManagerEx manager = getRunManager();
@@ -147,8 +146,8 @@ class RunConfigurable extends BaseConfigurable {
 
   public boolean isModified() {
     if (super.isModified()) return true;
-    for (int i = 0; i < myTabs.length; i++) {
-      if (myTabs[i].isModified()) {
+    for (ConfigurationTab myTab : myTabs) {
+      if (myTab.isModified()) {
         return true;
       }
     }
@@ -156,11 +155,9 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public void disposeUIResources() {
-    for (int i = 0; i < myTabs.length; i++) {
-      final ConfigurationTab tab = myTabs[i];
+    for (final ConfigurationTab tab : myTabs) {
       tab.disposeUIResources();
     }
-    myPanel = null;
   }
 
   private ConfigurationType[] getConfigurationFactories() {
