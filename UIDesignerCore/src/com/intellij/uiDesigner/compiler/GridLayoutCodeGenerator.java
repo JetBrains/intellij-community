@@ -28,7 +28,8 @@ import org.objectweb.asm.commons.Method;
  * @noinspection HardCodedStringLiteral
  */
 public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
-  private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
+  private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)");
+  private static final Method myInitConstraintsIndentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
   private static final Method ourGridLayoutManagerConstructor = Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)");
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
@@ -85,8 +86,13 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
     newDimensionOrNull(generator, constraints.myMinimumSize);
     newDimensionOrNull(generator, constraints.myPreferredSize);
     newDimensionOrNull(generator, constraints.myMaximumSize);
-    generator.push(constraints.getIndent());
 
-    generator.invokeConstructor(gridConstraintsType, myInitConstraintsMethod);
+    if (constraints.getIndent() != 0) {
+      generator.push(constraints.getIndent());
+      generator.invokeConstructor(gridConstraintsType, myInitConstraintsIndentMethod);
+    }
+    else {
+      generator.invokeConstructor(gridConstraintsType, myInitConstraintsMethod);
+    }
   }
 }
