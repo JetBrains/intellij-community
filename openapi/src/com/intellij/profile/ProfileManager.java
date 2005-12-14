@@ -18,6 +18,8 @@ package com.intellij.profile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -29,7 +31,6 @@ public interface ProfileManager {
 
   Collection<Profile> getProfiles();
 
-  @Nullable 
   Profile getProfile(@NotNull String name);
 
   void updateProfile(Profile profile);
@@ -37,4 +38,7 @@ public interface ProfileManager {
   String[] getAvailableProfileNames();
 
   void deleteProfile(String name);
+
+  @Nullable
+  File createUniqueProfileFile(final String profileName) throws IOException;
 }

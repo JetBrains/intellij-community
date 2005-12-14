@@ -30,6 +30,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -303,5 +305,9 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     } else {
       myApplicationProfileManager.deleteProfile(name);
     }
+  }
+
+  public File createUniqueProfileFile(final String profileName) throws IOException {
+    return null;
   }
 }

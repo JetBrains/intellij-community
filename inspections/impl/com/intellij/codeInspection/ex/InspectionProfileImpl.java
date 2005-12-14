@@ -89,6 +89,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
 
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
+    myLocal = inspectionProfile.isLocal();
     mySource = inspectionProfile;
   }
 
@@ -297,7 +298,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
   }
 
   public void save() {
-    if (isLocal()) {
+    if (isLocal() && myFile != null) {
       try {
         Element root = new Element(ROOT_ELEMENT_TAG);
         root.setAttribute(PROFILE_NAME_TAG, myName);
@@ -391,6 +392,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
   }
 
   public void copyFrom(InspectionProfileImpl profile) {
+    super.copyFrom(profile);
     if (profile == null) return;
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(profile.myDisplayLevelMap);
     myBaseProfile = profile.myBaseProfile;
