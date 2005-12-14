@@ -90,8 +90,13 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
     return added;
   }
 
+  // ASSERTIONS ONLY
   public void setWritable(final boolean writable) {
     this.writable = writable;
+  }
+
+  public boolean isWritable() {
+    return writable;
   }
 
   public HighlightInfo set(final int index, final HighlightInfo element) {
