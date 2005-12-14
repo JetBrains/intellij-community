@@ -119,8 +119,6 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
 
 
   private void compile() throws InvalidInputException, InterruptedException {
-    //myClassWriterThread = new ClassWriterThread();
-    //myClassWriterThread.start();
     final INameEnvironment environment = getEnvironment();
 
     Compiler batchCompiler =
@@ -130,23 +128,8 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
         getCompilerOptions(),
         getBatchRequestor(),
         getProblemFactory());
-    //{
-    //    public void accept(IBinaryType binaryType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
-    //      flushClassFile(binaryType);
-    //      super.accept(binaryType, packageBinding, accessRestriction);
-    //    }
-    //  };
     batchCompiler.compile(getCompilationUnits());
-
-    // wait for all classes to be parsed
-    synchronized (END_OF_STREAM) {
-      myCompilationResults.offer(END_OF_STREAM);
-      END_OF_STREAM.wait();
-    }
-
     environment.cleanup();
-    //myClassWriterThread.endOfStream();
-    //myClassWriterThread.join();
   }
 
   public boolean processMessageLine(final OutputParser.Callback callback, final String outputDir, Project project) {
@@ -159,10 +142,6 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
       return true;
     }
     if (result == END_OF_STREAM) {
-      // tell the main thread we are finished
-      synchronized (END_OF_STREAM) {
-        END_OF_STREAM.notify();
-      }
       return false;
     }
 
@@ -176,7 +155,6 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
       String relativePath = FileUtil.toSystemDependentName(filePath + ".class");
       String path = FileUtil.toSystemDependentName(outputDir) + File.separatorChar + relativePath;
                                                     
-      //myClassWriterThread.offerClassToWrite(classFile, outputDir, callback);
       try {
         ClassFile.writeToDisk(
                 true,
