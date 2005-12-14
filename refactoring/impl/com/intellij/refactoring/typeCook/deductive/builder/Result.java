@@ -109,7 +109,7 @@ public class Result {
 
   public void apply(final HashSet<PsiElement> victims) {
     for (final PsiElement element : victims) {
-      if (element instanceof PsiTypeCastExpression) {
+      if (element instanceof PsiTypeCastExpression && myCastToOperandType.containsKey(element)) {
         final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
         try {
           cast.replace(cast.getOperand());
