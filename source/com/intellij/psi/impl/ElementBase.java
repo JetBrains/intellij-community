@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -189,7 +190,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
 
     final EjbClassRole role = EjbRolesUtil.getEjbRole(aClass);
-    if (role != null) return role.getType();
+    if (role != null) {
+      return role.getType() == EjbClassRoleEnum.EMPTY_ROLE ? -100 : role.getType().ordinal() + 101;
+    }
     if (aClass.isAnnotationType()) {
       return CLASS_KIND_ANNOTATION;
     }

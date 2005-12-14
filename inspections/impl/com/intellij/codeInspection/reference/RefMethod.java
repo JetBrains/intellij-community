@@ -11,10 +11,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.role.EjbClassRole;
-import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
-import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.j2ee.ejb.role.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -276,16 +273,16 @@ public class RefMethod extends RefElement {
         EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
         if (role != null) {
           setCanBeStatic(false);
-          int roleType = role.getType();
+          EjbMethodRoleEnum roleType = role.getType();
           if (role instanceof EjbDeclMethodRole) {
             setEjbDeclaration(true);
             setCanBeFinal(false);
 
-            if (roleType == EjbDeclMethodRole.EJB_METHOD_ROLE_FINDER_DECL ||
-                roleType == EjbDeclMethodRole.EJB_METHOD_ROLE_CMP_SETTER_DECL ||
-                roleType == EjbDeclMethodRole.EJB_METHOD_ROLE_CMR_SETTER_DECL ||
-                roleType == EjbDeclMethodRole.EJB_METHOD_ROLE_CMP_GETTER_DECL ||
-                roleType == EjbDeclMethodRole.EJB_METHOD_ROLE_CMR_GETTER_DECL) {
+            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_DECL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_DECL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_DECL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_DECL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_DECL) {
               for (RefParameter refParameter : myParameters) {
                 refParameter.parameterReferenced(false);
                 refParameter.parameterReferenced(true);
@@ -312,19 +309,19 @@ public class RefMethod extends RefElement {
               }
             }
 
-            if (roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CREATE_IMPL) {
+            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CREATE_IMPL) {
               setBodyEmpty(false);
             }
 
-            if (roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
-                roleType == EjbImplMethodRole.EJB_METHOD_ROLE_FINDER_IMPL) {
+            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_IMPL) {
               for (RefParameter refParameter : myParameters) {
                 refParameter.parameterReferenced(false);
                 refParameter.parameterReferenced(true);

@@ -11,6 +11,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
+import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
@@ -310,8 +311,8 @@ public class RefClass extends RefElement {
         setEjb(true);
         setCanBeStatic(false);
         setCanBeFinal(false);
-        if (role.getType() == EjbClassRole.EJB_CLASS_ROLE_HOME_INTERFACE ||
-            role.getType() == EjbClassRole.EJB_CLASS_ROLE_REMOTE_INTERFACE) {
+        if (role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_HOME_INTERFACE ||
+            role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_REMOTE_INTERFACE) {
           PsiClassType remoteExceptionType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.rmi.RemoteException", psiClass.getResolveScope());
           for (PsiMethod psiMethod : psiClass.getAllMethods()) {
             if (!RefUtil.belongsToScope(psiMethod, getRefManager())) continue;
