@@ -104,16 +104,16 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
       }
       return c;
     }
-
+                                                  
     private static boolean canDelegate(@NonNls final String name) {
       return !name.startsWith(EclipseCompilerDriver.class.getName()) && !name.startsWith("org.eclipse.");
-    }
+    }  
   }
 
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
     @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
-    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseCompilerSettings.getInstance(myProject), false, false);
+    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseEmbeddedCompilerSettings.getInstance(myProject), false, false);
 
     Process process = new Process() {
       public OutputStream getOutputStream() {

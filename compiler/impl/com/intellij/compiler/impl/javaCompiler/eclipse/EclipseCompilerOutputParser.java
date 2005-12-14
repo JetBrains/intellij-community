@@ -49,10 +49,10 @@ public class EclipseCompilerOutputParser extends OutputParser {
       return true;
     }
     if (line.startsWith("[completed ")) {
-      Matcher matcher = PATH_PATTERN.matcher(line.substring("[completed ".length()));
-      matcher.matches();
-      String path = matcher.group(1);
-      callback.setProgressText(CompilerBundle.message("eclipse.compiler.completed", path));
+      //Matcher matcher = PATH_PATTERN.matcher(line.substring("[completed ".length()));
+      //matcher.matches();
+      //String path = matcher.group(1);
+      //callback.setProgressText(CompilerBundle.message("eclipse.compiler.completed", path));
       return true;
     }
     if (line.startsWith("[writing ")) {
@@ -60,7 +60,7 @@ public class EclipseCompilerOutputParser extends OutputParser {
       matcher.matches();
       String path = matcher.group(1);
       String absPath = FileUtil.toSystemDependentName(myOutputDir + '/' + path);
-      callback.setProgressText(CompilerBundle.message("eclipse.compiler.writing", absPath));
+      //callback.setProgressText(CompilerBundle.message("eclipse.compiler.writing", absPath));
       callback.fileGenerated(absPath);
       return true;
     }

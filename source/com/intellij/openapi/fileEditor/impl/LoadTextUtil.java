@@ -33,9 +33,8 @@ public final class LoadTextUtil {
     char[] buffer = ourSharedBuffer.length >= fileLength ? ourSharedBuffer : new char[fileLength];
 
     int offset = 0;
-    int read;
     do {
-      read = reader.read( buffer, offset, buffer.length - offset);
+      int read = reader.read(buffer, offset, buffer.length - offset);
       if (read < 0) break;
       offset += read;
 

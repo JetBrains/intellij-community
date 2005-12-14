@@ -25,6 +25,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -33,7 +34,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.StringTokenizer;
 
 public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
@@ -87,6 +87,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         final CompileScope projectScope = context.getProjectCompileScope();
 
         final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+        if (formFiles.length==0) return;
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         final BindingsCache bindingsCache = new BindingsCache(myProject);
         final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(
@@ -96,15 +97,11 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = sortByModules(formFiles);
 
         try {
-          for (Iterator<Module> modules = module2formFiles.keySet().iterator(); modules.hasNext();) {
-            final Module module = modules.next();
-
+          for (final Module module : module2formFiles.keySet()) {
             final HashMap<String, VirtualFile> class2form = new HashMap<String, VirtualFile>();
 
-            final ArrayList list = module2formFiles.get(module);
-            for (int i = 0; i < list.size(); i++) {
-              final VirtualFile formFile = (VirtualFile)list.get(i);
-
+            final ArrayList<VirtualFile> list = module2formFiles.get(module);
+            for (final VirtualFile formFile : list) {
               if (compilerManager.isExcludedFromCompilation(formFile)) {
                 continue;
               }
@@ -136,9 +133,9 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
               final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
 
-              final boolean inScope = (sourceFile == null)?
+              final boolean inScope = (sourceFile == null) ?
                                       scope.belongs(formFile.getUrl()) :
-                                      scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl()) ;
+                                      scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl());
 
               final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
               if (alreadyProcessedForm != null) {
@@ -158,7 +155,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
                 continue;
               }
 
-              final FileProcessingCompiler.ProcessingItem item = new MyInstrumentationItem(classFile, formFile);
+              final ProcessingItem item = new MyInstrumentationItem(classFile, formFile);
               items.add(item);
             }
           }
@@ -174,9 +171,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
   private HashMap<Module, ArrayList<VirtualFile>> sortByModules(final VirtualFile[] formFiles) {
     final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = new HashMap<Module,ArrayList<VirtualFile>>();
-    for (int i = 0; i < formFiles.length; i++) {
-      final VirtualFile formFile = formFiles[i];
-
+    for (final VirtualFile formFile : formFiles) {
       final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
       if (module != null) {
         ArrayList<VirtualFile> list = module2formFiles.get(module);
@@ -195,8 +190,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
   private HashMap<Module, ArrayList<MyInstrumentationItem>> sortByModules(final FileProcessingCompiler.ProcessingItem[] items) {
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2formFiles = new HashMap<Module,ArrayList<MyInstrumentationItem>>();
-    for (int i = 0; i < items.length; i++) {
-      final MyInstrumentationItem item = (MyInstrumentationItem)items[i];
+    for (ProcessingItem item1 : items) {
+      final MyInstrumentationItem item = (MyInstrumentationItem)item1;
       final VirtualFile formFile = item.getFormFile();
 
       final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
@@ -216,10 +211,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   }
 
   private static VirtualFile findFile(final VirtualFile[] outputDirectories, final String className, final Module module) {
-    //noinspection HardCodedStringLiteral
-    final String relativepath = getClassFileName(className.replace('$', '.'), module) + ".class";
-    for (int idx = 0; idx < outputDirectories.length; idx++) {
-      final VirtualFile outputDirectory = outputDirectories[idx];
+    @NonNls final String relativepath = getClassFileName(className.replace('$', '.'), module) + ".class";
+    for (final VirtualFile outputDirectory : outputDirectories) {
       final VirtualFile file = outputDirectory.findFileByRelativePath(relativepath);
       if (file != null) {
         return file;
@@ -257,9 +250,9 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
         int formsProcessed = 0;
 
-        for (Iterator<Module> iterator = module2itemsList.keySet().iterator(); iterator.hasNext();) {
-          final Module module = iterator.next();
-          final String classPath = ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+        for (final Module module : module2itemsList.keySet()) {
+          final String classPath =
+            ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
           final ClassLoader loader = createClassLoader(classPath);
 
           if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
@@ -284,10 +277,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
           final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
 
-          for (int i = 0; i < list.size(); i++) {
+          for (final MyInstrumentationItem item : list) {
             context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
-
-            final MyInstrumentationItem item = list.get(i);
 
             final VirtualFile formFile = item.getFormFile();
 
@@ -308,11 +299,11 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             codeGenerator.patchFile(classFile);
             final String[] errors = codeGenerator.getErrors();
             final String[] warnings = codeGenerator.getWarnings();
-            for (int j = 0; j < warnings.length; j++) {
-              addWarning(context, warnings[j], formFile);
+            for (String warning : warnings) {
+              addWarning(context, warning, formFile);
             }
-            for (int j = 0; j < errors.length; j++) {
-              addError(context, errors[j], formFile);
+            for (String error : errors) {
+              addError(context, error, formFile);
             }
             if (errors.length == 0) {
               compiledItems.add(item);

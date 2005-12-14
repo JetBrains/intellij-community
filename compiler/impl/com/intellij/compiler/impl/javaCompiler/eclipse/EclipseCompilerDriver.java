@@ -75,10 +75,10 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     throws InvalidInputException {
     int fileCount = sourceFilePaths.length;
     CompilationUnit[] units = new CompilationUnit[fileCount];
-    String defaultEncoding = null;
+    final String defaultEncoding = null;
 
     for (int i = 0; i < fileCount; i++) {
-      units[i] = new CompilationUnit(null, sourceFilePaths[i], defaultEncoding);
+      units[i] = new MyCompilationUnit(sourceFilePaths[i], defaultEncoding);
     }
     return units;
   }
@@ -91,7 +91,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     };
   }
 
-  private static final CompilationResult END_OF_STREAM = new CompilationResult(new char[0],0,0,0);
+  private static final CompilationResult END_OF_STREAM = new CompilationResult(new char[0], 0, 0, 0);
 
   private INameEnvironment getEnvironment() {
     return classPath;
@@ -118,8 +118,11 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   }
 
 
-  private void compile() throws InvalidInputException {
-    INameEnvironment environment = getEnvironment();
+  private void compile() throws InvalidInputException, InterruptedException {
+    //myClassWriterThread = new ClassWriterThread();
+    //myClassWriterThread.start();
+    final INameEnvironment environment = getEnvironment();
+
     Compiler batchCompiler =
       new Compiler(
         environment,
@@ -127,75 +130,123 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
         getCompilerOptions(),
         getBatchRequestor(),
         getProblemFactory());
+    //{
+    //    public void accept(IBinaryType binaryType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
+    //      flushClassFile(binaryType);
+    //      super.accept(binaryType, packageBinding, accessRestriction);
+    //    }
+    //  };
     batchCompiler.compile(getCompilationUnits());
-    myCompilationResults.offer(END_OF_STREAM);
+
+    // wait for all classes to be parsed
+    synchronized (END_OF_STREAM) {
+      myCompilationResults.offer(END_OF_STREAM);
+      END_OF_STREAM.wait();
+    }
+
     environment.cleanup();
+    //myClassWriterThread.endOfStream();
+    //myClassWriterThread.join();
   }
 
   public boolean processMessageLine(final OutputParser.Callback callback, final String outputDir, Project project) {
+    CompilationResult result;
     try {
-      CompilationResult result = myCompilationResults.take();
-      if (result == EclipseCompilerDriver.END_OF_STREAM) return false;
+      result = myCompilationResults.take();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      return true;
+    }
+    if (result == END_OF_STREAM) {
+      // tell the main thread we are finished
+      synchronized (END_OF_STREAM) {
+        END_OF_STREAM.notify();
+      }
+      return false;
+    }
 
-      String file = String.valueOf(result.getFileName());
-      callback.setProgressText(CompilerBundle.message("eclipse.compiler.parsing", file));
-      callback.fileProcessed(file);
+    String file = String.valueOf(result.getFileName());
+    callback.setProgressText(CompilerBundle.message("eclipse.compiler.parsing", file));
+    callback.fileProcessed(file);
 
-      ClassFile[] classFiles = result.getClassFiles();
-      for (ClassFile classFile : classFiles) {
-        String filePath = String.valueOf(classFile.fileName());
-        String relativePath = FileUtil.toSystemDependentName(filePath + ".class");
-        String path = FileUtil.toSystemDependentName(outputDir) + File.separatorChar + relativePath;
-
+    ClassFile[] classFiles = result.getClassFiles();
+    for (ClassFile classFile : classFiles) {
+      String filePath = String.valueOf(classFile.fileName());
+      String relativePath = FileUtil.toSystemDependentName(filePath + ".class");
+      String path = FileUtil.toSystemDependentName(outputDir) + File.separatorChar + relativePath;
+                                                    
+      //myClassWriterThread.offerClassToWrite(classFile, outputDir, callback);
+      try {
         ClassFile.writeToDisk(
                 true,
                 outputDir,
                 relativePath,
                 classFile.getBytes());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
 
-        callback.fileGenerated(path);
-      }
-      IProblem[] problems = result.getProblems();
-      if (problems != null) {
-        for (IProblem problem : problems) {
-          CompilerMessageCategory category = problem.isError() ? CompilerMessageCategory.ERROR : problem.isWarning() ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-          String filePath = String.valueOf(problem.getOriginatingFileName());
-          String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(filePath));
-          int lineNumber = problem.getSourceLineNumber();
-          int sourceStart = problem.getSourceStart();
-          int column = getColumn(url, lineNumber, sourceStart, project);
-          callback.message(category, problem.getMessage(), url, lineNumber, column);
-        }
-      }
+      callback.fileGenerated(path);
     }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
-      LOG.error(e);
+    IProblem[] problems = result.getProblems();
+    if (problems != null) {
+      for (IProblem problem : problems) {
+        CompilerMessageCategory category = problem.isError() ? CompilerMessageCategory.ERROR
+                                           : problem.isWarning() ? CompilerMessageCategory.WARNING :
+                                             CompilerMessageCategory.INFORMATION;
+        String filePath = String.valueOf(problem.getOriginatingFileName());
+        String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(filePath));
+        int lineNumber = problem.getSourceLineNumber();
+        int sourceStart = problem.getSourceStart();
+        int column = getColumn(url, lineNumber, sourceStart, project);
+        callback.message(category, problem.getMessage(), url, lineNumber, column);
+      }
     }
     return true;
   }
 
   private static int getColumn(final String url, final int lineNumber, final int sourceStart, final Project project) {
     if (sourceStart == 0) return 0;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>(){
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       public Integer compute() {
         VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
         if (file == null) return 0;
         Document document = FileDocumentManager.getInstance().getDocument(file);
         if (document == null) return 0;
-        int lineStartOffset = document.getLineStartOffset(lineNumber-1);
+        int lineStartOffset = document.getLineStartOffset(lineNumber - 1);
 
         String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, project);
-        int offsetInVirtualFile = sourceStart - (lineNumber-1) * (lineSeparator.length()-1);
-        return offsetInVirtualFile - lineStartOffset+1;
+        int offsetInVirtualFile = sourceStart - (lineNumber - 1) * (lineSeparator.length() - 1);
+        return offsetInVirtualFile - lineStartOffset + 1;
       }
     }).intValue();
   }
 
   public void parseCommandLineAndCompile(final String[] finalCmds) throws Exception {
     parseCommandLine(finalCmds);
+
     compile();
+  }
+
+  private static class MyCompilationUnit extends CompilationUnit {
+    private final String myDefaultEncoding;
+
+    public MyCompilationUnit(final String sourceFilePath, final String defaultEncoding) {
+      super(null, sourceFilePath, defaultEncoding);
+      myDefaultEncoding = defaultEncoding;
+    }
+
+    public char[] getContents() {
+      final String fileName = String.valueOf(getFileName());
+      try {
+        return FileUtil.loadFileText(new File(fileName), myDefaultEncoding);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      return null;
+    }
   }
 }

@@ -142,7 +142,7 @@ public class EclipseCompiler extends ExternalCompiler {
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
-
+          
     final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
       commandLine.add("-source");

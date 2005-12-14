@@ -73,7 +73,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private ProjectEx myDummyProject = null;
   private boolean myDummyProjectInitialized = false;
-  private Object myDummyProjectInitializationLock = new Object();
+  private final Object myDummyProjectInitializationLock = new Object();
 
   private PendingEventDispatcher<FileDocumentManagerListener> myEventDispatcher = PendingEventDispatcher.create(FileDocumentManagerListener.class);
   private final PsiManagerConfiguration myPsiManagerConfiguration;
@@ -192,7 +192,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public Document getCachedDocument(VirtualFile file) {
     WeakReference<Document> reference = file.getUserData(DOCUMENT_KEY);
-    Document document = reference != null ? (Document)reference.get() : null;
+    Document document = reference != null ? reference.get() : null;
 
     if (document != null && isFileBecameBinary(file)){
       file.putUserData(DOCUMENT_KEY, null);

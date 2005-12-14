@@ -224,7 +224,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public static boolean isPatternNegated(String wildcardPattern) {
     return wildcardPattern.length() > 1 && wildcardPattern.charAt(0) == '!';
   }
-
+  
   public boolean isResourceFile(String name) {
     int idx = 0;
     for (Iterator<Pattern> it = myWildcardCompiledPatterns.iterator(); it.hasNext(); idx++) {

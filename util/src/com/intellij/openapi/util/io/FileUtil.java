@@ -90,33 +90,13 @@ public class FileUtil {
   }
 
   public static char[] loadFileText(File file, String encoding) throws IOException{
-    FileInputStream stream = new FileInputStream(file);
+    InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-    char[] chars;
     try{
-      chars = loadText(reader, (int)file.length());
+      return adaptiveLoadText(reader);
     }
     finally{
       reader.close();
-    }
-    return chars;
-  }
-
-  public static char[] loadText(Reader reader, int length) throws IOException {
-    char[] chars = new char[length];
-    int count = 0;
-    while (count < chars.length) {
-      int n = reader.read(chars, count, chars.length - count);
-      if (n <= 0) break;
-      count += n;
-    }
-    if (count == chars.length){
-      return chars;
-    }
-    else{
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
     }
   }
 
@@ -130,6 +110,23 @@ public class FileUtil {
       stream.close();
     }
     return bytes;
+  }
+
+  public static char[] adaptiveLoadText(Reader reader) throws IOException {
+    char[] chars = new char[4096];
+    int count = 0;
+    while (count < chars.length) {
+      int n = reader.read(chars, count, chars.length - count);
+      if (n <= 0) break;
+      count += n;
+      if (count == chars.length) {
+        chars = ArrayUtil.realloc(chars, chars.length * 2);
+      }
+    }
+    if (count < chars.length) {
+      chars = ArrayUtil.realloc(chars, count);
+    }
+    return chars;
   }
 
   public static byte[] adaptiveLoadBytes(InputStream stream) throws IOException{
@@ -250,10 +247,9 @@ public class FileUtil {
   }
 
   private static File getTempFile(String originalFileName, File parent) {
-    File tempFile;
     for (int i = 0; ; i++) {
       @NonNls String name = "___" + originalFileName + i + ".__del__";
-      tempFile = new File(parent, name);
+      File tempFile = new File(parent, name);
       if (!tempFile.exists()) return tempFile;
     }
   }

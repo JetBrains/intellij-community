@@ -18,7 +18,6 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ui.UIBundle;
 
 public class FileChooserDescriptorFactory {

@@ -641,9 +641,7 @@ public class CompileDriver {
       }
       if (myShouldClearOutputDirectory) {
         final File[] files = getAllOutputDirectories();
-        for (File file : files) {
-          deleteAllFilesIn(file);
-        }
+        FileUtil.asyncDelete(Arrays.asList(files));
         // ensure output directories exist, create and refresh if not exist
         final List<File> createdFiles = new ArrayList<File>(files.length);
         for (final File file : files) {
@@ -651,9 +649,7 @@ public class CompileDriver {
             createdFiles.add(file);
           }
         }
-        if (createdFiles.size() > 0) {
-          CompilerUtil.refreshIOFiles(createdFiles);
-        }
+        CompilerUtil.refreshIOFiles(createdFiles);
       }
 
       clearCompilerSystemDirectory(context);
@@ -684,11 +680,6 @@ public class CompileDriver {
     });
 
     return outputDirs.toArray(new File[outputDirs.size()]);
-  }
-
-  private static void deleteAllFilesIn(File directory) {
-    FileUtil.asyncDelete(directory);
-    directory.mkdir();
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {
@@ -926,7 +917,7 @@ public class CompileDriver {
       context.getProgressIndicator().popState();
     }
     return toCompile.size() > 0 || wereFilesDeleted[0];
-  }
+  } 
 
   private Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) {
     //final String[] outputUrls = cache.getOutputUrls();
@@ -1098,30 +1089,33 @@ public class CompileDriver {
   }
 
   private void findOutOfDateFiles(final TranslatingCompiler compiler,
-                                  VfsSnapshot snapshot,
+                                  final VfsSnapshot snapshot,
                                   final boolean forceCompile,
                                   final TranslatingCompilerStateCache cache,
                                   final Set<VirtualFile> toCompile,
-                                  CompileContext context) {
-
+                                  final CompileContext context) {
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-    final List<VirtualFile> compilableFiles = getCompilableFiles(compiler, snapshot, context);
-    for (final VirtualFile file : compilableFiles) {
-      if (!forceCompile) {
-        if (compilerConfiguration.isExcludedFromCompilation(file)) {
-          continue;
+
+    snapshot.forEachUrl(new TObjectProcedure<String>() {
+      public boolean execute(final String url) {
+        final VirtualFile file = snapshot.getFileByUrl(url);
+        if (compiler.isCompilableFile(file, context)) {
+          if (!forceCompile && compilerConfiguration.isExcludedFromCompilation(file)) {
+            return true;
+          }
+          if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(url)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " +
+                        cache.getSourceTimestamp(url));
+            }
+            toCompile.add(file);
+          }
         }
+        return true;
       }
-      if (forceCompile || file.getTimeStamp() != cache.getSourceTimestamp(snapshot.getUrlByFile(file))) {
-        if (LOG.isDebugEnabled()) {
-          final String url = snapshot.getUrlByFile(file);
-          LOG.debug("File is out-of-date: " + url + "; current timestamp = " + file.getTimeStamp() + "; stored timestamp = " +
-                    cache.getSourceTimestamp(url));
-        }
-        toCompile.add(file);
-      }
-    }
+    });
   }
+
 
   private void addDependentFiles(final PsiFile psiFile,
                                  Set<VirtualFile> toCompile,
@@ -1157,22 +1151,6 @@ public class CompileDriver {
         addDependentFiles(dependentFile, toCompile, cache, snapshot, sourcesWithOutputRemoved, compiler, context);
       }
     }
-  }
-
-  private static List<VirtualFile> getCompilableFiles(final TranslatingCompiler compiler, final VfsSnapshot snapshot, final CompileContext context) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(snapshot.size());
-
-    snapshot.forEachUrl(new TObjectProcedure<String>() {
-      public boolean execute(final String url) {
-        final VirtualFile file = snapshot.getFileByUrl(url);
-        if (compiler.isCompilableFile(file, context)) {
-          result.add(file);
-        }
-        return true;
-      }
-    });
-
-    return result;
   }
 
   private String getModuleOutputDirForFile(CompileContext context, VirtualFile file) {

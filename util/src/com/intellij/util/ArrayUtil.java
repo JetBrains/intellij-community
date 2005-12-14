@@ -15,12 +15,11 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
-
-import com.intellij.util.text.CharArrayCharSequence;
 
 /**
  * Author: msk
@@ -48,6 +47,20 @@ public class ArrayUtil {
     }
 
     final byte [] result = new byte [newSize];
+    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    return result;
+  }
+  public static char[] realloc (final char[] array, final int newSize) {
+    if (newSize == 0) {
+      return EMPTY_CHAR_ARRAY;
+    }
+
+    final int oldSize = array.length;
+    if (oldSize == newSize) {
+      return array;
+    }
+
+    final char[] result = new char[newSize];
     System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
     return result;
   }
