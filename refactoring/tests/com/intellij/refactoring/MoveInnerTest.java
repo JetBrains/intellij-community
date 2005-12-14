@@ -5,8 +5,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
+import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 
 /**
  *  @author dsl
@@ -49,8 +51,10 @@ public class MoveInnerTest extends MultiFileTestCase {
         final PsiManager manager = PsiManager.getInstance(myProject);
         final PsiClass aClass = manager.findClass(innerClassName, GlobalSearchScope.moduleScope(myModule));
         final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(myProject, null);
+        final PsiElement targetContainer = MoveInnerImpl.getTargetContainer(aClass, false);
+        assertNotNull(targetContainer);
         moveInnerProcessor.setup(aClass, newClassName, passOuterClass, parameterName,
-                                 searchInComments, searchInNonJava);
+                                 searchInComments, searchInNonJava, targetContainer);
         moveInnerProcessor.run();
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         FileDocumentManager.getInstance().saveAllDocuments();

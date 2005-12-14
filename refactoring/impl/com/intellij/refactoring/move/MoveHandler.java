@@ -239,7 +239,7 @@ public class MoveHandler implements RefactoringActionHandler {
       return true;
     }
     if (moveType == INNER_TO_UPPER) {
-      return targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0]));
+      return targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0], false));
     }
     else if (moveType == MEMBERS) {
       return targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass);

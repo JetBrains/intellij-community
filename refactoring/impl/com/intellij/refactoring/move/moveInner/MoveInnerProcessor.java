@@ -60,9 +60,14 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
-  public MoveInnerProcessor(Project project, PsiClass innerClass, String name, boolean passOuterClass, String parameterName) {
+  public MoveInnerProcessor(Project project,
+                            PsiClass innerClass,
+                            String name,
+                            boolean passOuterClass,
+                            String parameterName,
+                            final PsiElement targetContainer) {
     super(project);
-    setup(innerClass, name, passOuterClass, parameterName, true, true);
+    setup(innerClass, name, passOuterClass, parameterName, true, true, targetContainer);
   }
 
   protected String getCommandName() {
@@ -77,6 +82,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiSearchHelper helper = manager.getSearchHelper();
+
+    LOG.assertTrue(myTargetContainer != null);
 
     PsiReference[] innerClassRefs = helper.findReferences(myInnerClass, GlobalSearchScope.projectScope(myProject), false);
     ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.length);
@@ -343,9 +350,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final PsiClass innerClass = dialog.getInnerClass();
     final boolean passOuterClass = dialog.isPassOuterClass();
     final String parameterName = dialog.getParameterName();
+    final PsiElement targetContainer = dialog.getTargetContainer();
 
     setup(innerClass, className, passOuterClass, parameterName,
-          dialog.isSearchInComments(), dialog.isSearchInNonJavaFiles());
+          dialog.isSearchInComments(), dialog.isSearchInNonJavaFiles(), targetContainer);
 
     run();
   }
@@ -355,12 +363,13 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                     final boolean passOuterClass,
                     final String parameterName,
                     boolean searchInComments,
-                    boolean searchInNonJava) {
+                    boolean searchInNonJava,
+                    final @NotNull PsiElement targetContainer) {
     myNewClassName = className;
     myInnerClass = innerClass;
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myInnerClass);
     myOuterClass = myInnerClass.getContainingClass();
-    myTargetContainer = MoveInnerImpl.getTargetContainer(myInnerClass);
+    myTargetContainer = targetContainer;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
     myParameterNameOuterClass = passOuterClass ? parameterName : null;
     if (myParameterNameOuterClass != null) {

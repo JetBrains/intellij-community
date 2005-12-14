@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -29,6 +30,7 @@ public abstract class RefactoringFactory {
 
   public abstract RenameRefactoring createRename(PsiElement element, String newName);
 
+  @Nullable("in case the source file is not located under any source root")
   public abstract MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName,
                                                        boolean passOuterClass, String parameterName);
 
@@ -49,16 +51,16 @@ public abstract class RefactoringFactory {
                                                            String newVisibility);
 
   public abstract MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
-                                                                     boolean replaceUsages,
-                                                                     String classParameterName,
-                                                                     PsiField[] fields,
-                                                                     String[] names);
+                                                                          boolean replaceUsages,
+                                                                          String classParameterName,
+                                                                          PsiField[] fields,
+                                                                          String[] names);
 
   public abstract MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
-                                                                     boolean replaceUsages,
-                                                                     String classParameterName,
-                                                                     PsiField[] fields,
-                                                                     String[] names);
+                                                                        boolean replaceUsages,
+                                                                        String classParameterName,
+                                                                        PsiField[] fields,
+                                                                        String[] names);
 
   public abstract ConvertToInstanceMethodRefactoring createConvertToInstanceMethod(PsiMethod method,
                                                                                    PsiParameter targetParameter);
@@ -96,10 +98,10 @@ public abstract class RefactoringFactory {
    * @param declareFinal should created parameter be declared <code>final</code>
    */
   public abstract IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
-                                                                           PsiMethod methodToSearchFor,
-                                                                           String parameterName, PsiExpression parameterInitializer,
-                                                                           PsiLocalVariable localVariable,
-                                                                           boolean removeLocalVariable, boolean declareFinal);
+                                                                                    PsiMethod methodToSearchFor,
+                                                                                    String parameterName, PsiExpression parameterInitializer,
+                                                                                    PsiLocalVariable localVariable,
+                                                                                    boolean removeLocalVariable, boolean declareFinal);
 
   /**
    * Creates Introduce Parameter refactoring that replaces expression with parameter.

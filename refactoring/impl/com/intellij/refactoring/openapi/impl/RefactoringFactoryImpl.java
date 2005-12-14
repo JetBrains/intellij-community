@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
+import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 
 /**
  * @author dsl
@@ -45,7 +46,9 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
   }
 
   public MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName, boolean passOuterClass, String parameterName) {
-    return new MoveInnerRefactoringImpl(myProject, innerClass, newName, passOuterClass, parameterName);
+    final PsiElement targetContainer = MoveInnerImpl.getTargetContainer(innerClass, false);
+    if (targetContainer == null) return null;
+    return new MoveInnerRefactoringImpl(myProject, innerClass, newName, passOuterClass, parameterName, targetContainer);
   }
 
   public MoveDestination createSourceFolderPreservingMoveDestination(String targetPackage) {
@@ -75,18 +78,18 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
   }
 
   public MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
-                                                            boolean replaceUsages,
-                                                            String classParameterName,
-                                                            PsiField[] fields,
-                                                            String[] names) {
+                                                                 boolean replaceUsages,
+                                                                 String classParameterName,
+                                                                 PsiField[] fields,
+                                                                 String[] names) {
     return new MakeMethodStaticRefactoringImpl(myProject, method, replaceUsages, classParameterName, fields, names);
   }
 
   public MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
-                                                            boolean replaceUsages,
-                                                            String classParameterName,
-                                                            PsiField[] fields,
-                                                            String[] names) {
+                                                               boolean replaceUsages,
+                                                               String classParameterName,
+                                                               PsiField[] fields,
+                                                               String[] names) {
     return new MakeClassStaticRefactoringImpl(myProject, aClass, replaceUsages, classParameterName, fields, names);
   }
 

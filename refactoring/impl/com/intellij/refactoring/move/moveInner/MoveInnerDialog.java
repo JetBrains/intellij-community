@@ -16,8 +16,8 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.NonFocusableCheckBox;
 
@@ -26,9 +26,12 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MoveInnerDialog extends RefactoringDialog {
   private Project myProject;
   private PsiClass myInnerClass;
+  private final PsiElement myTargetContainer;
   private MoveInnerProcessor myProcessor;
 
   private EditorTextField myClassNameField = new EditorTextField("");
@@ -39,10 +42,11 @@ public class MoveInnerDialog extends RefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
   private PsiClass myOuterClass;
 
-  public MoveInnerDialog(Project project, PsiClass innerClass, MoveInnerProcessor processor) {
+  public MoveInnerDialog(Project project, PsiClass innerClass, MoveInnerProcessor processor, final PsiElement targetContainer) {
     super(project, true);
     myProject = project;
     myInnerClass = innerClass;
+    myTargetContainer = targetContainer;
     myOuterClass = myInnerClass.getContainingClass();
     myProcessor = processor;
     setTitle(MoveInnerImpl.REFACTORING_NAME);
@@ -74,6 +78,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     return myCbPassOuterClass.isSelected();
   }
 
+  @NotNull
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
@@ -177,6 +182,11 @@ public class MoveInnerDialog extends RefactoringDialog {
     return null;
   }
 
+  @NotNull
+  public PsiElement getTargetContainer() {
+    return myTargetContainer;
+  }
+
   protected void doAction() {
     String message = null;
     final String className = getClassName();
@@ -198,9 +208,8 @@ public class MoveInnerDialog extends RefactoringDialog {
         }
       }
       if (message == null) {
-        PsiElement targetContainer = MoveInnerImpl.getTargetContainer(myInnerClass);
-        if (targetContainer instanceof PsiClass) {
-          PsiClass targetClass = (PsiClass)targetContainer;
+        if (myTargetContainer instanceof PsiClass) {
+          PsiClass targetClass = (PsiClass)myTargetContainer;
           PsiClass[] classes = targetClass.getInnerClasses();
           if (classes != null) {
             for (PsiClass aClass : classes) {
@@ -211,8 +220,8 @@ public class MoveInnerDialog extends RefactoringDialog {
             }
           }
         }
-        else if (targetContainer instanceof PsiDirectory) {
-          message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)targetContainer, className);
+        else if (myTargetContainer instanceof PsiDirectory) {
+          message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)myTargetContainer, className);
         }
       }
     }

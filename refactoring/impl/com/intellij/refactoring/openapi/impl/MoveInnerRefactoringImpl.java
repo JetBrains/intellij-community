@@ -6,6 +6,7 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.MoveInnerRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
@@ -14,8 +15,13 @@ import com.intellij.refactoring.move.moveInner.MoveInnerProcessor;
  * @author dsl
  */
 public class MoveInnerRefactoringImpl extends RefactoringImpl<MoveInnerProcessor> implements MoveInnerRefactoring {
-  public MoveInnerRefactoringImpl(Project project, PsiClass innerClass, String name, boolean passOuterClass, String parameterName) {
-    super(new MoveInnerProcessor(project, innerClass, name, passOuterClass, parameterName));
+  public MoveInnerRefactoringImpl(Project project,
+                                  PsiClass innerClass,
+                                  String name,
+                                  boolean passOuterClass,
+                                  String parameterName,
+                                  final PsiElement targetContainer) {
+    super(new MoveInnerProcessor(project, innerClass, name, passOuterClass, parameterName, targetContainer));
   }
 
   public PsiClass getInnerClass() {
