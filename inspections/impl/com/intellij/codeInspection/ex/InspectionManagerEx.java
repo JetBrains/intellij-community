@@ -11,7 +11,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
@@ -40,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -164,6 +164,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     InspectionProfile profile = (InspectionProfile)inspectionProfileManager.getProfile(myCurrentProfileName);
     if (profile == null) {
+      if (inspectionProfileManager.useProjectLevelProfileSettings()){
+        profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+        if (profile != null) return profile;
+      }
       final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
       if (avaliableProfileNames == null || avaliableProfileNames.length == 0){
         //can't be
@@ -465,14 +469,14 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       if (projectJdk == null) return;
     }
 
-    if (myCurrentScope == null) {
+   /* if (myCurrentScope == null) {
       final InspectCodePanel itc = new InspectCodePanel(this, scope);
 
       itc.show();
       if (!itc.isOK()) return;
 
 
-    }
+    }*/
 
     close();
     getContentManager().removeAllContents();

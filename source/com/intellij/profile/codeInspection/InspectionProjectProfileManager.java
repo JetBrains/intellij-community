@@ -71,7 +71,9 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     if (virtualFile == null){
       return (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
     }
-    return (InspectionProfile)getProfile(getProfile(virtualFile));
+    final Profile profile = getProfile(getProfile(virtualFile));
+    if (profile != null) return (InspectionProfile)profile;
+    return (InspectionProfile)myApplicationProfileManager.getRootProfile();
   }
 
   public void copy(ProjectProfileManager manager) {
@@ -92,13 +94,10 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return false;
   }
 
-  public void changeHectorSettingsForFile(VirtualFile file, String profile){
-    if (!myProfiles.containsKey(profile)){
-      final Profile projectProfile = myApplicationProfileManager.createProfile();
-      projectProfile.copyFrom(myApplicationProfileManager.getProfile(profile));
-      myProfiles.put(profile, projectProfile);
-    }
-    myHectorSettings.put(file, profile);
+  public String changeHectorSettingsForFile(VirtualFile file, String profile){
+    String projectProfileName = updateProjectProfiles(profile);
+    myHectorSettings.put(file, projectProfileName);
+    return projectProfileName;
   }
 
   public void clearHectorAssignment(VirtualFile file){

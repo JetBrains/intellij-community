@@ -40,7 +40,7 @@ public abstract class ProjectProfileManager implements ProfileManager, JDOMExter
     return null;
   }
 
-  public abstract void assignProfileToScope(String profile, ProfileScope scope);
+  public abstract String assignProfileToScope(String profile, ProfileScope scope);
 
   public abstract void deassignProfileFromScope(ProfileScope scope);
 

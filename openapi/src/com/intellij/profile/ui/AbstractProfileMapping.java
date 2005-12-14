@@ -33,7 +33,7 @@ public interface AbstractProfileMapping extends UnnamedConfigurable {
     String getProfile();
     String getScopeName();
     boolean isProperProfile();
-    void assignProfile(String profile);
+    String assignProfile(String profile);
     void setProfile(String profile);
     void deassignProfile();
     Icon getIcon(final boolean expanded);

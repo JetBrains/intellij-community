@@ -7,12 +7,15 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
@@ -37,14 +40,26 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     LabeledComponent component = new LabeledComponent();
     component.setText(InspectionsBundle.message("inspection.action.profile.label"));
     component.setLabelLocation(BorderLayout.WEST);
-    ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
+    final ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
     component.setComponent(comboboxWithBrowseButton);
     final JComboBox profiles = comboboxWithBrowseButton.getComboBox();
+    profiles.setRenderer(new DefaultListCellRenderer(){
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
+                                                                               cellHasFocus);
+        final Profile profile = (Profile)value;
+        setText(profile.getName());
+        setIcon(profile.isLocal() ? Profile.LOCAL_PROFILE : Profile.PROJECT_PROFILE);
+        return rendererComponent;
+      }
+    });
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    reloadProfiles(profiles, profileManager, manager);
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     comboboxWithBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, (String)profiles.getSelectedItem()){
+        final Profile selectedProfile = (Profile)comboboxWithBrowseButton.getComboBox().getSelectedItem();
+        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), selectedProfile.isLocal(), selectedProfile.isLocal() ? profileManager : projectProfileManager){
           protected void init() {
             super.init();
             setOKButtonText(CommonBundle.getOkButtonText());
@@ -52,10 +67,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         };
         inspectCodeDialog.show();
         if (inspectCodeDialog.isOK()){
-          reloadProfiles(profiles, profileManager, manager);
+          reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         } else {
           //if profile was disabled and cancel after apply was pressed
-          final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile((String)profiles.getSelectedItem());
+          final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
           final boolean canExecute = profile != null && profile.isExecutable();
           dialog.setOKActionEnabled(canExecute);
         }
@@ -63,7 +78,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     profiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile((String)profiles.getSelectedItem());
+        final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
         final boolean canExecute = profile != null && profile.isExecutable();
         dialog.setOKActionEnabled(canExecute);
         if (canExecute){
@@ -71,20 +86,26 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile((String)profiles.getSelectedItem());
+    final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
     return panel;
   }
 
-  private void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfileManager, InspectionManagerEx inspectionManager){
-    final String selectedProfile = inspectionManager.getCurrentProfile().getName();
-    final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
+  private void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfileManager, InspectionProjectProfileManager inspectionProjectProfileManager, InspectionManagerEx inspectionManager){
+    final InspectionProfile selectedProfile = inspectionManager.getCurrentProfile();
+    String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)profiles.getModel();
     model.removeAllElements();
     for (String profile : avaliableProfileNames) {
-      model.addElement(profile);
+      model.addElement(inspectionProfileManager.getProfile(profile));
+    }
+    if (inspectionProjectProfileManager.useProjectLevelProfileSettings()){
+      avaliableProfileNames = inspectionProjectProfileManager.getAvailableProfileNames();
+      for (String profile : avaliableProfileNames) {
+        model.addElement(inspectionProjectProfileManager.getProfile(profile));
+      }
     }
     profiles.setSelectedItem(selectedProfile);
   }

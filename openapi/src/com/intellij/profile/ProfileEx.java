@@ -33,6 +33,7 @@ public class ProfileEx implements Profile {
   public String myName;
   public File myFile;
   private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
+  public boolean myLocal = true;
 
   public ProfileEx(String name) {
     myName = name;
@@ -64,6 +65,18 @@ public class ProfileEx implements Profile {
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  public void setLocal(boolean isLocal) {
+    myLocal = isLocal;
+  }
+
+  public boolean isLocal() {
+    return myLocal;
+  }
+
+  public void setName(String name) {
+    myName = name;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

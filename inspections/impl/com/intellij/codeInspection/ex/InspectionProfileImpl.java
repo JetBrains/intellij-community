@@ -196,10 +196,6 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     return myName;
   }
 
-  public void setName(String name) {
-    myName = name;
-  }
-
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey) {
     return getToolState(inspectionToolKey).getLevel();
   }
@@ -301,7 +297,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
   }
 
   public void save() {
-    if (myFile != null) {
+    if (isLocal()) {
       try {
         Element root = new Element(ROOT_ELEMENT_TAG);
         root.setAttribute(PROFILE_NAME_TAG, myName);

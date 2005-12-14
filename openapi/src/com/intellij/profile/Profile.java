@@ -15,9 +15,11 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.io.File;
 
 /**
@@ -25,9 +27,16 @@ import java.io.File;
  * Date: 20-Nov-2005
  */
 public interface Profile extends JDOMExternalizable {
+  Icon LOCAL_PROFILE = IconLoader.getIcon("/nodes/abstractException.png");
+  Icon PROJECT_PROFILE = IconLoader.getIcon("/nodes/abstractMethod.png");
   @NonNls String INSPECTION = "INSPECTION";
   @NonNls String CODE_STYLE = "CODE_STYLE";
   String getName();
   File getFile();
   void copyFrom(Profile profile);
+
+  void setLocal(boolean isLocal);
+  boolean isLocal();
+
+  void setName(String name);
 }
