@@ -213,12 +213,16 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             continue;
           }
 
-          holder.setWritable(true);
-          holder.clear();
-          for (HighlightVisitor visitor : visitors) {
-            visitor.visit(element, holder);
+          try {
+            holder.setWritable(true);
+            holder.clear();
+            for (HighlightVisitor visitor : visitors) {
+              visitor.visit(element, holder);
+            }
           }
-          holder.setWritable(false);
+          finally {
+            holder.setWritable(false);
+          }
 
           //noinspection ForLoopReplaceableByForEach
           for (int i=0; i<holder.size(); i++) {
