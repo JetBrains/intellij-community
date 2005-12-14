@@ -744,6 +744,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       //noinspection HardCodedStringLiteral
       super("StoreRefreshStatusThread");
       setPriority(MIN_PRIORITY);
+      setDaemon(true);
     }
 
     public void run() {
