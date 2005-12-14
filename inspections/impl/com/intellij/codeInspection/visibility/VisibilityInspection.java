@@ -9,19 +9,17 @@
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.j2eeDom.ejb.Ejb;
-import com.intellij.j2ee.j2eeDom.ejb.EjbModel;
-import com.intellij.j2ee.j2eeDom.ejb.EntityBean;
-import com.intellij.j2ee.j2eeDom.xmlData.ObjectsList;
+import com.intellij.j2ee15.model.common.EjbRootElement;
+import com.intellij.j2ee15.model.common.EntityBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -118,8 +116,8 @@ public class VisibilityInspection extends FilteringInspectionTool {
   public WeakerAccessFilter getFilter() {
     if (myFilter == null){
       myFilter = new WeakerAccessFilter(isPackageLocalForMembersShouldBeSuggested(),
-                                            isPackageLocalForTopClassesShouldBeSuggested(),
-                                            isPrivateForInnersShouldBeSuggested());
+                                        isPackageLocalForTopClassesShouldBeSuggested(),
+                                        isPrivateForInnersShouldBeSuggested());
 
     }
     return myFilter;
@@ -131,46 +129,35 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
   public void runInspection(AnalysisScope scope) {
     getRefManager().findAllDeclarations(); // Find all declaration elements.
-    SmartRefElementPointer[] entryPoints = EntryPointsManager.getInstance(getManager().getProject()).getEntryPoints();
-    for (int i = 0; i < entryPoints.length; i++) {
-      RefElement refElement = entryPoints[i].getRefElement();
+    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(getManager().getProject()).getEntryPoints()) {
+      RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
         getFilter().addIgnoreList(refElement);
       }
     }
 
-    EjbModel[] ejbRootDescriptors = EjbUtil.getEjbModels(getManager().getProject());
-    for (int i = 0; i < ejbRootDescriptors.length; i++) {
-      EjbModel ejbRootDescriptor = ejbRootDescriptors[i];
-      ejbRootDescriptor.getEjbs().visitAllElements(new ObjectsList.ElementVisitor<Ejb>() {
-        public void acceptElement(Ejb ejb) {
-          if (ejb instanceof EntityBean) {
-            EntityBean entityBean = (EntityBean)ejb;
-            PsiClass primaryKeyClass = entityBean.getPrimaryKeyClass().getPsiClass();
-            if (primaryKeyClass != null) {
-              PsiField[] fields = primaryKeyClass.getFields();
-              for (int k = 0; k < fields.length; k++) {
-                PsiField field = fields[k];
-                RefField refField = (RefField)getRefManager().getReference(field);
-                if (refField != null) {
-                  getFilter().addIgnoreList(refField);
-                }
-              }
+    final EjbRootElement[] newEjbModels = EjbUtil.getNewEjbModels(getManager().getProject());
+    for (final EjbRootElement ejbRootElement : newEjbModels) {
+      for (final EntityBean entityBean : ejbRootElement.getEnterpriseBeans().getEntities()) {
+        PsiClass primaryKeyClass = entityBean.getPrimKeyClass().getValue();
+        if (primaryKeyClass != null) {
+          for (PsiField field : primaryKeyClass.getFields()) {
+            RefField refField = (RefField)getRefManager().getReference(field);
+            if (refField != null) {
+              getFilter().addIgnoreList(refField);
+            }
+          }
 
-              PsiMethod[] constructors = primaryKeyClass.getConstructors();
-              for (int k = 0; k < constructors.length; k++) {
-                PsiMethod constructor = constructors[k];
-                if (constructor.getParameterList().getParameters().length == 0) {
-                  RefMethod refConstructor = (RefMethod)getRefManager().getReference(constructor);
-                  if (refConstructor != null) {
-                    getFilter().addIgnoreList(refConstructor);
-                  }
-                }
+          for (PsiMethod constructor : primaryKeyClass.getConstructors()) {
+            if (constructor.getParameterList().getParameters().length == 0) {
+              RefMethod refConstructor = (RefMethod)getRefManager().getReference(constructor);
+              if (refConstructor != null) {
+                getFilter().addIgnoreList(refConstructor);
               }
             }
           }
         }
-      });
+      }
     }
   }
 
