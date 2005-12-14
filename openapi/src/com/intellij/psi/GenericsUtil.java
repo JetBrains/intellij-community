@@ -265,6 +265,8 @@ public class GenericsUtil {
             PsiTypeParameter typeParameter = iterator.next();
             PsiType typeArgument = resolveResult.getSubstitutor().substitute(typeParameter);
             if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
+            if (typeArgument instanceof PsiWildcardType &&
+                ((PsiWildcardType) typeArgument).getBound() instanceof PsiIntersectionType) toExtend = true;
             substitutor = substitutor.put(typeParameter, typeArgument == null ? null : typeArgument.accept(this));
           }
 
