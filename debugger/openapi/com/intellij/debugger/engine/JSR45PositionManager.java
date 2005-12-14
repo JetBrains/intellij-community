@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -146,7 +147,7 @@ public abstract class JSR45PositionManager implements PositionManager {
             final String relativePath = getRelativePath(path);
             final PsiFile file = myHelper.getDeployedJspSource(relativePath, myDebugProcess.getProject(), myScope);
             if(file != null && file.equals(position.getFile())) {
-              return getLocationsOfLine(type, file.getName(), relativePath, position.getLine() + 1);
+              return getLocationsOfLine(type, getJspSourceName(file.getName(), type), relativePath, position.getLine() + 1);
             }
           }
         }
@@ -159,6 +160,17 @@ public abstract class JSR45PositionManager implements PositionManager {
             DebuggerBundle.message("internal.error.locations.of.line", type.name()), ProcessOutputTypes.SYSTEM);
         }
         return null;
+      }
+
+      // Finds exact server file name (from available in type)
+      // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
+      private String getJspSourceName(final String name, final ReferenceType type) throws AbsentInformationException {
+        for(String sourceNameFromType:type.sourceNames(JSP_STRATUM)) {
+          if (sourceNameFromType.indexOf(name) >= 0) {
+            return sourceNameFromType;
+          }
+        }
+        return name;
       }
     });
   }
@@ -189,6 +201,17 @@ public abstract class JSR45PositionManager implements PositionManager {
   }
 
   protected String getRelativePath(String jspPath) {
+
+    if (jspPath != null) {
+      jspPath = jspPath.trim();
+      String jspClassesPackage = getJSPClassesPackage();
+      final String prefix = jspClassesPackage.replace('.', File.separatorChar);
+
+      if (jspPath.startsWith(prefix)) {
+        jspPath = jspPath.substring(prefix.length() + 1);
+      }
+    }
+
     return jspPath;
   }
 
