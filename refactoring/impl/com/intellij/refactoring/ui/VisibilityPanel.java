@@ -20,8 +20,6 @@ import java.awt.event.ItemListener;
 import java.util.EventListener;
 
 public class VisibilityPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.ui.VisibilityPanel");
-
   private JRadioButton myRbAsIs;
   private JRadioButton myRbEscalate;
   private JRadioButton myRbPrivate;
@@ -39,7 +37,7 @@ public class VisibilityPanel extends JPanel {
         if(e.getStateChange() == ItemEvent.SELECTED) {
           fireStateChanged();
         }
-      };
+      }
     };
 
     if(hasEscalate) {
@@ -130,14 +128,11 @@ public class VisibilityPanel extends JPanel {
     else if (PsiModifier.PRIVATE.equals(visibility)) {
       myRbPrivate.setSelected(true);
     }
-    else {
-      if (myRbEscalate != null) {
-        myRbEscalate.setSelected(true);
-      }
-      else {
-        LOG.assertTrue(myRbAsIs != null);
-        myRbAsIs.setSelected(true);
-      }
+    else if (myRbEscalate != null) {
+      myRbEscalate.setSelected(true);
+    }
+    else if (myRbAsIs != null) {
+      myRbAsIs.setSelected(true);
     }
   }
 
