@@ -85,6 +85,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visit(PsiElement element, HighlightInfoHolder holder) {
+    if (!holder.isWritable()) {
+      throw new UnsupportedOperationException();
+    }
     myHolder = holder;
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(element.isValid());
