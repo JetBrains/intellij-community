@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -81,6 +82,16 @@ public class NewActionAction extends GeneratePluginClassAction {
         groupTag.setAttribute("anchor", anchor);
         if (anchor.equals("first") || anchor.equals("last")) {
           groupTag.setAttribute("relative-to-action", myDialog.getSelectedActionId());
+        }
+      }
+
+      String firstKeyStroke = myDialog.getFirstKeyStroke();
+      if (firstKeyStroke != null && firstKeyStroke.length() > 0) {
+        XmlTag keyTag = (XmlTag)actionTag.add(actionTag.createChildTag("keyboard-shortcut", actions.getNamespace(), null, false));
+        keyTag.setAttribute("keymap", KeymapManager.DEFAULT_IDEA_KEYMAP);
+        keyTag.setAttribute("first-keystroke", firstKeyStroke);
+        if (myDialog.getSecondKeyStroke().length() > 0) {
+          keyTag.setAttribute("second-keystroke", myDialog.getSecondKeyStroke());
         }
       }
     }

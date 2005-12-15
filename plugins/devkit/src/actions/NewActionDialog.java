@@ -31,6 +31,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +52,10 @@ public class NewActionDialog extends DialogWrapper {
   private JRadioButton myAnchorLastRadio;
   private JRadioButton myAnchorBeforeRadio;
   private JRadioButton myAnchorAfterRadio;
+  private JPanel myFirstKeystrokeEditPlaceholder;
+  private JPanel mySecondKeystrokeEditPlaceholder;
+  private ShortcutTextField myFirstKeystrokeEdit;
+  private ShortcutTextField mySecondKeystrokeEdit;
   private TextFieldWithBrowseButton myIconEdit;
   private Project myProject;
   private ButtonGroup myAnchorButtonGroup = new ButtonGroup();
@@ -111,6 +117,14 @@ public class NewActionDialog extends DialogWrapper {
     myAnchorButtonGroup.add(myAnchorAfterRadio);
     myAnchorButtonGroup.setSelected(myAnchorFirstRadio.getModel(), true);
 
+    myFirstKeystrokeEdit = new ShortcutTextField();
+    myFirstKeystrokeEditPlaceholder.setLayout(new BorderLayout());
+    myFirstKeystrokeEditPlaceholder.add(myFirstKeystrokeEdit, BorderLayout.CENTER);
+
+    mySecondKeystrokeEdit = new ShortcutTextField();
+    mySecondKeystrokeEditPlaceholder.setLayout(new BorderLayout());
+    mySecondKeystrokeEditPlaceholder.add(mySecondKeystrokeEdit, BorderLayout.CENTER);
+
     updateControls();
   }
 
@@ -157,6 +171,14 @@ public class NewActionDialog extends DialogWrapper {
     return null;
   }
 
+  public String getFirstKeyStroke() {
+    return myFirstKeystrokeEdit.getText();
+  }
+
+  public String getSecondKeyStroke() {
+    return mySecondKeystrokeEdit.getText();
+  }
+
   private void updateControls() {
     setOKActionEnabled(myActionIdEdit.getText().length() > 0 &&
                        myActionNameEdit.getText().length() > 0 &&
@@ -191,4 +213,46 @@ public class NewActionDialog extends DialogWrapper {
       updateControls();
     }
   }
+
+  private class ShortcutTextField extends JTextField {
+    private KeyStroke myKeyStroke;
+
+    public ShortcutTextField() {
+      enableEvents(KeyEvent.KEY_EVENT_MASK);
+      setFocusTraversalKeysEnabled(false);
+    }
+
+    protected void processKeyEvent(KeyEvent e) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        int keyCode = e.getKeyCode();
+        if (
+          keyCode == KeyEvent.VK_SHIFT ||
+          keyCode == KeyEvent.VK_ALT ||
+          keyCode == KeyEvent.VK_CONTROL ||
+          keyCode == KeyEvent.VK_ALT_GRAPH ||
+          keyCode == KeyEvent.VK_META
+        ){
+          return;
+        }
+
+        setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
+      }
+    }
+
+    public void setKeyStroke(KeyStroke keyStroke) {
+      myKeyStroke = keyStroke;
+      if (keyStroke == null) {
+        setText("");
+      }
+      else {
+        setText(keyStroke.toString().replace("pressed ", "").replace("released ", ""));
+      }
+    }
+
+    public KeyStroke getKeyStroke() {
+      return myKeyStroke;
+    }
+  }
 }
+
+

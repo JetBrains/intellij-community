@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.devkit.actions.NewActionDialog">
-  <grid id="a7288" binding="myRootPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="a7288" binding="myRootPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="114" y="143" width="316" height="335"/>
+      <xy x="114" y="143" width="316" height="379"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
@@ -12,24 +12,15 @@
       <grid id="69b17" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="2" width="312" height="121"/>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+          <xy x="2" y="2" width="312" height="99"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="2f01e" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="2" y="39" width="63" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
-            </constraints>
-            <properties>
-              <text value="Class Name:"/>
-            </properties>
-          </component>
           <component id="5645" class="javax.swing.JTextField" binding="myActionNameEdit">
             <constraints>
-              <xy x="75" y="36" width="235" height="20"/>
+              <xy x="75" y="27" width="235" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -38,36 +29,35 @@
           </component>
           <component id="47ab9" class="javax.swing.JLabel">
             <constraints>
-              <xy x="2" y="8" width="19" height="14"/>
+              <xy x="2" y="5" width="52" height="14"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <focusTraversalPolicyProvider value="true"/>
               <text value="Action ID:"/>
             </properties>
           </component>
           <component id="ce44f" class="javax.swing.JTextField" binding="myActionIdEdit">
             <constraints>
-              <xy x="75" y="5" width="235" height="20"/>
+              <xy x="75" y="2" width="235" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
             <properties/>
           </component>
-          <component id="7cf7b" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="2" y="69" width="30" height="14"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
-            </constraints>
-            <properties>
-              <text value="Text:"/>
-            </properties>
-          </component>
           <component id="26274" class="javax.swing.JTextField" binding="myActionTextEdit">
             <constraints>
-              <xy x="75" y="66" width="235" height="20"/>
+              <xy x="75" y="52" width="235" height="20"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="27b6b" class="javax.swing.JTextField" binding="myActionDescriptionEdit">
+            <constraints>
+              <xy x="75" y="77" width="235" height="20"/>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -75,36 +65,45 @@
           </component>
           <component id="3c736" class="javax.swing.JLabel">
             <constraints>
-              <xy x="2" y="99" width="61" height="14"/>
+              <xy x="2" y="80" width="61" height="14"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
               <text value="Description:"/>
             </properties>
           </component>
-          <component id="27b6b" class="javax.swing.JTextField" binding="myActionDescriptionEdit">
+          <component id="2f01e" class="javax.swing.JLabel">
             <constraints>
-              <xy x="75" y="96" width="235" height="20"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
-                <preferred-size width="150" height="-1"/>
-              </grid>
+              <xy x="2" y="30" width="63" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
-            <properties/>
+            <properties>
+              <text value="Class Name:"/>
+            </properties>
+          </component>
+          <component id="7cf7b" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="2" y="55" width="30" height="14"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text value="Text:"/>
+            </properties>
           </component>
         </children>
       </grid>
       <grid id="450dd" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="128" width="312" height="205"/>
-          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+          <xy x="2" y="106" width="312" height="183"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none" title="Add to Group"/>
         <children>
           <scrollpane id="fe8a">
             <constraints>
-              <xy x="8" y="47" width="100" height="150"/>
+              <xy x="8" y="47" width="100" height="128"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
@@ -129,7 +128,7 @@
           </component>
           <scrollpane id="c0ce9">
             <constraints>
-              <xy x="118" y="47" width="101" height="150"/>
+              <xy x="118" y="47" width="101" height="128"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
@@ -146,7 +145,7 @@
           <grid id="d4854" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="229" y="22" width="75" height="175"/>
+              <xy x="229" y="22" width="75" height="153"/>
               <grid row="0" column="2" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
@@ -190,7 +189,7 @@
               </component>
               <vspacer id="73244">
                 <constraints>
-                  <xy x="32" y="125" width="11" height="42"/>
+                  <xy x="32" y="125" width="11" height="20"/>
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
                 </constraints>
               </vspacer>
@@ -206,6 +205,55 @@
               <text value="Groups:"/>
             </properties>
           </component>
+        </children>
+      </grid>
+      <grid id="3f8c6" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="2" y="294" width="312" height="83"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+        </constraints>
+        <properties/>
+        <border type="none" title="Keyboard Shortcuts"/>
+        <children>
+          <component id="d5e7e" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="27" width="29" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text value="First:"/>
+            </properties>
+          </component>
+          <component id="5ce08" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="8" y="56" width="43" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text value="Second:"/>
+            </properties>
+          </component>
+          <grid id="24949" binding="myFirstKeystrokeEditPlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="61" y="22" width="243" height="24"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+          <grid id="3ba64" binding="mySecondKeystrokeEditPlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="61" y="51" width="243" height="24"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
         </children>
       </grid>
     </children>
