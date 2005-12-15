@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
 public class RefreshStatuses extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -32,7 +33,10 @@ public class RefreshStatuses extends AnAction {
   public void update(AnActionEvent e) {
     super.update(e);
     final Object project = e.getDataContext().getData(DataConstants.PROJECT);
-    e.getPresentation().setVisible(project instanceof Project);
+    if (!(project instanceof Project) ||
+        ProjectLevelVcsManager.getInstance((Project) project).getAllActiveVcss().length == 0) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
+    }
   }
-
 }

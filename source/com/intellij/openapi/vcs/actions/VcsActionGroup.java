@@ -1,17 +1,15 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
 /**
  * @author mike
  */
 public class VcsActionGroup extends DefaultActionGroup {
-  public VcsActionGroup() {
-    super();
-  }
-
   public void update(AnActionEvent event) {
     super.update(event);
 
@@ -21,9 +19,6 @@ public class VcsActionGroup extends DefaultActionGroup {
       presentation.setVisible(false);
       presentation.setEnabled(false);
     } else if (!project.isOpen()) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
-    } else if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0){
       presentation.setVisible(false);
       presentation.setEnabled(false);
     } else {

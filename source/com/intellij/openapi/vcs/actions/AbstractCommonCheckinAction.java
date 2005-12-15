@@ -308,6 +308,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       presentation.setVisible(false);
       return;
     }
+    if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
 
     FilePath[] roots = filterRoots(getRoots(vcsContext), project);
     if (roots == null || roots.length == 0) {
