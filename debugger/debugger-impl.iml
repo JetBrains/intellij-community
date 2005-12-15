@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
