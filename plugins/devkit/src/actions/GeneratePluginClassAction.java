@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Set;
@@ -110,5 +111,5 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     return new PsiElement[] {klass};
   }
 
-  protected abstract String getClassTemplateName();
+  @NonNls protected abstract String getClassTemplateName();
 }

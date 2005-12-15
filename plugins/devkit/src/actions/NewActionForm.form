@@ -33,7 +33,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Action ID:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.id"/>
             </properties>
           </component>
           <component id="ce44f" class="javax.swing.JTextField" binding="myActionIdEdit">
@@ -69,7 +69,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Description:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.description"/>
             </properties>
           </component>
           <component id="2f01e" class="javax.swing.JLabel">
@@ -78,7 +78,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Class Name:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.class.name"/>
             </properties>
           </component>
           <component id="7cf7b" class="javax.swing.JLabel">
@@ -87,7 +87,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Text:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.text"/>
             </properties>
           </component>
         </children>
@@ -99,7 +99,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
-        <border type="none" title="Add to Group"/>
+        <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
         <children>
           <scrollpane id="fe8a">
             <constraints>
@@ -123,7 +123,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Actions:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.actions"/>
             </properties>
           </component>
           <scrollpane id="c0ce9">
@@ -149,7 +149,7 @@
               <grid row="0" column="2" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
-            <border type="none" title="Anchor"/>
+            <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.group.anchor"/>
             <children>
               <component id="f4be7" class="javax.swing.JRadioButton" binding="myAnchorFirstRadio">
                 <constraints>
@@ -157,7 +157,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
-                  <text value="First"/>
+                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.first"/>
                 </properties>
               </component>
               <component id="74ccc" class="javax.swing.JRadioButton" binding="myAnchorLastRadio">
@@ -166,7 +166,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
-                  <text value="Last"/>
+                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor."/>
                 </properties>
               </component>
               <component id="8b7" class="javax.swing.JRadioButton" binding="myAnchorBeforeRadio">
@@ -175,7 +175,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
-                  <text value="Before"/>
+                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.before"/>
                 </properties>
               </component>
               <component id="a46a8" class="javax.swing.JRadioButton" binding="myAnchorAfterRadio">
@@ -184,7 +184,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
-                  <text value="After"/>
+                  <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.anchor.after"/>
                 </properties>
               </component>
               <vspacer id="73244">
@@ -202,7 +202,7 @@
             </constraints>
             <properties>
               <focusTraversalPolicyProvider value="true"/>
-              <text value="Groups:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.groups"/>
             </properties>
           </component>
         </children>
@@ -214,7 +214,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
-        <border type="none" title="Keyboard Shortcuts"/>
+        <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.keyboard.shortcuts"/>
         <children>
           <component id="d5e7e" class="javax.swing.JLabel">
             <constraints>
@@ -222,7 +222,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="First:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.first"/>
             </properties>
           </component>
           <component id="5ce08" class="javax.swing.JLabel">
@@ -231,7 +231,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
-              <text value="Second:"/>
+              <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.keyboard.second"/>
             </properties>
           </component>
           <grid id="24949" binding="myFirstKeystrokeEditPlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

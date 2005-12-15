@@ -15,15 +15,17 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
@@ -32,7 +34,7 @@ public class NewActionAction extends GeneratePluginClassAction {
   private NewActionDialog myDialog;
 
   public NewActionAction() {
-    super("Action", "Create New Action", null);
+    super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
   }
 
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
@@ -78,7 +80,7 @@ public class NewActionAction extends GeneratePluginClassAction {
       if (groupId != null) {
         XmlTag groupTag = (XmlTag)actionTag.add(actionTag.createChildTag("add-to-group", actions.getNamespace(), null, false));
         groupTag.setAttribute("group-id", groupId);
-        final String anchor = myDialog.getSelectedAnchor();
+        @NonNls final String anchor = myDialog.getSelectedAnchor();
         groupTag.setAttribute("anchor", anchor);
         if (anchor.equals("first") || anchor.equals("last")) {
           groupTag.setAttribute("relative-to-action", myDialog.getSelectedActionId());
@@ -98,14 +100,14 @@ public class NewActionAction extends GeneratePluginClassAction {
   }
 
   protected String getErrorTitle() {
-    return "Cannot create action";
+    return DevKitBundle.message("new.action.error");
   }
 
   protected String getCommandName() {
-    return "Create Action";
+    return DevKitBundle.message("new.action.command");
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return "Creating new action: " + directory + "." + newName;
+    return DevKitBundle.message("new.action.action.name", directory, newName);
   }
 }

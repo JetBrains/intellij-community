@@ -25,14 +25,16 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.KeyEvent;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +66,7 @@ public class NewActionDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     init();
-    setTitle("New Action");
+    setTitle(DevKitBundle.message("new.action.dialog.title"));
     final ActionManager actionManager = ActionManager.getInstance();
     final String[] actionIds = actionManager.getActionIds("");
     Arrays.sort(actionIds);
@@ -162,6 +164,7 @@ public class NewActionDialog extends DialogWrapper {
     return action == null ? null : ActionManager.getInstance().getId(action);
   }
 
+  @NonNls
   public String getSelectedAnchor() {
     ButtonModel selection = myAnchorButtonGroup.getSelection();
     if (selection == myAnchorFirstRadio.getModel()) return "first";
@@ -245,6 +248,7 @@ public class NewActionDialog extends DialogWrapper {
         setText("");
       }
       else {
+        //noinspection HardCodedStringLiteral
         setText(keyStroke.toString().replace("pressed ", "").replace("released ", ""));
       }
     }
