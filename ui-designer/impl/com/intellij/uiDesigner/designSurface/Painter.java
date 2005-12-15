@@ -263,9 +263,15 @@ public final class Painter {
   /**
    * Paints selection for the specified <code>component</code>.
    */
-  public static void paintSelectionDecoration(@NotNull final RadComponent component, final Graphics g){
+  public static void paintSelectionDecoration(@NotNull RadComponent component, Graphics g,
+                                              boolean focused){
     if (component.isSelected()) {
-      g.setColor(Color.BLUE);
+      if (focused) {
+        g.setColor(Color.BLUE);
+      }
+      else {
+        g.setColor(Color.GRAY);
+      }
       final Point[] points = getPoints(component.getWidth(), component.getHeight());
       for (final Point point : points) {
         g.fillRect(point.x - R, point.y - R, 2 * R + 1, 2 * R + 1);

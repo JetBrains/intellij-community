@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.FocusEvent;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -191,6 +193,16 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
     myLayeredPane.add(myDecorationLayer, LAYER_PASSIVE_DECORATION);
     myLayeredPane.add(myDragLayer, LAYER_DND);
+
+    myGlassLayer.addFocusListener(new FocusListener() {
+      public void focusGained(FocusEvent e) {
+        myDecorationLayer.repaint();
+      }
+
+      public void focusLost(FocusEvent e) {
+        myDecorationLayer.repaint();
+      }
+    });
 
     // Ctrl+W / Ctrl+Shift+W support
     mySelectionState = new SelectionState(this);
