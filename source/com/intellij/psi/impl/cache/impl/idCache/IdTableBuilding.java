@@ -13,13 +13,16 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -46,6 +49,9 @@ public class IdTableBuilding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
 
   private static final int FILE_SIZE_LIMIT = 1000000; // ignore files of size > 1Mb
+
+  private IdTableBuilding() {
+  }
 
   public static void processPossibleComplexFileName(char[] chars, int startOffset, int endOffset, TIntIntHashMap table) {
     int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
@@ -123,7 +129,7 @@ public class IdTableBuilding {
                       final PsiManager manager) {
       Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
       lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars);
+      lexer.start(chars, 0, length);
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
@@ -142,7 +148,7 @@ public class IdTableBuilding {
       Lexer lexer = createLexer();
       JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars);
+      lexer.start(chars, 0, length);
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
@@ -156,7 +162,7 @@ public class IdTableBuilding {
                       int[] todoCounts,
                       final PsiManager manager) {
       BaseFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
-      filterLexer.start(chars);
+      filterLexer.start(chars, 0, length);
       while (filterLexer.getTokenType() != null) {
         filterLexer.advance();
       }
@@ -190,7 +196,7 @@ public class IdTableBuilding {
       Lexer lexer = new JspxHighlightingLexer();
       JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
-      lexer.start(chars);
+      lexer.start(chars, 0, length);
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
@@ -330,14 +336,14 @@ public class IdTableBuilding {
           private Language myXmlLanguage = StdLanguages.XML;
           private Language myELLanguage = StdLanguages.EL;
           private Language myAnyLanguage = Language.ANY;
-          
+
           public void advance() {
             IElementType tokenType = myOriginalLexer.getTokenType();
             if(tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType){
               final CopyCreatorLexer.HighlightingCopyElementType scriptletJavaElementTypeToken = (CopyCreatorLexer.HighlightingCopyElementType)tokenType;
               tokenType = scriptletJavaElementTypeToken.getBase();
             }
-            
+
             if (myCommentTokens.contains(tokenType)) {
               advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
             } else if (tokenType.getLanguage() != myXmlLanguage &&
@@ -388,7 +394,7 @@ public class IdTableBuilding {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     final char[] chars;
     final int textLength;
-    if (PsiDocumentManager.getInstance(manager.getProject()).isUncommited(document)) {
+    if (virtualFile.getModificationStamp() != document.getModificationStamp()) {
       final PsiFile psiFile = manager.getFile(fileContent);
       if (psiFile == null) return null;
 
