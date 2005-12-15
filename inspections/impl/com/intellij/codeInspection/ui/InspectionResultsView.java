@@ -967,12 +967,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
                 final PsiFile file = element.getContainingFile();
                 final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
                 if (action.isAvailable(myProject, null, file)) {
-                  e.getPresentation().setVisible(true);
+                  e.getPresentation().setEnabled(true);
                   return;
                 }
               }
             }
-            e.getPresentation().setVisible(false);
+            e.getPresentation().setEnabled(false);
           }
         };
         return suppressAction;
@@ -1081,7 +1081,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     protected PsiModifierListOwner getContainer() {
-      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)) {
+      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage) || myContext instanceof PsiFile) {
         return null;
       }
       PsiElement container = myContext;
@@ -1101,7 +1101,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     @Nullable
     protected PsiDocCommentOwner getContainer() {
-      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)){
+      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage) || myContext instanceof PsiFile){
         return null;
       }
       PsiElement container = myContext;
