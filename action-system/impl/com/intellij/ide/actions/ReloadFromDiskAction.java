@@ -66,8 +66,6 @@ public class ReloadFromDiskAction extends AnAction {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null || psiFile.getVirtualFile() == null){
       presentation.setEnabled(false);
-      return;
     }
-    presentation.setEnabled(document.getModificationStamp() != psiFile.getVirtualFile().getModificationStamp());
   }
 }
