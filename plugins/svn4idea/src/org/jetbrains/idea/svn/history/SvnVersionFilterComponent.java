@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,15 +25,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 
-import org.jetbrains.annotations.NonNls;
-
 public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private JCheckBox myUseAuthorFilter;
   private JTextField myAuthorField;
   private JPanel myPanel;
   private JPanel myStandardPanel;
   private final Project myProject;
-  @NonNls public static final String FORMAT = "yyyy/MM/dd hh:mm:ss";
+  @NonNls public static final String FORMAT = "yyyy/MM/dd HH:mm:ss";
 
   public SvnVersionFilterComponent(Project project) {
     super(project, new SimpleDateFormat(FORMAT));
