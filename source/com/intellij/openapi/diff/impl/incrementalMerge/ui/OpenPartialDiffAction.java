@@ -59,6 +59,13 @@ class OpenPartialDiffAction extends AnAction {
   }
 
   private String composeName(MergePanel2 mergePanel2) {
+    if (myLeftIndex == 1 && myRightIndex == 0) {
+      return DiffBundle.message("merge.partial.diff.action.name.0.1");
+    }
+    if (myLeftIndex == 1 && myRightIndex == 2) {
+      return DiffBundle.message("merge.partial.diff.action.name.1.2");
+    }
+      
     return DiffBundle.message("merge.partial.diff.action.name");
   }
 
