@@ -18,7 +18,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
   public MethodResolverProcessor(PsiClass classConstr, PsiExpressionList argumentList, PsiElement place) {
     super(place, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList)}, new ArrayList());
     setIsConstructor(true);
-    setAccessMember(classConstr);
+    setAccessClass(classConstr);
     setArgumentList(argumentList);
   }
 

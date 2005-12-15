@@ -24,7 +24,7 @@ public class CandidateInfo implements JavaResolveResult {
   public static CandidateInfo[] EMPTY_ARRAY = new CandidateInfo[0];
 
   private final PsiElement myPlace;
-  private final PsiMember myAccessMember;
+  private final PsiClass myAccessClass;
   private final PsiElement myCandidate;
   private Boolean myAccessProblem = null;
   private final boolean myStaticsProblem;
@@ -38,7 +38,7 @@ public class CandidateInfo implements JavaResolveResult {
     myStaticsProblem = staticsProblem;
     mySubstitutor = substitutor;
     myCurrentFileResolveContext = currFileContext;
-    myAccessMember = null;
+    myAccessClass = null;
     myPlace = null;
   }
 
@@ -53,11 +53,11 @@ public class CandidateInfo implements JavaResolveResult {
   public CandidateInfo(PsiElement candidate,
                        PsiSubstitutor substitutor,
                        PsiElement place,
-                       PsiMember accessMember,
+                       PsiClass accessClass,
                        boolean staticsProblem,
                        PsiElement currFileContext){
     myStaticsProblem = staticsProblem;
-    myAccessMember = accessMember;
+    myAccessClass = accessClass;
     myPlace = place;
     mySubstitutor = substitutor;
     myCandidate = candidate;
@@ -94,7 +94,7 @@ public class CandidateInfo implements JavaResolveResult {
       boolean accessProblem = false;
       if (myPlace != null && myCandidate instanceof PsiMember) {
         final PsiMember member = (PsiMember)myCandidate;
-        accessProblem = !myPlace.getManager().getResolveHelper().isAccessible(member, member.getModifierList(), myPlace, myAccessMember, myCurrentFileResolveContext);
+        accessProblem = !myPlace.getManager().getResolveHelper().isAccessible(member, member.getModifierList(), myPlace, myAccessClass, myCurrentFileResolveContext);
       }
       myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
     }

@@ -82,17 +82,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return ResolveVariableUtil.resolveVariable(psiRef, null, null);
   }
 
-  public boolean isAccessible(PsiMember member, PsiElement place, PsiMember accessObjectMember) {
-    return isAccessible(member, member.getModifierList(), place, accessObjectMember, null);
+  public boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
+    return isAccessible(member, member.getModifierList(), place, accessObjectClass, null);
   }
 
 
   public boolean isAccessible(PsiMember member,
                               PsiModifierList modifierList,
                               PsiElement place,
-                              PsiMember accessObjectMember,
+                              PsiClass accessObjectClass,
                               final PsiElement currentFileResolveScope) {
-    return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectMember, currentFileResolveScope);
+    return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
   @NotNull
@@ -260,7 +260,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private enum ConstraintType {
     EQUALS,
     SUBTYPE,
-    SUPERTYPE;
+    SUPERTYPE
   }
 
   @Nullable

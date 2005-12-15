@@ -21,13 +21,13 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   private final PsiElement myFromElement;
   private boolean myStaticScopeFlag = false;
-  private PsiMember myAccessMember = null;
+  private PsiClass myAccessClass = null;
   private PsiElement myCurrentFileContext = null;
 
-  public VariableResolverProcessor(String name, PsiElement place, PsiMember accessMember){
+  public VariableResolverProcessor(String name, PsiElement place, PsiClass accessClass){
     super(name, null, ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new ArrayList());
     myFromElement = place;
-    myAccessMember = accessMember;
+    myAccessClass = accessClass;
   }
 
   public VariableResolverProcessor(PsiJavaCodeReferenceElement fromElement) {
@@ -41,19 +41,19 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
       setName(referenceName.getText());
     }
     if (qualifier instanceof PsiExpression){
-      final JavaResolveResult accessClass = PsiUtil.getAccessObjectMember((PsiExpression)qualifier);
+      final JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
       final PsiElement element = accessClass.getElement();
       if (element instanceof PsiTypeParameter) {
         final PsiManager manager = element.getManager();
         final PsiClassType type = manager.getElementFactory().createType((PsiTypeParameter) element);
         final PsiType accessType = accessClass.getSubstitutor().substitute(type);
         if(accessType instanceof PsiArrayType)
-          myAccessMember = manager.getElementFactory().getArrayClass();
+          myAccessClass = manager.getElementFactory().getArrayClass();
         else if(accessType instanceof PsiClassType)
-          myAccessMember = ((PsiClassType)accessType).resolve();
+          myAccessClass = ((PsiClassType)accessType).resolve();
       }
       else if (element instanceof PsiClass)
-        myAccessMember = (PsiClass) element;
+        myAccessClass = (PsiClass) element;
     }
   }
 
@@ -69,7 +69,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !(((PsiVariable)element).hasModifierProperty(PsiModifier.STATIC));
-    super.add(new CandidateInfo(element, substitutor, myFromElement, myAccessMember, staticProblem, myCurrentFileContext));
+    super.add(new CandidateInfo(element, substitutor, myFromElement, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
   public String getProcessorType(){

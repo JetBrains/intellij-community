@@ -373,14 +373,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       UsageInfo usageInfo = iterator.next();
       PsiElement element = usageInfo.getElement();
       if (element != null) {
-        PsiMember accessObjectMember = null;
+        PsiClass accessObjectClass = null;
         if (element instanceof PsiReferenceExpression) {
           PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
           if (qualifier != null) {
-            accessObjectMember = (PsiMember)PsiUtil.getAccessObjectMember(qualifier).getElement();
+            accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
 
-          if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectMember, null)) {
+          if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
               RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
                                         ConflictsUtil.getDescription(method, true),

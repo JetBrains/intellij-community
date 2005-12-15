@@ -314,14 +314,14 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiElement element = usage.getElement();
         if (element != null) {
           final PsiMember member = usageInfo.member;
-          PsiMember accessObjectMember = null;
+          PsiClass accessObjectClass = null;
           if (element instanceof PsiReferenceExpression) {
             PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
             if (qualifier != null) {
-              accessObjectMember = (PsiMember)PsiUtil.getAccessObjectMember(qualifier).getElement();
+              accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
             }
 
-            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectMember, null)) {
+            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
@@ -433,8 +433,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)){
           PsiExpression qualifier = refExpr.getQualifierExpression();
-          PsiMember accessMember = (PsiMember) (qualifier != null ? PsiUtil.getAccessObjectMember(qualifier).getElement() : null);
-          checkAccessibility(((PsiMember)refElement), newContext, accessMember, member, conflicts);
+          PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
+          checkAccessibility(((PsiMember)refElement), newContext, accessClass, member, conflicts);
         }
       }
     }
@@ -466,10 +466,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private static void checkAccessibility(PsiMember refMember,
                                          PsiClass newContext,
-                                         PsiMember accessMember,
+                                         PsiClass accessClass,
                                          PsiMember member,
                                          LinkedHashSet<String> conflicts) {
-    if (!PsiUtil.isAccessible(refMember, newContext, accessMember)) {
+    if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  ConflictsUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
@@ -519,7 +519,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       super(highlightElement, ref, member);
       this.member = member;
       this.qualifierClass = qualifierClass;
-      this.reference = element;
+      reference = element;
     }
   }
 

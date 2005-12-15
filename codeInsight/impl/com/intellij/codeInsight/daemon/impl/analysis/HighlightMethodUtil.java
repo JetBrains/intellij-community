@@ -1050,14 +1050,14 @@ public class HighlightMethodUtil {
     PsiClass aClass = typeResolveResult.getElement();
     if (aClass == null) return null;
     final PsiResolveHelper resolveHelper = constructorCall.getManager().getResolveHelper();
-    PsiMember accessObjectMember = null;
+    PsiClass accessObjectClass = null;
     if (constructorCall instanceof PsiNewExpression) {
       PsiExpression qualifier = ((PsiNewExpression)constructorCall).getQualifier();
       if (qualifier != null) {
-        accessObjectMember = (PsiMember)PsiUtil.getAccessObjectMember(qualifier).getElement();
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
       }
     }
-    if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectMember)) {
+    if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
       String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classReference.getReferenceNameElement(), description);
       HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
