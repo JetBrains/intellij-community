@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.jar.Attributes;
@@ -302,7 +300,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
-                                                       final boolean serverMode,
+                                                       final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
                                                        boolean checkValidity)
     throws ExecutionException {
@@ -327,19 +325,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       address = debugPort;
     }
 
-    String listenTo;
-    if(serverMode && useSockets) {
-      try {
-        listenTo = InetAddress.getLocalHost().getHostName() + ":" + address;
-      }
-      catch (UnknownHostException e) {
-        listenTo = "localhost:" + address;
-      }
-    }
-    else {
-      listenTo = address;
-    }
-
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
@@ -358,29 +343,31 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     });
 
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-    String xrun = "transport=" + transportService.transportId() + ",address=" + listenTo;
-    if(serverMode) {
-      xrun += ",suspend=y,server=n";
+    final String debugAddress = (debuggerInServerMode && useSockets)? ("127.0.0.1:" + address) : address;
+    String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
+    if(debuggerInServerMode) {
+      debuggeeRunProperties += ",suspend=y,server=n";
     }
     else {
-      xrun += ",suspend=n,server=y";
+      debuggeeRunProperties += ",suspend=n,server=y";
     }
 
-    if (hasWhitespace(xrun)) {
-      xrun = "\"" + xrun + "\"";
+    if (hasWhitespace(debuggeeRunProperties)) {
+      debuggeeRunProperties = "\"" + debuggeeRunProperties + "\"";
     }
-    parameters.getVMParametersList().replaceOrAppend("-Xrunjdwp:", "-Xrunjdwp:" + xrun);
+    parameters.getVMParametersList().replaceOrAppend("-Xrunjdwp:", "-Xrunjdwp:" + debuggeeRunProperties);
 
-    return new RemoteConnection(useSockets, "127.0.0.1", address, serverMode);
+    return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
   }
 
   private static boolean shouldForceNoJIT(ProjectJdk jdk) {
-    if (jdk == null) return true;
-
-    String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-
-    if (version == null) return true;
-
+    if (jdk == null) {
+      return true;
+    }
+    final String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    if (version == null) {
+      return true;
+    }
     return version.startsWith("1.2") || version.startsWith("1.3");
   }
 
