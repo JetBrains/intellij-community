@@ -38,6 +38,10 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
+	    final String lhsText = lhs.getText();
+	    if (PsiKeyword.NULL.equals(lhsText)) {
+		    return false;
+	    }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;
@@ -46,6 +50,10 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
         if(rhs == null){
             return false;
         }
+	    final String rhsText = rhs.getText();
+	    if (PsiKeyword.NULL.equals(rhsText)) {
+		    return false;
+	    }
         final PsiType rhsType = rhs.getType();
         if(rhsType == null){
             return false;
