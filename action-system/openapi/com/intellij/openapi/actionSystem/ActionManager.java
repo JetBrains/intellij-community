@@ -112,4 +112,22 @@ public abstract class ActionManager {
    */
   public abstract void unregisterAction(@NotNull String actionId);
 
+  /**
+   * Returns the list of all registered action IDs with the specified prefix.
+   *
+   * @return all action <code>id</code>s which have the specified prefix.
+   * @since 5.1
+   */
+  public abstract String[] getActionIds(@NotNull String idPrefix);
+
+  /**
+   * Checks if the specified action ID represents an action group and not an individual action.
+   * Calling this method does not cause instantiation of a specific action class corresponding
+   * to the action ID.
+   *
+   * @param actionId the ID to check.
+   * @return true if the ID represents an action group, false otherwise.
+   * @since 5.1
+   */
+  public abstract boolean isGroup(@NotNull String actionId);
 }

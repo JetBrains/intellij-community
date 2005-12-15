@@ -31,6 +31,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
@@ -248,6 +249,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       return idList.toArray(new String[idList.size()]);
     }
+  }
+
+  public boolean isGroup(@NotNull String actionId) {
+    return getActionImpl(actionId, true) instanceof ActionGroup;
   }
 
   /**

@@ -18,11 +18,6 @@ public abstract class ActionManagerEx extends ActionManager{
   public abstract void removeTimerListener(TimerListener listener);
 
   /**
-   * @return all action <code>id</code>s which have the specified prefix.
-   */
-  public abstract String[] getActionIds(String idPrefix);
-
-  /**
    * @param element XML element for <code>actions</code> tag.
    * @param loader
    */
