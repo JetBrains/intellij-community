@@ -24,7 +24,7 @@ public class InheritanceImplUtil {
       final EnterpriseBean enterpriseBean = classRole.getEnterpriseBean();
       if (candidateClass.getManager().areElementsEquivalent(candidateClass, enterpriseBean.getEjbClass().getValue())) {
         for (final PsiClass anInterface : EjbUtil.getInterfaces(enterpriseBean)) {
-          if (!InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep)) {
+          if (InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep)) {
             return true;
           }
         }
@@ -93,22 +93,14 @@ public class InheritanceImplUtil {
     }
 
     if (!aClass.isInterface() && baseClass.isInterface()) {
-      if (checkDeep) {
-        if (checkInheritor(aClass.getSuperClass(), baseClass, checkDeep, checkedClasses)) {
-          return true;
-        }
-      }
-      if (checkInheritor(aClass.getInterfaces(), baseClass, checkDeep, checkedClasses)) {
+      if (checkDeep && checkInheritor(aClass.getSuperClass(), baseClass, checkDeep, checkedClasses)) {
         return true;
       }
+      return checkInheritor(aClass.getInterfaces(), baseClass, checkDeep, checkedClasses);
 
-      return false;
     }
     else {
-      if (checkInheritor(aClass.getSupers(), baseClass, checkDeep, checkedClasses)) {
-        return true;
-      }
-      return false;
+      return checkInheritor(aClass.getSupers(), baseClass, checkDeep, checkedClasses);
     }
   }
 
