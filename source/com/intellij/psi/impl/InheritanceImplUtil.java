@@ -1,14 +1,12 @@
 package com.intellij.psi.impl;
 
-import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
-import com.intellij.j2ee.ejb.role.EjbClassRole;
-import com.intellij.j2ee15.model.common.EnterpriseBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.searches.SuperClassSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.Processor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,20 +17,11 @@ public class InheritanceImplUtil {
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
     if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
 
-    final EjbClassRole classRole = EjbRolesUtil.getEjbRole(candidateClass);
-    if (classRole != null) {
-      final EnterpriseBean enterpriseBean = classRole.getEnterpriseBean();
-      if (candidateClass.getManager().areElementsEquivalent(candidateClass, enterpriseBean.getEjbClass().getValue())) {
-        for (final PsiClass anInterface : EjbUtil.getInterfaces(enterpriseBean)) {
-          if (InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep)) {
-            return true;
-          }
-        }
-        return false;
+    return !SuperClassSearch.search(candidateClass).forEach(new Processor<PsiClass>() {
+      public boolean process(final PsiClass psiClass) {
+        return !InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, checkDeep);
       }
-    }
-
-    return false;
+    });
   }
 
   public static boolean isJavaInheritor(final PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
@@ -65,8 +54,7 @@ public class InheritanceImplUtil {
     PsiClass objectClass = manager.findClass("java.lang.Object", candidateClass.getResolveScope());
     if (manager.areElementsEquivalent(baseClass, objectClass)) {
       if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
-      if (checkDeep) return true;
-      if (candidateClass.isInterface()) return true;
+      if (checkDeep || candidateClass.isInterface()) return true;
       return candidateClass.getExtendsListTypes().length == 0;
     }
 
