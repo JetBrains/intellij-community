@@ -97,7 +97,7 @@ public class Result {
         for (final Map.Entry<PsiTypeCastExpression,PsiType> entry : myCastToOperandType.entrySet()) {
           final PsiTypeCastExpression cast = entry.getKey();
           final PsiType operandType = myBinding.apply(entry.getValue());
-          if (operandType.isAssignableFrom(cast.getType())) {
+          if (!(operandType instanceof PsiTypeVariable) && cast.getType().isAssignableFrom(operandType)) {
             set.add(cast);
           }
         }
