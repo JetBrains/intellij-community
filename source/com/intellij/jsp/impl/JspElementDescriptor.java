@@ -1,10 +1,12 @@
 package com.intellij.jsp.impl;
 
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.module.Module;
 
 import javax.servlet.jsp.tagext.TagExtraInfo;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +16,7 @@ import javax.servlet.jsp.tagext.TagExtraInfo;
  * To change this template use File | Settings | File Templates.
  */
 public interface JspElementDescriptor extends XmlElementDescriptor {
-  TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties);
+  TagExtraInfo getExtraInfo(@Nullable Module module);
   boolean isRequiredAttributeImplicitlyPresent(XmlTag tag,String attributeName);
   XmlTag findVariableWithName(String name);
 }
