@@ -23,6 +23,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -68,9 +69,9 @@ public class TagNameReference implements PsiReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getElement();
+    if (element == null) return null;
 
-    if (element != null &&
-        (newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
+    if ((newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
         element.getContainingFile() instanceof JspFile
        ) {
       final String namespacePrefix = element.getNamespacePrefix();
@@ -79,9 +80,21 @@ public class TagNameReference implements PsiReference {
       if (namespacePrefix != null && namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
+    } else if (newElementName.indexOf(':') == -1) {
+      final String namespacePrefix = element.getNamespacePrefix();
+
+      if (namespacePrefix != null && namespacePrefix.length() > 0) {
+        if (element.getContainingFile() instanceof JspFile) {
+          final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
+
+          if (nsDescriptor instanceof TldDescriptor) {
+            newElementName = namespacePrefix + ":" + newElementName;
+          }
+        }
+      }
     }
 
-    if(element!=null) element.setName(newElementName);
+    element.setName(newElementName);
 
     return element;
   }
