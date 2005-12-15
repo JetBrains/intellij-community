@@ -8,14 +8,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +96,14 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public Object[] getVariants() {
-      return ExternalResourceManager.getInstance().getResourceUrls(null, true);
+      final String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
+      final PsiFile containingFile = myElement.getContainingFile();
+
+      if (containingFile instanceof JspFile) {
+        final Object[] possibleTldUris = JspManager.getInstance(containingFile.getProject()).getPossibleTldUris((JspFile)containingFile);
+        return ArrayUtil.mergeArrays(resourceUrls,possibleTldUris,Object.class);
+      }
+      return resourceUrls;
     }
 
     public boolean isSoft() {
