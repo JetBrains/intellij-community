@@ -2,15 +2,14 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,13 +28,15 @@ import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 
 /**
@@ -137,23 +138,7 @@ public class IntentionHintComponent extends JPanel {
                                                          ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
                                                          ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
                                                          boolean showExpanded) {
-    ArrayList<Pair<IntentionAction, List<IntentionAction>>> filteredIntentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(intentions.size());
-    Set<IntentionAction> seenIntentions = new HashSet<IntentionAction>();
-    for (Pair<IntentionAction, List<IntentionAction>> pair : intentions) {
-      if (seenIntentions.contains(pair.first)) continue;
-      seenIntentions.add(pair.first);
-      filteredIntentions.add(pair);
-    }
-
-    ArrayList<Pair<IntentionAction, List<IntentionAction>>> filteredFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(quickFixes.size());
-    Set<IntentionAction> seenFixes = new HashSet<IntentionAction>();
-    for (Pair<IntentionAction, List<IntentionAction>> pair : quickFixes) {
-      if (seenFixes.contains(pair.first)) continue;
-      seenFixes.add(pair.first);
-      filteredFixes.add(pair);
-    }
-
-    final IntentionHintComponent component = new IntentionHintComponent(project, view, filteredIntentions, filteredFixes);
+    final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
     if (showExpanded) {
       component.showIntentionHintImpl(false);
@@ -575,7 +560,10 @@ public class IntentionHintComponent extends JPanel {
           Point point = e.getPoint();
           int index = myCompositeActionsList.locationToIndex(point);
           IntentionActionWithTextCaching action = ((IntentionActionWithTextCaching)myCompositeActionsList.getModel().getElementAt(index));
-          if (isInArrowButton(point) && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0) {
+          if (isInBulbButton(point)) {
+            //do nothing if click in bulb button - to cope with new behaviour
+            e.consume();
+          } else if (isInArrowButton(point) && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0) {
             openChildPopup(action);
             e.consume();
           }
@@ -669,7 +657,7 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private class MyList extends JList {
+  private static class MyList extends JList {
     public MyList(IntentionActionWithTextCaching[] actions) {
       super(actions);
 
@@ -683,29 +671,6 @@ public class IntentionHintComponent extends JPanel {
           repaint();
         }
       }, KeyStroke.getKeyStroke(' '), WHEN_FOCUSED);
-    }
-
-    public String getToolTipText(MouseEvent event) {
-      PopupCellRenderer cellRenderer = (PopupCellRenderer)getCellRenderer();
-      if (cellRenderer.isInBulbButton(event.getPoint())) {
-        IntentionAction action = ((IntentionActionWithTextCaching)getModel().getElementAt(
-          locationToIndex(event.getPoint()))).getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-          return CodeInsightBundle.message("lightbulb.disable.action.text", action.getFamilyName());
-        }
-        else {
-          return CodeInsightBundle.message("lightbulb.enable.action.text", action.getFamilyName());
-        }
-      }
-      return null;
-    }
-
-    public Point getToolTipLocation(MouseEvent event) {
-      PopupCellRenderer cellRenderer = (PopupCellRenderer)getCellRenderer();
-      if (cellRenderer.isInBulbButton(event.getPoint())) {
-        return new Point(event.getPoint().x + 5, event.getPoint().y - 20);
-      }
-      return super.getToolTipLocation(event);
     }
   }
 
