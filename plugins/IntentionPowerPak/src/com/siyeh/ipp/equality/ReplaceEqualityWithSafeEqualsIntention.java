@@ -15,46 +15,65 @@
  */
 package com.siyeh.ipp.equality;
 
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
 
-
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new ObjectEqualityPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression exp =
-      (PsiBinaryExpression)element;
-    final PsiExpression lhs = exp.getLOperand();
-    final PsiExpression rhs = exp.getROperand();
-    final PsiExpression strippedLhs =
-      ParenthesesUtils.stripParentheses(lhs);
-    final PsiExpression strippedRhs =
-      ParenthesesUtils.stripParentheses(rhs);
-    final String lhsText = strippedLhs.getText();
-    final String rhsText = strippedRhs.getText();
-    @NonNls final String expString;
-    if (ParenthesesUtils.getPrecendence(strippedLhs) >
-        ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      expString = lhsText + "==null?" + rhsText + " == null:(" + lhsText +
-                  ").equals(" + rhsText + ')';
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new ObjectEqualityPredicate();
     }
-    else {
-      expString = lhsText + "==null?" + rhsText + " == null:" + lhsText +
-                  ".equals(" + rhsText + ')';
+
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiBinaryExpression exp =
+                (PsiBinaryExpression)element;
+        final PsiExpression lhs = exp.getLOperand();
+        final PsiExpression rhs = exp.getROperand();
+        if (rhs == null) {
+            return;
+        }
+        final PsiExpression strippedLhs =
+                ParenthesesUtils.stripParentheses(lhs);
+        if (strippedLhs == null) {
+            return;
+        }
+        final PsiExpression strippedRhs =
+                ParenthesesUtils.stripParentheses(rhs);
+        if (strippedRhs == null) {
+            return;
+        }
+        final String lhsText = strippedLhs.getText();
+        final String rhsText = strippedRhs.getText();
+        final PsiJavaToken operationSign = exp.getOperationSign();
+        final IElementType tokenType = operationSign.getTokenType();
+        final String signText = operationSign.getText();
+        @NonNls StringBuffer buffer = new StringBuffer(lhsText);
+        buffer.append("==null?");
+        buffer.append(rhsText);
+        buffer.append(signText);
+        buffer.append(" null:");
+        if (tokenType.equals(JavaTokenType.NE)) {
+            buffer.append('!');
+        }
+        if (ParenthesesUtils.getPrecendence(strippedLhs) >
+                ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+            buffer.append('(');
+            buffer.append(lhsText);
+            buffer.append(')');
+        } else {
+            buffer.append(lhsText);
+        }
+        buffer.append(".equals(");
+        buffer.append(rhsText);
+        buffer.append(')');
+        replaceExpression(buffer.toString(), exp);
     }
-    replaceExpression(expString, exp);
-  }
 }
