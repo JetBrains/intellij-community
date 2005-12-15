@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
- */
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.ide.actions.CreateElementActionBase;

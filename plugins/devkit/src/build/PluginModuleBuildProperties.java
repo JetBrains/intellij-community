@@ -21,10 +21,12 @@ import com.intellij.j2ee.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
@@ -138,6 +141,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
       myPluginXMLPointer = null;
       file = getPluginXMLPointer().getFile(); //to suggest default location
     }
+    assert file != null;
     return FileUtil.toSystemDependentName(file.getPath());
   }
 
@@ -157,18 +161,37 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     if (manifestUrl == null || manifestUrl.length() == 0){
       myManifestFilePointer = null;
     } else {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestUrl)), null);
-        }
-      });
+
+      final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestUrl);
+      if (manifest == null){
+        Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestUrl), DevKitBundle.message("error.file.not.found"));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestUrl)), null);
+          }
+        });
+      } else {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, null);
+          }
+        });
+      }
     }
   }
 
   @Nullable
   public String getManifestPath() {
     if (myManifestFilePointer != null){
-      return FileUtil.toSystemDependentName(myManifestFilePointer.getFile().getPath());
+      return FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl());
+    }
+    return null;
+  }
+
+  @Nullable
+  public VirtualFile getManifest(){
+    if (myManifestFilePointer != null){
+      return myManifestFilePointer.getFile();
     }
     return null;
   }

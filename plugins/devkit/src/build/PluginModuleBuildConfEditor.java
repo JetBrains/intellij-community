@@ -106,6 +106,9 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public void apply() throws ConfigurationException {
+    if (myUseUserManifest.isSelected() && myManifest.getText() != null && !new File(myManifest.getText()).exists()){
+      throw new ConfigurationException(DevKitBundle.message("error.file.not.found.message", myManifest.getText()));
+    }
     final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
     final String newPluginPath = myPluginXML.getText() + File.separator + META_INF + File.separator + PLUGIN_XML;
     if (plugin != null &&

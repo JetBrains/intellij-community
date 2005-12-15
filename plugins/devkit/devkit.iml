@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="ui-openapi" />
     <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">
