@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
   private Project myProject;
+  private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public JavaCompiler(Project project) {
     myProject = project;
@@ -31,7 +32,7 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return FileTypeManager.getInstance().getFileTypeByFile(file).equals(StdFileTypes.JAVA);
+    return FILE_TYPE_MANAGER.getFileTypeByFile(file).equals(StdFileTypes.JAVA);
   }
 
   public ExitStatus compile(CompileContext context, VirtualFile[] files) {

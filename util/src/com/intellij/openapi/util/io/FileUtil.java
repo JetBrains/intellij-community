@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +28,7 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 public class FileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
@@ -114,46 +114,62 @@ public class FileUtil {
 
   public static char[] adaptiveLoadText(Reader reader) throws IOException {
     char[] chars = new char[4096];
+    List<char[]> buffers = null;
     int count = 0;
-    while (count < chars.length) {
-      int n = reader.read(chars, count, chars.length - count);
+    int total = 0;
+    while (true) {
+      int n = reader.read(chars, count, chars.length-count);
       if (n <= 0) break;
       count += n;
+      total += n;
       if (count == chars.length) {
-        chars = ArrayUtil.realloc(chars, chars.length * 2);
+        if (buffers == null) {
+          buffers = new ArrayList<char[]>();
+        }
+        buffers.add(chars);
+        chars = new char[chars.length * 2];
+        count = 0;
       }
     }
-    if (count < chars.length) {
-      chars = ArrayUtil.realloc(chars, count);
+    char[] result = new char[total];
+    if (buffers != null) {
+      for (char[] buffer : buffers) {
+        System.arraycopy(buffer, 0, result, result.length - total, buffer.length);
+        total -= buffer.length;
+      }
     }
-    return chars;
+    System.arraycopy(chars, 0, result, result.length - total, total);
+    return result;
   }
 
   public static byte[] adaptiveLoadBytes(InputStream stream) throws IOException{
     byte[] bytes = new byte[4096];
+    List<byte[]> buffers = null;
     int count = 0;
-    while(true) {
+    int total = 0;
+    while (true) {
       int n = stream.read(bytes, count, bytes.length-count);
       if (n <= 0) break;
       count += n;
+      total += n;
       if (count == bytes.length) {
-        bytes = ArrayUtil.realloc(bytes, bytes.length * 2);
+        if (buffers == null) {
+          buffers = new ArrayList<byte[]>();
+        }
+        buffers.add(bytes);
+        bytes = new byte[bytes.length * 2];
+        count = 0;
       }
     }
-    if (count < bytes.length) {
-      bytes = ArrayUtil.realloc(bytes, count);
+    byte[] result = new byte[total];
+    if (buffers != null) {
+      for (byte[] buffer : buffers) {
+        System.arraycopy(buffer, 0, result, result.length - total, buffer.length);
+        total -= buffer.length;
+      }
     }
-    return bytes;
-  }
-  public static byte[] loadBytes(InputStream stream, int length) throws IOException{
-    byte[] bytes = new byte[length];
-    int count = 0;
-    while(count < length) {
-      int n = stream.read(bytes, count, length - count);
-      if (n <= 0) break;
-      count += n;
-    }
-    return bytes;
+    System.arraycopy(bytes, 0, result, result.length - total, total);
+    return result;
   }
 
   public static File createTempDirectory(@NonNls String prefix, @NonNls String suffix) throws IOException{
@@ -198,7 +214,7 @@ public class FileUtil {
 
     startDeletionThread(new File[]{tempFile});
   }
-  public static void asyncDelete(List<File> files) {
+  public static void asyncDelete(Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
       final File tempFile = renameToTempFile(file);

@@ -129,6 +129,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
         getBatchRequestor(),
         getProblemFactory());
     batchCompiler.compile(getCompilationUnits());
+    myCompilationResults.offer(END_OF_STREAM);
     environment.cleanup();
   }
 

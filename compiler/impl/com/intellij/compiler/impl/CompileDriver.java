@@ -1,4 +1,4 @@
-/*
+/**
  * @author: Eugene Zhuravlev
  * Date: Jan 17, 2003
  * Time: 1:42:26 PM
@@ -53,6 +53,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectProcedure;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -309,7 +310,8 @@ public class CompileDriver {
       if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return;
       }
-      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies);
+
+      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, getAllOutputDirectories());
     }
     catch (Throwable ex) {
       wereExceptions = true;
@@ -387,10 +389,11 @@ public class CompileDriver {
     public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
   }
 
-  private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies) {
+  private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies,
+                               final Set<File> outputDirectories) {
     try {
       if (isRebuild) {
-        deleteAll(context);
+        deleteAll(context, outputDirectories);
         if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
           return ExitStatus.ERRORS;
         }
@@ -431,7 +434,7 @@ public class CompileDriver {
       }
 
       try {
-        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies);
+        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -525,7 +528,7 @@ public class CompileDriver {
                             final CompilerManager compilerManager,
                             final boolean forceCompile,
                             boolean isRebuild,
-                            final boolean trackDependencies) {
+                            final boolean trackDependencies, final Set<File> outputDirectories) {
 
     boolean didSomething = false;
 
@@ -542,7 +545,7 @@ public class CompileDriver {
         return false;
       }
 
-      final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies);
+      final boolean compiledSomething = compileSources(context, snapshot, translator, forceCompile, isRebuild, trackDependencies, outputDirectories);
 
       // free memory earlier to leave other compilers more space
       dropDependencyCache(context);
@@ -614,7 +617,7 @@ public class CompileDriver {
     return map;
   }
 
-  private void deleteAll(final CompileContext context) {
+  private void deleteAll(final CompileContext context, Set<File> outputDirectories) {
     context.getProgressIndicator().pushState();
     try {
       final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
@@ -640,11 +643,10 @@ public class CompileDriver {
         }
       }
       if (myShouldClearOutputDirectory) {
-        final File[] files = getAllOutputDirectories();
-        FileUtil.asyncDelete(Arrays.asList(files));
+        FileUtil.asyncDelete(outputDirectories);
         // ensure output directories exist, create and refresh if not exist
-        final List<File> createdFiles = new ArrayList<File>(files.length);
-        for (final File file : files) {
+        final List<File> createdFiles = new ArrayList<File>(outputDirectories.size());
+        for (final File file : outputDirectories) {
           if (file.mkdirs()) {
             createdFiles.add(file);
           }
@@ -666,12 +668,11 @@ public class CompileDriver {
     }
   }
 
-  private File[] getAllOutputDirectories() {
-    final List<File> outputDirs = new ArrayList<File>();
+  private Set<File> getAllOutputDirectories() {
+    final Set<File> outputDirs = new THashSet<File>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(
-          ModuleManager.getInstance(myProject).getModules());
+        final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules());
         for (final VirtualFile outputDirectory : outputDirectories) {
           final File directory = VfsUtil.virtualToIoFile(outputDirectory);
           outputDirs.add(directory);
@@ -679,7 +680,7 @@ public class CompileDriver {
       }
     });
 
-    return outputDirs.toArray(new File[outputDirs.size()]);
+    return outputDirs;
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {
@@ -838,7 +839,7 @@ public class CompileDriver {
                                  final TranslatingCompiler compiler,
                                  final boolean forceCompile,
                                  final boolean isRebuild,
-                                 final boolean trackDependencies) {
+                                 final boolean trackDependencies, final Set<File> outputDirectories) {
     final TranslatingCompilerStateCache cache = getTranslatingCompilerCache(compiler);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
@@ -884,7 +885,7 @@ public class CompileDriver {
 
       if (toDelete.size() > 0) {
         try {
-          wereFilesDeleted[0] = syncOutputDir(urlsWithSourceRemoved, context, toDelete, cache);
+          wereFilesDeleted[0] = syncOutputDir(urlsWithSourceRemoved, context, toDelete, cache, outputDirectories);
         }
         catch (CacheCorruptedException e) {
           LOG.info(e);
@@ -917,7 +918,7 @@ public class CompileDriver {
       context.getProgressIndicator().popState();
     }
     return toCompile.size() > 0 || wereFilesDeleted[0];
-  } 
+  }
 
   private Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) {
     //final String[] outputUrls = cache.getOutputUrls();
@@ -931,7 +932,8 @@ public class CompileDriver {
     return set;
   }
 
-  private void findFilesToDelete(VfsSnapshot snapshot, final Set<String> urlsWithSourceRemoved,
+  private void findFilesToDelete(VfsSnapshot snapshot,
+                                 final Set<String> urlsWithSourceRemoved,
                                  final TranslatingCompilerStateCache cache,
                                  final Set<VirtualFile> toCompile,
                                  final CompileContextImpl context,
@@ -1050,9 +1052,9 @@ public class CompileDriver {
   }
 
   private boolean syncOutputDir(final Set<String> urlsWithSourceRemoved, final CompileContextImpl context, final Set<String> toDelete,
-                                final TranslatingCompilerStateCache cache) throws CacheCorruptedException {
+                                final TranslatingCompilerStateCache cache, final Set<File> outputDirectories) throws CacheCorruptedException {
 
-    DeleteHelper deleteHelper = new DeleteHelper(myProject);
+    DeleteHelper deleteHelper = new DeleteHelper(outputDirectories);
     int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();
     final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -1080,10 +1082,10 @@ public class CompileDriver {
           cache.remove(outputPath);
         }
       }
-      deleteHelper.finish();
       return wereFilesDeleted;
     }
     finally {
+      deleteHelper.finish();
       context.getProgressIndicator().popState();
     }
   }

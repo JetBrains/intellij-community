@@ -226,10 +226,11 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   }
   
   public boolean isResourceFile(String name) {
-    int idx = 0;
-    for (Iterator<Pattern> it = myWildcardCompiledPatterns.iterator(); it.hasNext(); idx++) {
-      final boolean matches = myPatternMatcher.matches(name, it.next());
-      if (isPatternNegated(myWildcardPatterns.get(idx))? !matches : matches) {
+    for (int i = 0; i < myWildcardCompiledPatterns.size(); i++) {
+      Pattern pattern = myWildcardCompiledPatterns.get(i);
+      final String wildcard = myWildcardPatterns.get(i);
+      final boolean matches = myPatternMatcher.matches(name, pattern);
+      if (isPatternNegated(wildcard) ? !matches : matches) {
         return true;
       }
     }
