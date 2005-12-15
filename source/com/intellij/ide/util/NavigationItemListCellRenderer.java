@@ -94,7 +94,8 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       if (value instanceof NavigationItem) {
         NavigationItem element = (NavigationItem)value;
         ItemPresentation presentation = element.getPresentation();
-        assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation()";
+        assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
+          element.toString() + ", class " + element.getClass().getName();
         String name = presentation.getPresentableText();
         Color color = list.getForeground();
         FileStatus status = element.getFileStatus();
