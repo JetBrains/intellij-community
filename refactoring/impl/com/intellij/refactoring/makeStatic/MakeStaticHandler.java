@@ -78,7 +78,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       return;
     }
 
-    if(member.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if(member instanceof PsiMethod && member.hasModifierProperty(PsiModifier.ABSTRACT)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MAKE_METHOD_STATIC, project);
       return;
@@ -119,7 +119,6 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       }
 
       dialog.show();
-      return;
     }
   }
 }
