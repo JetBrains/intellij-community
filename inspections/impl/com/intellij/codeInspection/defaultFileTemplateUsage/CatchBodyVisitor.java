@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -62,6 +63,10 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
       templateCatchBlock = (PsiCodeBlock)templateCatchBlock.replace(codeBlockFromText);
 
       templateParameter = sectionTemplate.getParameter();
+    }
+    catch (ProcessCanceledException e) {
+      /// @#^$%*?
+      return;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
