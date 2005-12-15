@@ -587,6 +587,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return sourceFieldMirror != null ? sourceFieldMirror : this;
   }
 
+  @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     if (myAnnotations == null) {
       ClsAnnotationsUtil.AttributeReader reader = new ClsAnnotationsUtil.AttributeReader() {

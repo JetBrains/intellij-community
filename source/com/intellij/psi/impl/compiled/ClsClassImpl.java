@@ -1125,6 +1125,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return false;
   }
 
+  @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     if (myAnnotations == null) {
       ClsAnnotationsUtil.AttributeReader reader = new ClsAnnotationsUtil.AttributeReader() {

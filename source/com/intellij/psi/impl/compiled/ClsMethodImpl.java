@@ -824,6 +824,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return PsiImplUtil.getTypeParameters(this);
   }
 
+  @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     if (myAnnotations == null) {
       ClsAnnotationsUtil.AttributeReader reader = new ClsAnnotationsUtil.AttributeReader() {
