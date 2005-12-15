@@ -12,6 +12,7 @@ import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
+import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 
@@ -20,11 +21,7 @@ import java.util.*;
 import gnu.trove.TObjectIntHashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Dec 27, 2004
- * Time: 4:57:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public class ResolverTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree");
@@ -40,7 +37,7 @@ public class ResolverTree {
 
   private HashSet<Constraint> myConstraints;
 
-  public ResolverTree(final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system) {
+  public ResolverTree(final ReductionSystem system) {
     myBindingFactory = new BindingFactory(system);
     mySolutions = new SolutionHolder();
     myCurrentBinding = myBindingFactory.create();

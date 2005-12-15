@@ -331,14 +331,14 @@ public class SystemBuilder {
 
       if (method != null) {
         final PsiClass aClass = method.getContainingClass();
-        final PsiTypeParameter[] methodTypeParams = method.getTypeParameters();
+        final PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] arguments = call.getArgumentList().getExpressions();
-        final PsiExpression aQualifier = expr instanceof PsiMethodCallExpression
+        final PsiExpression qualifier = expr instanceof PsiMethodCallExpression
                                          ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression()
                                          : null;
 
-        final HashSet<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParams));
+        final HashSet<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
@@ -346,15 +346,29 @@ public class SystemBuilder {
         PsiType aType;
 
         if (method.isConstructor()) {
-          aType = isCooked(expr) ? getType(expr) : expr.getType();
-          qualifierSubstitutor = Util.resolveType(aType).getSubstitutor();
+          if (expr instanceof PsiNewExpression) {
+            aType = isCooked(expr) ? getType(expr) : expr.getType();
+            qualifierSubstitutor = Util.resolveType(aType).getSubstitutor();
+          } else {
+            LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
+            final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
+            LOG.assertTrue(methodExpression instanceof PsiReferenceExpression);
+            if (PsiKeyword.THIS.equals(methodExpression.getText())){
+              aType = myManager.getElementFactory().createType(aClass);
+            } else {
+              LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
+              PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+              qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
+              aType = myManager.getElementFactory().createType(aClass, qualifierSubstitutor);
+            }
+          }
         }
         else {
           aType = getType(method);
         }
 
-        if (aQualifier != null) {
-          final PsiType qualifierType = evaluateType(aQualifier, system);
+        if (qualifier != null) {
+          final PsiType qualifierType = evaluateType(qualifier, system);
           final PsiClassType.ClassResolveResult result = Util.resolveType(qualifierType);
 
           if (result.getElement() != null) {
@@ -380,7 +394,7 @@ public class SystemBuilder {
             system.addSubtypeConstraint(argumentType, parmType);
           }
           else {
-            parmType = supertypeSubstitutor.substitute(parameters[i].getType());
+            parmType = qualifierSubstitutor.substitute(parameters[i].getType());
             if (qualifierSubstitutor != null) {
               parmType = qualifierSubstitutor.substitute(parmType);
             }
@@ -484,7 +498,7 @@ public class SystemBuilder {
                           final PsiType var = myTypeVariableFactory.create();
                           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
 
-                          for (final PsiTypeParameter aTypeParm : methodTypeParams) {
+                          for (final PsiTypeParameter aTypeParm : methodTypeParameters) {
                             PsiType parmVar = mapping.get(aTypeParm);
 
                             if (parmVar == null) {
@@ -535,7 +549,7 @@ public class SystemBuilder {
           theSubst = theSubst.put(parm, type);
         }
 
-        for (PsiTypeParameter typeParam : methodTypeParams) {
+        for (PsiTypeParameter typeParam : methodTypeParameters) {
           final PsiType inferred = inferTypeForMethodTypeParameter(typeParam, parameters, arguments, theSubst, expr, system);
           theSubst = theSubst.put(typeParam, inferred);
         }
