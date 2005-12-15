@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.ExternalResourceManager;
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -8,17 +9,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +47,9 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     };
   }
 
-  static class URLReference implements PsiReference {
+  public static class URLReference implements PsiReference {
     private PsiElement myElement;
-    URLReference(PsiElement element) {
+    public URLReference(PsiElement element) {
       myElement = element;
     }
 
@@ -64,6 +64,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     @Nullable
     public PsiElement resolve() {
       final String canonicalText = getCanonicalText();
+      if (ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)) return myElement;
       VirtualFile relativeFile = VfsUtil.findRelativeFile(canonicalText, myElement.getContainingFile().getVirtualFile());
       if (relativeFile != null) return myElement.getManager().findFile(relativeFile);
 
@@ -101,7 +102,11 @@ public class URIReferenceProvider implements PsiReferenceProvider {
 
       if (containingFile instanceof JspFile) {
         final Object[] possibleTldUris = JspManager.getInstance(containingFile.getProject()).getPossibleTldUris((JspFile)containingFile);
-        return ArrayUtil.mergeArrays(resourceUrls,possibleTldUris,Object.class);
+        Object[] result = new Object[resourceUrls.length + possibleTldUris.length + 1];
+        System.arraycopy(resourceUrls,0,result,0,resourceUrls.length);
+        System.arraycopy(possibleTldUris,0,result,resourceUrls.length,possibleTldUris.length);
+        result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
+        return result;
       }
       return resourceUrls;
     }
@@ -123,7 +128,19 @@ public class URIReferenceProvider implements PsiReferenceProvider {
           ((XmlAttribute)parent).isNamespaceDeclaration()
         )
        ) {
-      return getUrlReference(element);
+      if (!s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) return getUrlReference(element);
+      else {
+        final int offset = text.indexOf(s);
+        s = s.substring(JspManager.TAG_DIR_NS_PREFIX.length());
+        return new FileReferenceSet(
+          s,
+          element,
+          offset + JspManager.TAG_DIR_NS_PREFIX.length(),
+          ReferenceType.FILE_TYPE,
+          this,
+          true
+        ).getAllReferences();
+      }
     } else {
       if (s.startsWith("file:")) s = s.substring("file:".length());
       return new FileReferenceSet(s,element,text.indexOf(s), ReferenceType.FILE_TYPE, this,true).getAllReferences();

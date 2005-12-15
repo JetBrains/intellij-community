@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -697,14 +698,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {
     if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
-    String uri = xmlDoctype.getDtdUri();
-    if (uri == null || ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(uri)) return;
-
-    XmlFile xmlFile = XmlUtil.findXmlFile(xmlDoctype.getContainingFile(), uri);
-    if (xmlFile == null) {
-      final TextRange textRange = xmlDoctype.getDtdUrlElement().getTextRange();
-
-      reportURIProblem(textRange.getStartOffset() + 1,textRange.getEndOffset() - 1);
+    final PsiReference[] references = xmlDoctype.getReferences();
+    if (references.length > 0 && references[0] instanceof URIReferenceProvider.URLReference) {
+      checkUriReferenceProblem(references[0]);
     }
   }
 
@@ -718,29 +714,28 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkNamespaceAttribute(XmlAttribute attribute) {
-    String namespace = null;
-
-    if (attribute.isNamespaceDeclaration()) {
-      namespace = attribute.getValue();
-    }
-
-    if(namespace == null || namespace.length() < 1|| ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(namespace)) return;
-    XmlTag declarationTag = attribute.getParent();
-
-    if(declarationTag.getNSDescriptor(namespace, true) != null) return;
-
-    String attributeValue = declarationTag.getAttributeValue("targetNamespace");
-    if (attributeValue != null && attributeValue.equals(namespace)) {
-      // we referencing ns while defining it
-      return;
-    }
+    if (!attribute.isNamespaceDeclaration()) return;
 
     XmlAttributeValue element = attribute.getValueElement();
     if(element == null) return;
-    int start = element.getTextRange().getStartOffset() + 1;
-    int end = element.getTextRange().getEndOffset() - 1;
+    final PsiReference[] references = element.getReferences();
 
-    reportURIProblem(start,end);
+    if (references.length == 1 && references[0] instanceof URIReferenceProvider.URLReference) {
+      checkUriReferenceProblem(references[0]);
+    } else {
+      checkReferences(element, QuickFixProvider.NULL);
+    }
+  }
+
+  private void checkUriReferenceProblem(final PsiReference reference) {
+    if (reference.resolve() == null) {
+      final TextRange textRange = reference.getElement().getTextRange();
+      final TextRange referenceRange = reference.getRangeInElement();
+      int start = textRange.getStartOffset() + referenceRange.getStartOffset();
+      int end = textRange.getStartOffset() + referenceRange.getEndOffset();
+
+      reportURIProblem(start,end);
+    }
   }
 
   private void checkSchemaLocationAttribute(XmlAttribute attribute) {

@@ -2,21 +2,18 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -110,8 +107,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   public XmlMarkupDecl getMarkupDecl() {
     for(PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()){
       if (child instanceof XmlMarkupDecl){
-        XmlMarkupDecl decl = (XmlMarkupDecl)child;
-        return decl;
+        return (XmlMarkupDecl)child;
       }
     }
 
@@ -125,58 +121,20 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     PsiReference uriRefs[] = null;
       
     if (dtdUrlElement != null) {
-      final String uri = extractValue(dtdUrlElement);
-  
       uriRefs = new PsiReference[1];
-      uriRefs[0] = new PsiReference() {
-        public PsiElement getElement() {
-          return XmlDoctypeImpl.this;
+      uriRefs[0] = new URIReferenceProvider.URLReference(XmlDoctypeImpl.this) {
+        public Object[] getVariants() {
+          return (docTypePublic != null)?
+            super.getVariants(): PsiReference.EMPTY_ARRAY;
         }
-  
+        public String getCanonicalText() {
+          return extractValue(dtdUrlElement);
+        }
         public TextRange getRangeInElement() {
           return new TextRange(
             dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1,
             dtdUrlElement.getTextRange().getEndOffset() - getTextRange().getStartOffset() - 1
           );
-        }
-  
-        public PsiElement resolve() {
-          return XmlUtil.findXmlFile(XmlUtil.getContainingFile(XmlDoctypeImpl.this), uri);
-        }
-  
-        public String getCanonicalText() {
-          return uri;
-        }
-  
-        public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-          throw new IncorrectOperationException();
-        }
-  
-        public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-          throw new IncorrectOperationException();
-        }
-  
-        public boolean isReferenceTo(PsiElement element) {
-          return element == dtdUrlElement;
-        }
-  
-        public Object[] getVariants() {
-          final URIReferenceProvider uriReferenceProvider = ((URIReferenceProvider)ReferenceProvidersRegistry.getInstance(getProject())
-            .getProviderByType(
-              ReferenceProvidersRegistry.URI_PROVIDER
-            )
-          );
-          
-          final PsiReference[] referencesByElement = (docTypePublic != null)?
-            uriReferenceProvider.getUrlReference(dtdUrlElement): PsiReference.EMPTY_ARRAY;
-          
-          if (referencesByElement.length > 0) return referencesByElement[0].getVariants();
-         
-          return null;
-        }
-  
-        public boolean isSoft() {
-          return false;
         }
       };
     }
