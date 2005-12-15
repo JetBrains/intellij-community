@@ -7,7 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;

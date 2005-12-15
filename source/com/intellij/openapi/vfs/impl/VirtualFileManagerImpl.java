@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 

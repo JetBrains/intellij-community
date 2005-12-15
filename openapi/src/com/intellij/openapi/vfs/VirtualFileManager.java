@@ -164,4 +164,8 @@ public abstract class VirtualFileManager {
     if (index < 0) return url;
     return url.substring(index + "://".length());
   }
+
+  public abstract void addVirtualFileManagerListener(VirtualFileManagerListener listener);
+
+  public abstract void removeVirtualFileManagerListener(VirtualFileManagerListener listener);
 }

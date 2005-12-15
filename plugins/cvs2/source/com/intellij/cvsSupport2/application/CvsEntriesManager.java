@@ -23,7 +23,6 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -34,7 +33,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
-  private Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new com.intellij.util.containers.HashMap<VirtualFile, CvsInfo>();
+  private Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
 
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
@@ -52,6 +51,15 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   public CvsEntriesManager() {
     myEntriesListeners = new ArrayList<CvsEntriesListener>();
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener());
+  }
+
+  private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
+    public void afterRefreshFinish(boolean asynchonous) {}
+
+    public void beforeRefreshStart(boolean asynchonous) {
+      ensureFilesCached();
+    }
   }
 
   public String getComponentName() {
@@ -61,7 +69,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   public void initComponent() { }
 
   public void disposeComponent() {
-    myInfoByParentDirectoryPath = new com.intellij.util.containers.HashMap<VirtualFile, CvsInfo>();
+    myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
   }
 
   public void registerAsVirtualFileListener() {
@@ -102,8 +110,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   }
 
   public synchronized void clearChachedFiltersFor(final VirtualFile parent) {
-    for (Iterator each = myInfoByParentDirectoryPath.keySet().iterator(); each.hasNext();) {
-      VirtualFile file = (VirtualFile)each.next();
+    for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
       if (VfsUtil.isAncestor(parent, file, false)) {
@@ -116,8 +123,8 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private void fileStatusesChanged() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      FileStatusManager.getInstance(openProjects[i]).fileStatusesChanged();
+    for (Project openProject : openProjects) {
+      FileStatusManager.getInstance(openProject).fileStatusesChanged();
     }
   }
 
@@ -179,8 +186,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   private synchronized void clearCachedEntriesRecursive(VirtualFile parent) {
     if (!parent.isDirectory()) return;
 
-    for (Iterator each = myInfoByParentDirectoryPath.keySet().iterator(); each.hasNext();) {
-      VirtualFile file = (VirtualFile)each.next();
+    for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
       if (VfsUtil.isAncestor(parent, file, false)) clearCachedEntriesFor(file);
@@ -283,7 +289,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
       myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
     }
 
-    refreshFiles();
+    //refreshFiles();
   }
 
 
@@ -326,10 +332,10 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   public void unlockSynchronizationActions() {
     LOG.assertTrue(mySynchronizationActionLocks > 0);
     mySynchronizationActionLocks--;
-    refreshFiles();
+    //refreshFiles();
   }
 
-  private void refreshFiles() {
+  private void ensureFilesCached() {
     Runnable requestVirtualFileAction = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -339,9 +345,8 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
               paths = myFilesToRefresh.toArray(new String[myFilesToRefresh.size()]);
               myFilesToRefresh.clear();
             }
-            for (int i = 0; i < paths.length; i++) {
-              String path = paths[i];
-              VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+            for (String path : paths) {
+              VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
               if (virtualFile != null) virtualFile.getChildren();
             }
           }
@@ -378,8 +383,8 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private void fireStatusChanged(VirtualFile file) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      FileStatusManager.getInstance(openProjects[i]).fileStatusChanged(file);
+    for (Project openProject : openProjects) {
+      FileStatusManager.getInstance(openProject).fileStatusChanged(file);
     }
   }
 
