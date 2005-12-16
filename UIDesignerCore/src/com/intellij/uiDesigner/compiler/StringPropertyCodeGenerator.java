@@ -12,11 +12,7 @@ import javax.swing.*;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 22.11.2005
- * Time: 17:31:15
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class StringPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type myResourceBundleType = Type.getType(ResourceBundle.class);

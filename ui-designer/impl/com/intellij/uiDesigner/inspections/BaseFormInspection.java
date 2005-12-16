@@ -3,15 +3,14 @@ package com.intellij.uiDesigner.inspections;
 import com.intellij.codeInspection.FileCheckingInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.PsiPropertiesProvider;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,11 +26,23 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public abstract class BaseFormInspection implements FileCheckingInspection, FormInspectionTool {
+public abstract class BaseFormInspection extends LocalInspectionTool implements FileCheckingInspection, FormInspectionTool {
   private String myInspectionKey;
 
   public BaseFormInspection(@NonNls String inspectionKey) {
     myInspectionKey = inspectionKey;
+  }
+
+  public String getGroupDisplayName() {
+    return null;
+  }
+
+  public String getDisplayName() {
+    return null;
+  }
+
+  @NonNls public String getShortName() {
+    return myInspectionKey;
   }
 
   public boolean isActive(PsiElement psiRoot) {
@@ -59,15 +70,23 @@ public abstract class BaseFormInspection implements FileCheckingInspection, Form
       }
 
       final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
+      startCheckForm(rootContainer);
       FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
           checkComponentProperties(module, component, collector);
           return true;
         }
       });
+      doneCheckForm(rootContainer);
       return collector.result();
     }
     return null;
+  }
+
+  public void startCheckForm(IRootContainer rootContainer) {
+  }
+
+  public void doneCheckForm(IRootContainer rootContainer) {
   }
 
   @Nullable

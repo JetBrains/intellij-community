@@ -226,6 +226,9 @@ public final class ErrorAnalyzer {
         }
 
         if (formInspectionTools.size() > 0 && editor != null) {
+          for(FormInspectionTool tool: formInspectionTools) {
+            tool.startCheckForm(rootContainer);
+          }
           FormEditingUtil.iterate(
             rootContainer,
             new FormEditingUtil.ComponentVisitor<RadComponent>() {
@@ -245,6 +248,9 @@ public final class ErrorAnalyzer {
               }
             }
           );
+          for(FormInspectionTool tool: formInspectionTools) {
+            tool.doneCheckForm(rootContainer);
+          }
         }
       }
     }

@@ -357,9 +357,11 @@ public final class FormEditingUtil {
   public static GridConstraints getDefaultConstraints(final RadComponent component) {
     final Palette palette = Palette.getInstance(component.getModule().getProject());
     final ComponentItem item = palette.getItem(component.getComponentClassName());
-    assert item != null;
-    final GridConstraints defaultConstraints = item.getDefaultConstraints();
-    return defaultConstraints;
+    if (item != null) {
+      final GridConstraints defaultConstraints = item.getDefaultConstraints();
+      return defaultConstraints;
+    }
+    return new GridConstraints();
   }
 
   public static interface ComponentVisitor <Type extends IComponent>{
