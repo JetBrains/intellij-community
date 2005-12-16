@@ -1,15 +1,17 @@
 package com.intellij.openapi.compiler.ex;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -19,7 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
-
   public static class FileVisitor {
     protected void accept(final VirtualFile file, final String fileRoot, final String filePath) {
       if (file.isDirectory()) {
@@ -34,13 +35,8 @@ public class CompilerPathsEx extends CompilerPaths {
     }
 
     protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
-      final VirtualFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-        public VirtualFile[] compute() {
-          return file.getChildren();
-        }
-      });
-      for (int idx = 0; idx < children.length; idx++) {
-        final VirtualFile child = children[idx];
+      final VirtualFile[] children = file.getChildren();
+      for (final VirtualFile child : children) {
         final String name = child.getName();
         final StringBuffer buf = new StringBuffer(filePath.length() + "/".length() + name.length());
         buf.append(filePath).append("/").append(name);
@@ -50,14 +46,13 @@ public class CompilerPathsEx extends CompilerPaths {
   }
 
   public static void visitFiles(final VirtualFile[] directories, final FileVisitor visitor) {
-    for (int idx = 0; idx < directories.length; idx++) {
-      final VirtualFile outputDir = directories[idx];
-      final String path = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return outputDir.getPath();
+    for (final VirtualFile outputDir : directories) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final String path = outputDir.getPath();
+          visitor.accept(outputDir, path, path);
         }
       });
-      visitor.accept(outputDir, path, path);
     }
   }
 
@@ -70,7 +65,7 @@ public class CompilerPathsEx extends CompilerPaths {
     });
     visitFiles(outputDirectories, new FileVisitor() {
       protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
-        if (!(file.getFileSystem()  instanceof JarFileSystem)){
+        if (!(file.getFileSystem() instanceof JarFileSystem)){
           result.add(filePath);
         }
       }
@@ -81,11 +76,10 @@ public class CompilerPathsEx extends CompilerPaths {
   public static String getCompilationClasspath(Module module) {
     final StringBuffer classpathBuffer = new StringBuffer();
     final OrderEntry[] orderEntries = getOrderEntries(module);
-    for (int i = 0; i < orderEntries.length; i++) {
-      final OrderEntry orderEntry = orderEntries[i];
+    for (final OrderEntry orderEntry : orderEntries) {
       final VirtualFile[] files = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
-      for (int j = 0; j < files.length; j++) {
-        final String path = PathUtil.getLocalPath(files[j]);
+      for (VirtualFile file : files) {
+        final String path = PathUtil.getLocalPath(file);
         if (path == null) {
           continue;
         }
@@ -128,8 +122,7 @@ public class CompilerPathsEx extends CompilerPaths {
 
   public static String[] getOutputPaths(Module[] modules) {
     final Set<String> outputPaths = new OrderedSet<String>((TObjectHashingStrategy<String>)TObjectHashingStrategy.CANONICAL);
-    for (int idx = 0; idx < modules.length; idx++) {
-      Module module = modules[idx];
+    for (Module module : modules) {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       String outputPathUrl = moduleRootManager.getCompilerOutputPathUrl();
@@ -147,8 +140,7 @@ public class CompilerPathsEx extends CompilerPaths {
 
   public static VirtualFile[] getOutputDirectories(final Module[] modules) {
     final Set<VirtualFile> dirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
-    for (int idx = 0; idx < modules.length; idx++) {
-      Module module = modules[idx];
+    for (Module module : modules) {
       final VirtualFile outputDir = getModuleOutputDirectory(module, false);
       if (outputDir != null) {
         dirs.add(outputDir);

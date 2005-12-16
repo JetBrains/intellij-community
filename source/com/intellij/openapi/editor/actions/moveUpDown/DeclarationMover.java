@@ -52,17 +52,6 @@ class DeclarationMover extends LineMover {
     documentManager.commitDocument(documentManager.getDocument(whitespace.getContainingFile()));
   }
 
-  private static PsiElement findMemberOnLineStart(final int line, final Editor editor, final PsiFile file) {
-    int lineStartOffset = editor.getDocument().getLineStartOffset(line);
-    PsiElement element = firstNonWhiteElement(lineStartOffset, file, true);
-    return element;
-  }
-  private static PsiElement findMemberOnLineEnd(final int line, final Editor editor, final PsiFile file) {
-    int offset = editor.getDocument().getLineEndOffset(line);
-    PsiElement element = firstNonWhiteElement(offset, file, false);
-    return element;
-  }
-
   protected boolean checkAvailable(Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return false;
@@ -149,10 +138,10 @@ class DeclarationMover extends LineMover {
     // we should be positioned on member start or end to be able to move it
     final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
     final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line;
-    if (startLine != lineRange.startLine && startLine != lineRange.endLine && endLine != lineRange.startLine &&
-        endLine != lineRange.endLine) {
-      return null;
-    }
+    //if (startLine != lineRange.startLine && startLine != lineRange.endLine && endLine != lineRange.startLine &&
+    //    endLine != lineRange.endLine) {
+    //  return null;
+    //}
 
     return new LineRange(startLine, endLine);
   }
