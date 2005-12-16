@@ -3,13 +3,14 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Ref;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.FilterComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -17,13 +18,31 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
-import java.awt.*;
 
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
+  private FilterComponent myFilter = new FilterComponent("INTENTION_FILTER_HISTORY", 10){
+    protected void filter() {
+      final String filter = getFilter();
+      IntentionSettingsTree.this.reset(filterModel(filter));
+      myFilter.setSelectedItem(filter);
+      if (myTree != null) {
+        List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+        ((DefaultTreeModel)myTree.getModel()).reload();
+        TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
+      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTree.setSelectionRow(0);
+          myTree.requestFocus();
+        }
+      });
+    }
+  };
 
   protected IntentionSettingsTree() {
     initTree();
@@ -58,8 +77,10 @@ public abstract class IntentionSettingsTree {
 
     myComponent = new JPanel(new BorderLayout());
     JScrollPane scrollPane = new JScrollPane(myTree);
-    ActionToolbar toolbar = createTreeToolbarPanel();
-    myComponent.add(toolbar.getComponent(), BorderLayout.NORTH);
+    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    toolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
+    toolbarPanel.add(myFilter, BorderLayout.EAST);
+    myComponent.add(toolbarPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -118,6 +139,7 @@ public abstract class IntentionSettingsTree {
   }
 
   protected abstract void selectionChanged(Object selected);
+  protected abstract List<IntentionActionMetaData> filterModel(String filter);
 
   public void reset(List<IntentionActionMetaData> intentionsToShow) {
     CheckedTreeNode root = new CheckedTreeNode(null);
@@ -141,6 +163,7 @@ public abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     treeModel.nodeChanged(root);
+    myFilter.reset();
     //TreeUtil.expandAll(myTree);
   }
 
