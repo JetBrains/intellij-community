@@ -2,11 +2,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.ant.PsiAntElement;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.ide.IconProvider;
 import com.intellij.ide.IconUtilEx;
-import com.intellij.j2ee.ejb.role.EjbClassRole;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
-import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -22,20 +20,23 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
-import com.intellij.util.SmartList;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
-import java.util.List;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
+
     final PsiElement element = (PsiElement)this;
+    for (final IconProvider iconProvider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
+      final Icon icon = iconProvider.getIcon(element, flags);
+      if (icon != null) return icon;
+    }
+
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
@@ -51,10 +52,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       final VirtualFile vFile = psiDirectory.getVirtualFile();
       final Project project = psiDirectory.getProject();
       boolean isExcluded = isExcluded(vFile, project);
-      baseIcon = createLayeredIcon(symbolIcon, elementFlags | (isExcluded ? FLAGS_EXCLUDED : 0));
+      baseIcon = RowIcon.createLayeredIcon(symbolIcon, elementFlags | (isExcluded ? FLAGS_EXCLUDED : 0));
     }
     else if (element instanceof PsiPackage) {
-      baseIcon = createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
+      baseIcon = RowIcon.createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
     }
     else if (element instanceof PsiFile) {
       PsiFile file = (PsiFile)element;
@@ -67,33 +68,26 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       else {
         fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
       }
-      baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
+      baseIcon = RowIcon.createLayeredIcon(fileTypeIcon, elementFlags);
     }
     else if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       Icon symbolIcon = getClassBaseIcon(aClass);
-      baseIcon = createLayeredIcon(symbolIcon, getFlags(aClass, isLocked));
+      baseIcon = RowIcon.createLayeredIcon(symbolIcon, getFlags(aClass, isLocked));
     }
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      final EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
-      Icon methodIcon;
-      if (role == null) {
-        methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
-      }
-      else {
-        methodIcon = role.getIcon();
-      }
-      baseIcon = createLayeredIcon(methodIcon, getFlags(method, false));
+      Icon methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+      baseIcon = RowIcon.createLayeredIcon(methodIcon, getFlags(method, false));
     }
     else if (element instanceof PsiField) {
-      baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
+      baseIcon = RowIcon.createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
     }
     else if (element instanceof PsiParameter) {
-      baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
+      baseIcon = RowIcon.createLayeredIcon(Icons.PARAMETER_ICON, 0);
     }
     else if (element instanceof PsiVariable) {
-      baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
+      baseIcon = RowIcon.createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
     }
     else if (element instanceof XmlTag) {
       return Icons.XML_TAG_ICON;
@@ -127,9 +121,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     final VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
     final boolean isEnum = element instanceof PsiClass && ((PsiClass)element).isEnum();
     int flags = (element.hasModifierProperty(PsiModifier.FINAL) && !isEnum ? FLAGS_FINAL : 0)
-                      | (element.hasModifierProperty(PsiModifier.STATIC) && !isEnum ? FLAGS_STATIC : 0)
-                      | (isLocked ? FLAGS_LOCKED : 0)
-                      | (isExcluded(vFile, element.getProject()) ? FLAGS_EXCLUDED : 0);
+                | (element.hasModifierProperty(PsiModifier.STATIC) && !isEnum ? FLAGS_STATIC : 0)
+                | (isLocked ? FLAGS_LOCKED : 0)
+                | (isExcluded(vFile, element.getProject()) ? FLAGS_EXCLUDED : 0);
     if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       if (element.hasModifierProperty(PsiModifier.ABSTRACT) && !((PsiClass)element).isInterface()) {
@@ -143,10 +137,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
-  private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
-  private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
+
+
   private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/abstractException.png");
-  private static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
 
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;
@@ -159,11 +152,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final int CLASS_KIND_JUNIT_TEST = 90;
 
   public static final int FLAGS_ABSTRACT = 0x100;
-  private static final int FLAGS_STATIC = 0x200;
-  private static final int FLAGS_FINAL = 0x400;
-  private static final int FLAGS_LOCKED = 0x800;
-  private static final int FLAGS_EXCLUDED = 0x1000;
-  private static final int FLAGS_JUNIT_TEST = 0x2000;
+  public static final int FLAGS_STATIC = 0x200;
+  public static final int FLAGS_FINAL = 0x400;
+  public static final int FLAGS_LOCKED = 0x800;
+  public static final int FLAGS_EXCLUDED = 0x1000;
+  public static final int FLAGS_JUNIT_TEST = 0x2000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
 
@@ -177,8 +170,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (value == null) {
       value = aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Integer>() {
         public Result<Integer> compute() {
-          return new Result<Integer>(new Integer(getClassKindImpl(aClass)),
-                                     new Object[] {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+          return new Result<Integer>(new Integer(getClassKindImpl(aClass)), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       }, false);
       aClass.putUserData(CLASS_KIND_KEY, value);
@@ -189,10 +181,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static int getClassKindImpl(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
 
-    final EjbClassRole role = EjbRolesUtil.getEjbRole(aClass);
-    if (role != null) {
-      return role.getType() == EjbClassRoleEnum.EMPTY_ROLE ? -100 : role.getType().ordinal() + 101;
-    }
     if (aClass.isAnnotationType()) {
       return CLASS_KIND_ANNOTATION;
     }
@@ -246,42 +234,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon getClassBaseIcon(final PsiClass aClass) {
-    final EjbClassRole role = EjbRolesUtil.getEjbRole(aClass);
-    if (role != null) return role.getIcon();
     final int classKind = getClassKind(aClass);
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
     return BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
   }
 
-  private static RowIcon createLayeredIcon(Icon icon, int flags) {
-    if (flags != 0) {
-      List<Icon> iconLayers = new SmartList<Icon>();
-      if ((flags & FLAGS_STATIC) != 0) {
-        iconLayers.add(STATIC_MARK_ICON);
-      }
-      if ((flags & FLAGS_LOCKED) != 0) {
-        iconLayers.add(Icons.LOCKED_ICON);
-      }
-      if ((flags & FLAGS_EXCLUDED) != 0) {
-        iconLayers.add(Icons.EXCLUDED_FROM_COMPILE_ICON);
-      }
-      final boolean isFinal = (flags & FLAGS_FINAL) != 0;
-      if (isFinal) {
-        iconLayers.add(FINAL_MARK_ICON);
-      }
-      if ((flags & FLAGS_JUNIT_TEST) != 0) {
-        iconLayers.add(JUNIT_TEST_MARK);
-      }
-      LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
-      layeredIcon.setIcon(icon, 0);
-      for (int i = 0; i < iconLayers.size(); i++) {
-        Icon icon1 = iconLayers.get(i);
-        layeredIcon.setIcon(icon1, i+1);
-      }
-      icon = layeredIcon;
-    }
-    RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(icon, 0);
-    return baseIcon;
-  }
 }
