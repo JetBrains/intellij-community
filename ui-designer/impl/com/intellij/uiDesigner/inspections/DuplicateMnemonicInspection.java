@@ -73,7 +73,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     return ReferenceUtil.resolve(module, descriptor);
   }
 
-  private IProperty findProperty(final IComponent component, final String name) {
+  public static IProperty findProperty(final IComponent component, final String name) {
     IProperty[] props = component.getModifiedProperties();
     for(IProperty prop: props) {
       if (prop.getName().equals(name)) return prop;
