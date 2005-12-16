@@ -30,10 +30,12 @@ import java.util.*;
  * @author cdr
  */
 
-public abstract class GenericsHighlightUtil {
+public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
   private static final String GENERICS_ARE_NOT_SUPPORTED = JavaErrorMessages.message("generics.are.not.supported");
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
+
+  private GenericsHighlightUtil() {}
 
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
@@ -411,9 +413,7 @@ public abstract class GenericsHighlightUtil {
     return null;
   }
 
-  /**
-   * precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
-   */
+  //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
     if (elementToHighlight.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
@@ -774,6 +774,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkInstanceOfGenericType(PsiInstanceOfExpression expression) {
     final PsiTypeElement checkTypeElement = expression.getCheckType();
+    if (checkTypeElement == null) return null;
     PsiElement ref = checkTypeElement.getInnermostComponentReferenceElement();
     while (ref instanceof PsiJavaCodeReferenceElement) {
       final HighlightInfo result = isIllegalForInstanceOf((PsiJavaCodeReferenceElement)ref, checkTypeElement);
@@ -843,7 +844,8 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkEnumSuperConstructorCall(PsiMethodCallExpression expr) {
     PsiReferenceExpression methodExpression = expr.getMethodExpression();
-    if (PsiKeyword.SUPER.equals(methodExpression.getReferenceNameElement().getText())) {
+    final PsiElement refNameElement = methodExpression.getReferenceNameElement();
+    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
       final PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
       if (constructor instanceof PsiMethod && constructor.getContainingClass().isEnum()) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
