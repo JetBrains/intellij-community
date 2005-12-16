@@ -107,6 +107,10 @@ import java.util.List;/**
     return myClassName;
   }
 
+  public IProperty[] getModifiedProperties() {
+    return getAssignedIntrospectedProperties();
+  }
+
   /**
    * @return component's constraints in XY layout. This method rever
    * returns <code>null</code>.

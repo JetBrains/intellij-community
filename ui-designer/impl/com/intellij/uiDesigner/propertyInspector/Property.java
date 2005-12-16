@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.lw.IProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public abstract class Property {
+public abstract class Property implements IProperty {
   protected static final Property[] EMPTY_ARRAY=new Property[]{};
 
   /**

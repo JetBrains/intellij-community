@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -21,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -184,7 +186,7 @@ public abstract class RadComponent implements IComponent {
    */
   @Nullable
   public Property getInplaceProperty(final int x, final int y){
-    return getDefaultInplaceProperty(); 
+    return getDefaultInplaceProperty();
   }
 
   @Nullable
@@ -481,5 +483,17 @@ public abstract class RadComponent implements IComponent {
 
   public void fireConstraintsChanged(GridConstraints oldConstraints) {
     firePropertyChanged(PROP_CONSTRAINTS, oldConstraints, myConstraints);
+  }
+
+  public IProperty[] getModifiedProperties() {
+    final Palette palette = Palette.getInstance(getModule().getProject());
+    IntrospectedProperty[] props = palette.getIntrospectedProperties(getComponentClass());
+    ArrayList<IProperty> result = new ArrayList<IProperty>();
+    for(IntrospectedProperty prop: props) {
+      if (isMarkedAsModified(prop)) {
+        result.add(prop);
+      }
+    }
+    return result.toArray(new IProperty[result.size()]);
   }
 }

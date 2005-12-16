@@ -17,7 +17,7 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-public abstract class LwIntrospectedProperty {
+public abstract class LwIntrospectedProperty implements IProperty {
 
   private final String myName;
   private final String myPropertyClassName;
