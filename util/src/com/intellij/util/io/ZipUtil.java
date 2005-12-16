@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.*;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -57,7 +56,9 @@ public class ZipUtil {
     if (fileFilter != null && !FileUtil.isFilePathAcceptable(file, fileFilter)) return false;
     if (writtenItemRelativePaths != null && !writtenItemRelativePaths.add(relativeName)) return false;
 
-    LOG.debug("Add "+file+" as "+relativeName);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Add "+file+" as "+relativeName);
+    }
 
     long size = isDir ? 0 : file.length();
     ZipEntry e = new ZipEntry(relativeName);
@@ -69,13 +70,13 @@ public class ZipUtil {
     }
     zos.putNextEntry(e);
     if (!isDir) {
-      byte[] buf = new byte[1024];
-      int len;
       InputStream is = new BufferedInputStream(new FileInputStream(file));
-      while ((len = is.read(buf, 0, buf.length)) != -1) {
-        zos.write(buf, 0, len);
+      try {
+        FileUtil.copy(is, zos);
       }
-      is.close();
+      finally {
+        is.close();
+      }
     }
     zos.closeEntry();
     return true;
@@ -102,14 +103,13 @@ public class ZipUtil {
     if (FileUtil.isAncestor(dir, jarFile, false)) {
       return false;
     }
-    if (!relativePath.equals("")) {
+    if (relativePath.length() != 0) {
       addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter);
     }
     final File[] children = dir.listFiles();
     if (children != null) {
-      for (int i = 0; i < children.length; i++) {
-        File child = children[i];
-        final String childRelativePath = (relativePath.equals("") ? "" : relativePath + "/") + child.getName();
+      for (File child : children) {
+        final String childRelativePath = (relativePath.length() == 0 ? "" : relativePath + "/") + child.getName();
         addFileOrDirRecursively(outputStream, jarFile, child, childRelativePath, fileFilter, writtenItemRelativePaths);
       }
     }
@@ -146,13 +146,13 @@ public class ZipUtil {
     else {
       final BufferedInputStream is = new BufferedInputStream(inputStream);
       final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-      byte[] buf = new byte[1024];
-      int len;
-      while ((len = is.read(buf, 0, buf.length)) != -1) {
-        os.write(buf, 0, len);
+      try {
+        FileUtil.copy(is, os);
       }
-      os.close();
-      is.close();
+      finally {
+        os.close();
+        is.close();
+      }
     }
   }
 
@@ -195,46 +195,43 @@ public class ZipUtil {
     ZipInputStream zis = new ZipInputStream(in);
     ZipOutputStream zos = new ZipOutputStream(out);
     ZipEntry e;
-    byte[] buf = new byte[1024];
-    int n;
 
-    // put the old entries first, replace if necessary
-    while ((e = zis.getNextEntry()) != null) {
-      String name = e.getName();
+    try {
+      // put the old entries first, replace if necessary
+      while ((e = zis.getNextEntry()) != null) {
+        String name = e.getName();
 
-      if (!relpathToFile.containsKey(name)) { // copy the old stuff
-        // do our own compression
-        ZipEntry e2 = new ZipEntry(name);
-        e2.setMethod(e.getMethod());
-        e2.setTime(e.getTime());
-        e2.setComment(e.getComment());
-        e2.setExtra(e.getExtra());
-        if (e.getMethod() == ZipEntry.STORED) {
-          e2.setSize(e.getSize());
-          e2.setCrc(e.getCrc());
+        if (!relpathToFile.containsKey(name)) { // copy the old stuff
+          // do our own compression
+          ZipEntry e2 = new ZipEntry(name);
+          e2.setMethod(e.getMethod());
+          e2.setTime(e.getTime());
+          e2.setComment(e.getComment());
+          e2.setExtra(e.getExtra());
+          if (e.getMethod() == ZipEntry.STORED) {
+            e2.setSize(e.getSize());
+            e2.setCrc(e.getCrc());
+          }
+          zos.putNextEntry(e2);
+          FileUtil.copy(zis, zos);
         }
-        zos.putNextEntry(e2);
-        while ((n = zis.read(buf, 0, buf.length)) != -1) {
-          zos.write(buf, 0, n);
+        else { // replace with the new files
+          final File file = relpathToFile.get(name);
+          //addFile(file, name, zos);
+          relpathToFile.remove(name);
+          addFileToZip(zos, file, name, null, null);
         }
       }
-      else { // replace with the new files
-        final File file = relpathToFile.get(name);
-        //addFile(file, name, zos);
-        relpathToFile.remove(name);
-        addFileToZip(zos, file, name, null, null);
+
+      // add the remaining new files
+      for (final String path : relpathToFile.keySet()) {
+        File file = relpathToFile.get(path);
+        addFileToZip(zos, file, path, null, null);
       }
     }
-
-    // add the remaining new files
-    for (Iterator iterator = relpathToFile.keySet().iterator(); iterator.hasNext();) {
-      String path = (String)iterator.next();
-      File file = relpathToFile.get(path);
-      addFileToZip(zos, file, path, null, null);
+    finally {
+      zis.close();
+      zos.close();
     }
-
-    zis.close();
-    zos.close();
   }
-
 }
