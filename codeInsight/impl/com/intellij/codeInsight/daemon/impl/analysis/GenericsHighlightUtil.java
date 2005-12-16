@@ -265,7 +265,7 @@ public abstract class GenericsHighlightUtil {
 
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       PsiMethod method = signature.getMethod();
-      if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
+      //if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
       MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
       MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
       if (sameErasure != null) {
@@ -304,8 +304,14 @@ public abstract class GenericsHighlightUtil {
     HighlightInfo classHighliht) {
 
     MethodSignatureBackedByPsiMethod toCheck = toCheckSubsignature.get(signatureToCheck);
-    if (toCheck.getMethod().isConstructor() &&
-          !toCheck.getMethod().getContainingClass().equals(superMethod.getContainingClass())) return null;
+    final PsiMethod checkMethod = toCheck.getMethod();
+    if (checkMethod.isConstructor()) {
+      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
+    }
+
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
+    }
 
     if (!MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
       PsiMethod method1 = signatureToCheck.getMethod();
