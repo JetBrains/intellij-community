@@ -98,7 +98,7 @@ public class MatcherImpl {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }
       }
-    };
+    }
 
     ValidatingVisitor visitor = new ValidatingVisitor();
     final NodeIterator nodes = lastPattern.getNodes();
@@ -116,6 +116,10 @@ public class MatcherImpl {
     public CompiledOptions(final List<MatchContext> matchContexts, final List<Configuration> configurations) {
       this.matchContexts = matchContexts;
       myConfigurations = configurations;
+    }
+
+    public List<Configuration> getConfigurations() {
+      return myConfigurations;
     }
   }
 

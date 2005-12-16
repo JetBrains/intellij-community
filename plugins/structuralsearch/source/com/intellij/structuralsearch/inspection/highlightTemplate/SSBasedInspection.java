@@ -18,9 +18,6 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -52,6 +49,11 @@ import java.util.List;
 public class SSBasedInspection extends LocalInspectionTool {
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
   private MatcherImpl.CompiledOptions compiledConfigurations;
+  private final SSRInspectionsPrecompiler myInspectionsPrecompiler;
+
+  public SSBasedInspection() {
+    myInspectionsPrecompiler = SSRInspectionsPrecompiler.getInstance();
+  }
 
   public void writeSettings(Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
@@ -60,28 +62,6 @@ public class SSBasedInspection extends LocalInspectionTool {
   public void readSettings(Element node) throws InvalidDataException {
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
-
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 0) {
-      ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-        public void projectOpened(final Project project) {
-          ProjectManager.getInstance().removeProjectManagerListener(this);
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-            public void run() {
-              precompileConfigurations(project);
-            }
-          });
-        }
-      });
-    }
-    else {
-      final Project project = projects[0];
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-        public void run() {
-          precompileConfigurations(project);
-        }
-      });
-    }
   }
 
   public String getGroupDisplayName() {
@@ -101,7 +81,13 @@ public class SSBasedInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     Project project = file.getProject();
 
-    if (compiledConfigurations == null) return null;
+    if (compiledConfigurations == null) {
+      compiledConfigurations = myInspectionsPrecompiler.getCompiledConfigurations(myConfigurations);
+    }
+    if (compiledConfigurations == null) {
+      precompileConfigurations();
+      return null;
+    }
     Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
 
     List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
@@ -140,24 +126,16 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   @Nullable
   public JComponent createOptionsPanel() {
-    JPanel component = new SSBasedInspectionOptions(myConfigurations){
+    return new SSBasedInspectionOptions(myConfigurations){
       public void configurationsChanged(final SearchContext searchContext) {
         super.configurationsChanged(searchContext);
-        precompileConfigurations(searchContext.getProject());
+        precompileConfigurations();
       }
     }.getComponent();
-    return component;
   }
 
   // must be inside event dispatch
-  public void precompileConfigurations(final Project project) {
-    compiledConfigurations = new Matcher(project).precompileOptions(myConfigurations);
-    // avoid memory leak
-    ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
-      public void projectClosed(Project project) {
-        compiledConfigurations = null;
-        ProjectManager.getInstance().removeProjectManagerListener(project, this);
-      }
-    });
+  private void precompileConfigurations() {
+    myInspectionsPrecompiler.setChangedConfigurations(myConfigurations);
   }
 }
