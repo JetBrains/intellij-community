@@ -30,6 +30,8 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -560,8 +562,16 @@ public class XmlUtil {
         return new String[][]{new String[]{"", XHTML_URI}};
       }
       else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
+        String baseLanguageNameSpace = EMPTY_URI;
+        if (file instanceof JspFile) {
+          final Language baseLanguage = ((JspFile)file).getBaseLanguage();
+          if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
+            baseLanguageNameSpace = XHTML_URI;
+          }
+        }
+
         return new String[][]{
-          new String[]{"", XHTML_URI},
+          new String[]{"", baseLanguageNameSpace},
           new String[]{"jsp", JSP_URI}
         };
       }
