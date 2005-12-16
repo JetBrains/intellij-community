@@ -1378,6 +1378,11 @@ public class HighlightUtil {
   public static HighlightInfo checkIllegalType(PsiTypeElement typeElement) {
     if (typeElement == null || typeElement.getParent() instanceof PsiTypeElement) return null;
 
+    final PsiElement parent = typeElement.getParent();
+    if (PsiTreeUtil.getParentOfType(parent, PsiDocComment.class) != null){
+      return null;
+    }
+
     PsiType type = typeElement.getType();
     PsiType componentType = type.getDeepComponentType();
     if (componentType instanceof PsiClassType) {

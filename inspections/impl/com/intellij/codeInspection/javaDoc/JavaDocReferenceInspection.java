@@ -87,7 +87,17 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       public void visitDocTag(PsiDocTag tag) {
         super.visitDocTag(tag);
-        visitRefInDocTag(tag, tag.getManager().getJavadocManager(), context, problems);
+        final JavadocManager javadocManager = tag.getManager().getJavadocManager();
+        final JavadocTagInfo info = javadocManager.getTagInfo(tag.getName());
+        if (info == null || !info.isInline()) {
+          visitRefInDocTag(tag, javadocManager, context, problems);
+        }
+      }
+
+      public void visitInlineDocTag(PsiInlineDocTag tag) {
+        super.visitInlineDocTag(tag);
+        final JavadocManager javadocManager = tag.getManager().getJavadocManager();
+        visitRefInDocTag(tag, javadocManager, context, problems);
       }
 
       public void visitElement(PsiElement element) {
@@ -102,23 +112,23 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       public void visitDocComment(PsiDocComment comment) {
         super.visitDocComment(comment);
-        final PsiElement[] descriptionElements = comment.getDescriptionElements();
+        /*final PsiElement[] descriptionElements = comment.getDescriptionElements();
         for (PsiElement element : descriptionElements) {
           element.accept(this);
-        }
+        }*/
       }
     };
   }
 
-  public boolean visitRefInDocTag(final PsiDocTag tag,
+  public void visitRefInDocTag(final PsiDocTag tag,
                                   final JavadocManager manager,
                                   final PsiElement context,
                                   ArrayList<ProblemDescriptor> problems) {
     String tagName = tag.getName();
     PsiDocTagValue value = tag.getValueElement();
-    if (value == null) return true;
+    if (value == null) return;
     final JavadocTagInfo info = manager.getTagInfo(tagName);
-    if (info != null && !info.isValidInContext(context)) return true;
+    if (info != null && !info.isValidInContext(context)) return;
     String message = info == null || !info.isInline() ? null : info.checkTagValue(value);
     if (message != null){
       problems.add(createDescriptor(value, message));
@@ -133,20 +143,16 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>();
           final PsiDocTagValue valueElement = tag.getValueElement();
           if (valueElement != null) {
-            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.descriptor8", "<code>" +
-                                                                                                                            new String(value
-                                                                                                                              .getContainingFile().textToCharArray(),
-                                                                                                                                       textOffset,
-                                                                                                                                       value
-                                                                                                                                         .getTextRange()
-                                                                                                                                         .getEndOffset() -
-                                                                                                                                                         textOffset) +
-                                                                                                                                                                     "</code>")));
+            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.descriptor8",
+                                                                                  "<code>" +
+                                                                                  new String(value.getContainingFile().textToCharArray(),
+                                                                                             textOffset,
+                                                                                             value.getTextRange().getEndOffset() - textOffset) +
+                                                                                   "</code>")));
           }
         }
       }
     }
-    return false;
   }
 
 
