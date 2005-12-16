@@ -2,62 +2,40 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.i18n.I18nInspection;
-import com.intellij.codeInspection.FileCheckingInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.inspections.BaseFormInspection;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
-import com.intellij.uiDesigner.inspections.FormEditorErrorCollector;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
-import com.intellij.uiDesigner.inspections.FormFileErrorCollector;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
-import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class I18nFormInspection implements FormInspectionTool, FileCheckingInspection {
+public class I18nFormInspection extends BaseFormInspection {
   private static BorderProperty myBorderProperty = new BorderProperty();
 
-  public boolean isActive(PsiElement psiRoot) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getProfile(psiRoot);
-    HighlightDisplayKey key = HighlightDisplayKey.find("HardCodedStringLiteral");
-    if (key == null) {
-      return false;
-    }
-    return profile.isToolEnabled(key);
+  public I18nFormInspection() {
+    super("HardCodedStringLiteral");
   }
 
-  @Nullable
-  public ErrorInfo[] checkComponent(GuiEditor editor, RadComponent component) {
-    FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
-
-    Module module = editor.getModule();
-    checkComponentProperties(module, component, collector);
-
-    return collector.result();
-  }
-
-  private void checkComponentProperties(final Module module, final IComponent component, final FormErrorCollector collector) {
+  protected void checkComponentProperties(final Module module, final IComponent component, final FormErrorCollector collector) {
     for(final IProperty prop: component.getModifiedProperties()) {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {
@@ -124,7 +102,7 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
   private static boolean isSetterNonNls(final Project project, final GlobalSearchScope searchScope,
                                         final String componentClassName, final String propertyName) {
     PsiClass componentClass = PsiManager.getInstance(project).findClass(componentClassName, searchScope);
-    if (componentClass == null) {   
+    if (componentClass == null) {
       return false;
     }
     PsiMethod setter = PropertyUtil.findPropertySetter(componentClass, propertyName, false, true);
@@ -143,33 +121,12 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-      final Module module = ModuleUtil.getModuleForFile(file.getProject(), file.getVirtualFile());
-      if (module == null) {
-        return null;
-      }
-
       final PsiDirectory directory = file.getContainingDirectory();
       if (directory != null && I18nInspection.isPackageNonNls(directory.getPackage())) {
         return null;
       }
-
-      final LwRootContainer rootContainer;
-      try {
-        rootContainer = Utils.getRootContainer(file.getText(), new PsiPropertiesProvider(module));
-      }
-      catch (Exception e) {
-        return null;
-      }
-
-      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
-      FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
-        public boolean visit(final IComponent component) {
-          checkComponentProperties(module, component, collector);
-          return true;
-        }
-      });
-      return collector.result();
     }
-    return null;
+
+    return super.checkFile(file, manager, isOnTheFly);
   }
 }

@@ -57,13 +57,6 @@ public final class ErrorAnalyzer {
     @Nullable final GuiEditor editor,
     @NotNull final IRootContainer rootContainer
   ){
-    //noinspection ConstantConditions
-    LOG.assertTrue(module != null);
-    //noinspection ConstantConditions
-    LOG.assertTrue(formFile != null);
-    //noinspection ConstantConditions
-    LOG.assertTrue(rootContainer != null);
-
     // 1. Validate class to bind
     final String classToBind = rootContainer.getClassToBind();
     final PsiClass psiClass;
@@ -246,7 +239,6 @@ public final class ErrorAnalyzer {
                       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                     }
                     Collections.addAll(errorList, errorInfos);
-                    break;
                   }
                 }
                 return true;
@@ -276,9 +268,7 @@ public final class ErrorAnalyzer {
    * any error then the method returns <code>null</code>.
    */
   @Nullable
-  public static ErrorInfo getErrorForComponent(final IComponent component){
-    LOG.assertTrue(component != null);
-
+  public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){
     // Check bind to class errors
     {
       final ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
