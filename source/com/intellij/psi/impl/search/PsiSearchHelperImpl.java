@@ -68,6 +68,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
 
     SuperMethodsSearch.SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodSuperSearcher());
+    DeepestSuperMethodsSearch.DEEPEST_SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodDeepestSuperSearcher());
   }
 
   @NotNull

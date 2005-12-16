@@ -1,10 +1,10 @@
 package com.intellij.psi.impl;
 
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import gnu.trove.THashMap;
@@ -64,40 +64,15 @@ public class PsiSuperMethodImplUtil {
     return true;
   }
 
-  public static HierarchicalMethodSignature getHierarchicalMethodSignature(final PsiClass parentClass, final PsiMethod method) {
+  public static HierarchicalMethodSignatureImpl getHierarchicalMethodSignature(final PsiClass parentClass, final PsiMethod method) {
     return getSignaturesMap(parentClass).get(method.getSignature(PsiSubstitutor.EMPTY));
   }
 
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return null;
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    Map<MethodSignature, HierarchicalMethodSignatureImpl> signaturesMap = getSignaturesMap(aClass);
-    HierarchicalMethodSignatureImpl hierarchical = signaturesMap.get(method.getSignature(PsiSubstitutor.EMPTY));
-    LOG.assertTrue(hierarchical != null);
-    HierarchicalMethodSignature deepest = findDeepestSuperOrSelfSignature(hierarchical);
-    if (deepest == hierarchical) return null;
-    if (deepest != null) return deepest.getMethod();
-
-    PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
-    if (ejbDeclarations.length == 1) return ejbDeclarations[0];
-
-    return null;
+    return DeepestSuperMethodsSearch.search(method).findFirst();
   }
 
-  private static HierarchicalMethodSignature findDeepestSuperOrSelfSignature(HierarchicalMethodSignature signature) {
-    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
-
-    if (supers.size() == 1) return findDeepestSuperOrSelfSignature(supers.get(0));
-
-    for (HierarchicalMethodSignature superSignature : supers) {
-      PsiMethod superMethod = superSignature.getMethod();
-      if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        return findDeepestSuperOrSelfSignature(superSignature);
-      }
-    }
-    return signature;
-  }
 
   private static void buildMethodHierarchy(PsiClass aClass,
                                            PsiSubstitutor substitutor,
