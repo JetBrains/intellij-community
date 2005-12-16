@@ -16,76 +16,70 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.inspections.BaseFormInspection;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.inspections.StringDescriptorInspection;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class I18nFormInspection extends BaseFormInspection {
-  private static BorderProperty myBorderProperty = new BorderProperty();
-
+public class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
     super("HardCodedStringLiteral");
   }
 
-  protected void checkComponentProperties(final Module module, final IComponent component, final FormErrorCollector collector) {
-    for(final IProperty prop: component.getModifiedProperties()) {
-      Object propValue = prop.getPropertyValue(component);
-      if (propValue instanceof StringDescriptor) {
-        StringDescriptor descriptor = (StringDescriptor) propValue;
-        if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-          if (isSetterNonNls(module.getProject(),
-                             GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
-                             component.getComponentClassName(), prop.getName())) {
-            continue;
-          }
-          collector.addError(prop,
-                             CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                       JDOMUtil.escapeText(descriptor.getValue())),
-                             new EditorQuickFixProvider() {
-                               public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                                 return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
-                                                                        component, (IntrospectedProperty)prop);
-                               }
-                             });
+  protected void checkStringDescriptor(final StringDescriptorType descriptorType,
+                                       final Module module,
+                                       final IComponent component,
+                                       final IProperty prop,
+                                       final StringDescriptor descriptor,
+                                       final FormErrorCollector collector) {
+    if (isHardCodedStringDescriptor(descriptor)) {
+      if (descriptorType == StringDescriptorType.PROPERTY) {
+        if (isSetterNonNls(module.getProject(),
+                           GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
+                           component.getComponentClassName(), prop.getName())) {
+          return;
         }
-      }
-    }
 
-    if (component instanceof IContainer) {
-      final IContainer container = (IContainer) component;
-      StringDescriptor descriptor = container.getBorderTitle();
-      if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        collector.addError(myBorderProperty,
+        EditorQuickFixProvider provider = null;
+        switch (descriptorType) {
+          case PROPERTY:
+            provider = new EditorQuickFixProvider() {
+              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component,
+                                                       (IntrospectedProperty)prop);
+              }
+            };
+            break;
+
+          case BORDER:
+            provider = new EditorQuickFixProvider() {
+              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
+                                                     (RadContainer)component);
+              }
+            };
+            break;
+
+          case TAB:
+            provider = new EditorQuickFixProvider() {
+              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
+              }
+            };
+        }
+
+        collector.addError(prop,
                            CodeInsightBundle.message("inspection.i18n.message.in.form",
                                                      JDOMUtil.escapeText(descriptor.getValue())),
-                           new EditorQuickFixProvider() {
-                             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                               return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), (RadContainer)container);
-                             }
-                           });
-      }
-    }
-
-    if (component.getParent() instanceof ITabbedPane) {
-      ITabbedPane parentTabbedPane = (ITabbedPane) component.getParent();
-      final StringDescriptor descriptor = parentTabbedPane.getTabTitle(component);
-      if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        collector.addError(null,
-                           CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                     JDOMUtil.escapeText(descriptor.getValue())),
-                           new EditorQuickFixProvider() {
-                             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                               return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
-                             }
-                           });
+                           provider);
       }
     }
   }

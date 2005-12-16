@@ -131,6 +131,10 @@ public abstract class LwComponent implements IComponent{
     return myParent;
   }
 
+  public IContainer getParentContainer() {
+    return myParent;
+  }
+
   protected final void setParent(final LwContainer parent){
     myParent = parent;
   }

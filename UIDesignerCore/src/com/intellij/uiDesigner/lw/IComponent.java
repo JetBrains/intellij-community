@@ -34,5 +34,5 @@ public interface IComponent {
 
   IProperty[] getModifiedProperties();
 
-  IContainer getParent();
+  IContainer getParentContainer();
 }
