@@ -3,8 +3,11 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -13,12 +16,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +35,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -47,14 +58,9 @@ final class StringEditorDialog extends DialogWrapper{
   StringEditorDialog(
     final Component parent,
     final StringDescriptor descriptor,
-    final Module module
+    @NotNull final Module module
   ) {
     super(parent, true);
-
-    if (module == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("module cannot be null");
-    }
 
     myModule = module;
 
@@ -66,7 +72,7 @@ final class StringEditorDialog extends DialogWrapper{
   }
 
   protected String getDimensionServiceKey() {
-    return this.getClass().getName();
+    return getClass().getName();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -78,10 +84,69 @@ final class StringEditorDialog extends DialogWrapper{
     }
   }
 
+  @Override protected void doOKAction() {
+    if (myForm.myRbResourceBundle.isSelected()) {
+      final StringDescriptor descriptor = getDescriptor();
+      if (descriptor != null) {
+        checkSaveModifiedValue(descriptor);
+      }
+    }
+    super.doOKAction();
+  }
+
+  private void checkSaveModifiedValue(final StringDescriptor descriptor) {
+    final PropertiesFile propFile = PropertiesUtil.getPropertiesFile(descriptor.getBundleName(), myModule);
+    if (propFile != null) {
+      final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
+      final String editedValue = myForm.myResourceBundleCard.myTfValue.getText();
+      if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
+        final Collection<PsiReference> references = new ArrayList<PsiReference>();
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          new Runnable() {
+            public void run() {
+             references.addAll(ReferencesSearch.search(propertyByKey).findAll());
+            }
+          }, UIDesignerBundle.message("edit.text.searching.references"), false, myModule.getProject()
+        );
+
+        if (references.size() > 1) {
+          final int rc = Messages.showYesNoDialog(myModule.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
+                                                                                                  propertyByKey.getKey(), references.size()),
+                                                  UIDesignerBundle.message("edit.text.multiple.usages.title"), Messages.getWarningIcon());
+          if (rc != OK_EXIT_CODE) {
+            return;
+          }
+        }
+        final ReadonlyStatusHandler.OperationStatus operationStatus =
+          ReadonlyStatusHandler.getInstance(myModule.getProject()).ensureFilesWritable(propFile.getVirtualFile());
+        if (operationStatus.hasReadonlyFiles()) {
+          return;
+        }
+        CommandProcessor.getInstance().executeCommand(
+          myModule.getProject(),
+          new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  try {
+                    propertyByKey.setValue(editedValue);
+                  }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
+                  }
+                }
+              });
+            }
+          }, null, null);
+      }
+    }
+  }
+
   /**
    * @return edited descriptor. If initial descriptor was <code>null</code>
    * and user didn't change anything then this method returns <code>null</code>.
    */
+  @Nullable
   StringDescriptor getDescriptor(){
     if(myForm.myRbString.isSelected()){ // plain value
       final String value = myForm.myStringCard.myTfValue.getText();
@@ -283,8 +348,7 @@ final class StringEditorDialog extends DialogWrapper{
       );
     }
 
-    public void setDescriptor(final StringDescriptor descriptor){
-      LOG.assertTrue(descriptor != null);
+    public void setDescriptor(@NotNull final StringDescriptor descriptor){
       final String key = descriptor.getKey();
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
