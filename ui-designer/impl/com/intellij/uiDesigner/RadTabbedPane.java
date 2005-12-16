@@ -5,6 +5,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.ITabbedPane;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -23,7 +25,7 @@ import java.awt.event.MouseEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class RadTabbedPane extends RadContainer{
+public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadTabbedPane");
   /**
    * value: HashMap<Integer, StringDescriptor>
@@ -229,6 +231,10 @@ public final class RadTabbedPane extends RadContainer{
     if (index >= 0) {
       tabbedPane.setSelectedIndex(index);
     }
+  }
+
+  public StringDescriptor getTabTitle(IComponent component) {
+    return getChildTitle((RadComponent) component);
   }
 
   private final class MyTitleProperty extends Property{

@@ -33,4 +33,6 @@ public interface IComponent {
   String getComponentClassName();
 
   IProperty[] getModifiedProperties();
+
+  IContainer getParent();
 }

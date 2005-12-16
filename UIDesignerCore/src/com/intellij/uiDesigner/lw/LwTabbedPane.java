@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class LwTabbedPane extends LwContainer{
+public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   public LwTabbedPane() throws Exception{
     super(JTabbedPane.class.getName());
   }
@@ -74,5 +74,11 @@ public final class LwTabbedPane extends LwContainer{
       }
       myTitle = title;
     }
+  }
+
+  public StringDescriptor getTabTitle(IComponent component) {
+    LwComponent lwComponent = (LwComponent) component;
+    LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) lwComponent.getCustomLayoutConstraints();
+    return constraints == null ? null : constraints.myTitle;
   }
 }

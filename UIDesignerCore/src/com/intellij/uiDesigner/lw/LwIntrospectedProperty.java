@@ -65,4 +65,8 @@ public abstract class LwIntrospectedProperty implements IProperty {
    *
    */
   public abstract Object read(Element element) throws Exception;
+
+  public Object getPropertyValue(final IComponent component) {
+    return ((LwComponent) component).getPropertyValue(this);
+  }
 }

@@ -15,12 +15,9 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.shared.BorderType;
-
-public interface IContainer extends IComponent {
-  int getComponentCount();
-  IComponent getComponent(int index);
-  boolean isXY();
-  StringDescriptor getBorderTitle();
-  BorderType getBorderType();
+/**
+ * @author yole
+ */
+public interface ITabbedPane extends IContainer {
+  StringDescriptor getTabTitle(IComponent component);
 }

@@ -25,7 +25,7 @@ import java.util.List;/**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-                      public abstract class LwComponent implements IComponent{
+public abstract class LwComponent implements IComponent{
   /**
    *  Component's ID. Cannot be null.
    */

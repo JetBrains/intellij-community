@@ -4,7 +4,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.i18n.I18nInspection;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.FileCheckingInspection;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -19,17 +21,16 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
+import com.intellij.uiDesigner.inspections.FormEditorErrorCollector;
+import com.intellij.uiDesigner.inspections.FormErrorCollector;
+import com.intellij.uiDesigner.inspections.FormFileErrorCollector;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yole
@@ -48,52 +49,67 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
 
   @Nullable
   public ErrorInfo[] checkComponent(GuiEditor editor, RadComponent component) {
-    final Palette palette = Palette.getInstance(editor.getProject());
-    IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
-    List<ErrorInfo> result = null;
-    for(IntrospectedProperty prop: props) {
-      if (component.isMarkedAsModified(prop) && prop instanceof IntroStringProperty) {
-        StringDescriptor descriptor = (StringDescriptor) prop.getValue(component);
+    FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
+
+    Module module = editor.getModule();
+    checkComponentProperties(module, component, collector);
+
+    return collector.result();
+  }
+
+  private void checkComponentProperties(final Module module, final IComponent component, final FormErrorCollector collector) {
+    for(final IProperty prop: component.getModifiedProperties()) {
+      Object propValue = prop.getPropertyValue(component);
+      if (propValue instanceof StringDescriptor) {
+        StringDescriptor descriptor = (StringDescriptor) propValue;
         if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-          if (isSetterNonNls(editor.getProject(),
-                             GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(editor.getModule()),
+          if (isSetterNonNls(module.getProject(),
+                             GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
                              component.getComponentClassName(), prop.getName())) {
             continue;
           }
-          if (result == null) {
-            result = new ArrayList<ErrorInfo>();
-          }
-          result.add(new ErrorInfo(prop.getName(), CodeInsightBundle.message("inspection.i18n.message.general"),
-                                   new QuickFix[] { new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component, prop) }));
+          collector.addError(prop,
+                             CodeInsightBundle.message("inspection.i18n.message.in.form",
+                                                       JDOMUtil.escapeText(descriptor.getValue())),
+                             new EditorQuickFixProvider() {
+                               public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                                 return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
+                                                                        component, (IntrospectedProperty)prop);
+                               }
+                             });
         }
       }
     }
 
-    if (component instanceof RadContainer) {
-      RadContainer container = (RadContainer) component;
+    if (component instanceof IContainer) {
+      final IContainer container = (IContainer) component;
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        if (result == null) {
-          result = new ArrayList<ErrorInfo>();
-        }
-        result.add(new ErrorInfo(myBorderProperty.getName(), CodeInsightBundle.message("inspection.i18n.message.general"),
-                             new QuickFix[] { new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), container) }));
+        collector.addError(myBorderProperty,
+                           CodeInsightBundle.message("inspection.i18n.message.in.form",
+                                                     JDOMUtil.escapeText(descriptor.getValue())),
+                           new EditorQuickFixProvider() {
+                             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                               return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), (RadContainer)container);
+                             }
+                           });
       }
     }
 
-    if (component.getParent() instanceof RadTabbedPane) {
-      RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
-      final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
+    if (component.getParent() instanceof ITabbedPane) {
+      ITabbedPane parentTabbedPane = (ITabbedPane) component.getParent();
+      final StringDescriptor descriptor = parentTabbedPane.getTabTitle(component);
       if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        if (result == null) {
-          result = new ArrayList<ErrorInfo>();
-        }
-        result.add(new ErrorInfo(null, CodeInsightBundle.message("inspection.i18n.message.general"),
-                             new QuickFix[] { new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component) }));
+        collector.addError(null,
+                           CodeInsightBundle.message("inspection.i18n.message.in.form",
+                                                     JDOMUtil.escapeText(descriptor.getValue())),
+                           new EditorQuickFixProvider() {
+                             public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+                               return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
+                             }
+                           });
       }
     }
-
-    return result == null ? null : result.toArray(new ErrorInfo[result.size()]);
   }
 
   private boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
@@ -145,60 +161,15 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
         return null;
       }
 
-      List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-      checkGuiFormContainer(file, rootContainer, problems);
-      if (problems.size() > 0) {
-        return problems.toArray(new ProblemDescriptor [problems.size()]);
-      }
+      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
+      FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
+        public boolean visit(final IComponent component) {
+          checkComponentProperties(module, component, collector);
+          return true;
+        }
+      });
+      return collector.result();
     }
     return null;
-  }
-
-  private void checkGuiFormContainer(final PsiFile file, final LwContainer container, final List<ProblemDescriptor> problems) {
-    InspectionManager manager = InspectionManager.getInstance(file.getProject());
-    for(int i=0; i<container.getComponentCount(); i++) {
-      LwComponent component = (LwComponent)container.getComponent(i);
-
-      LwIntrospectedProperty[] props = component.getAssignedIntrospectedProperties();
-      for(LwIntrospectedProperty prop: props) {
-        if (prop instanceof LwRbIntroStringProperty) {
-          StringDescriptor descriptor = (StringDescriptor) component.getPropertyValue(prop);
-          if (isHardCodedStringDescriptor(descriptor)) {
-            if (isSetterNonNls(file.getProject(), file.getResolveScope(), component.getComponentClassName(), prop.getName())) {
-              continue;
-            }
-
-            problems.add(manager.createProblemDescriptor(file,
-                                                         CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                                                   JDOMUtil.escapeText(descriptor.getValue())),
-                                                         (LocalQuickFix) null,
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          }
-        }
-      }
-
-      if (container instanceof LwTabbedPane) {
-        LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) component.getCustomLayoutConstraints();
-        if (constraints != null && isHardCodedStringDescriptor(constraints.myTitle)) {
-          problems.add(manager.createProblemDescriptor(file, CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                                                       JDOMUtil.escapeText(constraints.myTitle.getValue())),
-                                                       (LocalQuickFix) null,
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-        }
-      }
-
-      if (component instanceof LwContainer) {
-        final LwContainer childContainer = (LwContainer)component;
-        final StringDescriptor borderTitle = childContainer.getBorderTitle();
-        if (borderTitle != null && isHardCodedStringDescriptor(borderTitle)) {
-          problems.add(manager.createProblemDescriptor(file,
-                                                       CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                                                 JDOMUtil.escapeText(borderTitle.getValue())),
-                                                       (LocalQuickFix) null,
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-        }
-        checkGuiFormContainer(file, childContainer, problems);
-      }
-    }
   }
 }

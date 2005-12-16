@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.IComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,10 @@ public abstract class Property implements IProperty {
   @NotNull
   public final String getName() {
     return myName;
+  }
+
+  public Object getPropertyValue(final IComponent component) {
+    return getValue((RadComponent) component);
   }
 
   /**
