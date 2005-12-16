@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
@@ -15,7 +16,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAct
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.ASTNode;
@@ -162,8 +167,23 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (myResult == null) {
       if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
         if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
+          final String name = tag.getName();
+
+          InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+          HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME)).getTool();
+          reportOneTagProblem(
+            tag,
+            name,
+            XmlErrorMessages.message("unknown.html.tag", name),
+            null,
+            HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME),
+            inspection,
+            XmlEntitiesInspection.UNKNOWN_TAG
+          );
+
           return;
         }
+
         checkReferences(tag, QuickFixProvider.NULL);
       }
     }
@@ -365,9 +385,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    final HighlightDisplayKey key = HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME);
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
-    if (requiredAttributes != null && profile.isToolEnabled(key)) {
+    if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
         if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
           if (!(elementDescriptor instanceof JspElementDescriptor) ||
@@ -376,7 +394,17 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             final InsertRequiredAttributeIntention insertRequiredAttributeIntention = new InsertRequiredAttributeIntention(
                 tag, attrName, null);
             final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-            addElementsForTag(tag, localizedMessage, profile.getErrorLevel(key) == HighlightDisplayLevel.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.ERROR, insertRequiredAttributeIntention);
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+            RequiredAttributesInspection inspection = (RequiredAttributesInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME)).getTool();
+            reportOneTagProblem(
+              tag,
+              attrName,
+              localizedMessage,
+              insertRequiredAttributeIntention,
+              HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
+              inspection,
+              XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
+            );
           }
         }
       }
@@ -385,6 +413,51 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (elementDescriptor instanceof Validator) {
       ((Validator)elementDescriptor).validate(tag,this);
     }
+  }
+
+  private void reportOneTagProblem(final XmlTag tag,
+                                   final String name,
+                                   final String localizedMessage,
+                                   final IntentionAction basicIntention,
+                                   final HighlightDisplayKey key,
+                                   final XmlEntitiesInspection inspection,
+                                   final int type) {
+    boolean htmlTag = false;
+
+    if (tag instanceof HtmlTag) {
+      htmlTag = true;
+      if(isAdditionallyDeclared(inspection.getAdditionalEntries(type), name)) return;
+    }
+
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+    final IntentionAction intentionAction = inspection.getIntentionAction(tag, name, type);
+    if (htmlTag && profile.isToolEnabled(key)) {
+      addElementsForTagWithManyQuickFixes(
+        tag,
+        localizedMessage,
+        profile.getErrorLevel(key) == HighlightDisplayLevel.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING,
+        intentionAction,
+        new EditInspectionToolsSettingsAction(key),
+        basicIntention);
+    } else if (!htmlTag) {
+      addElementsForTag(
+        tag,
+        localizedMessage,
+        HighlightInfoType.WRONG_REF,
+        basicIntention
+      );
+    }
+  }
+
+  private static boolean isAdditionallyDeclared(final String additional, final String name) {
+    StringTokenizer tokenizer = new StringTokenizer(additional, ", ");
+    while (tokenizer.hasMoreTokens()) {
+      if (name.equals(tokenizer.nextToken())) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private void checkDirective(final String name, final XmlTag tag) {
@@ -486,7 +559,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (attributeDescriptor == null) {
       final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
-      reportAttributeProblem(tag, attribute, localizedMessage);
+      reportAttributeProblem(tag, name, attribute, localizedMessage);
     }
     else {
       checkDuplicateAttribute(tag, attribute);
@@ -496,21 +569,46 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           !HtmlUtil.isSingleHtmlAttribute(attribute.getName())
          ) {
         final String localizedMessage = XmlErrorMessages.message("empty.attribute.is.not.allowed", name);
-        reportAttributeProblem(tag, attribute, localizedMessage);
+        reportAttributeProblem(tag, name, attribute, localizedMessage);
       }
     }
   }
 
   private void reportAttributeProblem(final XmlTag tag,
+                                      final String localName,
                                       final XmlAttribute attribute,
                                       final String localizedMessage) {
-    if (!(tag instanceof HtmlTag)) {
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-        HighlightInfoType.WRONG_REF,
-        XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
-        localizedMessage
-      );
-      addToResults(highlightInfo);
+    final HighlightInfoType tagProblemInfoType;
+    IntentionAction[] quickFixes;
+
+    if (tag instanceof HtmlTag) {
+      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+      HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)(((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME))).getTool();
+      if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return;
+      final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
+      if (!inspectionProfile.isToolEnabled(key)) return;
+
+      quickFixes = new IntentionAction[] {
+        inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
+        new EditInspectionToolsSettingsAction(key)
+      };
+
+      tagProblemInfoType = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
+    } else {
+      tagProblemInfoType = HighlightInfoType.WRONG_REF; quickFixes = null;
+    }
+
+    final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+      tagProblemInfoType,
+      XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
+      localizedMessage
+    );
+    addToResults(highlightInfo);
+
+    if (quickFixes != null) {
+      for (IntentionAction quickFix : quickFixes) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, null);
+      }
     }
   }
 
