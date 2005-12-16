@@ -13,6 +13,8 @@ import java.util.Iterator;
  * @author max
  */
 public class EmptyQuery<R> implements Query<R> {
+  private static final EmptyQuery EMPTY_QUERY_INSTANCE = new EmptyQuery();
+
   public Filter<R> getFilter() {
     return null;
   }
@@ -40,5 +42,9 @@ public class EmptyQuery<R> implements Query<R> {
 
   public Iterator<R> iterator() {
     return findAll().iterator();
+  }
+
+  public static <T> Query<T> getEmptyQuery() {
+    return (Query<T>) EMPTY_QUERY_INSTANCE;
   }
 }

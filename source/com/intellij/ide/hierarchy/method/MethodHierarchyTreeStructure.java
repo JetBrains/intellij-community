@@ -114,9 +114,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       return containingClass;
     }
 
-    final boolean isContainingClassesMethod = MethodHierarchyUtil.findBaseMethodInClass(method, superClass, true) != null;
-
-    if (!isContainingClassesMethod) {
+    if (MethodHierarchyUtil.findBaseMethodInClass(method, superClass, true) == null) {
       for (final PsiClass anInterface : containingClass.getInterfaces()) {
         if (MethodHierarchyUtil.findBaseMethodInClass(method, anInterface, true) != null) {
           return anInterface;

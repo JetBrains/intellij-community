@@ -1,13 +1,11 @@
 package com.intellij.psi.impl;
 
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
-import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -50,48 +48,10 @@ public class PsiSuperMethodImplUtil {
   }
 
   private static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
-                                                                                           PsiClass parentClass, boolean allowStaticMethod) {
-    final boolean myStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
+                                                                                           PsiClass parentClass,
+                                                                                           boolean allowStaticMethod) {
 
-    final EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
-    if (role instanceof EjbImplMethodRole) {
-      final PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
-      for (PsiMethod ejbDeclaration : ejbDeclarations) {
-        result.add(MethodSignatureBackedByPsiMethod.create(ejbDeclaration, PsiSubstitutor.EMPTY));
-      }
-    }
-
-    Map<MethodSignature, HierarchicalMethodSignatureImpl> signaturesMap = getSignaturesMap(parentClass);
-    HierarchicalMethodSignature signature = signaturesMap.get(method.getSignature(PsiSubstitutor.EMPTY));
-    PsiResolveHelper helper = method.getManager().getResolveHelper();
-    if (signature == null) {
-      return result;
-    }
-    PsiMethod hisMethod = signature.getMethod();
-    if (parentClass.equals(hisMethod.getContainingClass())) {
-      List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
-      for (HierarchicalMethodSignature superSignature : superSignatures) {
-        PsiMethod superMethod = superSignature.getMethod();
-        boolean hisStatic = superMethod.hasModifierProperty(PsiModifier.STATIC);
-        if (myStatic != hisStatic) continue;
-        if (allowStaticMethod || !hisStatic) {
-          if (helper.isAccessible(superMethod, method, null)) {
-            result.add(superSignature);
-          }
-        }
-      }
-    }
-    else {
-      if (helper.isAccessible(hisMethod, method, null)) {
-        boolean hisStatic = hisMethod.hasModifierProperty(PsiModifier.STATIC);
-        if (hisStatic == myStatic && (allowStaticMethod || !hisStatic)) {
-          result.add(signature);
-        }
-      }
-    }
-
-    return result;
+    return new ArrayList<MethodSignatureBackedByPsiMethod>(SuperMethodsSearch.search(method, parentClass, true, allowStaticMethod).findAll());
   }
 
   private static boolean canHaveSuperMethod(PsiMethod method, boolean checkAccess, boolean allowStaticMethod) {
@@ -102,6 +62,10 @@ public class PsiSuperMethodImplUtil {
     if (parentClass == null) return false;
     if ("java.lang.Object".equals(parentClass.getQualifiedName())) return false;
     return true;
+  }
+
+  public static HierarchicalMethodSignature getHierarchicalMethodSignature(final PsiClass parentClass, final PsiMethod method) {
+    return getSignaturesMap(parentClass).get(method.getSignature(PsiSubstitutor.EMPTY));
   }
 
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
