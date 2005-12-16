@@ -36,11 +36,14 @@ public class PsiImplUtil {
   }
 
   public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, String attributeName) {
+    if ("value".equals(attributeName)) attributeName = null;
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
-      if (ObjectUtils.equals(attribute.getName(), attributeName)) return attribute.getValue();
+      final String name = attribute.getName();
+      if (ObjectUtils.equals(name, attributeName)
+          || attributeName == null && name.equals("value")) return attribute.getValue();
     }
-
+    if (attributeName == null) attributeName = "value";
     PsiElement resolved = annotation.getNameReferenceElement().resolve();
     if (resolved != null) {
       PsiMethod[] methods = ((PsiClass)resolved).getMethods();
