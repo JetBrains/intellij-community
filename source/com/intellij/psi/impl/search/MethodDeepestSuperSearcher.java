@@ -29,7 +29,7 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
     LOG.assertTrue(hierarchical != null);
     HierarchicalMethodSignature deepest = findDeepestSuperOrSelfSignature(hierarchical);
     if (deepest == hierarchical) return true;
-    if (deepest != null) return consumer.process(method);
+    if (deepest != null) return consumer.process(deepest.getMethod());
 
     return true;
   }
