@@ -92,13 +92,13 @@ outer:
             final CandidateInfo conflict = newConflictsArray[j];
             if (conflict == method) break;
             switch(isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict)){
-              case Specifics.TRUE:
+              case TRUE:
                 conflicts.remove(conflict);
                 break;
-              case Specifics.FALSE:
+              case FALSE:
                 conflicts.remove(method);
                 continue;
-              case Specifics.CONFLICT:
+              case CONFLICT:
                 break;
             }
           }
@@ -141,16 +141,18 @@ outer:
     PsiClass innerMostClass = null;
     for (CandidateInfo info : conflicts) {
       if (!(info.getCurrentFileResolveScope() instanceof PsiClass)) return;
-      final PsiClass containingClass = ((PsiMember)info.getElement()).getContainingClass();
-      if (innerMostClass == null || PsiTreeUtil.isAncestor(innerMostClass, containingClass, true)) {
-        innerMostClass = containingClass;
+      final PsiClass resolveScope = (PsiClass)info.getCurrentFileResolveScope();
+      if (innerMostClass == null || PsiTreeUtil.isAncestor(innerMostClass, resolveScope, true)) {
+        innerMostClass = resolveScope;
       }
     }
 
+    if (innerMostClass == null) return;
+
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
       CandidateInfo info = iterator.next();
-      final PsiClass containingClass = ((PsiMember)info.getElement()).getContainingClass();
-      if (PsiTreeUtil.isAncestor(containingClass, innerMostClass, true)) {
+      final PsiElement resolveScope = info.getCurrentFileResolveScope();
+      if (resolveScope != innerMostClass) {
         iterator.remove();
       }
     }
@@ -181,10 +183,10 @@ outer:
     return (visible ? 1 : 0) << 1 | (available ? 1 : 0);
   }
 
-  private final class Specifics {
-    public static final int FALSE = 0;
-    public static final int TRUE = 1;
-    public static final int CONFLICT = 2;
+  private enum Specifics {
+    FALSE,
+    TRUE,
+    CONFLICT
   }
 
   private boolean checkOverriding(final CandidateInfo one, final CandidateInfo two){
@@ -204,7 +206,7 @@ outer:
     return Comparing.equal(method1.getReturnType(), method2.getReturnType());
   }
 
-  private int isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
+  private Specifics isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
     PsiMethod method1 = info1.getElement();
     PsiMethod method2 = info2.getElement();
     final PsiClass class1 = method1.getContainingClass();
