@@ -28,8 +28,8 @@ public class JUnitProcessHandler extends OSProcessHandler {
 
   public JUnitProcessHandler(final Process process, final String commandLine, final Charset charset) {
     super(process, commandLine);
-    myOut = new Extractor(getProcess().getInputStream());
-    myErr = new Extractor(getProcess().getErrorStream());
+    myOut = new Extractor(getProcess().getInputStream(), charset);
+    myErr = new Extractor(getProcess().getErrorStream(), charset);
     myCharset = charset;
   }
 
@@ -67,8 +67,8 @@ public class JUnitProcessHandler extends OSProcessHandler {
   private class Extractor extends PacketExtractorBase {
     private final SegmentedInputStream myStream;
 
-    public Extractor(final InputStream stream) {
-      myStream = new SegmentedInputStream(stream);
+    public Extractor(final InputStream stream, final Charset charset) {
+      myStream = new SegmentedInputStream(stream, charset);
     }
 
     public void setPacketProcessor(final PacketProcessor packetProcessor) {

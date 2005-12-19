@@ -8,14 +8,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 public class SegmentedInputStream extends InputStream implements SegmentedStream {
   private PushReader mySourceStream;
   private PacketProcessor myEventsDispatcher;
   private int myStartupPassed = 0;
 
-  public SegmentedInputStream(final InputStream sourceStream) {
-    mySourceStream = new PushReader(new BufferedReader(new InputStreamReader(sourceStream)));
+  public SegmentedInputStream(final InputStream sourceStream, final Charset charset) {
+    mySourceStream = new PushReader(new BufferedReader(new InputStreamReader(sourceStream, charset)));
   }
 
   public int read() throws IOException {
