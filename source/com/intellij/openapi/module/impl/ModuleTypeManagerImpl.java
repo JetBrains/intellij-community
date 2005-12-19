@@ -33,11 +33,10 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
@@ -88,7 +87,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private void registerDefaultTypes() {
     ModuleType.JAVA = new JavaModuleType();
     ModuleType.WEB = new WebModuleType();
-    ModuleType.EJB = new EjbModuleType();
     ModuleType.J2EE_APPLICATION = new J2EEApplicationModuleType();
 
     registerModuleType(ModuleType.JAVA);
