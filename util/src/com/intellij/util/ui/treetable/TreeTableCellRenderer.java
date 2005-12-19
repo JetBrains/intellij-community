@@ -62,6 +62,8 @@ public class TreeTableCellRenderer implements TableCellRenderer {
       table.setToolTipText(((JComponent)component).getToolTipText());
     }
 
+    myTree.setCellFocused(hasFocus);
+
     return myTree;
   }
 

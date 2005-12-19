@@ -41,7 +41,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -407,7 +406,7 @@ import java.util.*;
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 
-  protected Document getDocument(final XmlFile file) {
+  protected Document getDocument(final PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 }

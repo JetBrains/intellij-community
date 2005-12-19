@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -218,11 +219,18 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
   void releaseEditor(final Editor editor) {
     remove(editor.getComponent());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      });
+    final Application application = ApplicationManager.getApplication();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+    };
+
+    if (application.isUnitTestMode()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable);
+    }
   }
 
   public void addNotify() {
@@ -386,6 +394,17 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
     else {
       super.requestFocus();
+    }
+  }
+
+  public boolean requestFocusInWindow() {
+    if (myEditor != null) {
+      final boolean b = myEditor.getContentComponent().requestFocusInWindow();
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      return b;
+    }
+    else {
+      return super.requestFocusInWindow();
     }
   }
 

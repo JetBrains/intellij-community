@@ -33,7 +33,7 @@ public class TreeTableTree extends Tree{
   private Border myBorder;
   private final TreeTable myTreeTable;
   protected int myVisibleRow;
-
+  private boolean myCellFocused;
 
 
   public TreeTableTree(TreeModel model, TreeTable treeTable) {
@@ -93,15 +93,17 @@ public class TreeTableTree extends Tree{
     super.processKeyEvent(e);
   }
 
+  public void setCellFocused(boolean focused) {
+    myCellFocused = focused;
+  }
+
   public void setCellRenderer(final TreeCellRenderer x) {
     super.setCellRenderer(
         new TreeCellRenderer() {
           public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                         boolean selected, boolean expanded,
                                                         boolean leaf, int row, boolean hasFocus) {
-            hasFocus = SwingUtilities.findFocusOwner(myTreeTable)!=null
-                && row == myTreeTable.getSelectedRow();
-            return x.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+            return x.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, myCellFocused);
           }
         }
     );
