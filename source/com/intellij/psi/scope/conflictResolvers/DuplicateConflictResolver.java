@@ -10,6 +10,7 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,7 +22,8 @@ import java.util.Map;
 public class DuplicateConflictResolver implements PsiConflictResolver{
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     final Map<Object,PsiElement> uniqueItems = new HashMap<Object, PsiElement>();
-    for (CandidateInfo info : conflicts) {
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
+      CandidateInfo info = iterator.next();
       final PsiElement element = info.getElement();
       Object key;
       if (element instanceof PsiMethod) {
@@ -35,7 +37,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
         uniqueItems.put(key, element);
       }
       else {
-        conflicts.remove(info);
+        iterator.remove();
       }
     }
     if(uniqueItems.size() == 1) return conflicts.get(0);
