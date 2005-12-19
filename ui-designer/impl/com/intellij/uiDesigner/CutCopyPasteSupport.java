@@ -42,7 +42,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   public boolean isCopyEnabled(final DataContext dataContext) {
-    return FormEditingUtil.getSelectedComponents(myEditor).size() > 0;
+    return FormEditingUtil.getSelectedComponents(myEditor).size() > 0 && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
   public void performCopy(final DataContext dataContext) {
@@ -80,7 +80,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   public boolean isPasteEnabled(final DataContext dataContext) {
-    return getSerializedComponents() != null;
+    return getSerializedComponents() != null && !myEditor.getInplaceEditingLayer().isEditing();
   }
 
   public void performPaste(final DataContext dataContext) {

@@ -63,11 +63,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private boolean myInsideChange;
 
-  public InplaceEditingLayer(final GuiEditor editor) {
-    if (editor == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
+  public InplaceEditingLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
     myFocusWatcher = new MyFocusWatcher();
@@ -103,7 +99,7 @@ public final class InplaceEditingLayer extends JComponent{
   /**
    * @return whether the layer is in "editing" state or not
    */
-  boolean isEditing(){
+  public boolean isEditing(){
     return myInplaceComponent != null;
   }
 
