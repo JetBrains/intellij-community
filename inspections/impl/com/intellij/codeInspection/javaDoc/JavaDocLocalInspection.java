@@ -10,9 +10,12 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
+import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -26,6 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -206,15 +211,15 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                                                                                                     tags,
                                                                                                     TOP_LEVEL_CLASS_OPTIONS));
       tags = new String[]{"@return", "@param", InspectionsBundle.message("inspection.javadoc.throws.or.exception.option")};
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title1"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
-                                                                                                     tags,
-                                                                                                     METHOD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title2"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
-                                                                                                     null,
-                                                                                                     FIELD_OPTIONS));
-      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title3"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
-                                                                                                     null,
-                                                                                                     INNER_CLASS_OPTIONS));
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.method"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+                                                                                                           tags,
+                                                                                                           METHOD_OPTIONS));
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.field"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+                                                                                                          null,
+                                                                                                          FIELD_OPTIONS));
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.inner.class"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
+                                                                                                                null,
+                                                                                                                INNER_CLASS_OPTIONS));
       add(tabs, gc);
 
       final JCheckBox checkBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.deprecated"),
@@ -266,11 +271,57 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return InspectionManager.getInstance(element.getProject()).createProblemDescriptor(element, template, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, LocalQuickFix fix) {
-    return InspectionManager.getInstance(element.getProject()).createProblemDescriptor(element, template, new LocalQuickFix []{fix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, @NotNull LocalQuickFix fix) {
+    return InspectionManager.getInstance(element.getProject()).createProblemDescriptor(element, template, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
+  private static class AddMissingTagFix implements LocalQuickFix {
+    private final String myTag;
+    private final String myValue;
 
+    public AddMissingTagFix(@NonNls String tag, String value) {
+      myTag = tag;
+      myValue = value;
+    }
+    public AddMissingTagFix(String tag) {
+      this(tag, "");
+    }
+
+    public String getName() {
+      return InspectionsBundle.message("inspection.javadoc.problem.add.tag", myTag);
+    }
+
+    public void applyFix(Project project, ProblemDescriptor descriptor) {
+      PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      try {
+        PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
+        PsiDocComment docComment = owner.getDocComment();
+        PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
+        PsiElement addedTag = docComment.add(tag);
+        moveCaretTo(addedTag);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
+    private void moveCaretTo(final PsiElement newCaretPosition) {
+      Project project = newCaretPosition.getProject();
+      final PsiFile psiFile = newCaretPosition.getContainingFile();
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {
+        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (file == psiFile) {
+          editor.getCaretModel().moveToOffset(newCaretPosition.getTextRange().getEndOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        }
+      }
+    }
+
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
+    }
+  }
   @Nullable
   public ProblemDescriptor[] checkClass(PsiClass psiClass, InspectionManager manager, boolean isOnTheFly) {
     if (psiClass instanceof PsiAnonymousClass) return null;
@@ -287,65 +338,53 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     PsiDocTag[] tags = docComment.getTags();
+    @NonNls String[] tagsToCheck = {"author", "version", "since"};
+    @NonNls String[] absentDescriptionKeys = {
+      "inspection.javadoc.problem.missing.author.description",
+      "inspection.javadoc.problem.missing.version.description",
+      "inspection.javadoc.problem.missing.since.description"};
 
-    boolean isAuthorRequired = isTagRequired(psiClass, "author");
-    boolean isVersionRequired = isTagRequired(psiClass, "version");
-    boolean isSinceRequired = isTagRequired(psiClass, "since");
+    boolean[] isTagRequired = new boolean[tagsToCheck.length];
+    boolean[] isTagPresent = new boolean[tagsToCheck.length];
 
-    boolean isAuthorAbsent = true;
-    boolean isVersionAbsent = true;
-    boolean isSinceAbsent = true;
+    boolean someTagsAreRequired = false;
+    for (int i = 0; i < tagsToCheck.length; i++) {
+      final String tag = tagsToCheck[i];
+      someTagsAreRequired |= isTagRequired[i] = isTagRequired(psiClass, tag);
+    }
 
-    if (isAuthorRequired || isVersionRequired) {
-      for (int i = 0; i < tags.length && (isAuthorAbsent || isVersionAbsent || isSinceAbsent); i++) {
-        PsiDocTag tag = tags[i];
-        if ("author".equals(tag.getName())) isAuthorAbsent = false;
-        if ("version".equals(tag.getName())) isVersionAbsent = false;
-        if ("since".equals(tag.getName())) isSinceAbsent = false;
+    if (someTagsAreRequired) {
+      for (PsiDocTag tag : tags) {
+        String tagName = tag.getName();
+        for (int i = 0; i < tagsToCheck.length; i++) {
+          final String tagToCheck = tagsToCheck[i];
+          if (tagToCheck.equals(tagName)) {
+            isTagPresent[i] = true;
+          }
+        }
       }
     }
 
     ArrayList<ProblemDescriptor> problems = null;
 
-
-    if (isAuthorRequired && isAuthorAbsent) {
-      problems = new ArrayList<ProblemDescriptor>(2);
-      problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor2", "<code>@author</code>")));
+    for (int i = 0; i < tagsToCheck.length; i++) {
+      final String tagToCheck = tagsToCheck[i];
+      if (isTagRequired[i] && !isTagPresent[i]) {
+        problems = new ArrayList<ProblemDescriptor>(2);
+        ProblemDescriptor descriptor = createMissingTagDescriptor(elementToHighlight, tagToCheck);
+        problems.add(descriptor);
+      }
     }
-
-    if (isVersionRequired && isVersionAbsent) {
-      if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-      problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor2", "<code>@version</code>")));
-    }
-
-    if (isSinceRequired && isSinceAbsent) {
-      if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-      problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor2", "<code>@since</code>")));
-    }
-
     problems = checkForPeriodInDoc(docComment, docComment, problems);
 
     for (PsiDocTag tag : tags) {
-      if ("author".equals(tag.getName())) {
-        if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
+      for (int i = 0; i < tagsToCheck.length; i++) {
+        final String tagToCheck = tagsToCheck[i];
+        if (tagToCheck.equals(tag.getName()) && JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-          problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor5")));
+          problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message(absentDescriptionKeys[i])));
         }
       }
-      else
-        if ("version".equals(tag.getName())) {
-          if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
-            if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-            problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor6")));
-          }
-        }
-        else
-          if ("since".equals(tag.getName())) {
-            if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
-              if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-              problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor7")));
-            }
-          }
     }
 
     problems = checkDuplicateTags(tags, problems);
@@ -448,15 +487,16 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     if (isReturnRequired && isReturnAbsent) {
       problems = new ArrayList<ProblemDescriptor>(2);
-      problems.add(createDescriptor(psiMethod.getNameIdentifier(), InspectionsBundle.message("inspection.javadoc.problem.descriptor2", "<code>@return</code>")));
+
+      ProblemDescriptor descriptor = createMissingTagDescriptor(psiMethod.getNameIdentifier(), "return");
+      problems.add(descriptor);
     }
 
     if (absentParameters != null) {
       if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
       for (PsiParameter psiParameter : absentParameters) {
-        problems.add(createDescriptor(psiMethod.getNameIdentifier(),
-                                      InspectionsBundle.message("inspection.javadoc.method.problem.descriptor3", "<code>@param</code>",
-                                                                "<code>" + psiParameter.getName() + "</code>")));
+        ProblemDescriptor descriptor = createMissingParamTagDescriptor(psiMethod.getNameIdentifier(), psiParameter.getName());
+        problems.add(descriptor);
       }
     }
 
@@ -466,7 +506,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         final PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement != null) {
           problems.add(createDescriptor(psiMethod.getNameIdentifier(),
-                                        InspectionsBundle.message("inspection.javadoc.method.problem.descriptor2", "<code>@param " + valueElement.getText() + "</code>")));
+                                        InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>")));
         }
       }
     }
@@ -482,7 +522,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
       if (!found) {
         if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-        problems.add(createDescriptor(psiMethod.getNameIdentifier(), InspectionsBundle.message("inspection.javadoc.problem.descriptor2", "<code>@throws</code>")));
+        ProblemDescriptor descriptor = createMissingThrowsTagDescriptor(psiMethod);
+        problems.add(descriptor);
       }
     }
 
@@ -515,7 +556,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if ("return".equals(tag.getName())) {
           if (extractTagDescription(tag).length() == 0) {
             if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-            problems.add(manager.createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.method.problem.descriptor1", "<code>@return</code>"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+            String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@return</code>");
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(tag, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
+            problems.add(descriptor);
           }
         }
     }
@@ -525,6 +568,23 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return problems == null
            ? null
            : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+  }
+
+  private ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method) {
+    @NonNls String tag = "throws";
+    String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
+    PsiClassType type = method.getThrowsList().getReferencedTypes()[0];
+    final String firstDeclaredException = type.getCanonicalText();
+    return createDescriptor(method.getNameIdentifier(), message,new AddMissingTagFix(tag, firstDeclaredException));
+  }
+
+  private ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight, @NonNls String tag) {
+    String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
+    return createDescriptor(elementToHighlight, message,new AddMissingTagFix(tag));
+  }
+  private ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight, String param) {
+    String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param + "</code>");
+    return createDescriptor(elementToHighlight, message,new AddMissingTagFix("param", param));
   }
 
   private static String extractTagDescription(PsiDocTag tag) {
@@ -580,9 +640,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
 
         if (tagInfo == null){
-          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.descriptor10", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag)));
+          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag)));
         } else {
-          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.descriptor11", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag)));
+          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.disallowed.tag", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag)));
         }
 
       }
@@ -599,7 +659,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           final int textOffset = value.getTextOffset();
 
           if (textOffset == value.getTextRange().getEndOffset()) {
-            problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.descriptor9"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+            problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.name.expected"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
           }
         }
       }
@@ -607,7 +667,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (message != null) {
         final PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement == null){
-          problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.method.problem.descriptor1", "<code>" + tag.getName() + "</code>"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+          problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
         } else {
           problems.add(createDescriptor(valueElement, message));
         }
@@ -676,7 +736,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static ArrayList<ProblemDescriptor> checkDuplicateTags(final PsiDocTag[] tags,
-                                                          ArrayList<ProblemDescriptor> problems) {
+                                                                 ArrayList<ProblemDescriptor> problems) {
     Set<String> documentedParamNames = null;
     Set<String> documentedExceptions = null;
     Set<String> uniqueTags = null;

@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection");
   @NonNls public static final String SHORT_NAME = "JavadocReference";
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.javadoc.ref.display.name");
 
@@ -80,7 +78,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         super.visitReferenceElement(reference);
         PsiElement resolved = reference.resolve();
         if (resolved == null) {
-          refMessage[0] = InspectionsBundle.message("inspection.javadoc.problem.descriptor8", "<code>" + reference.getText() + "</code>");
+          refMessage[0] = InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + reference.getText() + "</code>");
           references[0] = reference;
         }
       }
@@ -143,12 +141,8 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>();
           final PsiDocTagValue valueElement = tag.getValueElement();
           if (valueElement != null) {
-            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.descriptor8",
-                                                                                  "<code>" +
-                                                                                  new String(value.getContainingFile().textToCharArray(),
-                                                                                             textOffset,
-                                                                                             value.getTextRange().getEndOffset() - textOffset) +
-                                                                                   "</code>")));
+            @NonNls String params = "<code>" + new String(value.getContainingFile().textToCharArray(), textOffset, value.getTextRange().getEndOffset() - textOffset) + "</code>";
+            problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", params)));
           }
         }
       }
