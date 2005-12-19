@@ -203,4 +203,7 @@ public class DataFlowTest extends InspectionTestCase {
   public void testArrayAccessNPE() throws Exception {
     doTest15();
   }
+  public void testArrayAccessDoesntCancelAnalysis() throws Exception {
+    doTest15();
+  }
 }

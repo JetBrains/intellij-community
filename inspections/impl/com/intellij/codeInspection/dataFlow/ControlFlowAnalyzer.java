@@ -760,8 +760,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiExpression arrayExpression = expression.getArrayExpression();
     arrayExpression.accept(this);
     addInstruction(new FieldReferenceInstruction(expression));
-    /////////////////////////////
-    addInstruction(new FieldReferenceInstruction(expression));
 
     PsiExpression indexExpression = expression.getIndexExpression();
     if (indexExpression != null) {
