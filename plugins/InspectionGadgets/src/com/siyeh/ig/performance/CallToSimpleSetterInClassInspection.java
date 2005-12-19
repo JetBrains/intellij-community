@@ -30,10 +30,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
+
     private final InlineCallFix fix = new InlineCallFix();
 
     public String getID(){
         return "CallToSimpleSetterFromWithinClass";
+    }
+
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message(
+                "call.to.simple.setter.in.class.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,7 +47,8 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "call.to.simple.setter.in.class.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -49,8 +56,10 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     }
 
     private static class InlineCallFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "call.to.simple.setter.in.class.inline.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -58,29 +67,38 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
             final PsiElement methodIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodIdentifier.getParent();
-            assert methodExpression != null;
+            if (methodExpression == null){
+                return;
+            }
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) methodExpression.getParent();
-            assert call != null;
+            if (call == null){
+                return;
+            }
             final PsiExpressionList argList = call.getArgumentList();
-            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
             final PsiMethod method = call.resolveMethod();
-            assert method != null;
+            if (method == null){
+                return;
+            }
             final PsiCodeBlock body = method.getBody();
+            if (body == null){
+                return;
+            }
             final PsiStatement[] statements = body.getStatements();
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement) statements[0];
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) assignmentStatement.getExpression();
-
+            final PsiAssignmentExpression assignment = (PsiAssignmentExpression)
+                    assignmentStatement.getExpression();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             final PsiReferenceExpression lhs = (PsiReferenceExpression)
                     assignment.getLExpression();
             final PsiField field = (PsiField)lhs.resolve();
-            assert field != null;
+            if (field == null){
+                return;
+            }
             final String fieldName = field.getName();
             if(qualifier == null){
                 final PsiManager manager = call.getManager();
@@ -89,10 +107,13 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(fieldName,
                                                                 call);
+                if (variable == null) {
+                    return;
+                }
                 @NonNls final String newExpression;
-                if (variable.equals(field)) {
+                if (variable.equals(field)){
                     newExpression = fieldName + " = " + arg.getText();
-                } else {
+                } else{
                     newExpression = "this." + fieldName + " = " + arg.getText();
                 }
                 replaceExpression(call, newExpression);
@@ -114,12 +135,6 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
-
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final PsiClass containingClass =
                     ClassUtils.getContainingClass(call);
             if(containingClass == null){

@@ -48,10 +48,9 @@ public class MethodUtils{
                 PsiType.BOOLEAN);
     }
 
-    public static boolean methodMatches(PsiMethod method,
-                                        @NotNull String methodNameP,
-                                        int parameterCount,
-                                        @NotNull PsiType returnTypeP){
+    public static boolean methodMatches(
+            PsiMethod method, @NotNull String methodNameP,
+            int parameterCount, @NotNull PsiType returnTypeP) {
         if(method == null){
             return false;
         }
@@ -101,6 +100,9 @@ public class MethodUtils{
 
     @Nullable
     public static PsiField getFieldOfGetter(PsiMethod method) {
+        if (method == null) {
+            return null;
+        }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length != 0){
@@ -173,6 +175,9 @@ public class MethodUtils{
 
     @Nullable
     public static PsiField getFieldOfSetter(PsiMethod method) {
+        if (method == null) {
+            return null;
+        }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length != 1){
