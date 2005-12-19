@@ -24,7 +24,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class ScriptSupportUtil {
-  public static final Key<XmlTag[]> CachedScriptTagsKey = Key.create("script tags");
+  private static final Key<XmlTag[]> CachedScriptTagsKey = Key.create("script tags");
+  private static final Key<String> ProcessingDeclarationsKey = Key.create("processingDeclarationd");
   private static final @NonNls String SCRIPT_TAG = "script";
 
   public static void clearCaches(XmlFile element) {
@@ -54,32 +55,40 @@ public class ScriptSupportUtil {
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }
 
-    for (XmlTag tag : myCachedScriptTags) {
-      final XmlTagChild[] children = tag.getValue().getChildren();
-      for (XmlTagChild child : children) {
-        if (!child.processDeclarations(processor, substitutor, null, place)) return false;
-      }
-      
-      if(tag.getAttributeValue("src") != null) {
-        final XmlAttribute attribute = tag.getAttribute("src", null);
-        
-        if (attribute != null) {
-          final XmlAttributeValue valueElement = attribute.getValueElement();
-          
-          if (valueElement != null) {
-            final PsiReference[] references = valueElement.getReferences();
-            
-            if (references.length > 0) {
-              final PsiElement psiElement = references[references.length - 1].resolve();
-              
-              if (psiElement instanceof PsiFile) {
-                if(!psiElement.processDeclarations(processor, substitutor, null, place))
-                  return false;
+    if (element.getUserData(ProcessingDeclarationsKey) != null) return true;
+    
+    try {
+      element.putUserData(ProcessingDeclarationsKey, "");
+
+      for (XmlTag tag : myCachedScriptTags) {
+        final XmlTagChild[] children = tag.getValue().getChildren();
+        for (XmlTagChild child : children) {
+          if (!child.processDeclarations(processor, substitutor, null, place)) return false;
+        }
+
+        if(tag.getAttributeValue("src") != null) {
+          final XmlAttribute attribute = tag.getAttribute("src", null);
+
+          if (attribute != null) {
+            final XmlAttributeValue valueElement = attribute.getValueElement();
+
+            if (valueElement != null) {
+              final PsiReference[] references = valueElement.getReferences();
+
+              if (references.length > 0) {
+                final PsiElement psiElement = references[references.length - 1].resolve();
+
+                if (psiElement instanceof PsiFile) {
+                  if(!psiElement.processDeclarations(processor, substitutor, null, place))
+                    return false;
+                }
               }
             }
           }
         }
       }
+    } finally {
+      element.putUserData(ProcessingDeclarationsKey, null);
     }
 
     return true;
