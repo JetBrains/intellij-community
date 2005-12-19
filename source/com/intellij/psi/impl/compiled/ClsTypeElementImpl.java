@@ -2,11 +2,9 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,11 +117,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @NotNull
   public PsiType getType() {
     if (myCachedType == null) {
-      PsiType type = calculateType();
-      if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
-        type = TypeConversionUtil.erasure(type);
-      }
-      myCachedType = type;
+      myCachedType = calculateType();
     }
     return myCachedType;
   }
