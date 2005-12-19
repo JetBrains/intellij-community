@@ -128,7 +128,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   }
 
-  /** @fabrique **/ 
   public void runStartupActivity() {
     myCurrentEditorProvider = new FocusBasedCurrentEditorProvider();
     myCommandListener = new CommandAdapter() {
