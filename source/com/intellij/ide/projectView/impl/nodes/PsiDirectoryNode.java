@@ -54,6 +54,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     }
   }
 
+  public VirtualFile getVirtualFile() {
+    return getValue().getVirtualFile();
+  }
+
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
     if (getValue() == null) return false;

@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -66,6 +67,16 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
    * @return true if the file is found in the subtree, false otherwise.
    */
   public abstract boolean contains(VirtualFile file);
+
+  /**
+   * Returns the virtual file represented by this node or one of its children.
+   *
+   * @return the virtual file instance, or null if the project view node doesn't represent a virtual file.
+   */
+  @Nullable
+  public VirtualFile getVirtualFile() {
+    return null;
+  }
 
   public final ViewSettings getSettings() {
     return mySettings;

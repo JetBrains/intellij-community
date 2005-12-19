@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -40,5 +41,9 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public void updateImpl(PresentationData data) {
     data.setPresentableText(getValue().getName());
     data.setIcons(IconUtilEx.getIcon(getValue(), Iconable.ICON_FLAG_READ_STATUS, getProject()));
+  }
+
+  public VirtualFile getVirtualFile() {
+    return getValue().getVirtualFile();
   }
 }

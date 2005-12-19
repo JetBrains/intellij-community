@@ -11,15 +11,16 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -27,7 +28,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,16 +265,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       final Object userObject = node.getUserObject();
       if (!(userObject instanceof ProjectViewNode)) return null;
       ProjectViewNode pvNode = (ProjectViewNode) userObject;
-      if (pvNode.getValue() instanceof PsiFile) {
-        return (PsiFile) pvNode.getValue();
+      VirtualFile vFile = pvNode.getVirtualFile();
+      if (vFile != null && !vFile.isDirectory()) {
+        return PsiManager.getInstance(myProject).findFile(vFile);
       }
-      else if (pvNode.getValue() instanceof com.intellij.lang.properties.ResourceBundle) {
-        com.intellij.lang.properties.ResourceBundle bundle = (com.intellij.lang.properties.ResourceBundle) pvNode.getValue();
-        final List<PropertiesFile> list = bundle.getPropertiesFiles(myProject);
-        if (list.size() > 0) {
-          return list.get(0);
-        }
-      }
+
       return null;
     }
   }

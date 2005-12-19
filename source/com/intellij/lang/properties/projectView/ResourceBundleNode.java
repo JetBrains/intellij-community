@@ -51,6 +51,14 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
     return getValue().getPropertiesFiles(myProject).contains(propertiesFile);
   }
 
+  public VirtualFile getVirtualFile() {
+    final List<PropertiesFile> list = getValue().getPropertiesFiles(myProject);
+    if (list.size() > 0) {
+      return list.get(0).getVirtualFile();
+    }
+    return null;
+  }
+
   public void update(PresentationData presentation) {
     presentation.setIcons(ResourceBundle.ICON);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
