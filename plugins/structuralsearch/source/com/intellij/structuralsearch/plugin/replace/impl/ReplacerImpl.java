@@ -374,7 +374,10 @@ public class ReplacerImpl {
           }
 
           if (element instanceof PsiExpression) {
-            if (element.getParent().getParent() instanceof PsiCall &&
+            final PsiElement parent = element.getParent().getParent();
+            if ((parent instanceof PsiCall ||
+                 parent instanceof PsiAnonymousClass
+                ) &&
                 prevSibling instanceof PsiJavaToken &&
                 ((PsiJavaToken)prevSibling).getTokenType() == ElementType.COMMA
                ) {

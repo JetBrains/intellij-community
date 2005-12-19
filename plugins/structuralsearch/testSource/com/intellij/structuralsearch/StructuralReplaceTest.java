@@ -1495,7 +1495,30 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
-  /** comment */
+  public void testActualParameterReplacementInConstructorInvokation() {
+    String s1 = "filterActions[0] = new Action(TEXT,\n" +
+                "    LifeUtil.getIcon(\"search\")) {\n" +
+                "        void test() {\n" +
+                "            int a = 1;\n" +
+                "        }\n" +
+                "};";
+    String s2 = "LifeUtil.getIcon(\"search\")";
+    String s3 = "StdIcons.SEARCH_LIFE";
+    String expectedResult = "filterActions[0] = new Action(TEXT,\n" +
+                "        StdIcons.SEARCH_LIFE) {\n" +
+                "        void test() {\n" +
+                "            int a = 1;\n" +
+                "        }\n" +
+                "};";
+    options.setToReformatAccordingToStyle(true);
+    options.setToShortenFQN(true);
+
+    String actualResult = replacer.testReplace(s1, s2, s3, options);
+    assertEquals("Replace in anonymous class parameter",expectedResult,actualResult);
+    options.setToShortenFQN(false);
+    options.setToReformatAccordingToStyle(false);
+  }
+
   public void testRemove() {
     String s1 = "class A {\n" +
                 "  /* */\n" +
