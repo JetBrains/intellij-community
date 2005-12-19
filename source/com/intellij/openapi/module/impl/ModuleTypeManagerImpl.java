@@ -91,7 +91,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
     registerModuleType(ModuleType.JAVA);
     registerModuleType(ModuleType.WEB);
-    registerModuleType(ModuleType.EJB);
     registerModuleType(ModuleType.J2EE_APPLICATION);
   }
 
