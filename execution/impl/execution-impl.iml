@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="idea_rt" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -47,40 +47,40 @@ public class I18nFormInspection extends StringDescriptorInspection {
                            component.getComponentClassName(), prop.getName())) {
           return;
         }
-
-        EditorQuickFixProvider provider = null;
-        switch (descriptorType) {
-          case PROPERTY:
-            provider = new EditorQuickFixProvider() {
-              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component,
-                                                       (IntrospectedProperty)prop);
-              }
-            };
-            break;
-
-          case BORDER:
-            provider = new EditorQuickFixProvider() {
-              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
-                                                     (RadContainer)component);
-              }
-            };
-            break;
-
-          case TAB:
-            provider = new EditorQuickFixProvider() {
-              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
-              }
-            };
-        }
-
-        collector.addError(prop,
-                           CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                     JDOMUtil.escapeText(descriptor.getValue())),
-                           provider);
       }
+
+      EditorQuickFixProvider provider = null;
+      switch (descriptorType) {
+        case PROPERTY:
+          provider = new EditorQuickFixProvider() {
+            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+              return new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component,
+                                                     (IntrospectedProperty)prop);
+            }
+          };
+          break;
+
+        case BORDER:
+          provider = new EditorQuickFixProvider() {
+            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+              return new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"),
+                                                   (RadContainer)component);
+            }
+          };
+          break;
+
+        case TAB:
+          provider = new EditorQuickFixProvider() {
+            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+              return new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component);
+            }
+          };
+      }
+
+      collector.addError(prop,
+                         CodeInsightBundle.message("inspection.i18n.message.in.form",
+                                                   JDOMUtil.escapeText(descriptor.getValue())),
+                         provider);
     }
   }
 
