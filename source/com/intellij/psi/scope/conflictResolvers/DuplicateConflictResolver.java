@@ -20,11 +20,8 @@ import java.util.Map;
  */
 public class DuplicateConflictResolver implements PsiConflictResolver{
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
-    final Map uniqueItems = new HashMap();
-
-    Object[] elements = conflicts.toArray();
-    for (Object element1 : elements) {
-      final CandidateInfo info = ((CandidateInfo)element1);
+    final Map<Object,PsiElement> uniqueItems = new HashMap<Object, PsiElement>();
+    for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();
       Object key;
       if (element instanceof PsiMethod) {
@@ -38,7 +35,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
         uniqueItems.put(key, element);
       }
       else {
-        conflicts.remove(element1);
+        conflicts.remove(info);
       }
     }
     if(uniqueItems.size() == 1) return conflicts.get(0);
