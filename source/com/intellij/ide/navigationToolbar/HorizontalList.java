@@ -20,8 +20,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.list.DottedBorder;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -211,7 +211,11 @@ public class HorizontalList extends JPanel {
    * to be invoked by alarm
    */
   protected void updateList() {
-    if (updateModel()){
+    immediateUpdateList(updateModel());
+  }
+
+  protected void immediateUpdateList(boolean update){
+    if (update){
       myFirstIndex = 0;
       mySelectedIndex = -1;
       myList.clear();
