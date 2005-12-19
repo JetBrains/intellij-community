@@ -125,7 +125,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Set<MethodSignature> removedSignatures = new HashSet<MethodSignature>();
 
 
-    final Implementation implAnno = myClass.getAnnotation(Implementation.class);
+    final Implementation implAnno = DomUtil.findAnnotationDFS(myClass, Implementation.class);
     final Class implClass = implAnno != null? implAnno.value():null;
     if (implClass != null) {
       for (Method method : implClass.getMethods()) {
