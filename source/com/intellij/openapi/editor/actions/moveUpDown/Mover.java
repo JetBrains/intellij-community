@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 abstract class Mover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.Mover");
@@ -100,7 +101,7 @@ abstract class Mover {
   private static boolean lineContainsNonSpaces(final Document document, final int line) {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
-    String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
+    @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
     return !text.matches("^\\s*$");
   }
 

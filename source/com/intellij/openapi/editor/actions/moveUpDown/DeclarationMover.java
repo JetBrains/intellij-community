@@ -10,6 +10,10 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.StdLanguages;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.ArrayList;
 
 class DeclarationMover extends LineMover {
   public DeclarationMover(final boolean isDown) {
@@ -22,11 +26,11 @@ class DeclarationMover extends LineMover {
     final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
     Document document = editor.getDocument();
     PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
-    fixupWhiteSpace(whiteSpace1);
     PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
+    PsiWhiteSpace whiteSpace = findWhitespaceNear(myDeleteStartAfterMoveOffset, file, false);
+    fixupWhiteSpace(whiteSpace1);
     fixupWhiteSpace(whiteSpace2);
 
-    PsiWhiteSpace whiteSpace = findWhitespaceNear(myDeleteStartAfterMoveOffset, file, false);
     fixupWhiteSpace(whiteSpace);
   }
 
@@ -132,18 +136,54 @@ class DeclarationMover extends LineMover {
     return true;
   }
 
-  private static LineRange memberRange(PsiElement member, Editor editor, LineRange lineRange) {
+  private static LineRange memberRange(@NotNull PsiElement member, Editor editor, LineRange lineRange) {
     final TextRange textRange = member.getTextRange();
     if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
-    // we should be positioned on member start or end to be able to move it
     final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
     final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line;
-    //if (startLine != lineRange.startLine && startLine != lineRange.endLine && endLine != lineRange.startLine &&
-    //    endLine != lineRange.endLine) {
-    //  return null;
-    //}
+    if (!isInsideDeclaration(member, startLine, endLine, lineRange, editor)) return null;
 
     return new LineRange(startLine, endLine);
+  }
+
+  private static boolean isInsideDeclaration(@NotNull final PsiElement member,
+                                             final int startLine,
+                                             final int endLine,
+                                             final LineRange lineRange,
+                                             final Editor editor) {
+    // if we positioned on member start or end we'll be able to move it
+    if (startLine == lineRange.startLine || startLine == lineRange.endLine || endLine == lineRange.startLine ||
+        endLine == lineRange.endLine) {
+      return true;
+    }
+    List<PsiElement> memberSuspects = new ArrayList<PsiElement>();
+    PsiModifierList modifierList = member instanceof PsiMember ? ((PsiMember)member).getModifierList() : null;
+    if (modifierList != null) memberSuspects.add(modifierList);
+    if (member instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)member;
+      if (aClass instanceof PsiAnonymousClass) return false; // move new expression instead of anon class
+      PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+      if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
+    }
+    if (member instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)member;
+      PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
+      PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+      if (returnTypeElement != null) memberSuspects.add(returnTypeElement);
+    }
+    if (member instanceof PsiField) {
+      final PsiField field = (PsiField)member;
+      PsiIdentifier nameIdentifier = field.getNameIdentifier();
+      if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
+      PsiTypeElement typeElement = field.getTypeElement();
+      if (typeElement != null) memberSuspects.add(typeElement);
+    }
+    TextRange lineTextRange = new TextRange(editor.getDocument().getLineStartOffset(lineRange.startLine), editor.getDocument().getLineEndOffset(lineRange.endLine));
+    for (PsiElement suspect : memberSuspects) {
+      if (suspect.getTextRange().intersects(lineTextRange)) return true;
+    }
+    return false;
   }
 
   private static final int ILLEGAL_MOVE = -1;

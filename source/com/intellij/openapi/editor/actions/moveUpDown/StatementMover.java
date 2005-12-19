@@ -134,15 +134,23 @@ class StatementMover extends LineMover {
 
   private boolean checkMovingInsideOutside(final PsiFile file, final Editor editor, final LineRange result, final boolean isDown) {
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement elementAt = file.findElementAt(offset);
-    if (elementAt == null) return false;
 
-    final Class[] classes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class,};
-    final PsiElement guard = PsiTreeUtil.getParentOfType(elementAt, classes);
+    final Class[] classes = {PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class,};
+    PsiElement guard = file.findElementAt(offset);
+    if (guard == null) return false;
+    do {
+      guard = PsiTreeUtil.<PsiElement>getParentOfType(guard, classes);
+    }
+    while (guard instanceof PsiAnonymousClass);
+
     // cannot move in/outside method/class/initializer/comment
     calcInsertOffset(editor, file, result);
-    elementAt = file.findElementAt(insertOffset);
-    final PsiElement newGuard = PsiTreeUtil.getParentOfType(elementAt, classes);
+    PsiElement newGuard = file.findElementAt(insertOffset);
+    do {
+      newGuard = PsiTreeUtil.<PsiElement>getParentOfType(newGuard, classes);
+    }
+    while (newGuard instanceof PsiAnonymousClass);
+
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
 
     // moving in/out nested class is OK
