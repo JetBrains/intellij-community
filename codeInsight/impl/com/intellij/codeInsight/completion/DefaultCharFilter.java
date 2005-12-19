@@ -20,8 +20,8 @@ public class DefaultCharFilter implements CharFilter {
   public DefaultCharFilter(PsiFile file) {
     myFile = file;
 
-    if (myFile instanceof XmlFile && !(myFile instanceof JspFile)) {
-      myDelegate = new XmlCharFilter();
+    if (myFile instanceof XmlFile) {
+      myDelegate = myFile instanceof JspFile ? new JspCharFilter() : new XmlCharFilter();
     }
   }
 
