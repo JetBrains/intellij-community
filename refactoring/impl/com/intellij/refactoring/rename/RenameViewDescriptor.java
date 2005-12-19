@@ -1,10 +1,10 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -16,29 +16,20 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 class RenameViewDescriptor implements UsageViewDescriptor{
-  private final boolean mySearchInComments;
-  private final boolean mySearchInNonJavaFiles;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameViewDescriptor");
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
-  private final String myHelpID;
   private PsiElement[] myElements;
 
-  public RenameViewDescriptor(
-    PsiElement primaryElement,
-    LinkedHashMap<PsiElement, String> renamesMap,
-    boolean isSearchInComments,
-    boolean isSearchInNonJavaFiles
-  ) {
+  public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
 
     myElements = renamesMap.keySet().toArray(new PsiElement[0]);
-
-    mySearchInComments = isSearchInComments;
-    mySearchInNonJavaFiles = isSearchInNonJavaFiles;
 
     Set<String> processedElementsHeaders = new THashSet<String>();
     Set<String> codeReferences = new THashSet<String>();
 
     for (final PsiElement element : myElements) {
+      LOG.assertTrue(element.isValid(), "Invalid element: " + element.toString());
       String newName = renamesMap.get(element);
 
       String prefix = "";
@@ -58,7 +49,6 @@ class RenameViewDescriptor implements UsageViewDescriptor{
 
     myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ");
     myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY), ", "));
-    myHelpID = HelpID.getRenameHelpID(primaryElement);
   }
 
   public PsiElement[] getElements() {

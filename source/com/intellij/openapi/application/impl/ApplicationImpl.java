@@ -411,7 +411,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     progressWindow.setTitle(progressTitle);
     final BlockingProgressIndicator progress = smoothProgress
                                                ? new SmoothProgressAdapter(progressWindow, project)
-                                               : (BlockingProgressIndicator)progressWindow;
+                                               : progressWindow;
 
     class MyThread extends Thread {
       private final Runnable myProcess;

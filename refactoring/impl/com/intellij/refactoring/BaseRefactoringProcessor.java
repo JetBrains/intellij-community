@@ -71,7 +71,8 @@ public abstract class BaseRefactoringProcessor {
 
   /**
    * Is called inside atomic action.
-   * @param refUsages
+   * @param refUsages usages to be filtered
+   * @return true if preprocessed successfully
    */
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     prepareSuccessful();
@@ -143,8 +144,7 @@ public abstract class BaseRefactoringProcessor {
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
     if (!myIsPreviewUsages) ensureFilesWritable(usages);
-    boolean toPreview = isPreviewUsages(usages);
-    if (toPreview) {
+    if (isPreviewUsages(usages)) {
       UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
 
       final PsiElement[] elements = descriptor.getElements();
@@ -166,7 +166,7 @@ public abstract class BaseRefactoringProcessor {
               }
             }
           };
-        };
+        }
       };
 
       showUsageView(descriptor, isVariable(), isVariable(), factory, usages);
@@ -295,7 +295,7 @@ public abstract class BaseRefactoringProcessor {
 
     LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
 
-    final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);;
+    final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -358,7 +358,7 @@ public abstract class BaseRefactoringProcessor {
    * Refactorings that spoil PSI (write something directly to documents etc.) should
    * do that in this method.<br>
    * This method is called immediately after
-   * <code>{@link #performRefactoring(com.intellij.usageView.UsageInfo[])}</code>.
+   * <code>{@link #performRefactoring(UsageInfo[])}</code>.
    */
   protected void performPsiSpoilingRefactoring() {
 
@@ -389,7 +389,7 @@ public abstract class BaseRefactoringProcessor {
 
   }
 
-  public final void  run() {
+  public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       testRun();
     }
@@ -398,7 +398,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private final void  testRun() {
+  private void  testRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     prepareTestRun();
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(findUsages());
