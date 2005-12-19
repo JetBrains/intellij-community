@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,8 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiClass;
-import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.core.GridConstraints;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +50,12 @@ public final class ComponentItemDialog extends DialogWrapper{
     myTfClassName.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser(UIDesignerBundle.message("title.choose.component.class"));
+          final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(project);
+          final TreeClassChooser chooser = factory.createInheritanceClassChooser(
+            UIDesignerBundle.message("title.choose.component.class"),
+            GlobalSearchScope.allScope(project),
+            PsiManager.getInstance(project).findClass(JComponent.class.getName(), GlobalSearchScope.allScope(project)),
+            true, false, null);
           chooser.showDialog();
           final PsiClass result = chooser.getSelectedClass();
           if (result != null) {
