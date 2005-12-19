@@ -381,7 +381,8 @@ public class IntentionHintComponent extends JPanel {
         }, new Computable<Boolean>(){
           public Boolean compute() {
             final IntentionActionWithTextCaching action = (IntentionActionWithTextCaching)myList.getSelectedValue();
-            return new Boolean(action.getAction() instanceof EmptyIntentionAction && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0);
+            return Boolean.valueOf(action.getAction() instanceof EmptyIntentionAction &&
+                                   action.getOptionIntentions().size() + action.getOptionFixes().size() > 0);
           }
         });
         myPopupShown = true;
