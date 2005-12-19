@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ import java.lang.reflect.Method;
  * @author Vladimir Kondratyev
  */
 public final class IntroStringProperty extends IntrospectedProperty{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.IntroStringProperty");
+
   /**
    * value: HashMap<String, StringDescriptor>
    */
@@ -174,6 +177,17 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
     else{
       super.setValueImpl(component, resolvedValue);
+    }
+  }
+
+  public void refreshValue(RadComponent component) {
+    StringDescriptor descriptor = (StringDescriptor) getValue(component);
+    descriptor.setResolvedValue(null);
+    try {
+      setValueImpl(component, descriptor);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 

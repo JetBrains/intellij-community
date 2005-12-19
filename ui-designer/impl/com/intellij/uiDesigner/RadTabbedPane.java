@@ -237,6 +237,17 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return getChildTitle((RadComponent) component);
   }
 
+  public void refreshChildTitle(final RadComponent radComponent) {
+    StringDescriptor childTitle = getChildTitle(radComponent);
+    childTitle.setResolvedValue(null);
+    try {
+      setChildTitle(radComponent, childTitle);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   private final class MyTitleProperty extends Property{
     /**
      * Index of tab which title should be edited

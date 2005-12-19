@@ -429,7 +429,7 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * Updates delegee's border
    */
-  private void updateBorder(){
+  public void updateBorder(){
     final String title = ReferenceUtil.resolve(getModule(), myBorderTitle);
     getDelegee().setBorder(myBorderType.createBorder(title));
   }

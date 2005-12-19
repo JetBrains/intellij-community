@@ -27,11 +27,12 @@ import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
-import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -798,6 +799,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter implements Runnable {
     private final Alarm myAlarm;
+    private final MyRefreshPropertiesRequest myRefreshPropertiesRequest = new MyRefreshPropertiesRequest();
 
     public MyPsiTreeChangeListener() {
       myAlarm = new Alarm();
@@ -812,26 +814,40 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     public void childAdded(final PsiTreeChangeEvent event) {
-      handleEvent();
+      handleEvent(event);
     }
 
     public void childMoved(final PsiTreeChangeEvent event) {
-      handleEvent();
+      handleEvent(event);
     }
 
     public void childrenChanged(final PsiTreeChangeEvent event) {
-      handleEvent();
+      handleEvent(event);
+    }
+
+    public void childRemoved(PsiTreeChangeEvent event) {
+      handleEvent(event);
+    }
+
+    public void childReplaced(PsiTreeChangeEvent event) {
+      handleEvent(event);
     }
 
     public void propertyChanged(final PsiTreeChangeEvent event) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(event.getPropertyName())) {
-        handleEvent();
+        handleEvent(event);
       }
     }
 
-    private void handleEvent() {
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(this, 2500, ModalityState.stateForComponent(GuiEditor.this));
+    private void handleEvent(final PsiTreeChangeEvent event) {
+      if (event.getParent() != null && event.getParent().getContainingFile() instanceof PropertiesFile) {
+        myAlarm.cancelRequest(myRefreshPropertiesRequest);
+        myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
+      }
+      else {
+        myAlarm.cancelRequest(this);
+        myAlarm.addRequest(this, 2500, ModalityState.stateForComponent(GuiEditor.this));
+      }
     }
 
     /**
@@ -861,6 +877,32 @@ public final class GuiEditor extends JPanel implements DataProvider {
     public void run() {
       PsiDocumentManager.getInstance(myModule.getProject()).commitDocument(myDocument);
       readFromFile(myKeepSelection);
+    }
+  }
+
+  private class MyRefreshPropertiesRequest implements Runnable {
+    public void run() {
+      FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
+        public boolean visit(final IComponent component) {
+          final RadComponent radComponent = (RadComponent)component;
+          for(IProperty prop: component.getModifiedProperties()) {
+            if (prop instanceof IntroStringProperty) {
+              IntroStringProperty strProp = (IntroStringProperty) prop;
+              strProp.refreshValue(radComponent);
+            }
+          }
+
+          if (component instanceof RadContainer) {
+            ((RadContainer) component).updateBorder();
+          }
+
+          if (component.getParentContainer() instanceof RadTabbedPane) {
+            ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent);
+          }
+
+          return true;
+        }
+      });
     }
   }
 }
