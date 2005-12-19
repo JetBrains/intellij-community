@@ -12,6 +12,7 @@ import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import junit.framework.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -108,7 +109,9 @@ public class TestCaseLoader {
     final Bombed bombedAnnotation = method.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
     if (IdeaTestUtil.isRotten(bombedAnnotation)) {
-      System.err.println("Disarm the stale bomb for '"+method+"' in class '"+method.getDeclaringClass()+"'");
+      String message = "Disarm the stale bomb for '" + method + "' in class '" + method.getDeclaringClass() + "'";
+      System.err.println(message);
+      Assert.fail(message);
     }
     return !IdeaTestUtil.bombExplodes(bombedAnnotation);
   }
@@ -117,7 +120,9 @@ public class TestCaseLoader {
     final Bombed bombedAnnotation = testCaseClass.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
     if (IdeaTestUtil.isRotten(bombedAnnotation)) {
-      System.err.println("Disarm the stale bomb for '"+testCaseClass+"'");
+      String message = "Disarm the stale bomb for '" + testCaseClass + "'";
+      System.err.println(message);
+      Assert.fail(message);
     }
     return !IdeaTestUtil.bombExplodes(bombedAnnotation);
   }
