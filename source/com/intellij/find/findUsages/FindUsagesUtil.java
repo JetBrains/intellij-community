@@ -2,7 +2,6 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
-import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -188,8 +187,7 @@ public class FindUsagesUtil {
       if (!options.isIncludeOverloadUsages) {
         addConstructorUsages(method, helper, searchScope, result, options);
       } else {
-        PsiMethod[] constructors = method.getContainingClass().getConstructors();
-        for (PsiMethod constructor : constructors) {
+        for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
           addConstructorUsages(constructor, helper, searchScope, result, options);
         }
       }
@@ -200,9 +198,6 @@ public class FindUsagesUtil {
           return addResult(result, ref, options, method);
         }
       }, method, searchScope, !options.isIncludeOverloadUsages);
-
-      PsiReference[] refs = EjbUsagesUtil.findEjbMethodReferences(method, helper, searchScope, !options.isIncludeOverloadUsages);
-      addResults(result, refs, options, method);
     }
   }
 
