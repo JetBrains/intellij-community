@@ -27,6 +27,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,9 +263,19 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       if (path == null) return null;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
-      if (!(userObject instanceof PsiFileNode)) return null;
-      final PsiFileNode descriptor = (PsiFileNode)userObject;
-      return descriptor.getValue();
+      if (!(userObject instanceof ProjectViewNode)) return null;
+      ProjectViewNode pvNode = (ProjectViewNode) userObject;
+      if (pvNode.getValue() instanceof PsiFile) {
+        return (PsiFile) pvNode.getValue();
+      }
+      else if (pvNode.getValue() instanceof com.intellij.lang.properties.ResourceBundle) {
+        com.intellij.lang.properties.ResourceBundle bundle = (com.intellij.lang.properties.ResourceBundle) pvNode.getValue();
+        final List<PropertiesFile> list = bundle.getPropertiesFiles(myProject);
+        if (list.size() > 0) {
+          return list.get(0);
+        }
+      }
+      return null;
     }
   }
 
