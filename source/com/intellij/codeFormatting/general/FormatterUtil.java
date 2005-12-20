@@ -341,10 +341,13 @@ public class FormatterUtil {
     return false;
   }
 
-  public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace) {
+  public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
     LeafElement lastWS = TreeUtil.findLastLeaf(astNode);
     if (lastWS.getElementType() != ElementType.WHITE_SPACE) {
       lastWS = null;
+    }
+    if (!astNode.getTextRange().equals(textRange)) {
+      return;
     }
     if (whiteSpace.length() == 0 && lastWS == null) {
       return;

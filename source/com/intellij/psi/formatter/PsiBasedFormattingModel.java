@@ -89,7 +89,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
         changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
         return true;
       } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
-        changeLastWhiteSpace(whiteSpace);
+        changeLastWhiteSpace(whiteSpace, textRange);
         return true;
       } else {
         return false;
@@ -100,8 +100,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return prevNode != null && prevNode.getElementType() == ElementType.WHITE_SPACE && prevNode.getText().trim().length()  >0;
   }
 
-  protected void changeLastWhiteSpace(final String whiteSpace) {
-    FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace);
+  protected void changeLastWhiteSpace(final String whiteSpace, final TextRange textRange) {
+    FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
   }
 
   protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement, final TextRange textRange) {
