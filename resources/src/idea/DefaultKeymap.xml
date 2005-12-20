@@ -2,7 +2,7 @@
 <component>
   <keymap name="$default" version="1" disable-mnemonics="false">
     <action id="ShowNavBar">
-      <keyboard-shortcut first-keystroke="shift N"/>
+      <keyboard-shortcut first-keystroke="alt N"/>
     </action>
     <action id="GuiDesigner.ExpandSelection">
       <keyboard-shortcut first-keystroke="control W"/>
