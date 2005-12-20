@@ -5,11 +5,7 @@ import java.util.EventListener;
 import java.util.Iterator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lvo
- * Date: Oct 21, 2005
- * Time: 3:23:37 PM
- * To change this template use File | Settings | File Templates.
+ * @author lvo
  */
 public class IntObjectCache<T> implements Iterable<T> {
 
@@ -20,18 +16,16 @@ public class IntObjectCache<T> implements Iterable<T> {
 
   protected int myTop;
   protected int myBack;
-  final protected CacheEntry<T>[] myCache;
-  final protected int[] myHashTable;
+  protected CacheEntry<T>[] myCache;
+  protected int[] myHashTable;
   protected int myHashTableSize;
   protected int myCount;
   protected int myFirstFree;
 
   final ArrayList<DeletedPairsListener> myListeners = new ArrayList<DeletedPairsListener>();
 
-  private static final int[] tableSizes =
-    new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,
-      102397, 204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847,
-      73467739, 146935499, 293871013, 587742049, 1175484103};
+  private static final int[] tableSizes = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
+    204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013, 587742049, 1175484103};
   private long myAttempts;
   private long myHits;
 
@@ -181,6 +175,26 @@ public class IntObjectCache<T> implements Iterable<T> {
     return myCache.length - 1;
   }
 
+  public void resize(int newSize) {
+    IntObjectCache<T> newCache = new IntObjectCache<T>(newSize);
+    for (DeletedPairsListener listener : myListeners) {
+      newCache.addDeletedPairsListener(listener);
+    }
+    final CacheEntry<T>[] cache = myCache;
+    int back = myBack;
+    while (back != 0) {
+      final CacheEntry<T> cacheEntry = cache[back];
+      newCache.cacheObject(cacheEntry.key, cacheEntry.value);
+      back = cacheEntry.prev;
+    }
+    myTop = newCache.myTop;
+    myBack = newCache.myBack;
+    myCache = newCache.myCache;
+    myHashTable = newCache.myHashTable;
+    myCount = newCache.myCount;
+    myFirstFree = newCache.myFirstFree;
+  }
+
   public double hitRate() {
     return myAttempts > 0 ? (double)myHits / (double)myAttempts : 0;
   }
@@ -238,9 +252,9 @@ public class IntObjectCache<T> implements Iterable<T> {
   private int searchForCacheEntry(int key) {
     myCache[0].key = key;
     int current = myHashTable[((key & 0x7fffffff) % myHashTableSize)];
-    for(;;) {
+    for (; ;) {
       final CacheEntry<T> cacheEntry = myCache[current];
-      if( key == cacheEntry.key) {
+      if (key == cacheEntry.key) {
         break;
       }
       current = cacheEntry.hash_next;
