@@ -1,9 +1,8 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.lexer.LexerBase;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.search.TodoPattern;
+import com.intellij.lexer.LexerBase;
+import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
@@ -65,7 +64,7 @@ public abstract class BaseFilterLexer extends LexerBase {
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
-      TodoPattern[] patterns = TodoConfiguration.getInstance().getTodoPatterns();
+      IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
       for(int index = 0; index < patterns.length; index++){
         Pattern pattern = patterns[index].getPattern();
         if (pattern != null){

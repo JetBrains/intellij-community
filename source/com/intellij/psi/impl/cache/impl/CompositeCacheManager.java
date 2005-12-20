@@ -5,7 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.TodoPattern;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternProvider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,15 +58,15 @@ public class CompositeCacheManager implements CacheManager{
     return files.toArray(new PsiFile[files.size()]);
   }
 
-  public int getTodoCount(VirtualFile file) {
+  public int getTodoCount(VirtualFile file, final IndexPatternProvider patternProvider) {
     int count = 0;
     for (CacheManager cacheManager : myManagers) {
-      count += cacheManager.getTodoCount(file);
+      count += cacheManager.getTodoCount(file, patternProvider);
     }
     return count;
   }
 
-  public int getTodoCount(VirtualFile file, TodoPattern pattern) {
+  public int getTodoCount(VirtualFile file, IndexPattern pattern) {
     int count = 0;
     for (CacheManager cacheManager : myManagers) {
       count += cacheManager.getTodoCount(file, pattern);

@@ -1,15 +1,20 @@
 package com.intellij.ide.todo;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.PendingEventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -19,10 +24,10 @@ import java.util.Iterator;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfiguration implements ApplicationComponent, JDOMExternalizable {
+public class TodoConfiguration implements ApplicationComponent, JDOMExternalizable, IndexPatternProvider {
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
-
+  private IndexPattern[] myIndexPatterns;
 
   private PendingEventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = PendingEventDispatcher.create(PropertyChangeListener.class);
 
@@ -35,10 +40,19 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
    * Invoked by reflection
    */
   TodoConfiguration() {
+    Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER).registerExtension(this);
     myTodoPatterns = new TodoPattern[]{
       new TodoPattern("\\btodo\\b.*", TodoAttributes.createDefault(), false)
     };
     myTodoFilters = new TodoFilter[]{};
+    buildIndexPatterns();
+  }
+
+  private void buildIndexPatterns() {
+    myIndexPatterns = new IndexPattern[myTodoPatterns.length];
+    for(int i=0; i<myTodoPatterns.length; i++) {
+      myIndexPatterns [i] = myTodoPatterns [i].getIndexPattern();
+    }
   }
 
   public static TodoConfiguration getInstance() {
@@ -58,9 +72,15 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
     return myTodoPatterns;
   }
 
+  @NotNull public IndexPattern[] getIndexPatterns() {
+    return myIndexPatterns;
+  }
+
   public void setTodoPatterns(TodoPattern[] patterns) {
     TodoPattern[] oldPatterns = myTodoPatterns;
     myTodoPatterns = patterns;
+    buildIndexPatterns();
+    myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_INDEX_PATTERNS, oldPatterns, patterns));
     myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldPatterns, patterns));
   }
 

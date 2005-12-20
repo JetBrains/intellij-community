@@ -27,7 +27,7 @@ public class AllTodosTreeBuilder extends TodoTreeBuilder{
     PsiFile[] psiFiles= mySearchHelper.findFilesWithTodoItems();
     for(int i=0;i<psiFiles.length;i++){
       PsiFile psiFile=psiFiles[i];
-      if(treeStructure.accept(psiFile)){
+      if(mySearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)){
         myFileTree.add(psiFile.getVirtualFile());
       }
     }

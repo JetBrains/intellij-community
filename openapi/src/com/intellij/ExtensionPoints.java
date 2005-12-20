@@ -70,7 +70,7 @@ public interface ExtensionPoints {
    * This extensions allows to run custom [command-line] application based on IDEA platform
    * <pre>
    * &lt;extensions xmlns="com.intellij"&gt;
-   *   &lt;applicationStarter implementation="my.plugin.package.MyAplicationStarter"/&gt;
+   *   &lt;applicationStarter implementation="my.plugin.package.MyApplicationStarter"/&gt;
    * &lt;/extensions&gt;
    * </pre>
    * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
@@ -82,4 +82,12 @@ public interface ExtensionPoints {
   @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
   @NonNls String FORM_INSPECTION_TOOL = "com.intellij.formInspectionTool";
   @NonNls String JAVA15_INSPECTION_TOOL = "com.intellij.java15InspectionTool";
+
+  /**
+   * This extension allows to index occurrences of arbitrary regular expression patterns in the
+   * text of comments.
+   *
+   * @see com.intellij.psi.search.IndexPatternProvider
+   */
+  @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
 }

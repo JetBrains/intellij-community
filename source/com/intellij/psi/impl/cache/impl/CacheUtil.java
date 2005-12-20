@@ -5,12 +5,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.ExtensionPoints;
 
 public class CacheUtil {
   public static PsiFile createFileCopy(PsiFile psiFile) {
@@ -69,5 +72,9 @@ public class CacheUtil {
     }
 
     return fileCopy;
+  }
+
+  public static IndexPatternProvider[] getIndexPatternProviders() {
+    return (IndexPatternProvider[]) Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER).getExtensions();
   }
 }

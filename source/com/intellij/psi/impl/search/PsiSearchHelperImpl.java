@@ -1,14 +1,8 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ant.PsiAntElement;
-import com.intellij.codeHighlighting.CopyCreatorLexer;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -21,38 +15,28 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
 
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-  private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
+  private static final IndexPatternOccurrence[] EMPTY_OCCURRENCES = new IndexPatternOccurrence[0];
 
   static {
     ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
@@ -69,6 +53,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     SuperMethodsSearch.SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodSuperSearcher());
     DeepestSuperMethodsSearch.DEEPEST_SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodDeepestSuperSearcher());
+
+    IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
   }
 
   @NotNull
@@ -282,8 +268,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return myManager.getCacheManager().getFilesWithTodoItems();
   }
 
-  private static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{TreeElement.XML_COMMENT_CHARACTERS});
-
   public TodoItem[] findTodoItems(PsiFile file) {
     return findTodoItems(file, null);
   }
@@ -292,147 +276,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return findTodoItems(file, new TextRange(startOffset, endOffset));
   }
 
-  private TodoItem[] findTodoItems(PsiFile file, TextRange range) {
-    if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement ||
-        file.getVirtualFile() == null) {
+  private TodoItem[] findTodoItems(final PsiFile file, TextRange range) {
+    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
+    if (occurrences.size() == 0) {
       return EMPTY_TODO_ITEMS;
     }
 
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile());
-    if (count == 0) {
-      return EMPTY_TODO_ITEMS;
+    TodoItem[] items = new TodoItem[occurrences.size()];
+    int index = 0;
+    for(IndexPatternOccurrence occurrence: occurrences) {
+      items [index++] = new TodoItemImpl(occurrence.getFile(),
+                                         occurrence.getTextRange().getStartOffset(),
+                                         occurrence.getTextRange().getEndOffset(),
+                                         mapPattern(occurrence.getPattern()));
     }
 
-    TIntArrayList commentStarts = new TIntArrayList();
-    TIntArrayList commentEnds = new TIntArrayList();
-    char[] chars = file.textToCharArray();
-    if (file instanceof PsiPlainTextFile) {
-      FileType fType = file.getFileType();
-      synchronized (PsiLock.LOCK) {
-        if (fType instanceof CustomFileType) {
-          TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-          Lexer lexer = fType.getHighlighter(myManager.getProject()).getHighlightingLexer();
-          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
-        }
-        else {
-          commentStarts.add(0);
-          commentEnds.add(file.getTextLength());
-        }
-      }
-    }
-    else {
-      // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
-      synchronized (PsiLock.LOCK) {
-        final Language lang = file.getLanguage();
-        Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();
-        TokenSet commentTokens = null;
-        if (file instanceof PsiJavaFile) {
-          commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
-        }
-        else if (file instanceof JspFile) {
-          final JspFile jspFile = (JspFile)file;
-          commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET);
-          final ParserDefinition parserDefinition = jspFile.getBaseLanguage().getParserDefinition();
-          if (parserDefinition != null) {
-            commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
-          }
-        }
-        else if (file instanceof XmlFile) {
-          commentTokens = XML_COMMENT_BIT_SET;
-        }
-        else {
-          final ParserDefinition parserDefinition = lang.getParserDefinition();
-          if (parserDefinition != null) {
-            commentTokens = parserDefinition.getCommentTokens();
-          }
-        }
-
-        if (commentTokens == null) return EMPTY_TODO_ITEMS;
-
-        findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
-      }
-    }
-
-    ArrayList<TodoItem> list = new ArrayList<TodoItem>();
-
-    for (int i = 0; i < commentStarts.size(); i++) {
-      int commentStart = commentStarts.get(i);
-      int commentEnd = commentEnds.get(i);
-
-      TodoPattern[] patterns = TodoConfiguration.getInstance().getTodoPatterns();
-      for (TodoPattern toDoPattern : patterns) {
-        Pattern pattern = toDoPattern.getPattern();
-        if (pattern != null) {
-          ProgressManager.getInstance().checkCanceled();
-
-          CharSequence input = new CharArrayCharSequence(chars, commentStart, commentEnd);
-          Matcher matcher = pattern.matcher(input);
-          while (true) {
-            //long time1 = System.currentTimeMillis();
-            boolean found = matcher.find();
-            //long time2 = System.currentTimeMillis();
-            //System.out.println("scanned text of length " + (lexer.getTokenEnd() - lexer.getTokenStart() + " in " + (time2 - time1) + " ms"));
-
-            if (!found) break;
-            int start = matcher.start() + commentStart;
-            int end = matcher.end() + commentStart;
-            if (start != end) {
-              if (range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) {
-                list.add(new TodoItemImpl(file, start, end, toDoPattern));
-              }
-            }
-
-            ProgressManager.getInstance().checkCanceled();
-          }
-        }
-      }
-    }
-
-    return list.toArray(new TodoItem[list.size()]);
+    return items;
   }
 
-  private static void findComments(final Lexer lexer,
-                            final char[] chars,
-                            final TextRange range,
-                            final TokenSet commentTokens,
-                            final TIntArrayList commentStarts, final TIntArrayList commentEnds) {
-    for (lexer.start(chars); ; lexer.advance()) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType) {
-        tokenType = ((CopyCreatorLexer.HighlightingCopyElementType)tokenType).getBase();
-      }
-      if (tokenType == null) break;
-
-      if (range != null) {
-        if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
-        if (lexer.getTokenStart() >= range.getEndOffset()) break;
-      }
-
-      boolean isComment = commentTokens.isInSet(tokenType);
-      if (!isComment) {
-        final Language commentLang = tokenType.getLanguage();
-        final ParserDefinition parserDefinition = commentLang.getParserDefinition();
-        if (parserDefinition != null) {
-          final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
-          isComment = langCommentTokens.isInSet(tokenType);
-        }
-      }
-
-      if (isComment) {
-        commentStarts.add(lexer.getTokenStart());
-        commentEnds.add(lexer.getTokenEnd());
+  private static TodoPattern mapPattern(final IndexPattern pattern) {
+    for(TodoPattern todoPattern: TodoConfiguration.getInstance().getTodoPatterns()) {
+      if (todoPattern.getIndexPattern() == pattern) {
+        return todoPattern;
       }
     }
+    LOG.assertTrue(false, "Could not find matching TODO pattern for index pattern " + pattern.getPatternString());
+    return null;
   }
 
   public int getTodoItemsCount(PsiFile file) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile());
+    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoConfiguration.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
 
   public int getTodoItemsCount(PsiFile file, TodoPattern pattern) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), pattern);
+    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
     if (count != -1) return count;
     TodoItem[] items = findTodoItems(file);
     count = 0;

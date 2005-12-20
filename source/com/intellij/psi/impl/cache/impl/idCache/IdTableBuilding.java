@@ -3,7 +3,6 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
@@ -26,8 +25,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -86,7 +85,7 @@ public class IdTableBuilding {
   }
 
   public interface IdCacheBuilder {
-    void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts, final PsiManager manager
+    void build(char[] chars, int length, TIntIntHashMap wordsTable, IndexPattern[] todoPatterns, int[] todoCounts, final PsiManager manager
     );
   }
 
@@ -98,7 +97,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       scanWords(wordsTable, chars, 0, length, UsageSearchContext.IN_PLAIN_TEXT);
@@ -124,7 +123,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
@@ -142,7 +141,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       Lexer lexer = createLexer();
@@ -158,7 +157,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       BaseFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
@@ -190,7 +189,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       Lexer lexer = new JspxHighlightingLexer();
@@ -205,7 +204,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       // Do nothing. This class is used to skip certain files from building caches for them.
@@ -216,7 +215,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       final TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
+                      IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       super.build(chars, length, wordsTable, todoPatterns, todoCounts, manager);
@@ -312,7 +311,7 @@ public class IdTableBuilding {
     public void build(char[] chars,
                       int length,
                       final TIntIntHashMap wordsTable,
-                      final TodoPattern[] todoPatterns,
+                      final IndexPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
       myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurrence>() {
@@ -382,7 +381,7 @@ public class IdTableBuilding {
     final TIntIntHashMap wordsTable = new TIntIntHashMap();
 
     final int[] todoCounts;
-    final TodoPattern[] todoPatterns = TodoConfiguration.getInstance().getTodoPatterns();
+    final IndexPattern[] todoPatterns = IdCacheUtil.getIndexPatterns();
     if (buildTodos && CacheManagerImpl.canContainTodoItems(fileContent.getVirtualFile())){
       int patternCount = todoPatterns.length;
       todoCounts = patternCount > 0 ? new int[patternCount] : null;

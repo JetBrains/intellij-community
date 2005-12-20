@@ -2,11 +2,10 @@ package com.intellij.psi.impl.cache;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.PsiFile;
-
-import java.util.List;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternProvider;
 
 public interface CacheManager {
   void initialize();
@@ -23,12 +22,12 @@ public interface CacheManager {
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(VirtualFile file);
+  int getTodoCount(VirtualFile file, final IndexPatternProvider patternProvider);
 
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(VirtualFile file, TodoPattern pattern);
+  int getTodoCount(VirtualFile file, IndexPattern pattern);
 
   /**
    * @deprecated
