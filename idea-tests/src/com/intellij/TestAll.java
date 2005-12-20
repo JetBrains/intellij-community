@@ -147,13 +147,13 @@ public class TestAll implements Test {
     List classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
     for (Iterator i = classes.iterator(); i.hasNext();) {
-      runNextTest(testResult, totalTests, i);
+      runNextTest(testResult, totalTests, (Class)i.next());
       if (testResult.shouldStop()) break;
     }
     tryGc(10);
   }
 
-  private void runNextTest(final TestResult testResult, int totalTests, Iterator i) {
+  private void runNextTest(final TestResult testResult, int totalTests, Class testCaseClass) {
     myRunTests++;
     if (!checkAvaliableMemory(35, testResult)) {
       testResult.stop();
@@ -188,8 +188,6 @@ public class TestAll implements Test {
         return;
       }
     }
-
-    Class testCaseClass = (Class)i.next();
 
     System.out.println("\nRunning " + testCaseClass.getName());
     LOG.info("Running " + testCaseClass.getName());

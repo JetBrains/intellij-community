@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
+import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -22,11 +22,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -44,7 +46,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private final boolean myUpdateAll;
   private final boolean myCompiled;
 
-  private final HighlightVisitor[] myHighlightVisitors;
+  @NotNull private final HighlightVisitor[] myHighlightVisitors;
 
   private Collection<HighlightInfo> myHighlights = Collections.emptyList();
   private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
@@ -71,22 +73,34 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     LOG.assertTrue(myFile.isValid());
   }
 
+  private static final Key<HighlightVisitor[]> HIGHLIGHT_VISITORS_KEY = new Key<HighlightVisitor[]>("HIGHLIGHT_VISITORS_POOL");
   private HighlightVisitor[] createHighlightVisitors() {
-    HighlightVisitor[] highlightVisitors = myProject.getComponents(HighlightVisitor.class);
+    HighlightVisitor[] highlightVisitors;
+    synchronized(myProject) {
+      highlightVisitors = myProject.getUserData(HIGHLIGHT_VISITORS_KEY);
+      if (highlightVisitors == null) {
+        highlightVisitors = myProject.getComponents(HighlightVisitor.class).clone();
+        myProject.putUserData(HIGHLIGHT_VISITORS_KEY, highlightVisitors);
+        for (int i = 0; i < highlightVisitors.length; i++) {
+          HighlightVisitor highlightVisitor = highlightVisitors[i];
+          highlightVisitors[i] = highlightVisitor.clone();
+        }
+      }
+      else {
+        myProject.putUserData(HIGHLIGHT_VISITORS_KEY, null);
+      }
+    }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
     }
     return highlightVisitors;
   }
-
-  /**
-   * @fabrique *
-   */
-  public Project getProject() {
-    return myProject;
+  private void releaseHighlightVisitors() {
+    synchronized(myProject) {
+      myProject.putUserData(HIGHLIGHT_VISITORS_KEY, myHighlightVisitors);
+    }
   }
 
-  
   public void doCollectInformation(ProgressIndicator progress) {
     PsiElement[] psiRoots = myFile.getPsiRoots();
 
@@ -129,10 +143,12 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     finally {
       if (myHighlightVisitors != null) {
         setRefCountHolders(null);
+        releaseHighlightVisitors();
       }
     }
     myHighlights = result;
   }
+
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
     if (myCompiled) {
@@ -202,7 +218,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
     final HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
-    holder.setWritable(false);
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : elements) {
@@ -286,8 +301,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
 
       if (role instanceof EjbImplMethodRole && EjbUtil.findEjbDeclarations(method).length != 0) {
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
-        return info;
+        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
       }
 
       PsiMethod[] methods = method.findSuperMethods(false);
@@ -300,9 +314,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           overrides = true;
         }
 
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset,
-                                                 overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
-        return info;
+        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset,
+                                  overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
       }
     }
 

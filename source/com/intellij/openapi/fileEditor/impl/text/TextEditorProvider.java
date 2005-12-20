@@ -140,10 +140,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
   public void disposeComponent() {}
 
-  /**
-   * @return never null
-   */
-  public TextEditor getTextEditor(Editor editor) {
+  @NotNull public TextEditor getTextEditor(Editor editor) {
     if (editor == null) {
       throw new IllegalArgumentException("editor cannot be null");
     }
@@ -203,7 +200,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  private final class DummyTextEditor extends UserDataHolderBase implements TextEditor {
+  private static final class DummyTextEditor extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
     private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 

@@ -17,6 +17,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.UserDataHolder;
 import org.picocontainer.PicoContainer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides access to components. Servers as a base interface for {@link com.intellij.openapi.application.Application}
@@ -35,7 +36,7 @@ public interface ComponentManager extends UserDataHolder {
    * @return component that matches interface class or null if there is no such component
    */
   BaseComponent getComponent(String name);
-  
+
   /**
    * Gets the component by its interface class.
    *
@@ -59,7 +60,7 @@ public interface ComponentManager extends UserDataHolder {
    *
    * @return array of interface classes
    */
-  Class[] getComponentInterfaces();
+  @NotNull Class[] getComponentInterfaces();
 
   /**
    * Checks whether there is a component with the specified interface class.
@@ -68,7 +69,7 @@ public interface ComponentManager extends UserDataHolder {
    * @return <code>true</code> if there is a component with the specified interface class;
    * <code>false</code> otherwise
    */
-  boolean hasComponent(Class interfaceClass);
+  boolean hasComponent(@NotNull Class interfaceClass);
 
   /**
    * Gets all components whose interface class is derived from <code>baseInterfaceClass</code>.
@@ -76,7 +77,7 @@ public interface ComponentManager extends UserDataHolder {
    * @param baseInterfaceClass base class
    * @return array of components
    */
-  <T> T[] getComponents(Class<T> baseInterfaceClass);
+  @NotNull <T> T[] getComponents(Class<T> baseInterfaceClass);
 
   PicoContainer getPicoContainer();
 }

@@ -33,7 +33,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,23 +41,20 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private PsiResolveHelper myResolveHelper;
 
-  /**
-   * @fabrique
-   */
-  protected HighlightInfoHolder myHolder;
+  private HighlightInfoHolder myHolder;
 
   private RefCountHolder myRefCountHolder;
 
-  private final XmlHighlightVisitor myXmlVisitor;
+  private XmlHighlightVisitor myXmlVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
-  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<PsiReferenceExpression>>());
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
-  private final Map<PsiParameter, Boolean> myParameterIsReassigned = Collections.synchronizedMap(new THashMap<PsiParameter, Boolean>());
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+  private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
 
-  private final Map<String, PsiClass> mySingleImportedClasses = Collections.synchronizedMap(new THashMap<String, PsiClass>());
-  private final Map<String, PsiElement> mySingleImportedFields = Collections.synchronizedMap(new THashMap<String, PsiElement>());
-  private final Map<MethodSignature, PsiElement> mySingleImportedMethods = Collections.synchronizedMap(new THashMap<MethodSignature, PsiElement>());
+  private final Map<String, PsiClass> mySingleImportedClasses = new THashMap<String, PsiClass>();
+  private final Map<String, PsiElement> mySingleImportedFields = new THashMap<String, PsiElement>();
+  private final Map<MethodSignature, PsiElement> mySingleImportedMethods = new THashMap<MethodSignature, PsiElement>();
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
   public String getComponentName() {
@@ -76,8 +72,17 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public HighlightVisitorImpl(PsiManager manager) {
     myXmlVisitor = new XmlHighlightVisitor();
-
     myResolveHelper = manager.getResolveHelper();
+  }
+
+  private HighlightVisitorImpl() {
+  }
+
+  public HighlightVisitorImpl clone() {
+    HighlightVisitorImpl highlightVisitor = new HighlightVisitorImpl();
+    highlightVisitor.myResolveHelper = myResolveHelper;
+    highlightVisitor.myXmlVisitor = myXmlVisitor;
+    return highlightVisitor;
   }
 
   public boolean suitableForFile(PsiFile file) {
@@ -89,6 +94,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       throw new UnsupportedOperationException();
     }
     myHolder = holder;
+
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(element.isValid());
     }
@@ -112,7 +118,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     Language lang = element.getLanguage();
     List<Annotator> annotators = lang.getAnnotators();
     if (annotators.size() > 0) {
-      for(Annotator annotator: annotators) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < annotators.size(); i++) {
+        Annotator annotator = annotators.get(i);
         annotator.annotate(element, myAnnotationHolder);
       }
       convertAnnotationsToHighlightInfos();
@@ -655,8 +663,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private void registerConstructorCall(PsiConstructorCall constructorCall) {
     JavaResolveResult resolveResult = constructorCall.resolveMethodGenerics();
-    if (myRefCountHolder != null && resolveResult.getElement() instanceof PsiNamedElement) {
-      myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolveResult.getElement());
+    final PsiElement resolved = resolveResult.getElement();
+    if (myRefCountHolder != null && resolved instanceof PsiNamedElement) {
+      myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
     }
   }
 

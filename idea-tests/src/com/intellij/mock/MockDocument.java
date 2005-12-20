@@ -1,6 +1,7 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.EmptyMarkupModel;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.util.Map;
@@ -114,8 +116,9 @@ public class MockDocument implements DocumentEx {
     return null;
   }
 
+  @NotNull
   public MarkupModel getMarkupModel(Project project) {
-    return null;
+    return new EmptyMarkupModel(this);
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -185,7 +188,7 @@ public class MockDocument implements DocumentEx {
   }
 
   public void unSuppressGuardedExceptions() {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   public void setCyclicBufferSize(int bufferSize) {
@@ -193,4 +196,5 @@ public class MockDocument implements DocumentEx {
 
   public void setText(final CharSequence text) {
   }
+
 }

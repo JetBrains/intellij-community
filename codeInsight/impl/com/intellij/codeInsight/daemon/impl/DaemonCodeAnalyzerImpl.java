@@ -449,9 +449,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static HighlightInfo[] getHighlights(Document document, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     MarkupModel markup = document.getMarkupModel(project);
-    if (markup == null) {
-      return null;
-    }
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
@@ -515,14 +512,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static void setHighlights(Document document, HighlightInfo[] highlights, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
-    if (markup != null) {
-      highlights = stripWarningsCoveredByErrors(highlights, markup);
-      markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
+    highlights = stripWarningsCoveredByErrors(highlights, markup);
+    markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
 
-      DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-      if (codeAnalyzer != null && codeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
-        ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
-      }
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    if (codeAnalyzer != null && codeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
+      ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
     }
   }
 
@@ -562,14 +557,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public static LineMarkerInfo[] getLineMarkers(Document document, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
-    if (markup == null) return null;
     return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
   }
 
   public static void setLineMarkers(Document document, LineMarkerInfo[] lineMarkers, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = document.getMarkupModel(project);
-    if (markup == null) return;
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 

@@ -9,4 +9,5 @@ public interface HighlightVisitor {
   void visit(PsiElement element, HighlightInfoHolder holder);
   void setRefCountHolder(RefCountHolder refCountHolder);
   void init();
+  HighlightVisitor clone();
 }

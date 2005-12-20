@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/** @fabrique **/
 public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
 
@@ -22,7 +21,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private int myErrorCount;
   private int myWarningCount;
   private int myInfoCount;
-  private boolean writable = true;
+  private boolean writable = false;
 
   public HighlightInfoHolder(PsiFile contextFile, HighlightInfoFilter[] filters) {
     super(5);
@@ -31,7 +30,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public boolean add(HighlightInfo info) {
-    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this);
+    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this+"; info="+info);
     if (info == null || !accepted(info)) return false;
 
     HighlightSeverity severity = info.getSeverity();
@@ -56,7 +55,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public void clear() {
-    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this);
+    if (!writable) throw new UnsupportedOperationException("Clearing holder after visit finished; " + this);
 
     myErrorCount = 0;
     myWarningCount = 0;
@@ -92,6 +91,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
 
   // ASSERTIONS ONLY
   public void setWritable(final boolean writable) {
+    LOG.assertTrue(this.writable != writable);
     this.writable = writable;
   }
 
