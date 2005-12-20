@@ -557,7 +557,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s9,s10_2)
     );
 
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.DECEMBER,20,12,0,"-maxim.mossienko","Covariant array types")) return;
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.DECEMBER,30,12,0,"-maxim.mossienko","Covariant array types")) return;
     String s11 = "class A {\n" +
                  "  void main(String[] argv);" +
                  "}";
