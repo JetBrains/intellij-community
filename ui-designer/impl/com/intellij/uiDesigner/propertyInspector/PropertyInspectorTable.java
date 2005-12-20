@@ -231,6 +231,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final PsiMethod setter = PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
       return setter;
     }
+    else if (DataConstants.PSI_FILE.equals(dataId)) {
+      return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
+    }
     else{
       return null;
     }
