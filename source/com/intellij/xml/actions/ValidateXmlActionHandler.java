@@ -498,7 +498,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     XmlAttribute[] attributes = rootTag.getAttributes();
     for (XmlAttribute attribute : attributes) {
-      if (attribute.getName().startsWith(XMLNS_PREFIX)) return true;
+      if (attribute.isNamespaceDeclaration()) return true;
     }
 
     return false;

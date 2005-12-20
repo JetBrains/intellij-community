@@ -2,10 +2,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -30,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -41,6 +39,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -52,10 +52,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Mike
@@ -91,34 +88,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                  IntentionAction quickFixAction) {
     addElementsForTagWithManyQuickFixes(tag, localizedMessage, type, quickFixAction);
   }
+
   private void addElementsForTagWithManyQuickFixes(XmlTag tag,
                                                    String localizedMessage,
                                                    HighlightInfoType type,
                                                    IntentionAction... quickFixActions) {
-    ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
-    ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
-
-    if(childByRole != null) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
-      addToResults(highlightInfo);
-
-      for (final IntentionAction quickFixAction : quickFixActions) {
-        if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
-      }
-    }
-
-    childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tagElement);
-
-    if(childByRole != null) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
-      for (final IntentionAction quickFixAction : quickFixActions) {
-        if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
-      }
-
-      addToResults(highlightInfo);
-    }
+    bindMessageToTag(tag, type,  0, tag.getName().length(), localizedMessage, quickFixActions);
   }
 
   public void visitXmlToken(XmlToken token) {
@@ -147,6 +122,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   //}
 
 
+  private static Key<CachedValue<List<String>>> ourCachedUnboundNSPrefixesKey = Key.create("unbound ns prefixes");
+
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
@@ -162,6 +139,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (myResult == null) {
       checkTagByDescriptor(tag);
+    }
+
+    if (myResult == null) {
+      checkUnboundNamespacePrefix(tag);
     }
 
     if (myResult == null) {
@@ -186,6 +167,63 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         checkReferences(tag, QuickFixProvider.NULL);
       }
+    }
+  }
+
+  private void checkUnboundNamespacePrefix(final XmlTag tag) {
+    final String namespacePrefix = tag.getNamespacePrefix();
+
+    if (namespacePrefix.length() > 0) {
+      final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
+
+      if (namespaceByPrefix.length() == 0) {
+        final PsiFile containingFile = tag.getContainingFile();
+
+        if (!"xml".equals(namespacePrefix) ) {
+          final boolean error = containingFile.getFileType() == StdFileTypes.JSPX || containingFile.getFileType() == StdFileTypes.XHTML ||
+                                containingFile.getFileType() == StdFileTypes.XML;
+          final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
+          final int messageLength = namespacePrefix.length();
+          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
+
+          bindMessageToTag(tag, infoType, 0, messageLength, localizedMessage);
+        }
+      }
+    }
+  }
+
+  private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int offset,
+                                final int messageLength, final String localizedMessage,
+                                IntentionAction... quickFixActions) {
+    ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
+    ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
+
+    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage,quickFixActions);
+    childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tagElement);
+    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage,quickFixActions);
+  }
+
+  private void bindMessageToAstNode(final ASTNode childByRole,
+                                    final HighlightInfoType warning,
+                                    final int offset,
+                                    final int length,
+                                    final String localizedMessage,
+                                    IntentionAction... quickFixActions) {
+    if(childByRole != null) {
+      final TextRange textRange = childByRole.getTextRange();
+      final int startOffset = textRange.getStartOffset() + offset;
+
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+        warning,
+        new TextRange(startOffset,startOffset + length),
+        localizedMessage
+      );
+
+      for (final IntentionAction quickFixAction : quickFixActions) {
+        if (quickFixAction == null) continue;
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
+      }
+      addToResults(highlightInfo);
     }
   }
 
@@ -769,7 +807,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           if(hasBadResolve) {
             String message;
-            if (reference instanceof GenericReference) {
+            if (reference instanceof EmptyResolveMessageProvider) {
               message = ((GenericReference)reference).getUnresolvedMessage();
             }
             else {

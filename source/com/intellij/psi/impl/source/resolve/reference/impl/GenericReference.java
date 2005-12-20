@@ -10,6 +10,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
  * Time: 17:33:24
  * To change this template use Options | File Templates.
  */
-public abstract class GenericReference implements PsiReference{
+public abstract class GenericReference implements PsiReference, EmptyResolveMessageProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.GenericReference");
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
   private final PsiReferenceProvider myProvider;
