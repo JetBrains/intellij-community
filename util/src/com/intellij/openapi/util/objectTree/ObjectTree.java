@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ObjectTree {
-
-  private static final Logger LOG = Logger.getInstance("#jetbrains.fabrique.util.objectTree.ObjectTree");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
   private Set myRootObjects = new THashSet();
   private Map<Object, ObjectNode> myObject2NodeMap = new THashMap<Object, ObjectNode>();

@@ -10,8 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ObjectNode {
-
-  private static final Logger LOG = Logger.getInstance("jetbrains.fabrique.util.objectTree.ObjectNode");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
 
   private ObjectTree myTree;
 
