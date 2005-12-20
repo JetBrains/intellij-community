@@ -34,7 +34,7 @@ public class EclipseCompiler extends ExternalCompiler {
 
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
-  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManagerEx.getLibRtPath() + "/org.eclipse.jdt.core_3.1.0.jar";
+  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManagerEx.getLibRtPath() + "/org.eclipse.jdt.core.jar";
 
   public EclipseCompiler(Project project) {
     myProject = project;
