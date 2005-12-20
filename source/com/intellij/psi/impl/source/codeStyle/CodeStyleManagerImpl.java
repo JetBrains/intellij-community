@@ -348,31 +348,29 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
-    if( element == null )
-    {
+    if (element == null && offset != file.getTextLength()) {
       return offset;
     }
-    if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+    if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
     final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
-    final Language elementLanguage = element.getLanguage();
-    final FormattingModelBuilder elementBuilder = elementLanguage.getFormattingModelBuilder();
+    FormattingModelBuilder elementBuilder = builder;
+    if (element != null) {
+      final Language elementLanguage = element.getLanguage();
+      elementBuilder = elementLanguage.getFormattingModelBuilder();
+    }
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
 
-      int result = FormatterEx.getInstanceEx().adjustLineIndent(model,
-                                                                settings,
-                                                                indentOptions,
-                                                                offset,
-                                                                significantRange);
+      int result = FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
       return result;
-
-    } else {
+    }
+    else {
       return offset;
     }
   }
