@@ -45,6 +45,7 @@ public class HorizontalList extends JPanel {
   private JButton myRightButton = new JButton(IconLoader.getIcon("/general/splitRight.png"));
   private JPanel myScrollablePanel = new JPanel(new GridBagLayout());
   private JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myScrollablePanel);
+  private int myPreferredWidth = 400;
 
   public HorizontalList() {
     this(ArrayUtil.EMPTY_OBJECT_ARRAY);
@@ -366,7 +367,7 @@ public class HorizontalList extends JPanel {
         final JLabel linkLabel = myList.get(i);
         final Icon icon = linkLabel.getIcon();
         width += linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
-        if (width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
+        if (wholeWidth == 0 || width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
           myScrollablePanel.add(linkLabel, gc);
         } else {
           myFirstIndex = i + 1;
@@ -377,7 +378,8 @@ public class HorizontalList extends JPanel {
       }
     }
 
-    final boolean scrollBarVisible = width >= wholeWidth;
+    myPreferredWidth = width + additionalWidth;
+    final boolean scrollBarVisible = wholeWidth != 0 && width >= wholeWidth;
     myLeftButton.setVisible(scrollBarVisible);
     myRightButton.setVisible(scrollBarVisible);
     myLeftButton.setEnabled(widthToTheRight >= wholeWidth && myFirstIndex < myModel.size() - 2);
@@ -387,7 +389,13 @@ public class HorizontalList extends JPanel {
   }
 
   public Dimension getPreferredSize() {
-    return new JButton("1").getPreferredSize();
+    final Dimension size = new JButton("1").getPreferredSize();
+    size.height += 5;
+    return size;
+  }
+
+  protected int getPreferredWidth() {
+     return myPreferredWidth;
   }
 
   private int getIndexByMode(int index){
@@ -404,14 +412,11 @@ public class HorizontalList extends JPanel {
   }
 
   private void clearBorder(){
-    if (mySelectedIndex != -1) {
-      final JLabel focusLostLabel = myList.get(mySelectedIndex);
-      focusLostLabel.setBackground(UIUtil.getListBackground());
-      focusLostLabel.setForeground(UIUtil.getListForeground());
-      clearBorder(focusLostLabel);
-    } else if (!myModel.isEmpty()) {
-      clearBorder(myList.get(myModel.size() - 1));
-    }
+    if (myModel.isEmpty()) return;
+    final JLabel focusLostLabel = myList.get(mySelectedIndex != -1 ? mySelectedIndex : myModel.size() - 1);
+    focusLostLabel.setBackground(UIUtil.getListBackground());
+    focusLostLabel.setForeground(UIUtil.getListForeground());
+    clearBorder(focusLostLabel);
   }
 
   protected void shiftFocus(int direction){

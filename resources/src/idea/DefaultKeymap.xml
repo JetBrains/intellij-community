@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component>
   <keymap name="$default" version="1" disable-mnemonics="false">
+    <action id="ShowNavBar">
+      <keyboard-shortcut first-keystroke="shift N"/>
+    </action>
     <action id="GuiDesigner.ExpandSelection">
       <keyboard-shortcut first-keystroke="control W"/>
     </action>

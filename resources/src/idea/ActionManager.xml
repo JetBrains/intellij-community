@@ -15,6 +15,7 @@
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"/>
 
+    <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction"/>
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true"/>
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true"/>
