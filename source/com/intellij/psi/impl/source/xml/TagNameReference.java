@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
@@ -100,17 +101,21 @@ public class TagNameReference implements PsiReference {
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    PsiMetaData metaData = null;
+
     if (element instanceof PsiMetaOwner){
       final PsiMetaOwner owner = (PsiMetaOwner)element;
-      if (owner.getMetaData() instanceof XmlElementDescriptor){
-        getElement().setName(owner.getMetaData().getName(getElement()));
+      metaData = owner.getMetaData();
+
+      if (metaData instanceof XmlElementDescriptor){
+        getElement().setName(metaData.getName(getElement()));
       }
     } else if (element instanceof JspFile) {
       // implicit reference to tag file
       return getElement();
     }
     
-    throw new IncorrectOperationException("Cant bind to not a xml element definition!");
+    throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData);
   }
 
   public boolean isReferenceTo(PsiElement element) {
