@@ -262,7 +262,7 @@ public class ControlFlowUtil {
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         //[ven]This is a hack since Extract Method doesn't want to see throw's exit points
         processGotoStatement(flow, offset, classesFilter, exitStatements);
-      }
+      }                                                                       
 
       public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
         processGoto(flow, start, end, exitPoints, exitStatements, offset, instruction.offset, null, classesFilter);
@@ -275,7 +275,7 @@ public class ControlFlowUtil {
       }
 
       public void visitConditionalThrowToInstruction(ConditionalThrowToInstruction instruction, int offset, int nextOffset) {
-        // ???
+        visitInstruction(instruction, offset, nextOffset);
       }
 
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
