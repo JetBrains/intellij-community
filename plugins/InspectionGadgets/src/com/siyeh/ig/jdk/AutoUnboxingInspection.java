@@ -20,29 +20,22 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class AutoUnboxingInspection extends ExpressionInspection{
 
     /** @noinspection StaticCollection */
     @NonNls static final Map<String,String> s_unboxingMethods =
             new HashMap<String, String>(8);
-
-    /** @noinspection StaticCollection */
-    static final Set<String> s_numberTypes = new HashSet<String>(8);
 
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
@@ -56,15 +49,6 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_unboxingMethods.put("long", "longValue");
         s_unboxingMethods.put("double", "doubleValue");
         s_unboxingMethods.put("char", "charValue");
-
-        s_numberTypes.add("java.lang.Integer");
-        s_numberTypes.add("java.lang.Short");
-        s_numberTypes.add("java.lang.Long");
-        s_numberTypes.add("java.lang.Double");
-        s_numberTypes.add("java.lang.Float");
-        s_numberTypes.add("java.lang.Byte");
-        s_numberTypes.add("java.lang.Character");
-        s_numberTypes.add("java.lang.Number");
     }
 
     public String getDisplayName(){
@@ -107,20 +91,14 @@ public class AutoUnboxingInspection extends ExpressionInspection{
                     ExpectedTypeUtils.findExpectedType(expression, false);
             assert expectedType != null;
             final String expectedTypeText = expectedType.getCanonicalText();
-            final String typeText = type.getCanonicalText();
             final String expressionText = expression.getText();
             final String boxClassName = s_unboxingMethods.get(expectedTypeText);
-            if(TypeUtils.typeEquals("java.lang.Boolean", type)){
+            if (expression instanceof PsiTypeCastExpression) {
                 replaceExpression(expression,
-                        expressionText + '.' + boxClassName + "()");
-            } else if(s_numberTypes.contains(typeText)){
-                replaceExpression(expression,
-                        expressionText + '.' + boxClassName + "()");
+                        '(' + expressionText + ")." + boxClassName + "()");
             } else{
-                @NonNls final String numberKlass = "Number";
                 replaceExpression(expression,
-                        "((" + numberKlass + ')' + expressionText + ")."
-                                + boxClassName + "()");
+                        expressionText + '.' + boxClassName + "()");
             }
         }
     }
@@ -187,7 +165,6 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, false);
-
             if(expectedType == null){
                 return;
             }
