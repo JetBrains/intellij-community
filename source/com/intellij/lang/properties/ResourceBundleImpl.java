@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Collections;
@@ -39,6 +40,11 @@ public class ResourceBundleImpl implements ResourceBundle {
     @NotNull
     public String getBaseName() {
       return "";
+    }
+
+    @NotNull
+    public VirtualFile getBaseDirectory() {
+      return null;
     }
   };
 
@@ -87,6 +93,7 @@ public class ResourceBundleImpl implements ResourceBundle {
     return result;
   }
 
+  @Nullable
   public static ResourceBundle createByUrl(String url) {
     if (!url.startsWith(RESOURCE_BUNDLE_PREFIX)) return null;
 
@@ -103,5 +110,10 @@ public class ResourceBundleImpl implements ResourceBundle {
 
   public String getUrl() {
     return RESOURCE_BUNDLE_PREFIX +getBaseName();
+  }
+
+  @NotNull
+  public VirtualFile getBaseDirectory() {
+    return myBaseDirectory;
   }
 }

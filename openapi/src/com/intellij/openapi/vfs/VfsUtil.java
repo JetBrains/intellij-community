@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
@@ -200,17 +204,19 @@ public class VfsUtil {
     // Separate files by first component in the path.
     HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<VirtualFile, Set<VirtualFile>>();
     for (VirtualFile aFile : files) {
-      VirtualFile file = aFile.isDirectory() ? aFile : aFile.getParent();
-      //assertTrue(file != null);
-      VirtualFile[] path = getPathComponents(file);
+      VirtualFile directory = aFile.isDirectory() ? aFile : aFile.getParent();
+      if (directory == null) return VirtualFile.EMPTY_ARRAY;
+      VirtualFile[] path = getPathComponents(directory);
       Set<VirtualFile> filesSet;
-      if (map.containsKey(path[0])) {
-        filesSet = map.get(path[0]);
+      final VirtualFile firstPart = path[0];
+      if (map.containsKey(firstPart)) {
+        filesSet = map.get(firstPart);
       }
       else {
-        map.put(path[0], filesSet = new HashSet<VirtualFile>());
+        filesSet = new THashSet<VirtualFile>();
+        map.put(firstPart, filesSet);
       }
-      filesSet.add(file);
+      filesSet.add(directory);
     }
     // Find common ancestor for each set of files.
     ArrayList<VirtualFile> ancestorsList = new ArrayList<VirtualFile>();
@@ -282,7 +288,7 @@ public class VfsUtil {
       file = file.getParent();
     }
     int size = componentsList.size();
-    VirtualFile components[] = new VirtualFile[size];
+    VirtualFile[] components = new VirtualFile[size];
     for (int i = 0; i < size; i++) {
       components[i] = componentsList.get(size - i - 1);
     }

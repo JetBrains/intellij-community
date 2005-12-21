@@ -3,17 +3,16 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.lang.properties.ResourceBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ResourceBundleAsVirtualFile extends VirtualFile {
   private final ResourceBundle myResourceBundle;
@@ -75,11 +74,11 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
   }
 
   public VirtualFile getParent() {
-    return null;
+    return myResourceBundle.getBaseDirectory();
   }
 
   public VirtualFile[] getChildren() {
-    return new VirtualFile[0];
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {

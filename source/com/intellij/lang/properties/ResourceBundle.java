@@ -8,6 +8,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,4 +20,6 @@ public interface ResourceBundle {
   @NotNull List<PropertiesFile> getPropertiesFiles(final Project project);
 
   @NotNull String getBaseName();
+
+  @NotNull VirtualFile getBaseDirectory();
 }
