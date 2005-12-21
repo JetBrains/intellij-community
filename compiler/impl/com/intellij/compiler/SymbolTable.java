@@ -30,6 +30,7 @@ public class SymbolTable {
           myTrie.close();
         }
       }
+      myTrie.setStringCacheSize(myTrie.getStringCacheSize() * 2);
       myTrie.setNodeCacheSize(myTrie.getNodeCacheSize() * 4);
     }
     catch (IOException e) {
@@ -75,7 +76,7 @@ public class SymbolTable {
     }
   }
 
-  public void dispose() throws CacheCorruptedException {
+  public synchronized void dispose() throws CacheCorruptedException {
     try {
       save();
       myTrie.close();
