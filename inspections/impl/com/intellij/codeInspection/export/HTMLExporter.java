@@ -8,41 +8,40 @@
  */
 package com.intellij.codeInspection.export;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class HTMLExporter {
   private final String myRootFolder;
   private Project myProject;
   private int myFileCounter;
-  private final com.intellij.util.containers.HashMap myElementToFilenameMap;
+  private final HashMap<RefElement,String> myElementToFilenameMap;
   private final HTMLComposer myComposer;
-  private final HashSet myGeneratedReferences;
-  private final HashSet myGeneratedPages;
+  private final HashSet<RefElement> myGeneratedReferences;
+  private final HashSet<RefElement> myGeneratedPages;
 
   public HTMLExporter(String rootFolder, HTMLComposer composer, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
-    myElementToFilenameMap = new com.intellij.util.containers.HashMap();
+    myElementToFilenameMap = new HashMap<RefElement, String>();
     myFileCounter = 0;
     myComposer = composer;
-    myGeneratedPages = new HashSet();
-    myGeneratedReferences = new HashSet();
+    myGeneratedPages = new HashSet<RefElement>();
+    myGeneratedReferences = new HashSet<RefElement>();
   }
 
   public void createPage(RefElement element) {
@@ -55,7 +54,9 @@ public class HTMLExporter {
   }
 
   private void appendNavBar(@NonNls final StringBuffer buf, RefElement element) {
-    buf.append("<a href=\"../index.html\" target=\"_top\">" + InspectionsBundle.message("inspection.export.inspections.link.text") + "</a>  ");
+    buf.append("<a href=\"../index.html\" target=\"_top\">");
+    buf.append(InspectionsBundle.message("inspection.export.inspections.link.text"));
+    buf.append("</a>  ");
     myComposer.appendElementReference(buf, element, InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
     buf.append("<hr>");
   }
@@ -69,12 +70,12 @@ public class HTMLExporter {
       indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath));
     }
 
+    FileWriter writer = null;
     try {
-      File myFolder = new File(folder);
-      myFolder.mkdirs();
-      FileWriter myWriter = new FileWriter(fullPath);
-      myWriter.write(buf.toString().toCharArray());
-      myWriter.close();
+      File folderFile = new File(folder);
+      folderFile.mkdirs();
+      writer = new FileWriter(fullPath);
+      writer.write(buf.toString().toCharArray());
     } catch (IOException e) {
       Messages.showMessageDialog(
         project,
@@ -83,6 +84,15 @@ public class HTMLExporter {
         Messages.getErrorIcon()
       );
       throw new ProcessCanceledException();
+    } finally {
+      if (writer != null) {
+        try {
+          writer.close();
+        }
+        catch (IOException e) {
+          //Cannot do anything in case of exception
+        }
+      }
     }
   }
 
@@ -92,7 +102,7 @@ public class HTMLExporter {
   }
 
   private String fileNameForElement(RefElement element) {
-    @NonNls String fileName = (String) myElementToFilenameMap.get(element);
+    @NonNls String fileName = myElementToFilenameMap.get(element);
 
     if (fileName == null) {
       fileName = "e" + Integer.toString(++myFileCounter) + ".html";
@@ -102,10 +112,9 @@ public class HTMLExporter {
     return fileName;
   }
 
-  private Set getReferencesWithoutPages() {
-    HashSet result = new HashSet();
-    for (Iterator iterator = myGeneratedReferences.iterator(); iterator.hasNext();) {
-      RefElement refElement = (RefElement) iterator.next();
+  private Set<RefElement> getReferencesWithoutPages() {
+    HashSet<RefElement> result = new HashSet<RefElement>();
+    for (RefElement refElement : myGeneratedReferences) {
       if (!myGeneratedPages.contains(refElement)) {
         result.add(refElement);
       }
@@ -115,10 +124,9 @@ public class HTMLExporter {
   }
 
   public void generateReferencedPages() {
-    Set extras = getReferencesWithoutPages();
+    Set<RefElement> extras = getReferencesWithoutPages();
     while (extras.size() > 0) {
-      for (Iterator iterator = extras.iterator(); iterator.hasNext();) {
-        RefElement refElement = (RefElement) iterator.next();
+      for (RefElement refElement : extras) {
         createPage(refElement);
       }
       extras = getReferencesWithoutPages();
