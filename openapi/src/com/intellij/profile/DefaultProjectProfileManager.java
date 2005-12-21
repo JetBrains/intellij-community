@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -84,8 +85,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       projectProfile.copyFrom(myApplicationProfileManager.getProfile(profile));
       projectProfile.setLocal(false);
       projectProfileName = Messages.showInputDialog(myProject,
-                                                    "",
-                                                    "",
+                                                    InspectionsBundle.message("profile.import.profile.name"),
+                                                    InspectionsBundle.message("profile.import.dialog.title"),
                                                     Messages.getInformationIcon(),
                                                     projectProfile.getName() + "<project>",
                                                     new InputValidator() {
