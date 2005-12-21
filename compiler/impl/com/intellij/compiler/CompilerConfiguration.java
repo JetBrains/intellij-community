@@ -28,6 +28,7 @@ import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -38,7 +39,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   public String DEFAULT_COMPILER;
-  private BackendCompiler myDefaultJavaCompiler;
+  @NotNull private BackendCompiler myDefaultJavaCompiler;
 
   // exclude from compile
   private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();

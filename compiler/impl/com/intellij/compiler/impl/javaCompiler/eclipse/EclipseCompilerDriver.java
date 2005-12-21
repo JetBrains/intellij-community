@@ -48,7 +48,7 @@ import java.io.StringWriter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;    
 
 public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerDriver");

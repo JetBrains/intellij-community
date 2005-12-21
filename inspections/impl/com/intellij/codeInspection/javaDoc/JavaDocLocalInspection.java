@@ -305,7 +305,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    private void moveCaretTo(final PsiElement newCaretPosition) {
+    private static void moveCaretTo(final PsiElement newCaretPosition) {
       Project project = newCaretPosition.getProject();
       final PsiFile psiFile = newCaretPosition.getContainingFile();
       final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -570,7 +570,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
            : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
-  private ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method) {
+  private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method) {
     @NonNls String tag = "throws";
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
     PsiClassType type = method.getThrowsList().getReferencedTypes()[0];
@@ -578,13 +578,27 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return createDescriptor(method.getNameIdentifier(), message,new AddMissingTagFix(tag, firstDeclaredException));
   }
 
-  private ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight, @NonNls String tag) {
+  private static ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight, @NonNls String tag) {
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
     return createDescriptor(elementToHighlight, message,new AddMissingTagFix(tag));
   }
-  private ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight, String param) {
+  private static ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight, String param) {
     String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param + "</code>");
-    return createDescriptor(elementToHighlight, message,new AddMissingTagFix("param", param));
+    return createDescriptor(elementToHighlight, message, new AddMissingParamTagFix(param));
+  }
+
+  private static class AddMissingParamTagFix extends AddMissingTagFix {
+    private final String myParamName;
+
+    public AddMissingParamTagFix(final String paramName) {
+      super("param", paramName);
+      myParamName = paramName;
+    }
+
+    public String getName() {
+      String message = InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myParamName);
+      return message;
+    }
   }
 
   private static String extractTagDescription(PsiDocTag tag) {
