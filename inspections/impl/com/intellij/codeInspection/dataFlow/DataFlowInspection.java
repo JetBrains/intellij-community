@@ -38,9 +38,6 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
 
-  public DataFlowInspection() {
-  }
-
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
