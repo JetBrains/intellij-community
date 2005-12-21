@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,7 +31,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   private String myName;
   private final LibraryTable myLibraryTable;
-  private com.intellij.util.containers.HashMap<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private HashMap<OrderRootType, VirtualFilePointerContainer> myRoots;
   private LibraryImpl mySource;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
@@ -84,8 +85,8 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   }
 
   public VirtualFilePointer[] getFilePointers(OrderRootType rootType) {
-    final List list = myRoots.get(rootType).getList();
-    return (VirtualFilePointer[])list.toArray(new VirtualFilePointer[list.size()]);
+    final List<VirtualFilePointer> list = myRoots.get(rootType).getList();
+    return list.toArray(new VirtualFilePointer[list.size()]);
   }
 
   public void setName(String name) {
@@ -113,9 +114,9 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     return myRootProvider;
   }
 
-  private com.intellij.util.containers.HashMap<OrderRootType, VirtualFilePointerContainer> initRoots() {
-    final com.intellij.util.containers.HashMap<OrderRootType, VirtualFilePointerContainer> result =
-      new com.intellij.util.containers.HashMap<OrderRootType, VirtualFilePointerContainer>(5);
+  private static HashMap<OrderRootType, VirtualFilePointerContainer> initRoots() {
+    final HashMap<OrderRootType, VirtualFilePointerContainer> result =
+      new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
     final VirtualFilePointerContainer classesRoots = VirtualFilePointerManager.getInstance().createContainer();
     result.put(OrderRootType.CLASSES, classesRoots);
@@ -131,8 +132,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   };
 
   public void readExternal(Element element) throws InvalidDataException {
-    final String nameAttribute = element.getAttributeValue(LIBRARY_NAME_ATTR);
-    myName = nameAttribute;
+    myName = element.getAttributeValue(LIBRARY_NAME_ATTR);
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
       final Element rootChild = element.getChild(rootType.name());
