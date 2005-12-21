@@ -53,6 +53,15 @@
       <interface-class>com.intellij.util.projectImport.JBuilderLibraryImportHelper</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.importProject.jbuilder.JBuilderLibraryImporter</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.util.projectWizard.JBuilderApplicationProjectImportHelper</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderEjbImportHelper</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderWebProjectImportHelper</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
