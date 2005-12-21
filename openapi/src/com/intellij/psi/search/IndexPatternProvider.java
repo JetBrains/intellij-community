@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.search;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
 
@@ -25,8 +25,16 @@ import java.beans.PropertyChangeListener;
  * source code files are indexed by IDEA.
  *
  * @author yole
+ * @since 5.1
+ * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {
+  /**
+   * The property the change of which should be reported to the property change listener
+   * when the list of index patterns is changed.
+   *
+   * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+   */
   @NonNls String PROP_INDEX_PATTERNS = "indexPatterns";
 
   /**
@@ -38,7 +46,7 @@ public interface IndexPatternProvider {
 
   /**
    * Adds a listener which is notified when the set of index patterns provided by this provider
-   * changes.
+   * changes. The property the change of which should be reported is {@link #PROP_INDEX_PATTERNS}.
    *
    * @param listener the listener to add.
    */

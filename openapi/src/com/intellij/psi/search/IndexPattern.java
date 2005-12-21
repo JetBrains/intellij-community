@@ -24,16 +24,20 @@ import java.util.regex.PatternSyntaxException;
  * A single pattern the occurrences of which in comments are indexed by IDEA.
  *
  * @author yole
+ * @since 5.1
  * @see IndexPatternProvider#getIndexPatterns()
  */
 public class IndexPattern {
-  /**
-   * Pattern for "todo" matching. It cannot be null.
-   */
-  private String myPatternString;
+  @NotNull private String myPatternString;
   private boolean myCaseSensitive;
   private Pattern myPattern;
 
+  /**
+   * Creates an instance of an index pattern.
+   *
+   * @param patternString the text of the Java regular expression to match.
+   * @param caseSensitive whether the regular expression should be case-sensitive.
+   */
   public IndexPattern(@NotNull String patternString, final boolean caseSensitive) {
     myPatternString = patternString;
     myCaseSensitive = caseSensitive;

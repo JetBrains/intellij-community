@@ -17,14 +17,35 @@ package com.intellij.psi.search;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents the occurrence of an index pattern in the comments of a source code file.
+ *
  * @author yole
+ * @since 5.1
+ * @see com.intellij.psi.search.searches.IndexPatternSearch
+ * @see IndexPatternProvider
  */
 public interface IndexPatternOccurrence {
-  PsiFile getFile();
+  /**
+   * Returns the file in which the occurrence was found.
+   *
+   * @return the file in which the occurrence was found.
+   */
+  @NotNull PsiFile getFile();
 
-  TextRange getTextRange();
+  /**
+   * Returns the text range which was matched by the pattern.
+   *
+   * @return the text range which was matched by the pattern.
+   */
+  @NotNull TextRange getTextRange();
 
-  IndexPattern getPattern();
+  /**
+   * Returns the instance of the pattern which was matched.
+   *
+   * @return the instance of the pattern which was matched.
+   */
+  @NotNull IndexPattern getPattern();
 }
