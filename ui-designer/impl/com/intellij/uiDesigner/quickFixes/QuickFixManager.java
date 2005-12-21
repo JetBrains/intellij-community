@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,15 +39,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    */
   private HeavyweightHint myHint;
 
-  public QuickFixManager(final GuiEditor editor, final T component) {
-    if (editor == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public QuickFixManager(@NotNull final GuiEditor editor, @NotNull final T component) {
     myEditor = editor;
     myComponent = component;
     myAlarm = new Alarm();

@@ -156,6 +156,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private ActiveDecorationLayer myActiveDecorationLayer;
 
   private boolean myShowGrid = true;
+  private QuickFixManagerImpl myQuickFixManager;
 
   /**
    * @param file file to be edited
@@ -267,6 +268,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
     // PSI listener to restart error highlighter
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
+
+    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer);
   }
 
   @NotNull
