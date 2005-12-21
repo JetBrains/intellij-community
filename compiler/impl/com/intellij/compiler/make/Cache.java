@@ -30,13 +30,13 @@ public class Cache {
   @NonNls private static final String DECLARATIONS_INDEX_FILE_NAME = "declarations_index.dat";
   @NonNls private static final String CLASSINFO_INDEX_FILE_NAME = "classinfo_index.dat";
 
-  public Cache(String storePath, int minViewCount, int maxViewCount) throws CacheCorruptedException {
-    myViewPool = new ViewPool(storePath, minViewCount, maxViewCount);
+  public Cache(String storePath) throws CacheCorruptedException {
+    myViewPool = new ViewPool(storePath);
     myDeclarationsIndexFile = new File(storePath + "/" + DECLARATIONS_INDEX_FILE_NAME);
     myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
   }
 
-  public synchronized void dispose() {
+  public synchronized void dispose() throws CacheCorruptedException {
     myViewPool.dispose(true);
     try {
       if (myQNameToClassDeclarationIdMap != null) {
@@ -648,15 +648,14 @@ public class Cache {
     }
     try {
       final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();
-      final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] classReferencers = classDeclarationView.getReferencers();
+      final int[] classReferencers = myViewPool.getClassDeclarationView(classDeclarationId).getReferencers();
       for (final int referencer : classReferencers) {
         if (referencer != classQName) { // skip self-dependencies
           addDependency(dependencies, referencer);
         }
       }
 
-      final int[] fieldIds = classDeclarationView.getFieldIds();
+      final int[] fieldIds = myViewPool.getClassDeclarationView(classDeclarationId).getFieldIds();
       for (final int fieldId : fieldIds) {
         final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
         final int[] fieldReferencers = fieldDeclarationView.getReferencers();
@@ -668,10 +667,9 @@ public class Cache {
         }
       }
 
-      final int[] methodIds = classDeclarationView.getMethodIds();
+      final int[] methodIds = myViewPool.getClassDeclarationView(classDeclarationId).getMethodIds();
       for (final int methodId : methodIds) {
-        final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
-        final int[] methodReferencers = methodDeclarationView.getReferencers();
+        final int[] methodReferencers = myViewPool.getMethodDeclarationView(methodId).getReferencers();
         for (int referencer : methodReferencers) {
           if (referencer != classQName) {
             final Dependency dependency = addDependency(dependencies, referencer);
@@ -865,9 +863,7 @@ public class Cache {
   private void removeMethodDeclaration(int classDeclarationId, int methodId) throws IOException, CacheCorruptedException {
     final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
     classDeclarationView.removeMethodId(methodId);
-    final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
-    //methodDeclarationView.removeRecord();
-    myViewPool.removeMethodDeclarationRecord(methodDeclarationView);
+    myViewPool.removeMethodDeclarationRecord(myViewPool.getMethodDeclarationView(methodId));
   }
 
 
@@ -883,12 +879,12 @@ public class Cache {
     try {
       if (classMember instanceof FieldInfo) {
         FieldInfo fieldInfo = (FieldInfo)classMember;
-        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
         if (memberId == UNKNOWN) {
-          memberId = view.getRecordId();
-          final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-          classDeclarationView.addFieldId(memberId);
+          memberId = myViewPool.getFieldDeclarationView(memberId).getRecordId();
+          final ClassDeclarationView cdview = myViewPool.getClassDeclarationView(classDeclarationId);
+          cdview.addFieldId(memberId);
         }
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
         view.setName(fieldInfo.getName());
         view.setDescriptor(fieldInfo.getDescriptor());
         view.setGenericSignature(fieldInfo.getGenericSignature());
@@ -899,12 +895,11 @@ public class Cache {
       }
       else if (classMember instanceof MethodInfo) {
         MethodInfo methodInfo = (MethodInfo)classMember;
-        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(memberId);
         if (memberId == UNKNOWN) {
-          memberId = view.getRecordId();
-          final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-          classDeclarationView.addMethodId(memberId);
+          memberId = myViewPool.getMethodDeclarationView(memberId).getRecordId();
+          myViewPool.getClassDeclarationView(classDeclarationId).addMethodId(memberId);
         }
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(memberId);
         view.setName(methodInfo.getName());
         view.setDescriptor(methodInfo.getDescriptor());
         view.setGenericSignature(methodInfo.getGenericSignature());
@@ -977,7 +972,7 @@ public class Cache {
     }
   }
 
-  public synchronized void wipe() {
+  public synchronized void wipe() throws CacheCorruptedException {
     myViewPool.wipe();
     myQNameToClassDeclarationIdMap = null;
     myQNameToClassInfoIdMap = null;
@@ -1014,13 +1009,10 @@ public class Cache {
         final int[] methodIds = getMethodIds(classDeclarationId);
         for (int methodId : methodIds) {
           final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
-          //methodDeclarationView.removeRecord();
           myViewPool.removeMethodDeclarationRecord(methodDeclarationView);
         }
 
-        final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-        //classDeclarationView.removeRecord();
-        myViewPool.removeClassDeclarationRecord(classDeclarationView);
+        myViewPool.removeClassDeclarationRecord(myViewPool.getClassDeclarationView(classDeclarationId));
         getQNameToClassDeclarationIdMap().remove(qName);
       }
 

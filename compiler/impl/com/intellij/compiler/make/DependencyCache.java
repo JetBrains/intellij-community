@@ -67,7 +67,7 @@ public class DependencyCache {
 
   public Cache getCache() throws CacheCorruptedException {
     if (myCache == null) {
-      myCache = new Cache(myStoreDirectoryPath, 50, Integer.MAX_VALUE);
+      myCache = new Cache(myStoreDirectoryPath);
     }
 
     return myCache;
@@ -76,7 +76,7 @@ public class DependencyCache {
   public Cache getNewClassesCache() throws CacheCorruptedException {
     if (myNewClassesCache == null) {
       //noinspection HardCodedStringLiteral
-      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 50, 1000);
+      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp");
     }
     return myNewClassesCache;
   }
@@ -596,11 +596,21 @@ public class DependencyCache {
   }
 
   public void dispose() {
-    if (myNewClassesCache != null) {
-      myNewClassesCache.wipe();
+    try {
+      if (myNewClassesCache != null) {
+        myNewClassesCache.wipe();
+      }
     }
-    if (myCache != null) {
-      myCache.dispose();
+    catch (CacheCorruptedException e) {
+      LOG.error(e); // todo
+    }
+    try {
+      if (myCache != null) {
+        myCache.dispose();
+      }
+    }
+    catch (CacheCorruptedException e) {
+      LOG.error(e); // todo
     }
     try {
       if (mySymbolTable != null) {
