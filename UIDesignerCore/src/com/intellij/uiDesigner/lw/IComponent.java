@@ -32,6 +32,8 @@ public interface IComponent {
 
   String getComponentClassName();
 
+  String getId();
+
   IProperty[] getModifiedProperties();
 
   IContainer getParentContainer();

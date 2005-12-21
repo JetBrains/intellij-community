@@ -34,7 +34,7 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
   }
 
   public String getGroupDisplayName() {
-    return null;
+    return UIDesignerBundle.message("form.inspections.group");
   }
 
   public String getDisplayName() {

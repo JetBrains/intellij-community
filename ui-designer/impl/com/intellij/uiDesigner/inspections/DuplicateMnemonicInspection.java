@@ -32,10 +32,6 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     super("DuplicateMnemonic");
   }
 
-  @Override public String getGroupDisplayName() {
-    return UIDesignerBundle.message("form.inspections.group");
-  }
-
   @Override public String getDisplayName() {
     return UIDesignerBundle.message("inspection.duplicate.mnemonics");
   }
@@ -64,7 +60,8 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
         StringDescriptor descriptor = (StringDescriptor)propValue;
         String value = ReferenceUtil.resolve(module, descriptor);
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
-        if (twm.myMnemonicIndex >= 0 && isButtonOrLabel(module, component)) {
+        if (twm.myMnemonicIndex >= 0 &&
+            (isComponentClass(module, component, JLabel.class) || isComponentClass(module, component, AbstractButton.class))) {
           return twm;
         }
       }
@@ -109,17 +106,14 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     return null;
   }
 
-  private static boolean isButtonOrLabel(final Module module, final IComponent component) {
+  public static boolean isComponentClass(final Module module, final IComponent component,
+                                         final Class<? extends JComponent> componentClass) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiClass aClass = psiManager.findClass(component.getComponentClassName(), scope);
     if (aClass != null) {
-      final PsiClass labelClass = psiManager.findClass(JLabel.class.getName(), scope);
+      final PsiClass labelClass = psiManager.findClass(componentClass.getName(), scope);
       if (labelClass != null && InheritanceUtil.isInheritorOrSelf(aClass, labelClass, true)) {
-        return true;
-      }
-      final PsiClass buttonClass = psiManager.findClass(AbstractButton.class.getName(), scope);
-      if (buttonClass != null && InheritanceUtil.isInheritorOrSelf(aClass, buttonClass, true)) {
         return true;
       }
     }

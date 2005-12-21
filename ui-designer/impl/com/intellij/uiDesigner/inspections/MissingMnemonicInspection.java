@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -24,10 +25,6 @@ import javax.swing.*;
 public class MissingMnemonicInspection extends BaseFormInspection {
   public MissingMnemonicInspection() {
     super("MissingMnemonic");
-  }
-
-  @Override public String getGroupDisplayName() {
-    return UIDesignerBundle.message("form.inspections.group");
   }
 
   @Override public String getDisplayName() {
@@ -55,7 +52,7 @@ public class MissingMnemonicInspection extends BaseFormInspection {
           }
           else if (labelClass != null && InheritanceUtil.isInheritorOrSelf(aClass, labelClass, true)) {
             IProperty labelForProperty = DuplicateMnemonicInspection.findProperty(component, SwingProperties.LABEL_FOR);
-            if (labelForProperty != null && labelForProperty.getPropertyValue(component) != null) {
+            if (labelForProperty != null && !StringUtil.isEmpty((String) labelForProperty.getPropertyValue(component))) {
               collector.addError(textProperty,
                                  UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
                                  new MyEditorQuickFixProvider());
