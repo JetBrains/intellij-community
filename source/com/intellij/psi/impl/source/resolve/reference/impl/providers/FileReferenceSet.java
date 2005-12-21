@@ -94,10 +94,12 @@ public class FileReferenceSet {
     while(true){
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
-      currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1,
-                                                                myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
-                                            index++, subreferenceText);
-      referencesList.add(currentContextRef);
+      if (subreferenceText.length() > 0) {
+        currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1,
+                                                                  myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+                                              index++, subreferenceText);
+        referencesList.add(currentContextRef);
+      }
       if ((currentSlash = nextSlash) < 0) {
         break;
       }
