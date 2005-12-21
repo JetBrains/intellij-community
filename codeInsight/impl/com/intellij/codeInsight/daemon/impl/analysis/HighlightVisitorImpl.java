@@ -39,13 +39,13 @@ import java.util.Map;
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
-  private PsiResolveHelper myResolveHelper;
+  private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
 
   private RefCountHolder myRefCountHolder;
 
-  private XmlHighlightVisitor myXmlVisitor;
+  private final XmlHighlightVisitor myXmlVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
@@ -71,22 +71,20 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void projectClosed() {}
 
   public HighlightVisitorImpl(PsiManager manager) {
-    myXmlVisitor = new XmlHighlightVisitor();
-    myResolveHelper = manager.getResolveHelper();
+    this(new XmlHighlightVisitor(),manager.getResolveHelper());
   }
 
-  private HighlightVisitorImpl() {
+  private HighlightVisitorImpl(XmlHighlightVisitor xmlHighlightVisitor, PsiResolveHelper resolveHelper) {
+    myResolveHelper = resolveHelper;
+    myXmlVisitor = xmlHighlightVisitor;
   }
 
   public HighlightVisitorImpl clone() {
-    HighlightVisitorImpl highlightVisitor = new HighlightVisitorImpl();
-    highlightVisitor.myResolveHelper = myResolveHelper;
-    highlightVisitor.myXmlVisitor = myXmlVisitor;
-    return highlightVisitor;
+    return new HighlightVisitorImpl(myXmlVisitor, myResolveHelper);
   }
 
   public boolean suitableForFile(PsiFile file) {
-    return true;
+    return true; 
   }
 
   public void visit(PsiElement element, HighlightInfoHolder holder) {

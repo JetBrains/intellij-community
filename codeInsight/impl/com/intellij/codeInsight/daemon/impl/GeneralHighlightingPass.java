@@ -73,22 +73,23 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     LOG.assertTrue(myFile.isValid());
   }
 
-  private static final Key<HighlightVisitor[]> HIGHLIGHT_VISITORS_KEY = new Key<HighlightVisitor[]>("HIGHLIGHT_VISITORS_POOL");
+  private static final Key<Integer> HIGHLIGHT_VISITOR_THREADS_IN_USE = new Key<Integer>("HIGHLIGHT_VISITORS_POOL");
   private HighlightVisitor[] createHighlightVisitors() {
     HighlightVisitor[] highlightVisitors;
     synchronized(myProject) {
-      highlightVisitors = myProject.getUserData(HIGHLIGHT_VISITORS_KEY);
-      if (highlightVisitors == null) {
-        highlightVisitors = myProject.getComponents(HighlightVisitor.class).clone();
-        myProject.putUserData(HIGHLIGHT_VISITORS_KEY, highlightVisitors);
+      Integer num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE);
+      highlightVisitors = myProject.getComponents(HighlightVisitor.class);
+      if (num == null) {
+        num = 0;
+      }
+      else {
+        highlightVisitors = highlightVisitors.clone();
         for (int i = 0; i < highlightVisitors.length; i++) {
           HighlightVisitor highlightVisitor = highlightVisitors[i];
           highlightVisitors[i] = highlightVisitor.clone();
         }
       }
-      else {
-        myProject.putUserData(HIGHLIGHT_VISITORS_KEY, null);
-      }
+      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num+1);
     }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
@@ -97,7 +98,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
   private void releaseHighlightVisitors() {
     synchronized(myProject) {
-      myProject.putUserData(HIGHLIGHT_VISITORS_KEY, myHighlightVisitors);
+      int num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE).intValue();
+      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num == 1 ? null : num-1);
     }
   }
 

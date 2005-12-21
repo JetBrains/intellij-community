@@ -22,12 +22,12 @@ import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -39,8 +39,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -52,7 +50,10 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Mike
@@ -78,7 +79,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     return myResult;
   }
 
-  public synchronized void clearResult() {
+  public void clearResult() {
     myResult = null;
   }
 
@@ -121,8 +122,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   //  super.visitXmlText(text);
   //}
 
-
-  private static Key<CachedValue<List<String>>> ourCachedUnboundNSPrefixesKey = Key.create("unbound ns prefixes");
 
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
@@ -171,7 +170,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkUnboundNamespacePrefix(final XmlTag tag) {
-    final String namespacePrefix = tag.getNamespacePrefix();
+    @NonNls final String namespacePrefix = tag.getNamespacePrefix();
 
     if (namespacePrefix.length() > 0) {
       final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
@@ -227,7 +226,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
+  public static void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
     final String text = element.getErrorDescription();
     if (text != null && text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
@@ -621,7 +620,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (tag instanceof HtmlTag) {
       final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
-      HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)(((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME))).getTool();
+      LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
+      HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return;
       final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
       if (!inspectionProfile.isToolEnabled(key)) return;
@@ -840,7 +840,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private synchronized void addToResults(final HighlightInfo info) {
+  private void addToResults(final HighlightInfo info) {
     if (myResult == null) myResult = new SmartList<HighlightInfo>();
     myResult.add(info);
   }
