@@ -60,9 +60,10 @@ public class ExtendsListFix implements IntentionAction {
 
   protected void invokeImpl () {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
-    PsiReferenceList extendsList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
+    PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) &&
+                                   myClass.isInterface() != myClassToExtendFrom.isInterface() ?
                                    myClass.getImplementsList() : myClass.getExtendsList();
-    PsiReferenceList otherList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
+    PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
                                  myClass.getExtendsList() : myClass.getImplementsList();
     try {
       modifyList(extendsList, myToAdd, -1);
