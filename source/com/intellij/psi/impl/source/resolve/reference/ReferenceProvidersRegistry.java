@@ -234,6 +234,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(PATH_REFERENCES_PROVIDER)
     );
 
+    final CustomizableReferenceProvider dynamicPathReferenceProvider = (CustomizableReferenceProvider)getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER);
+    final CustomizingReferenceProvider dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd = new CustomizingReferenceProvider(dynamicPathReferenceProvider);
+    dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd.addCustomization(
+      JspxDynamicPathReferenceProvider.ALLOW_REFERENCING_DIR_WITH_END_SLASH,
+      true
+    );
+
     registerXmlAttributeValueReferenceProvider(
       new String[]{"value"},
       new ScopeFilter(
@@ -246,7 +253,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
+      ), dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -264,7 +271,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
+      ), dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd
     );
 
     registerXmlAttributeValueReferenceProvider(

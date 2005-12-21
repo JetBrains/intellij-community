@@ -1,41 +1,18 @@
 package com.intellij.xml.util;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.DynamicFileReferenceSet;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspReferencesProvider;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 import java.util.Set;
-import java.io.File;
-import java.io.IOException;
-import java.awt.image.BufferedImage;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import javax.imageio.ImageIO;
 
 /**
  * Created by IntelliJ IDEA.

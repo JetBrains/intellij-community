@@ -42,6 +42,7 @@ public class FileReferenceSet {
   private final PsiReferenceProvider myProvider;
   private boolean myCaseSensitive;
   private String myPathString;
+  private final boolean myAllowEmptyFileReferenceAtEnd;
 
   public FileReferenceSet(String str,
                           PsiElement element,
@@ -49,12 +50,23 @@ public class FileReferenceSet {
                           ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive){
+    this(str, element, startInElement, type, provider, isCaseSensitive, true);
+  }
+
+  public FileReferenceSet(String str,
+                          PsiElement element,
+                          int startInElement,
+                          ReferenceType type,
+                          PsiReferenceProvider provider,
+                          final boolean isCaseSensitive,
+                          boolean allowEmptyFileReferenceAtEnd){
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
     myProvider = provider;
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
+    myAllowEmptyFileReferenceAtEnd = allowEmptyFileReferenceAtEnd;
 
     reparse(str);
   }
@@ -94,7 +106,7 @@ public class FileReferenceSet {
     while(true){
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
-      if (subreferenceText.length() > 0) {
+      if (subreferenceText.length() > 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
         currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1,
                                                                   myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
                                               index++, subreferenceText);
