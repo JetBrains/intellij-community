@@ -6,6 +6,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.Language;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ProjectComponent;
@@ -19,6 +20,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.jsp.JspFile;
@@ -308,6 +310,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
     if(parentOfType != null && parentOfType.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      return true;
+    }
+
+    final ASTNode astNode = TreeUtil.prevLeaf(element.getNode());
+    if (astNode != null && astNode.getPsi() instanceof OuterLanguageElement) {
       return true;
     }
 
