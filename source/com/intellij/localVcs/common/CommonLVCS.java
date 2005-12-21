@@ -660,6 +660,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public void rootsChanged(ModuleRootEvent event) {
     refreshRoots();
+    if (myTracker.isRefreshInProgress()) return;
     if (myRefreshRootsOperation != null) {
       LOG.assertTrue(false, myRefreshRootsOperation.toString());
     }

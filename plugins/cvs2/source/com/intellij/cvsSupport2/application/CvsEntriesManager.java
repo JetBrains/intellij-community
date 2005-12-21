@@ -4,7 +4,6 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.RootFormatter;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.UserDirIgnores;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
@@ -55,10 +54,11 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
-    public void afterRefreshFinish(boolean asynchonous) {}
+    public void afterRefreshFinish(boolean asynchonous) {
+      ensureFilesCached(); //to cache for next refreshes
+    }
 
     public void beforeRefreshStart(boolean asynchonous) {
-      ensureFilesCached();
     }
   }
 
@@ -288,8 +288,6 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     synchronized (myFilesToRefresh) {
       myFilesToRefresh.add(CvsVfsUtil.getPathFor(parent) + "/" + CVS_ADMIN_DIRECTORY_NAME);
     }
-
-    //refreshFiles();
   }
 
 
@@ -332,28 +330,18 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   public void unlockSynchronizationActions() {
     LOG.assertTrue(mySynchronizationActionLocks > 0);
     mySynchronizationActionLocks--;
-    //refreshFiles();
   }
 
   private void ensureFilesCached() {
-    Runnable requestVirtualFileAction = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            String[] paths;
-            synchronized (myFilesToRefresh) {
-              paths = myFilesToRefresh.toArray(new String[myFilesToRefresh.size()]);
-              myFilesToRefresh.clear();
-            }
-            for (String path : paths) {
-              VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-              if (virtualFile != null) virtualFile.getChildren();
-            }
-          }
-        });
-      }
-    };
-    ModalityContext.NON_MODAL.addRequest(requestVirtualFileAction);
+    String[] paths;
+    synchronized (myFilesToRefresh) {
+      paths = myFilesToRefresh.toArray(new String[myFilesToRefresh.size()]);
+      myFilesToRefresh.clear();
+    }
+    for (String path : paths) {
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+      if (virtualFile != null) virtualFile.getChildren();
+    }
   }
 
   public CvsConnectionSettings getCvsConnectionSettingsFor(VirtualFile root) {

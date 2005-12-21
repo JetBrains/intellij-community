@@ -28,9 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
@@ -61,6 +59,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final PendingEventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = PendingEventDispatcher.create(ProjectJdkListener.class);
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
+
+  private MyVirtualFileManagerListener myVirtualFileManagerListener;
 
   private String myProjectJdkName;
 
@@ -308,11 +308,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void projectOpened() {
     addRootsToWatch();
+    myVirtualFileManagerListener = new MyVirtualFileManagerListener();
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(myVirtualFileManagerListener);
     myProjectOpened = true;
   }
 
   public void projectClosed() {
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+    VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVirtualFileManagerListener);
     myProjectOpened = false;
   }
 
@@ -397,7 +400,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsChangeCounter++;
   }
 
-  public void rootsChanged(boolean filetypes) {
+  private void rootsChanged(boolean filetypes, boolean synchronize) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myRootsChangeCounter--;
     if (myRootsChangeCounter > 0) return;
@@ -409,6 +412,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
 
+    if (synchronize) doSynchronize();
+
+    addRootsToWatch();
+
+    myModificationCount++;
+  }
+
+  private void doSynchronize() {
     final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
     for (CacheUpdater updater : myChangeUpdaters) {
       synchronizer.registerCacheUpdater(updater);
@@ -425,10 +436,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     else {
       synchronizer.execute();
     }
+  }
 
-    addRootsToWatch();
-
-    myModificationCount++;
+  public void rootsChanged(boolean filetypes) {
+    rootsChanged(filetypes, true);
   }
 
   private void addRootsToWatch() {
@@ -545,7 +556,25 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     public void validityChanged(VirtualFilePointer[] pointers) {
       assertPointersCorrect(pointers);
-      rootsChanged(false);
+      rootsChanged(false, !myInsideRefresh);
+      if (myInsideRefresh) myChangesDetected = true;
+    }
+  }
+
+  private boolean myInsideRefresh = false;
+  private boolean myChangesDetected = false;
+
+  private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
+    public void beforeRefreshStart(boolean asynchonous) {
+      myInsideRefresh = true;
+    }
+
+    public void afterRefreshFinish(boolean asynchonous) {
+      myInsideRefresh = false;
+      if (myChangesDetected) {
+        doSynchronize();
+        myChangesDetected = false;
+      }
     }
   }
 
