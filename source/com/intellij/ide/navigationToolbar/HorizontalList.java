@@ -146,10 +146,7 @@ public class HorizontalList extends JPanel {
       clearBorder();
       mySelectedIndex = myModel.size() - 1;
       paintBorder();
-      while (!myList.get(mySelectedIndex).isShowing()){
-        scrollToVisible(1);
-      }
-      myList.get(myModel.size() - 1).requestFocusInWindow();
+      requestFocusInWindow();
     }
   }
 

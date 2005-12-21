@@ -15,7 +15,7 @@
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"/>
 
-    <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
+
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction"/>
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true"/>
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true"/>
@@ -366,6 +366,7 @@
         <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
         <separator/>
+        <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
         <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
         <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction"/>
         <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction"/>
@@ -730,6 +731,7 @@
       <reference ref="CloseEditor"/>
       <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
+        <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>

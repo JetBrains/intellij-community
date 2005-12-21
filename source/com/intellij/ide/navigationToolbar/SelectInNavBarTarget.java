@@ -15,17 +15,17 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -64,7 +64,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
   }
 
   protected boolean canWorkWithCustomObjects() {
-    return true;
+    return false;
   }
 
   protected void select(PsiElement element, boolean requestFocus) {
