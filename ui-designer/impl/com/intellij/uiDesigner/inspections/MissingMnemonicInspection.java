@@ -7,6 +7,9 @@ import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiManager;
@@ -48,18 +51,25 @@ public class MissingMnemonicInspection extends BaseFormInspection {
           if (buttonClass != null && InheritanceUtil.isInheritorOrSelf(aClass, buttonClass, true)) {
             collector.addError(textProperty,
                                UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
-                               null);
+                               new MyEditorQuickFixProvider());
           }
           else if (labelClass != null && InheritanceUtil.isInheritorOrSelf(aClass, labelClass, true)) {
             IProperty labelForProperty = DuplicateMnemonicInspection.findProperty(component, SwingProperties.LABEL_FOR);
             if (labelForProperty != null && labelForProperty.getPropertyValue(component) != null) {
               collector.addError(textProperty,
                                  UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
-                                 null);
+                                 new MyEditorQuickFixProvider());
             }
           }
         }
       }
+    }
+  }
+
+  private static class MyEditorQuickFixProvider implements EditorQuickFixProvider {
+    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+      return new AssignMnemonicFix(editor, component,
+                                   UIDesignerBundle.message("inspections.missing.mnemonic.quickfix"));
     }
   }
 }

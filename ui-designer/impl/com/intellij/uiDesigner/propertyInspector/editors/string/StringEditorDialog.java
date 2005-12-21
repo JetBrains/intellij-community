@@ -42,7 +42,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class StringEditorDialog extends DialogWrapper{
+public final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
 
   @NonNls
@@ -88,17 +88,16 @@ final class StringEditorDialog extends DialogWrapper{
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
       if (descriptor != null) {
-        checkSaveModifiedValue(descriptor);
+        saveModifiedPropertyValue(myModule, descriptor, myForm.myResourceBundleCard.myTfValue.getText());
       }
     }
     super.doOKAction();
   }
 
-  private void checkSaveModifiedValue(final StringDescriptor descriptor) {
-    final PropertiesFile propFile = PropertiesUtil.getPropertiesFile(descriptor.getBundleName(), myModule);
+  public static void saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor, final String editedValue) {
+    final PropertiesFile propFile = PropertiesUtil.getPropertiesFile(descriptor.getBundleName(), module);
     if (propFile != null) {
       final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
-      final String editedValue = myForm.myResourceBundleCard.myTfValue.getText();
       if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
         final Collection<PsiReference> references = new ArrayList<PsiReference>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -106,11 +105,11 @@ final class StringEditorDialog extends DialogWrapper{
             public void run() {
              references.addAll(ReferencesSearch.search(propertyByKey).findAll());
             }
-          }, UIDesignerBundle.message("edit.text.searching.references"), false, myModule.getProject()
+          }, UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
         );
 
         if (references.size() > 1) {
-          final int rc = Messages.showYesNoDialog(myModule.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
+          final int rc = Messages.showYesNoDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
                                                                                                   propertyByKey.getKey(), references.size()),
                                                   UIDesignerBundle.message("edit.text.multiple.usages.title"), Messages.getWarningIcon());
           if (rc != OK_EXIT_CODE) {
@@ -118,12 +117,12 @@ final class StringEditorDialog extends DialogWrapper{
           }
         }
         final ReadonlyStatusHandler.OperationStatus operationStatus =
-          ReadonlyStatusHandler.getInstance(myModule.getProject()).ensureFilesWritable(propFile.getVirtualFile());
+          ReadonlyStatusHandler.getInstance(module.getProject()).ensureFilesWritable(propFile.getVirtualFile());
         if (operationStatus.hasReadonlyFiles()) {
           return;
         }
         CommandProcessor.getInstance().executeCommand(
-          myModule.getProject(),
+          module.getProject(),
           new Runnable() {
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
