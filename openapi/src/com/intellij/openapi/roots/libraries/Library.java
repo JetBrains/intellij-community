@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 
 /**
  *  @author dsl
@@ -30,11 +29,6 @@ public interface Library extends JDOMExternalizable {
   String[] getUrls(OrderRootType rootType);
 
   VirtualFile[] getFiles(OrderRootType rootType);
-
-  /**
-   * @deprecated
-   */
-  VirtualFilePointer[] getFilePointers(OrderRootType rootType);
 
   ModifiableModel getModifiableModel();
 

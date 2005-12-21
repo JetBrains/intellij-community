@@ -20,7 +20,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  *  @author dsl
@@ -82,11 +81,6 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   public VirtualFile[] getFiles(OrderRootType rootType) {
     final VirtualFilePointerContainer result = myRoots.get(rootType);
     return result.getFiles();
-  }
-
-  public VirtualFilePointer[] getFilePointers(OrderRootType rootType) {
-    final List<VirtualFilePointer> list = myRoots.get(rootType).getList();
-    return list.toArray(new VirtualFilePointer[list.size()]);
   }
 
   public void setName(String name) {
