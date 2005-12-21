@@ -469,6 +469,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           myClassesDir = null;
           myDataDir = null;
           mySourceDir = null;
+          myOriginalSourceDir = null;
           CompilerTestCase.super.tearDown();
         } catch (Exception e) {
           exceptions[0] = e;
