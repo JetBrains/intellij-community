@@ -36,14 +36,14 @@ import java.util.Set;
 import org.jetbrains.annotations.NonNls;
 
 public class AutoUnboxingInspection extends ExpressionInspection{
-    /**
-         * @noinspection StaticCollection
-         */
-    @NonNls private static final Map<String,String> s_unboxingMethods = new HashMap<String, String>(8);
-    /**
-         * @noinspection StaticCollection
-         */
-    private static final Set<String> s_numberTypes = new HashSet<String>(8);
+
+    /** @noinspection StaticCollection */
+    @NonNls static final Map<String,String> s_unboxingMethods =
+            new HashMap<String, String>(8);
+
+    /** @noinspection StaticCollection */
+    static final Set<String> s_numberTypes = new HashSet<String>(8);
+
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
     static{
@@ -67,16 +67,17 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_numberTypes.add("java.lang.Number");
     }
 
-  public String getDisplayName(){
-      return InspectionGadgetsBundle.message("auto.unboxing.display.name");
-  }
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message("auto.unboxing.display.name");
+    }
 
     public String getGroupDisplayName(){
         return GroupNames.JDK_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("auto.unboxing.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "auto.unboxing.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -88,16 +89,20 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     }
 
     private static class AutoUnboxingFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "auto.unboxing.make.unboxing.explicit.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiExpression expression =
                     (PsiExpression) descriptor.getPsiElement();
             final PsiType type = expression.getType();
-
+            if (type == null){
+                return;
+            }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, false);
             assert expectedType != null;
@@ -107,22 +112,29 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             final String boxClassName = s_unboxingMethods.get(expectedTypeText);
             if(TypeUtils.typeEquals("java.lang.Boolean", type)){
                 replaceExpression(expression,
-                                  expressionText + '.' + boxClassName + "()");
+                        expressionText + '.' + boxClassName + "()");
             } else if(s_numberTypes.contains(typeText)){
                 replaceExpression(expression,
-                                  expressionText + '.' + boxClassName + "()");
+                        expressionText + '.' + boxClassName + "()");
             } else{
-              @NonNls final String numberKlass = "Number";
-              replaceExpression(expression,
-                                "((" + numberKlass + ")" + expressionText + ")." + boxClassName + "()");
+                @NonNls final String numberKlass = "Number";
+                replaceExpression(expression,
+                        "((" + numberKlass + ')' + expressionText + ")."
+                                + boxClassName + "()");
             }
         }
     }
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
-        public void visitConditionalExpression(PsiConditionalExpression expression)
-        {
+        public void visitArrayAccessExpression(
+                PsiArrayAccessExpression expression){
+            super.visitArrayAccessExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitConditionalExpression(
+                PsiConditionalExpression expression){
             super.visitConditionalExpression(expression);
             checkExpression(expression);
         }
@@ -137,8 +149,8 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             checkExpression(expression);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression)
-        {
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             checkExpression(expression);
         }
@@ -148,14 +160,14 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             checkExpression(expression);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression)
-        {
+        public void visitAssignmentExpression(
+                PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(PsiParenthesizedExpression expression)
-        {
+        public void visitParenthesizedExpression(
+                PsiParenthesizedExpression expression){
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);
         }
@@ -166,7 +178,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
                 return;
             }
             if(expressionType.getArrayDimensions() > 0){
-                return; // a horrible hack to get around what happens when you pass an array to a vararg expression
+                // a horrible hack to get around what happens when you pass
+                // an array to a vararg expression
+                return;
             }
             if(ClassUtils.isPrimitive(expressionType)){
                 return;
