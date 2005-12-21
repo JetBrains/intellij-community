@@ -59,6 +59,9 @@ public class HorizontalList extends JPanel {
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
+    myScrollPane.setBorder(null);
+    myScrollablePanel.setBorder(null);
+
     add(myScrollPane, BorderLayout.CENTER);
     add(myLeftButton, BorderLayout.WEST);
     add(myRightButton, BorderLayout.EAST);

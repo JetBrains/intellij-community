@@ -2,8 +2,10 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.util.ui.BlockBorder;
 import gnu.trove.THashMap;
 
 import javax.swing.*;
@@ -52,6 +54,9 @@ public class LightweightHint implements Hint, UserDataHolder {
     final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
     myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+    if (!SystemInfo.isMac) {
+      myComponent.setBorder(new BlockBorder());
+    }
 
     layeredPane.add(myComponent, new Integer(250 + layeredPane.getComponentCount()));
 
