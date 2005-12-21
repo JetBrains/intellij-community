@@ -15,6 +15,8 @@ import com.intellij.util.containers.FilteringIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  *  @author dsl
  */
@@ -76,6 +78,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @Nullable
   public Library getLibraryByName(String name) {
     final Iterator libraryIterator = getLibraryIterator();
     while (libraryIterator.hasNext()) {

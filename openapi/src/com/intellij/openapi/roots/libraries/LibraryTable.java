@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.EventListener;
 import java.util.Iterator;
 
@@ -32,6 +34,7 @@ public interface LibraryTable {
 
   Iterator getLibraryIterator();
 
+  @Nullable
   Library getLibraryByName(String name);
 
   String getTableLevel();

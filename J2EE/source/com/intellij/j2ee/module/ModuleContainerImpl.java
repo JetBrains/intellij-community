@@ -17,6 +17,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ExternalizableString;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -140,6 +141,7 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
     }
   }
 
+  @Nullable
   private Library findLibrary(Element child) {
     String libraryName = child.getAttributeValue(NAME_ATTRIBUTE_NAME);
     String libraryLevel = child.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
@@ -158,7 +160,7 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
     private int seed;
 
     public ExternalizableString create() {
-      return new ExternalizableString("" + seed++);
+      return new ExternalizableString(String.valueOf(seed++));
     }
 
     private void expandSeed(ExternalizableString orderEntryKey) {
