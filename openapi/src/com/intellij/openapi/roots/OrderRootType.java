@@ -15,54 +15,38 @@
  */
 package com.intellij.openapi.roots;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Root types that can be queried from OrderEntry.
- * @see com.intellij.openapi.roots.OrderEntry
+ * @see OrderEntry
  * @author dsl
  */
-public class OrderRootType {
-  private final String myName;
-
+public enum OrderRootType {
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
+  CLASSES_AND_OUTPUT,
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
+  COMPILATION_CLASSES,
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES");
+  CLASSES,
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES");
+  SOURCES,
 
   /**
    * JavaDoc paths.
    */
-  public static final OrderRootType JAVADOC = new OrderRootType("JAVADOC");
+  JAVADOC;
 
   public static final OrderRootType[] ALL_TYPES = {
     CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC
   };
-
-  private OrderRootType(@NonNls String name) {
-    myName = name;
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  public String toString() {
-    return myName;
-  }
 }

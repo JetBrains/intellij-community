@@ -135,7 +135,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     myName = nameAttribute;
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
-      final Element rootChild = element.getChild(rootType.getName());
+      final Element rootChild = element.getChild(rootType.name());
       if (rootChild == null) continue;
       roots.readExternal(rootChild, ROOT_PATH_ELEMENT);
     }
@@ -149,7 +149,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     }
 
     for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
-      final Element rootTypeElement = new Element(rootType.getName());
+      final Element rootTypeElement = new Element(rootType.name());
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
