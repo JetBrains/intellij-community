@@ -1,13 +1,12 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.IdeBundle;
-import com.intellij.j2ee.module.components.J2EEModuleUrl;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,7 +45,6 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     ourAbstractUrlProviders.add(new FormUrl(null, null));
     ourAbstractUrlProviders.add(new ResourceBundleUrl(null));
 
-    ourAbstractUrlProviders.add(new J2EEModuleUrl(null));
 
     ourAbstractUrlProviders.add(new PsiFileUrl(null, null));
     ourAbstractUrlProviders.add(new LibraryModuleGroupUrl(null));
