@@ -18,6 +18,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
+public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
   private VirtualFileManagerEx myManager = null;
 
@@ -50,7 +51,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
-  private class WatchRequestImpl implements WatchRequest {
+  private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
 
     public String myFSRootPath;
@@ -187,7 +188,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return myManager;
   }
 
-  private void updateFileWatcher() {
+  private static void updateFileWatcher() {
     if (FileWatcher.isAvailable()) {
       FileWatcher.interruptWatcher();
     }
@@ -204,6 +205,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return PROTOCOL;
   }
 
+  @Nullable
   public VirtualFile findFileByPath(String path) {
     if (File.separatorChar == '\\') {
       if (path.indexOf('\\') >= 0) return null;
@@ -282,6 +284,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return null;
   }
 
+  @Nullable
   public VirtualFile refreshAndFindFileByPath(String path) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final VirtualFile file = findFileByPath(path, true, true);
@@ -557,8 +560,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         dirtyFiles = myDirtyFiles.toArray(new String[myDirtyFiles.size()]);
         myDirtyFiles.clear();
       }
-      for (String path : dirtyFiles) {
-        path = path.replace(File.separatorChar, '/');
+      for (String dirtyFile : dirtyFiles) {
+        String path = dirtyFile.replace(File.separatorChar, '/');
         VirtualFile file = findFileByPath(path, false, false);
         if (file != null) {
           synchronized (myRefreshStatusMap) {
@@ -574,8 +577,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         deletedFiles = myDeletedFiles.toArray(new String[myDeletedFiles.size()]);
         myDeletedFiles.clear();
       }
-      for (String path : deletedFiles) {
-        path = path.replace(File.separatorChar, '/');
+      for (String deletedFile : deletedFiles) {
+        String path = deletedFile.replace(File.separatorChar, '/');
         VirtualFile file = findFileByPath(path, false, false);
         if (file != null) {
           synchronized (myRefreshStatusMap) {
@@ -635,7 +638,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     super.fireBeforeFileDeletion(requestor, file);
   }
 
-  private String getCanonicalPath(File file) {
+  @Nullable
+  private static String getCanonicalPath(File file) {
     if (SystemInfo.isFileSystemCaseSensitive) {
       return file.getAbsolutePath(); // fixes problem with symlinks under Unix (however does not under Windows!)
     }
@@ -658,6 +662,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     public void run() {
       updateFileWatcher();
       try {
+        //noinspection InfiniteLoopStatement
         while (true) {
           FileWatcher.ChangeInfo[] infos = FileWatcher.waitForChange();
 
@@ -749,12 +754,14 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
 
     public void run() {
+      //noinspection InfiniteLoopStatement
       while (true) {
         storeRefreshStatusToFiles();
         try {
           sleep(PERIOD);
         }
         catch (InterruptedException e) {
+          //normal situation
         }
       }
     }
