@@ -17,11 +17,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiManagerConfiguration;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -33,8 +36,8 @@ import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -1302,10 +1305,6 @@ public class FileManagerImpl implements FileManager {
             RepositoryManager repositoryManager = myManager.getRepositoryManager();
 
             removeInvalidFilesAndDirs(true);
-
-            if (repositoryManager != null) {
-              repositoryManager.updateByRootsChange();
-            }
 
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
