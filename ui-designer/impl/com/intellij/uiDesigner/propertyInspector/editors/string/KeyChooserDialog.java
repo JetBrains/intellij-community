@@ -2,19 +2,29 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
-import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ui.Table;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -22,63 +32,49 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class KeyChooserDialog extends DialogWrapper{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.KeyChooserDialog");
+
+  private PropertiesFile myBundle;
   private final String myBundleName;
   /** List of bundle's pairs*/
-  private final ArrayList<Pair<String, String>> myPairs;
+  private ArrayList<Pair<String, String>> myPairs;
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
   private final Table myTable;
   @NonNls private static final String NULL = "null";
+  private MyTableModel myModel;
 
   /**
    * @param bundle resource bundle to be shown.
    *@param bundleName name of the resource bundle to be shown. We need this
    * name to create StringDescriptor in {@link #getDescriptor()} method.
    *@param keyToPreselect describes row that should be selected in the
+   * @param parent the parent component for the dialog.
    */
   public KeyChooserDialog(
     final Component parent,
-    final PropertiesFile bundle,
-    final String bundleName,
+    @NotNull final PropertiesFile bundle,
+    @NotNull final String bundleName,
     final String keyToPreselect
   ) {
     super(parent, true);
-
-    // Check args
-    if(bundle == null){
-      throw new IllegalArgumentException();
-    }
-    if(bundleName == null){
-      throw new IllegalArgumentException();
-    }
+    myBundle = bundle;
 
     myBundleName = bundleName;
 
     setTitle(UIDesignerBundle.message("title.chooser.value"));
 
     // Read key/value pairs from resource bundle
-    myPairs = new ArrayList<Pair<String, String>>();
-
-    final List<Property> properties = bundle.getProperties();
-    for (Property property : properties) {
-      final String key = property.getKey();
-      final String value = property.getValue();
-      if (key != null) {
-        myPairs.add(new Pair<String, String>(key, value != null? value : NULL));
-      }
-    }
-    Collections.sort(myPairs, new MyPairComparator());
+    fillPropertyList();
 
     // Create UI
-    final MyTableModel model = new MyTableModel();
-    myTable = new Table(model);
+    myModel = new MyTableModel();
+    myTable = new Table(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new MySpeedSearch(myTable);
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
@@ -91,11 +87,39 @@ public final class KeyChooserDialog extends DialogWrapper{
       width = Math.max(width, metrics.stringWidth(pair.getFirst()));
     }
     width += 30;
-    width = Math.max(width, metrics.stringWidth(model.getColumnName(0)));
+    width = Math.max(width, metrics.stringWidth(myModel.getColumnName(0)));
     final TableColumn keyColumn = myTable.getColumnModel().getColumn(0);
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
 
+    selectKey(keyToPreselect);
+
+    init();
+
+    myTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (!e.isPopupTrigger() && e.getClickCount() == 2) {
+          doOKAction();
+        }
+      }
+    });
+  }
+
+  private void fillPropertyList() {
+    myPairs = new ArrayList<Pair<String, String>>();
+
+    final List<Property> properties = myBundle.getProperties();
+    for (Property property : properties) {
+      final String key = property.getKey();
+      final String value = property.getValue();
+      if (key != null) {
+        myPairs.add(new Pair<String, String>(key, value != null? value : NULL));
+      }
+    }
+    Collections.sort(myPairs, new MyPairComparator());
+  }
+
+  private void selectKey(final String keyToPreselect) {
     // Preselect proper row
     int indexToPreselect = -1;
     for(int i = myPairs.size() - 1; i >= 0; i--){
@@ -108,16 +132,10 @@ public final class KeyChooserDialog extends DialogWrapper{
     if(indexToPreselect != -1){
       selectElementAt(indexToPreselect);
     }
+  }
 
-    init();
-
-    myTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (!e.isPopupTrigger() && e.getClickCount() == 2) {
-          doOKAction();
-        }
-      }
-    });
+  @Override protected Action[] createLeftSideActions() {
+    return new Action[] { new NewKeyValueAction() };
   }
 
   private void selectElementAt(final int index) {
@@ -137,7 +155,7 @@ public final class KeyChooserDialog extends DialogWrapper{
    * @return resolved string descriptor. If user chose nothing then the
    * method returns <code>null</code>.
    */
-  StringDescriptor getDescriptor(){
+  @Nullable StringDescriptor getDescriptor() {
     final int selectedRow = myTable.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myTable.getRowCount()){
       return null;
@@ -207,10 +225,14 @@ public final class KeyChooserDialog extends DialogWrapper{
     public int getRowCount() {
       return myPairs.size();
     }
+
+    public void update() {
+      fireTableDataChanged();
+    }
   }
 
   private class MySpeedSearch extends SpeedSearchBase<Table> {
-    private TObjectIntHashMap myElements;
+    private TObjectIntHashMap<Object> myElements;
     private Object[] myElementsArray;
 
     public MySpeedSearch(final Table component) {
@@ -223,7 +245,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public Object[] getAllElements() {
       if (myElements == null) {
-        myElements = new TObjectIntHashMap();
+        myElements = new TObjectIntHashMap<Object>();
         myElementsArray = myPairs.toArray();
         for (int idx = 0; idx < myElementsArray.length; idx++) {
           Object element = myElementsArray[idx];
@@ -240,6 +262,46 @@ public final class KeyChooserDialog extends DialogWrapper{
     public void selectElement(final Object element, final String selectedText) {
       final int index = myElements.get(element);
       selectElementAt(index);
+    }
+  }
+
+  private class NewKeyValueAction extends AbstractAction {
+    public NewKeyValueAction() {
+      putValue(Action.NAME, UIDesignerBundle.message("key.chooser.new.property"));
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      NewKeyDialog dlg = new NewKeyDialog(getWindow());
+      dlg.show();
+      if (dlg.isOK()) {
+        final Property property = PropertiesElementFactory.createProperty(myBundle.getProject(),
+                                                                    dlg.getName(), dlg.getValue());
+        final ReadonlyStatusHandler.OperationStatus operationStatus =
+          ReadonlyStatusHandler.getInstance(myBundle.getProject()).ensureFilesWritable(myBundle.getVirtualFile());
+        if (operationStatus.hasReadonlyFiles()) {
+          return;
+        }
+        CommandProcessor.getInstance().executeCommand(
+          myBundle.getProject(),
+          new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  try {
+                    myBundle.addProperty(property);
+                  }
+                  catch (IncorrectOperationException e1) {
+                    LOG.error(e1);
+                  }
+                }
+              });
+            }
+          }, null, null);
+
+        fillPropertyList();
+        myModel.update();
+        selectKey(dlg.getName());
+      }
     }
   }
 }
