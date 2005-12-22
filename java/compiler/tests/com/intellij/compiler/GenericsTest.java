@@ -28,6 +28,8 @@ public class GenericsTest extends Jdk15CompilerTestCase {
 
   public void testCovariance2() throws Exception {doTest();}
 
+  public void testCovarianceNoChanges() throws Exception {doTest();}
+
   public void testAddParameterizedMethodToBase() throws Exception {doTest();}
 
   public void testAddMethodToBase() throws Exception {doTest();}
