@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.application.Application;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +155,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   /**
    * Renames this file to the <code>newName</code>.<p>
    * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
    * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -465,6 +466,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
 
+  @Nullable
   public <T> T getUserData(Key<T> key){
     synchronized(this){
       if (myUserMap == null) return null;
