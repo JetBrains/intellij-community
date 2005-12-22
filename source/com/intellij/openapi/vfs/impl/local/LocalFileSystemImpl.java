@@ -386,7 +386,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           } else {
             final boolean physicalExists = new File(request.getFileSystemRootPath()).exists();
             if (physicalExists) {
-              final int index = runPath.lastIndexOf('/');
+              int index = runPath.lastIndexOf('/');
               while(index >= 0) {
                 String parentPath = runPath.substring(0, index);
                 final VirtualFileImpl vParent = (VirtualFileImpl)_findFileByPath(parentPath, false);
@@ -403,6 +403,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                 }
 
                 runPath = parentPath;
+                index = runPath.lastIndexOf('/');
               }
             }
           }
