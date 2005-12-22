@@ -100,4 +100,17 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   public LwButtonGroup[] getButtonGroups() {
     return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[myButtonGroups.size()]);
   }
+
+  public String getButtonGroupName(IComponent component) {
+    for(int i=0; i<myButtonGroups.size(); i++) {
+      LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
+      final String[] ids = group.getComponentIds();
+      for(int j=0; j<ids.length; j++) {
+        if (ids [j].equals(component.getId())) {
+          return group.getName();
+        }
+      }
+    }
+    return null;
+  }
 }

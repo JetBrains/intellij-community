@@ -35,8 +35,8 @@ public class NoLabelForInspection extends BaseFormInspection {
   }
 
   protected void checkComponentProperties(final Module module, final IComponent component, FormErrorCollector collector) {
-    if (DuplicateMnemonicInspection.isComponentClass(module, component, JTextComponent.class) ||
-        DuplicateMnemonicInspection.isComponentClass(module, component, JComboBox.class)) {
+    if (FormInspectionUtil.isComponentClass(module, component, JTextComponent.class) ||
+        FormInspectionUtil.isComponentClass(module, component, JComboBox.class)) {
       IComponent root = component;
       while(root.getParentContainer() != null) {
         root = root.getParentContainer();
@@ -45,7 +45,7 @@ public class NoLabelForInspection extends BaseFormInspection {
       final Ref<RadComponent> candidateLabel = new Ref<RadComponent>();
       FormEditingUtil.iterate(root, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent c2) {
-          if (DuplicateMnemonicInspection.isComponentClass(module, c2, JLabel.class)) {
+          if (FormInspectionUtil.isComponentClass(module, c2, JLabel.class)) {
             IProperty prop = DuplicateMnemonicInspection.findProperty(c2, SwingProperties.LABEL_FOR);
             if (prop != null && component.getId().equals(prop.getPropertyValue(c2))) {
               found.set(Boolean.TRUE);

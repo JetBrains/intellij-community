@@ -1,10 +1,6 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -61,7 +57,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
         String value = ReferenceUtil.resolve(module, descriptor);
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
         if (twm.myMnemonicIndex >= 0 &&
-            (isComponentClass(module, component, JLabel.class) || isComponentClass(module, component, AbstractButton.class))) {
+            (FormInspectionUtil.isComponentClass(module, component, JLabel.class) || FormInspectionUtil.isComponentClass(module, component, AbstractButton.class))) {
           return twm;
         }
       }
@@ -106,17 +102,4 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     return null;
   }
 
-  public static boolean isComponentClass(final Module module, final IComponent component,
-                                         final Class<? extends JComponent> componentClass) {
-    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    final PsiClass aClass = psiManager.findClass(component.getComponentClassName(), scope);
-    if (aClass != null) {
-      final PsiClass labelClass = psiManager.findClass(componentClass.getName(), scope);
-      if (labelClass != null && InheritanceUtil.isInheritorOrSelf(aClass, labelClass, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwButtonGroup;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -164,5 +165,14 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       }
     }
     return result;
+  }
+
+  public String getButtonGroupName(IComponent component) {
+    for(RadButtonGroup group: myButtonGroups) {
+      if (group.contains((RadComponent)component)) {
+        return group.getName();
+      }
+    }
+    return null;
   }
 }

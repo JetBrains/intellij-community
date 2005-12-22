@@ -22,7 +22,8 @@ public class FormInspectionProvider implements ApplicationComponent, InspectionT
     return new Class[] {
       DuplicateMnemonicInspection.class,
       MissingMnemonicInspection.class,
-      NoLabelForInspection.class
+      NoLabelForInspection.class,
+      NoButtonGroupInspection.class
     };
   }
 }

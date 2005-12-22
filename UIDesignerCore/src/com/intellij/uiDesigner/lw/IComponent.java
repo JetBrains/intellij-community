@@ -15,6 +15,8 @@
  */
 package com.intellij.uiDesigner.lw;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -37,4 +39,6 @@ public interface IComponent {
   IProperty[] getModifiedProperties();
 
   IContainer getParentContainer();
+
+  GridConstraints getConstraints();
 }

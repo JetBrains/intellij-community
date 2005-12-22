@@ -15,14 +15,18 @@ public class GroupButtonsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
-      RadRootContainer rootContainer = editor.getRootContainer();
-      RadButtonGroup group = rootContainer.createGroup(rootContainer.suggestGroupName());
       ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-      for(RadComponent component: selectedComponents) {
-        rootContainer.setGroupForComponent(component, group);
-      }
-      editor.refreshAndSave(true);
+      groupButtons(editor, selectedComponents);
     }
+  }
+
+  public static void groupButtons(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
+    RadRootContainer rootContainer = editor.getRootContainer();
+    RadButtonGroup group = rootContainer.createGroup(rootContainer.suggestGroupName());
+    for(RadComponent component: selectedComponents) {
+      rootContainer.setGroupForComponent(component, group);
+    }
+    editor.refreshAndSave(true);
   }
 
   @Override public void update(AnActionEvent e) {

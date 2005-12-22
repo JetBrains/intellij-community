@@ -364,6 +364,16 @@ public final class FormEditingUtil {
     return new GridConstraints();
   }
 
+  public static IRootContainer getRoot(IComponent component) {
+    while(component != null) {
+      if (component.getParentContainer() instanceof IRootContainer) {
+        return (IRootContainer) component.getParentContainer();
+      }
+      component = component.getParentContainer();
+    }
+    return null;
+  }
+
   public static interface ComponentVisitor <Type extends IComponent>{
     /**
      * @return true if iteration should continue
