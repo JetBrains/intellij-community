@@ -40,6 +40,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class PsiViewerDialog extends DialogWrapper {
   private Project myProject;
@@ -105,22 +107,18 @@ public class PsiViewerDialog extends DialogWrapper {
     myEditor.getSettings().setFoldingOutlineShown(false);
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    Arrays.sort(fileTypes,new Comparator<FileType>() {
+      public int compare(final FileType o1, final FileType o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+
     List<FileType> customFileTypes = new ArrayList<FileType>();
 
-    for (int i = 0; i < fileTypes.length; i++) {
-      FileType fileType = fileTypes[i];
-
-      if (fileType != StdFileTypes.GUI_DESIGNER_FORM &&
-          fileType != StdFileTypes.IDEA_MODULE &&
-          fileType != StdFileTypes.IDEA_PROJECT &&
-          fileType != StdFileTypes.IDEA_WORKSPACE &&
-          fileType != StdFileTypes.ARCHIVE &&
-          fileType != StdFileTypes.UNKNOWN &&
-          fileType != StdFileTypes.PLAIN_TEXT &&
-          !(fileType instanceof CustomFileType)&&
-          !fileType.isBinary() &&
-          !fileType.isReadOnly()
-          ) {
+    for (FileType fileType : fileTypes) {
+      if (fileType != StdFileTypes.GUI_DESIGNER_FORM && fileType != StdFileTypes.IDEA_MODULE && fileType != StdFileTypes.IDEA_PROJECT &&
+          fileType != StdFileTypes.IDEA_WORKSPACE && fileType != StdFileTypes.ARCHIVE && fileType != StdFileTypes.UNKNOWN &&
+          fileType != StdFileTypes.PLAIN_TEXT && !(fileType instanceof CustomFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
         customFileTypes.add(fileType);
       }
     }
