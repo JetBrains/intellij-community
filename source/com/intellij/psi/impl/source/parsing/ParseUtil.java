@@ -415,14 +415,9 @@ public class ParseUtil implements Constants {
     return false;
   }
 
-  private static final TokenSet BIND_TRAINLING_COMMENT_BIT_SET = TokenSet.orSet(TokenSet.create(FIELD,
-      METHOD,
-      CLASS,
-      CLASS_INITIALIZER,
-      IMPORT_STATEMENT,
-      IMPORT_STATIC_STATEMENT,
-      PACKAGE_STATEMENT),
-                                                                                     STATEMENT_BIT_SET);
+  private static final TokenSet BIND_TRAILING_COMMENT_BIT_SET = TokenSet.orSet(
+    TokenSet.create(FIELD, METHOD, CLASS, CLASS_INITIALIZER, IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT, PACKAGE_STATEMENT),
+    JAVA_STATEMENT_BIT_SET);
 
   private static boolean bindTrailingComment(TreeElement comment) {
     TreeElement element = comment.getTreePrev();
@@ -432,7 +427,7 @@ public class ParseUtil implements Constants {
       space = element;
       element = element.getTreePrev();
     }
-    if (element != null && BIND_TRAINLING_COMMENT_BIT_SET.isInSet(element.getElementType())) {
+    if (element != null && BIND_TRAILING_COMMENT_BIT_SET.isInSet(element.getElementType())) {
       if (space == null || (!space.textContains('\n') && !space.textContains('\r'))) {
         if (!comment.textContains('\n') && !comment.textContains('\r')) {
           if (space != null) {
