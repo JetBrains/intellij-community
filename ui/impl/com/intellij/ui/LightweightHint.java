@@ -54,9 +54,6 @@ public class LightweightHint implements Hint, UserDataHolder {
     final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
     myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
-    if (!SystemInfo.isMac) {
-      myComponent.setBorder(new BlockBorder());
-    }
 
     layeredPane.add(myComponent, new Integer(250 + layeredPane.getComponentCount()));
 
