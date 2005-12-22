@@ -411,15 +411,18 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     int offsetBefore = editor.getCaretModel().getOffset();
+
+    //important to calculate before inserting charTyped
+    boolean handleAfterJavaLT = '<' == charTyped &&
+                                fileType == StdFileTypes.JAVA &&
+                                CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+                                PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
+                                BraceMatchingUtil.isAfterClassLikeIdentifier(offsetBefore, editor);
+
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if ('<' == charTyped) {
-      if (fileType == StdFileTypes.JAVA && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-        PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-        if (BraceMatchingUtil.isAfterClassLikeIdentifier(offsetBefore, editor)) {
-          handleAfterJavaLT(editor);
-        }
-      }
+    if (handleAfterJavaLT) {
+      handleAfterJavaLT(editor);
     }
     else if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
       handleAfterLParen(editor, fileType, '(');

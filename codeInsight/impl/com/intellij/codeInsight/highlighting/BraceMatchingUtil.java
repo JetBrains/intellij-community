@@ -41,7 +41,7 @@ public class BraceMatchingUtil {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
-    if (tokenType == JavaTokenType.IDENTIFIER) {
+    if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
       final CharSequence chars = editor.getDocument().getCharsSequence();
       final char startChar = chars.charAt(iterator.getStart());
       if (!Character.isUpperCase(startChar)) return false;
