@@ -1,10 +1,8 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -38,21 +36,31 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   public XmlEntityDecl resolve(PsiFile targetFile) {
     String text = getText();
     if (text.equals(GT_ENTITY) || text.equals(QUOT_ENTITY)) return null;
+    return resolveEntity(this, text, targetFile);
+  }
+
+  public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
     final String entityName = text.substring(1, text.length() - 1);
 
-    final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : this;
+    if (targetFile instanceof JspFile) {
+      targetFile = ((JspFile)targetFile).getBaseLanguageRoot();
+    }
+
+    final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : element;
     Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
     if (map == null){
       map = new HashMap<String,CachedValue<XmlEntityDecl>>();
       targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
     }
+
     CachedValue<XmlEntityDecl> value = map.get(entityName);
     if (value == null) {
-      if(getManager() == null){
+      final PsiManager manager = element.getManager();
+      if(manager == null){
         return resolveEntity(targetElement, entityName).getValue();
       }
-      value = getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
-        public CachedValueProvider.Result<XmlEntityDecl> compute() {
+      value = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
+        public Result<XmlEntityDecl> compute() {
           return resolveEntity(targetElement, entityName);
         }
       });
@@ -64,7 +72,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return value.getValue();
   }
 
-  private CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
+  private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
     if (targetElement.getUserData(EVALUATION_IN_PROCESS) != null) {
       return new CachedValueProvider.Result<XmlEntityDecl>(null,targetElement);
     }

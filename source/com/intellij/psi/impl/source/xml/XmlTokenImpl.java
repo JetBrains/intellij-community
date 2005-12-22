@@ -52,7 +52,11 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
   @NotNull
   public PsiReference[] getReferences() {
-    if (getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
+    final IElementType elementType = getElementType();
+
+    if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||
+        elementType == XmlTokenType.XML_CHAR_ENTITY_REF
+      ) {
       return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
     } else {
       return super.getReferences();

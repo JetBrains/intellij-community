@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -127,7 +128,12 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      XmlEntityDecl xmlEntityDecl = ((XmlEntityRef)myElement).resolve(myElement.getContainingFile());
+      XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
+        (XmlElement)myElement,
+        getCanonicalText(),
+        myElement.getContainingFile()
+      );
+
       if (xmlEntityDecl != null && !xmlEntityDecl.isPhysical()) {
         PsiNamedElement element = XmlUtil.findRealNamedElement(xmlEntityDecl);
         if (element != null) xmlEntityDecl = (XmlEntityDecl)element;
@@ -175,14 +181,10 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     } else if (element instanceof XmlElementContentSpec) {
       final PsiElement[] children = element.getChildren();
       final List<PsiReference> psiRefs = new ArrayList<PsiReference>(children.length);
-      
-      for (int i = 0; i < children.length; i++) {
-        final PsiElement child = children[i];
-        
-        if (child instanceof XmlToken &&
-            ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME
-           ) {
-          psiRefs.add( new ElementReference((XmlElement)element, (XmlElement)child) );
+
+      for (final PsiElement child : children) {
+        if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
+          psiRefs.add(new ElementReference((XmlElement)element, (XmlElement)child));
         }
       }
       
@@ -193,8 +195,10 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       return new PsiReference[] { new ElementReference((XmlElement)element, nameElement) };
     }
 
-    if (element instanceof XmlEntityRef)
+    if (element instanceof XmlEntityRef ||
+        (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF)) {
       return new PsiReference[] { new EntityReference(element) };
+    }
 
     return PsiReference.EMPTY_ARRAY;
   }

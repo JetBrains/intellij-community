@@ -431,6 +431,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(null, XmlElementDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlAttlistDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlElementContentSpec.class,dtdReferencesProvider);
+    registerReferenceProvider(null, XmlToken.class,dtdReferencesProvider);
 
     URIReferenceProvider uriProvider = new URIReferenceProvider();
 
