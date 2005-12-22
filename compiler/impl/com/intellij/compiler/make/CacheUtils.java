@@ -20,7 +20,11 @@ public class CacheUtils {
 
   public static String getMethodReturnTypeDescriptor(final Cache cache, final int methodDeclarationId, final SymbolTable symbolTable) throws CacheCorruptedException {
     String descriptor = symbolTable.getSymbol(cache.getMethodDescriptor(methodDeclarationId));
-    return descriptor.substring(descriptor.indexOf(')') + 1, descriptor.length());
+    return getMethodReturnTypeDescriptor(descriptor);
+  }
+
+  private static String getMethodReturnTypeDescriptor(final String methodDescriptor) {
+    return methodDescriptor.substring(methodDescriptor.indexOf(')') + 1, methodDescriptor.length());
   }
 
   public static String getMethodGenericSignature(final Cache cache, final int methodDeclarationId, final SymbolTable symbolTable) throws CacheCorruptedException {

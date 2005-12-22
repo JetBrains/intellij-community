@@ -1,5 +1,7 @@
 package com.intellij.compiler.make;
 
+import com.intellij.compiler.classParsing.FieldInfo;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 7, 2004
@@ -17,6 +19,12 @@ class FieldChangeDescription extends ChangeDescription {
     final int oldGenericSignature = oldCache.getFieldGenericSignature(oldFieldId);
     final int newGenericSignature = newCache.getFieldGenericSignature(newFieldId);
     genericSignatureChanged = (oldGenericSignature != newGenericSignature);
+  }
+
+  public FieldChangeDescription(final FieldInfo oldField, final FieldInfo newField) throws CacheCorruptedException {
+    descriptorChanged = oldField.getDescriptor() != newField.getDescriptor();
+    flagsChanged = oldField.getFlags() != newField.getFlags();
+    genericSignatureChanged = (oldField.getGenericSignature() != newField.getGenericSignature());
   }
 
   public boolean isChanged() {

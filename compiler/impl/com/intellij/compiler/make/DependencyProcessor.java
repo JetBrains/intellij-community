@@ -18,7 +18,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 import org.apache.bcel.classfile.Utility;
 import org.jetbrains.annotations.NonNls;
 
@@ -28,9 +31,9 @@ public class DependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyProcessor");
   private final DependencyCache myDependencyCache;
   private final int myQName;
-  private final Set myAddedMembers = new HashSet();
-  private final Set myRemovedMembers = new HashSet();
-  private final Set myChangedMembers = new HashSet();
+  private final Set<MemberInfo> myAddedMembers = new HashSet<MemberInfo>();
+  private final Set<MemberInfo> myRemovedMembers = new HashSet<MemberInfo>();
+  private final Set<MemberInfo> myChangedMembers = new HashSet<MemberInfo>();
   private final Map<MemberInfo, ChangeDescription> myChangeDescriptions = new HashMap<MemberInfo, ChangeDescription>();
   private final Dependency[] myBackDependencies;
   private final boolean myMembersChanged;
@@ -53,9 +56,14 @@ public class DependencyProcessor {
     final Cache newClassesCache = dependencyCache.getNewClassesCache();
 
     myBackDependencies = cache.getBackDependencies(qName);
-    addAddedMembers(qName, cache, newClassesCache, myAddedMembers);
-    addRemovedMembers(qName, cache, newClassesCache, myRemovedMembers);
-    addChangedMembers(qName, cache, newClassesCache, myChangedMembers);
+
+    final TIntObjectHashMap<FieldInfo> oldFields = getFieldInfos(cache, qName);
+    final THashMap<String, MethodInfoContainer> oldMethods = getMethodInfos(cache, qName);
+    final TIntObjectHashMap<FieldInfo> newFields = getFieldInfos(newClassesCache, qName);
+    final THashMap<String, MethodInfoContainer> newMethods = getMethodInfos(newClassesCache, qName);
+    addAddedMembers(oldFields, oldMethods, newFields, newMethods, myAddedMembers);
+    addRemovedMembers(oldFields, oldMethods, newFields, newMethods, myRemovedMembers);
+    addChangedMembers(oldFields, oldMethods, newFields, newMethods, myChangedMembers);
 
     myMembersChanged = myAddedMembers.size() > 0 || myRemovedMembers.size() > 0 || myChangedMembers.size() > 0;
     // track changes in super list
@@ -80,7 +88,7 @@ public class DependencyProcessor {
     mySuperClassAdded = wasDerivedFromObject && superclassesDiffer;
   }
 
-  private boolean hasMembersWithoutDefaults(Set addedMembers) {
+  private static boolean hasMembersWithoutDefaults(Set addedMembers) {
     for (final Object addedMember : addedMembers) {
       MemberInfo memberInfo = (MemberInfo)addedMember;
       if (memberInfo instanceof MethodInfo) {
@@ -839,57 +847,124 @@ public class DependencyProcessor {
     return false;
   }
 
-  private void addAddedMembers(int qName, Cache oldCache, Cache newCache, Collection members) throws CacheCorruptedException {
-    int[] newFields = newCache.getFieldIds(newCache.getClassDeclarationId(qName));
-    for (int newField : newFields) {
-      if (CacheUtils.findFieldByName(oldCache, oldCache.getClassDeclarationId(qName), newCache.getFieldName(newField)) == Cache.UNKNOWN) {
-        members.add(newCache.createFieldInfo(newField));
-      }
+  /** @return a map [fieldName->FieldInfo]*/
+  private TIntObjectHashMap<FieldInfo> getFieldInfos(Cache cache, int qName) throws CacheCorruptedException {
+    final TIntObjectHashMap<FieldInfo> map = new TIntObjectHashMap<FieldInfo>();
+    final int[] fields = cache.getFieldIds(cache.getClassDeclarationId(qName));
+    for (int fieldId : fields) {
+      final FieldInfo info = cache.createFieldInfo(fieldId);
+      map.put(info.getName(), info);
     }
-    int[] newMethods = newCache.getMethodIds(newCache.getClassDeclarationId(qName));
+    return map;
+  }
+
+  /** @return a map [methodSignature->MethodInfo]*/
+  private THashMap<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
+    final THashMap<String, MethodInfoContainer> map = new THashMap<String, MethodInfoContainer>();
+    final int[] methods = cache.getMethodIds(cache.getClassDeclarationId(qName));
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    for (int newMethod : newMethods) {
-      final int name = newCache.getMethodName(newMethod);
-      final int methodDescriptor = newCache.getMethodDescriptor(newMethod);
-      final String methodSignature = CacheUtils.getMethodSignature(symbolTable.getSymbol(name), symbolTable.getSymbol(methodDescriptor));
-      if (CacheUtils.findMethodBySignature(oldCache, oldCache.getClassDeclarationId(myQName), methodSignature, symbolTable) == Cache
-        .UNKNOWN) {
-        members.add(newCache.createMethodInfo(newMethod));
+    for (int methodId : methods) {
+      final MethodInfo info = cache.createMethodInfo(methodId);
+      final String signature = info.getDescriptor(symbolTable);
+      final MethodInfoContainer currentValue = map.get(signature);
+      // covariant methods have the same signature, so there might be several MethodInfos for one key
+      if (currentValue == null) {
+        map.put(signature, new MethodInfoContainer(info));
+      }
+      else {
+        currentValue.add(info);
+      }
+    }
+    return map;
+  }
+
+  private void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+                               Collection<MemberInfo> members) throws CacheCorruptedException {
+
+    for (final TIntObjectIterator<FieldInfo> it = newFields.iterator(); it.hasNext();) {
+      it.advance();
+      final int fieldName = it.key();
+      final FieldInfo fieldInfo = it.value();
+      if (!oldFields.containsKey(fieldName)) {
+        members.add(fieldInfo);
+      }
+    }
+    for (final String signature : newMethods.keySet()) {
+      if (!oldMethods.containsKey(signature)) {
+        members.addAll(newMethods.get(signature).getMethods());
       }
     }
   }
 
-  private void addRemovedMembers(int qName, Cache oldCache, Cache newCache, Collection members) throws CacheCorruptedException {
-    addAddedMembers(qName, newCache, oldCache, members);
+  private void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+                               Collection<MemberInfo> members) throws CacheCorruptedException {
+    addAddedMembers(newFields, newMethods, oldFields, oldMethods, members);
   }
 
-  private void addChangedMembers(final int qName, Cache oldCache, Cache newCache, Collection members) throws CacheCorruptedException {
-    int[] oldFields = oldCache.getFieldIds(oldCache.getClassDeclarationId(qName));
-    for (final int oldField : oldFields) {
-      final int newField = CacheUtils.findFieldByName(newCache, newCache.getClassDeclarationId(qName), oldCache.getFieldName(oldField));
-      if (newField != Cache.UNKNOWN) {
-        final FieldChangeDescription changeDescription = new FieldChangeDescription(oldCache, newCache, oldField, newField);
+  private void addChangedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+                               Collection<MemberInfo> members) throws CacheCorruptedException {
+    for (final TIntObjectIterator<FieldInfo> it = oldFields.iterator(); it.hasNext();) {
+      it.advance();
+      final int fieldName = it.key();
+      final FieldInfo oldInfo = it.value();
+      final FieldInfo newInfo = newFields.get(fieldName);
+      if (newInfo != null) {
+        final FieldChangeDescription changeDescription = new FieldChangeDescription(oldInfo, newInfo);
         if (changeDescription.isChanged()) {
-          final FieldInfo fieldInfo = oldCache.createFieldInfo(oldField);
-          members.add(fieldInfo);
-          myChangeDescriptions.put(fieldInfo, changeDescription);
+          members.add(oldInfo);
+          myChangeDescriptions.put(oldInfo, changeDescription);
         }
       }
     }
-    int[] oldMethods = oldCache.getMethodIds(oldCache.getClassDeclarationId(qName));
-    final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    for (final int oldMethod : oldMethods) {
-      final int name = oldCache.getMethodName(oldMethod);
-      final int methodDescriptor = oldCache.getMethodDescriptor(oldMethod);
-      final String signature = CacheUtils.getMethodSignature(symbolTable.getSymbol(name), symbolTable.getSymbol(methodDescriptor));
-      final int newMethod = CacheUtils.findMethodBySignature(newCache, newCache.getClassDeclarationId(qName), signature, symbolTable);
-      if (newMethod != Cache.UNKNOWN) {
-        final MethodChangeDescription changeDescription =
-          new MethodChangeDescription(oldCache, newCache, oldMethod, newMethod, symbolTable);
-        if (changeDescription.isChanged()) {
-          final MethodInfo methodInfo = oldCache.createMethodInfo(oldMethod);
-          members.add(methodInfo);
-          myChangeDescriptions.put(methodInfo, changeDescription);
+
+    if (oldMethods.size() > 0) {
+      final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
+      final Set<MethodInfo> processed = new HashSet<MethodInfo>();
+      for (final String signature : oldMethods.keySet()) {
+        final MethodInfoContainer oldMethodsContainer = oldMethods.get(signature);
+        final MethodInfoContainer newMethodsContainer = newMethods.get(signature);
+        if (newMethodsContainer != null) {
+          processed.clear();
+          if (oldMethodsContainer.size() == newMethodsContainer.size()) {
+            // first, process all corresponding method infos
+            for (MethodInfo oldInfo : oldMethodsContainer.getMethods()) {
+              MethodInfo _newInfo = null;
+              for (MethodInfo newInfo : newMethodsContainer.getMethods()) {
+                if (oldInfo.equals(newInfo)) {
+                  _newInfo = newInfo;
+                  break;
+                }
+              }
+              if (_newInfo != null) {
+                processed.add(oldInfo);
+                processed.add(_newInfo);
+                final MethodChangeDescription changeDescription = new MethodChangeDescription(oldInfo, _newInfo, symbolTable);
+                if (changeDescription.isChanged()) {
+                  members.add(oldInfo);
+                  myChangeDescriptions.put(oldInfo, changeDescription);
+                }
+              }
+            }
+          }
+          // processing the rest of infos, each pair
+          for (MethodInfo oldInfo : oldMethodsContainer.getMethods()) {
+            if (processed.contains(oldInfo)) {
+              continue;
+            }
+            for (MethodInfo newInfo : newMethodsContainer.getMethods()) {
+              if (processed.contains(newInfo)) {
+                continue;
+              }
+              final MethodChangeDescription changeDescription = new MethodChangeDescription(oldInfo, newInfo, symbolTable);
+              if (changeDescription.isChanged()) {
+                members.add(oldInfo);
+                myChangeDescriptions.put(oldInfo, changeDescription);
+              }
+            }
+          }
         }
       }
     }
@@ -921,4 +996,26 @@ public class DependencyProcessor {
     return false;
   }
 
+  private static class MethodInfoContainer {
+    private List<MethodInfo> myInfos = null;
+
+    protected MethodInfoContainer(MethodInfo info) {
+      myInfos = Collections.singletonList(info);
+    }
+
+    public List<MethodInfo> getMethods() {
+      return myInfos;
+    }
+
+    public int size() {
+      return myInfos.size();
+    }
+
+    public void add(MethodInfo info) {
+      if (myInfos.size() == 1) {
+        myInfos = new ArrayList<MethodInfo>(myInfos);
+      }
+      myInfos.add(info);
+    }
+  }
 }
