@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -170,6 +171,9 @@ public class AutoBoxingInspection extends ExpressionInspection {
         }
 
         private void checkExpression(@NotNull PsiExpression expression) {
+            if (expression.getParent() instanceof PsiParenthesizedExpression) {
+                return;
+            }
             final PsiType expressionType = expression.getType();
             if(expressionType == null) {
                 return;
