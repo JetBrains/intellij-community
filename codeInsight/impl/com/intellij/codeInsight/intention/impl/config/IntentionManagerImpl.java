@@ -46,8 +46,6 @@ public class IntentionManagerImpl extends IntentionManager {
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
 
-    registerIntentionAndMetaData(new EJBImplementationAction(), CodeInsightBundle.message("intentions.category.ejb"));
-    registerIntentionAndMetaData(new EJBDeclarationAction(), CodeInsightBundle.message("intentions.category.ejb"));
     registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), CodeInsightBundle.message("intentions.category.i18n"));
   }
 
