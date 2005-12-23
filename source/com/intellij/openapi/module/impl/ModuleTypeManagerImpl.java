@@ -84,10 +84,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   private void registerDefaultTypes() {
     ModuleType.JAVA = new JavaModuleType();
-    ModuleType.J2EE_APPLICATION = new J2EEApplicationModuleType();
-
     registerModuleType(ModuleType.JAVA);
-    registerModuleType(ModuleType.J2EE_APPLICATION);
   }
 
   public void disposeComponent() {
