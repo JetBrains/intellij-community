@@ -1,7 +1,6 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -60,9 +59,9 @@ public final class Painter {
     // Collect selected components and paint decoration for non selected components
     final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
     final Rectangle layeredPaneRect = editor.getLayeredPane().getVisibleRect();
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       component,
-      new IComponentUtil.ComponentVisitor<RadComponent>() {
+      new FormEditingUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(!component.getDelegee().isShowing()){ // Skip invisible components
             return true;

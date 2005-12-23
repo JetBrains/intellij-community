@@ -9,7 +9,6 @@ import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -72,7 +71,7 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
 
       final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager);
       startCheckForm(rootContainer);
-      IComponentUtil.iterate(rootContainer, new IComponentUtil.ComponentVisitor() {
+      FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
           checkComponentProperties(module, component, collector);
           return true;

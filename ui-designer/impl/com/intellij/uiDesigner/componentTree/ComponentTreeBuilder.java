@@ -5,7 +5,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -71,9 +70,9 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     // Found selected components
     final RadContainer rootContainer=myEditor.getRootContainer();
     final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       rootContainer,
-      new IComponentUtil.ComponentVisitor<RadComponent>() {
+      new FormEditingUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(component.isSelected()){
             selection.add(component);

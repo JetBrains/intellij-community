@@ -24,7 +24,6 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -75,9 +74,9 @@ public final class Generator {
     final ArrayList<FormProperty> result = new ArrayList<FormProperty>();
     final MyException[] exception = new MyException[1];
 
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       _rootContainer,
-      new IComponentUtil.ComponentVisitor<LwComponent>() {
+      new FormEditingUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent component) {
           final String binding = component.getBinding();
           if (binding == null) {

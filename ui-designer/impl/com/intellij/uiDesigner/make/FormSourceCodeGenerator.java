@@ -84,9 +84,9 @@ public final class FormSourceCodeGenerator {
     }
 
     ErrorAnalyzer.analyzeErrors(module, formFile, null, rootContainer);
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       rootContainer,
-      new IComponentUtil.ComponentVisitor<LwComponent>() {
+      new FormEditingUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent iComponent) {
           final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(iComponent);
           if (errorInfo != null){

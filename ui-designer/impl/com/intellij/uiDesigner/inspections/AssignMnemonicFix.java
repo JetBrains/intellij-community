@@ -9,7 +9,6 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDial
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -59,7 +58,7 @@ public class AssignMnemonicFix extends QuickFix {
       while (container.getParent() != null) {
         container = container.getParent();
       }
-      IComponentUtil.iterate(container, new IComponentUtil.ComponentVisitor() {
+      FormEditingUtil.iterate(container, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
           SupportCode.TextWithMnemonic twm = DuplicateMnemonicInspection.getTextWithMnemonic(myEditor.getModule(), component);
           if (twm != null) {

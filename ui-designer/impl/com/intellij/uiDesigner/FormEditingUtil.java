@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
@@ -10,8 +9,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +24,6 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class FormEditingUtil {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.FormEditingUtil");
-
   private FormEditingUtil() {
   }
 
@@ -139,9 +136,9 @@ public final class FormEditingUtil {
   @Nullable
   public static RadComponent getDraggerHost(@NotNull final GuiEditor editor){
     final Ref<RadComponent> result = new Ref<RadComponent>();
-    IComponentUtil.iterate(
+    iterate(
       editor.getRootContainer(),
-      new IComponentUtil.ComponentVisitor<RadComponent>() {
+      new ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(component.hasDragger()){
             result.set(component);
@@ -273,9 +270,9 @@ public final class FormEditingUtil {
   @NotNull
   public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor){
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
-    IComponentUtil.iterate(
+    iterate(
       editor.getRootContainer(),
-      new IComponentUtil.ComponentVisitor<RadComponent>(){
+      new ComponentVisitor<RadComponent>(){
         public boolean visit(final RadComponent component) {
           if(component.isSelected()){
             result.add(component);
@@ -314,9 +311,9 @@ public final class FormEditingUtil {
   public static boolean bindingExists(IComponent component, final String binding) {
     // Check that binding is unique
     final Ref<Boolean> bindingExists = new Ref<Boolean>(Boolean.FALSE);
-    IComponentUtil.iterate(
+    iterate(
       component,
-      new IComponentUtil.ComponentVisitor() {
+      new ComponentVisitor() {
         public boolean visit(final IComponent component) {
           if(binding.equals(component.getBinding())){
             bindingExists.set(Boolean.TRUE);
@@ -374,6 +371,35 @@ public final class FormEditingUtil {
     return null;
   }
 
+  /**
+   * Iterates component and its children (if any)
+   */
+  public static void iterate(final IComponent component, final ComponentVisitor visitor){
+    iterateImpl(component, visitor);
+  }
+
+  public static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
+    final boolean shouldContinue = visitor.visit(component);
+    if (!shouldContinue) {
+      return false;
+    }
+
+    if (!(component instanceof IContainer)) {
+      return true;
+    }
+
+    final IContainer container = (IContainer)component;
+
+    for (int i = 0; i < container.getComponentCount(); i++) {
+      final IComponent c = container.getComponent(i);
+      if (!iterateImpl(c, visitor)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }
@@ -381,7 +407,7 @@ public final class FormEditingUtil {
 
   public static void iterateStringDescriptors(final LwComponent component,
                                               final StringDescriptorVisitor<LwComponent> visitor) {
-    IComponentUtil.iterate(component, new IComponentUtil.ComponentVisitor<LwComponent>() {
+    iterate(component, new ComponentVisitor<LwComponent>() {
 
       public boolean visit(final LwComponent component) {
         LwIntrospectedProperty[] props = component.getAssignedIntrospectedProperties();
@@ -467,5 +493,12 @@ public final class FormEditingUtil {
       classToBindName.replace('$','.'),
       GlobalSearchScope.moduleScope(module)
     );
+  }
+
+  public static interface ComponentVisitor <Type extends IComponent>{
+    /**
+     * @return true if iteration should continue
+     */
+    boolean visit(Type component);
   }
 }

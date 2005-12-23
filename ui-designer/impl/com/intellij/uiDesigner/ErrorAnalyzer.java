@@ -10,7 +10,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -81,9 +80,9 @@ public final class ErrorAnalyzer {
     // field name -> error message
     final ArrayList<String> usedBindings = new ArrayList<String>(); // for performance reasons
     final HashMap<String, PsiType> className2Type = new HashMap<String,PsiType>(); // for performance reasons
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       rootContainer,
-      new IComponentUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
           // Reset previous error (if any)
           component.putClientProperty(CLIENT_PROP_BINDING_ERROR, null);
@@ -179,9 +178,9 @@ public final class ErrorAnalyzer {
     );
 
     // Check that there are no panels in XY with children
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       rootContainer,
-      new IComponentUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
@@ -230,9 +229,9 @@ public final class ErrorAnalyzer {
           for(FormInspectionTool tool: formInspectionTools) {
             tool.startCheckForm(rootContainer);
           }
-          IComponentUtil.iterate(
+          FormEditingUtil.iterate(
             rootContainer,
-            new IComponentUtil.ComponentVisitor<RadComponent>() {
+            new FormEditingUtil.ComponentVisitor<RadComponent>() {
               public boolean visit(final RadComponent component) {
                 for(FormInspectionTool tool: formInspectionTools) {
                   ErrorInfo[] errorInfos = tool.checkComponent(editor, component);

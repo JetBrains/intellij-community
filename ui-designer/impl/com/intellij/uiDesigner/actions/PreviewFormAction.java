@@ -154,9 +154,9 @@ public final class PreviewFormAction extends AnAction{
 
     // 1. Prepare form to preview. We have to change container so that it has only one binding.
     rootContainer.setClassToBind(CLASS_TO_BIND_NAME);
-    IComponentUtil.iterate(
+    FormEditingUtil.iterate(
       rootContainer,
-      new IComponentUtil.ComponentVisitor<LwComponent>() {
+      new FormEditingUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent iComponent) {
           iComponent.setBinding(null);
           return true;

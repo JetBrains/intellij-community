@@ -33,7 +33,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IComponentUtil;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
@@ -228,8 +228,8 @@ public class IdTableBuilding {
           addClassAndPackagesNames(className, wordsTable);
         }
 
-        IComponentUtil.iterate(container,
-                                new IComponentUtil.ComponentVisitor() {
+        FormEditingUtil.iterate(container,
+                                new FormEditingUtil.ComponentVisitor() {
                                   public boolean visit(IComponent iComponent) {
                                     String componentClassName = iComponent.getComponentClassName();
                                     addClassAndPackagesNames(componentClassName, wordsTable);
