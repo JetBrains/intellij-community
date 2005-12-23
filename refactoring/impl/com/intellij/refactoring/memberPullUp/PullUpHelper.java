@@ -150,12 +150,15 @@ public class PullUpHelper {
     }
 
     ExplicitSuperDeleter explicitSuperDeleter = new ExplicitSuperDeleter();
-    for (PsiMember element : myMembersAfterMove) {
-      if (!(element instanceof PsiClass)) {
-        element.accept(explicitSuperDeleter);
-      }
+    for (PsiMember member : myMembersAfterMove) {
+      member.accept(explicitSuperDeleter);
     }
     explicitSuperDeleter.fixSupers();
+
+    final QualifiedThisSuperAdjuster qualifiedThisSuperAdjuster = new QualifiedThisSuperAdjuster();
+    for (PsiMember member : myMembersAfterMove) {
+      member.accept(qualifiedThisSuperAdjuster);
+    }
 
     ChangeContextUtil.decodeContextInfo(myTargetSuperClass, null, null);
   }
@@ -533,6 +536,34 @@ public class PullUpHelper {
         myRefereeClasses.add(classMember.getContainingClass());
       }
       }
+  }
+
+  private class QualifiedThisSuperAdjuster extends PsiRecursiveElementVisitor {
+    public void visitThisExpression(PsiThisExpression expression) {
+      super.visitThisExpression(expression);
+      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+      if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
+        try {
+          qualifier.bindToElement(myTargetSuperClass);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    public void visitSuperExpression(PsiSuperExpression expression) {
+      super.visitSuperExpression(expression);
+      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+      if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
+        try {
+          expression.replace(myManager.getElementFactory().createExpressionFromText(myTargetSuperClass.getName() + ".this", null));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 
   private class ExplicitSuperDeleter extends PsiRecursiveElementVisitor {
