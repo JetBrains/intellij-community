@@ -35,10 +35,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
-import com.intellij.uiDesigner.lw.LwComponent;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.util.PathsList;
@@ -157,9 +154,9 @@ public final class PreviewFormAction extends AnAction{
 
     // 1. Prepare form to preview. We have to change container so that it has only one binding.
     rootContainer.setClassToBind(CLASS_TO_BIND_NAME);
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<LwComponent>() {
+      new IComponentUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent iComponent) {
           iComponent.setBinding(null);
           return true;

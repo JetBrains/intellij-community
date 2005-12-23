@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
-import com.intellij.j2ee.module.view.web.WebUtil;
+import com.intellij.j2ee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;

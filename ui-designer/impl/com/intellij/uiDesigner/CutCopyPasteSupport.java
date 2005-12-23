@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
@@ -120,7 +121,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         component.setLocation(new Point(xs.get(i) + delta, ys.get(i) + delta));
         rootContainer.addComponent(component);
 
-        FormEditingUtil.iterate(component, new FormEditingUtil.ComponentVisitor<RadComponent>() {
+        IComponentUtil.iterate(component, new IComponentUtil.ComponentVisitor<RadComponent>() {
           public boolean visit(final RadComponent c) {
             c.setSelected(true);
             return true;
@@ -181,7 +182,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         // pasted components should have no bindings
         lwComponent.setBinding(null);
         lwComponent.setId(editor.generateId());
-        FormEditingUtil.iterate(lwComponent, new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        IComponentUtil.iterate(lwComponent, new IComponentUtil.ComponentVisitor<LwComponent>() {
           public boolean visit(final LwComponent c) {
             c.setBinding(null);
             c.setId(editor.generateId());

@@ -1,9 +1,9 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 
 import javax.swing.*;
@@ -46,7 +46,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
       container = container.getParent();
     }
 
-    FormEditingUtil.iterate(container, new FormEditingUtil.ComponentVisitor() {
+    IComponentUtil.iterate(container, new IComponentUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         RadComponent radComponent = (RadComponent) component;
         final JComponent delegee = radComponent.getDelegee();

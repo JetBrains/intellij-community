@@ -885,7 +885,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
+      IComponentUtil.iterate(myRootContainer, new IComponentUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
           final RadComponent radComponent = (RadComponent)component;
           for(IProperty prop: component.getModifiedProperties()) {

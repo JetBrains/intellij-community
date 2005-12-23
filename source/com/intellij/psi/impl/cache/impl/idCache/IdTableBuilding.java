@@ -30,10 +30,10 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.TIntIntHashMap;
@@ -228,8 +228,8 @@ public class IdTableBuilding {
           addClassAndPackagesNames(className, wordsTable);
         }
 
-        FormEditingUtil.iterate(container,
-                                new FormEditingUtil.ComponentVisitor() {
+        IComponentUtil.iterate(container,
+                                new IComponentUtil.ComponentVisitor() {
                                   public boolean visit(IComponent iComponent) {
                                     String componentClassName = iComponent.getComponentClassName();
                                     addClassAndPackagesNames(componentClassName, wordsTable);

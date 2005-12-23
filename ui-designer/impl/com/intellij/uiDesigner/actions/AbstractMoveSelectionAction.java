@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
@@ -44,9 +45,9 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
     final ArrayList<RadComponent> components = new ArrayList<RadComponent>();
     final ArrayList<Point> points = new ArrayList<Point>();
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       myEditor.getRootContainer(),
-      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if (component instanceof RadAtomicComponent) {
             if(selectedComponent.equals(component)){
@@ -101,9 +102,9 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     final int[] minX = new int[]{Integer.MAX_VALUE};
     final int[] minY = new int[]{Integer.MAX_VALUE};
     final Ref<RadComponent> componentToBeSelected = new Ref<RadComponent>();
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       myEditor.getRootContainer(),
-      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if (component instanceof RadAtomicComponent) {
             final JComponent _delegee = component.getDelegee();

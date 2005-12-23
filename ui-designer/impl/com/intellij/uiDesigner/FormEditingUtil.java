@@ -139,9 +139,9 @@ public final class FormEditingUtil {
   @Nullable
   public static RadComponent getDraggerHost(@NotNull final GuiEditor editor){
     final Ref<RadComponent> result = new Ref<RadComponent>();
-    iterate(
+    IComponentUtil.iterate(
       editor.getRootContainer(),
-      new ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(component.hasDragger()){
             result.set(component);
@@ -273,9 +273,9 @@ public final class FormEditingUtil {
   @NotNull
   public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor){
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
-    iterate(
+    IComponentUtil.iterate(
       editor.getRootContainer(),
-      new ComponentVisitor<RadComponent>(){
+      new IComponentUtil.ComponentVisitor<RadComponent>(){
         public boolean visit(final RadComponent component) {
           if(component.isSelected()){
             result.add(component);
@@ -314,9 +314,9 @@ public final class FormEditingUtil {
   public static boolean bindingExists(IComponent component, final String binding) {
     // Check that binding is unique
     final Ref<Boolean> bindingExists = new Ref<Boolean>(Boolean.FALSE);
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       component,
-      new FormEditingUtil.ComponentVisitor() {
+      new IComponentUtil.ComponentVisitor() {
         public boolean visit(final IComponent component) {
           if(binding.equals(component.getBinding())){
             bindingExists.set(Boolean.TRUE);
@@ -374,50 +374,14 @@ public final class FormEditingUtil {
     return null;
   }
 
-  public static interface ComponentVisitor <Type extends IComponent>{
-    /**
-     * @return true if iteration should continue
-     */
-    boolean visit(Type component);
-  }
-
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }
 
-  /**
-   * Iterates component and its children (if any)
-   */
-  public static void iterate(@NotNull final IComponent component, @NotNull final ComponentVisitor visitor){
-    iterateImpl(component, visitor);
-  }
-
-
-  private static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
-    final boolean shouldContinue = visitor.visit(component);
-    if (!shouldContinue) {
-      return false;
-    }
-
-    if (!(component instanceof IContainer)) {
-      return true;
-    }
-
-    final IContainer container = (IContainer)component;
-
-    for (int i = 0; i < container.getComponentCount(); i++) {
-      final IComponent c = container.getComponent(i);
-      if (!iterateImpl(c, visitor)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
 
   public static void iterateStringDescriptors(final LwComponent component,
                                               final StringDescriptorVisitor<LwComponent> visitor) {
-    iterate(component, new ComponentVisitor<LwComponent>() {
+    IComponentUtil.iterate(component, new IComponentUtil.ComponentVisitor<LwComponent>() {
 
       public boolean visit(final LwComponent component) {
         LwIntrospectedProperty[] props = component.getAssignedIntrospectedProperties();

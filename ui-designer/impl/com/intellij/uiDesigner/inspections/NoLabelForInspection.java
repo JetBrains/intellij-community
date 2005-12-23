@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -13,6 +12,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
@@ -43,7 +43,7 @@ public class NoLabelForInspection extends BaseFormInspection {
       }
       final Ref<Boolean> found = new Ref<Boolean>(Boolean.FALSE);
       final Ref<RadComponent> candidateLabel = new Ref<RadComponent>();
-      FormEditingUtil.iterate(root, new FormEditingUtil.ComponentVisitor() {
+      IComponentUtil.iterate(root, new IComponentUtil.ComponentVisitor() {
         public boolean visit(final IComponent c2) {
           if (FormInspectionUtil.isComponentClass(module, c2, JLabel.class)) {
             IProperty prop = DuplicateMnemonicInspection.findProperty(c2, SwingProperties.LABEL_FOR);

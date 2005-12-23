@@ -1,10 +1,10 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadRootContainer;
 import com.intellij.uiDesigner.RadButtonGroup;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,9 +40,9 @@ class PassiveDecorationLayer extends JComponent{
     final RadRootContainer rootContainer = myEditor.getRootContainer();
 
     // Paint selection and dragger
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       component,
-      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           final Point point = SwingUtilities.convertPoint(
             component.getDelegee(),

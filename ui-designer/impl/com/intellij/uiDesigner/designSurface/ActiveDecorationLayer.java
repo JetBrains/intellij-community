@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,9 +107,9 @@ final class ActiveDecorationLayer extends JComponent{
 
     // Now we have to iterate through all items and insert ActiveSpots
     // for components which should have decorations but do not have items yet.
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(!(component instanceof RadContainer)){
             return true;
@@ -201,9 +202,9 @@ final class ActiveDecorationLayer extends JComponent{
 
     // Now we have to iterate through all items and insert ActiveSpots
     // for components which should have decorations but do not have items yet.
-    FormEditingUtil.iterate(
+    IComponentUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      new IComponentUtil.ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(!(component instanceof RadContainer)){
             return true;

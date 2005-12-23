@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.IComponentUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +132,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
 
-    FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor<RadComponent>() {
+    IComponentUtil.iterate(myEditor.getRootContainer(), new IComponentUtil.ComponentVisitor<RadComponent>() {
       public boolean visit(final RadComponent component) {
         if (binding.equals(component.getBinding())) {
           component.setSelected(true);
