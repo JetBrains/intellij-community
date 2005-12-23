@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.mock.MockProgressInidicator;
+import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -65,18 +65,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     Document document = myEditor.getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), false, true);
-    action1.doCollectInformation(new MockProgressInidicator());
+    action1.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
     PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
-    action2.doCollectInformation(new MockProgressInidicator());
+    action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
     
     Collection<HighlightInfo> highlights3 = null;
     
     if (doInspections()) {
       LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
-      inspectionsPass.doCollectInformation(new MockProgressInidicator());
+      inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
     }
 
@@ -105,7 +105,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     if (isToLaunchExternal && doExternalValidation()) {
       ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor);
-      action3.doCollectInformation(new MockProgressInidicator());
+      action3.doCollectInformation(new MockProgressIndicator());
 
       highlights3 = action3.getHighlights();
       for (HighlightInfo info : highlights3) {

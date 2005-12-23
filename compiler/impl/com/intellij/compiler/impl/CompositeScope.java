@@ -8,9 +8,10 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 
 import java.util.*;
 
@@ -27,9 +28,8 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
   }
 
   public VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly) {
-    List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
-    for (Iterator it = myScopes.iterator(); it.hasNext();) {
-      CompileScope scope = (CompileScope)it.next();
+    Set<VirtualFile> allFiles = new THashSet<VirtualFile>();
+    for (CompileScope scope : myScopes) {
       final VirtualFile[] files = scope.getFiles(fileType, inSourceOnly);
       if (files.length > 0) {
         allFiles.addAll(Arrays.asList(files));
@@ -39,8 +39,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
   }
 
   public boolean belongs(String url) {
-    for (Iterator<CompileScope> it = myScopes.iterator(); it.hasNext();) {
-      CompileScope scope = it.next();
+    for (CompileScope scope : myScopes) {
       if (scope.belongs(url)) {
         return true;
       }
@@ -50,16 +49,14 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
 
   public Module[] getAffectedModules() {
     Set<Module> modules = new HashSet<Module>();
-    for (Iterator<CompileScope> it = myScopes.iterator(); it.hasNext();) {
-      final CompileScope compileScope = it.next();
+    for (final CompileScope compileScope : myScopes) {
       modules.addAll(Arrays.asList(compileScope.getAffectedModules()));
     }
     return modules.toArray(new Module[modules.size()]);
   }
 
   public <T> T getUserData(Key<T> key) {
-    for (Iterator<CompileScope> it = myScopes.iterator(); it.hasNext();) {
-      CompileScope compileScope = it.next();
+    for (CompileScope compileScope : myScopes) {
       T userData = compileScope.getUserData(key);
       if (userData != null) {
         return userData;

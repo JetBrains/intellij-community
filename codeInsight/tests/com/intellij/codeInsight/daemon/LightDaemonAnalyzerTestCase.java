@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
-import com.intellij.mock.MockProgressInidicator;
+import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -52,15 +52,15 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
     Document document = getEditor().getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), false, true);
-    action1.doCollectInformation(new MockProgressInidicator());
+    action1.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
     PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength(), false);
-    action2.doCollectInformation(new MockProgressInidicator());
+    action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
     LocalInspectionsPass action3 = new LocalInspectionsPass(getProject(), getFile(), document, 0, getFile().getTextLength());
-    action3.doCollectInformation(new MockProgressInidicator());
+    action3.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights3 = action3.getHighlights();
 
     HashSet<HighlightInfo> result = new HashSet<HighlightInfo>(highlights1);
