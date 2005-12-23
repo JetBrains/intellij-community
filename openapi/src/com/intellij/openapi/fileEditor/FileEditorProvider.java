@@ -33,7 +33,7 @@ public interface FileEditorProvider {
    * @return whether the provider can create valid editor for the specified
    * <code>file</code> or not
    */
-  boolean accept(Project project, VirtualFile file);
+  boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
   /**
    * Creates editor for the specified file. This method
@@ -43,7 +43,8 @@ public interface FileEditorProvider {
    *
    * @return created editor for specified file. This method should never return <code>null</code>.
    */
-  FileEditor createEditor(Project project, VirtualFile file);
+  @NotNull
+  FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file);
 
   /**
    * Disposes the specified <code>editor</code>. It is guaranteed that this method is invoked only for editors 
@@ -51,24 +52,25 @@ public interface FileEditorProvider {
    *
    * @param editor editor to be disposed. This parameter is always not <code>null</code>.
    */
-  void disposeEditor(FileEditor editor);
+  void disposeEditor(@NotNull FileEditor editor);
 
   /**
    * Deserializes state from the specified <code>sourceElemet</code>
    */
   @NotNull
-  FileEditorState readState(Element sourceElement, Project project, VirtualFile file);
+  FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file);
 
   /**
    * Serializes state into the specified <code>targetElement</code>
    */
-  void writeState(FileEditorState state, Project project, Element targetElement);
+  void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement);
 
   /**
    * @return id of type of the editors that are created with this FileEditorProvider. Each FileEditorProvider should have 
    * unique non null id. The id is used for saving/loading of EditorStates.
    */
-  @NonNls String getEditorTypeId();
+  @NotNull @NonNls
+  String getEditorTypeId();
 
   /**
    * @return policy that specifies how show editor created via this provider be opened
@@ -77,5 +79,6 @@ public interface FileEditorProvider {
    * @see FileEditorPolicy#HIDE_DEFAULT_EDITOR
    * @see FileEditorPolicy#PLACE_BEFORE_DEFAULT_EDITOR
    */
+  @NotNull
   FileEditorPolicy getPolicy();
 }

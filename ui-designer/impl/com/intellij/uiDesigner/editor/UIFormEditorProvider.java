@@ -9,10 +9,9 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.impl.ModuleUtil;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +20,6 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.editor.UIFormEditorProvider");
 
   public boolean accept(final Project project, final VirtualFile file){
-    if (file == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("file cannot be null");
-    }
     return
       FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
