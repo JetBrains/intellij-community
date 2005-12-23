@@ -49,8 +49,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public void registerModuleType(ModuleType type) {
-    for (int i = 0; i < myModuleTypes.size(); i++) {
-      ModuleType oldType = myModuleTypes.get(i);
+    for (ModuleType oldType : myModuleTypes) {
       if (oldType.getId().equals(type.getId())) {
         LOG.error("Trying to register a module type that claunches with existing one. Old=" + oldType + ", new = " + type);
         return;
@@ -67,8 +66,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     if (JAVA_MODULE_ID_OLD.equals(moduleTypeID)) {
       return ModuleType.JAVA; // for compatibility with the previous ID that Java modules had
     }
-    for (int i = 0; i < myModuleTypes.size(); i++) {
-      ModuleType type = myModuleTypes.get(i);
+    for (ModuleType type : myModuleTypes) {
       if (type.getId().equals(moduleTypeID)) {
         return type;
       }
@@ -86,11 +84,9 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   private void registerDefaultTypes() {
     ModuleType.JAVA = new JavaModuleType();
-    ModuleType.WEB = new WebModuleType();
     ModuleType.J2EE_APPLICATION = new J2EEApplicationModuleType();
 
     registerModuleType(ModuleType.JAVA);
-    registerModuleType(ModuleType.WEB);
     registerModuleType(ModuleType.J2EE_APPLICATION);
   }
 

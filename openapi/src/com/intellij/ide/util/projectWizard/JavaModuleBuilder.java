@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -159,5 +160,10 @@ public class JavaModuleBuilder extends ModuleBuilder {
 
   public void setModuleJdk(ProjectJdk jdk) {
     myJdk = jdk;
+  }
+
+  @Nullable
+  protected String getPathForOutputPathStep() {
+    return null;
   }
 }

@@ -2,9 +2,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
-import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
+import com.intellij.j2ee.module.view.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -230,9 +229,8 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
 
     final PsiFile file = getElement().getContainingFile();
-    final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
     final String newName;
-    if (properties != null) {
+    if (WebUtil.getWebModuleProperties(file) != null) {
       newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
     } else {
       final VirtualFile dst = element.getContainingFile().getVirtualFile();

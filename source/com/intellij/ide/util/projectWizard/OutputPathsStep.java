@@ -1,14 +1,12 @@
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.projectWizard.j2ee.WebModuleBuilder;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,13 +44,7 @@ public class OutputPathsStep extends ModuleWizardStep{
     if (!myNamePathComponent.isPathChangedByUser()) {
       final String contentEntryPath = myDescriptor.getContentEntryPath();
       if (contentEntryPath != null) {
-        @NonNls String path = null;
-        if (myDescriptor instanceof WebModuleBuilder) {
-          final String explodedPath = ((WebModuleBuilder)myDescriptor).explodedDirPath;
-          if (explodedPath != null) {
-            path = explodedPath + "/WEB-INF/classes";
-          }
-        }
+        @NonNls String path = myDescriptor.getPathForOutputPathStep();
         if (path == null) {
           path = StringUtil.endsWithChar(contentEntryPath, '/') ? contentEntryPath + "classes" : contentEntryPath + "/classes";
         }
