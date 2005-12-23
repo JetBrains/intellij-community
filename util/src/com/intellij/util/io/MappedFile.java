@@ -9,7 +9,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
  * @author max
@@ -129,7 +128,7 @@ public class MappedFile {
   }
 
   private void expand() throws IOException {
-    resize((int)(myRealSize + Math.max(Math.min(1 << 20, myRealSize), 1024 * 32)));
+    resize((int)(myRealSize + Math.max(myRealSize, 1024 * 32)));
   }
 
   private void put(final byte[] src, final int offset, final int length) throws IOException {
@@ -167,23 +166,9 @@ public class MappedFile {
     final int current = (int)myRealSize;
     if (current == size) return;
     unmap();
-    if (size > current) {
-      FileOutputStream stream = new FileOutputStream(myFile, true);
-      FileChannel channel = stream.getChannel();
-
-      byte[] temp = new byte[size - current];
-      Arrays.fill(temp, (byte)0);
-      channel.write(ByteBuffer.wrap(temp));
-
-      channel.force(true);
-      channel.close();
-    }
-    else {
-      RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      raf.setLength(size);
-      raf.close();
-    }
-
+    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
+    raf.setLength(size);
+    raf.close();
     map();
   }
 
