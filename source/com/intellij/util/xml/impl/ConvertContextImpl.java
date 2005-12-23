@@ -21,7 +21,9 @@ public class ConvertContextImpl implements ConvertContext {
   }
 
   public final PsiClass findClass(String name) {
+    if (name == null) return null;
     final XmlFile file = getFile();
+    if (name.indexOf('$')>=0) name = name.replace('$', '.');
     return file.getManager().findClass(name, file.getResolveScope());
   }
 
