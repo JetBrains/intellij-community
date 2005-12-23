@@ -26,6 +26,7 @@ import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -77,10 +78,7 @@ public class VfsUtil {
    *                 and <code>file</code> are equal
    * @return <code>true</code> if <code>ancestor</code> is parent of <code>file</code>; <code>false</code> otherwise
    */
-  public static boolean isAncestor(VirtualFile ancestor, VirtualFile file, boolean strict) {
-    assert ancestor != null;
-    assert file != null;
-
+  public static boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile file, boolean strict) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
     VirtualFile parent = strict ? file.getParent() : file;
     while (true) {
@@ -272,7 +270,7 @@ public class VfsUtil {
         break;
       }
     }
-    return (lastEqualIdx != -1) ? minLengthPath[lastEqualIdx] : null;
+    return lastEqualIdx != -1 ? minLengthPath[lastEqualIdx] : null;
   }
 
   /**
