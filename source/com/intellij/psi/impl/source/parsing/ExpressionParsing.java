@@ -51,13 +51,18 @@ public class ExpressionParsing extends Parsing {
     if (expression != null)
       TreeUtil.addChildren(dummyRoot, expression);
 
-    if(lexer.getTokenType() != null){
+    CompositeElement parent = dummyRoot;
+    final IElementType tokenType = lexer.getTokenType();
+
+    if(tokenType != null && tokenType != ElementType.BAD_CHARACTER){
       final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
       TreeUtil.addChildren(dummyRoot, errorElement);
-      while(lexer.getTokenType() != null){
-        TreeUtil.addChildren(errorElement, ParseUtil.createTokenElement(lexer, table));
-        lexer.advance();
-      }
+      parent = errorElement;
+    }
+
+    while(lexer.getTokenType() != null){
+      TreeUtil.addChildren(parent, ParseUtil.createTokenElement(lexer, table));
+      lexer.advance();
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
