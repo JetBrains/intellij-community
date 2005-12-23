@@ -28,7 +28,6 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final PropertiesFilesManager myPropertiesFilesManager;
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
-  private Set<VirtualFile> myAllFiles;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
@@ -113,7 +112,6 @@ public class PropertiesReferenceManager implements ProjectComponent {
         if (myChangedFiles.isEmpty()) break;
         virtualFile = myChangedFiles.remove(myChangedFiles.size() - 1);
       }
-      myAllFiles = null;
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
@@ -124,20 +122,6 @@ public class PropertiesReferenceManager implements ProjectComponent {
           myPropertiesMap.put(key, containingFiles);
         }
         containingFiles.add(virtualFile);
-      }
-    }
-  }
-
-  private void updateAllFiles() {
-    updateChangedFiles();
-    if (myAllFiles == null) {
-      myAllFiles = new HashSet<VirtualFile>();
-      for(Collection<VirtualFile> vFiles: myPropertiesMap.values()) {
-        for(VirtualFile vFile: vFiles) {
-          if (vFile.isValid()) {
-            myAllFiles.add(vFile);
-          }
-        }
       }
     }
   }
@@ -187,13 +171,12 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   private void processPropertiesFiles(final Module module, PropertiesFileProcessor processor) {
-    updateAllFiles();
     final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
     ModuleUtil.getDependencies(module, dependentModules);
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
 
-    for(VirtualFile file: myAllFiles) {
+    for(VirtualFile file: PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
       if (!dependentModules.contains(ModuleUtil.getModuleForFile(myProject, file))) {
         continue;
       }
