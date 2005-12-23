@@ -20,6 +20,9 @@ import java.util.*;
  * @author cdr
  */
 public class PropertiesUtil {
+  private PropertiesUtil() {
+  }
+
   @NotNull
   public static Collection<Property> findPropertiesByKey(Project project, final String key) {
     return PropertiesReferenceManager.getInstance(project).findPropertiesByKey(key);

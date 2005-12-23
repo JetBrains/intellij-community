@@ -1,16 +1,18 @@
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import gnu.trove.THashMap;
@@ -26,6 +28,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final PropertiesFilesManager myPropertiesFilesManager;
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
+  private Set<VirtualFile> myAllFiles;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
@@ -37,8 +40,27 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   public void projectOpened() {
+    final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(myProject);
     final PsiReferenceProvider referenceProvider = new PropertiesReferenceProvider();
-    ReferenceProvidersRegistry.getInstance(myProject).registerReferenceProvider(PsiLiteralExpression.class, referenceProvider);
+    registry.registerReferenceProvider(PsiLiteralExpression.class, referenceProvider);
+    registry.registerReferenceProvider(new ElementFilter() {
+      public boolean isAcceptable(Object element, PsiElement context) {
+        if (context instanceof PsiLiteralExpression) {
+          PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
+          if (literalExpression.getParent() instanceof PsiNameValuePair) {
+            PsiNameValuePair nvp = (PsiNameValuePair) literalExpression.getParent();
+            if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(nvp.getName())) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      public boolean isClassAcceptable(Class hintClass) {
+        return true;
+      }
+    }, PsiLiteralExpression.class, new ResourceBundleReferenceProvider());
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -91,6 +113,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
         if (myChangedFiles.isEmpty()) break;
         virtualFile = myChangedFiles.remove(myChangedFiles.size() - 1);
       }
+      myAllFiles = null;
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
@@ -101,6 +124,20 @@ public class PropertiesReferenceManager implements ProjectComponent {
           myPropertiesMap.put(key, containingFiles);
         }
         containingFiles.add(virtualFile);
+      }
+    }
+  }
+
+  private void updateAllFiles() {
+    updateChangedFiles();
+    if (myAllFiles == null) {
+      myAllFiles = new HashSet<VirtualFile>();
+      for(Collection<VirtualFile> vFiles: myPropertiesMap.values()) {
+        for(VirtualFile vFile: vFiles) {
+          if (vFile.isValid()) {
+            myAllFiles.add(vFile);
+          }
+        }
       }
     }
   }
@@ -121,5 +158,59 @@ public class PropertiesReferenceManager implements ProjectComponent {
       result.addAll(properties);
     }
     return result;
+  }
+
+  public PropertiesFile[] findPropertiesFiles(final Module module, final String bundleName) {
+    final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
+    processPropertiesFiles(module, new PropertiesFileProcessor() {
+      public void process(String baseName, PropertiesFile propertiesFile) {
+        if (baseName.equals(bundleName)) {
+          result.add(propertiesFile);
+        }
+      }
+    });
+    return result.toArray(new PropertiesFile[result.size()]);
+  }
+
+  public String[] getPropertyFileBaseNames(final Module module) {
+    final ArrayList<String> result = new ArrayList<String>();
+    processPropertiesFiles(module, new PropertiesFileProcessor() {
+      public void process(String baseName, PropertiesFile propertiesFile) {
+        result.add(baseName);
+      }
+    });
+    return result.toArray(new String[result.size()]);
+  }
+
+  interface PropertiesFileProcessor {
+    void process(String baseName, PropertiesFile propertiesFile);
+  }
+
+  private void processPropertiesFiles(final Module module, PropertiesFileProcessor processor) {
+    updateAllFiles();
+    final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
+    ModuleUtil.getDependencies(module, dependentModules);
+
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+
+    for(VirtualFile file: myAllFiles) {
+      if (!dependentModules.contains(ModuleUtil.getModuleForFile(myProject, file))) {
+        continue;
+      }
+
+      PsiFile psiFile = psiManager.findFile(file);
+      if (!(psiFile instanceof PropertiesFile)) continue;
+
+      PsiDirectory directory = (PsiDirectory)psiFile.getParent();
+      PsiPackage pkg = directory.getPackage();
+      if (pkg != null) {
+        StringBuffer qName = new StringBuffer(pkg.getQualifiedName());
+        if (qName.length() > 0) {
+          qName.append(".");
+        }
+        qName.append(PropertiesUtil.getBaseName(file));
+        processor.process(qName.toString(), (PropertiesFile) psiFile);
+      }
+    }
   }
 }
