@@ -42,6 +42,8 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       if ("target".equals(name)) {
         //noinspection HardCodedStringLiteral
         return new String[] {"_blank","_top","_self","_parent"};
+      } else if ("enctype".equals(name)) {
+        return new String[] {"multipart/form-data","application/x-www-form-urlencoded"};
       }
     }
 
