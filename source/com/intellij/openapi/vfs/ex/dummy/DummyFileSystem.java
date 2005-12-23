@@ -3,10 +3,9 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,18 +34,6 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     fireFileCreated(null, root);
     return root;
   }
-
-  /*protected void fireFileCreated(Object requestor, VirtualFile file) {
-    super.fireFileCreated(requestor, file);
-  }*/
-
-  /*protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, isDirectory, parent);
-  }
-
-  protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
-    super.fireBeforeFileDeletion(requestor, file);
-  }*/
 
   public String getProtocol() {
     return PROTOCOL;
