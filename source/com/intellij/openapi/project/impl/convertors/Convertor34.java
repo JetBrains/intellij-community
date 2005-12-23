@@ -1,10 +1,11 @@
 package com.intellij.openapi.project.impl.convertors;
 
-import com.intellij.j2ee.DeploymentDescriptorsConstants;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.j2ee.J2EEFileTemplateNames;
 import com.intellij.j2ee.j2eeDom.web.WebRoot;
-import com.intellij.j2ee.module.J2EEDeploymentDescriptorBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
@@ -13,13 +14,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -225,13 +227,19 @@ public class Convertor34 {
     Element component = new Element("component");
     component.setAttribute("name", "WebModuleProperties");
 
-    J2EEDeploymentDescriptorBase webXml = new J2EEDeploymentDescriptorBase(null, DeploymentDescriptorsConstants.WEB_XML_DEPLOYMENT_DESCRIPTOR);
-    webXml.setUrl("file://$MODULE_DIR$/WEB-INF/web.xml");
     try {
-      webXml.writeExternal(component);
-      webXml.dispose();
+      BufferedWriter writer = null;
+      try {
+        writer = new BufferedWriter(new FileWriter(new File(moduleDirectory.getPath(), "WEB-INF/web.xml")));
+        writer.write(FileTemplateManager.getInstance().getJ2eeTemplate(J2EEFileTemplateNames.WEB_XML_23).getText());
+      }
+      finally {
+        if (writer != null) {
+          writer.close();
+        }
+      }
     }
-    catch (WriteExternalException e) {
+    catch (IOException e) {
       LOG.error(e);
     }
 
@@ -281,11 +289,11 @@ public class Convertor34 {
     newModuleRootManager.addContent(orderEntry);
 
     Element output = new Element("output");
-    output.setAttribute("url", "file://" + getModulePath("classes", module, moduleDirectory.getPath()));
+    output.setAttribute("url", "file://" + getModulePath("classes", moduleDirectory.getPath()));
     newModuleRootManager.addContent(output);
 
     Element content = new Element("content");
-    content.setAttribute("url", "file://" + getModulePath("", module,  moduleDirectory.getPath()));
+    content.setAttribute("url", "file://" + getModulePath("", moduleDirectory.getPath()));
     newModuleRootManager.addContent(content);
 
     VirtualFile classesDir = moduleDirectory.findFileByRelativePath("WEB-INF/classes");
@@ -296,10 +304,7 @@ public class Convertor34 {
 
     VirtualFile lib = moduleDirectory.findFileByRelativePath("WEB-INF/lib");
     if(lib != null) {
-      String modulePath = moduleDirectory.getPath();
-      VirtualFile[] libs = lib.getChildren();
-      for (int i = 0; i < libs.length; i++) {
-        VirtualFile virtualFile = libs[i];
+      for (VirtualFile virtualFile : lib.getChildren()) {
         Element libEntry = createLibraryEntry(virtualFile, module, moduleDirectory);
         newModuleRootManager.addContent(libEntry);
       }
@@ -322,12 +327,12 @@ public class Convertor34 {
     Element classes = new Element("CLASSES");
     library.addContent(classes);
     Element root = new Element("root");
-    root.setAttribute("url", "file://" + getModulePath(path, module, moduleDirectory.getPath()));
+    root.setAttribute("url", "file://" + getModulePath(path, moduleDirectory.getPath()));
     classes.addContent(root);
     return orderEntry;
   }
 
-  private static String getModulePath(String path, Element module, String moduleDirectory) {
+  private static String getModulePath(String path, String moduleDirectory) {
     return "".equals(path) ? moduleDirectory  : moduleDirectory + "/" + path;
   }
 
@@ -489,8 +494,7 @@ public class Convertor34 {
       Map<String, List<String>> contentToSource = dispatchFolders(myProjectRoots, mySourceFolders);
       final Map<String, List<String>> contentToExclude = dispatchFolders(myProjectRoots, myExcludeFolders);
 
-      for (Iterator<String> iterator = myProjectRoots.iterator(); iterator.hasNext();) {
-        String root = iterator.next();
+      for (String root : myProjectRoots) {
         final Element contentElement = new Element("content");
         contentElement.setAttribute("url", root);
         createFolders(contentElement, patternSourceFolder, contentToSource.get(root));
@@ -535,22 +539,19 @@ public class Convertor34 {
       }
     }
 
-    private void createFolders(final Element contentElement,
+    private static void createFolders(final Element contentElement,
                                final Element patternFolderElement,
                                final List<String> folders) {
-      for (Iterator<String> iterator1 = folders.iterator(); iterator1.hasNext();) {
-        String folder = iterator1.next();
-
+      for (String folder : folders) {
         Element folderElement = (Element)patternFolderElement.clone();
         folderElement.setAttribute("url", folder);
         contentElement.addContent(folderElement);
       }
     }
 
-    private Map<String, List<String>> dispatchFolders(ArrayList<String> projectRoots, List<String> folders) {
+    private static Map<String, List<String>> dispatchFolders(ArrayList<String> projectRoots, List<String> folders) {
       final Map<String, List<String>> result = new HashMap<String, List<String>>();
-      for (Iterator<String> iterator = projectRoots.iterator(); iterator.hasNext();) {
-        String root = iterator.next();
+      for (String root : projectRoots) {
         final ArrayList<String> foldersForRoot = new ArrayList<String>();
         result.put(root, foldersForRoot);
         for (Iterator<String> iterator1 = folders.iterator(); iterator1.hasNext();) {

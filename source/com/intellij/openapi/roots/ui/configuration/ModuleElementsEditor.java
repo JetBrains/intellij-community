@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,7 +19,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   protected final Project myProject;
   protected final ModifiableRootModel myModel;
   protected JComponent myComponent;
-  private java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   protected ModuleElementsEditor(Project project, ModifiableRootModel model) {
     myProject = project;
@@ -26,8 +27,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   public boolean isModified() {
-    boolean modelChanged = myModel == null? false : myModel.isChanged();
-    return modelChanged;
+    return myModel != null && myModel.isChanged();
   }
 
   public void apply() throws ConfigurationException {}

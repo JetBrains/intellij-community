@@ -1,13 +1,13 @@
 package com.intellij.jar;
 
+import com.intellij.j2ee.make.MakeUtil;
 import com.intellij.j2ee.module.ModuleContainer;
-import com.intellij.j2ee.module.ModuleContainerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -25,7 +25,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     return module.getComponent(BuildJarSettings.class);
   }
   public BuildJarSettings(Module module) {
-    myModuleContainer = new ModuleContainerImpl(module);
+    myModuleContainer = MakeUtil.getInstance().createModuleContainer(module);
   }
 
   public boolean isBuildJar() {

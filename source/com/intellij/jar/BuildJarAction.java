@@ -91,7 +91,7 @@ public class BuildJarAction extends AnAction {
         return IdeBundle.message("filter.all.file.types");
       }
     };
-    BuildRecipeImpl buildRecipe = new BuildRecipeImpl();
+    BuildRecipe buildRecipe = MakeUtil.getInstance().createBuildRecipe();
     LibraryLink[] libraries = moduleContainer.getContainingLibraries();
     final DummyCompileContext compileContext = DummyCompileContext.getInstance();
     for (LibraryLink libraryLink : libraries) {
@@ -112,7 +112,7 @@ public class BuildJarAction extends AnAction {
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
-    final BuildRecipeImpl dependencies = new BuildRecipeImpl();
+    final BuildRecipe dependencies = MakeUtil.getInstance().createBuildRecipe();
     try {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
