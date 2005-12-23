@@ -16,7 +16,11 @@
 package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ModuleBuildProperties {
   public static ModuleBuildProperties getInstance(Module module) {
@@ -39,6 +43,12 @@ public abstract class ModuleBuildProperties {
   public abstract boolean isBuildOnFrameDeactivation();
 
   public abstract boolean isSyncExplodedDir();
+
+  @Nullable
+  public abstract J2EEBuildParticipant getBuildParticipant();
+
+  @Nullable
+  public abstract UnnamedConfigurable getBuildConfigurable(J2EEModuleProperties moduleProperties, ModifiableRootModel rootModel);
 
   public String getPresentableName() {
     return getModule().getName();
