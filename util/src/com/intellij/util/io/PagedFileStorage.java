@@ -17,8 +17,8 @@ import java.util.Arrays;
 /**
  * @author max
  */
-public class PagedFileStorage {
-  private ByteBufferUtil.ByteBufferHolder myHolder;
+public final class PagedFileStorage {
+  private ByteBuffer myBuffer;
   private final File myFile;
   private long mySize;
   @NonNls private static final String RW = "rw";
@@ -30,56 +30,50 @@ public class PagedFileStorage {
 
   private void map() throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    myHolder = new ByteBufferUtil.ByteBufferHolder(
-      raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, raf.length()), myFile
-    );
+    myBuffer = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
     raf.close();
     mySize = myFile.length();
   }
 
 
-  private ByteBuffer getBuffer() {
-    return myHolder.getBuffer();
-  }
-
   public short getShort(int index) {
-    return getBuffer().getShort(index);
+    return myBuffer.getShort(index);
   }
 
   public void putShort(int index, short value) {
-    getBuffer().putShort(index, value);
+    myBuffer.putShort(index, value);
   }
 
   public int getInt(int index) {
-    return getBuffer().getInt(index);
+    return myBuffer.getInt(index);
   }
 
   public void putInt(int index, int value) {
-    getBuffer().putInt(index, value);
+    myBuffer.putInt(index, value);
   }
 
   public byte get(int index) {
-    return getBuffer().get(index);
+    return myBuffer.get(index);
   }
 
   public void put(int index, byte value) {
-    getBuffer().put(index, value);
+    myBuffer.put(index, value);
   }
 
   public void get(int index, byte[] dst, int offset, int length) {
-    final ByteBuffer buffer = getBuffer();
+    final ByteBuffer buffer = myBuffer;
     buffer.position(index);
     buffer.get(dst, offset, length);
   }
 
   public void put(int index, byte[] src, int offset, int length) {
-    final ByteBuffer buffer = getBuffer();
+    final ByteBuffer buffer = myBuffer;
     buffer.position(index);
     buffer.put(src, offset, length);
   }
 
   public void flush() {
-    final ByteBuffer buffer = getBuffer();
+    final ByteBuffer buffer = myBuffer;
     if (buffer instanceof MappedByteBuffer) {
       final MappedByteBuffer mappedByteBuffer = (MappedByteBuffer)buffer;
       mappedByteBuffer.force();
@@ -119,9 +113,11 @@ public class PagedFileStorage {
   }
 
   private void unmap() {
-    if (myHolder != null) {
+    if (myBuffer != null) {
       flush();
-      ByteBufferUtil.unmapMappedByteBuffer(myHolder);
+      ByteBufferUtil.ByteBufferHolder holder = new ByteBufferUtil.ByteBufferHolder(myBuffer, myFile);
+      myBuffer = null;
+      ByteBufferUtil.unmapMappedByteBuffer(holder);
     }
   }
 }
