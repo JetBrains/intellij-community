@@ -17,7 +17,9 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.j2ee.j2eeDom.DeploymentDescriptorFactory;
 import com.intellij.j2ee.j2eeDom.J2EEDeploymentItem;
+import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
 import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.j2ee.make.J2EEBuildParticipant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -31,6 +33,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +88,16 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public boolean isSyncExplodedDir() {
     return true;
+  }
+
+  @Nullable
+  public J2EEBuildParticipant getBuildParticipant() {
+    return null;
+  }
+
+  @Nullable
+  public UnnamedConfigurable getBuildConfigurable(J2EEModuleProperties moduleProperties, ModifiableRootModel rootModel) {
+    return null;
   }
 
   public void projectOpened() {}
