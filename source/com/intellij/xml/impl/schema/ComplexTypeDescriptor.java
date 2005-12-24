@@ -139,7 +139,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (base != null) {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.myFile.getDocument().getRootTag(),
+          myDocumentDescriptor.getTag(),
           base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
@@ -233,7 +233,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (base != null) {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.myFile.getDocument().getRootTag(),
+          myDocumentDescriptor.getTag(),
           base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
@@ -312,7 +312,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (base != null) {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.myFile.getDocument().getRootTag(),
+          myDocumentDescriptor.getTag(),
           base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {
@@ -362,7 +362,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (base != null && !visited.contains(base)) {
         visited.add(base);
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.myFile.getDocument().getRootTag(),
+          myDocumentDescriptor.getTag(),
           base);
 
         if (descriptor instanceof ComplexTypeDescriptor) {

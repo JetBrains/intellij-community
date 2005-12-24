@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
@@ -91,18 +92,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       psiReferences[0] = new TagNameReference(startTagName, true);
       psiReferences[1] = new TagNameReference(endTagName, false);
 
-      for (int i = 0; i < referencesFromProviders.length; i++) {
-        psiReferences[i + 2] = referencesFromProviders[i];
-      }
+      System.arraycopy(referencesFromProviders, 0, psiReferences, 2, referencesFromProviders.length);
       return psiReferences;
     }
     else{
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 1];
       psiReferences[0] = new TagNameReference(startTagName, true);
 
-      for (int i = 0; i < referencesFromProviders.length; i++) {
-        psiReferences[i + 1] = referencesFromProviders[i];
-      }
+      System.arraycopy(referencesFromProviders, 0, psiReferences, 1, referencesFromProviders.length);
       return psiReferences;
     }
   }
@@ -182,12 +179,24 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     final XmlFile file = XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),
                                              ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
+    final PsiMetaOwner owner;
 
-    if (file != null){
+    if (file == null) {
+      final String attributeValue = getAttributeValue("targetNamespace");
+      if (namespace.equals(attributeValue)) {
+        owner = this; 
+      } else {
+        owner = null;
+      }
+    } else {
+      owner = file.getDocument();
+    }
+
+    if (owner != null){
       myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
         public CachedValueProvider.Result<XmlNSDescriptor> compute() {
           return new Result<XmlNSDescriptor>(
-            (XmlNSDescriptor)file.getDocument().getMetaData(),
+            (XmlNSDescriptor)owner.getMetaData(),
             new Object[]{file}
           );
         }
@@ -494,10 +503,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public Map<String, String> getLocalNamespaceDeclarations() {
     Map<String, String> namespaces = new HashMap<String, String>();
-    final XmlAttribute[] attributes = getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      final XmlAttribute attribute = attributes[i];
-      if(!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
+    for (final XmlAttribute attribute : getAttributes()) {
+      if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
       namespaces.put(attribute.getLocalName(), attribute.getValue());
     }
     return namespaces;

@@ -142,7 +142,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       if (tag == null) return null;
       
       String canonicalText = getCanonicalText();
-      XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag);
+      XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag,canonicalText);
 
       if (nsDescriptor != null) {
         
@@ -194,10 +194,15 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       return null;
     }
 
-    private XmlNSDescriptorImpl getDescriptor(final XmlTag tag) {
-      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
-      XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-      if (nsDescriptor == null) nsDescriptor = tag.getNSDescriptor(tag.getNamespace(), true);
+    private XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text) {
+      XmlNSDescriptor nsDescriptor = nsDescriptor = tag.getNSDescriptor(
+        tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(text)),
+        true
+      );
+
+      if (nsDescriptor == null) { // import
+        nsDescriptor = (XmlNSDescriptor)((XmlFile)tag.getContainingFile()).getDocument().getMetaData();
+      }
       
       return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
     }
@@ -306,8 +311,9 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
                                   final String[] tagNames) {
       processor.namespace = namespace;
 
-      ((XmlNSDescriptorImpl)nsDescriptor).processTagsInNamespace(
-        nsDescriptor.getDescriptorFile().getDocument(),
+      final XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
+      xmlNSDescriptor.processTagsInNamespace(
+        xmlNSDescriptor.getTag(),
         tagNames,
         processor
       );

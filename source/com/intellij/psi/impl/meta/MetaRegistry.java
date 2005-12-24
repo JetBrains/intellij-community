@@ -62,6 +62,14 @@ public class MetaRegistry {
           ),
           com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
       );
+
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(SCHEMA_URIS),
+              new TextFilter("schema")
+          ),
+          com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
+      );
     }
     {
       addMetadataBinding(

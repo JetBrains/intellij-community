@@ -29,7 +29,8 @@ import java.util.*;
 public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
-  XmlFile myFile;
+  private XmlFile myFile;
+  private XmlTag myTag;
   private String myTargetNamespace;
   @NonNls
   public static final String XSD_PREFIX = "xsd";
@@ -70,8 +71,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       if (value == null || value.getDeclaration().isValid()) return value;
     }
 
-    XmlDocument document = myFile.getDocument();
-    XmlTag rootTag = document.getRootTag();
+    final XmlTag rootTag = myTag;
     if (rootTag == null) return null;
     XmlTag[] tags = rootTag.getSubTags();
     visited.add( this );
@@ -157,11 +157,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   private XmlAttributeDescriptorImpl getAttributeImpl(String localName, String namespace, Set<XmlTag> visited) {
-    XmlDocument document = myFile.getDocument();
-    XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) return null;
+    if (myTag == null) return null;
 
-    XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)rootTag.getNSDescriptor(namespace, true);
+    XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
 
     if (nsDescriptor != this && nsDescriptor != null) {
       return nsDescriptor.getAttribute(
@@ -171,9 +169,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
 
     if (visited == null) visited = new HashSet<XmlTag>(1);
-    else if(visited.contains(rootTag)) return null;
-    visited.add(rootTag);
-    XmlTag[] tags = rootTag.getSubTags();
+    else if(visited.contains(myTag)) return null;
+    visited.add(myTag);
+    XmlTag[] tags = myTag.getSubTags();
 
     for (XmlTag tag : tags) {
       if (equalsToSchemaName(tag, "attribute")) {
@@ -192,7 +190,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findXmlFile(myTag.getContainingFile(), schemaLocation.getValue());
 
           if (xmlFile != null) {
 
@@ -250,17 +248,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         return new StdTypeDescriptor(localNameByQualifiedName);
     }
 
-    final XmlDocument document = myFile.getDocument();
-    if (document == null) return null;
-    return findTypeDescriptor(document.getRootTag(), name);
+    return findTypeDescriptor(myTag, name);
   }
 
   public XmlElementDescriptor getDescriptorByType(String qName, XmlTag instanceTag){
-    final XmlDocument document = myFile.getDocument();
-    if(document == null) return null;
-    final XmlTag tag = document.getRootTag();
-    if(tag == null) return null;
-    final TypeDescriptor typeDescriptor = findTypeDescriptor(tag, qName);
+    if(myTag == null) return null;
+    final TypeDescriptor typeDescriptor = findTypeDescriptor(myTag, qName);
     if(!(typeDescriptor instanceof ComplexTypeDescriptor)) return null;
     return new XmlElementDescriptorByType(instanceTag, (ComplexTypeDescriptor)typeDescriptor);
   }
@@ -502,14 +495,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
     
     CollectElementsProcessor processor = new CollectElementsProcessor();
-    processTagsInNamespace(myFile.getDocument(), new String[] {"element"}, processor);
+    processTagsInNamespace(myTag, new String[] {"element"}, processor);
 
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
 
-  public boolean processTagsInNamespace(final XmlDocument document, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
-    XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) return true;
+  public boolean processTagsInNamespace(final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
     XmlTag[] tags = rootTag.getSubTags();
 
     NextTag:
@@ -538,7 +529,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             final XmlDocument includedDocument = xmlFile.getDocument();
           
             if (includedDocument != null) {
-              if (!processTagsInNamespace(includedDocument, tagNames, processor)) return false;
+              if (!processTagsInNamespace(includedDocument.getRootTag(), tagNames, processor)) return false;
             }
           }
         }
@@ -608,11 +599,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public XmlTag findGroup(String name) {
-    return findSpecialTag(name,"group",myFile.getDocument().getRootTag(), this, null);
+    return findSpecialTag(name,"group",myTag, this, null);
   }
 
   public XmlTag findAttributeGroup(String name) {
-    return findSpecialTag(name,"attributeGroup",myFile.getDocument().getRootTag(),this, null);
+    return findSpecialTag(name,"attributeGroup",myTag,this, null);
   }
 
   private Map<String,List<XmlTag>> mySubstitutions;
@@ -621,11 +612,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
 
     if (mySubstitutions ==null) {
-      XmlDocument document = myFile.getDocument();
       mySubstitutions = new HashMap<String, List<XmlTag>>();
-      XmlTag rootTag = document.getRootTag();
 
-      XmlTag[] tags = rootTag.getSubTags();
+      XmlTag[] tags = myTag.getSubTags();
 
       for (XmlTag tag : tags) {
         if (equalsToSchemaName(tag, "element")) {
@@ -677,14 +666,21 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   public void init(PsiElement element){
     myFile = (XmlFile) element.getContainingFile();
+    
+    if (element instanceof XmlTag) {
+      myTag = (XmlTag)element;
+    } else {
+      final XmlDocument document = myFile.getDocument();
 
-    final XmlDocument document = myFile.getDocument();
-    if (document != null) {
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag != null) {
-        myTargetNamespace = rootTag.getAttributeValue("targetNamespace");
+      if (document != null) {
+        myTag = document.getRootTag();
       }
     }
+
+    if (myTag != null) {
+      myTargetNamespace = myTag.getAttributeValue("targetNamespace");
+    }
+
   }
 
   public Object[] getDependences(){
@@ -747,5 +743,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   protected boolean supportsStdAttributes() {
     return true;
+  }
+
+  public XmlTag getTag() {
+    return myTag;
   }
 }
