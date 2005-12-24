@@ -14,7 +14,7 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="JUnit" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

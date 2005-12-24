@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="inspections-openapi" />
+    <orderEntry type="module" module-name="inspections-openapi" exported="" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
