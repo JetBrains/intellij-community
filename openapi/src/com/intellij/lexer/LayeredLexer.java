@@ -46,13 +46,13 @@ public class LayeredLexer extends LexerBase {
     myBaseLexer = baseLexer;
   }
 
-  public void registerSelfStoppingLayer(LexerBase Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
+  public void registerSelfStoppingLayer(Lexer Lexer, IElementType[] startTokens, IElementType[] stopTokens) {
     registerLayer(Lexer, startTokens);
     mySelfStoppingLexers.add(Lexer);
     myStopTokens.put(Lexer, stopTokens);
   }
 
-  public void registerLayer(LexerBase Lexer, IElementType[] startTokens) {
+  public void registerLayer(Lexer Lexer, IElementType[] startTokens) {
     for (int i = 0; i < startTokens.length; i++) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startTokens[i]));
       myStartTokenToLayerLexer.put(startTokens[i], Lexer);
