@@ -19,6 +19,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
@@ -113,6 +115,17 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
 
   protected static boolean isPublic(PsiModifierListOwner checkedClass) {
     return checkedClass.hasModifierProperty(PsiModifier.PUBLIC);
+  }
+
+  protected boolean isActionRegistered(PsiClass psiClass) {
+    final Set<PsiClass> registrationTypes = getRegistrationTypes(psiClass, true);
+    if (registrationTypes != null) {
+      for (PsiClass type : registrationTypes) {
+        if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
+        if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
+      }
+    }
+    return false;
   }
 
   static class RegistrationTypeFinder implements ComponentType.Processor, ActionType.Processor {

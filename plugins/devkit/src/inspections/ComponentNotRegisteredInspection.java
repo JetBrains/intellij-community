@@ -20,7 +20,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,6 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.Set;
 
 /**
  * @author swr
@@ -163,16 +161,5 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     final Project project = psiClass.getProject();
     final Module module = VfsUtil.getModuleForFile(project, psiClass.getContainingFile().getVirtualFile());
     return PluginModuleType.isPluginModuleOrDependency(module);
-  }
-
-  private boolean isActionRegistered(PsiClass psiClass) {
-    final Set<PsiClass> registrationTypes = getRegistrationTypes(psiClass, true);
-    if (registrationTypes != null) {
-      for (PsiClass type : registrationTypes) {
-        if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
-        if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
-      }
-    }
-    return false;
   }
 }

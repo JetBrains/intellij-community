@@ -121,7 +121,8 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     if (CHECK_JAVA_CODE &&
             nameIdentifier != null &&
             checkedClass.getQualifiedName() != null &&
-            checkedClass.getContainingFile().getVirtualFile() != null) {
+            checkedClass.getContainingFile().getVirtualFile() != null)
+    {
       final Set<PsiClass> componentClasses = getRegistrationTypes(checkedClass, CHECK_ACTIONS);
       if (componentClasses != null) {
         List<ProblemDescriptor> problems = null;
@@ -167,14 +168,18 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     if (CHECK_ACTIONS && CHECK_JAVA_CODE &&
             method.isConstructor() &&
             method.getNameIdentifier() != null &&
-            method.getContainingFile().getVirtualFile() != null) {
-      if (ActionType.ACTION.isOfType(method.getContainingClass())) {
-        if (method.getParameterList().getParameters().length == 0 && !isPublic(method)) {
-          return new ProblemDescriptor[]{
-                  manager.createProblemDescriptor(method.getNameIdentifier(),
-                          DevKitBundle.message("inspections.registration.problems.ctor.not.public"),
-                          new MakePublicFix(method, false), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-          };
+            method.getContainingFile().getVirtualFile() != null)
+    {
+      if (method.getParameterList().getParameters().length == 0 && !isPublic(method)) {
+        final PsiClass checkedClass = method.getContainingClass();
+        if (ActionType.ACTION.isOfType(checkedClass)) {
+          if (isActionRegistered(checkedClass)) {
+            return new ProblemDescriptor[]{
+                    manager.createProblemDescriptor(method.getNameIdentifier(),
+                            DevKitBundle.message("inspections.registration.problems.ctor.not.public"),
+                            new MakePublicFix(method, false), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+            };
+          }
         }
       }
     }
