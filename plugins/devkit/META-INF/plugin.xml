@@ -62,6 +62,10 @@
       <add-to-group anchor="last" group-id="NewGroup"/>
     </action>
 
+    <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction">
+      <add-to-group anchor="last" group-id="NewGroup"/>
+    </action>
+
     <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
             id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
