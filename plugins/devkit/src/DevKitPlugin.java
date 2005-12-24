@@ -17,9 +17,12 @@ package org.jetbrains.idea.devkit;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.codeInspection.InspectionToolProvider;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
+import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 
-public class DevKitPlugin implements ApplicationComponent {
+public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider {
   private ModuleTypeManager myModuleTypeManager;
 
   public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
@@ -29,6 +32,13 @@ public class DevKitPlugin implements ApplicationComponent {
 
   public String getComponentName() {
     return "DevKit.Plugin";
+  }
+
+  public Class[] getInspectionClasses() {
+    return new Class[] {
+            RegistrationProblemsInspection.class,
+            ComponentNotRegisteredInspection.class,
+    };
   }
 
   public void initComponent() {

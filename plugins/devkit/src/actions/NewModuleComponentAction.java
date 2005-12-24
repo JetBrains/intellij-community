@@ -15,11 +15,8 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
@@ -34,17 +31,8 @@ public class NewModuleComponentAction extends GenerateClassAndPatchPluginXmlActi
           DevKitBundle.message("new.menu.module.component.description"), null);
   }
 
-  protected void patchPluginXml(final XmlFile pluginXml, final PsiClass klass) throws IncorrectOperationException {
-    final XmlTag rootTag = pluginXml.getDocument().getRootTag();
-    if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
-      XmlTag moduleComponents = rootTag.findFirstSubTag("module-components");
-      if (moduleComponents == null) {
-        moduleComponents = (XmlTag)rootTag.add(rootTag.createChildTag("module-components", rootTag.getNamespace(), null, false));
-      }
-
-      XmlTag cmp = (XmlTag)moduleComponents.add(moduleComponents.createChildTag("component", moduleComponents.getNamespace(), null, false));
-      cmp.add(cmp.createChildTag("implementation-class", cmp.getNamespace(), klass.getQualifiedName(), false));
-    }
+  protected ComponentType getComponentType() {
+    return ComponentType.MODULE;
   }
 
   protected String getErrorTitle() {

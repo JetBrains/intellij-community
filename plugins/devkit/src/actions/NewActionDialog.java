@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2005 Your Corporation. All Rights Reserved.
+ * Copyright 2000-2005 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.jetbrains.idea.devkit.actions;
 
@@ -7,14 +19,20 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.ActionData;
+import org.jetbrains.idea.devkit.util.ActionType;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -22,6 +40,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +50,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class NewActionDialog extends DialogWrapper {
+public class NewActionDialog extends DialogWrapper implements ActionData {
   private JPanel myRootPanel;
   private JList myGroupList;
   private JList myActionList;
@@ -42,13 +62,26 @@ public class NewActionDialog extends DialogWrapper {
   private JRadioButton myAnchorLastRadio;
   private JRadioButton myAnchorBeforeRadio;
   private JRadioButton myAnchorAfterRadio;
+  private JPanel myShortcutPanel;
   private JPanel myFirstKeystrokeEditPlaceholder;
   private JPanel mySecondKeystrokeEditPlaceholder;
+  private JButton myClearFirstKeystroke;
+  private JButton myClearSecondKeystroke;
   private ShortcutTextField myFirstKeystrokeEdit;
   private ShortcutTextField mySecondKeystrokeEdit;
   private TextFieldWithBrowseButton myIconEdit;
   private Project myProject;
   private ButtonGroup myAnchorButtonGroup = new ButtonGroup();
+
+  public  NewActionDialog(PsiClass actionClass) {
+    this(actionClass.getProject());
+
+    myActionNameEdit.setText(actionClass.getQualifiedName());
+    myActionNameEdit.setEditable(false);
+    if (ActionType.GROUP.isOfType(actionClass)) {
+      myShortcutPanel.setVisible(false);
+    }
+  }
 
   protected NewActionDialog(final Project project) {
     super(project, false);
@@ -96,9 +129,10 @@ public class NewActionDialog extends DialogWrapper {
       }
     });
 
-    myActionIdEdit.getDocument().addDocumentListener(new MyDocumentListener());
-    myActionNameEdit.getDocument().addDocumentListener(new MyDocumentListener());
-    myActionTextEdit.getDocument().addDocumentListener(new MyDocumentListener());
+    final MyDocumentListener listener = new MyDocumentListener();
+    myActionIdEdit.getDocument().addDocumentListener(listener);
+    myActionNameEdit.getDocument().addDocumentListener(listener);
+    myActionTextEdit.getDocument().addDocumentListener(listener);
 
     myAnchorButtonGroup = new ButtonGroup();
     myAnchorButtonGroup.add(myAnchorFirstRadio);
@@ -110,10 +144,33 @@ public class NewActionDialog extends DialogWrapper {
     myFirstKeystrokeEdit = new ShortcutTextField();
     myFirstKeystrokeEditPlaceholder.setLayout(new BorderLayout());
     myFirstKeystrokeEditPlaceholder.add(myFirstKeystrokeEdit, BorderLayout.CENTER);
+    myClearFirstKeystroke.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myFirstKeystrokeEdit.setKeyStroke(null);
+      }
+    });
+    myFirstKeystrokeEdit.getDocument().addDocumentListener(listener);
+    myClearFirstKeystroke.setText(null);
+
+    final Icon icon = IconLoader.findIcon("/actions/cancel.png");
+    final Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
+    myClearFirstKeystroke.setIcon(icon);
+    myClearFirstKeystroke.setPreferredSize(size);
+    myClearFirstKeystroke.setMaximumSize(size);
 
     mySecondKeystrokeEdit = new ShortcutTextField();
     mySecondKeystrokeEditPlaceholder.setLayout(new BorderLayout());
     mySecondKeystrokeEditPlaceholder.add(mySecondKeystrokeEdit, BorderLayout.CENTER);
+    myClearSecondKeystroke.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        mySecondKeystrokeEdit.setKeyStroke(null);
+      }
+    });
+    mySecondKeystrokeEdit.getDocument().addDocumentListener(listener);
+    myClearSecondKeystroke.setText(null);
+    myClearSecondKeystroke.setIcon(icon);
+    myClearSecondKeystroke.setPreferredSize(size);
+    myClearSecondKeystroke.setMaximumSize(size);
 
     updateControls();
   }
@@ -126,6 +183,7 @@ public class NewActionDialog extends DialogWrapper {
     return myActionIdEdit;
   }
 
+  @NotNull
   public String getActionId() {
     return myActionIdEdit.getText();
   }
@@ -134,6 +192,7 @@ public class NewActionDialog extends DialogWrapper {
     return myActionNameEdit.getText();
   }
 
+  @NotNull
   public String getActionText() {
     return myActionTextEdit.getText();
   }
@@ -163,21 +222,36 @@ public class NewActionDialog extends DialogWrapper {
   }
 
   public String getFirstKeyStroke() {
-    return myFirstKeystrokeEdit.getText();
+    return getKeystrokeText(myFirstKeystrokeEdit.getKeyStroke());
   }
 
   public String getSecondKeyStroke() {
-    return mySecondKeystrokeEdit.getText();
+    return getKeystrokeText(mySecondKeystrokeEdit.getKeyStroke());
+  }
+
+  private static String getKeystrokeText(KeyStroke keyStroke) {
+    //noinspection HardCodedStringLiteral
+    return keyStroke != null ?
+            keyStroke.toString().replaceAll("pressed ", "").replaceAll("released ", "") :
+            null;
   }
 
   private void updateControls() {
     setOKActionEnabled(myActionIdEdit.getText().length() > 0 &&
                        myActionNameEdit.getText().length() > 0 &&
                        myActionTextEdit.getText().length() > 0 &&
-                       PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myActionNameEdit.getText()));
+                       (!myActionNameEdit.isEditable() || PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myActionNameEdit.getText())));
 
     myAnchorBeforeRadio.setEnabled(myActionList.getSelectedValue() != null);
     myAnchorAfterRadio.setEnabled(myActionList.getSelectedValue() != null);
+
+    boolean enabled = myFirstKeystrokeEdit.getDocument().getLength() > 0;
+    myClearFirstKeystroke.setEnabled(enabled);
+    mySecondKeystrokeEdit.setEnabled(enabled);
+    myClearSecondKeystroke.setEnabled(enabled);
+
+    enabled = enabled && mySecondKeystrokeEdit.getDocument().getLength() > 0;
+    myClearSecondKeystroke.setEnabled(enabled);
   }
 
   private static class MyActionRenderer extends ColoredListCellRenderer {
@@ -236,8 +310,7 @@ public class NewActionDialog extends DialogWrapper {
         setText("");
       }
       else {
-        //noinspection HardCodedStringLiteral
-        setText(keyStroke.toString().replace("pressed ", "").replace("released ", ""));
+        setText(KeymapUtil.getKeystrokeText(keyStroke));
       }
     }
 
