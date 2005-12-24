@@ -1,32 +1,27 @@
 package com.intellij.util.containers;
 
-import com.intellij.util.EventDispatcher;
-
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
 public class ObjectCache<K,V> implements Iterable {
 
-  public static final int defaultSize = 8192;
-  public static final int minSize = 4;
+  public static final int DEFAULT_SIZE = 8192;
+  public static final int MIN_SIZE = 4;
 
-  protected int myTop;
-  protected int myBack;
-  final protected CacheEntry<K, V>[] myCache;
-  final protected int[] myHashTable;
-  protected int myHashTableSize;
-  protected int myCount;
-  protected int myFirstFree;
+  private int myTop;
+  private int myBack;
+  private CacheEntry<K, V>[] myCache;
+  private int[] myHashTable;
+  private int myHashTableSize;
+  private int myCount;
+  private int myFirstFree;
+  private DeletedPairsListener[] myListeners;
+  private int myAttempts;
+  private int myHits;
 
-  final protected EventDispatcher<DeletedPairsListener> myEventDispatcher = EventDispatcher.create(DeletedPairsListener.class);
-
-  private static final int[] tableSizes =
-    new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,
-      102397, 204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847,
-      73467739, 146935499, 293871013, 587742049, 1175484103};
-  private long myAttempts;
-  private long myHits;
+  private static final int[] HASHTABLE_SIZES = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
+    204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013, 587742049, 1175484103};
 
   protected static class CacheEntry<K, V> {
     public K key;
@@ -37,12 +32,12 @@ public class ObjectCache<K,V> implements Iterable {
   }
 
   public ObjectCache() {
-    this(defaultSize);
+    this(DEFAULT_SIZE);
   }
 
   public ObjectCache(int cacheSize) {
-    if (cacheSize < minSize) {
-      cacheSize = minSize;
+    if (cacheSize < MIN_SIZE) {
+      cacheSize = MIN_SIZE;
     }
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
@@ -51,8 +46,8 @@ public class ObjectCache<K,V> implements Iterable {
     }
     myHashTableSize = cacheSize;
     int i = 0;
-    for (; myHashTableSize > tableSizes[i];) ++i;
-    myHashTableSize = tableSizes[i];
+    while (myHashTableSize > HASHTABLE_SIZES[i]) ++i;
+    myHashTableSize = HASHTABLE_SIZES[i];
     myHashTable = new int[myHashTableSize];
     myAttempts = 0;
     myHits = 0;
@@ -97,7 +92,8 @@ public class ObjectCache<K,V> implements Iterable {
 
   public void removeAll() {
     final ArrayList<K> keys = new ArrayList<K>(count());
-    for (int current = myTop; current > 0;) {
+    int current = myTop;
+    while (current > 0) {
       if (myCache[current].value != null) {
         keys.add(myCache[current].key);
       }
@@ -278,16 +274,42 @@ public class ObjectCache<K,V> implements Iterable {
   }
 
   public void addDeletedPairsListener(DeletedPairsListener listener) {
-    myEventDispatcher.addListener(listener);
+    if (myListeners == null) {
+      myListeners = new DeletedPairsListener[1];
+    }
+    else {
+      DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length + 1];
+      System.arraycopy(myListeners, 0, newListeners, 0, myListeners.length);
+      myListeners = newListeners;
+    }
+    myListeners[myListeners.length - 1] = listener;
   }
 
   public void removeDeletedPairsListener(DeletedPairsListener listener) {
-    myEventDispatcher.addListener(listener);
+    if (myListeners != null) {
+      if (myListeners.length == 1) {
+        myListeners = null;
+      }
+      else {
+        DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length - 1];
+        int i = 0;
+        for (DeletedPairsListener myListener : myListeners) {
+          if (myListener != listener) {
+            newListeners[i++] = myListener;
+          }
+        }
+        myListeners = newListeners;
+      }
+    }
   }
 
   private void fireListenersAboutDeletion(int index) {
-    final CacheEntry cacheEntry = myCache[index];
-    myEventDispatcher.getMulticaster().objectRemoved(cacheEntry.key, cacheEntry.value);
+    if (myListeners != null) {
+      final CacheEntry cacheEntry = myCache[index];
+      for (DeletedPairsListener myListener : myListeners) {
+        myListener.objectRemoved(cacheEntry.key, cacheEntry.value);
+      }
+    }
   }
 
   // end of listening features

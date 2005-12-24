@@ -1,6 +1,5 @@
 package com.intellij.util.containers;
 
-import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
@@ -9,25 +8,22 @@ import java.util.Iterator;
  */
 public class IntObjectCache<T> implements Iterable<T> {
 
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.ObjectCache");
+  public static final int DEFAULT_SIZE = 8192;
+  public static final int MIN_SIZE = 4;
 
-  public static final int defaultSize = 8192;
-  public static final int minSize = 4;
+  private int myTop;
+  private int myBack;
+  private CacheEntry<T>[] myCache;
+  private int[] myHashTable;
+  private int myHashTableSize;
+  private int myCount;
+  private int myFirstFree;
+  private DeletedPairsListener[] myListeners;
+  private int myAttempts;
+  private int myHits;
 
-  protected int myTop;
-  protected int myBack;
-  protected CacheEntry<T>[] myCache;
-  protected int[] myHashTable;
-  protected int myHashTableSize;
-  protected int myCount;
-  protected int myFirstFree;
-
-  final ArrayList<DeletedPairsListener> myListeners = new ArrayList<DeletedPairsListener>();
-
-  private static final int[] tableSizes = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
+  private static final int[] HASHTABLE_SIZES = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
     204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013, 587742049, 1175484103};
-  private long myAttempts;
-  private long myHits;
 
   protected static class CacheEntry<T> {
     public int key;
@@ -38,12 +34,12 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   public IntObjectCache() {
-    this(defaultSize);
+    this(DEFAULT_SIZE);
   }
 
   public IntObjectCache(int cacheSize) {
-    if (cacheSize < minSize) {
-      cacheSize = minSize;
+    if (cacheSize < MIN_SIZE) {
+      cacheSize = MIN_SIZE;
     }
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
@@ -52,8 +48,8 @@ public class IntObjectCache<T> implements Iterable<T> {
     }
     myHashTableSize = cacheSize;
     int i = 0;
-    for (; myHashTableSize > tableSizes[i];) ++i;
-    myHashTableSize = tableSizes[i];
+    while (myHashTableSize > HASHTABLE_SIZES[i]) ++i;
+    myHashTableSize = HASHTABLE_SIZES[i];
     myHashTable = new int[myHashTableSize];
     myAttempts = 0;
     myHits = 0;
@@ -97,7 +93,8 @@ public class IntObjectCache<T> implements Iterable<T> {
 
   public void removeAll() {
     final IntArrayList keys = new IntArrayList(count());
-    for (int current = myTop; current > 0;) {
+    int current = myTop;
+    while (current > 0) {
       if (myCache[current].value != null) {
         keys.add(myCache[current].key);
       }
@@ -252,7 +249,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   private int searchForCacheEntry(int key) {
     myCache[0].key = key;
     int current = myHashTable[((key & 0x7fffffff) % myHashTableSize)];
-    for (; ;) {
+    while (true) {
       final CacheEntry<T> cacheEntry = myCache[current];
       if (key == cacheEntry.key) {
         break;
@@ -298,17 +295,41 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   public void addDeletedPairsListener(DeletedPairsListener listener) {
-    myListeners.add(listener);
+    if (myListeners == null) {
+      myListeners = new DeletedPairsListener[1];
+    }
+    else {
+      DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length + 1];
+      System.arraycopy(myListeners, 0, newListeners, 0, myListeners.length);
+      myListeners = newListeners;
+    }
+    myListeners[myListeners.length - 1] = listener;
   }
 
   public void removeDeletedPairsListener(DeletedPairsListener listener) {
-    myListeners.remove(listener);
+    if (myListeners != null) {
+      if (myListeners.length == 1) {
+        myListeners = null;
+      }
+      else {
+        DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length - 1];
+        int i = 0;
+        for (DeletedPairsListener myListener : myListeners) {
+          if (myListener != listener) {
+            newListeners[i++] = myListener;
+          }
+        }
+        myListeners = newListeners;
+      }
+    }
   }
 
   private void fireListenersAboutDeletion(int index) {
-    final CacheEntry cacheEntry = myCache[index];
-    for (int i = 0; i < myListeners.size(); i++) {
-      myListeners.get(i).objectRemoved(cacheEntry.key, cacheEntry.value);
+    if (myListeners != null) {
+      final CacheEntry cacheEntry = myCache[index];
+      for (DeletedPairsListener myListener : myListeners) {
+        myListener.objectRemoved(cacheEntry.key, cacheEntry.value);
+      }
     }
   }
 
