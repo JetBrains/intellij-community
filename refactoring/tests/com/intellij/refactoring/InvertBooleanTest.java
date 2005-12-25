@@ -1,0 +1,34 @@
+package com.intellij.refactoring;
+
+import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
+
+/**
+ * @author ven
+ */
+public class InvertBooleanTest extends CodeInsightTestCase {
+  private static final String TEST_ROOT = "/refactoring/invertBoolean/";
+
+  public void test1() throws Exception { doTest(); }
+
+  public void test2() throws Exception { doTest(); } //inverting breaks overriding
+
+  public void testParameter() throws Exception { doTest(); } //inverting boolean parameter
+
+  public void testParameter1() throws Exception { doTest(); } //inverting boolean parameter more advanced stuff
+
+  private void doTest() throws Exception {
+    configureByFile(TEST_ROOT + getTestName(true) + ".java");
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    assertTrue(element instanceof PsiNamedElement);
+
+    final PsiNamedElement namedElement = (PsiNamedElement)element;
+    final String name = namedElement.getName();
+    new InvertBooleanProcessor(namedElement, name + "Inverted").run();
+    checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
+  }
+
+}
