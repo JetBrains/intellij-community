@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.IntentionQuickFixWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
@@ -166,11 +165,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final LocalQuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
-          if (fixes[k] instanceof IntentionQuickFixWrapper){
-            QuickFixAction.registerQuickFixAction(highlightInfo, ((IntentionQuickFixWrapper)fixes[k]).getIntentionAction(), options);
-          } else {
-            QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
-          }
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
         }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
@@ -257,11 +252,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final LocalQuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
-          if (fixes[k] instanceof IntentionQuickFixWrapper){
-            QuickFixAction.registerQuickFixAction(highlightInfo, ((IntentionQuickFixWrapper)fixes[k]).getIntentionAction(), options);
-          } else {
-            QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
-          }
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
         }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);

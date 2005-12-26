@@ -383,7 +383,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     leftUpdateableActionGroup.add(new PreviousOccurenceToolbarAction(this));
     leftUpdateableActionGroup.add(new NextOccurenceToolbarAction(this));
     leftUpdateableActionGroup.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
-    leftUpdateableActionGroup.add(new ToolbarHelpAction(myHelpId));
+    leftUpdateableActionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myHelpId));
 
     DefaultActionGroup rightUpdateableActionGroup = new DefaultActionGroup();
     fillRightToolbarGroup(rightUpdateableActionGroup);

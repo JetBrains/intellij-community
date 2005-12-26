@@ -13,6 +13,10 @@
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.ide.actions.CommonActionsFactory</interface-class>
+      <implementation-class>com.intellij.ide.actions.CommonActionsFactoryImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.ide.CopyPasteManager</interface-class>
       <implementation-class>com.intellij.ide.CopyPasteManagerEx</implementation-class>
     </component>

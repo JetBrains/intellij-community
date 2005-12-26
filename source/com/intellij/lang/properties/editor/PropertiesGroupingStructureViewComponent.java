@@ -1,9 +1,9 @@
 package com.intellij.lang.properties.editor;
 
-import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -29,7 +29,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   protected ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = (DefaultActionGroup)super.createActionGroup();
     actionGroup.add(new ChangeGroupSeparatorAction());
-    actionGroup.add(new ContextHelpAction("editing.propertyFile.bundleEditor"));
+    actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction("editing.propertyFile.bundleEditor"));
     return actionGroup;
   }
 

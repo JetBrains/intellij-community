@@ -134,7 +134,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     DefaultActionGroup leftGroup = new DefaultActionGroup();
     leftGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
     leftGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
-    leftGroup.add(new ToolbarHelpAction("find.todoList"));
+    leftGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction("find.todoList"));
     toolBarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, leftGroup, false).getComponent());
 

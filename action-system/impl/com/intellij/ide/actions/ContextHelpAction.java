@@ -1,14 +1,13 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ContextHelpAction extends AnAction {
   private static final Icon myIcon=IconLoader.getIcon("/actions/help.png");
