@@ -14,13 +14,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
->>>> ORIGINAL FileManagerImpl.java#28
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
-import com.intellij.openapi.util.Comparing;
-==== THEIRS FileManagerImpl.java#30
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
-==== YOURS FileManagerImpl.java
-<<<<
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
