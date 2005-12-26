@@ -315,7 +315,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     int index = key2.indexOf("#");
     LOG.assertTrue(index >= 0);
     String s = key2.substring(0, index);
-    return VariableKind.fromString(s);
+    return VariableKind.valueOf(s);
   }
 
   private String getVariableNameFromKey2(String key2){

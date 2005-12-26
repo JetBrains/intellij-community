@@ -23,27 +23,10 @@ import org.jetbrains.annotations.NonNls;
  *
  * @see CodeStyleManager#getVariableKind(com.intellij.psi.PsiVariable)
  */
-public class VariableKind {
-  private final String myName;
-
-  private static HashMap<String,VariableKind> ourNameToObjectMap = new HashMap<String, VariableKind>();
-
-  private VariableKind(@NonNls String name) {
-    myName = name;
-    ourNameToObjectMap.put(name, this);
-  }
-
-  public String toString() {
-    return myName;
-  }
-
-  public static VariableKind fromString(String s){
-    return ourNameToObjectMap.get(s);
-  }
-
-  public static final VariableKind FIELD = new VariableKind("FIELD");
-  public static final VariableKind STATIC_FIELD = new VariableKind("STATIC_FIELD");
-  public static final VariableKind STATIC_FINAL_FIELD = new VariableKind("STATIC_FINAL_FIELD");
-  public static final VariableKind PARAMETER = new VariableKind("PARAMETER");
-  public static final VariableKind LOCAL_VARIABLE = new VariableKind("LOCAL_VARIABLE");
+public enum VariableKind {
+  FIELD,
+  STATIC_FIELD,
+  STATIC_FINAL_FIELD,
+  PARAMETER,
+  LOCAL_VARIABLE
 }
