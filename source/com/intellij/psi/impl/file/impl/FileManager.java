@@ -34,5 +34,6 @@ public interface FileManager {
 
   void cleanupForNextTest();
 
-  PsiFile findFile(VirtualFile file, Language aspect);
+  FileViewProvider findViewProvider(VirtualFile file);
+  void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider);
 }
