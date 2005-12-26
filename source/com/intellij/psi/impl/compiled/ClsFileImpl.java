@@ -21,20 +21,20 @@ import org.jetbrains.annotations.NotNull;
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
-  private final VirtualFile myFile;
   private ClsClassImpl myClass = null;
   private ClsPackageStatementImpl myPackageStatement = null;
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final boolean myIsForDecompiling;
+  private final FileViewProvider myViewProvider;
 
-  private ClsFileImpl(PsiManagerImpl manager, VirtualFile file, boolean forDecompiling) {
+  private ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
-    myFile = file;
     myIsForDecompiling = forDecompiling;
+    myViewProvider = viewProvider;
   }
 
-  public ClsFileImpl(PsiManagerImpl manager, VirtualFile file) {
-    this(manager, file, false);
+  public ClsFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+    this(manager, viewProvider, false);
   }
 
 
@@ -60,7 +60,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     if (id == -2) {
       RepositoryManager repositoryManager = getRepositoryManager();
       if (repositoryManager != null) {
-        id = repositoryManager.getFileId(myFile);
+        id = repositoryManager.getFileId(getVirtualFile());
       }
       else {
         id = -1;
@@ -77,7 +77,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   @NotNull
   public VirtualFile getVirtualFile() {
-    return myFile;
+    return myViewProvider.getVirtualFile();
   }
 
   public PsiElement getParent() {
@@ -85,7 +85,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public PsiDirectory getContainingDirectory() {
-    VirtualFile parentFile = myFile.getParent();
+    VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
   }
@@ -101,7 +101,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public String getName() {
-    return myFile.getName();
+    return getVirtualFile().getName();
   }
 
   @NotNull
@@ -119,7 +119,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
         myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
       else {
-        myClass = new ClsClassImpl(myManager, this, myFile);
+        myClass = new ClsClassImpl(myManager, this, getVirtualFile());
       }
     }
     return new PsiClass[]{myClass};
@@ -225,38 +225,28 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   private void initializeMirror() {
     if (myMirror == null) {
-      try {
-        FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        Document document = documentManager.getDocument(getVirtualFile());
-        String text = document.getText();
-        String ext = StdFileTypes.JAVA.getDefaultExtension();
-        PsiClass aClass = getClasses()[0];
-        String fileName = aClass.getName() + "." + ext;
-        PsiManager manager = getManager();
-        PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
+      FileDocumentManager documentManager = FileDocumentManager.getInstance();
+      Document document = documentManager.getDocument(getVirtualFile());
+      String text = document.getText();
+      String ext = StdFileTypes.JAVA.getDefaultExtension();
+      PsiClass aClass = getClasses()[0];
+      String fileName = aClass.getName() + "." + ext;
+      PsiManager manager = getManager();
+      PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
         ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
-        //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
-        synchronized (PsiLock.LOCK) {
+      //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
+      synchronized (PsiLock.LOCK) {
         if (myMirror == null) {
           setMirror((TreeElement)mirrorTreeElement);
           myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
         }
       }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
     }
   }
 
   public long getModificationStamp() {
-    return myFile.getModificationStamp();
-  }
-
-  public void setModificationStamp(long modificationStamp) {
-    if (modificationStamp == getModificationStamp()) return;
-    LOG.assertTrue(false);
+    return getVirtualFile().getModificationStamp();
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -289,14 +279,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return new PsiFile[]{this};
   }
 
-  @NotNull
-  public PsiFile createPseudoPhysicalCopy() {
-    LOG.assertTrue(false);
-    return null;
+  public FileViewProvider getViewProvider() {
+    return myViewProvider;
   }
 
   public static String decompile(PsiManager manager, VirtualFile file) {
-    final ClsFileImpl psiFile = new ClsFileImpl((PsiManagerImpl)manager, file, true);
+    final ClsFileImpl psiFile = new ClsFileImpl((PsiManagerImpl)manager, new SingleRootFileViewProvider(manager, file), true);
     return psiFile.getMirrorText();
   }
 }
