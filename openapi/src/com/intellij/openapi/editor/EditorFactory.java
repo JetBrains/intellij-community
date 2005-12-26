@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -33,7 +34,8 @@ public abstract class EditorFactory implements ApplicationComponent {
    * @return the editor factory instance.
    */
   public static EditorFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(EditorFactory.class);
+    final Application application = ApplicationManager.getApplication();
+    return application != null ? application.getComponent(EditorFactory.class) : null;
   }
 
   /**
