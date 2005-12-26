@@ -30,7 +30,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
   @NonNls private static final String IBM_NS = "http://www.ibm.com/webservices/xsd/";
   @NonNls private static final String PERSISTENCE_NS = "http://java.sun.com/xml/ns/persistence";
-  @NonNls private static final String PERSISTENCE_ORM_NS = "http://java.sun.com/xml/ns/persistence_ORM";
+  @NonNls private static final String PERSISTENCE_ORM_NS = "http://java.sun.com/xml/ns/persistence/orm";
 
   private Map<String, String> myResources = new com.intellij.util.containers.HashMap<String, String>();
   private Set<String> myIgnoredResources = new HashSet<String>();
@@ -94,7 +94,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(JAVAEE_NS + "web-app_2_5.xsd","web-app_2_5.xsd");
 
     addInternalResource(PERSISTENCE_NS,"persistence.xsd");
-    addInternalResource(PERSISTENCE_ORM_NS,"persistence_ORM.xsd");
+    addInternalResource(PERSISTENCE_ORM_NS,"orm-1_0.xsd");
 
 
     // Plugins DTDs // stathik
