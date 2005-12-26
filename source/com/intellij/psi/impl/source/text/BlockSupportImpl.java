@@ -209,8 +209,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     else{
       final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
-      final PsiFile newFile = (PsiFileImpl)factory.createFileFromText(fileType, fileImpl.getName(), newFileText, 0, textLength);
-      // newFile.setOriginalFile(fileImpl);
+      final PsiFileImpl newFile = (PsiFileImpl)factory.createFileFromText(fileType, fileImpl.getName(), newFileText, 0, textLength);
       final ASTNode newFileElement = newFile.getNode();
       final RepositoryManager repositoryManager = manager.getRepositoryManager();
       final FileElement fileElement = (FileElement)fileImpl.getNode();
@@ -222,7 +221,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       final ASTNode firstChildNode = newFileElement.getFirstChildNode();
       if (firstChildNode != null)
         TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
-
+      fileImpl.getTreeElement().setCharTable(newFile.getTreeElement().getCharTable());
       if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
       manager.invalidateFile(fileImpl);
       fileElement.subtreeChanged();

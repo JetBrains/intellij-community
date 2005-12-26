@@ -54,11 +54,10 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if (context != null) {
       myLanguage = context.getLanguage();
     }
-    getTreeElement();
   }
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    this((PsiManagerImpl)manager, context);
+    this(manager, context);
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
@@ -66,7 +65,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table, Language language) {
-    this((PsiManagerImpl)manager, context);
+    this(manager, context);
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
@@ -86,8 +85,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   public boolean isValid() {
     if(myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
     if (!super.isValid()) return false;
-    if (myContext != null && !myContext.isValid()) return false;
-    return true;
+    return !(myContext != null && !myContext.isValid());
   }
 
   public boolean importClass(PsiClass aClass) {
