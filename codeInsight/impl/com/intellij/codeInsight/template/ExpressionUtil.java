@@ -56,7 +56,23 @@ import org.jetbrains.annotations.Nullable;
        if (identifier.equals(var.getNameIdentifier())){
          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
          VariableKind variableKind = codeStyleManager.getVariableKind(var);
-         SuggestedNameInfo suggestedInfo = codeStyleManager.suggestVariableName(variableKind, null, var.getInitializer(), var.getType());
+         PsiExpression initializer = var.getInitializer();
+         if (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
+           //synthesize initializer
+           PsiForeachStatement foreachStatement = (PsiForeachStatement)((PsiParameter)var).getDeclarationScope();
+           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+           if (iteratedValue != null) {
+             try {
+               final PsiArrayAccessExpression expr = (PsiArrayAccessExpression)iteratedValue.getManager().getElementFactory().createExpressionFromText("a[0]", var);
+               expr.getArrayExpression().replace(iteratedValue);
+               initializer = expr; //note: non physical with no parent
+             }
+             catch (IncorrectOperationException e) {
+               //do nothing
+             }
+           }
+         }
+         SuggestedNameInfo suggestedInfo = codeStyleManager.suggestVariableName(variableKind, null, initializer, var.getType());
          return suggestedInfo.names;
        }
      }
