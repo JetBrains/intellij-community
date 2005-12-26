@@ -38,7 +38,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
     if (file instanceof PsiJavaFile) {
-      final PsiImportList newImportList = CodeStyleManager.getInstance(myProject).prepareOptimizeImportsResult(file);
+      final PsiImportList newImportList = CodeStyleManager.getInstance(myProject).prepareOptimizeImportsResult((PsiJavaFile)file);
       return new Runnable() {
         public void run() {
           try {

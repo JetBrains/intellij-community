@@ -170,7 +170,7 @@ public abstract class CodeStyleManager {
    * @param file the file to calculate the import list for.
    * @return the calculated import list.
    */
-  public abstract PsiImportList prepareOptimizeImportsResult(PsiFile file);
+  public abstract PsiImportList prepareOptimizeImportsResult(PsiJavaFile file);
 
   /**
    * Reformats the specified range of a file, modifying only line indents and leaving
@@ -238,6 +238,7 @@ public abstract class CodeStyleManager {
   /**
    * @deprecated this method is not designed to be used by plugins.
    */
+  @Nullable
   public abstract PsiElement insertNewLineIndentMarker(PsiFile file, int offset) throws IncorrectOperationException;
 
   /**

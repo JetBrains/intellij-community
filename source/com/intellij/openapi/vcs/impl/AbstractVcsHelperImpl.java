@@ -289,7 +289,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           }
           final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile instanceof PsiJavaFile) {
-            resultList[0] = CodeStyleManager.getInstance(myProject).prepareOptimizeImportsResult(psiFile);
+            resultList[0] = CodeStyleManager.getInstance(myProject).prepareOptimizeImportsResult((PsiJavaFile)psiFile);
           }
         }
       });

@@ -260,7 +260,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public void optimizeImports(PsiFile file) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     if (file instanceof PsiJavaFile) {
-      PsiImportList newList = prepareOptimizeImportsResult(file);
+      PsiImportList newList = prepareOptimizeImportsResult((PsiJavaFile)file);
       if (newList != null) {
         final PsiImportList importList = ((PsiJavaFile)file).getImportList();
         if (importList != null) {
@@ -270,12 +270,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public PsiImportList prepareOptimizeImportsResult(PsiFile file) {
-    if( !( file instanceof PsiJavaFile ) )
-    {
-      return null;
-    }
-    return new ImportHelper(getSettings()).prepareOptimizeImportsResult(this, (PsiJavaFile)file);
+  public PsiImportList prepareOptimizeImportsResult(PsiJavaFile file) {
+    return new ImportHelper(getSettings()).prepareOptimizeImportsResult(this, file);
   }
 
   public boolean addImport(PsiFile file, PsiClass refClass) {
@@ -432,12 +428,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return getLineIndent(file, offset);
   }
 
-  private boolean insideElement(final PsiElement element, final int offset) {
+  private static boolean insideElement(final PsiElement element, final int offset) {
     final TextRange textRange = element.getTextRange();
     return textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset;
   }
 
-  private TextRange getSignificantRange(final PsiFile file, final int offset) {
+  private static TextRange getSignificantRange(final PsiFile file, final int offset) {
     final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
     if (elementAtOffset == null) {
       return new TextRange(offset, offset);
@@ -472,7 +468,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  private ASTNode findNearestExpressionParent(final ASTNode current) {
+  private static ASTNode findNearestExpressionParent(final ASTNode current) {
     ASTNode result = current;
     while (result != null) {
       PsiElement psi = ((TreeElement)result).getTransformedFirstOrSelf().getPsi();
@@ -529,6 +525,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return true;
   }
 
+  @Nullable
   public PsiElement insertNewLineIndentMarker(PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
@@ -865,7 +862,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  private @Nullable String getLongTypeName(PsiType type) {
+  @Nullable private static
+  String getLongTypeName(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass aClass = ((PsiClassType)type).resolve();
       if( aClass == null )
@@ -929,7 +927,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final String[] names;
     final String propertyName;
 
-    public NamesByExprInfo(String[] names, String propertyName) {
+    public NamesByExprInfo(String propertyName, String... names) {
       this.names = names;
       this.propertyName = propertyName;
     }
@@ -956,7 +954,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     String[] namesArray = names.toArray(new String[names.size()]);
     String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
-    return new NamesByExprInfo(namesArray, propertyName);
+    return new NamesByExprInfo(propertyName, namesArray);
   }
 
   private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind) {
@@ -973,7 +971,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
             || CREATE_PREFIX.equals(firstWord)) {
           final String propertyName = methodName.substring(firstWord.length());
           String[] names = getSuggestionsByName(propertyName, variableKind, false);
-          return new NamesByExprInfo(names, propertyName);
+          return new NamesByExprInfo(propertyName, names);
         }
       }
     }
@@ -987,7 +985,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         }
         if (refElement != null && propertyName != null) {
           String[] names = getSuggestionsByName(propertyName, variableKind, false);
-          return new NamesByExprInfo(names, propertyName);
+          return new NamesByExprInfo(propertyName, names);
         }
       }
       else {
@@ -1006,7 +1004,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
             if (name != null) {
               String[] names = getSuggestionsByName(name, variableKind, false);
-              return new NamesByExprInfo(names, name);
+              return new NamesByExprInfo(name, names);
             }
           }
         } else {
@@ -1017,7 +1015,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
               final String stringValue = ((String)value);
               String[] names = getSuggestionsByValue(stringValue);
               if (names.length > 0) {
-                return new NamesByExprInfo(new String[]{constantValueToConstantName(names)}, null);
+                return new NamesByExprInfo(null, constantValueToConstantName(names));
               }
             }
           }
@@ -1027,10 +1025,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     }
 
-    return new NamesByExprInfo(ArrayUtil.EMPTY_STRING_ARRAY, null);
+    return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  private String constantValueToConstantName(final String[] names) {
+  private static String constantValueToConstantName(final String[] names) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < names.length; i++) {
       if (i > 0) result.append("_");
@@ -1039,7 +1037,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return result.toString();
   }
 
-  private String[] getSuggestionsByValue(final String stringValue) {
+  private static String[] getSuggestionsByValue(final String stringValue) {
     List<String> result = new ArrayList<String>();
     StringBuffer currentWord = new StringBuffer();
 
@@ -1110,14 +1108,14 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
             if (name != null) {
               name = variableNameToPropertyName(name, VariableKind.PARAMETER);
               String[] names = getSuggestionsByName(name, variableKind, false);
-              return new NamesByExprInfo(names, name);
+              return new NamesByExprInfo(name, names);
             }
           }
         }
       }
     }
 
-    return new NamesByExprInfo(ArrayUtil.EMPTY_STRING_ARRAY, null);
+    return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public String variableNameToPropertyName(String name, VariableKind variableKind) {
