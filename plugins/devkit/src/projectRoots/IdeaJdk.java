@@ -24,7 +24,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +48,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
   @NonNls private static final String JAVA_HOME_PROPERTY = "java.home";
+  @NonNls private static final String BIN_DIR_NAME = "bin";
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String JRE_DIR_NAME = "jre";
@@ -119,17 +119,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       }
     }
 
-    final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
-    File tools = new File(new File(javaHome, LIB_DIR_NAME), toolsJar);
-    if (tools.exists()){ // java home points to jdk
-      return tools.getPath();
-    } else {
-      tools = new File(new File (new File(javaHome).getParentFile(), LIB_DIR_NAME), toolsJar);
-      if (tools.exists()){
-        return tools.getPath();
-      }
-    }
-    ProjectJdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
+    final ProjectJdk jdk = getInternalJavaSdk(sdkHome);
     if (jdk.getVersionString() != null){
       return jdk.getToolsPath();
     }
@@ -146,40 +136,20 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         return rtPath;
       }
     }
-    final String javaHome = System.getProperty(JAVA_HOME_PROPERTY);
-    File rt = new File(new File(javaHome, LIB_DIR_NAME), rtJar);
-    if (rt.exists()){ // java home points to jre
-      return rt.getPath();
-    } else {
-      rt = new File(new File (new File(javaHome, JRE_DIR_NAME), LIB_DIR_NAME), rtJar);
-      if (rt.exists()){
-        return rt.getPath();
-      }
+    final ProjectJdk jdk = getInternalJavaSdk(homePath);
+    if (jdk.getVersionString() != null){
+      return jdk.getToolsPath();
     }
     return null;
   }
 
   @Nullable
-  private Sdk getInternalJavaSdk(final String sdkHome) {
-    String jreHome = getJreHome(sdkHome);
-    ProjectJdk internalJdk = JavaSdk.getInstance().createJdk("", jreHome);
-    if (internalJdk.getVersionString() != null){ //internal jdk is valid
-      final String internalToolsPath = getInternalToolsPath(sdkHome);
-      if (internalToolsPath != null) {
-        final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(internalToolsPath));
-        if (tools != null) {
-          final SdkModificator sdkModificator = internalJdk.getSdkModificator();
-          sdkModificator.addRoot(tools, ProjectRootType.CLASS);
-          sdkModificator.commitChanges();
-        }
-      }
-    } else {
-      return null;
-    }
-    return internalJdk;
+  private ProjectJdk getInternalJavaSdk(final String sdkHome) {
+    final String jreHome = getJreHome(sdkHome);
+    return JavaSdk.getInstance().createJdk("", jreHome);
   }
 
-  private String getJreHome(final String sdkHome) {
+  private static String getJreHome(final String sdkHome) {
     @NonNls String jreHome;
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       jreHome = sdkHome + File.separator + JRE_DIR_NAME;
@@ -187,7 +157,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         return jreHome;
       }
     }
-    return System.getProperty(JAVA_HOME_PROPERTY);
+    final String jrePath = System.getProperty(JAVA_HOME_PROPERTY);
+    final File parent = new File(jrePath).getParentFile();
+    if (JavaSdk.checkForJdk(parent)) {
+      return parent.getPath();
+    }
+    return jrePath;
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
