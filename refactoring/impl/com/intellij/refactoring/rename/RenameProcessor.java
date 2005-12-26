@@ -222,7 +222,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     Set<String> conflicts = new HashSet<String>();
 
@@ -393,7 +393,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageInfo[] findUsages() {
+  public UsageInfo[] findUsages() {
     myRenamers.clear();
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
@@ -447,7 +447,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  public void performRefactoring(UsageInfo[] usages) {
     List<Pair<String, RefactoringElementListener>> listenersForPackages = new ArrayList<Pair<String,RefactoringElementListener>>();
 
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
