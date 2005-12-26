@@ -54,7 +54,13 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {
         StringDescriptor descriptor = (StringDescriptor)propValue;
-        String value = ReferenceUtil.resolve(module, descriptor);
+        String value;
+        if (component instanceof RadComponent) {
+          value = ReferenceUtil.resolve((RadComponent) component, descriptor);
+        }
+        else {
+          value = ReferenceUtil.resolve(module, descriptor, null);
+        }
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
         if (twm.myMnemonicIndex >= 0 &&
             (FormInspectionUtil.isComponentClass(module, component, JLabel.class) || FormInspectionUtil.isComponentClass(module, component, AbstractButton.class))) {
@@ -88,10 +94,13 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     }
   }
 
-  private String getText(final Module module, final IComponent component) {
+  @Nullable private static String getText(final Module module, final IComponent component) {
     IProperty prop = findProperty(component, SwingProperties.TEXT);
     StringDescriptor descriptor = (StringDescriptor) prop.getPropertyValue(component);
-    return ReferenceUtil.resolve(module, descriptor);
+    if (component instanceof RadComponent) {
+      return ReferenceUtil.resolve((RadComponent) component, descriptor);
+    }
+    return ReferenceUtil.resolve(module, descriptor, null);
   }
 
   public static IProperty findProperty(final IComponent component, final String name) {

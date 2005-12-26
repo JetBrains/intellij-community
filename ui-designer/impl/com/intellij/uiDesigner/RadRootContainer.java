@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * @author Anton Katilin
@@ -21,6 +22,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private String myClassToBind;
   private String myMainComponentBinding;
   private String myLayoutManager;
+  private Locale myStringDescriptorLocale;
   private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
 
   public RadRootContainer(final Module module, final Class aClass, final String id) {
@@ -174,5 +176,13 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       }
     }
     return null;
+  }
+
+  public Locale getStringDescriptorLocale() {
+    return myStringDescriptorLocale;
+  }
+
+  public void setStringDescriptorLocale(final Locale stringDescriptorLocale) {
+    myStringDescriptorLocale = stringDescriptorLocale;
   }
 }

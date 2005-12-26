@@ -129,7 +129,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
     }
 
     if (result != null) {
-      result.setResolvedValue(ReferenceUtil.resolve(component.getModule(), result));
+      result.setResolvedValue(ReferenceUtil.resolve(component, result));
     }
     return result;
   }
@@ -146,7 +146,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
 
     // 2. Apply real string value to JComponent peer
     final JComponent delegee = component.getDelegee();
-    final String resolvedValue = ReferenceUtil.resolve(component.getModule(), descriptor);
+    final String resolvedValue = ReferenceUtil.resolve(component, descriptor);
     if (descriptor != null) {
       descriptor.setResolvedValue(resolvedValue);
     }

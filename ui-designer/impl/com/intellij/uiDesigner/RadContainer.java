@@ -148,11 +148,6 @@ public class RadContainer extends RadComponent implements IContainer {
    * container
    */
   public final void addComponent(@NotNull final RadComponent component){
-    //noinspection ConstantConditions
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
     if (myComponents.contains(component)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is already added: " + component);
@@ -195,11 +190,6 @@ public class RadContainer extends RadComponent implements IContainer {
    * doesn't exist in the container
    */
   public final void removeComponent(@NotNull final RadComponent component){
-    //noinspection ConstantConditions
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
     if(!myComponents.contains(component)){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is not added: " + component);
@@ -430,7 +420,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * Updates delegee's border
    */
   public void updateBorder(){
-    final String title = ReferenceUtil.resolve(getModule(), myBorderTitle);
+    final String title = ReferenceUtil.resolve(this, myBorderTitle);
     getDelegee().setBorder(myBorderType.createBorder(title));
   }
 

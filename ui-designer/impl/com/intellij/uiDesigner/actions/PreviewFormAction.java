@@ -11,8 +11,7 @@ import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -41,11 +40,11 @@ import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -72,13 +71,15 @@ public final class PreviewFormAction extends AnAction{
     myEditor = editor;
   }
 
-  private GuiEditor getEditor(final DataContext context){
+  @Nullable private GuiEditor getEditor(final DataContext context){
     return myEditor != null ? myEditor : GuiEditorUtil.getEditorFromContext(context);
   }
 
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = getEditor(e.getDataContext());
-    showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext());
+    if (editor != null) {
+      showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext());
+    }
   }
 
   public void update(final AnActionEvent e) {
@@ -221,8 +222,8 @@ public final class PreviewFormAction extends AnAction{
     final HashSet<String> bundleSet = new HashSet<String>();
     FormEditingUtil.iterateStringDescriptors(
       rootContainer,
-      new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
-        public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
+      new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+        public boolean visit(final IComponent component, final StringDescriptor descriptor) {
           if (descriptor.getBundleName() != null) {
             bundleSet.add(descriptor.getBundleName());
           }
@@ -233,14 +234,11 @@ public final class PreviewFormAction extends AnAction{
     if (bundleSet.size() > 0) {
       HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
       HashSet<Module> modules = new HashSet<Module>();
+      PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
       for(String bundleName: bundleSet) {
-        PropertiesFile basePropFile = PropertiesUtil.getPropertiesFile(bundleName, module);
-        if (basePropFile != null) {
-          ResourceBundle resBundle = basePropFile.getResourceBundle();
-          for(PropertiesFile propFile: resBundle.getPropertiesFiles(module.getProject())) {
-            virtualFiles.add(propFile.getVirtualFile());
-            modules.add(ModuleUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
-          }
+        for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
+          virtualFiles.add(propFile.getVirtualFile());
+          modules.add(ModuleUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
         }
       }
       FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),
@@ -265,8 +263,8 @@ public final class PreviewFormAction extends AnAction{
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
     final List<String> paths = sources.getPathList();
-    for (Iterator<String> it = paths.iterator(); it.hasNext();) {
-      parameters.getClassPath().add(it.next());
+    for (final String path : paths) {
+      parameters.getClassPath().add(path);
     }
     try {
       parameters.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
@@ -302,7 +300,6 @@ public final class PreviewFormAction extends AnAction{
         UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar), e.getMessage()),
         CommonBundle.getErrorTitle()
       );
-      return;
     }
   }
 

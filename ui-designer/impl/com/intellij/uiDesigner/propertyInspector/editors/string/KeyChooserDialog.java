@@ -2,19 +2,14 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ui.Table;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -274,29 +269,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       NewKeyDialog dlg = new NewKeyDialog(getWindow());
       dlg.show();
       if (dlg.isOK()) {
-        final Property property = PropertiesElementFactory.createProperty(myBundle.getProject(),
-                                                                    dlg.getName(), dlg.getValue());
-        final ReadonlyStatusHandler.OperationStatus operationStatus =
-          ReadonlyStatusHandler.getInstance(myBundle.getProject()).ensureFilesWritable(myBundle.getVirtualFile());
-        if (operationStatus.hasReadonlyFiles()) {
-          return;
-        }
-        CommandProcessor.getInstance().executeCommand(
-          myBundle.getProject(),
-          new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  try {
-                    myBundle.addProperty(property);
-                  }
-                  catch (IncorrectOperationException e1) {
-                    LOG.error(e1);
-                  }
-                }
-              });
-            }
-          }, null, null);
+        if (StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue())) return;
 
         fillPropertyList();
         myModel.update();

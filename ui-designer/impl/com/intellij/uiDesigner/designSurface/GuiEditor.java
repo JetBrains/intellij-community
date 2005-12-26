@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,26 +22,29 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
-import com.intellij.uiDesigner.componentTree.ComponentPtr;
-import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.FocusListener;
 import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.util.Locale;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -156,7 +160,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private ActiveDecorationLayer myActiveDecorationLayer;
 
   private boolean myShowGrid = true;
-  private QuickFixManagerImpl myQuickFixManager;
 
   /**
    * @param file file to be edited
@@ -269,7 +272,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer);
+    new QuickFixManagerImpl(this, myGlassLayer);
   }
 
   @NotNull
@@ -536,6 +539,40 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public ActiveDecorationLayer getActiveDecorationLayer() {
     return myActiveDecorationLayer;
+  }
+
+  public void setStringDescriptorLocale(final Locale locale) {
+    myRootContainer.setStringDescriptorLocale(locale);
+    refreshProperties();
+    refreshErrors();   // this also has the nice side-effect of refreshing the component tree
+  }
+
+  public Locale getStringDescriptorLocale() {
+    return myRootContainer.getStringDescriptorLocale();
+  }
+
+  private void refreshProperties() {
+    FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        final RadComponent radComponent = (RadComponent)component;
+        for(IProperty prop: component.getModifiedProperties()) {
+          if (prop instanceof IntroStringProperty) {
+            IntroStringProperty strProp = (IntroStringProperty) prop;
+            strProp.refreshValue(radComponent);
+          }
+        }
+
+        if (component instanceof RadContainer) {
+          ((RadContainer) component).updateBorder();
+        }
+
+        if (component.getParentContainer() instanceof RadTabbedPane) {
+          ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent);
+        }
+
+        return true;
+      }
+    });
   }
 
   public static final class ReplaceInfo {
@@ -885,27 +922,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
-        public boolean visit(final IComponent component) {
-          final RadComponent radComponent = (RadComponent)component;
-          for(IProperty prop: component.getModifiedProperties()) {
-            if (prop instanceof IntroStringProperty) {
-              IntroStringProperty strProp = (IntroStringProperty) prop;
-              strProp.refreshValue(radComponent);
-            }
-          }
-
-          if (component instanceof RadContainer) {
-            ((RadContainer) component).updateBorder();
-          }
-
-          if (component.getParentContainer() instanceof RadTabbedPane) {
-            ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent);
-          }
-
-          return true;
-        }
-      });
+      refreshProperties();
     }
   }
 }

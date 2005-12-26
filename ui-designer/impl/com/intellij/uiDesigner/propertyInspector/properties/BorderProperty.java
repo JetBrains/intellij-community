@@ -130,7 +130,7 @@ public final class BorderProperty extends Property{
     public Object getValue(final RadComponent component){
       final RadContainer container = (RadContainer)component;
       final StringDescriptor descriptor = container.getBorderTitle();
-      final String resolvedValue = ReferenceUtil.resolve(component.getModule(), descriptor);
+      final String resolvedValue = ReferenceUtil.resolve(component, descriptor);
       if (descriptor != null) {
         descriptor.setResolvedValue(resolvedValue);
       }
@@ -140,7 +140,7 @@ public final class BorderProperty extends Property{
     protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
       final RadContainer container=(RadContainer)component;
       StringDescriptor title=(StringDescriptor)value;
-      if(title != null && ReferenceUtil.resolve(component.getModule(), title).length()==0){
+      if(title != null && ReferenceUtil.resolve(component, title).length()==0){
         title=null;
       }
       container.setBorderTitle(title);

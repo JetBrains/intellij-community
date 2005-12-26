@@ -97,7 +97,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
     final String value = titleDescriptor.getValue();
     if (value == null) { // from res bundle
-      return ReferenceUtil.resolve(getModule(), titleDescriptor);
+      return ReferenceUtil.resolve(this, titleDescriptor);
     }
     return value;
   }
@@ -284,7 +284,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       }
 
       // 2. Apply real string value to JComponent peer
-      getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(getModule(), descriptor));
+      getTabbedPane().setTitleAt(myIndex, ReferenceUtil.resolve(RadTabbedPane.this, descriptor));
     }
 
     @NotNull

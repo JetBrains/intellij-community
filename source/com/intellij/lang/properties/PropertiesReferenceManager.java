@@ -156,6 +156,26 @@ public class PropertiesReferenceManager implements ProjectComponent {
     return result.toArray(new PropertiesFile[result.size()]);
   }
 
+  public PropertiesFile findPropertiesFile(final Module module, final String bundleName, final Locale locale) {
+    PropertiesFile[] propFiles = findPropertiesFiles(module, bundleName);
+    if (locale != null) {
+      for(PropertiesFile propFile: propFiles) {
+        if (propFile.getLocale().equals(locale)) {
+          return propFile;
+        }
+      }
+    }
+
+    // fallback to default locale
+    for(PropertiesFile propFile: propFiles) {
+      if (propFile.getLocale().getLanguage().length() == 0 || propFile.getLocale().equals(Locale.getDefault())) {
+        return propFile;
+      }
+    }
+
+    return null;
+  }
+
   public String[] getPropertyFileBaseNames(final Module module) {
     final ArrayList<String> result = new ArrayList<String>();
     processPropertiesFiles(module, new PropertiesFileProcessor() {

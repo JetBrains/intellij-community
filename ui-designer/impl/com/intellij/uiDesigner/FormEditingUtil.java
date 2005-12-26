@@ -11,6 +11,9 @@ import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.util.containers.HashSet;
+import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -34,6 +39,8 @@ public final class FormEditingUtil {
 
   /**
    * <b>This method must be executed in command</b>
+   *
+   * @param editor the editor in which the selection is deleted.
    */
   public static void deleteSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
@@ -400,33 +407,57 @@ public final class FormEditingUtil {
     return true;
   }
 
+  public static Set<String> collectUsedBundleNames(final IRootContainer rootContainer) {
+    final Set<String> bundleNames = new HashSet<String>();
+    iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<IComponent>() {
+      public boolean visit(final IComponent component, final StringDescriptor descriptor) {
+        if (descriptor.getBundleName() != null && !bundleNames.contains(descriptor.getBundleName())) {
+          bundleNames.add(descriptor.getBundleName());
+        }
+        return true;
+      }
+    });
+    return bundleNames;
+  }
+
+  public static Locale[] collectUsedLocales(final Module module, final IRootContainer rootContainer) {
+    final Set<Locale> locales = new HashSet<Locale>();
+    final PropertiesReferenceManager propManager = module.getProject().getComponent(PropertiesReferenceManager.class);
+    for(String bundleName: collectUsedBundleNames(rootContainer)) {
+      PropertiesFile[] propFiles = propManager.findPropertiesFiles(module, bundleName);
+      for(PropertiesFile propFile: propFiles) {
+        locales.add(propFile.getLocale());
+      }
+    }
+    return locales.toArray(new Locale[locales.size()]);
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }
 
 
-  public static void iterateStringDescriptors(final LwComponent component,
-                                              final StringDescriptorVisitor<LwComponent> visitor) {
-    iterate(component, new ComponentVisitor<LwComponent>() {
+  public static void iterateStringDescriptors(final IComponent component,
+                                              final StringDescriptorVisitor<IComponent> visitor) {
+    iterate(component, new ComponentVisitor<IComponent>() {
 
-      public boolean visit(final LwComponent component) {
-        LwIntrospectedProperty[] props = component.getAssignedIntrospectedProperties();
-        for(LwIntrospectedProperty prop: props) {
-          if (prop instanceof LwRbIntroStringProperty) {
-            StringDescriptor descriptor = (StringDescriptor) component.getPropertyValue(prop);
-            if (!visitor.visit(component, descriptor)) {
+      public boolean visit(final IComponent component) {
+        for(IProperty prop: component.getModifiedProperties()) {
+          Object value = prop.getPropertyValue(component);
+          if (value instanceof StringDescriptor) {
+            if (!visitor.visit(component, (StringDescriptor) value)) {
               return false;
             }
           }
         }
-        if (component.getParent() instanceof LwTabbedPane) {
-          LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) component.getCustomLayoutConstraints();
-          if (constraints != null && !visitor.visit(component, constraints.myTitle)) {
+        if (component.getParentContainer() instanceof ITabbedPane) {
+          StringDescriptor tabTitle = ((ITabbedPane) component.getParentContainer()).getTabTitle(component);
+          if (tabTitle != null && !visitor.visit(component, tabTitle)) {
             return false;
           }
         }
-        if (component instanceof LwContainer) {
-          final StringDescriptor borderTitle = ((LwContainer) component).getBorderTitle();
+        if (component instanceof IContainer) {
+          final StringDescriptor borderTitle = ((IContainer) component).getBorderTitle();
           if (borderTitle != null && !visitor.visit(component, borderTitle)) {
             return false;
           }
@@ -455,6 +486,7 @@ public final class FormEditingUtil {
    * <code>container</code>. The method goes recursively through the hierarchy
    * of components. Note, that if <code>container</code> itself has <code>id</code>
    * then the method immediately retuns it.
+   * @return the found component.
    */
   @Nullable
   public static RadComponent findComponent(@NotNull final RadComponent component, @NotNull final String id) {

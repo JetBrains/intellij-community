@@ -286,7 +286,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {
-          descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+          descriptor.setResolvedValue(ReferenceUtil.resolve(component, descriptor));
         }
         return "\"" + descriptor.getResolvedValue() + "\"";
       }
@@ -297,7 +297,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {
-          descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+          descriptor.setResolvedValue(ReferenceUtil.resolve(component, descriptor));
         }
         return "\"" + descriptor.getResolvedValue() + "\"";
       }

@@ -109,9 +109,22 @@ public class PropertiesUtil {
     return result;
   }
 
-  @Nullable
-  public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
+  /**
+   * @deprecated Use getPropertiesFile() with specified locale instead
+   * @param bundleName
+   * @param searchFromModule
+   * @return
+   */
+  @Nullable public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
     @NonNls final String fileName = bundleName + ".properties";
     return ModuleUtil.findResourceFileInDependents(searchFromModule, fileName, PropertiesFile.class);
+  }
+
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@NotNull String bundleName,
+                                                 @NotNull Module searchFromModule,
+                                                 @Nullable Locale locale) {
+    PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(searchFromModule.getProject());
+    return manager.findPropertiesFile(searchFromModule, bundleName, locale);
   }
 }

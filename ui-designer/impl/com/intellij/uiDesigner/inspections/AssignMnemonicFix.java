@@ -30,7 +30,7 @@ public class AssignMnemonicFix extends QuickFix {
   public void run() {
     IProperty textProperty = DuplicateMnemonicInspection.findProperty(myComponent, SwingProperties.TEXT);
     StringDescriptor descriptor = (StringDescriptor) textProperty.getPropertyValue(myComponent);
-    String value = ReferenceUtil.resolve(myEditor.getModule(), descriptor);
+    String value = ReferenceUtil.resolve(myComponent, descriptor);
     String[] variants = fillMnemonicVariants(SupportCode.parseText(value).myText);
     String result = Messages.showEditableChooseDialog(UIDesignerBundle.message("inspection.missing.mnemonics.quickfix.prompt"),
                                                       UIDesignerBundle.message("inspection.missing.mnemonics.quickfix.title"),
@@ -42,7 +42,7 @@ public class AssignMnemonicFix extends QuickFix {
           prop.setValue(myComponent, StringDescriptor.create(result));
         }
         else {
-          StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor, result);
+          StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor, myEditor.getStringDescriptorLocale(), result);
         }
       }
       catch (Exception e) {
