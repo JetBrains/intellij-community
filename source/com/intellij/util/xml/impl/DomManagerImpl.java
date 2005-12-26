@@ -169,7 +169,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     if (aClass != null) {
       return aClass;
     }
-    for (final Class aClass1 : aClass.getInterfaces()) {
+    for (final Class aClass1 : concreteInterface.getInterfaces()) {
       aClass = findImplementationClassDFS(aClass1);
       if (aClass != null) {
         return aClass;
