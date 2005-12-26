@@ -27,7 +27,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,14 +65,7 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
-  /**
-   * Returns the PSI file corresponding to the specified virtual file.
-   *
-   * @param file the file for which the PSI is requested.
-   * @return the PSI file, or null if there is no PSI for the specified file in this project.
-   */
-  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect);
-  public abstract @NotNull Language[] getKnownAspects(@NotNull VirtualFile file);
+  public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
 
   /**
    * Returns the PSI directory corresponding to the specified virtual file system directory.
