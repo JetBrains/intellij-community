@@ -36,6 +36,12 @@ public class MockPsiManager extends PsiManager {
     return null;
   }
 
+  public
+  @Nullable
+  FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    return null;
+  }
+
   public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect) {
     return null;
   }

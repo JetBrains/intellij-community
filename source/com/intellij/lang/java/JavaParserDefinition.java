@@ -6,7 +6,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
@@ -54,17 +53,14 @@ public class JavaParserDefinition implements ParserDefinition {
     return PsiUtil.NULL_PSI_ELEMENT;
   }
 
-  public PsiFile createFile(final Project project, VirtualFile file) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (fileIndex.isInSource(file)) {
-      return new PsiJavaFileImpl(project, file);
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(viewProvider.getManager().getProject()).getFileIndex();
+    if (!viewProvider.isPhysical() || fileIndex.isInSource(viewProvider.getVirtualFile())) {
+      return new PsiJavaFileImpl(viewProvider);
     }
     else {
-      return new PsiPlainTextFileImpl(project, file);
+      return new PsiPlainTextFileImpl(viewProvider);
     }
   }
 
-  public PsiFile createFile(final Project project, String name, CharSequence text) {
-    return new PsiJavaFileImpl(project, name, text);
-  }
 }

@@ -20,8 +20,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private EventDispatcher<FocusChangeListener> myFocusChangeListenerMulticaster = EventDispatcher.create(FocusChangeListener.class);
 
   public void registerDocument(DocumentEx document) {
-    document.addDocumentListener(myDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
+  }
+
+  public DocumentListener getDocumentMulticaster() {
+    return myDocumentMulticaster.getMulticaster();
   }
 
   public void registerEditor(EditorEx editor) {

@@ -29,12 +29,15 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +71,7 @@ public abstract class Language {
   private List<Annotator> myCachedAnnotators;
   private ExternalAnnotator myLastExternalAnnotator;
   private List<ExternalAnnotator> myCachedExternalAnnotators;
+  private FileType myFileType;
 
   protected Language(String id) {
     this(id, "");
@@ -429,6 +433,19 @@ public abstract class Language {
   @NotNull
   public String getID() {
     return myID;
+  }
+
+  @Nullable
+  public FileType getAssociatedFileType() {
+    return myFileType;
+  }
+
+  public void associateFileType(FileType type) {
+    myFileType = type;
+  }
+
+  public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
+    return null;
   }
 
   /**

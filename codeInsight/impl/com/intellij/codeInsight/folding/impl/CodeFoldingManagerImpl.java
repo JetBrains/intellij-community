@@ -64,11 +64,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
         final Document document = editor.getDocument();
         //Do not save/restore folding for code fragments
-        final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-        if (vFile == null) return;
-
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null) return;
+        if (file == null || !file.getViewProvider().isPhysical()) return;
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         Runnable operation = new Runnable() {
@@ -100,11 +97,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (project != null && !project.equals(myProject)) return;
 
         Document document = editor.getDocument();
-        final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-        if (vFile == null) return;
-
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null || !file.isValid()) return;
+        if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         Editor[] otherEditors = EditorFactory.getInstance().getEditors(document, myProject);

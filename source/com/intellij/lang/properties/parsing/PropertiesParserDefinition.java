@@ -10,9 +10,9 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IFileElementType;
@@ -52,12 +52,8 @@ public class PropertiesParserDefinition implements ParserDefinition {
     return new PropertiesParser();
   }
 
-  public PsiFile createFile(final Project project, VirtualFile file) {
-    return new PropertiesFileImpl(project, file);
-  }
-
-  public PsiFile createFile(final Project project, String name, CharSequence text) {
-    return new PropertiesFileImpl(project, name, text);
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    return new PropertiesFileImpl(viewProvider);
   }
 
   @NotNull

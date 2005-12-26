@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.Assert;
 
@@ -15,7 +16,8 @@ import java.io.OutputStream;
 import org.jetbrains.annotations.NotNull;
 
 public class MockVirtualFile extends VirtualFile {
-  public String myContent = "";
+  private FileType myFileType;
+  protected CharSequence myContent = "";
   protected String myName = "";
   public long myModStamp = LocalTimeCounter.currentTime();
   protected long myTimeStamp = System.currentTimeMillis();
@@ -30,9 +32,20 @@ public class MockVirtualFile extends VirtualFile {
     myName = name;
   }
 
-  public MockVirtualFile(String name, String content) {
+  public MockVirtualFile(String name, CharSequence content) {
     myName = name;
     myContent = content;
+  }
+
+  public MockVirtualFile(final String name, final FileType fileType, final CharSequence text) {
+    this(name, fileType, text, LocalTimeCounter.currentTime());
+  }
+
+  public MockVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
+    myName = name;
+    myFileType = fileType;
+    myContent = text;
+    myModStamp = modificationStamp;
   }
 
   public void setListener(VirtualFileListener listener) {
@@ -42,6 +55,10 @@ public class MockVirtualFile extends VirtualFile {
   @NotNull
   public VirtualFileSystem getFileSystem() {
     return null;
+  }
+
+  public FileType getFileType() {
+    return myFileType != null ? myFileType : super.getFileType();
   }
 
   public String getPath() {
@@ -87,7 +104,7 @@ public class MockVirtualFile extends VirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    return myContent.getBytes();
+    return getContent().toString().getBytes();
   }
 
   public long getModificationStamp() {
@@ -135,5 +152,13 @@ public class MockVirtualFile extends VirtualFile {
 
   public void setWritable(boolean b) {
     myIsWritable = b;
+  }
+
+  public void rename(Object requestor, String newName) throws IOException {
+    myName = newName;
+  }
+
+  protected CharSequence getContent() {
+    return myContent;
   }
 }

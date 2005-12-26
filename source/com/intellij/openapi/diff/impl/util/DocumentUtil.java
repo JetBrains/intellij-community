@@ -38,14 +38,4 @@ public class DocumentUtil {
   public static int getLength(RangeMarker rangeMarker) {
     return rangeMarker.getEndOffset() - rangeMarker.getStartOffset();
   }
-
-  public static Document createCopy(Document document, Project project) {
-    if (document == null) return null;
-    if (project != null) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      PsiFile psiFile = documentManager.getPsiFile(document);
-      if (psiFile != null) return documentManager.getDocument(psiFile.createPseudoPhysicalCopy());
-    }
-    return EditorFactory.getInstance().createDocument(document.getText());
-  }
 }

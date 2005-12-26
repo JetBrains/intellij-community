@@ -46,6 +46,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
   public void reparseRange(PsiFile file, int startOffset, int endOffset, String newTextS) throws IncorrectOperationException{
     LOG.assertTrue(file.isValid());
+    file.getViewProvider().contentsChanged();
     char[] newText = newTextS.toCharArray();
     int fileLength = file.getTextLength();
     int lengthShift = newText.length - (endOffset - startOffset);
@@ -68,6 +69,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
   private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
+    file.getViewProvider().contentsChanged();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
     final CharTable charTable = fileImpl.getTreeElement().getCharTable();
@@ -179,10 +181,6 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
                                             final char[] newFileText,
                                             int startOffset,
                                             final int endOffset, final int lengthDiff, final int changedOffset) {
-    //if (treeFileElement.getElementType() != JavaElementType.JAVA_FILE) {
-    //  return false;
-    //}
-    //startOffset++; // ??(*&(*&(*&
     final LeafElement leafElement = treeFileElement.findLeafElementAt(startOffset);
     if (leafElement == null
         || hasErrorElementChild(leafElement.getTreeParent())
@@ -192,8 +190,6 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
     if (leafElementToChange == null) return false;
     TextRange leafRangeToChange = leafElementToChange.getTextRange();
-    String newElementText = new String(newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getLength() + lengthDiff);
-    String oldText = leafElementToChange.getText();
     LeafElement newElement = Factory.createLeafElement(leafElementToChange.getElementType(), newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff, -1, treeFileElement.getCharTable());
     newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
     ChangeUtil.replaceChild(leafElementToChange.getTreeParent(), leafElementToChange, newElement);
@@ -212,9 +208,10 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     }
     else{
       final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
-      final PsiFileImpl newFile = (PsiFileImpl)PsiElementFactoryImpl.createFileFromText(manager, fileType, fileImpl.getName(), newFileText, 0, textLength);
-      newFile.setOriginalFile(fileImpl);
-      final ASTNode newFileElement = newFile.getTreeElement();
+      final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
+      final PsiFile newFile = (PsiFileImpl)factory.createFileFromText(fileType, fileImpl.getName(), newFileText, 0, textLength);
+      // newFile.setOriginalFile(fileImpl);
+      final ASTNode newFileElement = newFile.getNode();
       final RepositoryManager repositoryManager = manager.getRepositoryManager();
       final FileElement fileElement = (FileElement)fileImpl.getNode();
       final int oldLength = fileElement.getTextLength();

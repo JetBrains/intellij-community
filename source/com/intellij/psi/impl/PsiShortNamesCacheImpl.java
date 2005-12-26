@@ -337,9 +337,12 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         }
       }
       else if (child instanceof PsiFile) {
-        VirtualFile vFile = ((PsiFile)child).getVirtualFile();
-        if (myProjectFileIndex.isInContent(vFile)) {
-          cacheFile((PsiFile)child);
+        final PsiFile psiFile = ((PsiFile)child);
+        if(psiFile.isPhysical()){
+          VirtualFile vFile = psiFile.getVirtualFile();
+          if (myProjectFileIndex.isInContent(vFile)) {
+            cacheFile((PsiFile)child);
+          }
         }
       }
     }
@@ -354,9 +357,12 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         }
       }
       else if (child instanceof PsiFile) {
-        VirtualFile vFile = ((PsiFile)child).getVirtualFile();
-        if (myProjectFileIndex.isInContent(vFile)) {
-          cacheFile((PsiFile)child);
+        final PsiFile psiFile = ((PsiFile)child);
+        if(psiFile.isPhysical()){
+          VirtualFile vFile = ((PsiFile)child).getVirtualFile();
+          if (myProjectFileIndex.isInContent(vFile)) {
+            cacheFile((PsiFile)child);
+          }
         }
       }
     }
@@ -370,7 +376,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         String oldName = (String)event.getOldValue();
         releaseFile(file, oldName);
         VirtualFile vFile = file.getVirtualFile();
-        if (myProjectFileIndex.isInContent(vFile)) {
+        if (file.isPhysical() && myProjectFileIndex.isInContent(vFile)) {
           cacheFile(file);
         }
       }

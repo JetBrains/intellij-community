@@ -4,6 +4,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -18,9 +19,8 @@ public class PropertiesElementFactory {
   }
 
   public static PropertiesFile createPropertiesFile(final Project project, String text) {
-    ParserDefinition def = StdFileTypes.PROPERTIES.getLanguage().getParserDefinition();
     @NonNls String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
-    final PropertiesFile dummyFile = (PropertiesFile)def.createFile(project, filename, text);
+    final PropertiesFile dummyFile = (PropertiesFile)PsiManager.getInstance(project).getElementFactory().createFileFromText(filename, text);
     return dummyFile;
   }
 

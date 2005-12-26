@@ -7,15 +7,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
-  public PsiJavaFileImpl(Project project, VirtualFile file) {
-    super(project, JAVA_FILE, JAVA_FILE, file);
-  }
-
-  public PsiJavaFileImpl(Project project, String name, CharSequence text) {
-    super(project, JAVA_FILE, JAVA_FILE, name, text);
+  public PsiJavaFileImpl(FileViewProvider file) {
+    super(JAVA_FILE, JAVA_FILE, file);
   }
 
   public String toString(){

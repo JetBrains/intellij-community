@@ -45,8 +45,9 @@ public interface MergeVersion {
     }
 
     public Document createWorkingDocument(final Project project) {
-      final Document workingDocument = DocumentUtil.createCopy(myDocument, project);
-      LOG.assertTrue(workingDocument != myDocument);
+      //TODO[ik]: do we really need to create copy here?
+      final Document workingDocument = myDocument; //DocumentUtil.createCopy(myDocument, project);
+      //LOG.assertTrue(workingDocument != myDocument);
       workingDocument.setReadOnly(false);
       final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(workingDocument);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

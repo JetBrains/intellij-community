@@ -6,10 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.html.ScriptSupportUtil;
@@ -27,17 +24,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlFileImpl extends PsiFileImpl implements XmlFile {
-  public XmlFileImpl(Project project, VirtualFile file) {
-    super(project, getElementType(file.getFileType()), getChameleonTypeByFile(file), file);
+  public XmlFileImpl(FileViewProvider viewProvider) {
+    super(getElementType(viewProvider.getVirtualFile().getFileType()),
+          getElementType(viewProvider.getVirtualFile().getFileType()), viewProvider);
   }
 
-  public XmlFileImpl(Project project, VirtualFile file, IElementType elementType, IElementType contentElementType) {
-    super(project, elementType, contentElementType, file);
-  }
-
-  private static IElementType getChameleonTypeByFile(VirtualFile file) {
-    final FileType fileTypeByFile = FileTypeManager.getInstance().getFileTypeByFile(file);
-    return getElementType(fileTypeByFile);
+  public XmlFileImpl(FileViewProvider viewProvider, IElementType elementType, IElementType contentElementType) {
+    super(elementType, contentElementType, viewProvider);
   }
 
   private static IElementType getElementType(final FileType fileTypeByFile) {
@@ -48,14 +41,6 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     return null;
   }
 
-  public XmlFileImpl(Project project, String name, CharSequence text, FileType fileType) {
-    super(project, getElementType(fileType), getElementType(fileType), name, text);
-  }
-
-  public XmlFileImpl(Project project, String name, CharSequence text, FileType fileType, IElementType elementType) {
-    super(project, elementType, getElementType(fileType), name, text);
-  }
-
   public XmlDocument getDocument() {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
@@ -64,7 +49,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
     final XmlDocument document = getDocument();
-    return document != null ? document.processElements(processor, place) : true;
+    return document == null || document.processElements(processor, place);
   }
 
   public void accept(PsiElementVisitor visitor) {
@@ -80,7 +65,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   public FileType getFileType() {
     if (myType == null) {
       PsiFile originalFile = getOriginalFile();
-      if (originalFile != null && originalFile.getFileType() != null) {
+      if (originalFile != null) {
         myType = originalFile.getFileType();
       }
       else {

@@ -43,6 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.ui.UIBundle;

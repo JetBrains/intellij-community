@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.jsp.JspFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,18 +50,8 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
    *
    * @return the modification stamp value
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
-   * @see #setModificationStamp(long)
    */
   long getModificationStamp();
-
-  /**
-   * Sets the modification stamp value. Modification stamp is a value changed by any modification
-   * of the content of the file. Note that it is not related to the file modification time.
-   *
-   * @param modificationStamp the new modification stamp value.
-   * @see #getModificationStamp()
-   */
-  void setModificationStamp(long modificationStamp);
 
   /**
    * For Java/JSP files only: returns the list of classes or packages which have been
@@ -138,12 +129,5 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
    */
   @NotNull PsiFile[] getPsiRoots();
 
-  /**
-   * Creates a copy which is considered physical (see {@link com.intellij.psi.PsiElement#isPhysical()})
-   * for a PSI file which is not backed by a {@link VirtualFile}. This allows, for example, to obtain a
-   * {@link com.intellij.openapi.editor.Document} instance for such a file.
-   *
-   * @return the pseudo-physical copy of the file.
-   */
-  @NotNull PsiFile createPseudoPhysicalCopy();
+  FileViewProvider getViewProvider();
 }

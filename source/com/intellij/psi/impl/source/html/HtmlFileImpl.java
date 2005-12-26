@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.xml.util.XmlUtil;
 
@@ -28,12 +29,8 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlFileImpl extends XmlFileImpl {
-  public HtmlFileImpl(Project project, VirtualFile file) {
-    super(project, file, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
-  }
-
-  public HtmlFileImpl(Project project, String name, CharSequence text, FileType fileType) {
-    super(project, name, text, fileType, XmlElementType.HTML_FILE);
+  public HtmlFileImpl(FileViewProvider provider) {
+    super(provider, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
   }
 
   public String toString() {

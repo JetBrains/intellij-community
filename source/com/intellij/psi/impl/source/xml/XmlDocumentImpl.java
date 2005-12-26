@@ -156,18 +156,14 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       }
     }
 
-    try{
-      final PsiFile fileFromText = getManager().getElementFactory().createFileFromText(
-        containingFile.getName() + ".dtd",
-        XmlUtil.generateDocumentDTD(this)
-      );
-      if (fileFromText instanceof XmlFile) {
-        return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
-      }
+    final PsiFile fileFromText = getManager().getElementFactory().createFileFromText(
+      containingFile.getName() + ".dtd",
+      XmlUtil.generateDocumentDTD(this)
+    );
+    if (fileFromText instanceof XmlFile) {
+      return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
     }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }
+    
     return null;
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.MockVirtualFile;
 
 class EditorChangeAction implements UndoableAction {
   private final DocumentEx myDocument; // DocumentEx or WeakReference<DocumentEx> or null
@@ -51,7 +52,7 @@ class EditorChangeAction implements UndoableAction {
 
   private void fileFileStatusChanged() {
     VirtualFile file = myDocumentFile != null ? myDocumentFile : FileDocumentManager.getInstance().getFile(getDocument());
-    if (file == null) return;
+    if (file == null || file instanceof MockVirtualFile) return;
 
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {

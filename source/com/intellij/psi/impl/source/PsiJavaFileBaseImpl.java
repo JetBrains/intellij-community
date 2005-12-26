@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -36,16 +35,16 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
 
-  protected PsiJavaFileBaseImpl(Project project,
-                                IElementType elementType,
-                                IElementType contentElementType,
-                                String name,
-                                CharSequence text) {
-    super(project, elementType, contentElementType, name, text);
-  }
+  //protected PsiJavaFileBaseImpl(Project project,
+  //                              IElementType elementType,
+  //                              IElementType contentElementType,
+  //                              String name,
+  //                              CharSequence text) {
+  //  super(project, elementType, contentElementType, name, text);
+  //}
 
-  protected PsiJavaFileBaseImpl(Project project, IElementType elementType, IElementType contentElementType, VirtualFile file) {
-    super(project, elementType, contentElementType, file);
+  protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
+    super(elementType, contentElementType, viewProvider);
   }
 
   public void subtreeChanged() {
@@ -58,6 +57,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     myCachedClasses = null;
   }
 
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiJavaFileBaseImpl clone() {
     PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();
     clone.clearCaches();

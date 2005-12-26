@@ -23,6 +23,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
@@ -363,7 +366,7 @@ public interface PsiElementFactory {
    * @return the created file.
    * @throws IncorrectOperationException if the file type with specified extension is binary.
    */
-  PsiFile createFileFromText(@NonNls String name, @NonNls String text) throws IncorrectOperationException;
+  PsiFile createFileFromText(@NonNls String name, @NonNls String text);
 
   /**
    * Creates a Java class from the specified text.
@@ -692,4 +695,9 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException if the text does not specify a valid whitespace.
    */
   PsiElement createWhiteSpaceFromText(@NonNls String s) throws IncorrectOperationException;
+
+  PsiFile createFileFromText(final String fileName, final FileType fileType, final CharSequence text);
+
+  PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
+                             long modificationStamp, boolean physical);
 }

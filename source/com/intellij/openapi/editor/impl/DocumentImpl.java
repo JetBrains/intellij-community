@@ -19,6 +19,7 @@ import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.psi.PsiExternalChangeAction;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
@@ -375,6 +376,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
 
+    getMulticaster().getDocumentMulticaster().beforeDocumentChange(event);
     DocumentListener[] listeners = getCachedListeners();
     for (int i = listeners.length - 1; i >= 0; i--) {
       try {
@@ -388,12 +390,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return event;
   }
 
+  private EditorEventMulticasterEx getMulticaster() {
+    return ((EditorEventMulticasterEx)EditorFactory.getInstance().getEventMulticaster());
+  }
+
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
     LOG.debug(event.toString());
     myLineSet.changedUpdate(event);
     setModificationStamp(newModificationStamp);
 
     updateRangeMarkers(event);
+
+    getMulticaster().getDocumentMulticaster().documentChanged(event);
 
     DocumentListener[] listeners = getCachedListeners();
     for (DocumentListener listener : listeners) {

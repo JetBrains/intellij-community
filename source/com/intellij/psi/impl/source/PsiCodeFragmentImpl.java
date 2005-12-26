@@ -9,6 +9,7 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -19,6 +20,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashMap;
@@ -42,7 +44,12 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
                              boolean isPhysical,
                              @NonNls String name,
                              CharSequence text) {
-    super(project, CODE_FRAGMENT, contentElementType, name, text);
+    super(CODE_FRAGMENT, contentElementType,
+          new SingleRootFileViewProvider(PsiManager.getInstance(project),
+                                         new MockVirtualFile(
+                                           name,
+                                           FileTypeManager.getInstance().getFileTypeByFileName(name),
+                                           text), false));
     myPhysical = isPhysical;
   }
 

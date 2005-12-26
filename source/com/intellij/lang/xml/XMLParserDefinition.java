@@ -4,11 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
@@ -54,11 +53,8 @@ public class XMLParserDefinition implements ParserDefinition {
     return PsiUtil.NULL_PSI_ELEMENT;
   }
 
-  public PsiFile createFile(final Project project, VirtualFile file) {
-    return new XmlFileImpl(project, file);
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    return new XmlFileImpl(viewProvider);
   }
 
-  public PsiFile createFile(final Project project, String name, CharSequence text) {
-    return new XmlFileImpl(project, name, text, StdFileTypes.XML);
-  }
 }

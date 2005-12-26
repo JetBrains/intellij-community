@@ -112,7 +112,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         else if (file instanceof JspFile) {
           final JspFile jspFile = (JspFile)file;
           commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET);
-          final ParserDefinition parserDefinition = jspFile.getBaseLanguage().getParserDefinition();
+          final ParserDefinition parserDefinition = jspFile.getViewProvider().getTemplateDataLanguage().getParserDefinition();
           if (parserDefinition != null) {
             commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
           }

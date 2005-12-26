@@ -61,17 +61,15 @@ public class CompareFileWithEditor extends BaseDiffAction {
     PsiFile elementPsiFile = element.getContainingFile();
     VirtualFile elementFile = elementPsiFile != null ? elementPsiFile.getVirtualFile() : null;
 
-    if (documentFile != null && documentFile.isValid() &&
-        documentFile.equals(elementFile)) return true;
-    return false;
+    return documentFile != null && documentFile.isValid() &&
+           documentFile.equals(elementFile);
   }
 
   private boolean checkSelection(DataContext dataContext) {
     VirtualFile[] virtualFiles = DataAccessor.VIRTUAL_FILE_ARRAY.from(dataContext);
     if (virtualFiles != null && virtualFiles.length != 1) return false;
     PsiElement[] psiElements = DataAccessor.PSI_ELEMENT_ARRAY.from(dataContext);
-    if (psiElements != null && psiElements.length != 1) return false;
-    return true;
+    return !(psiElements != null && psiElements.length != 1);
   }
 
   protected void disableAction(Presentation presentation) {

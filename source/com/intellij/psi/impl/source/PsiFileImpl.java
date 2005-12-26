@@ -5,11 +5,8 @@ import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -22,58 +19,25 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
-  private VirtualFile myFile;
-  private String myName; // for myFile == null only
-
   private final IElementType myElementType;
   protected final IElementType myContentElementType;
 
-  private long myModificationStamp;
-  private boolean myModificationStampSticky = false;
+  protected PsiFile myOriginalFile = null;
+  private boolean myExplicitlySetAsValid = false;
+  protected FileViewProvider myViewProvider = null;
 
-  protected PsiFile myOriginalFile;
-  private boolean myExplicitlySetAsPhysical;
-  private boolean myExplicitlySetAsValid;
-
-  protected PsiFileImpl(Project project, IElementType elementType, IElementType contentElementType, VirtualFile file) {
-    super((PsiManagerImpl)PsiManager.getInstance(project), -2);
-    myFile = file;
+  protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
+    super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
     myElementType = elementType;
     myContentElementType = contentElementType;
-    myModificationStamp = file.getModificationStamp();
-  }
-
-  protected PsiFileImpl(Project project,
-                        IElementType elementType,
-                        IElementType contentElementType,
-                        String name,
-                        CharSequence text) {
-    this(project, (FileElement)Factory.createCompositeElement(elementType), elementType, contentElementType, name);
-    final FileElement parent = getTreeElement();
-    char[] chars = CharArrayUtil.fromSequence(text);
-    TreeElement contentElement = createContentLeafElement(chars, 0, text.length(), parent.getCharTable());
-    TreeUtil.addChildren(parent, contentElement);
-  }
-
-  protected PsiFileImpl(Project project,
-                        FileElement fileElement,
-                        IElementType elementType,
-                        IElementType contentElementType,
-                        String name) {
-    super((PsiManagerImpl)PsiManager.getInstance(project), fileElement);
-    LOG.assertTrue(name != null);
-    myName = name;
-    myFile = null;
-    myElementType = elementType;
-    myContentElementType = contentElementType;
-    myModificationStamp = LocalTimeCounter.currentTime();
+    myViewProvider = provider;
   }
 
   public TreeElement createContentLeafElement(final char[] text, final int startOffset, final int endOffset, final CharTable table) {
@@ -83,10 +47,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   protected PsiFileImpl(PsiManagerImpl manager, IElementType elementType) {
     super(manager, (RepositoryTreeElement)Factory.createCompositeElement(elementType));
     myElementType = elementType;
-    myName = null;
-    myFile = null;
     myContentElementType = null;
-    myModificationStamp = LocalTimeCounter.currentTime();
   }
 
   public long getRepositoryId() {
@@ -94,7 +55,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     if (id == -2) {
       RepositoryManager repositoryManager = getRepositoryManager();
       if (repositoryManager != null) {
-        id = repositoryManager.getFileId(myFile);
+        id = repositoryManager.getFileId(myViewProvider.getVirtualFile());
       }
       else {
         id = -1;
@@ -109,6 +70,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement getTreeElement() {
+    if(!getViewProvider().isPhysical() && _getTreeElement() == null)
+      setTreeElement(loadTreeElement());
     return (FileElement)_getTreeElement();
   }
 
@@ -119,7 +82,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected boolean isKeepTreeElementByHardReference() {
-    return myFile == null || myExplicitlySetAsPhysical;
+    return !myViewProvider.isEventSystemEnabled();
   }
 
   private ASTNode _getTreeElement() {
@@ -127,12 +90,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public VirtualFile getVirtualFile() {
-    return myFile;
+    return myViewProvider.isEventSystemEnabled() ? myViewProvider.getVirtualFile() : null;
   }
 
   public boolean isValid() {
-    if (myFile == null || myExplicitlySetAsValid) return true; // "dummy" file
-    return myFile.isValid();
+    if (!myViewProvider.isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
+    return getViewProvider().getVirtualFile().isValid();
   }
 
   public boolean isContentsLoaded() {
@@ -141,27 +104,18 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public FileElement loadTreeElement() {
     // load document outside lock for better performance
-    if (!isPhysical()) {
-      return getTreeElement();
-    }
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-
     synchronized (PsiLock.LOCK) {
-      FileElement treeElement = getTreeElement();
+      FileElement treeElement = (FileElement)_getTreeElement();
       if (treeElement != null) return treeElement;
-      if (myFile != null && myManager.isAssertOnFileLoading(myFile)) {
-        LOG.error("File text loaded " + myFile.getPresentableUrl());
+      if (myViewProvider.isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
+        LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
-      final CharSequence docText = document.getCharsSequence();
-
-      treeElement = createFileElement(docText);
-
-      treeElement.setDocument(document);
+      treeElement = createFileElement(getViewProvider().getContents());
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Loaded text for file " + myFile.getPresentableUrl());
+      if (myViewProvider.isEventSystemEnabled()) ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
+      if (myViewProvider.isPhysical() && LOG.isDebugEnabled()) {
+        LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
       return treeElement;
     }
@@ -177,15 +131,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     return null;
-  }
-
-  public void setIsPhysicalExplicitly(boolean b) {
-    //LOG.assertTrue(ApplicationManagerEx.getApplicationEx().isUnitTestMode());
-    myExplicitlySetAsPhysical = b;
-  }
-
-  public boolean isExplicitlySetAsPhysical() {
-    return myExplicitlySetAsPhysical;
   }
 
   public void setIsValidExplicitly(boolean b) {
@@ -214,15 +159,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public long getModificationStamp() {
-    return myModificationStamp;
-  }
-
-  public void setModificationStamp(long modificationStamp) {
-    myModificationStamp = modificationStamp;
-  }
-
-  public void setModificationStampSticky(boolean timeStampSticky) {
-    myModificationStampSticky = timeStampSticky;
+    return getViewProvider().getModificationStamp();
   }
 
   @NotNull
@@ -246,19 +183,25 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void subtreeChanged() {
-    if (!myModificationStampSticky) {
-      myModificationStamp = LocalTimeCounter.currentTime();
-    }
+    myViewProvider.rootChanged(this);
     super.subtreeChanged();
   }
 
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiFileImpl clone() {
-    PsiFileImpl clone = (PsiFileImpl)super.clone();
+    FileViewProvider provider = myViewProvider.clone();
+    PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
 
-    clone.myFile = null;
-    clone.myName = getName();
-    clone.myExplicitlySetAsPhysical = false;
-    if (getVirtualFile() != null) {
+    HashMap<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    if (copyableMap != null){
+      final HashMap<Key,Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
+      clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
+    }
+    final FileElement treeClone = (FileElement)calcTreeElement().clone();
+    clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    treeClone.setPsiElement(clone);
+
+    if (getViewProvider().isEventSystemEnabled()) {
       clone.myOriginalFile = this;
     }
     else if (myOriginalFile != null) {
@@ -268,29 +211,23 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return clone;
   }
 
-  public String getName() {
-    return myFile != null ? myFile.getName() : myName;
+  @NotNull public String getName() {
+    return getViewProvider().getVirtualFile().getName();
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
     checkSetName(name);
-
-    if (myFile == null) {
-      myName = name;
-      return this; // not absolutely correct - might change type
-    }
-
     subtreeChanged();
     return PsiFileImplUtil.setName(this, name);
   }
 
   public void checkSetName(String name) throws IncorrectOperationException {
-    if (myFile == null) return;
+    if (!myViewProvider.isEventSystemEnabled()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
   public boolean isWritable() {
-    return myFile == null || myFile.isWritable();
+    return getViewProvider().getVirtualFile().isWritable();
   }
 
   public PsiElement getParent() {
@@ -298,8 +235,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public PsiDirectory getContainingDirectory() {
-    if (myFile == null) return null;
-    final VirtualFile parentFile = myFile.getParent();
+    final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
   }
@@ -314,7 +250,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void checkDelete() throws IncorrectOperationException {
-    if (myFile == null) {
+    if (!myViewProvider.isEventSystemEnabled()) {
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
@@ -325,8 +261,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void setOriginalFile(final PsiFile originalFile) {
-    if(originalFile.getOriginalFile() != null) myOriginalFile = originalFile.getOriginalFile();
-    else myOriginalFile = originalFile;
+    if (originalFile.getOriginalFile() != null) {
+      myOriginalFile = originalFile.getOriginalFile();
+    }
+    else {
+      myOriginalFile = originalFile;
+    }
   }
 
   public boolean canContainJavaCode() {
@@ -338,13 +278,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return new PsiFile[]{this};
   }
 
-  @NotNull
-  public PsiFile createPseudoPhysicalCopy() {
-    PsiFileImpl copy = (PsiFileImpl)copy();
-    copy.setIsPhysicalExplicitly(true); //?
-    return copy;
-  }
-
   public <T> T getCopyableUserData(Key<T> key) {
     return getCopyableUserDataImpl(key);
   }
@@ -354,7 +287,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public boolean isPhysical() {
-    return myExplicitlySetAsPhysical || myFile != null && !(myFile.getFileSystem() instanceof DummyFileSystem);
+    // TODO[ik] remove this shit with dummy file system
+    return myViewProvider.isEventSystemEnabled();
   }
 
   public abstract Lexer createLexer();
@@ -363,5 +297,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   public Language getLanguage() {
     final FileType fileType = getFileType();
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
+  }
+
+  public FileViewProvider getViewProvider() {
+    return myViewProvider;
   }
 }

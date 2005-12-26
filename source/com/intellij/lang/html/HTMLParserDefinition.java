@@ -5,11 +5,10 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
@@ -55,11 +54,8 @@ public class HTMLParserDefinition implements ParserDefinition {
     return PsiUtil.NULL_PSI_ELEMENT;
   }
 
-  public PsiFile createFile(final Project project, VirtualFile file) {
-    return new HtmlFileImpl(project, file);
+  public PsiFile createFile(FileViewProvider viewProvider) {
+    return new HtmlFileImpl(viewProvider);
   }
 
-  public PsiFile createFile(final Project project, String name, CharSequence text) {
-    return new HtmlFileImpl(project, name, text, StdFileTypes.HTML);
-  }
 }

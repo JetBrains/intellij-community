@@ -14,7 +14,7 @@ public class PsiFileImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");
 
   public static PsiFile setName(final PsiFile file, String newName) throws IncorrectOperationException {
-    VirtualFile vFile = file.getVirtualFile();
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
     PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
     try{
@@ -23,7 +23,8 @@ public class PsiFileImplUtil {
     catch(IOException e){
       throw new IncorrectOperationException(e.toString(),e);
     }
-    return manager.findFile(vFile);
+
+    return file.getViewProvider().isPhysical() ? manager.findFile(vFile) : file;
   }
 
   public static void checkSetName(PsiFile file, String name) throws IncorrectOperationException {

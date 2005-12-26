@@ -17,9 +17,9 @@ package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -92,19 +92,9 @@ public interface ParserDefinition {
   /**
    * Creates a PSI element for the specified virtual file.
    *
-   * @param project the project to which the file belongs.
-   * @param file    the file for which the PSI element is created.
+   * @param viewProvider
    * @return the PSI file element.
    */
-  PsiFile createFile(Project project, VirtualFile file);
+  PsiFile createFile(FileViewProvider viewProvider);
 
-  /**
-   * Creates a PSI element for the file with the specified name and contents.
-   *
-   * @param project the project to which the file belongs.
-   * @param name    The name of the file.
-   * @param text    The contents of the file.
-   * @return the PSI file element.
-   */
-  PsiFile createFile(Project project, String name, CharSequence text);
 }

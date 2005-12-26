@@ -7,8 +7,8 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
@@ -28,18 +28,8 @@ public abstract class PsiFileBase extends PsiFileImpl {
                                                                            Language.ANY); // Shouldn't happen to be used.
   @NotNull private final Language myLanguage;
 
-  protected PsiFileBase(Project project,
-                        VirtualFile file,
-                        final Language language) {
-    super(project, language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, file);
-    myLanguage = language;
-  }
-
-  protected PsiFileBase(Project project,
-                        String name,
-                        CharSequence text,
-                        final Language language) {
-    super(project, _createFileElement(text, language, project), language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, name);
+  protected PsiFileBase(FileViewProvider viewProvider, final Language language) {
+    super(language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, viewProvider);
     myLanguage = language;
   }
 

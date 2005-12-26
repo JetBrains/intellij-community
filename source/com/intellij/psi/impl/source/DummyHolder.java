@@ -7,6 +7,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -34,6 +35,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private Language myLanguage = StdLanguages.JAVA;
   
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
+  private FileElement myFileElement = null;
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
@@ -45,7 +47,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public DummyHolder(PsiManager manager, PsiElement context) {
-    super((PsiManagerImpl)manager, DUMMY_HOLDER);
+    super(DUMMY_HOLDER, DUMMY_HOLDER, new DummyHolderViewProvider(manager));
+    ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     LOG.assertTrue(manager != null);
     myContext = context;
     if (context != null) {
@@ -55,7 +58,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    super((PsiManagerImpl)manager, DUMMY_HOLDER);
+    this((PsiManagerImpl)manager, context);
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
@@ -63,7 +66,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table, Language language) {
-    super((PsiManagerImpl)manager, DUMMY_HOLDER);
+    this((PsiManagerImpl)manager, context);
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
@@ -176,9 +179,12 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public FileElement getTreeElement() {
-    final FileElement holderElement = super.getTreeElement();
-    if (myTable != null) holderElement.setCharTable(myTable);
-    return holderElement;
+    if(myFileElement == null){
+      myFileElement = new FileElement(DUMMY_HOLDER);
+      myFileElement.setPsiElement(this);
+      if(myTable != null) myFileElement.setCharTable(myTable);
+    }
+    return myFileElement;
   }
 
   @NotNull
@@ -188,5 +194,14 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   public void setLanguage(final Language language) {
     myLanguage = language;
+  }
+
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
+  protected PsiFileImpl clone() {
+    final PsiFileImpl psiFile = (PsiFileImpl)cloneImpl(myFileElement);
+    final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
+    psiFile.myViewProvider = dummyHolderViewProvider;
+    dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
+    return psiFile;
   }
 }

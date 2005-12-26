@@ -564,7 +564,7 @@ public class XmlUtil {
       else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
         String baseLanguageNameSpace = EMPTY_URI;
         if (file instanceof JspFile) {
-          final Language baseLanguage = ((JspFile)file).getBaseLanguage();
+          final Language baseLanguage = ((JspFile)file).getViewProvider().getTemplateDataLanguage();
           if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
             baseLanguageNameSpace = XHTML_URI;
           }

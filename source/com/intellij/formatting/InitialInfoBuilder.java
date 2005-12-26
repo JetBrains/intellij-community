@@ -198,8 +198,11 @@ class InitialInfoBuilder {
     }
     message.append("Start Offset:");
     message.append(startOffset);
+    message.append(" ");
     message.append(newEndOffset);
+    message.append(" ");
     message.append(newEndOffset);
+    message.append("\n");
     message.append("File text:");
     message.append('\n');
     message.append(model.getText(new TextRange(0, model.getTextLength())).toString());

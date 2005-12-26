@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -41,7 +42,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -385,6 +388,11 @@ import java.util.*;
    */
   protected PsiFile createFile(String fileName, String text) throws IncorrectOperationException {
     return getPsiManager().getElementFactory().createFileFromText(fileName, text);
+  }
+
+  protected PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
+    return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
+                                                                  text, LocalTimeCounter.currentTime(), true);
   }
 
   /**

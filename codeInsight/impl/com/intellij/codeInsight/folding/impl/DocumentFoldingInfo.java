@@ -170,7 +170,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     if (document == null) return;
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null) return;
+    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
 
     String date = null;
     for (final Object o : element.getChildren()) {

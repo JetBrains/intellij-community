@@ -231,7 +231,7 @@ public class Tool {
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         handler.startNotify();
         /*
-        ContentManager contentManager = RunManager.getInstance(project).getContentManager();
+        ContentManager contentManager = RunManager.getInstance(project).getViewProvider();
         ExecutionView.Descriptor descriptor = new ExecutionView.Descriptor(project, getName(), contentManager,
                                                                            ToolWindowId.RUN);
         descriptor.canBreak = false;

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -141,9 +142,11 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     deleteVFile();
     myVFile = getSourceRoot().createChildData(this, fileName);
     VfsUtil.saveText(myVFile, fileText);
+    final FileDocumentManager manager = FileDocumentManager.getInstance();
+    manager.reloadFromDisk(manager.getDocument(myVFile));
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
-    ((PsiFileImpl) myFile).setIsPhysicalExplicitly(true);
+    assertTrue(myFile.isPhysical());
     myEditor = createEditor(myVFile);
   }
 

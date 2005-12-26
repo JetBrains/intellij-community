@@ -12,7 +12,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
 public class FileElement extends RepositoryTreeElement{
-  private Document myDocument; // only to hold document
   private CharTable myCharTable = new CharTableImpl();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.FileElement");
 
@@ -22,10 +21,6 @@ public class FileElement extends RepositoryTreeElement{
 
   public FileElement(IElementType type) {
     super(type);
-  }
-
-  public void setDocument(Document document){
-    myDocument = document;
   }
 
   public PsiManager getManager() {
@@ -47,7 +42,6 @@ public class FileElement extends RepositoryTreeElement{
 
   public Object clone() {
     FileElement clone = (FileElement)super.clone();
-    clone.myDocument = null;
     return clone;
   }
 

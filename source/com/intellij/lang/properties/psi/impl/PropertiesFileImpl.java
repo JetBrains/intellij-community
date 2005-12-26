@@ -9,11 +9,11 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -36,12 +36,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private Map<String,List<Property>> myPropertiesMap;
   private List<Property> myProperties;
 
-  public PropertiesFileImpl(Project project, VirtualFile file) {
-    super(project, file, StdFileTypes.PROPERTIES.getLanguage());
-  }
-
-  public PropertiesFileImpl(Project project, String name, CharSequence text) {
-    super(project, name, text, StdFileTypes.PROPERTIES.getLanguage());
+  public PropertiesFileImpl(FileViewProvider viewProvider) {
+    super(viewProvider, StdFileTypes.PROPERTIES.getLanguage());
   }
 
   @NotNull

@@ -5,12 +5,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -29,10 +29,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
@@ -243,6 +245,23 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiClassType createType(PsiJavaCodeReferenceElement classReference) {
     LOG.assertTrue(classReference != null);
     return new PsiClassReferenceType(classReference);
+  }
+
+  public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
+                                    long modificationStamp, final boolean physical) {
+    final MockVirtualFile virtualFile = new MockVirtualFile(name, fileType, text, modificationStamp);
+
+    if(fileType instanceof LanguageFileType){
+      final Language language = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDefinition = language.getParserDefinition();
+      FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      if (parserDefinition != null) return viewProvider.getPsi(language);
+    }
+    final SingleRootFileViewProvider singleRootFileViewProvider =
+      new SingleRootFileViewProvider(myManager, virtualFile, physical);
+    final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
+    return plainTextFile;
   }
 
   private static class TypeDetacher extends PsiTypeVisitor<PsiType> {
@@ -485,6 +504,10 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return newElement.getPsi();
   }
 
+  public PsiFile createFileFromText(final String name, final FileType fileType, final CharSequence text) {
+    return createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), false);
+  }
+
   public PsiJavaCodeReferenceElement createPackageReferenceElement(String packageName)
     throws IncorrectOperationException {
     if (packageName.length() == 0) {
@@ -619,42 +642,25 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return method.getDocComment();
   }
 
-  public PsiFile createFileFromText(String name, String text) throws IncorrectOperationException {
+  public PsiFile createFileFromText(String name, String text){
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
     if (type.isBinary()) {
-      throw new IncorrectOperationException("Cannot create binary files from text");
+      throw new RuntimeException("Cannot create binary files from text");
     }
 
-    char[] chars = text.toCharArray();
-    int startOffset = 0;
-    int endOffset = text.length();
-
-
-    return createFileFromText(myManager, type, name, chars, startOffset, endOffset);
+    return createFileFromText(name, type, text);
   }
 
   public PsiFile createDummyFileFromText(final String name, FileType fileType, char[] chars, int startOffset, int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
-    return createFileFromText(myManager, fileType, name, chars, startOffset, endOffset);
+    return createFileFromText(fileType, name, chars, startOffset, endOffset);
   }
 
-  public static PsiFile createFileFromText(PsiManagerImpl manager,
-                                           FileType fileType,
-                                           String name,
-                                           char[] chars,
-                                           int startOffset,
-                                           int endOffset) {
+  public PsiFile createFileFromText(FileType fileType, final String fileName, char[] chars, int startOffset, int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
-    final Project project = manager.getProject();
     final CharArrayCharSequence text = new CharArrayCharSequence(chars, startOffset, endOffset);
-    if (fileType instanceof LanguageFileType) {
-      final ParserDefinition parserDefinition = ((LanguageFileType)fileType).getLanguage().getParserDefinition();
-      if (parserDefinition != null) {
-        return parserDefinition.createFile(project, name, text);
-      }
-    }
-    return new PsiPlainTextFileImpl(project, name, fileType, text);
+    return createFileFromText(fileName, fileType, text);
   }
 
   public PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException {
@@ -784,7 +790,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     int startOffset = 0;
     int endOffset = text.length();
 
-    return (PsiJavaFile) createFileFromText(myManager, type, fileName, chars, startOffset, endOffset);
+    return (PsiJavaFile) createFileFromText(type, fileName, chars, startOffset, endOffset);
   }
 
   public XmlTag createTagFromText(String text) throws IncorrectOperationException {

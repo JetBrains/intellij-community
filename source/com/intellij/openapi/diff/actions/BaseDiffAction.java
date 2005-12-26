@@ -88,9 +88,7 @@ abstract class BaseDiffAction extends AnAction {
 
   protected static boolean isEditorContent(Document document) {
     VirtualFile editorFile = getDocumentFile(document);
-    if (editorFile == null || !editorFile.isValid())
-      return true;
-    return false;
+    return editorFile == null || !editorFile.isValid();
   }
 
   protected static String getDocumentFileUrl(Document document) {

@@ -8,23 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFile{
   private final FileType myFileType;
 
-  public PsiPlainTextFileImpl(Project project, VirtualFile file) {
-    super(project, PLAIN_TEXT_FILE, PLAIN_TEXT, file);
-    myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-  }
-
-  public PsiPlainTextFileImpl(Project project,
-                              String name,
-                              FileType fileType,
-                              CharSequence text) {
-    super(project, PLAIN_TEXT_FILE, PLAIN_TEXT, name, text);
-    myFileType = fileType;
+  public PsiPlainTextFileImpl(FileViewProvider viewProvider) {
+    super(PLAIN_TEXT_FILE, PLAIN_TEXT, viewProvider);
+    myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
   public void accept(PsiElementVisitor visitor){

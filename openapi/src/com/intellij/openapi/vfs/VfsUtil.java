@@ -335,6 +335,7 @@ public class VfsUtil {
     if (file == null) {
       if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
       if (!base.isDirectory()) base = base.getParent();
+      if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
       file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
       if (file == null) return null;
     }

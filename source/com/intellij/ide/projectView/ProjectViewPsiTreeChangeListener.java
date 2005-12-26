@@ -45,7 +45,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     /*
     if (parent == null) return;
     if (parent.getContainingFile() == null) return;
-    if (!parent.getContainingFile().isPhysical()) return;
+    if (!parent.getContainingFile().isEventSystemEnabled()) return;
     */
     
     if (parent instanceof PsiDirectory && isFlattenPackages()){

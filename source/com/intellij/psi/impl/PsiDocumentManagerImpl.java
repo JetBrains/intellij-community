@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.TreeWrapperPsiElement;
+import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
@@ -40,8 +42,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   private final Project myProject;
   private PsiManager myPsiManager;
-  private final Key<PsiFile> KEY_PSI_FILE = Key.create("KEY_PSI_FILE");
-  private final Key<WeakReference<Document>> KEY_DOCUMENT = Key.create("KEY_DOCUMENT");
   private final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
   private Set<Document> myUncommittedDocuments = new HashSet<Document>();
   private boolean myProcessDocumentEvents = true;
@@ -91,7 +91,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       psiFile = getPsiFile(virtualFile);
       if (psiFile == null) return null;
 
-      psiFile.setModificationStamp(document.getModificationStamp());
+      //psiFile.setModificationStamp(document.getModificationStamp());
       fireFileCreated(document, psiFile);
     }
 
@@ -100,21 +100,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
 
   public PsiFile getCachedPsiFile(Document document) {
-    PsiFile file = document.getUserData(KEY_PSI_FILE);
-    if (file != null) {
-      /* TODO[max, lex]: This is right code. Disabled for now since Lex wants to get event invalid files through this hole.
-      if (!file.isValid()) {
-        document.putUserData(KEY_PSI_FILE, null);
-        return null;
-      }
-      */
-      return file;
-    }
-
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    PsiFile psiFile = getCachedPsiFile(virtualFile);
-    return psiFile;
+    return getCachedPsiFile(virtualFile);
   }
 
   protected PsiFile getCachedPsiFile(VirtualFile virtualFile) {
@@ -131,19 +119,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     Document document = getCachedDocument(file);
     if (document != null) return document;
 
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null){
-      document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    }
-    else{
-      if (!file.isPhysical()) return null;
-      document = createDocument(file.getText());
-      ((DocumentEx)document).setModificationStamp(file.getModificationStamp());
-
-      file.putUserData(KEY_DOCUMENT, new WeakReference<Document>(document));
-      document.putUserData(KEY_PSI_FILE, file);
-    }
-
+    if (!file.getViewProvider().isEventSystemEnabled()) return null;
+    document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
     fireDocumentCreated(document, file);
 
     return document;
@@ -154,15 +131,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public Document getCachedDocument(PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null){
-      return FileDocumentManager.getInstance().getCachedDocument(vFile);
-    }
-    else{
-      WeakReference<Document> reference = file.getUserData(KEY_DOCUMENT);
-      if (reference == null) return null;
-      return reference.get();
-    }
+    if(!file.isPhysical()) return null;
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+    return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
 
   public void commitAllDocuments() {
@@ -330,7 +301,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         //myBlockSupport.reparseRangeInternal(file, startOffset, psiEndOffset, s);
         myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
         //checkConsistency(file, document);
-        file.setModificationStamp(document.getModificationStamp());
+        //file.setModificationStamp(document.getModificationStamp());
       }
 
       textBlock.clear();
@@ -389,7 +360,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     final Document document = event.getDocument();
     final PsiFile file = getCachedPsiFile(document);
-    if (file == null) return;
+    if (file == null || (file instanceof SrcRepositoryPsiElement && ((SrcRepositoryPsiElement)file).getTreeElement() == null)) return;
 
     if (mySmartPointerManager != null) { // can be false in "mock" tests
       mySmartPointerManager.unfastenBelts(file);

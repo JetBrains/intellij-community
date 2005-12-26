@@ -126,11 +126,9 @@ public class PendingEventDispatcher <T extends EventListener> {
       }
     }
     else {
-      /*
       if (myDispatchingListeners.size() > 0 && listener != myDispatchingListeners.peek() && myDispatchingListeners.contains(listener)){
         LOG.error("Cyclic dispatching is prohibited");
       }
-      */
     }
   }
 

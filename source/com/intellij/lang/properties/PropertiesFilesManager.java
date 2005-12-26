@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
+import com.intellij.testFramework.MockVirtualFile;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
@@ -126,7 +127,8 @@ public class PropertiesFilesManager implements ApplicationComponent {
         Editor[] editors = EditorFactory.getInstance().getAllEditors();
         for (Editor editor : editors) {
           VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-          if (virtualFile == null) continue;
+          if (virtualFile == null || virtualFile instanceof MockVirtualFile) continue;
+
           FileType fileType = myFileTypeManager.getFileTypeByFile(virtualFile);
           if (fileType == StdFileTypes.PROPERTIES) {
             virtualFile.getFileSystem().forceRefreshFiles(false, virtualFile);
