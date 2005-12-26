@@ -156,12 +156,26 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   @Nullable
   private Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
-    final Class<? extends DomElement> registeredImplementation = myImplementationClasses.get(concreteInterface);
+    final Class<? extends DomElement> registeredImplementation = findImplementationClassDFS(concreteInterface);
     if (registeredImplementation != null) {
       return registeredImplementation;
     }
     final Implementation implementation = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
     return implementation == null ? null : implementation.value();
+  }
+
+  private Class<? extends DomElement> findImplementationClassDFS(final Class<? extends DomElement> concreteInterface) {
+    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
+    if (aClass != null) {
+      return aClass;
+    }
+    for (final Class aClass1 : aClass.getInterfaces()) {
+      aClass = findImplementationClassDFS(aClass1);
+      if (aClass != null) {
+        return aClass;
+      }
+    }
+    return null;
   }
 
   public Project getProject() {
