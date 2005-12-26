@@ -8,31 +8,33 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 
-import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
-import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class ExternalToolPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
+  private final int myStartOffset;
+  private final int myEndOffset;
   private AnnotationHolderImpl myAnnotationHolder;
   HighlightInfoHolder myHolder;
   private Project myProject;
 
   public ExternalToolPass(PsiFile file,
-                          Editor editor) {
+                          Editor editor,
+                          int startOffset,
+                          int endOffset) {
     super(editor.getDocument());
     myFile = file;
+    myStartOffset = startOffset;
+    myEndOffset = endOffset;
     myProject = file.getProject();
     myAnnotationHolder = new AnnotationHolderImpl();
+
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -40,7 +42,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     final List<ExternalAnnotator> externalAnnotators = myFile.getLanguage().getExternalAnnotators();
     
     if (externalAnnotators.size() > 0) {
-      final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
+      final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
       
       if ( errors.length > 0) {
         return;

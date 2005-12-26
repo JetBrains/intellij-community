@@ -158,7 +158,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         }
 
       case Pass.EXTERNAL_TOOLS:
-        return new ExternalToolPass(myFile, myEditor);
+        return new ExternalToolPass(myFile, myEditor, startOffset, endOffset);
 
       default:
         LOG.error(Integer.toString(pass));
@@ -203,7 +203,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(myProject).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope != null && dirtyScope.isValid()) {
-      if (pass != Pass.POST_UPDATE_ALL && pass != Pass.EXTERNAL_TOOLS) {
+      if (pass != Pass.POST_UPDATE_ALL) {
         PsiFile file = dirtyScope.getContainingFile();
         if (file.getTextLength() != document.getTextLength()) {
           LOG.error("Length wrong! dirtyScope:" + dirtyScope,

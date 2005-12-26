@@ -50,10 +50,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -454,12 +451,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @NotNull
   public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+    return getHighlights(document, minSeverity, project, Integer.MIN_VALUE, Integer.MAX_VALUE);
+  }
+
+  @NotNull
+  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project, int startOffset, int endOffset) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
-      if (info.getSeverity().compareTo(minSeverity) >= 0) {
+      if (info.getSeverity().compareTo(minSeverity) >= 0 &&
+          info.startOffset >= startOffset &&
+          info.endOffset <= endOffset) {
         array.add(info);
       }
     }
