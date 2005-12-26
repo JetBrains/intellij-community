@@ -572,8 +572,7 @@ public class DependencyProcessor {
             break;
           }
           if (!method.isPrivate()) {
-            int derivedMethod = CacheUtils.findMethodBySignature(oldCache, oldCache.getClassDeclarationId(subclassQName),
-                                                                 method.getDescriptor(symbolTable), symbolTable);
+            int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
             if (derivedMethod != Cache.UNKNOWN) {
               if (!method.getReturnTypeDescriptor(symbolTable)
                 .equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
@@ -616,7 +615,7 @@ public class DependencyProcessor {
           }
         }
         else if (member instanceof FieldInfo) {
-          if (CacheUtils.findFieldByName(oldCache, oldCache.getClassDeclarationId(subclassQName), member.getName()) != Cache.UNKNOWN) {
+          if (oldCache.findFieldByName(oldCache.getClassDeclarationId(subclassQName), member.getName()) != Cache.UNKNOWN) {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
@@ -645,8 +644,7 @@ public class DependencyProcessor {
               break;
             }
           }
-          int derivedMethod = CacheUtils.findMethodBySignature(oldCache, oldCache.getClassDeclarationId(subclassQName),
-                                                               oldMethod.getDescriptor(symbolTable), symbolTable);
+          int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
           if (derivedMethod != Cache.UNKNOWN) {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
@@ -675,7 +673,7 @@ public class DependencyProcessor {
 
   private boolean hasGenericsNameClashes(final MethodInfo baseMethod, final Cache oldCache, final int subclassQName) throws CacheCorruptedException {
     // it is illegal if 2 methods in a hierarchy have 1) same name 2) different signatures 3) same erasure
-    final int[] methods = CacheUtils.findMethodsByName(oldCache, oldCache.getClassDeclarationId(subclassQName), baseMethod.getName());
+    final int[] methods = oldCache.findMethodsByName(oldCache.getClassDeclarationId(subclassQName), baseMethod.getName());
     if (methods.length > 0) {
       for (final int methodInSubclass : methods) {
         if (ClsUtil.isBridge(oldCache.getMethodFlags(methodInSubclass))) {
@@ -752,7 +750,7 @@ public class DependencyProcessor {
     final Cache cache = newCache.getClassId(qName) != Cache.UNKNOWN? newCache : oldCache; // use recompiled version (if any) for searching methods
     for (Iterator it = methodsToCheck.iterator(); it.hasNext();) {
       final MethodInfo methodInfo = (MethodInfo)it.next();
-      final int superMethod = CacheUtils.findMethodBySignature(cache, cache.getClassDeclarationId(qName), methodInfo.getDescriptor(symbolTable), symbolTable);
+      final int superMethod = cache.findMethodsBySignature(cache.getClassDeclarationId(qName), methodInfo.getDescriptor(symbolTable), symbolTable);
       if (superMethod != Cache.UNKNOWN) {
         if (ClsUtil.isAbstract(cache.getMethodFlags(superMethod))) {
           return true;

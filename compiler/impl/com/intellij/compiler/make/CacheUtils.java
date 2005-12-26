@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsUtil;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -45,18 +45,18 @@ public class CacheUtils {
   }
 
   private static String[] parseSignature(String signature) {
-    ArrayList list = new ArrayList();
+    final ArrayList<String> list = new ArrayList<String>();
     String paramSignature = parseParameterSignature(signature);
     while (paramSignature != null && !"".equals(paramSignature)) {
       list.add(paramSignature);
       signature = signature.substring(paramSignature.length());
       paramSignature = parseParameterSignature(signature);
     }
-    return (String[])list.toArray(new String[list.size()]);
+    return list.toArray(new String[list.size()]);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String parseParameterSignature(String signature) {
+  private static @Nullable String parseParameterSignature(String signature) {
     if (StringUtil.startsWithChar(signature, 'B')) {
       return "B";
     }
@@ -89,68 +89,6 @@ public class CacheUtils {
       return (s != null) ? ("[" + s) : null;
     }
     return null;
-  }
-
-  public static int findField(final Cache cache, final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException {
-    final int[] fieldIds = cache.getFieldIds(classDeclarationId);
-    for (int fieldId : fieldIds) {
-      if (name != cache.getFieldName(fieldId)) {
-        continue;
-      }
-      if (descriptor != cache.getFieldDescriptor(fieldId)) {
-        continue;
-      }
-      return fieldId;
-    }
-    return Cache.UNKNOWN;
-  }
-
-  public static int findFieldByName(final Cache cache, final int classDeclarationId, final int name) throws CacheCorruptedException {
-    final int[] fieldIds = cache.getFieldIds(classDeclarationId);
-    for (int fieldId : fieldIds) {
-      if (name != cache.getFieldName(fieldId)) {
-        continue;
-      }
-      return fieldId;
-    }
-    return Cache.UNKNOWN;
-  }
-
-  public static int findMethod(final Cache cache, final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException {
-    final int[] methodIds = cache.getMethodIds(classDeclarationId);
-    for (int methodId : methodIds) {
-      if (name != cache.getMethodName(methodId)) {
-        continue;
-      }
-      if (descriptor != cache.getMethodDescriptor(methodId)) {
-        continue;
-      }
-      return methodId;
-    }
-    return Cache.UNKNOWN;
-  }
-
-  public static int[] findMethodsByName(final Cache cache, final int classDeclarationId, final int name) throws CacheCorruptedException {
-    final int[] methodIds = cache.getMethodIds(classDeclarationId);
-    TIntArrayList list = new TIntArrayList();
-    for (final int methodId : methodIds) {
-      if (name == cache.getMethodName(methodId)) {
-        list.add(methodId);
-      }
-    }
-    return list.toNativeArray();
-  }
-
-  public static int findMethodBySignature(final Cache cache, final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException {
-    final int[] methodIds = cache.getMethodIds(classDeclarationId);
-    for (int methodId : methodIds) {
-      final int name = cache.getMethodName(methodId);
-      final int descriptor = cache.getMethodDescriptor(methodId);
-      if (signature.equals(getMethodSignature(symbolTable.getSymbol(name), symbolTable.getSymbol(descriptor)))) {
-        return methodId;
-      }
-    }
-    return Cache.UNKNOWN;
   }
 
   public static String getMethodSignature(String name, String descriptor) {
@@ -195,7 +133,7 @@ public class CacheUtils {
     return ClsUtil.isFinal(cache.getFlags(classId));
   }
 
-  public static final boolean isFieldReferenced(Cache cache, final int fieldId, final int referencerClassQName) throws CacheCorruptedException {
+  public static boolean isFieldReferenced(Cache cache, final int fieldId, final int referencerClassQName) throws CacheCorruptedException {
     final int[] referencers = cache.getFieldReferencers(fieldId);
     for (int referencer : referencers) {
       if (referencerClassQName == referencer) {
@@ -205,7 +143,7 @@ public class CacheUtils {
     return false;
   }
 
-  public static final boolean isMethodReferenced(Cache cache, final int methodId, final int referencerClassQName) throws CacheCorruptedException {
+  public static boolean isMethodReferenced(Cache cache, final int methodId, final int referencerClassQName) throws CacheCorruptedException {
     final int[] referencers = cache.getMethodReferencers(methodId);
     for (final int referencer : referencers) {
       if (referencerClassQName == referencer) {

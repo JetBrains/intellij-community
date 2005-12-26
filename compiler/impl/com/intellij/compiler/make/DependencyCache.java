@@ -245,14 +245,14 @@ public class DependencyCache {
       if (refInfo instanceof MemberReferenceInfo) {
         final MemberInfo memberInfo = ((MemberReferenceInfo)refInfo).getMemberInfo();
         if (memberInfo instanceof FieldInfo) {
-          int fieldId = CacheUtils.findField(cache, declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
+          int fieldId = cache.findField(declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
           if (fieldId == Cache.UNKNOWN) {
             fieldId = cache.putMember(declaringClassId, Cache.UNKNOWN, memberInfo);
           }
           cache.addFieldReferencer(fieldId, classQName);
         }
         else if (memberInfo instanceof MethodInfo) {
-          int methodId = CacheUtils.findMethod(cache, declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
+          int methodId = cache.findMethod(declaringClassId, memberInfo.getName(), memberInfo.getDescriptor());
           if (methodId == Cache.UNKNOWN) {
             methodId = cache.putMember(declaringClassId, Cache.UNKNOWN, memberInfo);
           }
@@ -356,7 +356,7 @@ public class DependencyCache {
 
       final AnnotationNameValuePair[] memberValues = annotation.getMemberValues();
       for (final AnnotationNameValuePair nameValuePair : memberValues) {
-        final int[] annotationMembers = CacheUtils.findMethodsByName(cache, annotationDeclarationId, nameValuePair.getName());
+        final int[] annotationMembers = cache.findMethodsByName(annotationDeclarationId, nameValuePair.getName());
         for (int annotationMember : annotationMembers) {
           cache.addMethodReferencer(annotationMember, classQName);
         }
@@ -385,18 +385,19 @@ public class DependencyCache {
       return refInfo.getClassName();
     }
     final int declaringClassName = refInfo.getClassName();
-    if (getCache().getClassId(declaringClassName) == Cache.UNKNOWN) {
+    final Cache cache = getCache();
+    if (cache.getClassId(declaringClassName) == Cache.UNKNOWN) {
       return declaringClassName;
     }
-    final int classDeclarationId = getCache().getClassDeclarationId(declaringClassName);
+    final int classDeclarationId = cache.getClassDeclarationId(declaringClassName);
     final MemberInfo memberInfo = ((MemberReferenceInfo)refInfo).getMemberInfo();
     if (memberInfo instanceof FieldInfo) {
-      if (CacheUtils.findFieldByName(getCache(), classDeclarationId, memberInfo.getName()) != Cache.UNKNOWN) {
+      if (cache.findFieldByName(classDeclarationId, memberInfo.getName()) != Cache.UNKNOWN) {
         return declaringClassName;
       }
     }
     else if (memberInfo instanceof MethodInfo) {
-      if (CacheUtils.findMethod(getCache(), classDeclarationId, memberInfo.getName(), memberInfo.getDescriptor()) != Cache.UNKNOWN) {
+      if (cache.findMethod(classDeclarationId, memberInfo.getName(), memberInfo.getDescriptor()) != Cache.UNKNOWN) {
         return declaringClassName;
       }
     }
@@ -496,24 +497,25 @@ public class DependencyCache {
     Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> changedConstants,
     Collection<ChangedConstantsDependencyProcessor.FieldChangeInfo> removedConstants) throws CacheCorruptedException {
 
-    int[] fields = getCache().getFieldIds(getCache().getClassDeclarationId(qName));
+    final Cache cache = getCache();
+    int[] fields = cache.getFieldIds(cache.getClassDeclarationId(qName));
     for (final int field : fields) {
-      final int oldFlags = getCache().getFieldFlags(field);
+      final int oldFlags = cache.getFieldFlags(field);
       if (ClsUtil.isStatic(oldFlags) && ClsUtil.isFinal(oldFlags)) {
-        int newField = CacheUtils
-          .findFieldByName(getNewClassesCache(), getNewClassesCache().getClassDeclarationId(qName), getCache().getFieldName(field));
+        final Cache newClassesCache = getNewClassesCache();
+        int newField = newClassesCache.findFieldByName(newClassesCache.getClassDeclarationId(qName), cache.getFieldName(field));
         if (newField == Cache.UNKNOWN) {
-          if (!ConstantValue.EMPTY_CONSTANT_VALUE.equals(getCache().getFieldConstantValue(field)))
+          if (!ConstantValue.EMPTY_CONSTANT_VALUE.equals(cache.getFieldConstantValue(field)))
           { // if the field was really compile time constant
-            removedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(getCache().createFieldInfo(field)));
+            removedConstants.add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(cache.createFieldInfo(field)));
           }
         }
         else {
-          final boolean visibilityRestricted = MakeUtil.isMoreAccessible(oldFlags, getNewClassesCache().getFieldFlags(newField));
-          if (!getCache().getFieldConstantValue(field).equals(getNewClassesCache().getFieldConstantValue(newField)) || visibilityRestricted)
+          final boolean visibilityRestricted = MakeUtil.isMoreAccessible(oldFlags, newClassesCache.getFieldFlags(newField));
+          if (!cache.getFieldConstantValue(field).equals(newClassesCache.getFieldConstantValue(newField)) || visibilityRestricted)
           {
             changedConstants
-              .add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(getCache().createFieldInfo(field), visibilityRestricted));
+              .add(new ChangedConstantsDependencyProcessor.FieldChangeInfo(cache.createFieldInfo(field), visibilityRestricted));
           }
         }
       }
@@ -669,15 +671,16 @@ public class DependencyCache {
     }
 
     public boolean process(int classQName) throws CacheCorruptedException {
-      final int classDeclarationId = getCache().getClassDeclarationId(classQName);
+      final Cache cache = getCache();
+      final int classDeclarationId = cache.getClassDeclarationId(classQName);
       if (myIsField) {
-        final int fieldId = CacheUtils.findField(getCache(), classDeclarationId, myMemberName, myMemberDescriptor);
+        final int fieldId = cache.findField(classDeclarationId, myMemberName, myMemberDescriptor);
         if (fieldId != Cache.UNKNOWN) {
           myDeclaringClass = classQName;
         }
       }
       else {
-        final int methodId = CacheUtils.findMethod(getCache(), classDeclarationId, myMemberName, myMemberDescriptor);
+        final int methodId = cache.findMethod(classDeclarationId, myMemberName, myMemberDescriptor);
         if (methodId != Cache.UNKNOWN) {
           myDeclaringClass = classQName;
           return false;

@@ -52,8 +52,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectProcedure;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -428,7 +428,7 @@ public class CompileDriver {
         return myExitStatus;
       }
 
-      didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
+      didSomething |= invokeFileProcessingCompilers(compilerManager, context, SourceInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, forceCompile, true);
       if (myExitStatus != null) {
         return myExitStatus;
       }
@@ -439,7 +439,7 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -447,17 +447,17 @@ public class CompileDriver {
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
         if (myExitStatus != null) {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, false);
         if (myExitStatus != null) {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, isRebuild);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, Validator.class, myProcessingCompilerAdapterFactory, forceCompile, true);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -565,7 +565,12 @@ public class CompileDriver {
     FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler);
   }
 
-  private boolean invokeFileProcessingCompilers(final CompilerManager compilerManager, CompileContextImpl context, Class<? extends FileProcessingCompiler> fileProcessingCompilerClass, FileProcessingCompilerAdapterFactory factory, boolean forceCompile) {
+  private boolean invokeFileProcessingCompilers(final CompilerManager compilerManager,
+                                                CompileContextImpl context,
+                                                Class<? extends FileProcessingCompiler> fileProcessingCompilerClass,
+                                                FileProcessingCompilerAdapterFactory factory,
+                                                boolean forceCompile,
+                                                final boolean checkScope) {
     LOG.assertTrue(FileProcessingCompiler.class.isAssignableFrom(fileProcessingCompilerClass));
     boolean didSomething = false;
     final FileProcessingCompiler[] compilers = compilerManager.getCompilers(fileProcessingCompilerClass);
@@ -577,7 +582,7 @@ public class CompileDriver {
             return false;
           }
 
-          final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile);
+          final boolean processedSomething = processFiles(factory.create(context, compiler), forceCompile, checkScope);
 
           dropInternalCache(compiler);
 
@@ -1177,13 +1182,14 @@ public class CompileDriver {
     return path;
   }
 
-  private boolean processFiles(final FileProcessingCompilerAdapter adapter, final boolean forceCompile) {
+  private boolean processFiles(final FileProcessingCompilerAdapter adapter, final boolean forceCompile, final boolean checkScope) {
     final CompileContext context = adapter.getCompileContext();
     final FileProcessingCompilerStateCache cache = getFileProcessingCompilerCache(adapter.getCompiler());
     final FileProcessingCompiler.ProcessingItem[] items = adapter.getProcessingItems();
     if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
       return false;
     }
+    final CompileScope scope = context.getCompileScope();
     final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
     final Set<String> allUrls = new HashSet<String>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1208,13 +1214,12 @@ public class CompileDriver {
     if (urls.length > 0) {
       context.getProgressIndicator().pushState();
       context.getProgressIndicator().setText(CompilerBundle.message("progress.processing.outdated.files"));
-      final CompileScope scope = context.getCompileScope();
       final List<String> urlsToRemove = new ArrayList<String>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (final String url : urls) {
             if (!allUrls.contains(url)) {
-              if (scope.belongs(url)) {
+              if (!checkScope || scope.belongs(url)) {
                 urlsToRemove.add(url);
               }
             }

@@ -391,6 +391,92 @@ public class Cache {
     }
   }
 
+  public synchronized int findField(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
+    try {
+      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+      final int[] ids = view.getFieldIds();
+      for (final int id : ids) {
+        final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
+        if (pair.name == name && pair.descriptor == descriptor) {
+          return id;
+        }
+      }
+      return Cache.UNKNOWN;
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
+  public synchronized int findFieldByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
+    try {
+      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+      final int[] ids = view.getFieldIds();
+      for (final int id : ids) {
+        final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
+        if (pair.name == name) {
+          return id;
+        }
+      }
+      return Cache.UNKNOWN;
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
+  public synchronized int findMethod(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
+    try {
+      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+      final int[] ids = view.getMethodIds();
+      for (final int id : ids) {
+        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
+        if (pair.name == name && pair.descriptor == descriptor) {
+          return id;
+        }
+      }
+      return Cache.UNKNOWN;
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
+  public synchronized int[] findMethodsByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
+    try {
+      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+      final int[] ids = view.getMethodIds();
+      final TIntArrayList list = new TIntArrayList();
+      for (final int id : ids) {
+        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
+        if (pair.name == name) {
+          list.add(id);
+        }
+      }
+      return list.toNativeArray();
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
+  public synchronized int findMethodsBySignature(final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException{
+    try {
+      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+      final int[] ids = view.getMethodIds();
+      for (int methodId : ids) {
+        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(methodId);
+        if (signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(pair.name), symbolTable.getSymbol(pair.descriptor)))) {
+          return methodId;
+        }
+      }
+      return Cache.UNKNOWN;
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
   public synchronized int[] getMethodIds(int classDeclarationId) throws CacheCorruptedException{
     try {
       final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
@@ -881,8 +967,7 @@ public class Cache {
         FieldInfo fieldInfo = (FieldInfo)classMember;
         if (memberId == UNKNOWN) {
           memberId = myViewPool.getFieldDeclarationView(memberId).getRecordId();
-          final ClassDeclarationView cdview = myViewPool.getClassDeclarationView(classDeclarationId);
-          cdview.addFieldId(memberId);
+          myViewPool.getClassDeclarationView(classDeclarationId).addFieldId(memberId, fieldInfo.getName(), fieldInfo.getDescriptor());
         }
         final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
         view.setName(fieldInfo.getName());
@@ -897,7 +982,7 @@ public class Cache {
         MethodInfo methodInfo = (MethodInfo)classMember;
         if (memberId == UNKNOWN) {
           memberId = myViewPool.getMethodDeclarationView(memberId).getRecordId();
-          myViewPool.getClassDeclarationView(classDeclarationId).addMethodId(memberId);
+          myViewPool.getClassDeclarationView(classDeclarationId).addMethodId(memberId, methodInfo.getName(), methodInfo.getDescriptor());
         }
         final MethodDeclarationView view = myViewPool.getMethodDeclarationView(memberId);
         view.setName(methodInfo.getName());
