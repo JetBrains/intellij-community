@@ -31,7 +31,7 @@ public class CacheUtil {
         fileCopy = implFile;
       }
       else {
-        fileCopy = new ClsFileImpl((PsiManagerImpl)psiFile.getManager(), vFile);
+        fileCopy = new ClsFileImpl((PsiManagerImpl)psiFile.getManager(), psiFile.getViewProvider());
         ((ClsFileImpl)fileCopy).setRepositoryId(-1);
       }
     }
@@ -62,10 +62,8 @@ public class CacheUtil {
         }
         */
         PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
-        char[] chars = CharArrayUtil.fromSequence(text);
-        fileCopy = factory.createDummyFileFromText(psiFile.getName(), fileType, chars, 0, text.length());
+        fileCopy = factory.createFileFromText(psiFile.getName(), fileType, text, psiFile.getModificationStamp(), false);
       }
-      fileCopy.setModificationStamp(psiFile.getModificationStamp());
     }
     else {
       fileCopy = psiFile;
