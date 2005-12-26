@@ -59,6 +59,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public static ReferenceProviderType DYNAMIC_PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Dynamic Path References Provider");
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
   public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
+  public static ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
 
   public static ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
@@ -475,6 +476,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       }, PsiLiteralExpression.class, filePathReferenceProvider);
 
     final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
+    registerTypeWithProvider(SCHEMA_PROVIDER, schemaReferencesProvider);
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"ref","type","base","name","substitutionGroup","memberTypes"},
       new ScopeFilter(
