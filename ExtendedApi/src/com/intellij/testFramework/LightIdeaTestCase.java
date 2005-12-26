@@ -121,7 +121,7 @@ import java.util.*;
         if (ourProject != null) {
           ProjectUtil.closeProject(ourProject);
         }
-        ourProject = ProjectManagerEx.getInstanceEx().newProject("", false, false);
+        ourProject = ProjectManagerEx.getInstanceEx().newProject("LightIdeaTestCaseProject", false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
 
