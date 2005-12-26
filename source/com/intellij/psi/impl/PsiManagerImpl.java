@@ -54,6 +54,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.lang.Language;
+import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,7 +258,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public boolean isInProject(PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file instanceof PsiFileImpl && ((PsiFileImpl) file).isExplicitlySetAsPhysical()) return true;
+    if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof MockVirtualFile) return true;
 
     if (element instanceof PsiPackage) {
       PsiDirectory[] dirs = ((PsiPackage) element).getDirectories();
@@ -483,10 +484,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myFileManager.findFile(file);
   }
 
-  public
   @Nullable
-  PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect) {
-    return myFileManager.findFile(file, aspect);
+  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    return myFileManager.findViewProvider(file);
   }
 
   public
@@ -547,7 +547,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
 
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && myCacheManager != null) {
+    if (file.getViewProvider().isPhysical() && myCacheManager != null) {
       myCacheManager.addOrInvalidateFile(virtualFile);
     }
   }
