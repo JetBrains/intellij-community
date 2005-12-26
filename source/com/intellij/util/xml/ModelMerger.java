@@ -5,7 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.impl.AdvancedProxy;
-import com.intellij.util.xml.impl.MethodSignature;
+import com.intellij.util.xml.JavaMethodSignature;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class ModelMerger {
     private Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
       return method.getReturnType() != void.class
              && method.getParameterTypes().length == 0?
-             MethodSignature.getSignature(method).findAnnotatedMethod(PrimaryKey.class, aClass): null;
+             JavaMethodSignature.getSignature(method).findAnnotatedMethod(PrimaryKey.class, aClass): null;
     }
 
 

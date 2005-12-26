@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.xml.JavaMethodSignature;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
@@ -39,7 +40,7 @@ public class AdvancedProxy {
   public static <T> T createProxy(final Class<T> superClass,
                                   final Class[] interfaces,
                                   final InvocationHandler handler,
-                                  final Set<MethodSignature> additionalMethods,
+                                  final Set<JavaMethodSignature> additionalMethods,
                                   final Object... constructorArgs) {
     try {
       final Callback[] callbacks = new Callback[]{handler};
@@ -102,9 +103,9 @@ public class AdvancedProxy {
   private static class ProxyDescription {
     private final Class mySuperClass;
     private final Class[] myInterfaces;
-    private final Set<MethodSignature> myAdditionalMethods;
+    private final Set<JavaMethodSignature> myAdditionalMethods;
 
-    public ProxyDescription(final Class superClass, final Class[] interfaces, final Set<MethodSignature> additionalMethods) {
+    public ProxyDescription(final Class superClass, final Class[] interfaces, final Set<JavaMethodSignature> additionalMethods) {
       mySuperClass = superClass;
       myInterfaces = interfaces;
       myAdditionalMethods = additionalMethods;

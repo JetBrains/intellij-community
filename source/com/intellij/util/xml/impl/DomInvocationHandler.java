@@ -294,20 +294,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  final AttributeChildInvocationHandler getAttributeChild(final MethodSignature method) {
+  final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
     final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfoImpl.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
   }
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    return doInvoke(MethodSignature.getSignature(method), args);
+    return doInvoke(JavaMethodSignature.getSignature(method), args);
   }
 
-  public final Object doInvoke(final MethodSignature signature, final Object... args) throws Throwable {
+  public final Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
     Invocation invocation = myInvocationCache.getInvocation(signature);
     if (invocation == null) {
-      invocation = createInvocation(signature.findMethod(myType));
+      invocation = createInvocation(signature.findMethod(DomUtil.getRawType(myType)));
       myInvocationCache.putInvocation(signature, invocation);
     }
     return invocation.invoke(this, args);
@@ -338,8 +338,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         myGenericInfoImpl.buildMethodMaps();
 
         if (ATTRIBUTES.equals(qname)) {
-          for (Map.Entry<MethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
-            getOrCreateAttributeChild(entry.getKey().findMethod(myType), entry.getValue());
+          for (Map.Entry<JavaMethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
+            getOrCreateAttributeChild(entry.getKey().findMethod(DomUtil.getRawType(myType)), entry.getValue());
           }
         }
 
@@ -387,7 +387,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag,
                                                              final Pair<String, Integer> pair) {
-    final MethodSignature signature = myGenericInfoImpl.getFixedChildGetter(pair);
+    final JavaMethodSignature signature = myGenericInfoImpl.getFixedChildGetter(pair);
     final String qname = pair.getFirst();
     final Class<?> rawType = DomUtil.getRawType(myType);
     final Method method = signature.findMethod(rawType);

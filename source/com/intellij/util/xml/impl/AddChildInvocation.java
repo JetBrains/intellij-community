@@ -40,7 +40,7 @@ public class AddChildInvocation implements Invocation{
     final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
     final boolean b = handler.getManager().setChanging(true);
     try {
-      ClassChooserManager.getClassChooser(myType).distinguishTag(domElement.getXmlTag(), DomUtil.getRawType(type));
+      ClassChooserManager.getClassChooser(DomUtil.getRawType(type)).distinguishTag(domElement.getXmlTag(), DomUtil.getRawType(type));
     }
     finally {
       handler.getManager().setChanging(b);

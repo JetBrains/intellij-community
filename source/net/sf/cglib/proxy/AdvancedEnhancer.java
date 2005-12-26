@@ -15,7 +15,7 @@
  */
 package net.sf.cglib.proxy;
 
-import com.intellij.util.xml.impl.MethodSignature;
+import com.intellij.util.xml.JavaMethodSignature;
 import net.sf.cglib.asm.ClassVisitor;
 import net.sf.cglib.asm.Label;
 import net.sf.cglib.asm.Type;
@@ -145,7 +145,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     private boolean interceptDuringConstruction = true;
 
   //Changes by Peter Gromov
-  private Set<MethodSignature> myAdditionalMethods = Collections.emptySet();
+  private Set<JavaMethodSignature> myAdditionalMethods = Collections.emptySet();
 
 
     /**
@@ -213,7 +213,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
 
   //Changes by Peter Gromov
-  public void setAdditionalMethods(final Set<MethodSignature> additionalMethods) {
+  public void setAdditionalMethods(final Set<JavaMethodSignature> additionalMethods) {
     myAdditionalMethods = additionalMethods;
   }
 
@@ -467,12 +467,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
       //Changes by Peter Gromov
 
-      final Set<MethodSignature> finalMethods = new HashSet<MethodSignature>();
+      final Set<JavaMethodSignature> finalMethods = new HashSet<JavaMethodSignature>();
       Class aClass = sc;
       while (!Object.class.equals(aClass)) {
         for (final Method method : aClass.getDeclaredMethods()) {
           final int modifiers = method.getModifiers();
-          final MethodSignature signature = MethodSignature.getSignature(method);
+          final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
           if ((modifiers & Constants.ACC_FINAL) != 0) {
             finalMethods.add(signature);
             actualMethods.remove(method);

@@ -5,7 +5,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.impl.MethodSignature;
+import com.intellij.util.xml.JavaMethodSignature;
 
 /**
  * @author peter
@@ -13,5 +13,5 @@ import com.intellij.util.xml.impl.MethodSignature;
 public interface DomAttributeChildDescription extends DomChildrenDescription{
   GenericAttributeValue getDomAttributeValue(DomElement parent);
 
-  MethodSignature getGetterMethod();
+  JavaMethodSignature getGetterMethod();
 }

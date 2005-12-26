@@ -21,12 +21,12 @@ import java.util.*;
  */
 public class GenericInfoImpl implements DomGenericInfo {
   private final Class<? extends DomElement> myClass;
-  private final BidirectionalMap<MethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<MethodSignature, Pair<String, Integer>>();
+  private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<JavaMethodSignature, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
-  private final Map<MethodSignature, String> myCollectionChildrenGetterMethods = new HashMap<MethodSignature, String>();
-  private final Map<MethodSignature, String> myCollectionChildrenAdditionMethods = new HashMap<MethodSignature, String>();
+  private final Map<JavaMethodSignature, String> myCollectionChildrenGetterMethods = new HashMap<JavaMethodSignature, String>();
+  private final Map<JavaMethodSignature, String> myCollectionChildrenAdditionMethods = new HashMap<JavaMethodSignature, String>();
   private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
-  private final Map<MethodSignature, String> myAttributeChildrenMethods = new HashMap<MethodSignature, String>();
+  private final Map<JavaMethodSignature, String> myAttributeChildrenMethods = new HashMap<JavaMethodSignature, String>();
   private boolean myValueElement;
   private boolean myInitialized;
   private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
@@ -40,11 +40,11 @@ public class GenericInfoImpl implements DomGenericInfo {
     return integer == null ? 0 : (integer);
   }
 
-  final MethodSignature getFixedChildGetter(final Pair<String, Integer> pair) {
+  final JavaMethodSignature getFixedChildGetter(final Pair<String, Integer> pair) {
     return myFixedChildrenMethods.getKeysByValue(pair).get(0);
   }
 
-  final Set<Map.Entry<MethodSignature, String>> getCollectionChildrenEntries() {
+  final Set<Map.Entry<JavaMethodSignature, String>> getCollectionChildrenEntries() {
     return myCollectionChildrenGetterMethods.entrySet();
   }
 
@@ -52,7 +52,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     return myCollectionChildrenClasses.get(tagName);
   }
 
-  final Set<Map.Entry<MethodSignature, String>> getAttributeChildrenEntries() {
+  final Set<Map.Entry<JavaMethodSignature, String>> getAttributeChildrenEntries() {
     return myAttributeChildrenMethods.entrySet();
   }
 
@@ -68,11 +68,11 @@ public class GenericInfoImpl implements DomGenericInfo {
     return myAttributeChildrenMethods.values();
   }
 
-  final Pair<String, Integer> getFixedChildInfo(MethodSignature method) {
+  final Pair<String, Integer> getFixedChildInfo(JavaMethodSignature method) {
     return myFixedChildrenMethods.get(method);
   }
 
-  final String getAttributeName(MethodSignature method) {
+  final String getAttributeName(JavaMethodSignature method) {
     return myAttributeChildrenMethods.get(method);
   }
 
@@ -82,7 +82,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getSubTagName(final MethodSignature method) {
+  private String getSubTagName(final JavaMethodSignature method) {
     final SubTag subTagAnnotation = method.findAnnotation(SubTag.class, myClass);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
       return getNameFromMethod(method);
@@ -91,7 +91,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getSubTagNameForCollection(final MethodSignature method) {
+  private String getSubTagNameForCollection(final JavaMethodSignature method) {
     final SubTagList subTagList = method.findAnnotation(SubTagList.class, myClass);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
@@ -101,12 +101,12 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  private String getNameFromMethod(final MethodSignature method) {
+  private String getNameFromMethod(final JavaMethodSignature method) {
     final String propertyName = getPropertyName(method);
     return propertyName == null ? null : getNameStrategy().convertName(propertyName);
   }
 
-  private static String getPropertyName(MethodSignature method) {
+  private static String getPropertyName(JavaMethodSignature method) {
     return PropertyUtil.getPropertyName(method.getMethodName());
   }
 
@@ -122,7 +122,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     myInitialized = true;
 
     final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
-    final Set<MethodSignature> removedSignatures = new HashSet<MethodSignature>();
+    final Set<JavaMethodSignature> removedSignatures = new HashSet<JavaMethodSignature>();
 
 
     final Implementation implAnno = DomUtil.findAnnotationDFS(myClass, Implementation.class);
@@ -130,7 +130,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (implClass != null) {
       for (Method method : implClass.getMethods()) {
         if (!Modifier.isAbstract(method.getModifiers())) {
-          removedSignatures.add(MethodSignature.getSignature(method));
+          removedSignatures.add(JavaMethodSignature.getSignature(method));
         }
       }
       for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
@@ -148,8 +148,8 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       final Method method = iterator.next();
       if (isCoreMethod(method) || DomUtil.isTagValueSetter(method) ||
-          isCustomMethod(MethodSignature.getSignature(method))) {
-        removedSignatures.add(MethodSignature.getSignature(method));
+          isCustomMethod(JavaMethodSignature.getSignature(method))) {
+        removedSignatures.add(JavaMethodSignature.getSignature(method));
         iterator.remove();
       }
     }
@@ -157,23 +157,23 @@ public class GenericInfoImpl implements DomGenericInfo {
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
       if (DomUtil.isGetter(method) && processGetterMethod(method)) {
-        removedSignatures.add(MethodSignature.getSignature(method));
+        removedSignatures.add(JavaMethodSignature.getSignature(method));
         iterator.remove();
       }
     }
 
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
-      final MethodSignature signature = MethodSignature.getSignature(method);
+      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
       if (isAddMethod(method, signature)) {
         myCollectionChildrenAdditionMethods.put(signature, extractTagName(signature, "add"));
-        removedSignatures.add(MethodSignature.getSignature(method));
+        removedSignatures.add(JavaMethodSignature.getSignature(method));
         iterator.remove();
       }
     }
     for (Iterator<Method> iterator = methods.iterator(); iterator.hasNext();) {
       Method method = iterator.next();
-      final MethodSignature signature = MethodSignature.getSignature(method);
+      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
       if (removedSignatures.contains(signature)) {
         iterator.remove();
       }
@@ -192,7 +192,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   }
 
-  private boolean isAddMethod(Method method, MethodSignature signature) {
+  private boolean isAddMethod(Method method, JavaMethodSignature signature) {
     final String tagName = extractTagName(signature, "add");
     if (tagName == null) return false;
 
@@ -202,7 +202,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 
-  private String extractTagName(MethodSignature method, String prefix) {
+  private String extractTagName(JavaMethodSignature method, String prefix) {
     final String name = method.getMethodName();
     if (!name.startsWith(prefix)) return null;
 
@@ -222,7 +222,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
 
     final boolean isAttributeMethod = method.getReturnType().equals(GenericAttributeValue.class);
-    final MethodSignature signature = MethodSignature.getSignature(method);
+    final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
     final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
     if (annotation != null) {
       assert isAttributeMethod : method + " should return " + GenericAttributeValue.class;
@@ -267,14 +267,14 @@ public class GenericInfoImpl implements DomGenericInfo {
     return false;
   }
 
-  private boolean isCustomMethod(final MethodSignature method) {
+  private boolean isCustomMethod(final JavaMethodSignature method) {
     return method.findAnnotation(PropertyAccessor.class, myClass) != null;
   }
 
   public final Invocation createInvocation(Method method) {
     buildMethodMaps();
 
-    final MethodSignature signature = MethodSignature.getSignature(method);
+    final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
     final PropertyAccessor accessor = signature.findAnnotation(PropertyAccessor.class, myClass);
     if (accessor != null) {
       return createPropertyAccessorInvocation(accessor);
@@ -407,9 +407,9 @@ public class GenericInfoImpl implements DomGenericInfo {
     };
   }
 
-  private Method findGetterMethod(final Map<MethodSignature, String> map, final String xmlElementName) {
+  private Method findGetterMethod(final Map<JavaMethodSignature, String> map, final String xmlElementName) {
     buildMethodMaps();
-    for (Map.Entry<MethodSignature, String> entry : map.entrySet()) {
+    for (Map.Entry<JavaMethodSignature, String> entry : map.entrySet()) {
       if (xmlElementName.equals(entry.getValue())) {
         return entry.getKey().findMethod(myClass);
       }
@@ -418,9 +418,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private Method getCollectionAddMethod(final String tagName, Class... parameterTypes) {
-    for (Map.Entry<MethodSignature, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
+    for (Map.Entry<JavaMethodSignature, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
       if (tagName.equals(entry.getValue())) {
-        final MethodSignature method = entry.getKey();
+        final JavaMethodSignature method = entry.getKey();
         if (Arrays.equals(parameterTypes, method.getParameterTypes())) {
           return method.findMethod(myClass);
         }
@@ -431,7 +431,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   private Method[] getFixedChildrenGetterMethods(String tagName) {
     final Method[] methods = new Method[getFixedChildrenCount(tagName)];
-    for (Map.Entry<MethodSignature, Pair<String, Integer>> entry : myFixedChildrenMethods.entrySet()) {
+    for (Map.Entry<JavaMethodSignature, Pair<String, Integer>> entry : myFixedChildrenMethods.entrySet()) {
       final Pair<String, Integer> pair = entry.getValue();
       if (tagName.equals(pair.getFirst())) {
         methods[pair.getSecond()] = entry.getKey().findMethod(myClass);
@@ -506,7 +506,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   @NotNull
   public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
     final ArrayList<DomAttributeChildDescription> result = new ArrayList<DomAttributeChildDescription>();
-    for (Map.Entry<MethodSignature, String> entry : myAttributeChildrenMethods.entrySet()) {
+    for (Map.Entry<JavaMethodSignature, String> entry : myAttributeChildrenMethods.entrySet()) {
       result.add(new AttributeChildDescriptionImpl(entry.getValue(), entry.getKey().findMethod(myClass)));
     }
     return result;

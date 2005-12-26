@@ -4,7 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.xml.impl.MethodSignature;
+import com.intellij.util.xml.JavaMethodSignature;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
@@ -143,7 +143,7 @@ public class DomUtil {
   }
 
   public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
-    return MethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
+    return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
   }
 
   public static boolean isGetter(final Method method) {

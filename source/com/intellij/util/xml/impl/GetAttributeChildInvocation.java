@@ -3,13 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.util.xml.JavaMethodSignature;
+
 /**
  * @author peter
  */
 public class GetAttributeChildInvocation implements Invocation {
-  private MethodSignature myMethodSignature;
+  private JavaMethodSignature myMethodSignature;
 
-  public GetAttributeChildInvocation(final MethodSignature method) {
+  public GetAttributeChildInvocation(final JavaMethodSignature method) {
     myMethodSignature = method;
   }
 

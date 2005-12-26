@@ -46,7 +46,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
     if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
       final Type type = getParentHandler().getGenericInfo().getFixedChildDescription(getXmlElementName()).getType();
-      ClassChooserManager.getClassChooser(type).distinguishTag(newTag, DomUtil.getRawType(getDomElementType()));
+      ClassChooserManager.getClassChooser(DomUtil.getRawType(type)).distinguishTag(newTag, DomUtil.getRawType(getDomElementType()));
     }
     return newTag;
   }

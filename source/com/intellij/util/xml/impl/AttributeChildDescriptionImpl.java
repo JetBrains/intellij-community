@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.JavaMethodSignature;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 
 import java.lang.reflect.Method;
@@ -16,14 +17,14 @@ import java.util.List;
  * @author peter
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
-  private final MethodSignature myGetterMethod;
+  private final JavaMethodSignature myGetterMethod;
 
   protected AttributeChildDescriptionImpl(final String attributeName, final Method getter) {
     super(attributeName, getter.getGenericReturnType());
-    myGetterMethod = MethodSignature.getSignature(getter);
+    myGetterMethod = JavaMethodSignature.getSignature(getter);
   }
 
-  public final MethodSignature getGetterMethod() {
+  public final JavaMethodSignature getGetterMethod() {
     return myGetterMethod;
   }
 
