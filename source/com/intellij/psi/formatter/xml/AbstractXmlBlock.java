@@ -409,7 +409,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                     final CodeStyleSettings settings,
                                     final FormattingDocumentModel documentModel) {
     final PsiFile file = element.getContainingFile();
-    final Language baseLanguage = ((JspFile)file).getBaseLanguage();
+    final Language baseLanguage = ((JspFile)file).getViewProvider().getTemplateDataLanguage();
     if (baseLanguage == StdLanguages.HTML) {
       final PsiElement[] psiRoots = file.getPsiRoots();
       LOG.assertTrue(psiRoots.length == 4);
