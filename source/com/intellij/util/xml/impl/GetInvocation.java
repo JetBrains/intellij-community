@@ -32,7 +32,7 @@ public abstract class GetInvocation implements Invocation {
     }
 
     final String tagValue = tagNotNull ? getValue(tag, handler) : null;
-    return myConverter.fromString(tagValue, new ConvertContextImpl(handler));
+    return tagValue == null? null: myConverter.fromString(tagValue, new ConvertContextImpl(handler));
   }
 
   protected abstract String getValue(XmlTag tag, DomInvocationHandler handler);
