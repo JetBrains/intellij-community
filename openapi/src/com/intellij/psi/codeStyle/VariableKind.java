@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Defines different types of variables for which the code style specifies naming settings.
  *
