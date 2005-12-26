@@ -960,69 +960,63 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-      PsiElement[] children = methodExpr.getChildren();
-      String methodName = children[children.length - 1].getText();
-      String[] words = NameUtil.nameToWords(methodName);
-      if (words.length > 1) {
-        String firstWord = words[0];
-        if (GET_PREFIX.equals(firstWord)
-            || IS_PREFIX.equals(firstWord)
-            || FIND_PREFIX.equals(firstWord)
-            || CREATE_PREFIX.equals(firstWord)) {
-          final String propertyName = methodName.substring(firstWord.length());
-          String[] names = getSuggestionsByName(propertyName, variableKind, false);
-          return new NamesByExprInfo(propertyName, names);
+      String methodName = methodExpr.getReferenceName();
+      if (methodName != null) {
+        String[] words = NameUtil.nameToWords(methodName);
+        if (words.length > 1) {
+          String firstWord = words[0];
+          if (GET_PREFIX.equals(firstWord)
+              || IS_PREFIX.equals(firstWord)
+              || FIND_PREFIX.equals(firstWord)
+              || CREATE_PREFIX.equals(firstWord)) {
+            final String propertyName = methodName.substring(firstWord.length());
+            String[] names = getSuggestionsByName(propertyName, variableKind, false);
+            return new NamesByExprInfo(propertyName, names);
+          }
         }
       }
     }
-    else {
-      if (expr instanceof PsiReferenceExpression) {
-        String propertyName = ((PsiReferenceExpression)expr).getReferenceName();
-        PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
+    else if (expr instanceof PsiReferenceExpression) {
+      String propertyName = ((PsiReferenceExpression)expr).getReferenceName();
+      PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
+      if (refElement instanceof PsiVariable) {
+        VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
+        propertyName = variableNameToPropertyName(propertyName, refVariableKind);
+      }
+      if (refElement != null && propertyName != null) {
+        String[] names = getSuggestionsByName(propertyName, variableKind, false);
+        return new NamesByExprInfo(propertyName, names);
+      }
+    }
+    else if (expr instanceof PsiArrayAccessExpression) {
+      PsiExpression arrayExpr = ((PsiArrayAccessExpression)expr).getArrayExpression();
+      if (arrayExpr instanceof PsiReferenceExpression) {
+        String arrayName = ((PsiReferenceExpression)arrayExpr).getReferenceName();
+        PsiElement refElement = ((PsiReferenceExpression)arrayExpr).resolve();
         if (refElement instanceof PsiVariable) {
           VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
-          propertyName = variableNameToPropertyName(propertyName, refVariableKind);
+          arrayName = variableNameToPropertyName(arrayName, refVariableKind);
         }
-        if (refElement != null && propertyName != null) {
-          String[] names = getSuggestionsByName(propertyName, variableKind, false);
-          return new NamesByExprInfo(propertyName, names);
-        }
-      }
-      else {
-        if (expr instanceof PsiArrayAccessExpression) {
-          PsiExpression array = ((PsiArrayAccessExpression)expr).getArrayExpression();
-          if (array instanceof PsiReferenceExpression) {
-            PsiElement[] children = array.getChildren();
-            String arrayName = children[children.length - 1].getText();
-            PsiElement refElement = ((PsiReferenceExpression)array).resolve();
-            if (refElement instanceof PsiVariable) {
-              VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
-              arrayName = variableNameToPropertyName(arrayName, refVariableKind);
-            }
 
-            String name = StringUtil.unpluralize(arrayName);
-
-            if (name != null) {
-              String[] names = getSuggestionsByName(name, variableKind, false);
-              return new NamesByExprInfo(name, names);
-            }
-          }
-        } else {
-          if (expr instanceof PsiLiteralExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {
-            final PsiLiteralExpression literalExpression = ((PsiLiteralExpression)expr);
-            final Object value = literalExpression.getValue();
-            if (value instanceof String) {
-              final String stringValue = ((String)value);
-              String[] names = getSuggestionsByValue(stringValue);
-              if (names.length > 0) {
-                return new NamesByExprInfo(null, constantValueToConstantName(names));
-              }
-            }
+        if (arrayName != null) {
+          String name = StringUtil.unpluralize(arrayName);
+          if (name != null) {
+            String[] names = getSuggestionsByName(name, variableKind, false);
+            return new NamesByExprInfo(name, names);
           }
         }
       }
-
-
+    }
+    else if (expr instanceof PsiLiteralExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expr;
+      final Object value = literalExpression.getValue();
+      if (value instanceof String) {
+        final String stringValue = ((String)value);
+        String[] names = getSuggestionsByValue(stringValue);
+        if (names.length > 0) {
+          return new NamesByExprInfo(null, constantValueToConstantName(names));
+        }
+      }
     }
 
     return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
