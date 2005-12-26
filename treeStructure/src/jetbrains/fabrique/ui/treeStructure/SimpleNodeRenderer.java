@@ -6,8 +6,9 @@ package jetbrains.fabrique.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -17,7 +18,7 @@ public class SimpleNodeRenderer extends NodeRenderer {
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected,
                                     boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    
+
     mySelected = selected;
     myFocused = hasFocus;
 
@@ -75,7 +76,7 @@ public class SimpleNodeRenderer extends NodeRenderer {
     }
   }
 
-  public void append(String fragment, SimpleTextAttributes attributes) {
+  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
     super.append(fragment, attributes);
     setName(getName() + fragment);
   }

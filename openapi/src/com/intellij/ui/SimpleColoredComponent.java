@@ -88,7 +88,7 @@ public class SimpleColoredComponent extends JComponent {
    * @exception java.lang.IllegalArgumentException if <code>attributes</code>
    * is <code>null</code>
    */
-  public void append(final String fragment,final SimpleTextAttributes attributes){
+  public void append(@NotNull final String fragment,@NotNull final SimpleTextAttributes attributes){
     if(fragment==null){
       throw new IllegalArgumentException("fragment cannot be null");
     }
