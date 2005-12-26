@@ -30,4 +30,5 @@ public abstract class DomManager {
 
   public abstract DomGenericInfo getGenericInfo(Type type);
 
+  public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
 }

@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
+import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiLock;
@@ -39,16 +39,31 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
+  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
   private PomModel myPomModel;
   private boolean myChanging;
 
-
   public DomManagerImpl(final PomModel pomModel, final Project project) {
     myPomModel = pomModel;
     myProject = project;
+    final XmlAspect xmlAspect = myPomModel.getModelAspect(XmlAspect.class);
+    assert xmlAspect != null;
+    myXmlListener = new PomModelListener() {
+      public synchronized void modelChanged(PomModelEvent event) {
+        if (myChanging) return;
+        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
+        if (changeSet != null) {
+          new ExternalChangeProcessor(changeSet).processChanges();
+        }
+      }
+
+      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+        return xmlAspect.equals(aspect);
+      }
+    };
   }
 
   public final void addDomEventListener(DomEventListener listener) {
@@ -111,7 +126,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     synchronized (PsiLock.LOCK) {
       try {
         XmlTag tag = handler.getXmlTag();
-        final Class<?> abstractInterface = DomUtil.getRawType(handler.getDomElementType());
+        final Class abstractInterface = DomUtil.getRawType(handler.getDomElementType());
         final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(abstractInterface);
         final Class<? extends DomElement> concreteInterface = classChooser.chooseClass(tag);
         final DomElement element = doCreateDomElement(concreteInterface, handler);
@@ -132,11 +147,21 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   private DomElement doCreateDomElement(final Class<? extends DomElement> concreteInterface, final DomInvocationHandler handler) {
-    final Implementation implementationClass = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    if (implementationClass != null) {
-      return AdvancedProxy.createProxy(implementationClass.value(), new Class[]{concreteInterface}, handler, Collections.EMPTY_SET);
+    final Class<? extends DomElement> aClass = getImplementation(concreteInterface);
+    if (aClass != null) {
+      return AdvancedProxy.createProxy(aClass, new Class[]{concreteInterface}, handler, Collections.EMPTY_SET);
     }
     return AdvancedProxy.createProxy(handler, concreteInterface);
+  }
+
+  @Nullable
+  private Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
+    final Class<? extends DomElement> registeredImplementation = myImplementationClasses.get(concreteInterface);
+    if (registeredImplementation != null) {
+      return registeredImplementation;
+    }
+    final Implementation implementation = DomUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+    return implementation == null ? null : implementation.value();
   }
 
   public Project getProject() {
@@ -203,21 +228,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final void projectOpened() {
-    final XmlAspect xmlAspect = myPomModel.getModelAspect(XmlAspect.class);
-    assert xmlAspect != null;
-    myXmlListener = new PomModelListener() {
-      public void modelChanged(PomModelEvent event) {
-        if (myChanging) return;
-        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null) {
-          new ExternalChangeProcessor(changeSet).processChanges();
-        }
-      }
-
-      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
-        return xmlAspect.equals(aspect);
-      }
-    };
     myPomModel.addModelListener(myXmlListener);
   }
 
@@ -225,4 +235,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myPomModel.removeModelListener(myXmlListener);
   }
 
+  public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+    assert domElementClass.isAssignableFrom(implementationClass);
+    myImplementationClasses.put(domElementClass, implementationClass);
+  }
 }
