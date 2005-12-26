@@ -376,7 +376,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
 
-    getMulticaster().getDocumentMulticaster().beforeDocumentChange(event);
+    final EditorEventMulticasterEx multicaster = getMulticaster();
+    if(multicaster != null) multicaster.getDocumentMulticaster().beforeDocumentChange(event);
     DocumentListener[] listeners = getCachedListeners();
     for (int i = listeners.length - 1; i >= 0; i--) {
       try {
@@ -391,7 +392,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private EditorEventMulticasterEx getMulticaster() {
-    return ((EditorEventMulticasterEx)EditorFactory.getInstance().getEventMulticaster());
+    final EditorFactory instance = EditorFactory.getInstance();
+    if(instance == null) return null;
+    return ((EditorEventMulticasterEx)instance.getEventMulticaster());
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
@@ -401,7 +404,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     updateRangeMarkers(event);
 
-    getMulticaster().getDocumentMulticaster().documentChanged(event);
+    final EditorEventMulticasterEx multicaster = getMulticaster();
+    if(multicaster != null) multicaster.getDocumentMulticaster().documentChanged(event);
 
     DocumentListener[] listeners = getCachedListeners();
     for (DocumentListener listener : listeners) {
