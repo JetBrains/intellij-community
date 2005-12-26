@@ -1,12 +1,12 @@
 package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.compiler.ant.BuildProperties;
-import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.GenerationOptions;
+import com.intellij.compiler.ant.Tag;
 import com.intellij.openapi.util.Pair;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,6 +36,6 @@ public class Javac extends Tag{
       return null;
     }
     //noinspection HardCodedStringLiteral
-    return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkHomeProperty(moduleName)) + "/bin/javac";
+    return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkBinProperty(moduleName)) + "/javac";
   }
 }

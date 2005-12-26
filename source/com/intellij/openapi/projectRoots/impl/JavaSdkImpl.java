@@ -6,6 +6,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -425,39 +425,6 @@ public class JavaSdkImpl extends JavaSdk {
     String path = file.getAbsolutePath().replace(File.separatorChar, '/');
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
     return vFile;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean checkForJdk(File file) {
-    file = new File(file.getAbsolutePath() + File.separator + "bin");
-    if (!file.exists()) return false;
-    FileFilter fileFilter = new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        if (f.isDirectory()) return false;
-        if (f.getName().startsWith("javac")) return true;
-        if (f.getName().startsWith("javah")) return true;
-        return false;
-      }
-    };
-    File[] children = file.listFiles(fileFilter);
-    return (children != null && children.length >= 2);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean checkForJre(String file){
-    File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
-    if (!ioFile.exists()) return false;
-    FileFilter fileFilter = new FileFilter() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        if (f.isDirectory()) return false;
-        if (f.getName().startsWith("java")) return true;
-        return false;
-      }
-    };
-    File[] children = ioFile.listFiles(fileFilter);
-    return (children != null && children.length >= 1);
   }
 
   private static class ReadStreamThread extends Thread {

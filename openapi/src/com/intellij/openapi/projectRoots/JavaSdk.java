@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
+import java.io.FileFilter;
+
 public abstract class JavaSdk extends SdkType implements ApplicationComponent {
   public JavaSdk(@NonNls String name) {
     super(name);
@@ -29,4 +32,37 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
   }
 
   public abstract ProjectJdk createJdk(String jdkName, String jdkHome);
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean checkForJdk(File file) {
+    file = new File(file.getAbsolutePath() + File.separator + "bin");
+    if (!file.exists()) return false;
+    FileFilter fileFilter = new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
+      public boolean accept(File f) {
+        if (f.isDirectory()) return false;
+        if (f.getName().startsWith("javac")) return true;
+        if (f.getName().startsWith("javah")) return true;
+        return false;
+      }
+    };
+    File[] children = file.listFiles(fileFilter);
+    return (children != null && children.length >= 2);
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean checkForJre(String file){
+    File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
+    if (!ioFile.exists()) return false;
+    FileFilter fileFilter = new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
+      public boolean accept(File f) {
+        if (f.isDirectory()) return false;
+        if (f.getName().startsWith("java")) return true;
+        return false;
+      }
+    };
+    File[] children = ioFile.listFiles(fileFilter);
+    return (children != null && children.length >= 1);
+  }
 }

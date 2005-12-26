@@ -1,10 +1,10 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.ant.taskdefs.FileSet;
 import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -50,6 +50,7 @@ public class BuildProperties extends CompositeGenerator {
   public static final @NonNls String PROPERTY_COMPILER_GENERATE_DEBUG_INFO = "compiler.debug";
   public static final @NonNls String PROPERTY_COMPILER_GENERATE_NO_WARNINGS = "compiler.generate.no.warnings";
   public static final @NonNls String PROPERTY_PROJECT_JDK_HOME = "project.jdk.home";
+  public static final @NonNls String PROPERTY_PROJECT_JDK_BIN = "project.jdk.bin";
   public static final @NonNls String PROPERTY_PROJECT_JDK_CLASSPATH = "project.jdk.classpath";
   public static final @NonNls String PROPERTY_SKIP_TESTS = "skip.tests";
 
@@ -155,6 +156,7 @@ public class BuildProperties extends CompositeGenerator {
 
     final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
+    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""), 1);
     add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null? getJdkPathId(projectJdk.getName()) : ""));
   }
 
@@ -186,6 +188,10 @@ public class BuildProperties extends CompositeGenerator {
     return "module.jdk.home." + convertName(moduleChunkName);
   }
 
+  public static @NonNls String getModuleChunkJdkBinProperty(@NonNls final String moduleChunkName) {
+    return "module.jdk.bin." + convertName(moduleChunkName);
+  }
+
   public static @NonNls String getModuleChunkCompilerArgsProperty(@NonNls final String moduleName) {
     return "compiler.args." + convertName(moduleName);
   }
@@ -196,6 +202,10 @@ public class BuildProperties extends CompositeGenerator {
 
   public static @NonNls String getJdkHomeProperty(@NonNls final String jdkName) {
     return "jdk.home." + convertName(jdkName);
+  }
+
+  public static @NonNls String getJdkBinProperty(@NonNls final String jdkName) {
+    return "jdk.bin." + convertName(jdkName);
   }
 
   public static @NonNls String getCompileTargetName(@NonNls String moduleName) {

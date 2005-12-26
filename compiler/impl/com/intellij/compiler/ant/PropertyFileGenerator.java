@@ -13,7 +13,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,17 +43,24 @@ public class PropertyFileGenerator extends Generator{
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
-        final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
-        File homeDir;
-        try {
-          homeDir = home.getCanonicalFile();
-        }
-        catch (IOException e) {
-          homeDir = home;
-        }
+        final File homeDir = toCanonicalFile(VfsUtil.virtualToIoFile(jdk.getHomeDirectory()));
         addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
+
+        final File binPath = toCanonicalFile(new File(jdk.getBinPath()));
+        addProperty(BuildProperties.getJdkBinProperty(jdk.getName()), binPath.getPath().replace(File.separatorChar, '/'));
       }
     }
+  }
+
+  private File toCanonicalFile(final File file) {
+    File canonicalFile;
+    try {
+      canonicalFile = file.getCanonicalFile();
+    }
+    catch (IOException e) {
+      canonicalFile = file;
+    }
+    return canonicalFile;
   }
 
   public void addProperty(String name, String value) {
