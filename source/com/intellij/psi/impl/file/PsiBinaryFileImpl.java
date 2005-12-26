@@ -4,50 +4,38 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiBinaryFileImpl");
 
   private final PsiManagerImpl myManager;
-  private VirtualFile myFile;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
   private long myModificationStamp;
   private FileType myFileType;
+  private final FileViewProvider myViewProvider;
 
-  public PsiBinaryFileImpl(PsiManagerImpl manager, VirtualFile vFile) {
+  public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+    myViewProvider = viewProvider;
     myManager = manager;
-    myFile = vFile;
-    myModificationStamp = myFile.getModificationStamp();
-    myFileType = FileTypeManager.getInstance().getFileTypeByFile(myFile);
+    final VirtualFile virtualFile = myViewProvider.getVirtualFile();
+    myModificationStamp = virtualFile.getModificationStamp();
+    myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
   public VirtualFile getVirtualFile() {
-    return myFile;
-  }
-
-  public void setVirtualFile(VirtualFile file) throws IOException {
-    myFile = file;
-    if (file != null){
-      myName = null;
-      if (myContents != null){
-        file.setBinaryContent(myContents);
-        myContents = null;
-      }
-    }
+    return myViewProvider.getVirtualFile();
   }
 
   public byte[] getStoredContents() {
@@ -55,13 +43,13 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public String getName() {
-    return myFile != null ? myFile.getName() : myName;
+    return !isCopy() ? getVirtualFile().getName() : myName;
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
     checkSetName(name);
 
-    if (myFile == null){
+    if (isCopy()){
       myName = name;
       return this; // not absolutely correct - might change type
     }
@@ -70,22 +58,18 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public void checkSetName(String name) throws IncorrectOperationException {
-    if (myFile == null) return;
+    if (isCopy()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
   public PsiDirectory getContainingDirectory() {
-    VirtualFile parentFile = myFile.getParent();
+    VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
   }
 
   public long getModificationStamp() {
     return myModificationStamp;
-  }
-
-  public void setModificationStamp(long modificationStamp) {
-    myModificationStamp = modificationStamp;
   }
 
   @NotNull
@@ -177,14 +161,17 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public PsiElement copy() {
     PsiBinaryFileImpl clone = (PsiBinaryFileImpl)clone();
-    clone.myFile = null;
     clone.myName = getName();
     try{
-      clone.myContents = myFile != null ? myFile.contentsToByteArray() : myContents;
+      clone.myContents = !isCopy() ? getVirtualFile().contentsToByteArray() : myContents;
     }
     catch(IOException e){
     }
     return clone;
+  }
+
+  private boolean isCopy() {
+    return myName != null;
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
@@ -209,7 +196,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public void checkDelete() throws IncorrectOperationException{
-    if (myFile == null){
+    if (isCopy()){
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
@@ -220,17 +207,17 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   public boolean isValid() {
-    if (myFile == null) return true; // "dummy" file
-    if (!myFile.isValid()) return false;
-    return myManager.getFileManager().findFile(myFile) == this;
+    if (isCopy()) return true; // "dummy" file
+    if (!getVirtualFile().isValid()) return false;
+    return myManager.getFileManager().findFile(getVirtualFile()) == this;
   }
 
   public boolean isWritable() {
-    return myFile != null ? myFile.isWritable() : true;
+    return isCopy() || getVirtualFile().isWritable();
   }
 
   public boolean isPhysical() {
-    return myFile != null;
+    return !isCopy();
   }
 
   public String getDetectedLineSeparator() {
@@ -259,10 +246,8 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return new PsiFile[]{this};
   }
 
-  @NotNull
-  public PsiFile createPseudoPhysicalCopy() {
-    LOG.assertTrue(false);
-    return null;
+  public FileViewProvider getViewProvider() {
+    return myViewProvider;
   }
 
   public ASTNode getNode() {
