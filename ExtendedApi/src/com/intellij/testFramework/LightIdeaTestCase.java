@@ -42,7 +42,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.TestCase;
@@ -174,7 +173,7 @@ import java.util.*;
 
         });
 
-        //((PsiManagerImpl) PsiManager.getInstance(ourProject)).runStartupActivity();
+        //((PsiManagerImpl) PsiManager.getInstance(ourProject)).runPreStartupActivity();
         ((StartupManagerImpl)StartupManager.getInstance(getProject())).runStartupActivities();
       }
     });

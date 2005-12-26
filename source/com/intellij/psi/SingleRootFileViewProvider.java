@@ -23,6 +23,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.testFramework.MockVirtualFile;
 
@@ -176,8 +177,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     }
     if(myContents == null){
       final Document document = getDocument();
-      final PsiFile cachedPsi = getCachedPsi(getBaseLanguage());
-      if (cachedPsi != null && PsiDocumentManager.getInstance(myManager.getProject()).isUncommited(document)) {
+      final PsiFileImpl cachedPsi = (PsiFileImpl)getCachedPsi(getBaseLanguage());
+      if (cachedPsi != null && cachedPsi.isContentsLoaded() && PsiDocumentManager.getInstance(myManager.getProject()).isUncommited(document)) {
         myContents = new CharArrayCharSequence(cachedPsi.textToCharArray());
       }
       else if (document != null) {

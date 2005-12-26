@@ -190,6 +190,14 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               myLanguageLevel = projectRootManagerEx.getLanguageLevel();
             }
+            runPreStartupActivity();
+          }
+        }
+      );
+
+      startupManagerEx.registerStartupActivity(
+        new Runnable() {
+          public void run() {
             runStartupActivity();
           }
         }
@@ -307,13 +315,16 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void runStartupActivity() {
+    myShortNamesCache.runStartupActivity();
+  }
+
+  public void runPreStartupActivity() {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("PsiManager.runStartupActivity()");
+      LOG.debug("PsiManager.runPreStartupActivity()");
     }
     myFileManager.runStartupActivity();
 
     myCacheManager.initialize();
-    myShortNamesCache.runStartupActivity();
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
     if (startupManager != null) {
