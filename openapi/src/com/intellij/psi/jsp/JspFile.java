@@ -16,14 +16,13 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
-import com.intellij.lang.Language;
+import com.intellij.lang.jsp.JspFileViewProvider;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-
-import java.util.Set;
 
 public interface JspFile extends XmlFile {
   WebModuleProperties getWebModuleProperties();
@@ -42,14 +41,11 @@ public interface JspFile extends XmlFile {
   PsiClass getJavaRoot();
 
   PsiFile getBaseLanguageRoot();
-
-  Language getBaseLanguage();
-
-  Set<String> getKnownTaglibPrefixes();
-
   /**
    * @return file which the errorPage directive references,
    * or null, if there is no errorPage directive or directive references invalid file
    */
   PsiFile getErrorPage();
+
+  JspxFileViewProvider getViewProvider();
 }
