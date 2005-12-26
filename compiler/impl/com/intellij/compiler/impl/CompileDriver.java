@@ -329,7 +329,7 @@ public class CompileDriver {
               new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(), null, -1, -1), false, compileContext.getCompileScope()
             );
           }
-        });
+        }, ModalityState.NON_MMODAL);
       }
       else {
         writeStatus(new CompileStatus(CompilerConfiguration.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
