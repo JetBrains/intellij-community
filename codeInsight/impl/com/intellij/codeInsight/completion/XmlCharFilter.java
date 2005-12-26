@@ -23,11 +23,12 @@ public class XmlCharFilter implements CharFilter {
       case ',':
       case ';':
       case '=':
-      case ' ':
       case '(':
 
       default:
         return CharFilter.HIDE_LOOKUP;
+      case ' ':
+        return SELECT_ITEM_AND_FINISH_LOOKUP;
     }
   }
 }

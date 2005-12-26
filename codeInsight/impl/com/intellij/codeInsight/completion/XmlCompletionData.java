@@ -316,6 +316,8 @@ public class XmlCompletionData extends CompletionData {
       }
       else if (completionChar == '/') {
         template.addTextSegment("/>");
+      } else if (completionChar == ' ') {
+        template.addTextSegment(" ");
       }
 
       templateManager.startTemplate(editor, template);
