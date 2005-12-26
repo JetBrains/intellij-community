@@ -32,7 +32,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.invertBoolean.InvertBooleanMethodProcessor");
 
   private PsiNamedElement myElement;
-  String myNewName;
+  private String myNewName;
   private RenameProcessor myRenameProcessor;
   private SmartPsiElementPointer[] myUsagesToInvert;
   private SmartPointerManager mySmartPointerManager;
