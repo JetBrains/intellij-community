@@ -15,19 +15,34 @@
  */
 package com.intellij.openapi.fileEditor;
 
-public class FileEditorPolicy {
+public enum FileEditorPolicy {
+
+  /**
+   * Place created editor before default IDEA's editor (if any)
+   *
+   */
+  /*
+   * should be the first declaration
+   */
+  PLACE_BEFORE_DEFAULT_EDITOR,
+
   /**
    * No policy
    */
-  public static final FileEditorPolicy NONE = new FileEditorPolicy();
+  NONE,
+
   /**
    * Do not create default IDEA's editor (if any) for the file
    */
-  public static final FileEditorPolicy HIDE_DEFAULT_EDITOR = new FileEditorPolicy();
+  HIDE_DEFAULT_EDITOR,
+
   /**
-   * Place created editor before default IDEA's editor (if any)
+   * Place created editor after the default EDEA'a editor (if any)
+   *
+   *
    */
-  public static final FileEditorPolicy PLACE_BEFORE_DEFAULT_EDITOR = new FileEditorPolicy();
-  
-  private FileEditorPolicy() {}
+  /*
+   * should be the last declaration
+   */
+  PLACE_AFTER_DEFAULT_EDITOR
 }

@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -59,7 +58,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
 
     // Sort editors according policies
-    Collections.sort(myProviders, MyComparator.ourInstance);
+    Collections.sort(mySharedProviderList, MyComparator.ourInstance);
 
     if(mySharedProviderList.size()>0){
       return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
@@ -110,15 +109,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     private MyComparator() {}
 
     public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
-      if(provider1.getPolicy() == FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR){
-        return provider2 instanceof TextEditorProvider ? -1 : 0;
-      }
-      else if(provider2.getPolicy() == FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR){
-        return provider1 instanceof TextEditorProvider ? 1 : 0;
-      }
-      else{
-        return 0;
-      }
+      return provider1.getPolicy().ordinal() - provider2.getPolicy().ordinal();
     }
   }
 }
