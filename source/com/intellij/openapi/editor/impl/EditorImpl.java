@@ -527,14 +527,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
 
     getDocument().addDocumentListener(highlighter);
+    highlighter.setEditor(this);
+    highlighter.setText(getDocument().getCharsSequence());
     myHighlighter = highlighter;
-    try{
-      highlighter.setEditor(this);
-      highlighter.setText(getDocument().getCharsSequence());
-    }
-    catch(Exception e){
-      LOG.error(e);
-    }
 
     if (myPanel != null) {
       reinitSettings();
