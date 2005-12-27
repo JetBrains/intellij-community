@@ -23,7 +23,7 @@ public class TemplateContext implements JDOMExternalizable, Cloneable {
   public static final int HTML_CONTEXT = 5;
   public static final int JSP_CONTEXT = 6;
   public static final int OTHER_CONTEXT = 7;
-  public static final int COMPLETION_CONTEXT = 8;;
+  public static final int COMPLETION_CONTEXT = 8;
 
   public Object clone()  {
     try {

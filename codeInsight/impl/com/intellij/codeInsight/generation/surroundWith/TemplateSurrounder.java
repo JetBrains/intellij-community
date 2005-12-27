@@ -1,14 +1,17 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.TemplateManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +29,21 @@ public class TemplateSurrounder implements Surrounder {
     return myTemplate.getDescription();
   }
 
+  public boolean isApplicableForFileType(FileType fileType) {
+    final TemplateContext templateContext = myTemplate.getTemplateContext();
+    if (templateContext.XML) {
+      return fileType == StdFileTypes.XML;
+    }
+
+    if (templateContext.HTML && (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML)) return true;
+    if (templateContext.JSP && (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX)) return true;
+
+    return false;
+  }
+
   public boolean isApplicable(@NotNull PsiElement[] elements) {
-    return true;
+    final FileType fileType = elements[0].getContainingFile().getFileType();
+    return isApplicableForFileType(fileType);
   }
 
   @Nullable public TextRange surroundElements(@NotNull final Project project,
@@ -41,7 +57,7 @@ public class TemplateSurrounder implements Surrounder {
 
     final int endOffset = languageWithWSSignificant ?
                           editor.getSelectionModel().getSelectionEnd():
-                          elements[elements.length - 1].getTextRange().getStartOffset();
+                          elements[elements.length - 1].getTextRange().getEndOffset();
 
     editor.getCaretModel().moveToOffset(startOffset);
     editor.getSelectionModel().setSelection(startOffset, endOffset);
