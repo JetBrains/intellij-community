@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="UIDesignerCore" />
     <orderEntry type="library" name="BCEL" level="project" />
     <orderEntry type="module" module-name="forms_rt" />
-    <orderEntry type="library" name="asm-2.1" level="project" />
+    <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="NotNull" />
     <orderEntryProperties />
   </component>
