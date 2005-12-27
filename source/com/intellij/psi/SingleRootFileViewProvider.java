@@ -68,7 +68,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public synchronized PsiFile getPsi(Language target) {
-    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+    if(!isPhysical())
+      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     if (target != getBaseLanguage()) return null;
     return myPsiFile != null ? myPsiFile : (myPsiFile = createFile());
   }
