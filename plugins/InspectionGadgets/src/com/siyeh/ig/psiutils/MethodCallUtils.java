@@ -16,9 +16,10 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class MethodCallUtils {
 
@@ -68,5 +69,83 @@ public class MethodCallUtils {
         final PsiMethod method = (PsiMethod)element;
         return MethodUtils.methodMatches(method, methodName, parameterCount,
                 returnType);
+    }
+
+    public static boolean isApplicable(PsiMethod method,
+                                       PsiSubstitutor substitutorForMethod,
+                                       PsiType[] types) {
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        if (method.isVarArgs()) {
+            if (types.length < parameters.length - 1) {
+                return false;
+            }
+            final PsiParameter lastParameter =
+                    parameters[parameters.length - 1];
+            PsiType lastParameterType = lastParameter.getType();
+            if (!(lastParameterType instanceof PsiArrayType)) {
+                return false;
+            }
+            lastParameterType = substitutorForMethod.substituteAndCapture(
+                    lastParameterType);
+            if (lastParameter.isVarArgs()) {
+                for (int i = 0; i < parameters.length - 1; i++) {
+                    final PsiParameter parm = parameters[i];
+                    if (parm.isVarArgs()) {
+                        return false;
+                    }
+                    final PsiType argType = types[i];
+                    if (argType == null) {
+                        return false;
+                    }
+                    final PsiType parameterType = parameters[i].getType();
+                    final PsiType substitutedParmType =
+                            substitutorForMethod.substituteAndCapture(
+                                    parameterType);
+                    if (!TypeConversionUtil.isAssignable(substitutedParmType,
+                            argType)) {
+                        return false;
+                    }
+                }
+                if (types.length == parameters.length) {
+                    //call with array as vararg parameter
+                    final PsiType lastArgType = types[types.length - 1];
+                    if (lastArgType != null && TypeConversionUtil.isAssignable(
+                            lastParameterType, lastArgType)) {
+                        return true;
+                    }
+                }
+                final PsiArrayType arrayType = (PsiArrayType)lastParameterType;
+                final PsiType componentType = arrayType.getComponentType();
+                for (int i = parameters.length - 1; i < types.length; i++) {
+                    final PsiType argType = types[i];
+                    if (argType == null ||
+                            !TypeConversionUtil.isAssignable(componentType,
+                                    argType)) {
+                        return false;
+                    }
+                }
+            } else {
+                return false;
+            }
+        } else {
+            if (types.length != parameters.length) {
+                return false;
+            }
+            for (int i = 0; i < types.length; i++) {
+                final PsiType type = types[i];
+                if (type == null) {
+                    return false; //?
+                }
+                final PsiType parameterType = parameters[i].getType();
+                final PsiType substitutedParameterType =
+                        substitutorForMethod.substituteAndCapture(parameterType);
+                if (!TypeConversionUtil.isAssignable(substitutedParameterType,
+                        type)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
