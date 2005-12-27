@@ -267,7 +267,7 @@ class FormatProcessor {
       saveDependancy(spaceProperty);
     }
 
-    if (shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
+    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
       myAlignAgain.add(whiteSpace);
     } else {
       myAlignAgain.remove(whiteSpace);
