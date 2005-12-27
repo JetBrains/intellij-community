@@ -21,6 +21,7 @@ import java.util.*;
  */
 public class GenericInfoImpl implements DomGenericInfo {
   private final Class<? extends DomElement> myClass;
+  private DomManagerImpl myDomManager;
   private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods = new BidirectionalMap<JavaMethodSignature, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
   private final Map<JavaMethodSignature, String> myCollectionChildrenGetterMethods = new HashMap<JavaMethodSignature, String>();
@@ -31,8 +32,9 @@ public class GenericInfoImpl implements DomGenericInfo {
   private boolean myInitialized;
   private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
 
-  public GenericInfoImpl(final Class<? extends DomElement> aClass) {
+  public GenericInfoImpl(final Class<? extends DomElement> aClass, final DomManagerImpl domManager) {
     myClass = aClass;
+    myDomManager = domManager;
   }
 
   final int getFixedChildrenCount(String qname) {
@@ -124,9 +126,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Set<Method> methods = new HashSet<Method>(Arrays.asList(myClass.getMethods()));
     final Set<JavaMethodSignature> removedSignatures = new HashSet<JavaMethodSignature>();
 
-
-    final Implementation implAnno = DomUtil.findAnnotationDFS(myClass, Implementation.class);
-    final Class implClass = implAnno != null? implAnno.value():null;
+    final Class implClass = myDomManager.getImplementation(myClass);
     if (implClass != null) {
       for (Method method : implClass.getMethods()) {
         if (!Modifier.isAbstract(method.getModifiers())) {
@@ -185,8 +185,7 @@ public class GenericInfoImpl implements DomGenericInfo {
         for (Method method : methods) {
           sb.append("\n  "+method);
         }
-        System.out.println(sb);
-        //throw new AssertionError("No implementation for methods: " + sb.toString());
+        assert false: "No implementation for methods: " + sb.toString();
       }
     }
 
@@ -473,6 +472,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   public DomFixedChildDescription getFixedChildDescription(String tagName) {
     buildMethodMaps();
     final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
+    assert getterMethods.length > 0;
     return new FixedChildDescriptionImpl(tagName,
                                          getterMethods[0].getGenericReturnType(),
                                          getFixedChildrenCount(tagName),

@@ -94,12 +94,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     GenericInfoImpl genericInfoImpl = myMethodsMaps.get(type);
     if (genericInfoImpl == null) {
       if (type instanceof Class) {
-        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type);
+        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type, this);
         myMethodsMaps.put(type, genericInfoImpl);
       }
       else if (type instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType)type;
-        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType());
+        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType(), this);
         myMethodsMaps.put(type, genericInfoImpl);
       }
       else {
@@ -155,7 +155,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   @Nullable
-  private Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
+  Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
     final Class<? extends DomElement> registeredImplementation = findImplementationClassDFS(concreteInterface);
     if (registeredImplementation != null) {
       return registeredImplementation;
