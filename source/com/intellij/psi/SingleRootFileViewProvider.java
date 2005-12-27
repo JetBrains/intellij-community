@@ -24,6 +24,7 @@ import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.testFramework.MockVirtualFile;
 
@@ -66,7 +67,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return Collections.singleton(getBaseLanguage());
   }
 
-  public PsiFile getPsi(Language target) {
+  public synchronized PsiFile getPsi(Language target) {
     ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     if (target != getBaseLanguage()) return null;
     return myPsiFile != null ? myPsiFile : (myPsiFile = createFile());
@@ -100,7 +101,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   public void rootChanged(PsiFile psiFile) {
   }
 
-  public PsiFile getCachedPsi(Language target) {
+  public synchronized PsiFile getCachedPsi(Language target) {
     return myPsiFile;
   }
 
@@ -171,7 +172,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   @NotNull
-  public CharSequence getContents() {
+  public synchronized CharSequence getContents() {
     if(myModificationStamp != getModificationStamp()){
       contentsChanged();
     }
@@ -210,5 +211,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
                                                          getModificationStamp()),
                                      false);
     return clone;
+  }
+
+  public synchronized void forceCachedPsi(final PsiFile psiCodeFragment) {
+    myPsiFile = psiCodeFragment;
+    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
 }

@@ -49,7 +49,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
                                          new MockVirtualFile(
                                            name,
                                            FileTypeManager.getInstance().getFileTypeByFileName(name),
-                                           text), false));
+                                           text), isPhysical));
+    if(isPhysical) ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
   }
 

@@ -39,6 +39,7 @@ import java.util.Set;
 
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
+  final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
 
   private final Project myProject;
   private PsiManager myPsiManager;
@@ -121,6 +122,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+
+    if(!file.getViewProvider().isPhysical()){ // need to hold not physical elements by hard ref because it 
+      document.putUserData(HARD_REF_TO_PSI, file);
+    }
+
     fireDocumentCreated(document, file);
 
     return document;
