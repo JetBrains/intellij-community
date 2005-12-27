@@ -29,7 +29,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag"
-    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
+    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;">
     <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
     <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
     <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
