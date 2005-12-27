@@ -27,8 +27,8 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
     final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
     if (childrenInRange == null) {
       final PsiElement elementAt = file.findElementAt(startOffset);
-      if (elementAt instanceof XmlToken && ((XmlToken)elementAt).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS &&
-        elementAt.getTextRange().equals(new TextRange(startOffset, endOffset))) {
+      if (elementAt instanceof XmlToken &&
+          ((XmlToken)elementAt).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
         return new PsiElement[] {elementAt};
       }
       return PsiElement.EMPTY_ARRAY;
