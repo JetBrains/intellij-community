@@ -23,10 +23,10 @@ import java.lang.reflect.Type;
  */
 public class DomUIFactory {
   private static final Logger LOG;
-  private static Method GET_VALUE_METHOD = null;
-  private static Method SET_VALUE_METHOD = null;
-  private static Method GET_STRING_METHOD = null;
-  private static Method SET_STRING_METHOD = null;
+  public static Method GET_VALUE_METHOD = null;
+  public static Method SET_VALUE_METHOD = null;
+  public static Method GET_STRING_METHOD = null;
+  public static Method SET_STRING_METHOD = null;
 
   static {
     LOG = Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory");
