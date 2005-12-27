@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -62,6 +63,9 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(getManager(), new MockVirtualFile(getName(), FileTypeManager.getInstance().getFileTypeByFileName(getName()), getText()), false);
     dummyHolderViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = dummyHolderViewProvider;
+    final FileElement treeClone = (FileElement)calcTreeElement().clone();
+    clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    treeClone.setPsiElement(clone);
     return clone;
   }
 
