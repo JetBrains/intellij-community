@@ -17,6 +17,4 @@ public interface EditorEventMulticasterEx extends EditorEventMulticaster{
 
   void addFocusChangeListner(FocusChangeListener listener);
   void removeFocusChangeListner(FocusChangeListener listener);
-
-  DocumentListener getDocumentMulticaster();
 }
