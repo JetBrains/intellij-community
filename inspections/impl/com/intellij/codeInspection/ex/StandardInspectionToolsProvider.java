@@ -3,19 +3,17 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.canBeStatic.CanBeStaticInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
-import com.intellij.codeInspection.ejb.EJBErrorInspection;
-import com.intellij.codeInspection.ejb.EJBWarningInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
@@ -83,9 +81,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       JavaDocReferenceInspection.class,
       DeprecationInspection.class,
       EqualsAndHashcode.class,
-
-      EJBErrorInspection.class,
-      EJBWarningInspection.class,
 
       Java15APIUsageInspection.class,
 
