@@ -50,8 +50,15 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     boolean firstIsTag = node1.getPsi() instanceof XmlTag && !firstIsText;
     boolean secondIsTag = node2.getPsi() instanceof XmlTag && !secondIsText;
 
+    boolean firstIsEntityRef = isEntityRef(node1);
+    boolean secondIsEntityRef = isEntityRef(node2);
+
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
         return Spacing.getReadOnlySpacing();
+    }
+
+    if (firstIsEntityRef || secondIsEntityRef) {
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (type2 == ElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
@@ -118,6 +125,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     }
 
     return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
+  }
+
+  private boolean isEntityRef(final ASTNode node) {
+    return node.getElementType() == ElementType.XML_ENTITY_REF;
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {
