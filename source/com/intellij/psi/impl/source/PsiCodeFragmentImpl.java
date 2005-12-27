@@ -55,10 +55,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   }
 
   protected PsiCodeFragmentImpl clone() {
-    PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)super.clone();
+    final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl(getTreeElement());
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
+    final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(getManager(), new MockVirtualFile(getName(), FileTypeManager.getInstance().getFileTypeByFileName(getName()), getText()), false);
+    dummyHolderViewProvider.forceCachedPsi(clone);
+    clone.myViewProvider = dummyHolderViewProvider;
     return clone;
   }
 
