@@ -651,6 +651,10 @@
       <separator/>
       <reference ref="ShowSettings"/>
       <separator/>
+      <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction" icon="/com/intellij/uiDesigner/icons/preview.png"/>
+      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction" icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
+      <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
+      <separator/>
       <reference ref="HelpTopics"/>
       <separator/>
       <reference ref="CaptureMemorySnapShot"/>
@@ -1241,8 +1245,8 @@
     <!-- *********************** GUI designer actions ********************* -->
 
     <group id="GuiDesigner.EditorPopupMenu">
-      <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction" icon="/com/intellij/uiDesigner/icons/preview.png"/>
-      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction" icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
+      <reference ref="GuiDesigner.PreviewForm"/>
+      <reference ref="GuiDesigner.DataBindingWizard"/>
       <separator/>
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>

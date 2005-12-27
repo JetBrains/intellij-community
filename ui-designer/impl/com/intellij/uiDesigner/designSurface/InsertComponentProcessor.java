@@ -12,7 +12,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.PalettePanel;
+import com.intellij.uiDesigner.palette.PaletteWindow;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InsertComponentProcessor");
 
   private final GuiEditor myEditor;
-  private final PalettePanel myPalette;
+  private final PaletteWindow myPalette;
   private boolean mySticky;
   private DropInfo myDropInfo;
   private RadComponent myInsertedComponent;
@@ -39,7 +39,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private boolean myShouldSetPreferredSizeIfNotResized;
   private GridInsertProcessor myGridInsertProcessor;
 
-  public InsertComponentProcessor(final GuiEditor editor, final PalettePanel palette){
+  public InsertComponentProcessor(@NotNull final GuiEditor editor, @NotNull final PaletteWindow palette) {
     myEditor = editor;
     myPalette = palette;
     myGridInsertProcessor = new GridInsertProcessor(editor);

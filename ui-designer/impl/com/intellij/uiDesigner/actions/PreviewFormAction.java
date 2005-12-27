@@ -41,6 +41,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -86,27 +87,19 @@ public final class PreviewFormAction extends AnAction{
     final GuiEditor editor = getEditor(e.getDataContext());
 
     if(editor == null){
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
 
     final VirtualFile file = editor.getFile();
-    e.getPresentation().setEnabled(
+    e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
       FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM
     );
   }
 
-  private static void showPreviewFrame(final Module module, final VirtualFile formFile, final DataContext dataContext) {
-    if (module == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("module cannot be null");
-    }
-    if (formFile == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("formFile cannot be null");
-    }
-
+  private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
+                                       final DataContext dataContext) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");

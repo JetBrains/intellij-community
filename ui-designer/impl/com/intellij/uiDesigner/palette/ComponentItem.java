@@ -162,6 +162,16 @@ public final class ComponentItem implements Cloneable{
     return myClassName;
   }
 
+  public String getClassShortName() {
+    final int lastDotIndex = myClassName.lastIndexOf('.');
+    if (lastDotIndex != -1 && lastDotIndex != myClassName.length() - 1/*not the last char in class name*/) {
+      return myClassName.substring(lastDotIndex + 1);
+    }
+    else{
+      return myClassName;
+    }
+  }
+
   /**
    * @param className name of the class that will be instanteated when user drop
    * item on the form. Cannot be <code>null</code>. If the class does not exist or

@@ -22,11 +22,16 @@ import java.util.Locale;
  */
 public class ChooseLocaleAction extends ComboBoxAction {
   private GuiEditor myEditor;
+  private GuiEditor myLastEditor;
   private Presentation myPresentation;
+
+  public ChooseLocaleAction() {
+    this(null);
+  }
 
   public ChooseLocaleAction(GuiEditor editor) {
     myEditor = editor;
-    Locale locale = editor.getStringDescriptorLocale();
+    Locale locale = editor != null ? editor.getStringDescriptorLocale() : null;
     getTemplatePresentation().setText(locale == null || locale.getDisplayName().length() == 0
                                       ? UIDesignerBundle.message("choose.locale.default")
                                       : locale.getDisplayName());
@@ -41,27 +46,29 @@ public class ChooseLocaleAction extends ComboBoxAction {
 
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     DefaultActionGroup group = new DefaultActionGroup();
-    Locale[] locales = FormEditingUtil.collectUsedLocales(myEditor.getModule(), myEditor.getRootContainer());
-    Arrays.sort(locales, new Comparator<Locale>() {
-      public int compare(final Locale o1, final Locale o2) {
-        return o1.getDisplayName().compareTo(o2.getDisplayName());
+    GuiEditor editor = myLastEditor == null ? myEditor : myLastEditor;
+    if (editor != null) {
+      Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
+      Arrays.sort(locales, new Comparator<Locale>() {
+        public int compare(final Locale o1, final Locale o2) {
+          return o1.getDisplayName().compareTo(o2.getDisplayName());
+        }
+      });
+      for(Locale locale: locales) {
+        group.add(new SetLocaleAction(editor, locale));
       }
-    });
-    for(Locale locale: locales) {
-      group.add(new SetLocaleAction(myEditor, locale));
     }
     return group;
   }
 
   @Nullable private GuiEditor getEditor(final AnActionEvent e) {
     if (myEditor != null) return myEditor;
-    return GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    myLastEditor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    return myLastEditor;
   }
 
   public void update(AnActionEvent e) {
-    if (getEditor(e) == null) {
-      e.getPresentation().setEnabled(false);
-    }
+    e.getPresentation().setVisible(getEditor(e) != null);
   }
 
   private class SetLocaleAction extends AnAction {

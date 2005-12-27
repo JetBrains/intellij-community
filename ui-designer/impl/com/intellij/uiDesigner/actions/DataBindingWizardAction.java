@@ -139,18 +139,21 @@ public final class DataBindingWizardAction extends AnAction{
     final DataContext context = e.getDataContext();
     final Project project = (Project)context.getData(DataConstants.PROJECT);
     if(project == null){
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
 
     final VirtualFile vFile = (VirtualFile)context.getData(DataConstants.VIRTUAL_FILE);
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
-    if(!StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)){
-      e.getPresentation().setEnabled(false);
+    if (vFile == null) {
+      e.getPresentation().setVisible(false);
       return;
     }
-
-    e.getPresentation().setEnabled(true);
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
+    if(!StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)){
+      e.getPresentation().setVisible(false);
+      return;
+    }
+    e.getPresentation().setVisible(true);
   }
 
 

@@ -32,7 +32,8 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.palette.PalettePanel;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.PaletteWindow;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
@@ -133,7 +134,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Panel with components palette.
    */
-  @NotNull private final PalettePanel myPalettePanel;
+  //@NotNull private final PalettePanel myPalettePanel;
   /**
    * GuiEditor should not react on own events. If <code>myInsideChange</code>
    * is <code>true</code> then we do not react on incoming DocumentEvent.
@@ -263,8 +264,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     // Palette at the top
     // It is important to create palette toolbar after root container has been loaded
+    /*
     myPalettePanel = new PalettePanel(this);
     mainPaneAndToolbar.add(myPalettePanel, BorderLayout.NORTH);
+    */
     myProcessor = new MainProcessor(this);
     new MergeCellsToolbar(this);
 
@@ -710,9 +713,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
   }
 
-  @NotNull
-  public PalettePanel getPalettePanel() {
-    return myPalettePanel;
+  public PaletteWindow getPaletteWindow() {
+    return Palette.getInstance(getProject()).getPaletteWindow();
   }
 
   @NotNull

@@ -27,20 +27,16 @@ public final class MainProcessor extends EventProcessor{
   @NotNull private final GuiEditor myEditor;
 
   public MainProcessor(@NotNull final GuiEditor editor){
-    //noinspection ConstantConditions
-    if (editor == null){
-      throw new IllegalArgumentException("editor cannot be null");
-    }
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
-    myInsertComponentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPalettePanel());
+    myInsertComponentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPaletteWindow());
   }
 
   protected void processKeyEvent(final KeyEvent e){
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         if ((myCurrentProcessor != null && myCurrentProcessor.isDragActive()) ||
-            (myEditor.getPalettePanel().getActiveItem() != null && myCurrentProcessor != myInsertComponentProcessor)) {
+            (myEditor.getPaletteWindow().getActiveItem() != null && myCurrentProcessor != myInsertComponentProcessor)) {
           myEditor.setDesignTimeInsets(12);
         }
       }
@@ -117,7 +113,7 @@ public final class MainProcessor extends EventProcessor{
 
     Cursor cursor = Cursor.getDefaultCursor();
     if(id==MouseEvent.MOUSE_MOVED){
-      if (myEditor.getPalettePanel().getActiveItem() != null) {
+      if (myEditor.getPaletteWindow().getActiveItem() != null) {
         cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
       }
       else {
@@ -238,7 +234,7 @@ public final class MainProcessor extends EventProcessor{
     }
     */
 
-    final ComponentItem selectedItem = myEditor.getPalettePanel().getActiveItem();
+    final ComponentItem selectedItem = myEditor.getPaletteWindow().getActiveItem();
     if (selectedItem != null) {
       myInsertComponentProcessor.setSticky(e.isControlDown());
       myCurrentProcessor = myInsertComponentProcessor;
@@ -295,8 +291,8 @@ public final class MainProcessor extends EventProcessor{
         return true;
       }
     }
-    else if (myEditor.getPalettePanel().getActiveItem() != null) {
-      myEditor.getPalettePanel().clearActiveItem();
+    else if (myEditor.getPaletteWindow().getActiveItem() != null) {
+      myEditor.getPaletteWindow().clearActiveItem();
       myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
       return true;
     }
