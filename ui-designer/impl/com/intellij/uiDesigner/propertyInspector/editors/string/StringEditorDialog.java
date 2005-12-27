@@ -98,7 +98,7 @@ public final class StringEditorDialog extends DialogWrapper{
   @Override protected void doOKAction() {
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
-      if (descriptor != null) {
+      if (descriptor != null && descriptor.getKey().length() > 0) {
         final String value = myForm.myResourceBundleCard.myTfValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {

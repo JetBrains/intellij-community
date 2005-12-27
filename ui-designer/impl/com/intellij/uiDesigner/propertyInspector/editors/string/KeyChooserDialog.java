@@ -269,7 +269,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       NewKeyDialog dlg = new NewKeyDialog(getWindow());
       dlg.show();
       if (dlg.isOK()) {
-        if (StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue())) return;
+        if (!StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue())) return;
 
         fillPropertyList();
         myModel.update();
