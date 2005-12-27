@@ -236,7 +236,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (fileType == StdFileTypes.XML) {
       return TemplateContext.XML_CONTEXT;
     }
-    if (fileType == StdFileTypes.HTML) {
+    if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML) {
       return TemplateContext.HTML_CONTEXT;
     }
 
