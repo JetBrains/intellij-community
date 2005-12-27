@@ -648,15 +648,7 @@ public class CompileDriver {
         }
       }
       if (myShouldClearOutputDirectory) {
-        FileUtil.asyncDelete(outputDirectories);
-        // ensure output directories exist, create and refresh if not exist
-        final List<File> createdFiles = new ArrayList<File>(outputDirectories.size());
-        for (final File file : outputDirectories) {
-          if (file.mkdirs()) {
-            createdFiles.add(file);
-          }
-        }
-        CompilerUtil.refreshIOFiles(createdFiles);
+        clearOutputDirectories(outputDirectories);
       }
 
       clearCompilerSystemDirectory(context);
@@ -686,6 +678,25 @@ public class CompileDriver {
     });
 
     return outputDirs;
+  }
+
+  private static void clearOutputDirectories(final Set<File> outputDirectories) {
+    // do not delete directories themselves, or we'll get rootsChanged() otherwise
+    Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size()*2);
+    for (File outputDirectory : outputDirectories) {
+      File[] files = outputDirectory.listFiles();
+      if (files != null) filesToDelete.addAll(Arrays.asList(files));
+    }
+    FileUtil.asyncDelete(filesToDelete);
+
+    // ensure output directories exist, create and refresh if not exist
+    final List<File> createdFiles = new ArrayList<File>(outputDirectories.size());
+    for (final File file : outputDirectories) {
+      if (file.mkdirs()) {
+        createdFiles.add(file);
+      }
+    }
+    CompilerUtil.refreshIOFiles(createdFiles);
   }
 
   private void clearCompilerSystemDirectory(final CompileContext context) {

@@ -263,7 +263,8 @@ public class FileUtil {
   }
 
   private static File getTempFile(String originalFileName, File parent) {
-    for (int i = 0; ; i++) {
+    int randomSuffix = (int)(System.currentTimeMillis() % 1000);
+    for (int i = randomSuffix; ; i++) {
       @NonNls String name = "___" + originalFileName + i + ".__del__";
       File tempFile = new File(parent, name);
       if (!tempFile.exists()) return tempFile;
