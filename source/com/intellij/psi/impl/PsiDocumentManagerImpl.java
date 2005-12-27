@@ -324,7 +324,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public boolean isUncommited(Document document) {
-    if(myProcessDocumentEvents) return true;
     return myUncommittedDocuments.contains(document);
   }
 
