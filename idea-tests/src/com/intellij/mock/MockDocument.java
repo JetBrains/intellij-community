@@ -191,6 +191,10 @@ public class MockDocument implements DocumentEx {
 
   }
 
+  public boolean isInEventsHandling() {
+    return false;
+  }
+
   public void setCyclicBufferSize(int bufferSize) {
   }
 

@@ -23,6 +23,8 @@ public interface DocumentEx extends Document {
 
   void suppressGuardedExceptions();
   void unSuppressGuardedExceptions();
+
+  boolean isInEventsHandling();
 }
 
 

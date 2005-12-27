@@ -57,6 +57,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
+  private boolean myEventsHandling = false;
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -371,7 +372,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myGuardsSuppressed = false;
   }
 
+  public boolean isInEventsHandling() {
+    return myEventsHandling;
+  }
+
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
+    myEventsHandling = true;
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
 
     DocumentListener[] listeners = getCachedListeners();
@@ -388,20 +394,25 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
-    LOG.debug(event.toString());
-    myLineSet.changedUpdate(event);
-    setModificationStamp(newModificationStamp);
+    try{
+      LOG.debug(event.toString());
+      myLineSet.changedUpdate(event);
+      setModificationStamp(newModificationStamp);
 
-    updateRangeMarkers(event);
+      updateRangeMarkers(event);
 
-    DocumentListener[] listeners = getCachedListeners();
-    for (DocumentListener listener : listeners) {
-      try {
-        listener.documentChanged(event);
+      DocumentListener[] listeners = getCachedListeners();
+      for (DocumentListener listener : listeners) {
+        try {
+          listener.documentChanged(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+    }
+    finally{
+      myEventsHandling = false;
     }
   }
 
