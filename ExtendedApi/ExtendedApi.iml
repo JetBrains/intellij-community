@@ -21,6 +21,8 @@
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="inspections-openapi" />
+    <orderEntry type="module" module-name="J2EE" />
+    <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

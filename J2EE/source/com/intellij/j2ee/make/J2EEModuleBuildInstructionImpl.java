@@ -1,5 +1,7 @@
 package com.intellij.j2ee.make;
 
+import com.intellij.j2ee.J2EEBundle;
+import com.intellij.j2ee.make.impl.MakeUtilImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,17 +10,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.j2ee.make.impl.MakeUtilImpl;
-import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
-import java.util.Set;
 import java.util.Collection;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
-import org.jetbrains.annotations.NonNls;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.make.J2EEModuleBuildInstructionImpl");
@@ -41,8 +40,9 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      if (myBuildProperties.isExplodedEnabled()) {
-        File fromFile = new File(myBuildProperties.getExplodedPath());
+      boolean willBuild = ModuleBuilder.willBuild(myBuildProperties);
+      if (willBuild) {
+        File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
         MakeUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
         // copy dependencies
         buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {

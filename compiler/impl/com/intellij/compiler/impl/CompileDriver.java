@@ -452,7 +452,7 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, true);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -1031,7 +1031,7 @@ public class CompileDriver {
 
             if (outputDir != null) {
               if (!FileUtil.startsWith(outputPath, outputDir)) {
-                LOG.assertTrue(false, outputPath + " does not start with " + outputDir);
+                LOG.error(outputPath + " does not start with " + outputDir);
               }
               className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputDir.length(), outputPath.length()), '/');
             }
@@ -1056,7 +1056,7 @@ public class CompileDriver {
     });
   }
 
-  private boolean syncOutputDir(final Set<String> urlsWithSourceRemoved, final CompileContextImpl context, final Set<String> toDelete,
+  private static boolean syncOutputDir(final Set<String> urlsWithSourceRemoved, final CompileContextImpl context, final Set<String> toDelete,
                                 final TranslatingCompilerStateCache cache, final Set<File> outputDirectories) throws CacheCorruptedException {
 
     DeleteHelper deleteHelper = new DeleteHelper(outputDirectories);
@@ -1568,7 +1568,7 @@ public class CompileDriver {
     final String message = CompilerBundle.message(resourceId, modules.size(), names);
 
     if(ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(false, message);
+      LOG.error(message);
     }
 
     Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
