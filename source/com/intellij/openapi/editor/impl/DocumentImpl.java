@@ -377,7 +377,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
-    myEventsHandling = true;
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
 
     DocumentListener[] listeners = getCachedListeners();
@@ -390,6 +389,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
 
+    myEventsHandling = true;
     return event;
   }
 
