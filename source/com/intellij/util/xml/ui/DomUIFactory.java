@@ -47,22 +47,23 @@ public class DomUIFactory {
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
+    final DomFixedWrapper wrapper = new DomFixedWrapper(element);
     if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-      return new BooleanControl(element, GET_VALUE_METHOD, SET_VALUE_METHOD);
+      return new BooleanControl(wrapper);
     }
     else if (type.equals(String.class)) {
-      return new StringControl(element, GET_VALUE_METHOD, SET_VALUE_METHOD);
+      return new StringControl(wrapper);
     }
     else if (type.equals(PsiClass.class)) {
-      return new PsiClassControl(element, GET_STRING_METHOD, SET_STRING_METHOD);
+      return new PsiClassControl(wrapper);
     }
     else if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
-      return new EnumControl(element, (Class)type, GET_STRING_METHOD, SET_STRING_METHOD);
+      return new EnumControl(wrapper, (Class)type);
     }
     throw new IllegalArgumentException("Not supported: " + type);
   }
 
-  private static Method findMethod(Class clazz, String methodName) {
+  public static Method findMethod(Class clazz, String methodName) {
     final Method[] methods = clazz.getMethods();
     for (Method method : methods) {
       if (methodName.equals(method.getName())) {
