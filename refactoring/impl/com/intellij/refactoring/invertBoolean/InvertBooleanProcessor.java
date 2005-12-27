@@ -2,28 +2,29 @@ package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author ven
@@ -34,7 +35,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private PsiNamedElement myElement;
   private String myNewName;
   private RenameProcessor myRenameProcessor;
-  private SmartPsiElementPointer[] myUsagesToInvert;
+  private Map<UsageInfo, SmartPsiElementPointer> myToInvert = new HashMap<UsageInfo, SmartPsiElementPointer>();
   private SmartPointerManager mySmartPointerManager;
 
   public InvertBooleanProcessor(final PsiNamedElement namedElement, final String newName) {
@@ -111,22 +112,25 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
     final UsageInfo[] renameUsages = myRenameProcessor.findUsages();
 
-    //invert usages are not going to be filtered, so it is safe to save them in the private field
-    myUsagesToInvert = toInvert.toArray(new SmartPsiElementPointer[toInvert.size()]);
+    final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[toInvert.size()]);
 
     //merge rename and invert usages
-    Set<PsiElement> elements = new HashSet<PsiElement>();
+    Map<PsiElement, UsageInfo> expressionsToUsages = new HashMap<PsiElement, UsageInfo>();
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (UsageInfo renameUsage : renameUsages) {
-      elements.add(renameUsage.getElement());
+      expressionsToUsages.put(renameUsage.getElement(), renameUsage);
       result.add(renameUsage);
     }
 
-    for (SmartPsiElementPointer pointer : myUsagesToInvert) {
+    for (SmartPsiElementPointer pointer : usagesToInvert) {
       final PsiExpression expression = (PsiExpression)pointer.getElement();
-      if (!elements.contains(expression)) {
-        elements.add(expression);
-        result.add(new UsageInfo(expression)); //fake UsageInfo
+      if (!expressionsToUsages.containsKey(expression)) {
+        final UsageInfo usageInfo = new UsageInfo(expression);
+        expressionsToUsages.put(expression, usageInfo);
+        result.add(usageInfo); //fake UsageInfo
+        myToInvert.put(usageInfo, pointer);
+      } else {
+        myToInvert.put(expressionsToUsages.get(expression), pointer);
       }
     }
 
@@ -198,19 +202,22 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       });
     }
 
-    for (SmartPsiElementPointer invertUsage : myUsagesToInvert) {
-      PsiExpression expression = (PsiExpression)invertUsage.getElement();
-      LOG.assertTrue(expression != null);
-      if (expression.getParent() instanceof PsiMethodCallExpression) expression = (PsiExpression)expression.getParent();
-      try {
-        while (expression.getParent() instanceof PsiPrefixExpression &&
-               ((PsiPrefixExpression)expression.getParent()).getOperationSign().getTokenType() == JavaTokenType.EXCL) {
-          expression = (PsiExpression)expression.getParent();
+    for (UsageInfo usage : usages) {
+      final SmartPsiElementPointer pointerToInvert = myToInvert.get(usage);
+      if (pointerToInvert != null) {
+        PsiExpression expression = (PsiExpression)pointerToInvert.getElement();
+        LOG.assertTrue(expression != null);
+        if (expression.getParent() instanceof PsiMethodCallExpression) expression = (PsiExpression)expression.getParent();
+        try {
+          while (expression.getParent() instanceof PsiPrefixExpression &&
+                 ((PsiPrefixExpression)expression.getParent()).getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+            expression = (PsiExpression)expression.getParent();
+          }
+          expression.replace(CodeInsightServicesUtil.invertCondition(expression));
         }
-        expression.replace(CodeInsightServicesUtil.invertCondition(expression));
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
     }
   }
