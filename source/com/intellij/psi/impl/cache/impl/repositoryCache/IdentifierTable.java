@@ -9,14 +9,15 @@ import gnu.trove.THashMap;
  * @author max
  */
 public class IdentifierTable {
-    private THashMap<String, String> myMap = new THashMap<String, String>(10, 0.9f);
+  private THashMap<String, String> myMap = new THashMap<String, String>(10, 0.9f);
 
-    public String intern(String name) {
-        String entry = myMap.get(name);
-        if (entry == null) {
-            myMap.put(name, name);
-            entry = name;
-        }
-        return entry;
+  public String intern(String name) {
+    String entry = myMap.get(name);
+    if (entry == null) {
+      name = new String(name);
+      myMap.put(name, name);
+      entry = name;
     }
+    return entry;
+  }
 }
