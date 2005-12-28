@@ -10,6 +10,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -122,7 +123,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
       ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-      documentManager.commitDocument(documentManager.getDocument(this));
     }
     getPropertiesList().addChild(ChangeUtil.copyToElement(property));
     return property;
