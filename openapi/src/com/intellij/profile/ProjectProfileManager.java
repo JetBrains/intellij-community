@@ -30,7 +30,7 @@ import java.util.Map;
 public abstract class ProjectProfileManager implements ProfileManager, JDOMExternalizable {
 
   @Nullable
-  public static ProjectProfileManager getProjectProfileFactory(Project project, String profileType){
+  public static ProjectProfileManager getProjectProfileManager(Project project, String profileType){
     final ProjectProfileManager[] components = project.getComponents(ProjectProfileManager.class);
     for (ProjectProfileManager manager : components) {
       if (manager.getProfileType().compareTo(profileType) == 0){

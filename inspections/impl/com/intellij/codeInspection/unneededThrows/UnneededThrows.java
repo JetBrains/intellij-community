@@ -11,10 +11,7 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -41,7 +38,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod && !refElement.isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refElement;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this.getShortName())) return;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -109,7 +106,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (getDescriptions(refElement) != null) {
           refElement.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            public void visitMethod(final RefMethodImpl refMethod) {
               getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);
@@ -158,8 +155,8 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
       RefElement refElement = getElement(descriptor);
-      if (refElement.isValid() && refElement instanceof RefMethod) {
-        RefMethod refMethod = (RefMethod)refElement;
+      if (refElement.isValid() && refElement instanceof RefMethodImpl) {
+        RefMethodImpl refMethod = (RefMethodImpl)refElement;
         removeExcessiveThrows(refMethod);
       }
     }
@@ -168,7 +165,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void removeExcessiveThrows(RefMethod refMethod) {
+    private void removeExcessiveThrows(RefMethodImpl refMethod) {
       try {
         Project project = getManager().getProject();
         ProblemDescriptor[] problems = getDescriptions(refMethod);

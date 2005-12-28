@@ -38,7 +38,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
     for (Iterator iterator = content.iterator(); iterator.hasNext();) {
       Element entryElement = (Element) iterator.next();
       if ("entry_point".equals(entryElement.getName())) {
-        SmartRefElementPointer entryPoint = new SmartRefElementPointer(entryElement);
+        SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(entryElement);
         myFQNameToSmartEntryPointRef.put(entryPoint.getFQName(), entryPoint);
       }
     }
@@ -68,8 +68,8 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
           SmartRefElementPointer entryPoint = (SmartRefElementPointer) iterator.next();
           if (entryPoint.resolve(manager)) {
             RefElement refElement = entryPoint.getRefElement();
-            refElement.setEntry(true);
-            refElement.setPermanentEntry(entryPoint.isPersistent());
+            ((RefElementImpl)refElement).setEntry(true);
+            ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
           }
         }
       }
@@ -78,13 +78,13 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
 
   private void purgeTemporaryEntryPoints() {
     Collection collection = myFQNameToSmartEntryPointRef.values();
-    SmartRefElementPointer[] entries = (SmartRefElementPointer[]) collection.toArray(new SmartRefElementPointer[collection.size()]);
+    SmartRefElementPointerImpl[] entries = (SmartRefElementPointerImpl[]) collection.toArray(new SmartRefElementPointerImpl[collection.size()]);
     for (int i = 0; i < entries.length; i++) {
       SmartRefElementPointer entry = entries[i];
       if (!entry.isPersistent()) {
         myFQNameToSmartEntryPointRef.remove(entry.getFQName());
         RefElement refElement = entry.getRefElement();
-        if (refElement != null) refElement.setEntry(false);
+        if (refElement != null) ((RefElementImpl)refElement).setEntry(false);
         entry.freeReference();
       }
     }
@@ -102,7 +102,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
 
       ArrayList<RefMethod> refConstructors = refClass.getConstructors();
       if (refConstructors.size() == 1) {
-        addEntryPoint((RefElement) refConstructors.get(0), isPersistent);
+        addEntryPoint(refConstructors.get(0), isPersistent);
         return;
       } else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
@@ -116,10 +116,10 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
     }
 
     if (myFQNameToSmartEntryPointRef.get(newEntryPoint.getExternalName()) == null) {
-      SmartRefElementPointer entry = new SmartRefElementPointer(newEntryPoint, isPersistent);
+      SmartRefElementPointerImpl entry = new SmartRefElementPointerImpl(newEntryPoint, isPersistent);
       myFQNameToSmartEntryPointRef.put(entry.getFQName(), entry);
-      newEntryPoint.setEntry(true);
-      newEntryPoint.setPermanentEntry(entry.isPersistent());
+      ((RefElementImpl)newEntryPoint).setEntry(true);
+      ((RefElementImpl)newEntryPoint).setPermanentEntry(entry.isPersistent());
     }
   }
 
@@ -146,14 +146,14 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
 
     if (key != null) {
       myFQNameToSmartEntryPointRef.remove(key);
-      anEntryPoint.setEntry(false);
+      ((RefElementImpl)anEntryPoint).setEntry(false);
     }
   }
 
   public SmartRefElementPointer[] getEntryPoints() {
     validateEntryPoints();
     Collection collection = myFQNameToSmartEntryPointRef.values();
-    return (SmartRefElementPointer[]) collection.toArray(new SmartRefElementPointer[collection.size()]);
+    return (SmartRefElementPointer[]) collection.toArray(new SmartRefElementPointerImpl[collection.size()]);
   }
 
   public void projectOpened() {
@@ -173,7 +173,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
 
   private void validateEntryPoints() {
     Collection collection = myFQNameToSmartEntryPointRef.values();
-    SmartRefElementPointer[] entries = (SmartRefElementPointer[]) collection.toArray(new SmartRefElementPointer[collection.size()]);
+    SmartRefElementPointerImpl[] entries = (SmartRefElementPointerImpl[]) collection.toArray(new SmartRefElementPointerImpl[collection.size()]);
     for (int i = 0; i < entries.length; i++) {
       SmartRefElementPointer entry = entries[i];
       RefElement refElement = entry.getRefElement();

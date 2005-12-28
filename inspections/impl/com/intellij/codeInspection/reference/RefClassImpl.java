@@ -8,19 +8,20 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class RefClass extends RefElement {
+public class RefClassImpl extends RefElementImpl implements RefClass {
   private static final int IS_ANONYMOUS_MASK = 0x10000;
   private static final int IS_INTERFACE_MASK = 0x20000;
   private static final int IS_UTILITY_MASK   = 0x40000;
@@ -34,13 +35,13 @@ public class RefClass extends RefElement {
   private HashSet<RefClass> myBases;
   private HashSet<RefClass> mySubClasses;
   private ArrayList<RefMethod> myConstructors;
-  private RefMethod myDefaultConstructor;
+  private RefMethodImpl myDefaultConstructor;
   private ArrayList<RefMethod> myOverridingMethods;
   private HashSet<RefElement> myInTypeReferences;
   private HashSet<RefElement> myInstanceReferences;
   private ArrayList<RefElement> myClassExporters;
 
-  RefClass(PsiClass psiClass, RefManager manager) {
+  RefClassImpl(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
   }
 
@@ -60,22 +61,18 @@ public class RefClass extends RefElement {
       PsiJavaFile psiFile = (PsiJavaFile) psiParent;
       String packageName = psiFile.getPackageName();
       if (!"".equals(packageName)) {
-        getRefManager().getPackage(packageName).add(this);
+        ((RefPackageImpl)getRefManager().getPackage(packageName)).add(this);
       } else {
-        getRefManager().getRefProject().getDefaultPackage().add(this);
+        ((RefPackageImpl)getRefManager().getRefProject().getDefaultPackage()).add(this);
       }
 
-      setCanBeStatic(false);
     } else {
       while (!(psiParent instanceof PsiClass || psiParent instanceof PsiMethod || psiParent instanceof PsiField)) {
         psiParent = psiParent.getParent();
       }
         RefElement refParent = getRefManager().getReference(psiParent);
-      refParent.add(this);
+        ((RefElementImpl)refParent).add(this);
 
-      if (!(getOwner().getOwner() instanceof RefPackage)) {
-        setCanBeStatic(false);
-      }
     }
 
     setAbstract(psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
@@ -83,10 +80,6 @@ public class RefClass extends RefElement {
     setAnonymous(psiClass instanceof PsiAnonymousClass);
     setIsLocal(!(isAnonymous() || psiParent instanceof PsiClass || psiParent instanceof PsiFile));
     setInterface(psiClass.isInterface());
-
-    if (isAbstract() || isAnonymous() || isInterface()) {
-      setCanBeFinal(false);
-    }
 
     initializeSuperReferences(psiClass);
 
@@ -96,19 +89,22 @@ public class RefClass extends RefElement {
     setUtilityClass(psiMethods.length > 0 || psiFields.length > 0);
 
     for (PsiField psiField : psiFields) {
-      getRefManager().getFieldReference(this, psiField);
+      ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);
     }
 
-    if (!isApplet()) setServlet(getRefManager().getServlet() != null && psiClass.isInheritor(getRefManager().getServlet(), true));
+    if (!isApplet()) {
+      final PsiClass servlet = ((RefManagerImpl)getRefManager()).getServlet();
+      setServlet(servlet != null && psiClass.isInheritor(servlet, true));
+    }
     if (!isApplet() && !isServlet()) {
       setTestCase(JUnitUtil.isTestCaseClass(psiClass));
       for (RefClass refBase : getBaseClasses()) {
-        refBase.setTestCase(true);
+        ((RefClassImpl)refBase).setTestCase(true);
       }
     }
 
     for (PsiMethod psiMethod : psiMethods) {
-      RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
+      RefMethod refMethod = ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
 
       if (refMethod != null) {
         if (psiMethod.isConstructor()) {
@@ -118,7 +114,7 @@ public class RefClass extends RefElement {
 
           addConstructor(refMethod);
           if (psiMethod.getParameterList().getParameters().length == 0) {
-            setDefaultConstructor(refMethod);
+            setDefaultConstructor((RefMethodImpl)refMethod);
           }
         }
         else {
@@ -130,7 +126,7 @@ public class RefClass extends RefElement {
     }
 
     if (myConstructors.size() == 0 && !isInterface() && !isAnonymous()) {
-      RefImplicitConstructor refImplicitConstructor = new RefImplicitConstructor(this);
+      RefImplicitConstructorImpl refImplicitConstructor = new RefImplicitConstructorImpl(this);
       setDefaultConstructor(refImplicitConstructor);
       addConstructor(refImplicitConstructor);
     }
@@ -142,33 +138,29 @@ public class RefClass extends RefElement {
           setUtilityClass(false);
         }
       }
-
-      setCanBeStatic(false);
     }
 
-    if (isAnonymous()) {
-      setCanBeStatic(false);
-    }
 
-    setApplet(getRefManager().getApplet() != null && psiClass.isInheritor(getRefManager().getApplet(), true));
-
+    final PsiClass applet = ((RefManagerImpl)getRefManager()).getApplet();
+    setApplet(applet != null && psiClass.isInheritor(applet, true));
+    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
   }
 
   private void initializeSuperReferences(PsiClass psiClass) {
     if (!isSelfInheritor(psiClass)) {
       for (PsiClass psiSuperClass : psiClass.getSupers()) {
-        if (RefUtil.belongsToScope(psiSuperClass, getRefManager())) {
+        if (RefUtil.getInstance().belongsToScope(psiSuperClass, getRefManager())) {
           RefClass refClass = (RefClass)getRefManager().getReference(psiSuperClass);
           if (refClass != null) {
             myBases.add(refClass);
-            refClass.markOverriden(this);
+            refClass.getSubClasses().add(this);
           }
         }
       }
     }
   }
 
-  private static boolean isSelfInheritor(PsiClass psiClass) {
+  public boolean isSelfInheritor(PsiClass psiClass) {
     return isSelfInheritor(psiClass, new ArrayList<PsiClass>());
   }
 
@@ -184,10 +176,10 @@ public class RefClass extends RefElement {
     return false;
   }
 
-  private void setDefaultConstructor(RefMethod defaultConstructor) {
+  private void setDefaultConstructor(RefMethodImpl defaultConstructor) {
     if (defaultConstructor != null) {
       for (RefClass superClass : getBaseClasses()) {
-        RefMethod superDefaultConstructor = superClass.getDefaultConstructor();
+        RefMethodImpl superDefaultConstructor = (RefMethodImpl)superClass.getDefaultConstructor();
 
         if (superDefaultConstructor != null) {
           superDefaultConstructor.addInReference(defaultConstructor);
@@ -199,130 +191,40 @@ public class RefClass extends RefElement {
     myDefaultConstructor = defaultConstructor;
   }
 
-  private void markOverriden(RefClass subClass) {
-    mySubClasses.add(subClass);
-    setCanBeFinal(false);
-  }
-
   public void buildReferences() {
     PsiClass psiClass = (PsiClass) getElement();
 
     if (psiClass != null) {
       for (PsiClassInitializer classInitializer : psiClass.getInitializers()) {
-        RefUtil.addReferences(psiClass, this, classInitializer.getBody());
+        ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, classInitializer.getBody());
+      }
+
+      PsiField[] psiFields = psiClass.getFields();
+      for (PsiField psiField : psiFields) {
+        ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);
       }
 
       PsiMethod[] psiMethods = psiClass.getMethods();
-      PsiField[] psiFields = psiClass.getFields();
-
-      HashSet<PsiVariable> allFields = new HashSet<PsiVariable>();
-
-      for (PsiField psiField : psiFields) {
-        getRefManager().getFieldReference(this, psiField);
-        allFields.add(psiField);
-      }
-
-      ArrayList<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
-      boolean hasInitializers = false;
-      for (PsiClassInitializer initializer : psiClass.getInitializers()) {
-        PsiCodeBlock body = initializer.getBody();
-        if (body != null) {
-          hasInitializers = true;
-          ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-          ControlFlow flow;
-          try {
-            flow = analyzer.buildControlFlow();
-          }
-          catch (AnalysisCanceledException e) {
-            flow = ControlFlow.EMPTY;
-          }
-          PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
-          PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-          for (int j = 0; j < ssaVariables.length; j++) {
-            PsiVariable psiVariable = writtenVariables[j];
-            if (allFields.contains(psiVariable)) {
-              if (instanceInitializerInitializedFields.contains(psiVariable)) {
-                allFields.remove(psiVariable);
-                instanceInitializerInitializedFields.remove(psiVariable);
-              }
-              else {
-                instanceInitializerInitializedFields.add(psiVariable);
-              }
-            }
-          }
-          for (PsiVariable psiVariable : writtenVariables) {
-            if (!instanceInitializerInitializedFields.contains(psiVariable)) {
-              allFields.remove(psiVariable);
-            }
-          }
-        }
-      }
-
       for (PsiMethod psiMethod : psiMethods) {
-        RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
-
-        if (refMethod != null) {
-          if (psiMethod.isConstructor()) {
-            PsiCodeBlock body = psiMethod.getBody();
-            if (body != null) {
-              hasInitializers = true;
-              ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-              ControlFlow flow;
-              try {
-                flow = analyzer.buildControlFlow();
-              }
-              catch (AnalysisCanceledException e) {
-                flow = ControlFlow.EMPTY;
-              }
-
-              PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-              for (PsiVariable psiVariable : writtenVariables) {
-                if (instanceInitializerInitializedFields.contains(psiVariable)) {
-                  allFields.remove(psiVariable);
-                  instanceInitializerInitializedFields.remove(psiVariable);
-                }
-              }
-
-
-              List<PsiMethod> redirectedConstructors = HighlightControlFlowUtil.getRedirectedConstructors(psiMethod);
-              if ((redirectedConstructors == null || redirectedConstructors.isEmpty())) {
-                PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
-                ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(Arrays.asList(ssaVariables));
-                good.addAll(instanceInitializerInitializedFields);
-                allFields.retainAll(good);
-              }
-              else {
-                allFields.removeAll(Arrays.asList(writtenVariables));
-              }
-            }
-          }
-        }
-      }
-
-      for (PsiField psiField : psiFields) {
-        if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
-          RefField refField = (RefField)getRefManager().getReference(psiField);
-          refField.setCanBeFinal(false);
-        }
+        ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
       }
 
       EjbClassRole role = EjbRolesUtil.getEjbRole(psiClass);
       if (role != null) {
         setEjb(true);
-        setCanBeStatic(false);
-        setCanBeFinal(false);
         if (role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_HOME_INTERFACE ||
             role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_REMOTE_INTERFACE) {
           PsiClassType remoteExceptionType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.rmi.RemoteException", psiClass.getResolveScope());
           for (PsiMethod psiMethod : psiClass.getAllMethods()) {
-            if (!RefUtil.belongsToScope(psiMethod, getRefManager())) continue;
-            RefMethod refMethod = getRefManager().getMethodReference(this, psiMethod);
+            if (!RefUtil.getInstance().belongsToScope(psiMethod, getRefManager())) continue;
+            RefMethodImpl refMethod = (RefMethodImpl)((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
             if (refMethod != null) {
               refMethod.updateThrowsList(remoteExceptionType);
             }
           }
         }
       }
+      ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
     }
   }
 
@@ -372,7 +274,7 @@ public class RefClass extends RefElement {
     myOverridingMethods.add(refMethod);
   }
 
-  public ArrayList<RefMethod> getLibraryMethods() {
+  public List<RefMethod> getLibraryMethods() {
     return myOverridingMethods;
   }
 
@@ -423,7 +325,7 @@ public class RefClass extends RefElement {
     super.referenceRemoved();
 
     for (RefClass subClass : getSubClasses()) {
-      subClass.removeBase(this);
+      ((RefClassImpl)subClass).removeBase(this);
     }
 
     for (RefClass superClass : getBaseClasses()) {
@@ -468,17 +370,7 @@ public class RefClass extends RefElement {
     return checkFlag(IS_LOCAL_MASK);
   }
 
-  public boolean isCanBeStatic() {
-    for (RefClass refBase : getBaseClasses()) {
-      if (!refBase.isCanBeStatic()) {
-        setCanBeStatic(false);
-        return false;
-      }
-    }
-
-    return super.isCanBeStatic();
-  }
-
+ 
   public boolean isReferenced() {
     if (super.isReferenced()) return true;
 
@@ -505,7 +397,7 @@ public class RefClass extends RefElement {
     myClassExporters.add(exporter);
   }
 
-  public ArrayList<RefElement> getClassExporters() {
+  public List<RefElement> getClassExporters() {
     return myClassExporters;
   }
 

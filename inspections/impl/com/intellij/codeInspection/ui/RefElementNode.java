@@ -9,7 +9,9 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author max
@@ -47,9 +49,9 @@ public class RefElementNode extends InspectionTreeNode {
   public String toString() {
     final RefElement element = getElement();
     if (element instanceof RefImplicitConstructor) {
-      return RefUtil.getQualifiedName(((RefImplicitConstructor)element).getOwnerClass());
+      return RefUtil.getInstance().getQualifiedName(((RefImplicitConstructor)element).getOwnerClass());
     }
-    return RefUtil.getQualifiedName(element);
+    return RefUtil.getInstance().getQualifiedName(element);
   }
 
   public boolean isValid() {

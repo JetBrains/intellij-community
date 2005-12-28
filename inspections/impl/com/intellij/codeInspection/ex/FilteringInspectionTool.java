@@ -16,7 +16,7 @@ import java.util.*;
  */
 public abstract class FilteringInspectionTool extends InspectionTool {
   public abstract RefFilter getFilter();
-  HashMap<String, Set<RefElement>> myPackageContents = null;
+  HashMap<String, Set<RefElement>> myPackageContents = new HashMap<String, Set<RefElement>>();
   Set<RefElement> myIgnoreElements = new HashSet<RefElement>();
   public InspectionTreeNode[] getContents() {
     List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
@@ -40,7 +40,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     getManager().getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (!myIgnoreElements.contains(refElement) && refElement.isValid() && getFilter().accepts(refElement)) {
-          String packageName = RefUtil.getPackageName(refElement);
+          String packageName = RefUtil.getInstance().getPackageName(refElement);
           Set<RefElement> content = myPackageContents.get(packageName);
           if (content == null) {
             content = new HashSet<RefElement>();
@@ -68,6 +68,6 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   public void cleanup() {
     super.cleanup();
-    myPackageContents = null;
+    myPackageContents.clear();
   }
 }

@@ -15,21 +15,21 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.codeInspection.InspectionsBundle;
 import org.jetbrains.annotations.Nullable;
 
 
-public class RefFile extends RefElement {
-  RefFile(PsiFile elem, RefManager manager) {
+public class RefFileImpl extends RefElementImpl implements RefFile {
+  RefFileImpl(PsiFile elem, RefManager manager) {
     super(elem, manager);
     if (elem instanceof PsiJavaFile) {
-      manager.getPackage(((PsiJavaFile)elem).getPackageName()).add(this);
+      ((RefPackageImpl)manager.getPackage(((PsiJavaFile)elem).getPackageName())).add(this);
     } else {
       final Project project = elem.getProject();
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
@@ -57,12 +57,12 @@ public class RefFile extends RefElement {
                   String qualifiedName = aPackage.getQualifiedName();
                   final int prefixLength = folder.getPackagePrefix().length();
                   if (prefixLength > 0 && qualifiedName.length() > prefixLength){ //consider package prefixes
-                    manager.getPackage(qualifiedName.substring(prefixLength + 1)).add(this);
+                    ((RefPackageImpl)manager.getPackage(qualifiedName.substring(prefixLength + 1))).add(this);
                   } else {
                     if (qualifiedName.length() == 0) {
                       qualifiedName = InspectionsBundle.message("inspection.reference.default.package");
                     }
-                    manager.getPackage(qualifiedName).add(this);
+                    ((RefPackageImpl)manager.getPackage(qualifiedName)).add(this);
                   }
                   return;
                 }
@@ -84,6 +84,6 @@ public class RefFile extends RefElement {
   }
 
   protected void initialize() {
-
+    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
   }
 }

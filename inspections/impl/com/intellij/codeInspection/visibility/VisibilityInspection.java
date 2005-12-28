@@ -61,8 +61,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
       myPackageLocalForMembersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myPackageLocalForMembersCheckbox.isSelected();
-          SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = selected;
+          SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected();
         }
       });
 
@@ -73,8 +72,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
       myPackageLocalForTopClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myPackageLocalForTopClassesCheckbox.isSelected();
-          SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = selected;
+          SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected();
         }
       });
 
@@ -86,8 +84,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
       myPrivateForInnersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myPrivateForInnersCheckbox.isSelected();
-          SUGGEST_PRIVATE_FOR_INNERS = selected;
+          SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected();
         }
       });
 
@@ -115,9 +112,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
   public WeakerAccessFilter getFilter() {
     if (myFilter == null){
-      myFilter = new WeakerAccessFilter(isPackageLocalForMembersShouldBeSuggested(),
-                                        isPackageLocalForTopClassesShouldBeSuggested(),
-                                        isPrivateForInnersShouldBeSuggested());
+      myFilter = new WeakerAccessFilter(this);
 
     }
     return myFilter;
@@ -249,18 +244,6 @@ public class VisibilityInspection extends FilteringInspectionTool {
     return new JobDescriptor[]{InspectionManagerEx.BUILD_GRAPH, InspectionManagerEx.FIND_EXTERNAL_USAGES};
   }
 
-  private boolean isPackageLocalForMembersShouldBeSuggested() {
-    return SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS;
-  }
-
-  private boolean isPackageLocalForTopClassesShouldBeSuggested() {
-    return SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES;
-  }
-
-  private boolean isPrivateForInnersShouldBeSuggested() {
-    return SUGGEST_PRIVATE_FOR_INNERS;
-  }
-
   private void changeAccessLevel(PsiModifierListOwner psiElement, RefElement refElement, String newAccess) {
     try {
       if (psiElement instanceof PsiVariable) {
@@ -280,7 +263,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       }
 
       list.setModifierProperty(newAccess, true);
-      refElement.setAccessModifier(newAccess);
+      RefUtil.getInstance().setAccessModifier(refElement, newAccess);
       getFilter().addIgnoreList(refElement);
     }
     catch (IncorrectOperationException e) {

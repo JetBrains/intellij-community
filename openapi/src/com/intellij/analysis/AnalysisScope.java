@@ -17,6 +17,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -449,4 +451,39 @@ public class AnalysisScope {
     myFilesSet = null;
   }
 
+  public Set<String> getActiveInspectionProfiles() {
+    Set<String> result = new HashSet<String>();
+    if (myType == PROJECT || myType == CUSTOM){
+      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
+      LOG.assertTrue(profileManager != null);
+      result.addAll(profileManager.getProfilesUsedInProject().values());
+    } else if (myType == MODULE){
+      processModule(result, myModule);
+    } else if (myType == MODULES){
+      for (Module module : myModules) {
+        processModule(result, module);
+      }
+    } else if (myType == FILE || myType == DIRECTORY){
+      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
+      LOG.assertTrue(profileManager != null);
+      result.add(profileManager.getProfile(((PsiFile)myElement).getVirtualFile()));
+    } else if (myType == PACKAGE){
+      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
+      LOG.assertTrue(profileManager != null);
+      final PsiDirectory[] psiDirectories = ((PsiPackage)myElement).getDirectories();
+      for (PsiDirectory directory : psiDirectories) {
+        result.add(profileManager.getProfile(directory.getVirtualFile()));
+      }
+    }
+    return result;
+  }
+
+  private void processModule(final Set<String> result, final Module module) {
+    final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myModule.getProject(), Profile.INSPECTION);
+    LOG.assertTrue(profileManager != null);
+    final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+    for (VirtualFile file : files) {
+      result.add(profileManager.getProfile(file));
+    }
+  }
 }

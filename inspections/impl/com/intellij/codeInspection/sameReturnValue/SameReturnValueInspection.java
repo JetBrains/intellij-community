@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
 
@@ -30,7 +27,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refElement;
-            if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this.getShortName())) return;
+            if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -68,7 +65,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (getDescriptions(refElement) != null) {
           refElement.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            public void visitMethod(final RefMethodImpl refMethod) {
               getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);

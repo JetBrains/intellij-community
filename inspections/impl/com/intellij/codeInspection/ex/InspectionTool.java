@@ -9,21 +9,21 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 public abstract class InspectionTool implements JDOMExternalizable {
   private InspectionManagerEx myManager;
@@ -118,7 +118,7 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract void ignoreElement(RefElement refElement);
 
-  protected RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
+  protected static RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
     final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
     TreeUtil.traverseDepth(packageNode, new TreeUtil.Traverse() {
       public boolean accept(Object node) {

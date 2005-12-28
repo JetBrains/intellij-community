@@ -1,11 +1,13 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -41,6 +43,13 @@ public class QuickFixWrapper implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     myDescriptor.getFixes()[myFixNumber].applyFix(project, myDescriptor);
+    final PsiElement element = myDescriptor.getPsiElement();
+    if (element != null) {
+      final PsiFile fileForUndo = element.getContainingFile();
+      if (!Comparing.equal(fileForUndo, file)) {
+        UndoManager.getInstance(project).markDocumentForUndo(fileForUndo);
+      }
+    }
   }
 
   public boolean startInWriteAction() {

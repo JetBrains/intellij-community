@@ -10,10 +10,10 @@ package com.intellij.codeInspection.reference;
 
 
 
-public class RefPackage extends RefEntity {
+public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   private final String myQualifiedName;
 
-  public RefPackage(String name) {
+  public RefPackageImpl(String name) {
     super(getPackageSuffix(name));
     myQualifiedName = name;
   }

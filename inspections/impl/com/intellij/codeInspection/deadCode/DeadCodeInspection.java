@@ -83,8 +83,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
       myMainsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myMainsCheckbox.isSelected();
-          ADD_MAINS_TO_ENTRIES = selected;
+          ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected();
         }
       });
 
@@ -95,8 +94,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myEJBMethodsCheckbox.setSelected(ADD_EJB_TO_ENTRIES);
       myEJBMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myEJBMethodsCheckbox.isSelected();
-          ADD_EJB_TO_ENTRIES = selected;
+          ADD_EJB_TO_ENTRIES = myEJBMethodsCheckbox.isSelected();
         }
       });
       gc.gridy++;
@@ -106,8 +104,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myJUnitCheckbox.setSelected(ADD_JUNIT_TO_ENTRIES);
       myJUnitCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myJUnitCheckbox.isSelected();
-          ADD_JUNIT_TO_ENTRIES = selected;
+          ADD_JUNIT_TO_ENTRIES = myJUnitCheckbox.isSelected();
         }
       });
 
@@ -118,8 +115,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
       myAppletToEntries.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myAppletToEntries.isSelected();
-          ADD_APPLET_TO_ENTRIES = selected;
+          ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected();
         }
       });
       gc.gridy++;
@@ -129,8 +125,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
       myServletToEntries.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myServletToEntries.isSelected();
-          ADD_SERVLET_TO_ENTRIES = selected;
+          ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected();
         }
       });
       gc.gridy++;
@@ -141,8 +136,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
       myNonJavaCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myNonJavaCheckbox.isSelected();
-          ADD_NONJAVA_TO_ENTRIES = selected;
+          ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected();
         }
       });
 
@@ -358,7 +352,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public boolean queryExternalUsagesRequests() {
     checkForReachables();
-    final RefFilter filter = myPhase == 1 ? (RefFilter)new StrictUnreferencedFilter() : new RefUnreachableFilter();
+    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter() : new RefUnreachableFilter();
     final boolean[] requestAdded = new boolean[]{false};
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
@@ -583,7 +577,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
         psiElements.add(psiElement);
-        RefUtil.removeRefElement(refElement, deletedRefs);
+        RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -599,7 +593,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private class CommentOutBin extends QuickFixAction {
     public CommentOutBin() {
       super(InspectionsBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
-                                                        SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
+                                                                                                             SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
             DeadCodeInspection.this);
     }
 
@@ -609,7 +603,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
         commentOutDead(psiElement);
-        RefUtil.removeRefElement(refElement, deletedRefs);
+        RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
 
       EntryPointsManager entryPointsManager = getEntryPointsManager(getManager().getProject());
@@ -642,7 +636,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     // Cleanup previous reachability information.
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        refElement.setReachable(false);
+        ((RefElementImpl)refElement).setReachable(false);
         refElement.accept(new RefVisitor() {
           public void visitMethod(RefMethod method) {
             if (isAddMainsEnabled() && method.isAppMain()) {
@@ -703,16 +697,16 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             addInstantiatedClass(method.getOwnerClass());
           }
           else {
-            method.getOwnerClass().setReachable(true);
+            ((RefClassImpl)method.getOwnerClass()).setReachable(true);
           }
           myProcessedMethods.add(method);
-          makeContentReachable(method);
+          makeContentReachable((RefElementImpl)method);
           makeClassInitializersReachable(method.getOwnerClass());
         }
         else {
           if (isClassInstantiated(method.getOwnerClass())) {
             myProcessedMethods.add(method);
-            makeContentReachable(method);
+            makeContentReachable((RefElementImpl)method);
           }
           else {
             addDelayedMethod(method);
@@ -727,7 +721,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     public void visitClass(RefClass refClass) {
       boolean alreadyActive = refClass.isReachable();
-      refClass.setReachable(true);
+      ((RefClassImpl)refClass).setReachable(true);
 
       if (!alreadyActive) {
         // Process class's static intitializers.
@@ -740,29 +734,27 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     public void visitField(RefField field) {
       // Process class's static intitializers.
       if (!field.isReachable()) {
-        makeContentReachable(field);
+        makeContentReachable((RefElementImpl)field);
         makeClassInitializersReachable(field.getOwnerClass());
       }
     }
 
     private void addInstantiatedClass(RefClass refClass) {
       if (myInstantiatedClasses.add(refClass)) {
-        refClass.setReachable(true);
+        ((RefClassImpl)refClass).setReachable(true);
         myInstantiatedClassesCount++;
 
-        ArrayList<RefMethod> methods = refClass.getLibraryMethods();
-        for (int i = 0; i < methods.size(); i++) {
-          RefMethod refMethod = methods.get(i);
+        final java.util.List<RefMethod> refMethods = refClass.getLibraryMethods();
+        for (RefMethod refMethod : refMethods) {
           refMethod.accept(this);
         }
-
         for (RefClass baseClass : refClass.getBaseClasses()) {
           addInstantiatedClass(baseClass);
         }
       }
     }
 
-    private void makeContentReachable(RefElement refElement) {
+    private void makeContentReachable(RefElementImpl refElement) {
       refElement.setReachable(true);
       for (RefElement refCallee : refElement.getOutReferences()) {
         refCallee.accept(this);

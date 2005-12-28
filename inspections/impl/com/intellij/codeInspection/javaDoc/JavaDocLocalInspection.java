@@ -716,7 +716,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
-    int actualAccess = getAccessNumber(RefUtil.getAccessModifier(psiElement));
+    final RefUtil refUtil = RefUtil.getInstance();
+    int actualAccess = getAccessNumber(refUtil.getAccessModifier(psiElement));
     if (psiElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)psiElement;
       if (PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null) {
@@ -729,7 +730,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (psiElement instanceof PsiMethod) {
       psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       while (psiElement != null) {
-        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(RefUtil.getAccessModifier(psiElement)));
+        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(refUtil.getAccessModifier(psiElement)));
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 
@@ -739,7 +740,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (psiElement instanceof PsiField) {
       psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       while (psiElement != null) {
-        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(RefUtil.getAccessModifier(psiElement)));
+        actualAccess = Math.max(actualAccess, JavaDocLocalInspection.getAccessNumber(refUtil.getAccessModifier(psiElement)));
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 

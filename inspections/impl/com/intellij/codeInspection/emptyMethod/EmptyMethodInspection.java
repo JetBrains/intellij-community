@@ -39,7 +39,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refElement;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this.getShortName())) return;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -62,7 +62,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     String message = null;
     if (refMethod.isOnlyCallsSuper()) {
       RefMethod refSuper = findSuperWithBody(refMethod);
-      if (refSuper == null || RefUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
+      if (refSuper == null || RefUtil.getInstance().compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
         message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
       }
     }
@@ -102,7 +102,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return null;
   }
 
-  private boolean areAllImplementationsEmpty(RefMethod refMethod) {
+  private static boolean areAllImplementationsEmpty(RefMethod refMethod) {
     if (refMethod.hasBody() && !refMethod.isBodyEmpty()) return false;
 
     for (RefMethod refDerived : refMethod.getDerivedMethods()) {
@@ -131,7 +131,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
                   PsiCodeBlock body = derivedMethod.getBody();
                   if (body == null) return true;
                   if (body.getStatements().length == 0) return true;
-                  if (RefUtil.isMethodOnlyCallsSuper(derivedMethod)) return true;
+                  if (RefUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
 
                   ignoreElement(refMethod);
                   return false;
@@ -181,7 +181,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       RefElement refElement = getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);
-        RefMethod refMethod = (RefMethod)refElement;
+        RefMethodImpl refMethod = (RefMethodImpl)refElement;
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         if (refMethod.isOnlyCallsSuper()) {
           deleteMethod(refMethod, psiElements, refElements);
@@ -208,7 +208,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
         ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
         for (int i = 0; i < refElements.size(); i++) {
           RefElement element = refElements.get(i);
-          RefUtil.removeRefElement(element, deletedRefs);
+          RefUtil.getInstance().removeRefElement(element, deletedRefs);
         }
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -224,9 +224,9 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
+    private void deleteHierarchy(RefMethodImpl refMethod, List<PsiElement> result, List<RefElement> refElements) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
-      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
+      RefMethod[] refMethods = derivedMethods.toArray(new RefMethodImpl[derivedMethods.size()]);
       for (RefMethod refDerived : refMethods) {
         deleteMethod(refDerived, result, refElements);
       }

@@ -8,15 +8,14 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -91,7 +90,7 @@ public abstract class HTMLComposer {
     if (owner instanceof RefPackage) {
       buf.append(InspectionsBundle.message("inspection.export.results.package"));
       buf.append(NBSP).append(CODE_OPENING);
-      buf.append(RefUtil.getPackageName(refElement));
+      buf.append(RefUtil.getInstance().getPackageName(refElement));
       buf.append(CODE_CLOSING);
     }
     else if (owner instanceof RefMethod) {
@@ -330,7 +329,8 @@ public abstract class HTMLComposer {
 
     buf.append("\">");
 
-    if (RefUtil.isAnonymousClass(refElement)) {
+
+    if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
       buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
     }
     else if (refElement instanceof RefMethod) {
@@ -350,7 +350,7 @@ public abstract class HTMLComposer {
 
     buf.append(CODE_CLOSING);
 
-    if (RefUtil.isAnonymousClass(refElement)) {
+    if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
       buf.append(" ");
       buf.append(InspectionsBundle.message("inspection.export.results.anonymous.ref.in.owner"));
       buf.append(" ");

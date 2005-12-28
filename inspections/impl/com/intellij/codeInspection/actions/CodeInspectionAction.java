@@ -88,8 +88,15 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
+    final JCheckBox runWithEditorSettings = new JCheckBox("Run With Editor Settings", manager.RUN_WITH_EDITOR_PROFILE);
+    runWithEditorSettings.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        manager.RUN_WITH_EDITOR_PROFILE = runWithEditorSettings.isSelected();
+      }
+    });
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(component, BorderLayout.NORTH);
+    panel.add(runWithEditorSettings, BorderLayout.SOUTH);
     return panel;
   }
 

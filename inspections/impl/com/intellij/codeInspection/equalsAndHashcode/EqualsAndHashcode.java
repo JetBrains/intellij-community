@@ -55,7 +55,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
       }
 
       public void visitClass(PsiClass aClass) {
-        if (!InspectionManagerEx.isToCheckMember(aClass, EqualsAndHashcode.this.getShortName())) return;
+        if (!InspectionManagerEx.isToCheckMember(aClass, EqualsAndHashcode.this)) return;
         super.visitClass(aClass);
 
         boolean hasEquals = false;

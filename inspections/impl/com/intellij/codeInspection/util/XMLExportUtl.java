@@ -8,8 +8,8 @@
  */
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
@@ -92,12 +92,13 @@ public class XMLExportUtl {
     classElement.addContent(nameElement);
 
     Element displayName = new Element(InspectionsBundle.message("inspection.export.results.display.name"));
-    displayName.addContent(RefUtil.getQualifiedName(refClass));
+    final RefUtil refUtil = RefUtil.getInstance();
+    displayName.addContent(refUtil.getQualifiedName(refClass));
     classElement.addContent(displayName);
 
     parentNode.addContent(classElement);
 
-    RefClass topClass = RefUtil.getTopLevelClass(refClass);
+    RefClass topClass = refUtil.getTopLevelClass(refClass);
     if (topClass != refClass) {
       appendClass(topClass, classElement);
     }
@@ -120,10 +121,11 @@ public class XMLExportUtl {
     methodElement.addContent(shortNameElement);
 
     Element displayName = new Element(InspectionsBundle.message("inspection.export.results.display.name"));
-    displayName.addContent(RefUtil.getQualifiedName(refMethod));
+    final RefUtil refUtil = RefUtil.getInstance();
+    displayName.addContent(refUtil.getQualifiedName(refMethod));
     methodElement.addContent(displayName);
 
-    appendClass(RefUtil.getTopLevelClass(refMethod), methodElement);
+    appendClass(refUtil.getTopLevelClass(refMethod), methodElement);
 
     parentNode.addContent(methodElement);
   }
@@ -140,10 +142,11 @@ public class XMLExportUtl {
     fieldElement.addContent(shortNameElement);
 
     Element displayName = new Element(InspectionsBundle.message("inspection.export.results.display.name"));
-    displayName.addContent(RefUtil.getQualifiedName(refField));
+    final RefUtil refUtil = RefUtil.getInstance();
+    displayName.addContent(refUtil.getQualifiedName(refField));
     fieldElement.addContent(displayName);
 
-    appendClass(RefUtil.getTopLevelClass(refField), fieldElement);
+    appendClass(refUtil.getTopLevelClass(refField), fieldElement);
 
     parentNode.addContent(fieldElement);
   }

@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -92,6 +93,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   @NonNls private static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
   private InspectionProfile myExternalProfile = null;
+  public boolean RUN_WITH_EDITOR_PROFILE = false;
 
   public InspectionManagerEx(Project project) {
     myProject = project;
@@ -224,7 +226,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     //noinspection HardCodedStringLiteral
     Content content = PeerFactory.getInstance().getContentFactory().createContent(view, "FOOO", false);
 
-    content.setDisplayName(InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
+    content.setDisplayName(RUN_WITH_EDITOR_PROFILE ? "Inspection Results" : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
 
@@ -247,7 +249,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (!isToCheckMemberInAnnotation(owner, inspectionToolID)){
       return false;
     }
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);;
+    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);
     while (classContainer != null) {
       if (!isToCheckMemberInDocComment(classContainer, inspectionToolID)){
         return false;
@@ -258,6 +260,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       classContainer = classContainer.getContainingClass();
     }
     return true;
+  }
+
+  public static boolean isToCheckMember(PsiDocCommentOwner owner, InspectionTool tool){
+    if (((InspectionManagerEx)InspectionManagerEx.getInstance(owner.getProject())).RUN_WITH_EDITOR_PROFILE &&
+        InspectionProjectProfileManager.getInstance(owner.getProject()).getProfile(owner).getInspectionTool(tool.getShortName()) != tool) return false;
+    //!(tool instanceof LocalInspectionToolWrapper)
+    return isToCheckMember(owner, tool.getShortName());
   }
 
   @NotNull private static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierListOwner owner) {
@@ -449,7 +458,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     EntryPointsManager.getInstance(getProject()).cleanup();
 
     if (myRefManager != null) {
-      myRefManager.cleanup();
+      ((RefManagerImpl)myRefManager).cleanup();
       myRefManager = null;
       myCurrentScope = null;
     }
@@ -493,13 +502,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = new RefManager(myProject, myCurrentScope);
+      myRefManager = RefUtil.getInstance().getRefManager(myProject, myCurrentScope);
     }
 
     return myRefManager;
   }
 
-  public void launchInspectionsOffline(final AnalysisScope scope, OutputStream outStream) {
+  public void launchInspectionsOffline(final AnalysisScope scope, OutputStream outStream, final boolean runWithEditorSettings) {
     cleanup();
 
     myCurrentScope = scope;
@@ -509,7 +518,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        performInspectionsWithProgress(scope);
+        performInspectionsWithProgress(scope, runWithEditorSettings);
 
         InspectionTool[] tools = getCurrentProfile().getInspectionTools();
         for (InspectionTool tool : tools) {
@@ -586,7 +595,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             PsiMethod psiMethod = (PsiMethod)sortedID;
             final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refMethod));
+            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
 
             final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
             helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
@@ -613,7 +622,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             PsiField psiField = (PsiField)sortedID;
             final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refManager.getReference(psiField)));
+            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
 
             helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
           }
@@ -641,7 +650,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
             PsiMethod psiMethod = (PsiMethod)sortedID;
             final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
 
-            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refManager.getReference(psiMethod)));
+            incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
 
             helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
           }
@@ -739,7 +748,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       return;
     }
 
-    InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
+    InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope);
     if (!view.update()) {
       Messages.showMessageDialog(myProject,
                                  InspectionsBundle.message("inspection.no.problems.message"),
@@ -752,20 +761,20 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   private void performInspectionsWithProgress(final AnalysisScope scope) {
+    performInspectionsWithProgress(scope, RUN_WITH_EDITOR_PROFILE);
+  }
+  
+  private void performInspectionsWithProgress(final AnalysisScope scope, final boolean runWithEditorSettings) {
     try {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           try {
             PsiManager.getInstance(myProject).startBatchFilesProcessingMode();
-            getRefManager().inspectionReadActionStarted();
+            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
             EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
-
-            InspectionTool[] tools = getCurrentProfile().getInspectionTools();
-            ArrayList<LocalInspectionToolWrapper> localTools = initJobDescriptors(tools, scope);
-
             List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-            runTools(tools, localTools, needRepeatSearchRequest, scope);
+            runTools(needRepeatSearchRequest, scope, runWithEditorSettings);
             performPostRunFindUsages(needRepeatSearchRequest);
           }
           catch (ProcessCanceledException e) {
@@ -780,7 +789,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     }
     finally {
       if (myRefManager != null) {
-        getRefManager().inspectionReadActionFinished();
+        ((RefManagerImpl)getRefManager()).inspectionReadActionFinished();
       }
     }
   }
@@ -803,15 +812,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     while (needRepeatSearchRequest.size() > 0);
   }
 
-  private void runTools(InspectionTool[] tools,
-                        final ArrayList<LocalInspectionToolWrapper> localTools,
-                        List<InspectionTool> needRepeatSearchRequest,
-                        final AnalysisScope scope) {
+  private void runTools(List<InspectionTool> needRepeatSearchRequest, final AnalysisScope scope, final boolean runWithEditorSettings) {
+    InspectionTool[] tools = getCurrentProfile().getInspectionTools();
+    final ArrayList<LocalInspectionToolWrapper> localTools = initJobDescriptors(tools, scope);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (InspectionTool tool : tools) {
-      if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) tool.initialize(this);
-    }
-
+    final Map<Profile, List<LocalInspectionToolWrapper>> profileToToolsMap = new HashMap<Profile, List<LocalInspectionToolWrapper>>();
     try {
       scope.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -819,8 +824,26 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
         @Override
         public void visitFile(PsiFile file) {
+          List<LocalInspectionToolWrapper> tools = new ArrayList<LocalInspectionToolWrapper>();
+          if (runWithEditorSettings){
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getProfile(file);
+            if (profileToToolsMap.containsKey(profile)){
+              tools = profileToToolsMap.get(profile);
+            } else {
+              final InspectionTool[] localInspectionTools = profile.getInspectionTools();
+              for (InspectionTool tool : localInspectionTools) {
+                if (tool instanceof LocalInspectionToolWrapper){
+                  tool.initialize(InspectionManagerEx.this);
+                  tools.add((LocalInspectionToolWrapper)tool);
+                }
+              }
+              profileToToolsMap.put((Profile)profile, tools);
+            }
+          } else {
+            tools = localTools;
+          }
           incrementJobDoneAmount(LOCAL_ANALYSIS, file.getVirtualFile().getPresentableUrl());
-          for (LocalInspectionToolWrapper tool : localTools) {
+          for (LocalInspectionToolWrapper tool : tools) {
             tool.processFile(file);
             psiManager.dropResolveCaches();
           }
@@ -834,21 +857,27 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       LOG.error(e);
     }
 
-    for (InspectionTool tool : tools) {
-      if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName())) &&
-          !(tool instanceof LocalInspectionToolWrapper)) {
-        try {
-          tool.runInspection(scope);
-
-          if (tool.queryExternalUsagesRequests()) {
-            needRepeatSearchRequest.add(tool);
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+    final Set<String> profiles = scope.getActiveInspectionProfiles();
+    for (String profile : profiles) {
+      final InspectionProfile inspectionProfile = ((InspectionProfile)profileManager.getProfile(profile));
+      tools = inspectionProfile.getInspectionTools();
+      for (InspectionTool tool : tools) {
+        if (inspectionProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName())) &&
+            !(tool instanceof LocalInspectionToolWrapper)) {
+          try {
+            tool.initialize(this);
+            tool.runInspection(scope);
+            if (tool.queryExternalUsagesRequests()) {
+              needRepeatSearchRequest.add(tool);
+            }
           }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
       }
     }
@@ -859,16 +888,15 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myJobDescriptors = new ArrayList<JobDescriptor>();
     ArrayList<LocalInspectionToolWrapper> localTools = new ArrayList<LocalInspectionToolWrapper>();
     for (InspectionTool tool : tools) {
-      if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
-        if (tool instanceof LocalInspectionToolWrapper) {
-          LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) tool;
-          localTools.add(wrapper);
-          appendJobDescriptor(LOCAL_ANALYSIS);
-        } else {
-          JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
-          for (JobDescriptor jobDescriptor : jobDescriptors) {
-            appendJobDescriptor(jobDescriptor);
-          }
+      tool.initialize(this);
+      if (tool instanceof LocalInspectionToolWrapper) {
+        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) tool;
+        localTools.add(wrapper);
+        appendJobDescriptor(LOCAL_ANALYSIS);
+      } else {
+        JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
+        for (JobDescriptor jobDescriptor : jobDescriptors) {
+          appendJobDescriptor(jobDescriptor);
         }
       }
     }

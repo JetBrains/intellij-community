@@ -11,13 +11,14 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public abstract class RefEntity {
-  private RefEntity myOwner;
-  private ArrayList myChildren;
+public abstract class RefEntityImpl implements RefEntity {
+  private RefEntityImpl myOwner;
+  private ArrayList<RefEntity> myChildren;
   private final String myName;
 
-  protected RefEntity(String name) {
+  protected RefEntityImpl(String name) {
     myName = name != null ? name : InspectionsBundle.message("inspection.reference.noname");
     myOwner = null;
     myChildren = null;
@@ -27,7 +28,7 @@ public abstract class RefEntity {
     return myName;
   }
 
-  public ArrayList getChildren() {
+  public List<RefEntity> getChildren() {
     return myChildren;
   }
 
@@ -35,23 +36,23 @@ public abstract class RefEntity {
     return myOwner;
   }
 
-  private void setOwner(RefEntity owner) {
+  private void setOwner(RefEntityImpl owner) {
     myOwner = owner;
   }
 
   public void add(RefEntity child) {
     if (myChildren == null) {
-      myChildren = new ArrayList();
+      myChildren = new ArrayList<RefEntity>();
     }
 
     myChildren.add(child);
-    child.setOwner(this);
+    ((RefEntityImpl)child).setOwner(this);
   }
 
   protected void removeChild(RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
-      child.setOwner(null);
+      ((RefEntityImpl)child).setOwner(null);
     }
   }
 

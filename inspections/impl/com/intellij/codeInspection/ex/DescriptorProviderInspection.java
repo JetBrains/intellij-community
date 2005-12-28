@@ -174,7 +174,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     myPackageContents = new HashMap<String, Set<RefElement>>();
     final Set<RefElement> elements = myProblemElements.keySet();
     for (RefElement element : elements) {
-      String packageName = RefUtil.getPackageName(element);
+      String packageName = RefUtil.getInstance().getPackageName(element);
       Set<RefElement> content = myPackageContents.get(packageName);
       if (content == null) {
         content = new HashSet<RefElement>();

@@ -8,18 +8,17 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.psi.PsiModifierListOwner;
 
-import java.text.MessageFormat;
+public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
 
-public class RefImplicitConstructor extends RefMethod {
-
-  RefImplicitConstructor(RefClass ownerClass) {
+  RefImplicitConstructorImpl(RefClass ownerClass) {
     super(InspectionsBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
   }
 
   public void buildReferences() {
+    ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
   }
 
   public boolean isSuspicious() {
@@ -43,7 +42,7 @@ public class RefImplicitConstructor extends RefMethod {
   }
 
   public void setAccessModifier(String am) {
-    getOwnerClass().setAccessModifier(am);
+    RefUtil.getInstance().setAccessModifier(getOwnerClass(), am);
   }
 
   public PsiModifierListOwner getElement() {

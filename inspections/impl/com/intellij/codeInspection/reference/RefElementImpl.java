@@ -8,9 +8,11 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Stack;
 
-public abstract class RefElement extends RefEntity {
+public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
   private static final int ACCESS_MODIFIER_MASK = 0x03;
   private static final int ACCESS_PRIVATE = 0x00;
@@ -31,8 +33,7 @@ public abstract class RefElement extends RefEntity {
 
   private static final int IS_STATIC_MASK = 0x04;
   private static final int IS_FINAL_MASK = 0x08;
-  private static final int IS_CAN_BE_STATIC_MASK = 0x10;
-  private static final int IS_CAN_BE_FINAL_MASK = 0x20;
+
   private static final int IS_REACHABLE_MASK = 0x40;
   private static final int IS_ENTRY_MASK = 0x80;
   private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
@@ -49,7 +50,7 @@ public abstract class RefElement extends RefEntity {
   private int myFlags;
   private boolean myIsDeleted ;
 
-  protected RefElement(String name, RefElement owner) {
+  protected RefElementImpl(String name, RefElement owner) {
     super(name);
     myManager = owner.getRefManager();
     myID = null;
@@ -82,7 +83,7 @@ public abstract class RefElement extends RefEntity {
     }
   }
 
-  protected RefElement(PsiFile file, RefManager manager) {
+  protected RefElementImpl(PsiFile file, RefManager manager) {
     super(file.getName());
     myManager = manager;
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(file);
@@ -92,16 +93,13 @@ public abstract class RefElement extends RefEntity {
     myInReferences = new ArrayList<RefElement>(0);
   }
 
-  protected RefElement(PsiModifierListOwner elem, RefManager manager) {
-    super(RefUtil.getName(elem));
+  protected RefElementImpl(PsiModifierListOwner elem, RefManager manager) {
+    super(getName(elem));
     myManager = manager;
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(elem);
     myFlags = 0;
 
-    setCanBeStatic(true);
-    setCanBeFinal(true);
-
-    setAccessModifier(RefUtil.getAccessModifier(elem));
+    setAccessModifier(RefUtil.getInstance().getAccessModifier(elem));
 
     //TODO[ik?] need more proper way to identify synthetic JSP holders
     final boolean isSynth = elem instanceof JspHolderMethod || elem instanceof JspClass;
@@ -113,6 +111,31 @@ public abstract class RefElement extends RefEntity {
     myInReferences = new ArrayList<RefElement>(0);
 
     initialize(elem);
+  }
+
+   public static String getName(PsiElement element) {
+    if (element instanceof PsiAnonymousClass) {
+      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
+      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
+      return InspectionsBundle.message("inspection.reference.anonymous.name", (psiBaseClass != null ? psiBaseClass.getQualifiedName() : ""));
+    }
+
+    if (element instanceof JspClass) {
+      final JspClass jspClass = (JspClass)element;
+      final JspxFileImpl jspxFile = jspClass.getJspxFile();
+      return "<" + jspxFile.getName() + ">";
+    }
+
+    if (element instanceof JspHolderMethod) {
+      return InspectionsBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+    }
+
+    String name = null;
+    if (element instanceof PsiNamedElement) {
+      name = ((PsiNamedElement)element).getName();
+    }
+
+    return name == null ? InspectionsBundle.message("inspection.reference.anonymous") : name;
   }
 
   protected void initialize(PsiModifierListOwner elem) {
@@ -143,7 +166,7 @@ public abstract class RefElement extends RefEntity {
   public void buildReferences() {
   }
 
-  protected void markReferenced(final RefElement refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
+  protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
   }
 
@@ -171,8 +194,8 @@ public abstract class RefElement extends RefEntity {
     if (callStack.contains(this)) return refElement == this;
     if (getInReferences().size() == 0) return false;
 
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refElement instanceof RefMethodImpl) {
+      RefMethodImpl refMethod = (RefMethodImpl) refElement;
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (refSuper.getInReferences().size() > 0) return false;
       }
@@ -187,7 +210,7 @@ public abstract class RefElement extends RefEntity {
 
     callStack.push(this);
     for (RefElement refCaller : getInReferences()) {
-      if (!refCaller.isSuspicious() || !refCaller.isCalledOnlyFrom(refElement, callStack)) {
+      if (!refCaller.isSuspicious() || !((RefElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
       }
@@ -200,7 +223,7 @@ public abstract class RefElement extends RefEntity {
   public void addReference(RefElement refWhat, PsiElement psiWhat, PsiElement psiFrom, boolean forWriting, boolean forReading, PsiReferenceExpression expression) {
     if (refWhat != null) {
       addOutReference(refWhat);
-      refWhat.markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+      ((RefElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
     }
   }
 
@@ -236,32 +259,16 @@ public abstract class RefElement extends RefEntity {
     setFlag(isStatic, IS_STATIC_MASK);
   }
 
-  protected boolean checkFlag(int mask) {
+  public boolean checkFlag(int mask) {
     return (myFlags & mask) != 0;
   }
 
-  protected void setFlag(boolean b, int mask) {
+  public void setFlag(boolean b, int mask) {
     if (b) {
       myFlags |= mask;
     } else {
       myFlags &= ~mask;
     }
-  }
-
-  public void setCanBeStatic(boolean canBeStatic) {
-    setFlag(canBeStatic, IS_CAN_BE_STATIC_MASK);
-  }
-
-  public boolean isCanBeStatic() {
-    return checkFlag(IS_CAN_BE_STATIC_MASK);
-  }
-
-  public void setCanBeFinal(boolean canBeFinal) {
-    setFlag(canBeFinal, IS_CAN_BE_FINAL_MASK);
-  }
-
-  public boolean isCanBeFinal() {
-    return checkFlag(IS_CAN_BE_FINAL_MASK);
   }
 
   public boolean isUsesDeprecatedApi() {
@@ -339,7 +346,7 @@ public abstract class RefElement extends RefEntity {
   public void referenceRemoved() {
     myIsDeleted = true;
     if (getOwner() != null) {
-      getOwner().removeChild(this);
+      ((RefEntityImpl)getOwner()).removeChild(this);
     }
 
     for (RefElement refCallee : getOutReferences()) {

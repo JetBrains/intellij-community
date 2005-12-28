@@ -20,8 +20,12 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class RefManager {
+public class RefManagerImpl extends RefManager {
+
+  private int myLastUsedMask = 256*256*256*4;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
   private final Project myProject;
@@ -37,21 +41,19 @@ public class RefManager {
   private PsiClass myServlet;
   private boolean myIsInProcess = false;
 
-  public interface RefIterator {
-    void accept(RefElement refElement);
-  }
+  private List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
 
-  public RefManager(Project project, AnalysisScope scope) {
+  public RefManagerImpl(Project project, AnalysisScope scope) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
-    myRefProject = new RefProject(this);
+    myRefProject = new RefProjectImpl(this);
     myRefTable = new HashMap<PsiElement, RefElement>();
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
 
     myProjectIterator = new ProjectIterator();
 
+    final PsiManager psiManager = PsiManager.getInstance(project);
     PsiElementFactory factory = psiManager.getElementFactory();
     try {
       myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
@@ -81,12 +83,39 @@ public class RefManager {
 
   public void cleanup() {
     myRefTable = null;
+    myGraphAnnotators.clear();
   }
 
   public AnalysisScope getScope() {
     return myScope;
   }
 
+
+  public void fireNodeInitialized(RefElement refElement){
+    for (RefGraphAnnotator annotator : myGraphAnnotators) {
+      annotator.initialize(refElement);
+    }
+  }
+
+  public void fireNodeMarkedReferenced(RefElement refWhat,
+                                       RefElement refFrom,
+                                       boolean referencedFromClassInitializer){
+    for (RefGraphAnnotator annotator : myGraphAnnotators) {
+      annotator.markReferenced(refWhat, refFrom, referencedFromClassInitializer);
+    }
+  }
+
+  public void fireBuildReferences(RefElement refElement){
+    for (RefGraphAnnotator annotator : myGraphAnnotators) {
+      annotator.buildReferences(refElement);
+    }
+  }
+
+  public int registerGraphAnnotator(RefGraphAnnotator annotator){
+    myGraphAnnotators.add(annotator);
+    myLastUsedMask *= 2;
+    return myLastUsedMask;
+  }
 
   public void findAllDeclarations() {
     if (!myDeclarationsFound) {
@@ -145,15 +174,15 @@ public class RefManager {
 
     RefPackage refPackage = myPackages.get(packageName);
     if (refPackage == null) {
-      refPackage = new RefPackage(packageName);
+      refPackage = new RefPackageImpl(packageName);
       myPackages.put(packageName, refPackage);
 
       int dotIndex = packageName.lastIndexOf('.');
       if (dotIndex >= 0) {
-        getPackage(packageName.substring(0, dotIndex)).add(refPackage);
+        ((RefPackageImpl)getPackage(packageName.substring(0, dotIndex))).add(refPackage);
       }
       else {
-        getRefProject().add(refPackage);
+        ((RefProjectImpl)getRefProject()).add(refPackage);
       }
     }
 
@@ -183,6 +212,7 @@ public class RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
+    private final RefUtilImpl REF_UTIL = (RefUtilImpl)RefUtil.getInstance();
     public void visitElement(PsiElement element) {
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
@@ -207,13 +237,13 @@ public class RefManager {
     public void visitClass(PsiClass aClass) {
       if (!(aClass instanceof PsiTypeParameter)) {
         super.visitClass(aClass);
-        RefElement refClass = RefManager.this.getReference(aClass);
+        RefElement refClass = RefManagerImpl.this.getReference(aClass);
         if (refClass != null) {
-          refClass.buildReferences();
-          ArrayList children = refClass.getChildren();
+          ((RefClassImpl)refClass).buildReferences();
+          List children = refClass.getChildren();
           if (children != null) {
             for (Object aChildren : children) {
-              RefElement refChild = (RefElement)aChildren;
+              RefElementImpl refChild = (RefElementImpl)aChildren;
               refChild.buildReferences();
             }
           }
@@ -223,36 +253,32 @@ public class RefManager {
 
     public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
-      RefUtil.addTypeReference(variable, variable.getType(), RefManager.this);
+      REF_UTIL.addTypeReference(variable, variable.getType(), RefManagerImpl.this);
     }
 
     public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
       super.visitInstanceOfExpression(expression);
-      RefUtil.addTypeReference(expression, expression.getCheckType().getType(), RefManager.this);
+      final PsiTypeElement typeElement = expression.getCheckType();
+      if (typeElement != null) {
+        REF_UTIL.addTypeReference(expression, typeElement.getType(), RefManagerImpl.this);
+      }
     }
 
     public void visitThisExpression(PsiThisExpression expression) {
       super.visitThisExpression(expression);
-      if (expression.getQualifier() != null) {
-        RefUtil.addTypeReference(expression, expression.getType(), RefManager.this);
-        addInstanceReference(expression, (PsiClass)expression.getQualifier().resolve());
-      }
-    }
-
-    private void addInstanceReference(PsiThisExpression psiElement, PsiClass psiClass) {
-      RefClass ownerClass = RefUtil.getOwnerClass(RefManager.this, psiElement);
-
-      if (ownerClass != null) {
-        RefClass refClass = (RefClass)RefManager.this.getReference(psiClass);
-        if (refClass != null) {
-          refClass.addInstanceReference(ownerClass);
-        }
-
-        if (refClass != ownerClass) {
-          ownerClass.setCanBeStatic(false);
+      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+      if (qualifier != null) {
+        REF_UTIL.addTypeReference(expression, expression.getType(), RefManagerImpl.this);
+        RefClass ownerClass = RefUtil.getInstance().getOwnerClass(RefManagerImpl.this, expression);
+        if (ownerClass != null) {
+          RefClassImpl refClass = (RefClassImpl)RefManagerImpl.this.getReference(qualifier.resolve());
+          if (refClass != null) {
+            refClass.addInstanceReference(ownerClass);
+          }
         }
       }
     }
+
   }
 
   public PsiMethod getAppMainPattern() {
@@ -273,29 +299,29 @@ public class RefManager {
 
   @Nullable public RefElement getReference(PsiElement elem) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
-    if (elem != null && !(elem instanceof PsiPackage) && RefUtil.belongsToScope(elem, this)) {
+    if (elem != null && !(elem instanceof PsiPackage) && RefUtil.getInstance().belongsToScope(elem, this)) {
       if (!elem.isValid()) return null;
 
       RefElement ref = getRefTable().get(elem);
       if (ref == null) {
         if (elem instanceof PsiClass) {
-          ref = new RefClass((PsiClass)elem, this);
+          ref = new RefClassImpl((PsiClass)elem, this);
         }
         else if (elem instanceof PsiMethod) {
-          ref = new RefMethod((PsiMethod)elem, this);
+          ref = new RefMethodImpl((PsiMethod)elem, this);
         }
         else if (elem instanceof PsiField) {
-          ref = new RefField((PsiField)elem, this);
+          ref = new RefFieldImpl((PsiField)elem, this);
         }
         else if (elem instanceof PsiFile) {
-          ref = new RefFile((PsiFile)elem, this);
+          ref = new RefFileImpl((PsiFile)elem, this);
         }
         else {
           return null;
         }
 
         getRefTable().put(elem, ref);
-        ref.initialize();
+        ((RefElementImpl)ref).initialize();
       }
 
       return ref;
@@ -307,10 +333,10 @@ public class RefManager {
   public RefMethod getMethodReference(RefClass refClass, PsiMethod psiMethod) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
 
-    RefMethod ref = (RefMethod)getRefTable().get(psiMethod);
+    RefMethodImpl ref = (RefMethodImpl)getRefTable().get(psiMethod);
 
     if (ref == null) {
-      ref = new RefMethod(refClass, psiMethod, this);
+      ref = new RefMethodImpl(refClass, psiMethod, this);
       ref.initialize();
       getRefTable().put(psiMethod, ref);
     }
@@ -320,10 +346,10 @@ public class RefManager {
 
   public RefField getFieldReference(RefClass refClass, PsiField psiField) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
-    RefField ref = (RefField)getRefTable().get(psiField);
+    RefFieldImpl ref = (RefFieldImpl)getRefTable().get(psiField);
 
     if (ref == null) {
-      ref = new RefField(refClass, psiField, this);
+      ref = new RefFieldImpl(refClass, psiField, this);
       ref.initialize();
       getRefTable().put(psiField, ref);
     }
@@ -336,8 +362,8 @@ public class RefManager {
     RefElement ref = getRefTable().get(param);
 
     if (ref == null) {
-      ref = new RefParameter(param, index, this);
-      ref.initialize();
+      ref = new RefParameterImpl(param, index, this);
+      ((RefParameterImpl)ref).initialize();
       getRefTable().put(param, ref);
     }
 

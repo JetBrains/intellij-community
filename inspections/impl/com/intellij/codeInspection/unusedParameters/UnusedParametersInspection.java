@@ -12,10 +12,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefParameter;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,13 +49,13 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
         if (getRefManager().getScope().getScopeType() != AnalysisScope.PROJECT) {
           ProgressManager.getInstance().runProcess(new Runnable() {
             public void run() {
-              final UnusedParametersFilter filter = new UnusedParametersFilter();
+              final UnusedParametersFilter filter = getFilter();
               final PsiSearchHelper helper = PsiManager.getInstance(getManager().getProject()).getSearchHelper();
 
               getRefManager().iterate(new RefManager.RefIterator() {
                 public void accept(RefElement refElement) {
                   if (filter.accepts(refElement)) {
-                    RefMethod refMethod = (RefMethod) refElement;
+                    RefMethodImpl refMethod = (RefMethodImpl) refElement;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
                     if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                       PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getManager().getProject()), true);
@@ -99,7 +96,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
   public UnusedParametersFilter getFilter() {
     if (myFilter == null) {
-      myFilter = new UnusedParametersFilter();
+      myFilter = new UnusedParametersFilter(this);
     }
     return myFilter;
   }
@@ -109,7 +106,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
   }
 
   public void exportResults(final Element parentNode) {
-    final UnusedParametersFilter filter = new UnusedParametersFilter();
+    final UnusedParametersFilter filter = getFilter();
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (filter.accepts(refElement)) {
@@ -150,10 +147,9 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
         if (psiMethod == null) continue;
 
-        ArrayList psiParameters = new ArrayList();
-        UnusedParametersFilter filter = (UnusedParametersFilter)getFilter();
-        for (Iterator paramIterator = filter.getUnusedParameters(refMethod).iterator(); paramIterator.hasNext();) {
-          RefParameter refParameter = (RefParameter) paramIterator.next();
+        ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
+        UnusedParametersFilter filter = getFilter();
+        for (final RefParameter refParameter : filter.getUnusedParameters(refMethod)) {
           psiParameters.add(refParameter.getElement());
         }
 
@@ -185,8 +181,8 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return myComposer;
   }
 
-  private void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod, final Collection parametersToDelete) {
-    ArrayList newParameters = new ArrayList();
+  private void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod, final Collection<PsiElement> parametersToDelete) {
+    ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
     PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
     for (int i = 0; i < oldParameters.length; i++) {
       PsiParameter oldParameter = oldParameters[i];

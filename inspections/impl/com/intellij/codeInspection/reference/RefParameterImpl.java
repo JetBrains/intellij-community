@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
-public class RefParameter extends RefElement {
+public class RefParameterImpl extends RefElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final String VALUE_UNDEFINED = "#";
@@ -20,7 +20,7 @@ public class RefParameter extends RefElement {
   private final short myIndex;
   private String myActualValueTemplate;
 
-  RefParameter(PsiParameter parameter, int index, RefManager manager) {
+  RefParameterImpl(PsiParameter parameter, int index, RefManager manager) {
     super(parameter, manager);
 
     myIndex = (short)index;
@@ -59,10 +59,6 @@ public class RefParameter extends RefElement {
     return myIndex;
   }
 
-  protected void initialize(PsiElement elem) {
-    // Empty is important here. Final modifier is externally set by RefMethod.buildReferences.
-  }
-
   public void updateTemplateValue(PsiExpression expression) {
     if (myActualValueTemplate == null) return;
 
@@ -95,11 +91,7 @@ public class RefParameter extends RefElement {
     return myActualValueTemplate;
   }
 
-  public void initializeFinalFlag() {
-    setIsFinal(((PsiModifierListOwner)getElement()).hasModifierProperty(PsiModifier.FINAL));
-  }
-
   protected void initialize() {
-
+    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
   }
 }

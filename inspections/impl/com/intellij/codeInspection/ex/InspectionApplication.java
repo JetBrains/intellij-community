@@ -34,6 +34,7 @@ public class InspectionApplication {
   public String myOutPath = null;
   public String mySourceDirectory = null;
   public String myProfileName = null;
+  public boolean myRunWithEditorSettings = false;
   private Project myProject;
   private int myVerboseLevel = 0;
 
@@ -119,7 +120,7 @@ public class InspectionApplication {
 
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          im.launchInspectionsOffline(scope, outStream);
+          im.launchInspectionsOffline(scope, outStream, myRunWithEditorSettings);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");

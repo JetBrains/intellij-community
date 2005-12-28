@@ -15,31 +15,29 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class RefField extends RefElement {
+public class RefFieldImpl extends RefElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
 
-  RefField(PsiField field, RefManager manager) {
+  RefFieldImpl(PsiField field, RefManager manager) {
       this((RefClass) manager.getReference(field.getContainingClass()), field, manager);
   }
 
-  RefField(RefClass ownerClass, PsiField field, RefManager manager) {
+  RefFieldImpl(RefClass ownerClass, PsiField field, RefManager manager) {
     super(field, manager);
 
-    ownerClass.add(this);
+    ((RefClassImpl)ownerClass).add(this);
 
     PsiClass psiClass = field.getContainingClass();
 
     if (psiClass.isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
-    }
-
-    setCanBeStatic(isStatic());
+    }    
   }
 
-  protected void markReferenced(RefElement refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
+  protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     super.markReferenced(refFrom, psiFrom, psiWhat, forWriting, forReading, expressionFrom);
 
     boolean referencedFromClassInitializer = false;
@@ -55,18 +53,12 @@ public class RefField extends RefElement {
 
     if (forWriting) {
       setUsedForWriting(true);
-      if (!(refFrom instanceof RefMethod) ||
-          !((RefMethod)refFrom).isConstructor() ||
-          ((PsiField) psiWhat).hasInitializer()) {
-        if (!referencedFromClassInitializer) {
-          setCanBeFinal(false);
-        }
-      }
     }
 
     if (forReading) {
       setUsedForReading(true);
     }
+    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer);
   }
 
   public boolean isUsedForReading() {
@@ -97,10 +89,11 @@ public class RefField extends RefElement {
   public void buildReferences() {
     PsiField psiField = (PsiField) getElement();
     if (psiField != null) {
-      RefUtil.addReferences(psiField, this, psiField.getInitializer());
+      final RefUtilImpl refUtil = (RefUtilImpl)RefUtil.getInstance();
+      refUtil.addReferences(psiField, this, psiField.getInitializer());
 
       if (psiField instanceof PsiEnumConstant) {
-        RefUtil.addReferences(psiField, this, psiField);
+        refUtil.addReferences(psiField, this, psiField);
       }
 
       if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
@@ -112,14 +105,14 @@ public class RefField extends RefElement {
       PsiType type = psiField.getType();
       if (type != null) {
         PsiType psiType = type;
-        RefClass ownerClass = RefUtil.getOwnerClass(getRefManager(), psiField);
+        RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), psiField);
 
         if (ownerClass != null) {
           psiType = psiType.getDeepComponentType();
           if (psiType instanceof PsiClassType) {
             PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-            if (psiClass != null && RefUtil.belongsToScope(psiClass, getRefManager())) {
-                RefClass refClass = (RefClass) getRefManager().getReference(psiClass);
+            if (psiClass != null && refUtil.belongsToScope(psiClass, getRefManager())) {
+                RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
               if (refClass != null) {
                 refClass.addTypeReference(ownerClass);
                 refClass.addClassExporter(this);
@@ -128,6 +121,7 @@ public class RefField extends RefElement {
           }
         }
       }
+      ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
     }
   }
 
@@ -161,7 +155,7 @@ public class RefField extends RefElement {
       String className = externalName.substring(0, lastDotIdx);
       String fieldName = externalName.substring(lastDotIdx + 1);
 
-      if (RefClass.classFromExternalName(manager, className) != null) {
+      if (RefClassImpl.classFromExternalName(manager, className) != null) {
         PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(className);
         if (psiClass != null) {
           PsiField psiField = psiClass.findFieldByName(fieldName, false);
@@ -183,6 +177,6 @@ public class RefField extends RefElement {
   }
 
   protected void initialize() {
-
+    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
   }
 }

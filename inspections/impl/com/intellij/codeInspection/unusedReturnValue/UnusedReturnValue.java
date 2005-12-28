@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,9 +29,9 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
 
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        if (refElement instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod) refElement;
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnusedReturnValue.this.getShortName())) return;
+        if (refElement instanceof RefMethodImpl) {
+          RefMethodImpl refMethod = (RefMethodImpl) refElement;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnusedReturnValue.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -41,7 +41,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
     });
   }
 
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
+  private ProblemDescriptor[] checkMethod(RefMethodImpl refMethod) {
     if (refMethod.isConstructor()) return null;
     if (refMethod.isLibraryOverride()) return null;
     if (refMethod.getInReferences().size() == 0) return null;
@@ -61,7 +61,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (getDescriptions(refElement) != null) {
           refElement.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            public void visitMethod(final RefMethodImpl refMethod) {
               getManager().enqueueMethodUsagesProcessor(refMethod, new InspectionManagerEx.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   ignoreElement(refMethod);
@@ -110,8 +110,8 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
       RefElement refElement = getElement(descriptor);
-      if (refElement.isValid() && refElement instanceof RefMethod) {
-        RefMethod refMethod = (RefMethod)refElement;
+      if (refElement.isValid() && refElement instanceof RefMethodImpl) {
+        RefMethodImpl refMethod = (RefMethodImpl)refElement;
         makeMethodVoid(refMethod);
       }
     }
@@ -120,7 +120,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void makeMethodVoid(RefMethod refMethod) {
+    private void makeMethodVoid(RefMethodImpl refMethod) {
       PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
       if (psiMethod == null) return;
       PsiParameter[] params = psiMethod.getParameterList().getParameters();

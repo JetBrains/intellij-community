@@ -9,16 +9,16 @@
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -62,8 +62,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myReportClassesCheckbox.isSelected();
-          REPORT_CLASSES = selected;
+          REPORT_CLASSES = myReportClassesCheckbox.isSelected();
         }
       });
       gc.gridy = 0;
@@ -73,8 +72,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myReportMethodsCheckbox.isSelected();
-          REPORT_METHODS = selected;
+          REPORT_METHODS = myReportMethodsCheckbox.isSelected();
         }
       });
       gc.gridy++;
@@ -84,8 +82,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myReportFieldsCheckbox.isSelected();
-          REPORT_FIELDS = selected;
+          REPORT_FIELDS = myReportFieldsCheckbox.isSelected();
         }
       });
 
@@ -112,6 +109,8 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   }
 
   public void runInspection(AnalysisScope scope) {
+    final int mask = getRefManager().registerGraphAnnotator(new CanBeFinalAnnotator(this));
+    CanBeFinalAnnotator.registerMask(mask);
     getRefManager().findAllDeclarations();
   }
 
@@ -126,7 +125,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
                   !(refMethod instanceof RefImplicitConstructor)) {
                 getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
-                    refMethod.setCanBeFinal(false);
+                    refMethod.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                 });
@@ -137,7 +136,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
               if (!refClass.isAnonymous()) {
                 getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
-                    refClass.setCanBeFinal(false);
+                    refClass.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                 });
@@ -149,7 +148,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
                 public boolean process(PsiReference psiReference) {
                   PsiElement expression = psiReference.getElement();
                   if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
-                    refField.setCanBeFinal(false);
+                    refField.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                   return true;
@@ -232,7 +231,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       LOG.error(e);
     }
 
-    refElement.setIsFinal(true);
+    RefUtil.getInstance().setIsFinal(refElement, true);
   }
 
   private class AcceptSuggested extends QuickFixAction {
@@ -241,8 +240,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
 
         if (psiElement == null) continue;
@@ -252,4 +250,5 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       return true;
     }
   }
+
 }
