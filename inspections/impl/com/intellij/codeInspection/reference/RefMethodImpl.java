@@ -385,10 +385,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   public boolean isLibraryOverride() {
-    return isLibraryOverride(new HashSet<RefMethodImpl>());
+    return isLibraryOverride(new HashSet<RefMethod>());
   }
 
-  private boolean isLibraryOverride(Collection<RefMethodImpl> processed) {
+  private boolean isLibraryOverride(Collection<RefMethod> processed) {
     if (processed.contains(this)) return false;
     processed.add(this);
 

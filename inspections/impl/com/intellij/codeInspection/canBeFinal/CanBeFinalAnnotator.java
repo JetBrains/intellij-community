@@ -52,8 +52,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
         }
       }
     }
-    else if (refElement instanceof RefMethodImpl) {
-      final RefMethodImpl refMethod = (RefMethodImpl)refElement;
+    else if (refElement instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refElement;
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
       if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
           PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || refMethod.getOwnerClass().isAnonymous() ||
@@ -66,7 +66,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       }
       for (PsiMethod psiSuperMethod : psiMethod.findSuperMethods()) {
         if (RefUtil.getInstance().belongsToScope(psiSuperMethod, myManager)) {
-          RefMethodImpl refSuperMethod = (RefMethodImpl)myManager.getReference(psiSuperMethod);
+          RefMethod refSuperMethod = (RefMethod)myManager.getReference(psiSuperMethod);
           if (refSuperMethod != null) {
             refSuperMethod.setFlag(false, CAN_BE_FINAL_MASK);
           }
@@ -77,7 +77,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
 
   public void markReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
     if (!(refWhat instanceof RefField)) return;
-    if (!(refFrom instanceof RefMethodImpl) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer()) {
+    if (!(refFrom instanceof RefMethod) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer()) {
       if (!referencedFromClassInitializer) {
         refWhat.setFlag(false, CAN_BE_FINAL_MASK);
       }
@@ -178,8 +178,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
 
       }
     }
-    else if (refElement instanceof RefMethodImpl) {
-      final RefMethodImpl refMethod = (RefMethodImpl)refElement;
+    else if (refElement instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refElement;
       final PsiElement element = refMethod.getElement();
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;

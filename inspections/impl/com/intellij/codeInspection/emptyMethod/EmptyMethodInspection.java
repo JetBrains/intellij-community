@@ -181,7 +181,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       RefElement refElement = getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);
-        RefMethodImpl refMethod = (RefMethodImpl)refElement;
+        RefMethod refMethod = (RefMethod)refElement;
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         if (refMethod.isOnlyCallsSuper()) {
           deleteMethod(refMethod, psiElements, refElements);
@@ -224,9 +224,9 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void deleteHierarchy(RefMethodImpl refMethod, List<PsiElement> result, List<RefElement> refElements) {
+    private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
-      RefMethod[] refMethods = derivedMethods.toArray(new RefMethodImpl[derivedMethods.size()]);
+      RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
       for (RefMethod refDerived : refMethods) {
         deleteMethod(refDerived, result, refElements);
       }

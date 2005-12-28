@@ -47,7 +47,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private final ArrayList<RefElement> myOutReferences;
   private final ArrayList<RefElement> myInReferences;
 
-  private int myFlags;
+  private long myFlags;
   private boolean myIsDeleted ;
 
   protected RefElementImpl(String name, RefElement owner) {
@@ -194,8 +194,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     if (callStack.contains(this)) return refElement == this;
     if (getInReferences().size() == 0) return false;
 
-    if (refElement instanceof RefMethodImpl) {
-      RefMethodImpl refMethod = (RefMethodImpl) refElement;
+    if (refElement instanceof RefMethod) {
+      RefMethod refMethod = (RefMethod) refElement;
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (refSuper.getInReferences().size() > 0) return false;
       }
@@ -317,7 +317,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Nullable
   public String getAccessModifier() {
-    int access_id = myFlags & ACCESS_MODIFIER_MASK;
+    long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;
     if (access_id == ACCESS_PUBLIC) return PsiModifier.PUBLIC;
     if (access_id == ACCESS_PACKAGE) return PsiModifier.PACKAGE_LOCAL;

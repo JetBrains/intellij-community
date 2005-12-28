@@ -12,7 +12,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +58,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
               getRefManager().iterate(new RefManager.RefIterator() {
                 public void accept(RefElement refElement) {
                   if (filter.accepts(refElement)) {
-                    RefMethodImpl refMethod = (RefMethodImpl) refElement;
+                    RefMethod refMethod = (RefMethod) refElement;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
                     if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                       PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getManager().getProject()), true);
