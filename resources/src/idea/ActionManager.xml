@@ -118,6 +118,10 @@
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
+    <group id="JavaeeMigrationGroup">
+      <action id="MigrateToEjb30" class="com.intellij.j2ee15.module.view.actions.MigrateToEjb30Action"/>
+    </group>
+
     <group id="J2EEGenerateGroup">
       <action id="GeneratePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.GeneratePersistenceUnitAction"/>      
       <action id="CreatePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.CreatePersistenceUnitAction"/>
@@ -480,6 +484,7 @@
         <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction"/>
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
+        <reference ref="JavaeeMigrationGroup"/>
       </group>
 
       <!-- Build -->
