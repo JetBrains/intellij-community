@@ -6,7 +6,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
 public class CreateClassDialog extends DialogWrapper {
   private final JLabel myInformationLabel = new JLabel("#");
@@ -119,7 +120,7 @@ public class CreateClassDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         myPackageChooseButton.doClick();
       }
-    }.registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, myTfPackage);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK)), myTfPackage);
 
     myPackageChooseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
