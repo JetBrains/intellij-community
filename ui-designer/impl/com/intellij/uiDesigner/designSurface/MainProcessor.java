@@ -141,6 +141,9 @@ public final class MainProcessor extends EventProcessor{
     else if(id == MouseEvent.MOUSE_CLICKED){
       processMouseClicked(e);
     }
+    else if (id == MouseEvent.MOUSE_EXITED) {
+      myEditor.getActiveDecorationLayer().removeFeedback();
+    }
 
     if (!e.isConsumed() && myCurrentProcessor != null) {
       myCurrentProcessor.processMouseEvent(e);
