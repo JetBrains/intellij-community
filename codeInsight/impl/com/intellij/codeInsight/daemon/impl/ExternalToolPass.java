@@ -44,8 +44,10 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     if (externalAnnotators.size() > 0) {
       final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
       
-      if ( errors.length > 0) {
-        return;
+      for (HighlightInfo error : errors) {
+        if (error.group != UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP) {
+          return;
+        }
       }
       for(ExternalAnnotator externalAnnotator: externalAnnotators) {
         externalAnnotator.annotate(myFile, myAnnotationHolder);
