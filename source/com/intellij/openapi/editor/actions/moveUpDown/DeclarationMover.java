@@ -49,11 +49,12 @@ class DeclarationMover extends LineMover {
     PsiElement element1 = whitespace.getPrevSibling();
     PsiElement element2 = whitespace.getNextSibling();
     if (element2 == null || element1 == null) return;
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(whitespace.getProject());
+    final Document document = documentManager.getDocument(whitespace.getContainingFile());
     String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), StdLanguages.JAVA);
     LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws.toCharArray(), 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
     whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(whitespace.getProject());
-    documentManager.commitDocument(documentManager.getDocument(whitespace.getContainingFile()));
+    documentManager.commitDocument(document);
   }
 
   protected boolean checkAvailable(Editor editor, PsiFile file) {
