@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,7 @@ public class MockVirtualFile extends VirtualFile {
   protected long myActualTimeStamp = myTimeStamp;
   private boolean myIsWritable = true;
   private VirtualFileListener myListener = null;
+  private static final Charset CHARSET = Charset.forName("UTF-8");
 
   public MockVirtualFile() {
   }
@@ -102,9 +104,9 @@ public class MockVirtualFile extends VirtualFile {
       }
     };
   }
-
+                                                           
   public byte[] contentsToByteArray() throws IOException {
-    return getContent().toString().getBytes();
+    return getContent().toString().getBytes(getCharset().name());
   }
 
   public long getModificationStamp() {
@@ -160,5 +162,9 @@ public class MockVirtualFile extends VirtualFile {
 
   protected CharSequence getContent() {
     return myContent;
+  }
+
+  public Charset getCharset() {
+    return CHARSET;
   }
 }
