@@ -152,14 +152,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
     }
-
-    // remove unnecessary imports of the class
-    for (PsiFile file : fileSet) {
-      PsiReference[] refs = mySearchHelper.findReferences(myClass, new LocalSearchScope(file), false);
-      if (refs.length == 1 && refs[0].getElement().getParent() instanceof PsiImportStatement) {
-        refs[0].getElement().getParent().delete();
-      }
-    }
   }
 
   private void fixPossiblyRedundantCast(PsiTypeCastExpression cast) throws IncorrectOperationException {
@@ -328,7 +320,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         markNode(type);
       }
       else if (declScope instanceof PsiForeachStatement) {
-        markNode(type); // todo[dsl]
+        final PsiExpression iteratedValue = ((PsiForeachStatement)declScope).getIteratedValue();
+        addLink(type, iteratedValue);
+        addLink(iteratedValue, type);
       }
       else if (declScope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)declScope;
