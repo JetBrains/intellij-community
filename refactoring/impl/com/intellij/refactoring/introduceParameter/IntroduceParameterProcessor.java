@@ -363,8 +363,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
           if (element instanceof PsiExpression) {
             element = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)element);
           }
-          PsiElement newExpr = factory.createExpressionFromText(myParameterName, element);
-          element.replace(newExpr);
+          if (element.getParent() instanceof PsiStatement) {
+            element.getParent().delete();
+          }
+          else {
+            PsiElement newExpr = factory.createExpressionFromText(myParameterName, element);
+            element.replace(newExpr);
+          }
         }
       }
 
