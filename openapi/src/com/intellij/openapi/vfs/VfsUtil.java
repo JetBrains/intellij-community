@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
@@ -42,26 +43,9 @@ import java.util.StringTokenizer;
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
-  private static final char[] READ_BUF = new char[8 * 1024];
-
   public static String loadText(VirtualFile file) throws IOException{
     final BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), file.getCharset()));
-    try {
-      StringBuilder builder = new StringBuilder((int)file.getLength());
-
-      synchronized (READ_BUF) {
-        do {
-          final int read = reader.read(READ_BUF);
-          if (read < 0) break;
-          builder.append(READ_BUF, 0, read);
-        } while (true);
-      }
-
-      return builder.toString();
-    }
-    finally {
-      reader.close();
-    }
+    return new String(FileUtil.adaptiveLoadText(reader));
   }
 
   public static void saveText(VirtualFile file, String text) throws IOException {
@@ -297,7 +281,7 @@ public class VfsUtil {
   public static VirtualFile findRelativeFile(String uri, VirtualFile base) {
     if (base != null) {
       if (!base.isValid()){
-        LOG.assertTrue(false, "Invalid file name: " + base.getName() + ", url: " + uri);
+        LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
       }
     }
 
@@ -451,8 +435,6 @@ public class VfsUtil {
   public static File virtualToIoFile(VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
-
-
 
   public static VirtualFile copyFileRelative(Object requestor, VirtualFile file, VirtualFile toDir, String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
