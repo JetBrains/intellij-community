@@ -39,9 +39,9 @@ public final class InsertComponentProcessor extends EventProcessor {
   private boolean myShouldSetPreferredSizeIfNotResized;
   private GridInsertProcessor myGridInsertProcessor;
 
-  public InsertComponentProcessor(@NotNull final GuiEditor editor, @NotNull final PaletteWindow palette) {
+  public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
-    myPalette = palette;
+    myPalette = editor.getPaletteWindow();
     myGridInsertProcessor = new GridInsertProcessor(editor);
   }
 
@@ -59,9 +59,7 @@ public final class InsertComponentProcessor extends EventProcessor {
    * TODO[vova] it would be fine to configure such "input" controls somewhere in palette
    * @return whether component is an input control or not
    */
-  private static boolean isInputComponent(final RadComponent component){
-    LOG.assertTrue(component != null);
-
+  private static boolean isInputComponent(@NotNull final RadComponent component){
     final Class aClass = component.getComponentClass();
     if(
       AbstractButton.class.isAssignableFrom(aClass) ||
@@ -80,9 +78,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @NotNull
-  private static String suggestBinding(final GuiEditor editor, final String componentClassName){
-    LOG.assertTrue(componentClassName != null);
-
+  private static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
     final int lastDotIndex = componentClassName.lastIndexOf('.');
     String shortClassName = componentClassName.substring(lastDotIndex + 1);
 
@@ -206,8 +202,11 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
+    processComponentInsert(e.getPoint(), myPalette.getActiveItem());
+  }
+
+  public void processComponentInsert(final Point point, final ComponentItem item) {
     myEditor.getActiveDecorationLayer().removeFeedback();
-    final ComponentItem item = myPalette.getActiveItem();
     final String id = myEditor.generateId();
     if (JScrollPane.class.getName().equals(item.getClassName())) {
       myInsertedComponent = new RadScrollPane(myEditor.getModule(), id);
@@ -258,8 +257,8 @@ public final class InsertComponentProcessor extends EventProcessor {
 
     myEditor.setDesignTimeInsets(2);
 
-    final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, e.getX(), e.getY(), 0);
-    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertMode.None) {
+    final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0);
+    if (FormEditingUtil.canDrop(myEditor, point.x, point.y, 1) || location.getMode() != GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -268,7 +267,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             if (location.getMode() == GridInsertMode.None) {
-              myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), components, new int[]{0}, new int[]{0});
+              myDropInfo = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
             }
             else {
               myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
@@ -308,7 +307,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             myEditor.refresh();
 
-            myInitialPoint = e.getPoint();
+            myInitialPoint = point;
           }
 
         },

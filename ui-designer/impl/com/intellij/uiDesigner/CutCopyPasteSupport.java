@@ -52,7 +52,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private boolean doCopy() {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final MyData data = new MyData(serializeForCopy(myEditor, selectedComponents));
-    final MyTransferable transferable = new MyTransferable(data);
+    final SimpleTransferable transferable = new SimpleTransferable<MyData>(data, MyData.class);
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(transferable, new MyClipboardOwner());
@@ -288,27 +288,4 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
 
-  public static final class MyTransferable implements Transferable {
-    private final MyData myDataProxy;
-
-    public MyTransferable(final MyData data) {
-      myDataProxy = data;
-    }
-
-    @Nullable
-    public Object getTransferData(final DataFlavor flavor) {
-      if (!ourDataFlavor.equals(flavor)) {
-        return null;
-      }
-      return myDataProxy;
-    }
-
-    public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[]{ourDataFlavor};
-    }
-
-    public boolean isDataFlavorSupported(final DataFlavor flavor) {
-      return flavor.equals(ourDataFlavor);
-    }
-  }
 }

@@ -29,7 +29,7 @@ public final class MainProcessor extends EventProcessor{
   public MainProcessor(@NotNull final GuiEditor editor){
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
-    myInsertComponentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPaletteWindow());
+    myInsertComponentProcessor = new InsertComponentProcessor(myEditor);
   }
 
   protected void processKeyEvent(final KeyEvent e){

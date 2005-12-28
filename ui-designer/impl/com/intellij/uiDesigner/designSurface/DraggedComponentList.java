@@ -18,11 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 07.11.2005
- * Time: 17:56:49
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class DraggedComponentList implements Transferable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.DraggedComponentList");

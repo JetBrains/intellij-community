@@ -2,13 +2,19 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.SimpleTransferable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 /**
  * @author yole
@@ -50,6 +56,23 @@ public class PaletteComponentList extends JList {
     setVisibleRowCount(0);
     setLayoutOrientation(HORIZONTAL_WRAP);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    setDragEnabled(true);
+    setTransferHandler(new TransferHandler() {
+      public int getSourceActions(JComponent c) {
+        return DnDConstants.ACTION_MOVE;
+      }
+
+      protected Transferable createTransferable(JComponent c) {
+        final Object selectedValue = getSelectedValue();
+        if (selectedValue != null) {
+          return new SimpleTransferable<ComponentItem>((ComponentItem) selectedValue, ComponentItem.class);
+        }
+        return null;
+      }
+    });
+
+    new DropTarget(this, DnDConstants.ACTION_MOVE, new MyDropTargetAdapter());
+
     initActions();
   }
 
@@ -193,6 +216,15 @@ public class PaletteComponentList extends JList {
           scrollRectToVisible(getCellBounds(selIndexCurrent - 1, selIndexCurrent - 1));
         }
       }
+    }
+  }
+
+  private class MyDropTargetAdapter extends DropTargetAdapter {
+    @Override public void dragOver(DropTargetDragEvent dtde) {
+      setHoverIndex(-1);
+    }
+
+    public void drop(DropTargetDropEvent dtde) {
     }
   }
 }

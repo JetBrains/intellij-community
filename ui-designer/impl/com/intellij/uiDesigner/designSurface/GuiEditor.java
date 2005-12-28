@@ -43,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DnDConstants;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Locale;
@@ -161,6 +163,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private ActiveDecorationLayer myActiveDecorationLayer;
 
   private boolean myShowGrid = true;
+  private DesignDropTargetListener myDropTargetListener;
 
   /**
    * @param file file to be edited
@@ -276,6 +279,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
     new QuickFixManagerImpl(this, myGlassLayer);
+
+    myDropTargetListener = new DesignDropTargetListener(this);
+    new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
   }
 
   @NotNull
@@ -770,6 +776,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myShowGrid = showGrid;
       repaint();
     }
+  }
+
+  public DesignDropTargetListener getDropTargetListener() {
+    return myDropTargetListener;
   }
 
   private final class MyLayeredPane extends JLayeredPane {
