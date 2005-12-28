@@ -112,7 +112,16 @@ public class FileUtil {
     return bytes;
   }
 
-  public static char[] adaptiveLoadText(Reader reader) throws IOException {
+  @NotNull public static String loadTextAndClose(Reader reader) throws IOException {
+    try {
+      return new String(adaptiveLoadText(reader));
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  @NotNull public static char[] adaptiveLoadText(Reader reader) throws IOException {
     char[] chars = new char[4096];
     List<char[]> buffers = null;
     int count = 0;

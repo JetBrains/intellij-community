@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -114,21 +115,10 @@ public class JavaUtil {
   private static Pair<File,String> suggestRootForJavaFile(File javaFile) {
     if (!javaFile.isFile()) return null;
 
+    Reader reader = null;
     try{
-      Reader reader = new BufferedReader(new FileReader(javaFile));
-      char[] chars = new char[(int)javaFile.length()];
-      int count = 0;
-      for(; ;){
-        int n = reader.read(chars, count, chars.length - count);
-        if (n <= 0) break;
-        count += n;
-      }
-      reader.close();
-      if (count != chars.length){
-        char[] newChars = new char[count];
-        System.arraycopy(chars, 0, newChars, 0, count);
-        chars = newChars;
-      }
+      reader = new BufferedReader(new FileReader(javaFile));
+      char[] chars = FileUtil.adaptiveLoadText(reader);
 
       String packageName = getPackageStatement(chars);
       if (packageName != null){
@@ -157,6 +147,16 @@ public class JavaUtil {
     }
     catch(IOException e){
       return null;
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          //ignore
+        }
+      }
     }
 
     return null;

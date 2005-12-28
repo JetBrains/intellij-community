@@ -359,14 +359,13 @@ public class JavaLexer extends LexerBase {
   }
 
   public static void main(String[] args) {
-    BufferedReader reader;
 
     try {
-      reader = new BufferedReader(new FileReader(args[0]));
+      BufferedReader reader = new BufferedReader(new FileReader(args[0]));
       String s;
       StringBuffer buf = new StringBuffer();
       while ((s = reader.readLine()) != null) {
-        buf.append(s + "\n");
+        buf.append(s).append("\n");
       }
 
       char[] cbuf = buf.toString().toCharArray();

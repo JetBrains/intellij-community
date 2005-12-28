@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -178,20 +179,8 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   /** Read template from stream. Stream does not closed after reading. */
   private static String readExternal(InputStream inputStream) throws IOException{
-    StringWriter wr = new StringWriter();
     Reader fr = new InputStreamReader(inputStream, ourEncoding);
-    BufferedReader br = new BufferedReader(fr);
-    int currChar;
-    do{
-      currChar = br.read();
-      if (currChar != -1){
-        wr.write(currChar);
-      }
-    }
-    while (currChar != -1);
-    br.close();
-    fr.close();
-    return wr.toString();
+    return FileUtil.loadTextAndClose(fr);
   }
 
   /** Removes template file.
