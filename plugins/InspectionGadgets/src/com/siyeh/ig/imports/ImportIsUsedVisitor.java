@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
+
     private final PsiImportStatement m_import;
     private boolean m_used = false;
 
@@ -27,29 +28,35 @@ class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
         m_import = importStatement;
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-        super.visitReferenceElement(ref);
-        followReferenceToImport(ref);
-    }
-
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
-        super.visitReferenceExpression(ref);
-        followReferenceToImport(ref);
-    }
-
-    private void followReferenceToImport(PsiJavaCodeReferenceElement ref) {
-        final PsiElement element = ref.resolve();
-        if (!(element instanceof PsiClass)) {
+    public void visitElement(PsiElement element) {
+        if (m_used) {
             return;
         }
-        final PsiClass referencedClass = (PsiClass) element;
-        if (ref.getQualifier()!=null) {
-            return;        //it' already fully qualified, so the import statement wasn't responsible
+        super.visitElement(element);
+    }
+
+    public void visitReferenceElement(
+            @NotNull PsiJavaCodeReferenceElement reference) {
+        followReferenceToImport(reference);
+        super.visitReferenceElement(reference);
+    }
+
+    private void followReferenceToImport(
+            PsiJavaCodeReferenceElement reference) {
+        if (reference.getQualifier()!=null) {
+            //it's already fully qualified, so the import statement wasn't
+            // responsible
+            return;
         }
         final String importName = m_import.getQualifiedName();
         if (importName == null) {
             return;
         }
+        final PsiElement element = reference.resolve();
+        if (!(element instanceof PsiClass)) {
+            return;
+        }
+        final PsiClass referencedClass = (PsiClass) element;
         final String qualifiedName = referencedClass.getQualifiedName();
         if (qualifiedName == null) {
             return;
@@ -57,7 +64,8 @@ class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
         if (m_import.isOnDemand()) {
             final int lastComponentIndex = qualifiedName.lastIndexOf((int) '.');
             if (lastComponentIndex > 0) {
-                final String packageName = qualifiedName.substring(0, lastComponentIndex);
+                final String packageName = qualifiedName.substring(0,
+                        lastComponentIndex);
                 if (importName.equals(packageName)) {
                     m_used = true;
                 }

@@ -76,47 +76,54 @@ import java.util.*;
         "ClassWithTooManyMethods"})
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
+
     private static final int NUM_INSPECTIONS = 500;
     private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
             new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
-    private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
+    private final InspectionGadgetsTelemetry telemetry =
+            new InspectionGadgetsTelemetry();
     private static final boolean TELEMETRY_ENABLED = false;
-  @NonNls private static final String INSPECTION = "Inspection";
-  @NonNls private static final String BUILD_FIXES_ONLY_ON_THE_FLY = "(r)";
+    @NonNls private static final String INSPECTION = "Inspection";
+    @NonNls private static final String BUILD_FIXES_ONLY_ON_THE_FLY = "(r)";
 
-  public static void main(String[] args) {
-      final PrintStream out;
-      if (args.length == 0) {
-          out = System.out;
-      } else {
-          final OutputStream stream;
-          try {
-              stream = new FileOutputStream(args[0]);
-          } catch (final FileNotFoundException e) {
-              return;
-          }
-          out = new PrintStream(stream);
-      }
-      final InspectionGadgetsPlugin plugin=new InspectionGadgetsPlugin();
-      plugin.createDocumentation(out);
-  }
+    public static void main(String[] args) {
+        final PrintStream out;
+        if (args.length == 0) {
+            out = System.out;
+        } else {
+            final OutputStream stream;
+            try {
+                stream = new FileOutputStream(args[0]);
+            } catch (final FileNotFoundException e) {
+                return;
+            }
+            out = new PrintStream(stream);
+        }
+        final InspectionGadgetsPlugin plugin=new InspectionGadgetsPlugin();
+        plugin.createDocumentation(out);
+    }
 
     private void createDocumentation(PrintStream out){
-        final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
+        final Class<? extends LocalInspectionTool>[] classes =
+                getInspectionClasses();
         Arrays.sort(classes, new InspectionComparator());
 
         final int numQuickFixes = countQuickFixes(classes, out);
-        out.println(InspectionGadgetsBundle.message("create.documentation.count.inspections.message", classes.length));
-        out.println(InspectionGadgetsBundle.message("create.documentation.count.quick.fixes.message", numQuickFixes));
+        out.println(InspectionGadgetsBundle.message(
+                "create.documentation.count.inspections.message",
+                classes.length));
+        out.println(InspectionGadgetsBundle.message(
+                "create.documentation.count.quick.fixes.message",
+                numQuickFixes));
         String currentGroupName="";
 
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
-                         aClass.newInstance();
+                        aClass.newInstance();
                 final String groupDisplayName =
                         inspection.getGroupDisplayName();
                 if(!groupDisplayName.equals(currentGroupName)){
@@ -127,16 +134,21 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                 }
                 printInspectionDescription(inspection, out);
             } catch(InstantiationException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldn.t.instantiate.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldn.t.instantiate.class",
+                        className));
             } catch(IllegalAccessException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.access.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.access.class", className));
             } catch(ClassCastException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.cast.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.cast.class", className));
             }
         }
 
         out.println();
-        out.println(InspectionGadgetsBundle.message("create.documentation.inspections.enabled.by.default.message"));
+        out.println(InspectionGadgetsBundle.message(
+                "create.documentation.inspections.enabled.by.default.message"));
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
@@ -146,51 +158,62 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                     out.println('\t' + inspection.getDisplayName());
                 }
             } catch(InstantiationException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldn.t.instantiate.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldn.t.instantiate.class",
+                        className));
             } catch(IllegalAccessException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.access.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.access.class", className));
             } catch(ClassCastException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.cast.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.cast.class", className));
             }
         }
         final File descriptionDirectory = new File(DESCRIPTION_DIRECTORY_NAME);
         final File[] descriptionFiles = descriptionDirectory.listFiles();
-        final Set<File> descriptionFilesSet = new HashSet<File>(descriptionFiles.length);
-        for(File descriptionFile1 : descriptionFiles){
-            if(!descriptionFile1.getName().startsWith(".")){
-                descriptionFilesSet.add(descriptionFile1);
+        final Set<File> descriptionFilesSet = new HashSet<File>(
+                descriptionFiles.length);
+        for(File descriptionFile : descriptionFiles){
+            final String name = descriptionFile.getName();
+            if(!(name.length() > 0 && name.charAt(0) == '.')){
+                descriptionFilesSet.add(descriptionFile);
             }
         }
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
-                                        className.length() -
-                                        INSPECTION.length());
+                            className.length() -
+                            INSPECTION.length());
             @NonNls final String fileName =
                     DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
             final File descriptionFile = new File(fileName);
             if(descriptionFile.exists()){
                 descriptionFilesSet.remove(descriptionFile);
             } else{
-                out.println(InspectionGadgetsBundle.message("create.documentation.couldnt.find.documentation.file.error.message", fileName));
+                out.println(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.find.documentation.file.error.message",
+                        fileName));
             }
         }
         for(final File file : descriptionFilesSet){
             out.println(
-              InspectionGadgetsBundle.message("create.documentation.unused.documentation.file.error.message", file.getAbsolutePath()));
+                    InspectionGadgetsBundle.message(
+                            "create.documentation.unused.documentation.file.error.message",
+                            file.getAbsolutePath()));
         }
     }
 
     private static void printInspectionDescription(LocalInspectionTool inspection,
                                                    PrintStream out){
-        final boolean hasQuickFix = ((BaseInspection) inspection).hasQuickFix();
+        final BaseInspection baseInspection = (BaseInspection)inspection;
+        final boolean hasQuickFix = baseInspection.hasQuickFix();
 
         final String displayName = inspection.getDisplayName();
         out.print("      * ");
         out.print(displayName);
         if(hasQuickFix){
-            if(((BaseInspection) inspection).buildQuickFixesOnlyForOnTheFlyErrors()){
+            if(baseInspection.buildQuickFixesOnlyForOnTheFlyErrors()){
                 out.print(BUILD_FIXES_ONLY_ON_THE_FLY);
             } else{
                 out.print("(*)");
@@ -199,7 +222,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println();
     }
 
-    private static int countQuickFixes(Class<? extends LocalInspectionTool>[] classes, PrintStream out){
+    private static int countQuickFixes(
+            Class<? extends LocalInspectionTool>[] classes, PrintStream out){
         int numQuickFixes = 0;
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
@@ -210,11 +234,15 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                     numQuickFixes++;
                 }
             } catch(InstantiationException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldn.t.instantiate.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldn.t.instantiate.class",
+                        className));
             } catch(IllegalAccessException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.access.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.access.class", className));
             } catch(ClassCastException ignore){
-                out.print(InspectionGadgetsBundle.message("create.documentation.couldnt.cast.class", className));
+                out.print(InspectionGadgetsBundle.message(
+                        "create.documentation.couldnt.cast.class", className));
             }
         }
         return numQuickFixes;
@@ -225,37 +253,39 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public Class<? extends LocalInspectionTool>[] getInspectionClasses(){
-      if (m_inspectionClasses.isEmpty()){
-        registerNamingInspections();
-        registerBugInspections();
-        registerCloneInspections();
-        registerConfusingInspections();
-        registerAbstractionInspections();
-        registerClassLayoutInspections();
-        registerImportInspections();
-        registerEncapsulationInspections();
-        registerVisibilityInspections();
-        registerInitializerInspections();
-        registerFinalizationInspections();
-        registerExceptionInspections();
-        registerVerboseInspections();
-        registerStyleInspections();
-        registerSerializationInspections();
-        registerThreadingInspections();
-        registerMethodMetricsInspections();
-        registerClassMetricsInspections();
-        registerPortabilityInspections();
-        registerInternationalInspections();
-        registerPerformanceInspections();
-        registerMaturityInspections();
-        registerJUnitInspections();
-        registerLoggingInspections();
-        registerSecurityInspections();
-        registerResourceManagementInspections();
-        registerJ2MEInspections();
-      }
-      final int numInspections = m_inspectionClasses.size();
-      return m_inspectionClasses.toArray(new Class[numInspections]);
+        if (m_inspectionClasses.isEmpty()){
+            registerNamingInspections();
+            registerBugInspections();
+            registerCloneInspections();
+            registerConfusingInspections();
+            registerAbstractionInspections();
+            registerClassLayoutInspections();
+            registerImportInspections();
+            registerEncapsulationInspections();
+            registerVisibilityInspections();
+            registerInitializerInspections();
+            registerFinalizationInspections();
+            registerExceptionInspections();
+            registerVerboseInspections();
+            registerStyleInspections();
+            registerSerializationInspections();
+            registerThreadingInspections();
+            registerMethodMetricsInspections();
+            registerClassMetricsInspections();
+            registerPortabilityInspections();
+            registerInternationalInspections();
+            registerPerformanceInspections();
+            registerMaturityInspections();
+            registerJUnitInspections();
+            registerLoggingInspections();
+            registerSecurityInspections();
+            registerResourceManagementInspections();
+            registerJ2MEInspections();
+        }
+        final int numInspections = m_inspectionClasses.size();
+        final Class<? extends LocalInspectionTool>[] classArray =
+                new Class[numInspections];
+        return m_inspectionClasses.toArray(classArray);
     }
 
     public void initComponent(){}
@@ -443,6 +473,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SwitchStatementInspection.class);
         m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
         m_inspectionClasses.add(InstanceofThisInspection.class);
+        m_inspectionClasses.add(MethodOnlyUsedFromInnerClassInspection.class);
     }
 
     private void registerClassLayoutInspections(){
@@ -574,7 +605,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NegatedConditionalInspection.class);
         m_inspectionClasses.add(ConfusingElseInspection.class);
         m_inspectionClasses.add(SwitchStatementWithConfusingDeclarationInspection.class);
-            m_inspectionClasses.add(RedundantMethodOverrideInspection.class);
+        m_inspectionClasses.add(RedundantMethodOverrideInspection.class);
     }
 
     private void registerVerboseInspections(){

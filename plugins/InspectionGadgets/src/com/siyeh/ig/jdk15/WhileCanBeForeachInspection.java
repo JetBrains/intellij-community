@@ -87,7 +87,6 @@ public class WhileCanBeForeachInspection extends StatementInspection {
         private static String createCollectionIterationText(
                 @NotNull PsiWhileStatement whileStatement)
                 throws IncorrectOperationException {
-            System.out.println("createCollectionIterationText()");
             final String text = whileStatement.getText();
             final int length = text.length();
             @NonNls final StringBuffer out = new StringBuffer(length);
@@ -360,8 +359,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
             final PsiManager manager = whileStatement.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
-            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                languageLevel.equals(LanguageLevel.JDK_1_4)) {
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             if (!isCollectionLoopStatement(whileStatement)) {
