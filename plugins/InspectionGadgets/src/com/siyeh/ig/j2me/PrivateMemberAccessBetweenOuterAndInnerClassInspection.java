@@ -33,7 +33,8 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.display.name");
+        return InspectionGadgetsBundle.message(
+                "private.member.access.between.outer.and.inner.classes.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,7 +42,9 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     }
 
     protected String buildErrorString(Object arg){
-        return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.problem.descriptor", arg);
+        return InspectionGadgetsBundle.message(
+                "private.member.access.between.outer.and.inner.classes.problem.descriptor",
+                arg);
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -66,7 +69,9 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         }
 
         public String getName(){
-            return InspectionGadgetsBundle.message("private.member.access.between.outer.and.inner.classes.make.local.quickfix", elementName);
+            return InspectionGadgetsBundle.message(
+                    "private.member.access.between.outer.and.inner.classes.make.local.quickfix",
+                    elementName);
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -80,7 +85,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
                 modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
                 modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-
         }
     }
 
@@ -94,17 +98,17 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
+            final PsiElement containingClass =
+                    getContainingContextClass(expression);
+            if(containingClass == null){
+                return;
+            }
             final PsiElement element = expression.resolve();
             if(!(element instanceof PsiMethod || element instanceof PsiField)){
                 return;
             }
             final PsiMember member = (PsiMember) element;
             if(!member.hasModifierProperty(PsiModifier.PRIVATE)){
-                return;
-            }
-            final PsiElement containingClass =
-                    getContainingContextClass(expression);
-            if(containingClass == null){
                 return;
             }
             final PsiClass memberClass =
@@ -130,8 +134,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 final PsiExpressionList args = anonymousClass.getArgumentList();
                 if(args!=null &&
                         PsiTreeUtil.isAncestor(args, expression, true)){
-                    return PsiTreeUtil
-                            .getParentOfType(aClass, PsiClass.class);
+                    return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
                 }
             }
             return aClass;
