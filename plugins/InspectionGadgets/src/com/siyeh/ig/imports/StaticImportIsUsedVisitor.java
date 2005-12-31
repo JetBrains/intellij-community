@@ -18,7 +18,7 @@ package com.siyeh.ig.imports;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticImportIsUsedVisitor extends PsiRecursiveElementVisitor {
+class StaticImportIsUsedVisitor extends PsiRecursiveElementVisitor {
 
     private final PsiImportStaticStatement m_import;
     private boolean m_used = false;
