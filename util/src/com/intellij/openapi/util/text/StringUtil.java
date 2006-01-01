@@ -715,7 +715,8 @@ public class StringUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String unpluralize(final String name) {
+  @NotNull
+  public static String unpluralize(final @NotNull String name) {
     if (name.endsWith("sses") || name.endsWith("xes")) { //?
       return name.substring(0, name.length() - 2);
     }
@@ -740,7 +741,7 @@ public class StringUtil {
       return name.substring(0, name.length() - "Children".length()) + "Child";
     }
 
-    return null;
+    return name;
   }
 
   public static boolean containsAlphaCharacters(String value) {
