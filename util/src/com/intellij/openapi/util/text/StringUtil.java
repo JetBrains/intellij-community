@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.util.text;
 
+import com.intellij.CommonBundle;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -714,8 +714,14 @@ public class StringUtil {
     return CommonBundle.message("file.size.format.mbytes", size);
   }
 
+  /**
+   * Returns unpluralized variant using English based heuristics like proprties -> property, names -> name, children -> child.
+   * Returns <code>null</code> if failed to match appropriate heuristic.
+   * @param name english word in plural form
+   * @return name in singular form or <code>null</code> if failed to find one.
+   */
   @SuppressWarnings({"HardCodedStringLiteral"})
-  @NotNull
+  @Nullable
   public static String unpluralize(final @NotNull String name) {
     if (name.endsWith("sses") || name.endsWith("xes")) { //?
       return name.substring(0, name.length() - 2);
@@ -741,7 +747,7 @@ public class StringUtil {
       return name.substring(0, name.length() - "Children".length()) + "Child";
     }
 
-    return name;
+    return null;
   }
 
   public static boolean containsAlphaCharacters(String value) {
