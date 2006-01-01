@@ -29,10 +29,10 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
   private boolean myAfterEndOfLine;
 
   public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
-    LOG.assertTrue(startElement.isValid());
-    LOG.assertTrue(startElement.isPhysical());
-    LOG.assertTrue(endElement.isValid());
-    LOG.assertTrue(endElement.isPhysical());
+    LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");
+    LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
+    LOG.assertTrue(endElement.isValid(), "Invalid PsiElement");
+    LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
       LOG.error("Empty PSI elements should not be passed to createDescriptor");
