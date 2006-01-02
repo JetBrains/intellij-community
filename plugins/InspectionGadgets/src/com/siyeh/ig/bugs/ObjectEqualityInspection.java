@@ -18,7 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -36,19 +40,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.Collection;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreEnums = true;
-    
+
     /** @noinspection PublicField*/
     public boolean m_ignoreClassObjects = false;
 
     /** @noinspection PublicField*/
     public boolean m_ignorePrivateConstructors = false;
-
-    private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -83,7 +86,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new EqualityToEqualsFix();
     }
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
@@ -98,7 +101,9 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             final PsiElement comparisonToken = descriptor.getPsiElement();
             final PsiBinaryExpression expression = (PsiBinaryExpression)
                     comparisonToken.getParent();
-            assert expression != null;
+            if (expression == null) {
+                return;
+            }
             boolean negated=false;
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -166,7 +171,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             }
             if (m_ignorePrivateConstructors &&
                     (typeHasPrivateConstructor(lhs) ||
-                            typeHasPrivateConstructor(rhs))) {
+                    typeHasPrivateConstructor(rhs))) {
                 return;
             }
             final PsiMethod method =
@@ -189,11 +194,44 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 return false;
             }
             final PsiClassType classType = (PsiClassType)type;
-            final PsiClass psiClass = classType.resolve();
-            if (psiClass == null) {
+            final PsiClass aClass = classType.resolve();
+            if (aClass != null && aClass.isInterface()) {
+                return implementorsHaveOnlyPrivateConstructors(aClass);
+            } else {
+                return hasOnlyPrivateConstructors(aClass);
+            }
+        }
+
+        private boolean implementorsHaveOnlyPrivateConstructors(
+                final PsiClass aClass) {
+            final PsiManager manager = aClass.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final GlobalSearchScope scope =
+                    GlobalSearchScope.allScope(aClass.getProject());
+            final PsiElementProcessor.CollectElementsWithLimit<PsiClass>
+                    processor =
+                    new PsiElementProcessor.CollectElementsWithLimit(6);
+            final ProgressManager progressManager = ProgressManager.getInstance();
+            progressManager.runProcess(new Runnable() {
+                public void run() {
+                    searchHelper.processInheritors(processor, aClass, scope,
+                            true, true);
+                }
+            }, null);
+            if (processor.isOverflow()) {
                 return false;
             }
-            return hasOnlyPrivateConstructors(psiClass);
+            final Collection<PsiClass> implementors = processor.getCollection();
+            for (PsiClass implementor : implementors) {
+                if (!implementor.isInterface() &&
+                        !implementor.hasModifierProperty(
+                                PsiModifier.ABSTRACT)) {
+                    if (!hasOnlyPrivateConstructors(implementor)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         private boolean hasOnlyPrivateConstructors(PsiClass aClass) {
