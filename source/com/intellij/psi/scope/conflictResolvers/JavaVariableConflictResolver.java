@@ -1,10 +1,10 @@
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
@@ -27,14 +27,15 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
       final CandidateInfo[] uncheckedResult = conflicts.toArray(new CandidateInfo[size]);
       CandidateInfo currentResult = uncheckedResult[0];
 
-      if(currentResult.getElement() instanceof PsiField){
+      final PsiElement currentElement = currentResult.getElement();
+      if(currentElement instanceof PsiField){
         for(int i = 1; i < uncheckedResult.length; i++){
-          //TODO[ik]: Handle introduced fields properly.
           final CandidateInfo candidate = uncheckedResult[i];
-          if(candidate.getElement() == null) continue;
+          final PsiElement otherElement = candidate.getElement();
+          if(otherElement == null) continue;
 
-          if (!(candidate.getElement() instanceof PsiField)) {
-            if(candidate.getElement() instanceof PsiLocalVariable) {
+          if (!(otherElement instanceof PsiField)) {
+            if(otherElement instanceof PsiLocalVariable) {
               return candidate;
             }
             else {
@@ -44,43 +45,32 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
             }
           }
 
-          final PsiClass newClass = ((PsiField)candidate.getElement()).getContainingClass();
-          final PsiClass oldClass = ((PsiField)currentResult.getElement()).getContainingClass();
-
-          // Hack for JSP
-          if(newClass == null && candidate.getElement().getContainingFile() instanceof JspFile){
-            conflicts.remove(currentResult);
-            currentResult = candidate;
-          }
-
-          if(oldClass == null && currentResult.getElement().getContainingFile() instanceof JspFile){
-            conflicts.remove(candidate);
-            continue;
-          }
+          final PsiClass newClass = ((PsiField)otherElement).getContainingClass();
+          final PsiClass oldClass = ((PsiField)currentElement).getContainingClass();
 
           if(newClass.isInheritor(oldClass, true)){
             // current is better
             conflicts.remove(currentResult);
             currentResult = candidate;
           }
-          else if(oldClass.isInheritor(newClass, true)){
-              // current is worse
+          else if (oldClass.isInheritor(newClass, true)) {
+            // current is worse
+            conflicts.remove(candidate);
+            continue;
+          }
+          else {
+            if (!candidate.isAccessible()) {
               conflicts.remove(candidate);
               continue;
             }
-            else{
-              if(!candidate.isAccessible()){
-                conflicts.remove(candidate);
-                continue;
-              }
-              if(!currentResult.isAccessible()){
-                conflicts.remove(currentResult);
-                currentResult = candidate;
-                continue;
-              }
-
-              return null;
+            if (!currentResult.isAccessible()) {
+              conflicts.remove(currentResult);
+              currentResult = candidate;
+              continue;
             }
+
+            return null;
+          }
           if(!candidate.isAccessible()){
             conflicts.remove(candidate);
             continue;
@@ -89,6 +79,11 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
             conflicts.remove(currentResult);
             currentResult = candidate;
             continue;
+          }
+
+          //This test should go last
+          if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
+            conflicts.remove(candidate);
           }
         }
       }
