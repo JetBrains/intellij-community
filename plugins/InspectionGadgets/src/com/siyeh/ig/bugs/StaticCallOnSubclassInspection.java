@@ -28,14 +28,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "StaticMethodReferencedViaSubclass";
     }
-    private final StaticCallOnSubclassFix fix = new StaticCallOnSubclassFix();
-
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("static.method.via.subclass.display.name");
+        return InspectionGadgetsBundle.message(
+                "static.method.via.subclass.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,9 +43,11 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final PsiReferenceExpression methodExpression = (PsiReferenceExpression) location.getParent();
+        final PsiReferenceExpression methodExpression =
+                (PsiReferenceExpression) location.getParent();
         assert methodExpression != null;
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) methodExpression.getParent();
+        final PsiMethodCallExpression methodCall =
+                (PsiMethodCallExpression) methodExpression.getParent();
         assert methodCall != null;
         final PsiMethod method = methodCall.resolveMethod();
         assert method != null;
@@ -55,35 +57,51 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         final PsiElement qualifier = methodExpression.getQualifier();
         assert qualifier != null;
         final String referencedClass = qualifier.getText();
-        return InspectionGadgetsBundle.message("static.method.via.subclass.problem.descriptor", declaringClass, referencedClass);
+        return InspectionGadgetsBundle.message(
+                "static.method.via.subclass.problem.descriptor",
+                declaringClass, referencedClass);
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new StaticCallOnSubclassFix();
     }
 
     private static class StaticCallOnSubclassFix extends InspectionGadgetsFix {
+
         public String getName() {
-            return InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "static.method.via.subclass.rationalize.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
-            final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
-            assert expression != null;
-            final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();
+                throws IncorrectOperationException {
+            final PsiIdentifier name =
+                    (PsiIdentifier) descriptor.getPsiElement();
+            final PsiReferenceExpression expression =
+                    (PsiReferenceExpression) name.getParent();
+            if (expression == null) {
+                return;
+            }
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression) expression.getParent();
             final String methodName = expression.getReferenceName();
-            assert call != null;
+            if (call == null) {
+                return;
+            }
             final PsiMethod method = call.resolveMethod();
-            assert method != null;
+            if (method == null) {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
             final PsiExpressionList argumentList = call.getArgumentList();
-            assert containingClass != null;
-            final String containingClassName = containingClass.getName();
-            assert argumentList != null;
+            if (containingClass == null) {
+                return;
+            }
+            final String containingClassName =
+                    containingClass.getQualifiedName();
             final String argText = argumentList.getText();
-            replaceExpression(call, containingClassName + '.' + methodName + argText );
+            replaceExpressionAndShorten(call, containingClassName + '.' +
+                    methodName + argText);
         }
     }
 
@@ -91,52 +109,44 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         return new StaticCallOnSubclassVisitor();
     }
 
-    private static class StaticCallOnSubclassVisitor extends BaseInspectionVisitor {
+    private static class StaticCallOnSubclassVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
             final PsiElement qualifier = methodExpression.getQualifier();
             if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiMethod method = call.resolveMethod();
-            if(method == null){
+            if(method == null) {
                 return;
             }
-            if(!method.hasModifierProperty(PsiModifier.STATIC))
-            {
+            if(!method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-
             final PsiElement referent = ((PsiReference) qualifier).resolve();
             if (!(referent instanceof PsiClass)) {
                 return;
             }
             final PsiClass referencedClass = (PsiClass) referent;
-
-
             final PsiClass declaringClass = method.getContainingClass();
-            if(declaringClass == null)
-            {
+            if(declaringClass == null) {
                 return;
             }
             if (declaringClass.equals(referencedClass)) {
                 return;
             }
-
-            final PsiClass containingClass = ClassUtils.getContainingClass(call);
-            if(!ClassUtils.isClassVisibleFromClass(containingClass, declaringClass))
-            {
+            final PsiClass containingClass =
+                    ClassUtils.getContainingClass(call);
+            if(!ClassUtils.isClassVisibleFromClass(containingClass,
+                    declaringClass)) {
                 return;
             }
             registerMethodCallError(call);
         }
-
-
     }
-
 }
