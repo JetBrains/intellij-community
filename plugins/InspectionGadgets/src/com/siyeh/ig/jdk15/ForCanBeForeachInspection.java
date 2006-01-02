@@ -772,8 +772,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final PsiManager manager = forStatement.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
-            if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)){
+            if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             if(isArrayLoopStatement(forStatement)
