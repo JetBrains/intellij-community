@@ -52,6 +52,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
             // current is better
             conflicts.remove(currentResult);
             currentResult = candidate;
+            continue;
           }
           else if (oldClass.isInheritor(newClass, true)) {
             // current is worse
@@ -69,21 +70,13 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
               continue;
             }
 
-            return null;
-          }
-          if(!candidate.isAccessible()){
-            conflicts.remove(candidate);
-            continue;
-          }
-          if(!currentResult.isAccessible()){
-            conflicts.remove(currentResult);
-            currentResult = candidate;
-            continue;
-          }
+            //This test should go last
+            if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
+              conflicts.remove(candidate);
+              continue;
+            }
 
-          //This test should go last
-          if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
-            conflicts.remove(candidate);
+            return null;
           }
         }
       }
