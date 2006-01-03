@@ -131,7 +131,7 @@ public class MappedFile {
     resize((int)(myRealSize + Math.max(myRealSize, 1024 * 32)));
   }
 
-  private void put(final byte[] src, final int offset, final int length) throws IOException {
+  public void put(final byte[] src, final int offset, final int length) throws IOException {
     ensureSize(myPosition + length);
 
     getBuffer().put(src, offset, length);
