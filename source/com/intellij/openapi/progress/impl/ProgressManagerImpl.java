@@ -12,8 +12,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.List;
 
 public class ProgressManagerImpl extends ProgressManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.ProgressManager");
+  @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
 
@@ -28,7 +31,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
 
   public ProgressManagerImpl(Application application) {
-    if (!application.isUnitTestMode()) {
+    if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
       new Thread("Progress Cancel Checker") {
         public void run() {
           while (true) {
@@ -72,7 +75,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
 
   public void setCancelButtonText(String cancelButtonText) {
     ProgressIndicator progressIndicator = getProgressIndicator();
-    if (progressIndicator != null) {      
+    if (progressIndicator != null) {
       if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
         ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
         if (original instanceof ProgressWindow) {
