@@ -85,7 +85,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public long getModificationStamp() {
-    final Document document = myDocument;
+    final Document document = getCachedDocument();
     if (document != null) {
       if (!PsiDocumentManager.getInstance(getManager().getProject()).isUncommited(document)) {
         myModificationStamp = document.getModificationStamp();
@@ -194,6 +194,11 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
+  }
+
+  private Document getCachedDocument() {
+    if (myDocument != null) return myDocument;
+    return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
   public Document getDocument() {
