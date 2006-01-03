@@ -18,18 +18,21 @@ package com.siyeh.ig.imports;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class StaticImportIsUsedVisitor extends PsiRecursiveElementVisitor {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
-    private final PsiImportStaticStatement m_import;
-    private boolean m_used = false;
+class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
-    StaticImportIsUsedVisitor(PsiImportStaticStatement importStatement) {
+    private Collection<PsiImportStaticStatement> importStatements;
+
+    StaticImportsAreUsedVisitor(PsiImportStaticStatement[] importStatements) {
         super();
-        m_import = importStatement;
+        this.importStatements = new ArrayList(Arrays.asList(importStatements));
     }
 
     public void visitElement(PsiElement element) {
-        if (m_used) {
+        if (importStatements.isEmpty()) {
             return;
         }
         super.visitElement(element);
@@ -48,25 +51,39 @@ class StaticImportIsUsedVisitor extends PsiRecursiveElementVisitor {
             // responsible
             return;
         }
-        final String referenceName = m_import.getReferenceName();
         final String qualifiedName = reference.getQualifiedName();
-        if (referenceName != null && !referenceName.equals(qualifiedName)) {
+        if (qualifiedName == null) {
             return;
         }
-        final PsiClass targetClass =
-                m_import.resolveTargetClass();
         final PsiElement element = reference.resolve();
         if (!(element instanceof PsiMember)) {
             return;
         }
         final PsiMember member = (PsiMember)element;
         final PsiClass containingClass = member.getContainingClass();
-        if (containingClass != null && containingClass.equals(targetClass)) {
-            m_used = true;
+        if (containingClass == null) {
+            return;
+        }
+        for (PsiImportStaticStatement importStatement : importStatements) {
+            final String referenceName = importStatement.getReferenceName();
+            if (!qualifiedName.equals(referenceName)) {
+                return;
+            }
+            final PsiClass targetClass =
+                    importStatement.resolveTargetClass();
+            if (containingClass.equals(targetClass)) {
+                importStatements.remove(importStatement);
+                break;
+            }
         }
     }
 
-    public boolean isUsed() {
-        return m_used;
+    public PsiImportStaticStatement[] getUnusedImportStaticStatements() {
+        if (importStatements.isEmpty()) {
+            return PsiImportStaticStatement.EMPTY_ARRAY;
+        } else {
+            return importStatements.toArray(
+                    new PsiImportStaticStatement[importStatements.size()]);
+        }
     }
 }
