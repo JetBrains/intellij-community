@@ -73,7 +73,10 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
             PsiExpression[] args = argumentList.getExpressions();
             if (parameters.length == args.length) {
               PsiExpression lastArg = args[args.length - 1];
-              if (lastArg instanceof PsiNewExpression) {
+              PsiParameter lastParameter = parameters[args.length - 1];
+              PsiType lastParamType = lastParameter.getType();
+              LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+              if (lastArg instanceof PsiNewExpression && ((PsiEllipsisType) lastParamType).toArrayType().equals(lastArg.getType())) {
                 PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression) lastArg).getArrayInitializer();
                 if (arrayInitializer != null) {
                   if (isSafeToFlatten(expression, method, arrayInitializer.getInitializers())) {
