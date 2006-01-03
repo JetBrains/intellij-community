@@ -85,7 +85,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public long getModificationStamp() {
-    final Document document = getDocument();
+    final Document document = myDocument;
     if (document != null) {
       if (!PsiDocumentManager.getInstance(getManager().getProject()).isUncommited(document)) {
         myModificationStamp = document.getModificationStamp();
