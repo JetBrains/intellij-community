@@ -40,11 +40,16 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     protected String buildErrorString(PsiElement location) {
         if (anonymousClass) {
           if (anonymousExtends) {
-            return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.extending", text);
+            return InspectionGadgetsBundle.message(
+                    "method.only.used.from.inner.class.problem.descriptor.anonymous.extending",
+                    text);
           }
-          return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.implementing", text);
+          return InspectionGadgetsBundle.message(
+                  "method.only.used.from.inner.class.problem.descriptor.anonymous.implementing",
+                  text);
         }
-        return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "method.only.used.from.inner.class.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -66,9 +71,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
             final LocalSearchScope scope =
                     new LocalSearchScope(containingClass);
             final PsiReference[] references =
-                    searchHelper.findReferences(method,
-                                                scope,
-                                                false);
+                    searchHelper.findReferences(method, scope, false);
             if (references.length == 0) {
                 return;
             }
@@ -90,7 +93,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
                     return;
                 }
             }
-
             if (firstReferenceClass instanceof PsiAnonymousClass) {
                 final PsiClass[] interfaces =
                         firstReferenceClass.getInterfaces();
@@ -107,7 +109,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
                     anonymousExtends = true;
                     text = superClass.getName();
                 }
-
                 anonymousClass = true;
             } else {
                 anonymousClass = false;
