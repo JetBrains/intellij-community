@@ -76,13 +76,11 @@ public final class BorderProperty extends Property{
    * Border type subproperty
    */
   private final class MyTypeProperty extends Property{
-    private final BorderTypeRenderer myRenderer;
-    private final BorderTypeEditor myEditor;
+    BorderTypeRenderer myRenderer;
+    BorderTypeEditor myEditor;
 
     public MyTypeProperty(){
       super(BorderProperty.this, "type");
-      myRenderer=new BorderTypeRenderer();
-      myEditor=new BorderTypeEditor();
     }
 
     public Object getValue(final RadComponent component){
@@ -97,11 +95,17 @@ public final class BorderProperty extends Property{
     }
 
     @NotNull
-    public PropertyRenderer getRenderer(){
+    public PropertyRenderer getRenderer() {
+      if (myRenderer == null) {
+        myRenderer = new BorderTypeRenderer();
+      }
       return myRenderer;
     }
 
-    public PropertyEditor getEditor(){
+    public PropertyEditor getEditor() {
+      if (myEditor == null) {
+        myEditor = new BorderTypeEditor();
+      }
       return myEditor;
     }
 
@@ -118,13 +122,11 @@ public final class BorderProperty extends Property{
    * Title subproperty
    */
   private final class MyTitleProperty extends Property{
-    private final StringRenderer myRenderer;
-    private final StringEditor myEditor;
+    private StringRenderer myRenderer;
+    private StringEditor myEditor;
 
     public MyTitleProperty(){
       super(BorderProperty.this, "title");
-      myRenderer=new StringRenderer();
-      myEditor=new StringEditor();
     }
 
     public Object getValue(final RadComponent component){
@@ -147,11 +149,17 @@ public final class BorderProperty extends Property{
     }
 
     @NotNull
-    public PropertyRenderer getRenderer(){
+    public PropertyRenderer getRenderer() {
+      if (myRenderer == null) {
+        myRenderer = new StringRenderer();
+      }
       return myRenderer;
     }
 
-    public PropertyEditor getEditor(){
+    public PropertyEditor getEditor() {
+      if (myEditor == null) {
+        myEditor = new StringEditor();
+      }
       return myEditor;
     }
 
