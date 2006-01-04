@@ -11,29 +11,40 @@ import java.util.Arrays;
  * @author max
  */
 public class PersistentStringEnumerator {
-  private File myFile;
   private MappedFile myStorage;
-  private static final int FIRST_VECTOR_OFFSET = 0;
-  private int maxDepth = 0;
-  private int allocatedPages = 0;
+  private static final int FIRST_VECTOR_OFFSET = 4;
+  private static final int OPEN_MAGIC = 0xbabe0589;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac;
+
   private byte[] buffer = new byte[256];
 
   private static final int BITS_PER_LEVEL = 4;
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
 
-  public PersistentStringEnumerator(File file) throws IOException {
-    myFile = file;
-    myStorage = new MappedFile(file, 1024 * 4);
-    if (myStorage.length() == 0) {
-      allocVector();
+  public static class CorruptedException extends IOException {
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    public CorruptedException(File file) {
+      super("PersistentStringEnumerator storage corrupted " + file.getPath());
     }
   }
 
-  int enumerate(String value) {
+  public PersistentStringEnumerator(File file) throws IOException {
+    myStorage = new MappedFile(file, 1024 * 4);
+    if (myStorage.length() == 0) {
+      myStorage.writeInt(OPEN_MAGIC);
+      allocVector();
+    }
+    else if (myStorage.getInt(0) != CORRECTLY_CLOSED_MAGIC) {
+      myStorage.close();
+      throw new CorruptedException(file);
+    }
+  }
+
+  public int enumerate(String value) throws IOException {
     int depth = 0;
-    try {
-      int hc = value.hashCode();
+    final int valueHC = value.hashCode();
+    int hc = valueHC;
       int vector = FIRST_VECTOR_OFFSET;
       int pos;
       int lastVector;
@@ -55,14 +66,15 @@ public class PersistentStringEnumerator {
       else {
         int collision = Math.abs(vector);
         boolean splitVector = false;
-        String candidate;
+        int candidateHC;
         do {
-          candidate = valueOf(collision);
-          if (candidate.hashCode() != value.hashCode()) {
+          candidateHC = hashCodeOf(collision);
+          if (candidateHC != valueHC) {
             splitVector = true;
             break;
           }
 
+          String candidate = valueOf(collision);
           if (value.equals(candidate)) {
             return collision;
           }
@@ -75,16 +87,16 @@ public class PersistentStringEnumerator {
         if (splitVector) {
           depth--;
           do {
-            final int valueHC = hcByte(value, depth);
-            final int oldHC = hcByte(candidate, depth);
-            if (valueHC == oldHC) {
+            final int valueHCByte = hcByte(valueHC, depth);
+            final int oldHCByte = hcByte(candidateHC, depth);
+            if (valueHCByte == oldHCByte) {
               int newVector = allocVector();
-              myStorage.putInt(lastVector + oldHC * 4, newVector);
+              myStorage.putInt(lastVector + oldHCByte * 4, newVector);
               lastVector = newVector;
             }
             else {
-              myStorage.putInt(lastVector + valueHC * 4, -newId);
-              myStorage.putInt(lastVector + oldHC * 4, vector);
+              myStorage.putInt(lastVector + valueHCByte * 4, -newId);
+              myStorage.putInt(lastVector + oldHCByte * 4, vector);
               break;
             }
             depth++;
@@ -96,33 +108,21 @@ public class PersistentStringEnumerator {
           myStorage.putInt(newId, vector);
           myStorage.putInt(pos, -newId);
         }
+
         return newId;
       }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally{
-      if (depth > maxDepth) maxDepth = depth;
-    }
   }
 
-  private static int hcByte(String s, int byteN) {
-    return (s.hashCode() >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
+  private static int hcByte(int hashcode, int byteN) {
+    return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
   }
 
-  private int allocVector() {
-    try {
-      final int pos = (int)myStorage.length();
-      byte[] fill = new byte[SLOTS_PER_VECTOR * 4];
-      Arrays.fill(fill, (byte)0);
-      myStorage.put(pos, fill, 0, fill.length);
-      allocatedPages++;
-      return pos;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private int allocVector() throws IOException {
+    final int pos = (int)myStorage.length();
+    byte[] fill = new byte[SLOTS_PER_VECTOR * 4];
+    Arrays.fill(fill, (byte)0);
+    myStorage.put(pos, fill, 0, fill.length);
+    return pos;
   }
 
   private int nextCanditate(final int idx) throws IOException {
@@ -133,8 +133,9 @@ public class PersistentStringEnumerator {
     for (int i = 0; i != str.length(); ++ i)
     {
       final char c = str.charAt(i);
-      if (c < 0 || c >= 128)
+      if (c < 0 || c >= 128) {
         return false;
+      }
     }
     return true;
   }
@@ -145,6 +146,7 @@ public class PersistentStringEnumerator {
       final int pos = (int)storage.length();
       storage.seek(pos);
       storage.writeInt(0);
+      storage.writeInt(value.hashCode());
 
       int len = value.length();
       if (len < 255 && isAscii(value)) {
@@ -167,31 +169,37 @@ public class PersistentStringEnumerator {
     }
   }
 
-  public String valueOf(int idx) {
-    try {
-      final MappedFile storage = myStorage;
-      storage.seek(idx + 4);
-      int len = 0xFF & (int) storage.readByte();
-      if (len == 0xFF) {
-        return storage.readUTF();
-      }
-      else {
-        final byte[] buf = buffer;
-        storage.get(buf, 0, len);
-        char[] chars = new char[len];
-        for (int i = 0; i < len; i++) {
-          chars[i] = (char)buf[i];
-        }
-        return new String(chars);
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public int hashCodeOf(int idx) throws IOException {
+    return myStorage.getInt(idx + 4);
   }
 
-  public void close() {
-    myStorage.close();
-    System.out.println("maxDepth = " + maxDepth + ", pages = " + allocatedPages);
+  public String valueOf(int idx) throws IOException {
+    final String result;
+    final MappedFile storage = myStorage;
+    storage.seek(idx + 8);
+    int len = 0xFF & (int) storage.readByte();
+    if (len == 0xFF) {
+      result = storage.readUTF();
+    }
+    else {
+      final byte[] buf = buffer;
+      storage.get(buf, 0, len);
+      char[] chars = new char[len];
+      for (int i = 0; i < len; i++) {
+        chars[i] = (char)buf[i];
+      }
+      result = new String(chars);
+    }
+
+    return result;
   }
+
+  public void close() throws IOException {
+    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+    myStorage.close();
+  }
+
+  public void flush() {
+    myStorage.flush();
+  }  
 }

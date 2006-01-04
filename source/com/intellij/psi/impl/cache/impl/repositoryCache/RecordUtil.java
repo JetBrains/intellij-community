@@ -15,7 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.Internalize;
-import com.intellij.util.io.NameStore;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -411,14 +412,14 @@ public class RecordUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.repositoryCache");
 
-  public static String readNAME(DataInput record, NameStore nameStore) throws IOException {
+  public static String readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
     final int low = record.readUnsignedByte();
     final int nameId = (readINT(record) << 8) | low;
-    return nameStore.stringOfId(nameId);
+    return nameStore.valueOf(nameId);
   }
 
-  public static void writeNAME(RecordDataOutput record, final String name, NameStore nameStore) throws IOException {
-    final int nameId = nameStore.idOfString(name);
+  public static void writeNAME(RecordDataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
+    final int nameId = nameStore.enumerate(name);
     record.writeByte(nameId & 0xFF);
     writeINT(record, (nameId >> 8));
   }
@@ -428,7 +429,7 @@ public class RecordUtil {
     readINT(record);
   }
 
-  public static void readTYPE(DataInput record, TypeInfo view, NameStore nameStore) throws IOException {
+  public static void readTYPE(DataInput record, TypeInfo view, PersistentStringEnumerator nameStore) throws IOException {
     final int b = 0xFF & record.readByte();
     final int tag = b & 0x3;
     final int index = 0xF & (b >> 2);
@@ -455,7 +456,7 @@ public class RecordUtil {
   public static void writeTYPE(RecordDataOutput record,
                                PsiType type,
                                PsiTypeElement typeElement,
-                               /*, NameStore nameStore*/NameStore nameStore)
+                               PersistentStringEnumerator nameStore)
     throws IOException {
     if (typeElement == null) {
       record.writeByte(0x02);
@@ -536,7 +537,7 @@ public class RecordUtil {
 
   public static void writeSTR(DataOutput record, String str) throws IOException {
     final int len = str.length();
-    if (len < 255 && NameStore.isAscii(str)) {
+    if (len < 255 && PersistentStringEnumerator.isAscii(str)) {
       record.writeByte(len);
       record.writeBytes(str);
     }
@@ -662,4 +663,28 @@ public class RecordUtil {
     }
   }
 
+  public static PersistentStringEnumerator getNameStoreFile(String name, boolean toDelete, File cacheFolder) {
+    File ioFile = new File(cacheFolder, name);
+    if (toDelete) {
+      if (ioFile.exists())
+        LOG.assertTrue(ioFile.delete());
+    }
+
+    PersistentStringEnumerator names = null;
+    try {
+      names = new PersistentStringEnumerator(ioFile);
+    }
+    catch (PersistentStringEnumerator.CorruptedException e) {
+      if (!toDelete) {
+        names = getNameStoreFile (name, true, cacheFolder);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      if (!toDelete)
+        names = getNameStoreFile (name, true, cacheFolder);
+    }
+
+    return names;
+  }
 }
