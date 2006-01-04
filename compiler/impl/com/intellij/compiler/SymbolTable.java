@@ -8,47 +8,33 @@ package com.intellij.compiler;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.PersistentTrieImpl;
+import com.intellij.util.containers.IntObjectCache;
+import com.intellij.util.containers.ObjectIntCache;
+import com.intellij.util.io.PersistentStringEnumerator;
 
 import java.io.File;
 import java.io.IOException;
 
 public class SymbolTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.SymbolTable");
-  private final PersistentTrieImpl myTrie;
-  private static final int CACHE_SIZE = 5 * 1024 * 1024; // 5 mbytes
+  private final PersistentStringEnumerator myTrie;
+  private IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(0x800);
+  private ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(0x800);
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
-      final boolean isNewFile = file.length() == 0;
-      myTrie = new PersistentTrieImpl(file, CACHE_SIZE);
-      if (!isNewFile && !myTrie.isTrieComplete()) {
-        try {
-          throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"));
-        }
-        finally {
-          myTrie.close();
-        }
-      }
-      myTrie.setStringCacheSize(myTrie.getStringCacheSize() * 2);
-      myTrie.setNodeCacheSize(myTrie.getNodeCacheSize() * 4);
+      myTrie = new PersistentStringEnumerator(file);
+    }
+    catch (PersistentStringEnumerator.CorruptedException e) {
+      throw new CacheCorruptedException(CompilerBundle.message("error.compiler.caches.corrupted"));
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);
     }
-  }
-
-  public synchronized boolean isDirty() {
-    return myTrie.isDirty();
   }
 
   public synchronized void save() throws CacheCorruptedException {
-    try {
-      myTrie.flush();
-    }
-    catch (IOException e) {
-      throw new CacheCorruptedException(e);
-    }
+    myTrie.flush();
   }
 
   public synchronized int getId(String symbol) throws CacheCorruptedException {
@@ -56,8 +42,14 @@ public class SymbolTable {
     if (symbol.length() == 0) {
       return -1;
     }
+    int result = myStringIndexCache.tryKey(symbol);
+    if (result != Integer.MIN_VALUE) return result;
+
     try {
-      return myTrie.addString(symbol);
+      result = myTrie.enumerate(symbol);
+      myIndexStringCache.cacheObject(result, symbol);
+      myStringIndexCache.cacheObject(symbol, result);
+      return result;
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);
@@ -68,8 +60,14 @@ public class SymbolTable {
     if (id == -1) {
       return "";
     }
+    String result = myIndexStringCache.tryKey(id);
+    if (result != null) return result;
+
     try {
-      return myTrie.getStringByIndex(id);
+      result = myTrie.valueOf(id);
+      myIndexStringCache.cacheObject(id, result);
+      myStringIndexCache.cacheObject(result, id);
+      return result;
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);
