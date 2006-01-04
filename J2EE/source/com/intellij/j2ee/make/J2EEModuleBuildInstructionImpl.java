@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.*;
 import java.util.Collection;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -40,9 +41,11 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      boolean willBuild = ModuleBuilder.willBuild(myBuildProperties);
-      if (willBuild) {
-        File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
+      File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
+      boolean builtAlready = ModuleBuilder.willBuildExploded(myBuildProperties);
+      if (!builtAlready) {
+        ModuleBuilder.getInstance(getModule()).buildExploded(fromFile, context, new ArrayList<File>());
+      }
         MakeUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
         // copy dependencies
         buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
@@ -54,18 +57,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
             return true;
           }
         }, false);
-      }
-      else {
-        buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
-          public boolean visitInstruction(BuildInstruction instruction) throws Exception {
-            instruction.addFilesToExploded(context, target, writtenPaths, fileFilter);
-            if (instruction.isExternalDependencyInstruction()) {
-              externalDependencyFound.set(Boolean.TRUE);
-            }
-            return true;
-          }
-        }, false);
-      }
       if (externalDependencyFound.get().booleanValue()) {
         MakeUtilImpl.writeManifest(buildRecipe, context, target);
       }
