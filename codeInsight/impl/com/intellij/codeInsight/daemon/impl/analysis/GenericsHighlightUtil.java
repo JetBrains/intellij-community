@@ -818,10 +818,8 @@ public class GenericsHighlightUtil {
     PsiModifierList list = method.getModifierList();
     final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
     if (overrideAnnotation != null) {
-      PsiMethod[] superMethods = method.findSuperMethods();
-      final PsiClass containingClass = method.getContainingClass();
-      for (PsiMethod superMethod : superMethods) {
-        if (containingClass.isInterface() == superMethod.getContainingClass().isInterface()) return null;
+      for (PsiMethod superMethod : method.findSuperMethods()) {
+        if (!superMethod.getContainingClass().isInterface()) return null;
       }
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
                                                JavaErrorMessages.message("override.annotation.violated"));
