@@ -4,10 +4,9 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -31,10 +30,12 @@ import java.util.List;
 import java.util.Stack;
 
 public class BraceMatchingUtil {
+  private static final int UNDEFINED_TOKEN_GROUP = -1;
   private static final int JAVA_TOKEN_GROUP = 0;
   private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
   private static final int JSP_TOKEN_GROUP = 3;
+  private static final int PAIRED_TOKEN_GROUP = 4;
   private static final int DOC_TOKEN_GROUP = 5;
 
   public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
@@ -46,7 +47,7 @@ public class BraceMatchingUtil {
       final char startChar = chars.charAt(iterator.getStart());
       if (!Character.isUpperCase(startChar)) return false;
       final CharSequence word = chars.subSequence(iterator.getStart(), iterator.getEnd());
-      if (word.length() == 1) return true; 
+      if (word.length() == 1) return true;
       for (int i = 1; i < word.length(); i++) {
         if (Character.isLowerCase(word.charAt(i))) return true;
       }
@@ -81,7 +82,7 @@ public class BraceMatchingUtil {
     }
 
     public int getTokenGroup(IElementType tokenType) {
-      return 0;
+      return PAIRED_TOKEN_GROUP;
     }
 
     public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
@@ -170,7 +171,7 @@ public class BraceMatchingUtil {
         return DOC_TOKEN_GROUP;
       }
       else{
-        return -1;
+        return UNDEFINED_TOKEN_GROUP;
       }
     }
 
@@ -334,11 +335,11 @@ public class BraceMatchingUtil {
     public int getTokenGroup(IElementType tokenType) {
       int tokenGroup = super.getTokenGroup(tokenType);
 
-      if(tokenGroup==-1 && ourStyleBraceMatcher!=null) {
+      if(tokenGroup == UNDEFINED_TOKEN_GROUP && ourStyleBraceMatcher != null) {
         tokenGroup = ourStyleBraceMatcher.getTokenGroup(tokenType);
       }
 
-      if(tokenGroup==-1 && ourScriptBraceMatcher!=null) {
+      if(tokenGroup == UNDEFINED_TOKEN_GROUP && ourScriptBraceMatcher != null) {
         tokenGroup = ourScriptBraceMatcher.getTokenGroup(tokenType);
       }
 
@@ -574,14 +575,16 @@ public class BraceMatchingUtil {
   private static int getTokenGroup(IElementType tokenType, FileType fileType){
     BraceMatcher matcher = getBraceMatcher(fileType);
     if (matcher!=null) return matcher.getTokenGroup(tokenType);
-    return -1;
+    return UNDEFINED_TOKEN_GROUP;
   }
 
   private static boolean isStrictTagMatching(FileType fileType, int tokenGroup) {
     switch(tokenGroup){
       case XML_TAG_TOKEN_GROUP:
-        return fileType instanceof LanguageFileType &&
-               ((LanguageFileType)fileType).getLanguage() instanceof XMLLanguage;
+        // Other xml languages may have nonbalanced tag names
+        return fileType == StdFileTypes.XML ||
+               fileType == StdFileTypes.XHTML ||
+               fileType == StdFileTypes.JSPX;
 
       case JSP_TOKEN_GROUP:
         return true;
