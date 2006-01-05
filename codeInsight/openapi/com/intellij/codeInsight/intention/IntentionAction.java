@@ -20,24 +20,41 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
+/**
+ * Interface for intention actions. Intention actions are invoked by pressing
+ * Alt-Enter in the code editor at the location where an intention is available,
+ * and can be enabled or disabled in the "Intentions" settings dialog.
+ *
+ * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
+ */
 public interface IntentionAction {
   /**
    * Returns text to be shown in the list of available actions, if this action
    * is available.
+   *
    * @see #isAvailable(Project,Editor,PsiFile)
+   * @return the text to show in the intention popup.
    */
   String getText();
 
   /**
-   * @return this intention's "id". This id is used to externalize "auto-show"
-   * state of intentions. When user clicks on a lightbulb in intention list),
-   * all intentions with the same family name gets enabled/disabled.
+   * Returns the identifier of the family of intentions. This id is used to externalize
+   * "auto-show" state of intentions. When user clicks on a lightbulb in intention list,
+   * all intentions with the same family name get enabled/disabled. The identifier
+   * is also used to locate the description and preview text for the intention.
+   *
+   * @return the intention family ID.
+   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...) 
    */
   String getFamilyName();
 
   /**
    * Checks whether this intention is available at a caret offset in file.
    * If this method returns true, a light bulb for this intention is shown.
+   *
+   * @param project the project in which the availability is checked.
+   * @param editor the editor in which the intention will be invoked.
+   * @param file the file open in the editor.
    */
   boolean isAvailable(Project project, Editor editor, PsiFile file);
 
@@ -45,6 +62,10 @@ public interface IntentionAction {
    * Called when user invokes intention. This method is called inside command.
    * If {@link #startInWriteAction()} returns true, this method is also called
    * inside write action.
+   *
+   * @param project the project in which the intention is invoked.
+   * @param editor the editor in which the intention is invoked.
+   * @param file the file open in the editor.
    */
   void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException;
 
@@ -52,7 +73,9 @@ public interface IntentionAction {
    * Indicate whether this action should be invoked inside write action.
    * Should return false if e.g. modal dialog is shown inside the action.
    * If false is returned the action itself is responsible for starting write action
-   * when needed
+   * when needed.
+   *
+   * @return true if the intention requires a write action, false otherwise.
    */
   boolean startInWriteAction();
 }

@@ -24,29 +24,50 @@ import java.util.List;
 
 /**
  * Manager for intentions. All intentions must be registered here.
+ *
+ * @see IntentionAction
  */
 public abstract class IntentionManager implements ProjectComponent {
 
   /**
-   * Returns instance of <code>IntententionManager</code> for given project.
-   * @param project
+   * Returns instance of <code>IntentionManager</code> for given project.
+   *
+   * @param project the project for which the instance is returned.
    */
   public static IntentionManager getInstance(Project project){
     return project.getComponent(IntentionManager.class);
   }
 
   /**
-   * Registers intention action.
-   * @param action
+   * Registers an intention action.
+   *
+   * @param action the intention action to register.
    */
   public abstract void addAction(IntentionAction action);
 
   /**
    * Returns all registered intention actions.
+   *
    * @return array of registered actions.
    */
   public abstract IntentionAction[] getIntentionActions();
 
+  /**
+   * Registers an intention action which can be enabled or disabled through the "Intention
+   * Settings" dialog. To provide the description and the example code for the intention,
+   * the directory with the name equal to {@link IntentionAction#getFamilyName()} needs to
+   * be created under the <code>intentionDescriptions</code> directory of the resource root.
+   * The directory needs to contain three files. <code>description.html</code> provides the
+   * description of the intention, <code>before.java.template</code> provides the sample code
+   * before the intention is invoked, and <code>after.java.template</code> provides the sample
+   * code after invoking the intention. The templates can contain a fragment of code surrounded
+   * with <code>&lt;spot&gt;</code> and <code>&lt;/spot&gt;</code> markers. If present, that fragment
+   * will be surrounded by a blinking rectangle in the inspection preview pane.
+   *
+   * @param action   the intention action to register.
+   * @param category the name of the category or categories under which the intention will be shown
+   *                 in the "Intention Settings" dialog.
+   */
   public abstract void registerIntentionAndMetaData(IntentionAction action, String... category);
 
   /**
