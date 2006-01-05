@@ -2,16 +2,17 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -209,6 +210,16 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       String name = codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
+
+      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+      for(PsiAnnotation ann: annotations) {
+        if (AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
+          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.NOT_NULL, field);
+          parm.getModifierList().addAfter(annotation, null);
+          break;
+        }
+      }
+
       constructor.getParameterList().add(parm);
       if (fieldName.equals(parmName)) {
         buffer.append("this.");
