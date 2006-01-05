@@ -21,6 +21,7 @@ public class PersistentStringEnumerator {
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
   private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
+  private boolean myClosed = false;
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -202,8 +203,15 @@ public class PersistentStringEnumerator {
   }
 
   public void close() throws IOException {
-    flush();
-    myStorage.close();
+    if (!myClosed) {
+      myClosed = true;
+      flush();
+      myStorage.close();
+    }
+  }
+
+  public boolean isClosed() {
+    return myClosed;
   }
 
   public void flush() throws IOException {
