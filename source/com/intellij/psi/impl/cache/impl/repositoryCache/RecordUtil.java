@@ -5,6 +5,7 @@ import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
@@ -667,8 +668,7 @@ public class RecordUtil {
     throws PersistentStringEnumerator.CorruptedException {
     File ioFile = new File(cacheFolder, name);
     if (toDelete) {
-      if (ioFile.exists())
-        LOG.assertTrue(ioFile.delete());
+      LOG.assertTrue(FileUtil.delete(ioFile));
     }
 
     PersistentStringEnumerator names = null;
