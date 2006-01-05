@@ -728,7 +728,7 @@ public class TypedHandler implements TypedActionHandler {
 
     int tagOffset = tag.getTextRange().getStartOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true)) return false;
+    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true,true)) return false;
 
     editor.getDocument().insertString(offset, "</" + name + ">");
     return false;

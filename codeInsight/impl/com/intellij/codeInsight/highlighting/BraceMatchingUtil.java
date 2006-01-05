@@ -439,64 +439,102 @@ public class BraceMatchingUtil {
   private static final Stack<IElementType> ourBraceStack = new Stack<IElementType>();
   private static final Stack<String> ourTagNameStack = new Stack<String>();
 
-  public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator, boolean forward) {
-    IElementType brace1Token = getToken(iterator);
-    int group = getTokenGroup(brace1Token, fileType);
-    String brace1TagName = getTagName(fileText, iterator);
-    boolean isStrict = isStrictTagMatching(fileType, group);
-    boolean isCaseSensitive = areTagsCaseSensitive(fileType, group);
+  private static class MatchBraceContext {
+    CharSequence fileText;
+    FileType fileType;
+    HighlighterIterator iterator;
+    boolean forward;
 
-    ourBraceStack.clear();
-    ourTagNameStack.clear();
-    ourBraceStack.push(brace1Token);
-    if (isStrict){
-      ourTagNameStack.push(brace1TagName);
+    IElementType brace1Token;
+    int group;
+    String brace1TagName;
+    boolean isStrict;
+    boolean isCaseSensitive;
+
+    MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward) {
+      fileText = _fileText;
+      fileType = _fileType;
+      iterator = _iterator;
+      forward = _forward;
+
+      brace1Token = getToken(iterator);
+      group = getTokenGroup(brace1Token, fileType);
+      brace1TagName = getTagName(fileText, iterator);
+
+      isStrict = isStrictTagMatching(fileType, group);
+      isCaseSensitive = areTagsCaseSensitive(fileType, group);
     }
-    boolean matched = false;
-    while(true){
-      if (!forward){
-        iterator.retreat();
-      }
-      else{
-        iterator.advance();
-      }
-      if (iterator.atEnd()) {
-        break;
-      }
 
-      IElementType tokenType = getToken(iterator);
+    MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward,
+                      boolean _strict) {
+      this(_fileText, _fileType, _iterator, _forward);
+      isStrict = _strict;
+    }
 
-      if (getTokenGroup(tokenType, fileType) == group) {
-        String tagName = getTagName(fileText, iterator);
-        if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
-        if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
-          ourBraceStack.push(tokenType);
-          if (isStrict){
-            ourTagNameStack.push(tagName);
+    boolean doBraceMatch() {
+      ourBraceStack.clear();
+      ourTagNameStack.clear();
+      ourBraceStack.push(brace1Token);
+      if (isStrict){
+        ourTagNameStack.push(brace1TagName);
+      }
+      boolean matched = false;
+      while(true){
+        if (!forward){
+          iterator.retreat();
+        }
+        else{
+          iterator.advance();
+        }
+        if (iterator.atEnd()) {
+          break;
+        }
+
+        IElementType tokenType = getToken(iterator);
+
+        if (getTokenGroup(tokenType, fileType) == group) {
+          String tagName = getTagName(fileText, iterator);
+          if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
+          if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
+            ourBraceStack.push(tokenType);
+            if (isStrict){
+              ourTagNameStack.push(tagName);
+            }
+          }
+          else if (forward ? isRBraceToken(iterator, fileText,fileType) : isLBraceToken(iterator, fileText, fileType)){
+            IElementType topTokenType = ourBraceStack.pop();
+            String topTagName = null;
+            if (isStrict){
+              topTagName = ourTagNameStack.pop();
+            }
+
+            if (!isPairBraces(topTokenType, tokenType, fileType)
+              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
+            ){
+              matched = false;
+              break;
+            }
+
+            if (ourBraceStack.size() == 0){
+              matched = true;
+              break;
+            }
           }
         }
-        else if (forward ? isRBraceToken(iterator, fileText,fileType) : isLBraceToken(iterator, fileText, fileType)){
-          IElementType topTokenType = ourBraceStack.pop();
-          String topTagName = null;
-          if (isStrict){
-            topTagName = ourTagNameStack.pop();
-          }
-
-          if (!isPairBraces(topTokenType, tokenType, fileType)
-            || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
-          ){
-            matched = false;
-            break;
-          }
-
-          if (ourBraceStack.size() == 0){
-            matched = true;
-            break;
-          }
-        }
       }
+      return matched;
     }
-    return matched;
+  }
+
+  public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator, 
+                                                boolean forward) {
+    return new MatchBraceContext(fileText, fileType, iterator, forward).doBraceMatch();
+  }
+
+
+  public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator,
+                                                boolean forward, boolean isStrict) {
+    return new MatchBraceContext(fileText, fileType, iterator, forward, isStrict).doBraceMatch();
   }
 
   public static boolean findStructuralLeftBrace(FileType fileType, HighlighterIterator iterator, CharSequence fileText) {
