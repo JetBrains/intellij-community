@@ -240,18 +240,24 @@ public class TargetElementUtil {
       ) {
       PsiElement element = (PsiElement) o;
       if (!(element instanceof PsiPackage)) {
-        PsiFile file = element.getContainingFile();
-        if (file == null) return null;
-        if (file.getOriginalFile() != null) file = file.getOriginalFile();
-        if (file == null) return null;
-        if (file.getVirtualFile() == null) return null;
+        if (!isValidElement(element)) return null;
       }
       return element;
     }
     else if (o instanceof LookupValueWithPsiElement) {
-      return ((LookupValueWithPsiElement)o).getElement();
+      final PsiElement element = ((LookupValueWithPsiElement)o).getElement();
+      if (isValidElement(element)) return element;
+      return null;
     } else {
       return null;
     }
+  }
+
+  private static boolean isValidElement(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return false;
+    if (file.getOriginalFile() != null) file = file.getOriginalFile();
+    if (file == null) return false;
+    return file.getVirtualFile() != null;
   }
 }
