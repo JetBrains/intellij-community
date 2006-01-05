@@ -1,7 +1,9 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -133,6 +135,12 @@ class ReferenceAdjuster implements Constants {
       array.add(parent);
       return;
     }
+
+    if (parent.getPsi() instanceof JspFile) {
+      final JspFile jspFile = ((JspFile)parent.getPsi());
+      addReferencesInRange(array, (TreeElement)jspFile.getJavaRoot().getNode(), startOffset, endOffset);
+    }
+
     if (parent instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(parent);
       int offset = 0;
