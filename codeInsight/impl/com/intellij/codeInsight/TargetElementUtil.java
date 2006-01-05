@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,8 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlEntityDecl;
 
 public class TargetElementUtil {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
@@ -249,7 +248,9 @@ public class TargetElementUtil {
       }
       return element;
     }
-    else {
+    else if (o instanceof LookupValueWithPsiElement) {
+      return ((LookupValueWithPsiElement)o).getElement();
+    } else {
       return null;
     }
   }
