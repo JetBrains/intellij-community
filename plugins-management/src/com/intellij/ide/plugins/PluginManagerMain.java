@@ -775,8 +775,8 @@ public class PluginManagerMain {
 
               final String message = isUpdate ? updateMessage : downloadMessage;
               if (Messages.showYesNoDialog(main,
-                                           (isUpdate ? IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName())
-                                           : IdeBundle.message("prompt.update.plugin", pluginNode.getName())),
+                                           (isUpdate ? IdeBundle.message("prompt.update.plugin", pluginNode.getName())
+                                           : IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName())),
                                            message,
                                            Messages.getQuestionIcon()) == 0) {
                 if (downloadPlugin(pluginNode)) {
