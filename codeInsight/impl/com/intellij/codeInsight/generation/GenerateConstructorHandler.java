@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.infos.CandidateInfo;
@@ -28,10 +29,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected Object[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
+      if (searchHelper.isFieldBoundToForm(field)) continue;
       array.add(field);
     }
     return array.toArray(new PsiElement[array.size()]);
