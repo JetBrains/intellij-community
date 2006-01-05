@@ -131,18 +131,18 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   protected class ReferenceSet{
     private final @Nullable Map<CustomizationKey, Object> options = myOptions;
     private JavaReference[] myReferences;
-    private final PsiElement myElement;
+    private PsiElement myElement;
     private final int myStartInElement;
     private final ReferenceType myType;
 
     ReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type){
       myType = type;
-      myElement = element;
       myStartInElement = startInElement;
-      reparse(str);
+      reparse(str,element);
     }
 
-    private void reparse(String str){
+    private void reparse(String str,PsiElement element){
+      myElement = element;
       final List<JavaReference> referencesList = new ArrayList<JavaReference>();
       int currentDot = -1;
       int index = 0;
@@ -163,8 +163,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       myReferences = referencesList.toArray(new JavaReference[referencesList.size()]);
     }
 
-    private void reparse(){
-      reparse(myElement.getText());
+    private void reparse(PsiElement element){
+      final String text;
+      
+      if (element instanceof XmlAttributeValue) {
+        text = StringUtil.stripQuotesAroundValue( element.getText() );
+      } else if (element instanceof XmlTag) {
+        text = ((XmlTag)element).getValue().getTrimmedText();
+      } else {
+        text = element.getText();
+      }
+      reparse(text,element);
     }
 
     private JavaReference getReference(int index){
@@ -268,7 +277,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         final String newName = qualifiedName;
         final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
         final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
-        reparse();
+        reparse(finalElement);
         return finalElement;
       }
 
