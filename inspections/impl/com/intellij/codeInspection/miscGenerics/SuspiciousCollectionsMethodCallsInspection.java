@@ -5,15 +5,14 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,7 +25,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
                                    GlobalSearchScope searchScope,
                                    List<PsiMethod> patternMethods,
                                    IntArrayList indices) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = manager.getElementFactory();
     final PsiClass collectionClass = manager.findClass("java.util.Collection", searchScope);
     PsiType[] javaLangObject = {PsiType.getJavaLangObject(manager, searchScope)};
     MethodSignature removeSignature = MethodSignatureUtil.createMethodSignature("remove", javaLangObject, null, PsiSubstitutor.EMPTY);
@@ -87,6 +85,9 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
 
     place.accept(new PsiRecursiveElementVisitor() {
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+        final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return;
         final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length != 1) return;
         PsiType argType = args[0].getType();
@@ -96,7 +97,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
 
         if (!(argType instanceof PsiClassType)) return;
 
-        final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
         final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
         final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
         if (psiMethod == null) return;
@@ -114,8 +114,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
               String message = null;
               if (!typeParamMapping.isAssignableFrom(argType)) {
                 if (!typeParamMapping.isConvertibleFrom(argType)) {
-                  PsiExpression qualifier = methodExpression.getQualifierExpression();
-                  LOG.assertTrue(qualifier != null);
                   PsiType qualifierType = qualifier.getType();
                   LOG.assertTrue(qualifierType != null);
 
