@@ -437,8 +437,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void contentsLoaded(PsiFileImpl file) {
     final Document document = getCachedDocument(file);
-    LOG.assertTrue(document != null);
-    getTextBlock(document).clear();
+    if(document != null)
+      getTextBlock(document).clear();
   }
 
   public boolean isDocumentCommited(Document doc) {

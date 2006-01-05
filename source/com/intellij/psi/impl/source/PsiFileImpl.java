@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -110,7 +111,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       if (myViewProvider.isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
         LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
-      treeElement = createFileElement(getViewProvider().getContents());
+      final FileViewProvider viewProvider = getViewProvider();
+      final Document document = viewProvider.getDocument();
+      treeElement = createFileElement(viewProvider.getContents());
+      treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
       if (myViewProvider.isEventSystemEnabled()) ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
