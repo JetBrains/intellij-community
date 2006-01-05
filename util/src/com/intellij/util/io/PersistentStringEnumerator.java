@@ -5,7 +5,6 @@ package com.intellij.util.io;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author max
@@ -21,6 +20,7 @@ public class PersistentStringEnumerator {
   private static final int BITS_PER_LEVEL = 4;
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
+  private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -30,7 +30,11 @@ public class PersistentStringEnumerator {
   }
 
   public PersistentStringEnumerator(File file) throws IOException {
-    myStorage = new MappedFile(file, 1024 * 4);
+    this(file, 1024 * 4);
+  }
+
+  public PersistentStringEnumerator(File file, int initialSize) throws IOException {
+    myStorage = new MappedFile(file, initialSize);
     if (myStorage.length() == 0) {
       myStorage.writeInt(OPEN_MAGIC);
       allocVector();
@@ -45,72 +49,73 @@ public class PersistentStringEnumerator {
     int depth = 0;
     final int valueHC = value.hashCode();
     int hc = valueHC;
-      int vector = FIRST_VECTOR_OFFSET;
-      int pos;
-      int lastVector;
+    int vector = FIRST_VECTOR_OFFSET;
+    int pos;
+    int lastVector;
 
+    do {
+      lastVector = vector;
+      pos = vector + (hc & LEVEL_MASK) * 4;
+      hc >>>= BITS_PER_LEVEL;
+      vector = myStorage.getInt(pos);
+      depth++;
+    }
+    while (vector > 0);
+
+    if (vector == 0) {
+      // Empty slot
+      final int newId = writeNewString(value);
+      myStorage.putInt(pos, -newId);
+      return newId;
+    }
+    else {
+      int collision = Math.abs(vector);
+      boolean splitVector = false;
+      int candidateHC;
       do {
-        lastVector = vector;
-        pos = vector + (hc & LEVEL_MASK) * 4;
-        hc >>>= BITS_PER_LEVEL;
-        vector = myStorage.getInt(pos);
-        depth++;
-      } while (vector > 0);
+        candidateHC = hashCodeOf(collision);
+        if (candidateHC != valueHC) {
+          splitVector = true;
+          break;
+        }
 
-      if (vector == 0) {
-        // Empty slot
-        final int newId = writeNewString(value);
-        myStorage.putInt(pos, -newId);
-        return newId;
+        String candidate = valueOf(collision);
+        if (value.equals(candidate)) {
+          return collision;
+        }
+
+        collision = nextCanditate(collision);
       }
-      else {
-        int collision = Math.abs(vector);
-        boolean splitVector = false;
-        int candidateHC;
+      while (collision != 0);
+
+      final int newId = writeNewString(value);
+      if (splitVector) {
+        depth--;
         do {
-          candidateHC = hashCodeOf(collision);
-          if (candidateHC != valueHC) {
-            splitVector = true;
+          final int valueHCByte = hcByte(valueHC, depth);
+          final int oldHCByte = hcByte(candidateHC, depth);
+          if (valueHCByte == oldHCByte) {
+            int newVector = allocVector();
+            myStorage.putInt(lastVector + oldHCByte * 4, newVector);
+            lastVector = newVector;
+          }
+          else {
+            myStorage.putInt(lastVector + valueHCByte * 4, -newId);
+            myStorage.putInt(lastVector + oldHCByte * 4, vector);
             break;
           }
-
-          String candidate = valueOf(collision);
-          if (value.equals(candidate)) {
-            return collision;
-          }
-
-          collision = nextCanditate(collision);
+          depth++;
         }
-        while (collision != 0);
-
-        final int newId = writeNewString(value);
-        if (splitVector) {
-          depth--;
-          do {
-            final int valueHCByte = hcByte(valueHC, depth);
-            final int oldHCByte = hcByte(candidateHC, depth);
-            if (valueHCByte == oldHCByte) {
-              int newVector = allocVector();
-              myStorage.putInt(lastVector + oldHCByte * 4, newVector);
-              lastVector = newVector;
-            }
-            else {
-              myStorage.putInt(lastVector + valueHCByte * 4, -newId);
-              myStorage.putInt(lastVector + oldHCByte * 4, vector);
-              break;
-            }
-            depth++;
-          }
-          while (true);
-        }
-        else {
-          // Hashcode collision detected. Insert new string into the list of colliding.
-          myStorage.putInt(newId, vector);
-          myStorage.putInt(pos, -newId);
-        }
-
-        return newId;
+        while (true);
       }
+      else {
+        // Hashcode collision detected. Insert new string into the list of colliding.
+        myStorage.putInt(newId, vector);
+        myStorage.putInt(pos, -newId);
+      }
+
+      return newId;
+    }
   }
 
   private static int hcByte(int hashcode, int byteN) {
@@ -119,9 +124,7 @@ public class PersistentStringEnumerator {
 
   private int allocVector() throws IOException {
     final int pos = (int)myStorage.length();
-    byte[] fill = new byte[SLOTS_PER_VECTOR * 4];
-    Arrays.fill(fill, (byte)0);
-    myStorage.put(pos, fill, 0, fill.length);
+    myStorage.put(pos, EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
     return pos;
   }
 
@@ -129,9 +132,8 @@ public class PersistentStringEnumerator {
     return -myStorage.getInt(idx);
   }
 
-  public static boolean isAscii (final String str) {
-    for (int i = 0; i != str.length(); ++ i)
-    {
+  public static boolean isAscii(final String str) {
+    for (int i = 0; i != str.length(); ++ i) {
       final char c = str.charAt(i);
       if (c < 0 || c >= 128) {
         return false;
@@ -177,7 +179,7 @@ public class PersistentStringEnumerator {
     final String result;
     final MappedFile storage = myStorage;
     storage.seek(idx + 8);
-    int len = 0xFF & (int) storage.readByte();
+    int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
       result = storage.readUTF();
     }
@@ -201,5 +203,5 @@ public class PersistentStringEnumerator {
 
   public void flush() {
     myStorage.flush();
-  }  
+  }
 }
