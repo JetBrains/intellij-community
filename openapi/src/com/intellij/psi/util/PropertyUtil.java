@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +23,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.Introspector;
 import java.util.ArrayList;
@@ -33,6 +36,9 @@ import java.util.List;
  */
 public class PropertyUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PropertyUtil");
+
+  private PropertyUtil() {
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isSimplePropertyGetter(PsiMethod method) {
@@ -85,7 +91,7 @@ public class PropertyUtil {
     return true;
   }
 
-  public static String getPropertyName(PsiMethod method) {
+  @Nullable public static String getPropertyName(PsiMethod method) {
     if (isSimplePropertyGetter(method)) {
       return getPropertyNameByGetter(method);
     }
@@ -97,9 +103,8 @@ public class PropertyUtil {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
-    String methodName = getterMethod.getName();
+    @NonNls String methodName = getterMethod.getName();
     return methodName.startsWith("get") ?
            StringUtil.decapitalize(methodName.substring(3)) :
            StringUtil.decapitalize(methodName.substring(2));
@@ -110,10 +115,10 @@ public class PropertyUtil {
     return Introspector.decapitalize(methodName.substring(3));
   }
 
-  public static PsiMethod findPropertyGetter(PsiClass aClass,
-                                             String propertyName,
-                                             boolean isStatic,
-                                             boolean checkSuperClasses) {
+  @Nullable public static PsiMethod findPropertyGetter(PsiClass aClass,
+                                                       String propertyName,
+                                                       boolean isStatic,
+                                                       boolean checkSuperClasses) {
     if (aClass == null) return null;
     PsiMethod[] methods;
     if (checkSuperClasses) {
@@ -123,9 +128,7 @@ public class PropertyUtil {
       methods = aClass.getMethods();
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
-
+    for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertyGetter(method)) {
@@ -138,7 +141,7 @@ public class PropertyUtil {
     return null;
   }
 
-  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  @Nullable public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -155,7 +158,7 @@ public class PropertyUtil {
     return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
   }
 
-  public static PsiMethod findPropertySetter(PsiClass aClass,
+  @Nullable public static PsiMethod findPropertySetter(PsiClass aClass,
                                              String propertyName,
                                              boolean isStatic,
                                              boolean checkSuperClasses) {
@@ -168,9 +171,7 @@ public class PropertyUtil {
       methods = aClass.getMethods();
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
-
+    for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertySetter(method)) {
@@ -183,7 +184,7 @@ public class PropertyUtil {
     return null;
   }
 
-  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  @Nullable public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -198,11 +199,10 @@ public class PropertyUtil {
     return null;
   }
 
-  public static PsiField findPropertyField(Project project, PsiClass aClass, String propertyName, boolean isStatic) {
+  @Nullable public static PsiField findPropertyField(Project project, PsiClass aClass, String propertyName, boolean isStatic) {
     PsiField[] fields = aClass.getAllFields();
 
-    for (int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
+    for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
       if (propertyName.equals(suggestPropertyName(project, field))) return field;
     }
@@ -210,7 +210,7 @@ public class PropertyUtil {
     return null;
   }
 
-  public static PsiField findPropertyFieldWithType(Project project, String propertyName,
+  @Nullable public static PsiField findPropertyFieldWithType(Project project, String propertyName,
                                                    boolean isStatic, PsiType type, Iterator<PsiField> fields) {
     while (fields.hasNext()) {
       PsiField field = fields.next();
@@ -223,8 +223,7 @@ public class PropertyUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String getPropertyName(String methodName) {
+  @Nullable public static String getPropertyName(@NonNls String methodName) {
     if (methodName.startsWith("get")) {
       return Introspector.decapitalize(methodName.substring(3));
     }
@@ -261,17 +260,16 @@ public class PropertyUtil {
     return name.toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String suggestSetterName(String propertyName) {
-    StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
+    @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     name.insert(0, "set");
     return name.toString();
   }
 
   public static String[] getReadableProperties(PsiClass aClass, boolean includeSuperClass) {
-    List result = new ArrayList();
+    List<String> result = new ArrayList<String>();
 
-    PsiMethod[] methods = PsiMethod.EMPTY_ARRAY;
+    PsiMethod[] methods;
     if (includeSuperClass) {
       methods = aClass.getAllMethods();
     }
@@ -279,9 +277,7 @@ public class PropertyUtil {
       methods = aClass.getMethods();
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
-
+    for (PsiMethod method : methods) {
       if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
 
       if (isSimplePropertyGetter(method)) {
@@ -289,13 +285,13 @@ public class PropertyUtil {
       }
     }
 
-    return (String[])result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   public static String[] getWritableProperties(PsiClass aClass, boolean includeSuperClass) {
-    List result = new ArrayList();
+    List<String> result = new ArrayList<String>();
 
-    PsiMethod[] methods = PsiMethod.EMPTY_ARRAY;
+    PsiMethod[] methods;
 
     if (includeSuperClass) {
       methods = aClass.getAllMethods();
@@ -304,9 +300,7 @@ public class PropertyUtil {
       methods = aClass.getMethods();
     }
 
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
-
+    for (PsiMethod method : methods) {
       if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
 
       if (isSimplePropertySetter(method)) {
@@ -314,7 +308,7 @@ public class PropertyUtil {
       }
     }
 
-    return (String[])result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   public static PsiMethod generateGetterPrototype(PsiField field) {
@@ -328,6 +322,17 @@ public class PropertyUtil {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         getMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
+
+      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+      for(PsiAnnotation ann: annotations) {
+        if (AnnotationUtil.NULLABLE.equals(ann.getQualifiedName()) ||
+            AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
+          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + ann.getQualifiedName(), getMethod);
+          getMethod.getModifierList().addAfter(annotation, null);
+          break;
+        }
+      }
+
       PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
       getMethod.getBody().replace(body);
       getMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(getMethod);
@@ -353,14 +358,25 @@ public class PropertyUtil {
       PsiMethod setMethod = factory.createMethod(setName, PsiType.VOID);
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
+
+      PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+      for(PsiAnnotation ann: annotations) {
+        if (AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
+          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + ann.getQualifiedName(), param);
+          param.getModifierList().addAfter(annotation, null);
+          break;
+        }
+      }
+
+
       setMethod.getParameterList().add(param);
       setMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
       setMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
-      StringBuffer buffer = new StringBuffer();
+
+      @NonNls StringBuffer buffer = new StringBuffer();
       buffer.append("{\n");
       if (name.equals(parameterName)) {
         if (!isStatic) {
-          //noinspection HardCodedStringLiteral
           buffer.append("this.");
         }
         else {
@@ -405,7 +421,7 @@ public class PropertyUtil {
   /**
    *  "xxx", "void setMyProperty(String pp)" -> "setXxx"
    */
-  public static String suggestPropertyAccessor(String name, PsiMethod accessorTemplate) {
+  @Nullable public static String suggestPropertyAccessor(String name, PsiMethod accessorTemplate) {
     if (isSimplePropertyGetter(accessorTemplate)) {
       PsiType type = accessorTemplate.getReturnType();
       return suggestGetterName(name, type, accessorTemplate.getName());
