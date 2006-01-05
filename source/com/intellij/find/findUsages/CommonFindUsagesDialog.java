@@ -2,7 +2,6 @@ package com.intellij.find.findUsages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.SearchScopeCache;
 
 import javax.swing.*;
 
@@ -24,7 +23,7 @@ public class CommonFindUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions() {
-    return new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+    return new FindUsagesOptions(myProject);
   }
 
   protected void update() {

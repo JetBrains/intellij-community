@@ -60,11 +60,11 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope allScope(final Project project) {
-    return SearchScopeCache.getInstance(project).getAllScope();
+    return project.getAllScope();
   }
 
   public static GlobalSearchScope projectScope(Project project) {
-    return SearchScopeCache.getInstance(project).getProjectScope();
+    return project.getProjectScope();
   }
 
   public static GlobalSearchScope projectProductionScope(Project project, final boolean includeNonJavaFiles) {
@@ -84,19 +84,19 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope moduleScope(Module module) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleScope(module);
+    return module.getModuleScope();
   }
 
   public static GlobalSearchScope moduleWithLibrariesScope(Module module) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleWithLibrariesScope(module);
+    return module.getModuleWithLibrariesScope();
   }
 
   public static GlobalSearchScope moduleWithDependenciesScope(Module module) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleWithDependenciesScope(module);
+    return module.getModuleWithDependenciesScope();
   }
 
   public static GlobalSearchScope moduleRuntimeScope(Module module, final boolean includeTests) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleRuntimeScope(module, includeTests);
+    return module.getModuleRuntimeScope(includeTests);
   }
 
   public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(Module module) {
@@ -104,15 +104,15 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope moduleWithDependenciesAndLibrariesScope(Module module, boolean includeTests) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleWithDependenciesAndLibrariesScope(module, includeTests);
+    return module.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
   public static GlobalSearchScope moduleWithDependentsScope(Module module) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleWithDependentsScope(module);
+    return module.getModuleWithDependentsScope();
   }
 
   public static GlobalSearchScope moduleTestsWithDependentsScope(Module module) {
-    return SearchScopeCache.getInstance(module.getProject()).getModuleWithDependentsScope(module);
+    return module.getModuleWithDependentsScope();
   }
 
   public static GlobalSearchScope packageScope(PsiPackage aPackage, boolean includeSubpackages) {

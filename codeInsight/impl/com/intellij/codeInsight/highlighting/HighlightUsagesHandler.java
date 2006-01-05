@@ -27,7 +27,6 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -171,7 +170,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
       setStatusText(myTarget, myRefs.length, myProject);
 
-      FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+      FindUsagesOptions options = new FindUsagesOptions(myProject);
       options.isUsages = true;
       options.isReadAccess = true;
       options.isWriteAccess = true;

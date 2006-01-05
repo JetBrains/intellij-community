@@ -1,11 +1,10 @@
 package com.intellij.find.findUsages;
 
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 
@@ -24,7 +23,7 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions() {
-    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(myProject);
     options.clear();
     options.isUsages = true;
     options.isIncludeOverloadUsages = isToChange(myCbIncludeOverloadedMethods);

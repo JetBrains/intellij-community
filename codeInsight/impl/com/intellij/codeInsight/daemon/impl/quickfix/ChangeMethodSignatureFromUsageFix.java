@@ -16,17 +16,16 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -100,7 +99,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (method == null) return;
     if (!CodeInsightUtil.prepareFileForWrite(method.getContainingFile())) return;
 
-    final FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(project));
+    final FindUsagesOptions options = new FindUsagesOptions(project);
     options.isImplementingMethods = true;
     options.isMethodsUsages = true;
     options.isOverridingMethods = true;

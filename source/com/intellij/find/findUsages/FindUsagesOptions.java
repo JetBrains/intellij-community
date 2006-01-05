@@ -1,9 +1,9 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.SearchScopeCache;
 
 /**
  *
@@ -33,8 +33,8 @@ public class FindUsagesOptions implements Cloneable {
   public boolean isThrowUsages = false;
   public ThrowSearchUtil.Root myThrowRoot = null;
 
-  public FindUsagesOptions(SearchScopeCache searchScopeCache) {
-    searchScope = searchScopeCache.getProjectScope();
+  public FindUsagesOptions(Project project) {
+    searchScope = project.getProjectScope();
   }
 
   public Object clone() {

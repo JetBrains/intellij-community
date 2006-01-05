@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -408,9 +409,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
+      ((ModuleImpl)module).clearScopesCache();
     }
 
     myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+
+    for (Module module : modules) {
+      ((ModuleImpl)module).clearScopesCache();
+    }
 
     if (synchronize) doSynchronize();
 

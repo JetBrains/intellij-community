@@ -663,7 +663,8 @@ public class RecordUtil {
     }
   }
 
-  public static PersistentStringEnumerator getNameStoreFile(String name, boolean toDelete, File cacheFolder) {
+  public static PersistentStringEnumerator getNameStoreFile(String name, boolean toDelete, File cacheFolder)
+    throws PersistentStringEnumerator.CorruptedException {
     File ioFile = new File(cacheFolder, name);
     if (toDelete) {
       if (ioFile.exists())
@@ -675,9 +676,7 @@ public class RecordUtil {
       names = new PersistentStringEnumerator(ioFile);
     }
     catch (PersistentStringEnumerator.CorruptedException e) {
-      if (!toDelete) {
-        names = getNameStoreFile (name, true, cacheFolder);
-      }
+      throw e;
     }
     catch (IOException e) {
       LOG.error(e);

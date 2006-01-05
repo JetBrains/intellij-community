@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModule;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,4 +116,12 @@ public interface Module extends ComponentManager, AreaInstance {
    * @return the POM module instance.
    */
   @NotNull PomModule getPom();
+
+  GlobalSearchScope getModuleScope();
+  GlobalSearchScope getModuleWithLibrariesScope();
+  GlobalSearchScope getModuleWithDependenciesScope();
+  GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests);
+  GlobalSearchScope getModuleWithDependentsScope();
+  GlobalSearchScope getModuleTestsWithDependentsScope();
+  GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 }

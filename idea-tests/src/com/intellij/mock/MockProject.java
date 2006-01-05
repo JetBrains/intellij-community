@@ -1,16 +1,14 @@
 package com.intellij.mock;
 
+import com.intellij.application.options.ExpandMacroToPathMap;
+import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.application.options.ExpandMacroToPathMap;
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-
-import java.util.Map;
-
 import org.picocontainer.PicoContainer;
 
 public class MockProject extends UserDataHolderBase implements ProjectEx {
@@ -101,5 +99,13 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
 
   public PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
+  }
+
+  public GlobalSearchScope getAllScope() {
+    return null;
+  }
+
+  public GlobalSearchScope getProjectScope() {
+    return null;
   }
 }

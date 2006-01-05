@@ -31,7 +31,6 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.LightweightHint;
@@ -81,23 +80,23 @@ public class FindUsagesManager implements JDOMExternalizable{
 
   private LastSearchData myLastSearchData = new LastSearchData();
 
-  public FindUsagesManager(Project project, SearchScopeCache searchScopeCache, com.intellij.usages.UsageViewManager anotherManager) {
+  public FindUsagesManager(Project project, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
 
-    myFindPackageOptions = createFindUsagesOptions(searchScopeCache);
-    myFindClassOptions = createFindUsagesOptions(searchScopeCache);
-    myFindMethodOptions = createFindUsagesOptions(searchScopeCache);
-    myFindVariableOptions = createFindUsagesOptions(searchScopeCache);
-    myFindPointcutOptions = createFindUsagesOptions(searchScopeCache);
+    myFindPackageOptions = createFindUsagesOptions(project);
+    myFindClassOptions = createFindUsagesOptions(project);
+    myFindMethodOptions = createFindUsagesOptions(project);
+    myFindVariableOptions = createFindUsagesOptions(project);
+    myFindPointcutOptions = createFindUsagesOptions(project);
   }
 
   public static FindUsagesProvider getFindHandler(PsiElement elt) {
     return elt.getLanguage().getFindUsagesProvider();
   }
 
-  private FindUsagesOptions createFindUsagesOptions(SearchScopeCache searchScopeCache) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(searchScopeCache);
+  private FindUsagesOptions createFindUsagesOptions(Project project) {
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isIncludeOverloadUsages = false;
     findUsagesOptions.isIncludeSubpackages = true;
@@ -670,7 +669,7 @@ public class FindUsagesManager implements JDOMExternalizable{
     else {
       FindUsagesProvider handler = getFindHandler(element);
       if (handler != null) {
-        return new CommonFindUsagesDialog(element, myProject, createFindUsagesOptions(SearchScopeCache.getInstance(myProject)),
+        return new CommonFindUsagesDialog(element, myProject, createFindUsagesOptions(myProject),
                                           isOpenInNewTab, isOpenInNewTabEnabled, isSingleFile);
       }
       return null;

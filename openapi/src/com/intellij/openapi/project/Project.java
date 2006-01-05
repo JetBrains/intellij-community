@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
-
+import com.intellij.psi.search.GlobalSearchScope;
 
 
 /**
@@ -46,4 +46,7 @@ public interface Project extends ComponentManager, AreaInstance {
   boolean isDefault();
 
   PomModel getModel();
+
+  GlobalSearchScope getAllScope();
+  GlobalSearchScope getProjectScope();
 }

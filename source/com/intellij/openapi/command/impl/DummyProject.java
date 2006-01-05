@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.picocontainer.PicoContainer;
 
@@ -88,6 +89,14 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   public PomModel getModel() {
+    return null;
+  }
+
+  public GlobalSearchScope getAllScope() {
+    return null;
+  }
+
+  public GlobalSearchScope getProjectScope() {
     return null;
   }
 }

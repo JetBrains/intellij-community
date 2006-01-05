@@ -1,13 +1,12 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +37,7 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    final FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+    final FindUsagesOptions options = new FindUsagesOptions(myProject);
     options.clear();
     options.isUsages = true;
     return options;

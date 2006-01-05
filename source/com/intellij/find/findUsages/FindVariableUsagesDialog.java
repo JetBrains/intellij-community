@@ -4,7 +4,6 @@ package com.intellij.find.findUsages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.search.SearchScopeCache;
 
 import javax.swing.*;
 
@@ -20,7 +19,7 @@ public class FindVariableUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(myProject);
     options.clear();
     options.isReadAccess = false;
     options.isWriteAccess = false;

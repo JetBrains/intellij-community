@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.text.StringSearcher;
@@ -60,13 +59,13 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   private Key HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
 
-  public FindManagerImpl(Project project, FindSettings findSettings, SearchScopeCache searchScopeCache, com.intellij.usages.UsageViewManager anotherManager) {
+  public FindManagerImpl(Project project, FindSettings findSettings, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
     findSettings.initModelBySetings(myFindInFileModel);
     findSettings.initModelBySetings(myFindInProjectModel);
 
-    myFindUsagesManager = new FindUsagesManager(myProject, searchScopeCache, myAnotherManager);
+    myFindUsagesManager = new FindUsagesManager(myProject, myAnotherManager);
     myFindInProjectModel.setMultipleFiles(true);
   }
 

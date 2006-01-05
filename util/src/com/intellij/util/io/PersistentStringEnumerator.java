@@ -12,7 +12,7 @@ import java.io.IOException;
 public class PersistentStringEnumerator {
   private MappedFile myStorage;
   private static final int FIRST_VECTOR_OFFSET = 4;
-  private static final int OPEN_MAGIC = 0xbabe0589;
+  private static final int DIRTY_MAGIC = 0xbabe0589;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac;
 
   private byte[] buffer = new byte[256];
@@ -36,16 +36,21 @@ public class PersistentStringEnumerator {
   public PersistentStringEnumerator(File file, int initialSize) throws IOException {
     myStorage = new MappedFile(file, initialSize);
     if (myStorage.length() == 0) {
-      myStorage.writeInt(OPEN_MAGIC);
+      myStorage.writeInt(DIRTY_MAGIC);
       allocVector();
     }
     else if (myStorage.getInt(0) != CORRECTLY_CLOSED_MAGIC) {
       myStorage.close();
       throw new CorruptedException(file);
     }
+    else {
+      myStorage.putInt(0, DIRTY_MAGIC);
+    }
   }
 
   public int enumerate(String value) throws IOException {
+    myStorage.putInt(0, DIRTY_MAGIC);
+
     int depth = 0;
     final int valueHC = value.hashCode();
     int hc = valueHC;
@@ -197,11 +202,12 @@ public class PersistentStringEnumerator {
   }
 
   public void close() throws IOException {
-    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+    flush();
     myStorage.close();
   }
 
-  public void flush() {
+  public void flush() throws IOException {
+    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
     myStorage.flush();
   }
 }

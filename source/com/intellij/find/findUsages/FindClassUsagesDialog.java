@@ -1,14 +1,13 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 
@@ -29,7 +28,7 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(myProject);
     options.clear();
     options.isUsages = isToChange(myCbUsages);
     options.isMethodsUsages = isToChange(myCbMethodsUsages);

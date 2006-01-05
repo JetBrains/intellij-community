@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -40,6 +41,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -82,6 +85,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
   };
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls private static final String ELEMENT_MACRO = "macro";
+  private GlobalSearchScope myAllScope;
+  private GlobalSearchScope myProjectScope;
 
   protected ProjectImpl(ProjectManagerImpl manager,
                         String filePath,
@@ -130,6 +135,98 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
   public PomModel getModel() {
     return myModel != null ? myModel : (myModel = getComponent(PomModel.class));
+  }
+
+  public GlobalSearchScope getAllScope() {
+    if (myAllScope == null) {
+      final ProjectRootManager projectRootManager = getComponent(ProjectRootManager.class);
+      myAllScope = new GlobalSearchScope() {
+        final ProjectFileIndex myProjectFileIndex = projectRootManager.getFileIndex();
+
+        public boolean contains(VirtualFile file) {
+          return true;
+        }
+
+        public int compare(VirtualFile file1, VirtualFile file2) {
+          OrderEntry[] entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
+          OrderEntry[] entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
+          if (entries1.length != entries2.length) return 0;
+
+          int res = 0;
+          for (OrderEntry entry1 : entries1) {
+            Module module = entry1.getOwnerModule();
+            ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+            OrderEntry entry2 = moduleFileIndex.getOrderEntryForFile(file2);
+            if (entry2 == null) {
+              return 0;
+            }
+            else {
+              int aRes = entry2.compareTo(entry1);
+              if (aRes == 0) return 0;
+              if (res == 0) {
+                res = aRes;
+              }
+              else if (res != aRes) {
+                return 0;
+              }
+            }
+          }
+
+          return res;
+        }
+
+        public boolean isSearchInModuleContent(Module aModule) {
+          return true;
+        }
+
+        public boolean isSearchInLibraries() {
+          return true;
+        }
+
+        public String getDisplayName() {
+          return PsiBundle.message("psi.search.scope.project.and.libraries");
+        }
+
+        public String toString() {
+          return getDisplayName();
+        }
+      };
+    }
+    return myAllScope;
+  }
+
+  public GlobalSearchScope getProjectScope() {
+    if (myProjectScope == null) {
+      final ProjectRootManager projectRootManager = getComponent(ProjectRootManager.class);
+      myProjectScope = new GlobalSearchScope() {
+        private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
+
+        public boolean contains(VirtualFile file) {
+          return myFileIndex.isInContent(file);
+        }
+
+        public int compare(VirtualFile file1, VirtualFile file2) {
+          return 0;
+        }
+
+        public boolean isSearchInModuleContent(Module aModule) {
+          return true;
+        }
+
+        public boolean isSearchInLibraries() {
+          return false;
+        }
+
+        public String getDisplayName() {
+          return PsiBundle.message("psi.search.scope.project");
+        }
+
+        public String toString() {
+          return getDisplayName();
+        }
+      };
+    }
+    return myProjectScope;
   }
 
   public void setDummy(boolean isDummy) {

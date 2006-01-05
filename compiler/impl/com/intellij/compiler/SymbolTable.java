@@ -34,7 +34,12 @@ public class SymbolTable {
   }
 
   public synchronized void save() throws CacheCorruptedException {
-    myTrie.flush();
+    try {
+      myTrie.flush();
+    }
+    catch (IOException e) {
+      throw new CacheCorruptedException(e);
+    }
   }
 
   public synchronized int getId(String symbol) throws CacheCorruptedException {

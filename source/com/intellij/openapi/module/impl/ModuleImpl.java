@@ -17,6 +17,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.impl.scopes.ModuleRuntimeClasspathScope;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.BaseFileConfigurable;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -30,6 +33,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -56,11 +60,22 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private boolean isModuleAdded;
   private Map<String, String> myOptions = new HashMap<String, String>();
 
+  private GlobalSearchScope myModuleScope = null;
+
   @NonNls private static final String MODULE_LAYER = "module-components";
   @NotNull private PomModule myPomModule;
   @NotNull private PomModel myPomModel;
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls private static final String ELEMENT_TYPE = "type";
+
+  private ModuleWithDependenciesScope myModuleWithLibrariesScope;
+  private ModuleWithDependenciesScope myModuleWithDependenciesScope;
+  private ModuleWithDependenciesScope myModuleWithDependenciesAndLibrariesScope;
+  private ModuleWithDependenciesScope myModuleWithDependenciesAndLibrariesNoTestsScope;
+  private ModuleWithDependentsScope   myModuleWithDependentsScope;
+  private ModuleWithDependentsScope   myModuleTestsWithDependentsScope;
+  private ModuleRuntimeClasspathScope myModuleTestsRuntimeClasspathScope;
+  private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
     super(false, pathMacros);
@@ -401,6 +416,83 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   @NotNull
   public PomModule getPom() {
     return myPomModule;
+  }
+
+  public GlobalSearchScope getModuleScope() {
+    if (myModuleScope == null) {
+      myModuleScope = new ModuleWithDependenciesScope(this, false, false, true);
+    }
+
+    return myModuleScope;
+  }
+
+  public GlobalSearchScope getModuleWithLibrariesScope() {
+    if (myModuleWithLibrariesScope == null) {
+      myModuleWithLibrariesScope = new ModuleWithDependenciesScope(this, true, false, true);
+    }
+    return myModuleWithLibrariesScope;
+  }
+
+  public GlobalSearchScope getModuleWithDependenciesScope() {
+    if (myModuleWithDependenciesScope == null) {
+      myModuleWithDependenciesScope = new ModuleWithDependenciesScope(this, false, true, true);
+    }
+    return myModuleWithDependenciesScope;
+  }
+
+  public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
+    if (includeTests) {
+      if (myModuleWithDependenciesAndLibrariesScope == null) {
+        myModuleWithDependenciesAndLibrariesScope = new ModuleWithDependenciesScope(this, true, true, true);
+      }
+      return myModuleWithDependenciesAndLibrariesScope;
+    }
+    else {
+      if (myModuleWithDependenciesAndLibrariesNoTestsScope == null) {
+        myModuleWithDependenciesAndLibrariesNoTestsScope = new ModuleWithDependenciesScope(this, true, true, false);
+      }
+      return myModuleWithDependenciesAndLibrariesNoTestsScope;
+    }
+  }
+
+  public GlobalSearchScope getModuleWithDependentsScope() {
+    if (myModuleWithDependentsScope == null) {
+      myModuleWithDependentsScope = new ModuleWithDependentsScope(this, false);
+    }
+    return myModuleWithDependentsScope;
+  }
+
+  public GlobalSearchScope getModuleTestsWithDependentsScope() {
+    if (myModuleTestsWithDependentsScope == null) {
+      myModuleTestsWithDependentsScope = new ModuleWithDependentsScope(this, true);
+    }
+    return myModuleTestsWithDependentsScope;
+  }
+
+  public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
+    if (includeTests) {
+      if (myModuleTestsRuntimeClasspathScope == null) {
+        myModuleTestsRuntimeClasspathScope = new ModuleRuntimeClasspathScope(this, true);
+      }
+      return myModuleTestsRuntimeClasspathScope;
+    }
+    else {
+      if (myModuleRuntimeClasspathScope == null) {
+        myModuleRuntimeClasspathScope = new ModuleRuntimeClasspathScope(this, false);
+      }
+      return myModuleRuntimeClasspathScope;
+    }
+  }
+
+  public void clearScopesCache() {
+    myModuleWithLibrariesScope = null;
+    myModuleWithDependenciesScope = null;
+    myModuleWithDependenciesAndLibrariesScope = null;
+    myModuleWithDependenciesAndLibrariesNoTestsScope = null;
+    myModuleWithDependentsScope = null;
+    myModuleTestsWithDependentsScope = null;
+    myModuleTestsRuntimeClasspathScope = null;
+    myModuleRuntimeClasspathScope = null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
