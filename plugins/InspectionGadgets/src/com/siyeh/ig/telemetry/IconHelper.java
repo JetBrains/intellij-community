@@ -17,10 +17,11 @@ package com.siyeh.ig.telemetry;
 
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
 import java.net.URL;
 
 class IconHelper{
+
     private IconHelper(){
         super();
     }
