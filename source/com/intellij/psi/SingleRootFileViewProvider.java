@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
+import java.lang.ref.WeakReference;
 
 public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
@@ -38,7 +39,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   private PsiFile myPsiFile = null;
   private CharSequence myContents = null;
   private boolean myPhysical;
-  private Document myDocument;
+  private WeakReference<Document> myDocument;
   private long myModificationStamp;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
@@ -197,13 +198,18 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   private Document getCachedDocument() {
-    if (myDocument != null) return myDocument;
+    final Document document = myDocument != null ? myDocument.get() : null;
+    if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
   public Document getDocument() {
-    if(myDocument == null) myDocument = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-    return myDocument;
+    Document document = myDocument != null ? myDocument.get() : null;
+    if(document == null) {
+      document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
+      myDocument = new WeakReference<Document>(document);
+    }
+    return document;
   }
 
   public FileViewProvider clone(){
