@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,7 +51,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -626,7 +624,7 @@ public class ClasspathPanel extends JPanel {
   private static abstract class TableItem<T extends OrderEntry> {
     protected @Nullable T myEntry;
 
-    protected TableItem(@NotNull T entry) {
+    protected TableItem(@Nullable T entry) {
       myEntry = entry;
     }
 
@@ -1060,7 +1058,7 @@ public class ClasspathPanel extends JPanel {
       });
 
       myChangeProjectJdkButton = new FixedSizeButton(20);
-      myChangeProjectJdkButton.addActionListener(new ChangeJdkAction(ProjectBundle.message("module.libraries.target.jdk.select.title"), myChangeProjectJdkButton) {
+      myChangeProjectJdkButton.addActionListener(new ConfigureJdkAction(myChangeProjectJdkButton) {
         public ProjectJdk getProjectJdkToSelect() {
           return ProjectRootManager.getInstance(myProject).getProjectJdk();
         }
@@ -1070,7 +1068,16 @@ public class ClasspathPanel extends JPanel {
         }
       });
       myChangeModuleJdkButton = new FixedSizeButton(20);
-      myChangeModuleJdkButton.addActionListener(new ConfigureJdkAction(myChangeModuleJdkButton));
+      myChangeModuleJdkButton.addActionListener(new ConfigureJdkAction(myChangeModuleJdkButton) {
+        public ProjectJdk getProjectJdkToSelect() {
+          return myRootModel.getJdk();
+        }
+
+        public void setChosenJdk(ProjectJdk jdk) {
+          myCbModuleJdk.update(jdk);
+        }
+      });
+
       myCbModuleJdk.setPreferredSize(new Dimension(myCbModuleJdk.getPreferredSize().width, myChangeModuleJdkButton.getPreferredSize().height));
 
       jdkPanel.add(myRbUseProjectJdk,
@@ -1142,44 +1149,28 @@ public class ClasspathPanel extends JPanel {
       }
     }
 
-    private abstract class ChangeJdkAction implements ActionListener {
-      private final JComponent myParent;
-      private final String myTitle;
-
-      public abstract ProjectJdk getProjectJdkToSelect();
-
-      public abstract void setChosenJdk(ProjectJdk jdk);
-
-      protected ChangeJdkAction(final String title, JComponent parent) {
-        myParent = parent;
-        myTitle = title;
-      }
-
-      public void actionPerformed(ActionEvent e) {
-        final ProjectJdk jdk = JdkChooserPanel.showDialog(myTitle, myParent, getProjectJdkToSelect());
-        if (jdk != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              setChosenJdk(jdk);
-            }
-          });
-        }
-        updateJdkPanelControls(); // should update, no matter pressed user ok or cancel (the jdk itself could change)
-      }
-    }
-    private class ConfigureJdkAction implements ActionListener {
+    private abstract class ConfigureJdkAction implements ActionListener {
       private final JComponent myParent;
 
       protected ConfigureJdkAction(JComponent parent) {
         myParent = parent;
       }
 
+      public abstract ProjectJdk getProjectJdkToSelect();
+      public abstract void setChosenJdk(ProjectJdk jdk);
+
       public void actionPerformed(ActionEvent e) {
-        ProjectJdksEditor editor = new ProjectJdksEditor(myRootModel.getJdk(), myParent);
+        ProjectJdksEditor editor = new ProjectJdksEditor(getProjectJdkToSelect(), myParent);
         editor.show();
         if (editor.isOK()) {
-          ProjectJdk selectedJdk = editor.getSelectedJdk();
-          myCbModuleJdk.update(selectedJdk);
+          final ProjectJdk selectedJdk = editor.getSelectedJdk();
+          if (selectedJdk != null) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                setChosenJdk(selectedJdk);
+              }
+            });
+          }
         }
         updateJdkPanelControls(); // should update, no matter pressed user ok or cancel (the jdk itself could change)
       }

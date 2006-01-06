@@ -21,7 +21,7 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
   }
 
   public @Deprecated ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state) {
-    return new LibrariesEditor(state.getProject(), state.getRootModel());
+    return null;
   }
 
   public @Deprecated ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state) {

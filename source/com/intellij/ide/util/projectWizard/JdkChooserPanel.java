@@ -117,11 +117,7 @@ public class JdkChooserPanel extends JPanel {
     }
   }
 
-  public static ProjectJdk showDialog(final Component parent) {
-    return showDialog(null, parent, null);
-  }
-
-  public static ProjectJdk showDialog(String title, final Component parent, ProjectJdk jdkToSelect) {
+  private static ProjectJdk showDialog(String title, final Component parent, ProjectJdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel();
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
     if (title != null) {
