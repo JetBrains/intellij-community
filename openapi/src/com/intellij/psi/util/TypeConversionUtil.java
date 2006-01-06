@@ -249,6 +249,7 @@ public class TypeConversionUtil {
       PsiType typeArg2 = substitutor2.substitute(typeParam);
       if (typeArg1 == null || typeArg2 == null) return false;
       if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return false;
+      if (typeArg1 instanceof PsiCapturedWildcardType || typeArg2 instanceof PsiCapturedWildcardType) return false;
 
       if (typeArg1 instanceof PsiClassType && ((PsiClassType)typeArg1).resolve() instanceof PsiTypeParameter) return false;
       if (typeArg2 instanceof PsiClassType && ((PsiClassType)typeArg2).resolve() instanceof PsiTypeParameter) return false;
