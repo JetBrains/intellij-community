@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,12 +31,14 @@ import java.util.Set;
 
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         extends MethodInspection{
+
     public String getID(){
         return "IteratorNextCanNotThrowNoSuchElementException";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("iterator.next.no.throw.nosuchelementexception.display.name");
+        return InspectionGadgetsBundle.message(
+                "iterator.next.does.not.throw.nosuchelementexception.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -43,7 +46,8 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("iterator.next.no.throw.nosuchelementexception.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -56,16 +60,13 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             @NonNls final String name = method.getName();
-            if(!"next".equals(name)){
+            if(!HardcodedMethodConstants.NEXT.equals(name)){
                 return;
             }
             if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if(paramList == null){
-                return;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if(parameters.length != 0){
                 return;
@@ -74,14 +75,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             if(aClass == null){
                 return;
             }
-
             if(!isIterator(aClass)){
                 return;
             }
-            final PsiManager psiManager = aClass.getManager();
-            final PsiElementFactory elementFactory =
-                    psiManager.getElementFactory();
-
             final Set<PsiType> exceptions =
                     ExceptionUtils.calculateExceptionsThrown(method);
             for(Object exception : exceptions){
@@ -98,7 +94,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         }
     }
 
-    private static boolean callsIteratorNext(PsiElement method){
+    public static boolean callsIteratorNext(PsiElement method){
         final CallsIteratorNextVisitor visitor =
                 new CallsIteratorNextVisitor();
         method.accept(visitor);
@@ -115,26 +111,22 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;
             }
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
-            @NonNls final String methodName = methodExpression.getReferenceName();
-            if(!"next".equals(methodName)){
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if(!HardcodedMethodConstants.NEXT.equals(methodName)){
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null){
-                return;
-            }
             final PsiExpression[] args = argumentList.getExpressions();
-            if(args == null || args.length != 0){
+            if(args.length != 0){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -152,8 +144,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         }
     }
 
-    private static boolean isIterator(PsiClass aClass)
-    {
+    public static boolean isIterator(PsiClass aClass){
         final String className = aClass.getQualifiedName();
         if("java.util.Iterator".equals(className)){
             return true;

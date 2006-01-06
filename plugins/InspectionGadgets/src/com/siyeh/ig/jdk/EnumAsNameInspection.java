@@ -28,14 +28,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnumAsNameInspection extends BaseInspection{
 
-  private final RenameFix fix = new RenameFix();
-
     public String getID(){
         return "EnumAsIdentifier";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("use.enum.as.identifier.display.name");
+        return InspectionGadgetsBundle.message(
+                "use.enum.as.identifier.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -43,11 +42,12 @@ public class EnumAsNameInspection extends BaseInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("use.enum.as.identifier.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "use.enum.as.identifier.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     public ProblemDescriptor[] doCheckClass(PsiClass aClass,

@@ -37,8 +37,6 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     @NonNls static final Map<String,String> s_unboxingMethods =
             new HashMap<String, String>(8);
 
-    private final AutoUnboxingFix fix = new AutoUnboxingFix();
-
     static{
         s_unboxingMethods.put("int", "intValue");
         s_unboxingMethods.put("short", "shortValue");
@@ -69,7 +67,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new AutoUnboxingFix();
     }
 
     private static class AutoUnboxingFix extends InspectionGadgetsFix{

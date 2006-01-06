@@ -26,11 +26,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class VarargParameterInspection extends MethodInspection {
+
     public String getID(){
         return "VariableArgumentMethod";
     }
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("variable.argument.method.display.name");
+        return InspectionGadgetsBundle.message(
+                "variable.argument.method.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +41,8 @@ public class VarargParameterInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("variable.argument.method.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "variable.argument.method.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,9 +53,6 @@ public class VarargParameterInspection extends MethodInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
             final PsiParameter[] parameters = parameterList.getParameters();
             if (parameters == null) {
                 return;
@@ -63,7 +64,5 @@ public class VarargParameterInspection extends MethodInspection {
                 }
             }
         }
-
     }
-
 }

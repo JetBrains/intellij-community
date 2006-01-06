@@ -26,7 +26,8 @@ import com.siyeh.InspectionGadgetsBundle;
 public class AssertStatementInspection extends StatementInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("assert.statement.display.name");
+        return InspectionGadgetsBundle.message(
+                "assert.statement.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,20 +35,20 @@ public class AssertStatementInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("assert.statement.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "assert.statement.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new AssertStatementVisitor();
     }
 
-    private static class AssertStatementVisitor extends StatementInspectionVisitor {
+    private static class AssertStatementVisitor
+            extends StatementInspectionVisitor {
 
         public void visitAssertStatement(PsiAssertStatement statement) {
             super.visitAssertStatement(statement);
             registerStatementError(statement);
         }
-
     }
-
 }

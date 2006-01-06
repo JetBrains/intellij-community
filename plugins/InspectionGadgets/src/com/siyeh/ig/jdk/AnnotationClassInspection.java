@@ -26,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public class AnnotationClassInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("annotation.class.display.name");
+
+        return InspectionGadgetsBundle.message(
+                "annotation.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +36,8 @@ public class AnnotationClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("annotation.class.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "annotation.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,7 +52,5 @@ public class AnnotationClassInspection extends ClassInspection {
             }
             registerClassError(aClass);
         }
-
     }
-
 }

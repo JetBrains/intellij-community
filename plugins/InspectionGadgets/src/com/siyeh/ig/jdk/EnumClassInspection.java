@@ -34,7 +34,8 @@ public class EnumClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("enumerated.class.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "enumerated.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,7 +50,5 @@ public class EnumClassInspection extends ClassInspection {
             }
             registerClassError(aClass);
         }
-
     }
-
 }

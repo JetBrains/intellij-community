@@ -27,13 +27,13 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertAsNameInspection extends BaseInspection {
-    private final RenameFix fix = new RenameFix();
 
     public String getID(){
         return "AssertAsIdentifier";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("use.assert.as.identifier.display.name");
+        return InspectionGadgetsBundle.message(
+                "use.assert.as.identifier.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,14 +41,16 @@ public class AssertAsNameInspection extends BaseInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("use.assert.as.identifier.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "use.assert.as.identifier.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckClass(
+            PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
         if (aClass instanceof PsiAnonymousClass) {
             return super.doCheckClass(aClass, mgr, isOnTheFly);
         }
@@ -57,7 +59,8 @@ public class AssertAsNameInspection extends BaseInspection {
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(
+            PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
             return super.doCheckMethod(method, mgr, isOnTheFly);
@@ -74,7 +77,8 @@ public class AssertAsNameInspection extends BaseInspection {
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckField(
+            PsiField field, InspectionManager mgr, boolean isOnTheFly) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
             return super.doCheckField(field, mgr, isOnTheFly);
@@ -95,7 +99,6 @@ public class AssertAsNameInspection extends BaseInspection {
     }
 
     private static class AssertAsNameVisitor extends BaseInspectionVisitor {
-
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
@@ -128,7 +131,6 @@ public class AssertAsNameInspection extends BaseInspection {
             registerClassError(aClass);
         }
 
-
         public void visitTypeParameter(PsiTypeParameter parameter) {
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
@@ -138,5 +140,4 @@ public class AssertAsNameInspection extends BaseInspection {
             registerTypeParameterError(parameter);
         }
     }
-
 }

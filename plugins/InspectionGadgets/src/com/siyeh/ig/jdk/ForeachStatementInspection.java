@@ -30,10 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class ForeachStatementInspection extends StatementInspection{
-    private final ForEachFix fix = new ForEachFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("extended.for.statement.display.name");
+        return InspectionGadgetsBundle.message(
+                "extended.for.statement.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,104 +41,117 @@ public class ForeachStatementInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("extended.for.statement.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "extended.for.statement.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new ForEachFix();
     }
 
     private static class ForEachFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("extended.for.statement.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "extended.for.statement.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
+            final PsiElement element = descriptor.getPsiElement();
             final PsiForeachStatement statement =
-                    (PsiForeachStatement) descriptor.getPsiElement()
-                            .getParent();
+                    (PsiForeachStatement) element.getParent();
 
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
             assert statement != null;
-            @NonNls final StringBuffer newStatement=new StringBuffer();
             final PsiExpression iteratedValue = statement.getIteratedValue();
+            final PsiParameter iterationParameter =
+                    statement.getIterationParameter();
+            final PsiType type = iterationParameter.getType();
+            if (iteratedValue == null) {
+                return;
+            }
+            @NonNls final StringBuffer newStatement = new StringBuffer();
             if(iteratedValue.getType() instanceof PsiArrayType){
-                final String index = codeStyleManager.suggestUniqueVariableName("i",
-                                                                                statement,
-                                                                                true);
-                newStatement.append("for(int " + index + " = 0;" + index + '<');
+                final String index =
+                        codeStyleManager.suggestUniqueVariableName("i",
+                                statement, true);
+                newStatement.append("for(int ");
+                newStatement.append(index);
+                newStatement.append(" = 0;");
+                newStatement.append(index);
+                newStatement.append('<');
                 newStatement.append(iteratedValue.getText());
-                newStatement.append(".length;" + index + "++)");
+                newStatement.append(".length;");
+                newStatement.append(index);
+                newStatement.append("++)");
                 newStatement.append("{ ");
-                newStatement.append(statement.getIterationParameter().getType()
-                                            .getPresentableText());
+                newStatement.append(type .getPresentableText());
                 newStatement.append(' ');
-                newStatement.append(statement.getIterationParameter()
-                                            .getName());
+                newStatement.append(iterationParameter .getName());
                 newStatement.append(" = ");
                 newStatement.append(iteratedValue.getText());
-                newStatement.append('[' + index + "];");
-                final PsiStatement body = statement.getBody();
-                if(body instanceof PsiBlockStatement){
-                    final PsiCodeBlock block =
-                            ((PsiBlockStatement) body).getCodeBlock();
-                    final PsiElement[] children =
-                            block.getChildren();
-                    for(int i = 1; i < children.length - 1; i++){
-                        //skip the braces
-                        newStatement.append(children[i].getText());
-                    }
-                } else{
-                    newStatement.append(body.getText());
-                }
-                newStatement.append('}');
+                newStatement.append('[');
+                newStatement.append(index);
+                newStatement.append("];");
             } else{
-
-                final String iterator =  codeStyleManager.suggestUniqueVariableName("it", statement,
-                                                                                    true);
-                final String typeText = statement.getIterationParameter()
-                                .getType()
-                                .getPresentableText();
+                final String iterator =
+                        codeStyleManager.suggestUniqueVariableName("it",
+                                statement, true);
+                final String typeText = type
+                        .getPresentableText();
                 newStatement.append("for(java.util.Iterator<");
                 newStatement.append(typeText);
-                newStatement.append("> " + iterator + " = ");
+                newStatement.append("> ");
+                newStatement.append(iterator);
+                newStatement.append(" = ");
                 newStatement.append(iteratedValue.getText());
-                newStatement.append(".iterator();" + iterator + ".hasNext();)");
+                newStatement.append(".iterator();");
+                newStatement.append(iterator);
+                newStatement.append(".hasNext();)");
                 newStatement.append('{');
                 newStatement.append(typeText);
                 newStatement.append(' ');
-                newStatement.append(statement.getIterationParameter()
-                                            .getName());
+                newStatement.append(iterationParameter.getName());
                 newStatement.append(" = ");
-                newStatement.append(iterator + ".next();");
+                newStatement.append(iterator);
+                newStatement.append(".next();");
 
-                final PsiStatement body = statement.getBody();
-                if(body instanceof PsiBlockStatement){
-                    final PsiCodeBlock block = ((PsiBlockStatement) body).getCodeBlock();
-                    final PsiElement[] children = block.getChildren();
-                    for(int i = 1; i < children.length - 1; i++){
-                        //skip the braces
-                        newStatement.append(children[i].getText());
-                    }
-                } else{
-                    newStatement.append(body.getText());
-                }
-                newStatement.append('}');
             }
+            final PsiStatement body = statement.getBody();
+            if(body instanceof PsiBlockStatement){
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement)body;
+                final PsiCodeBlock block = blockStatement.getCodeBlock();
+                final PsiElement[] children = block.getChildren();
+                for(int i = 1; i < children.length - 1; i++){
+                    //skip the braces
+                    newStatement.append(children[i].getText());
+                }
+            } else{
+                final String bodyText;
+                if (body == null) {
+                    bodyText = "";
+                } else {
+                    bodyText = body.getText();
+                }
+                newStatement.append(bodyText);
+            }
+            newStatement.append('}');
             replaceStatement(statement, newStatement.toString());
         }
     }
-
 
     public BaseInspectionVisitor buildVisitor(){
         return new ForeachStatementVisitor();
     }
 
-    private static class ForeachStatementVisitor extends StatementInspectionVisitor{
+    private static class ForeachStatementVisitor
+            extends StatementInspectionVisitor{
 
-        public void visitForeachStatement(@NotNull PsiForeachStatement statement){
+        public void visitForeachStatement(
+                @NotNull PsiForeachStatement statement){
             super.visitForeachStatement(statement);
             registerStatementError(statement);
         }
