@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifyBooleanExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -88,7 +89,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     });
     return copy[0];
   }
-  public static boolean canBeSimplified(PsiExpression expression) {
+  public static boolean canBeSimplified(@NotNull PsiExpression expression) {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
     expression.accept(new PsiRecursiveElementVisitor() {
@@ -120,7 +121,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     public ExpressionVisitor(PsiManager psiManager, final boolean createResult) {
       isCreateResult = createResult;
       trueExpression = createResult ? createExpression(psiManager, Boolean.toString(true)) : null;
-      falseExpression = createResult ? createExpression(psiManager, Boolean.toString(true)) : null;
+      falseExpression = createResult ? createExpression(psiManager, Boolean.toString(false)) : null;
     }
 
     private static PsiExpression createExpression(final PsiManager psiManager, String text) {

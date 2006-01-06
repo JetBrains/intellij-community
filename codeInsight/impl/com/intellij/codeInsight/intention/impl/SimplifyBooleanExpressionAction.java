@@ -25,8 +25,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     PsiExpression expression = getExpressionToSimplify(editor, file);
-    if (expression == null) return false;
-    return SimplifyBooleanExpressionFix.canBeSimplified(expression);
+    return expression != null && SimplifyBooleanExpressionFix.canBeSimplified(expression);
   }
 
   private static PsiExpression getExpressionToSimplify(final Editor editor, final PsiFile file) {
