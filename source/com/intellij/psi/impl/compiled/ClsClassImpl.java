@@ -1077,7 +1077,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     if (parent instanceof PsiFile) {
       String packageName = ((ClsFileImpl)parent).getPackageName();
       String sourceFileName = getSourceFileName();
-      String relativeFilePath = packageName.replace('.', '/') + '/' + sourceFileName;
+      String relativeFilePath = packageName.length() == 0 ?
+                                sourceFileName :
+                                packageName.replace('.', '/') + '/' + sourceFileName;
 
       final VirtualFile vFile = getContainingFile().getVirtualFile();
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
