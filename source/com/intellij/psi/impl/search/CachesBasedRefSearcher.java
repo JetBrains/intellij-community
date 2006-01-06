@@ -5,6 +5,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
@@ -16,8 +17,10 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.psi.Property;
 
 import java.util.Set;
 
@@ -129,6 +132,26 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
           return false;
         }
         //}
+      }
+    } else if (refElement instanceof Property) {
+      final String[] words = StringUtil.getWordsIn(((Property)refElement).getKey()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      final String lastWordInPropertyName = words.length > 0 ? words[words.length - 1]: null;
+
+      if (lastWordInPropertyName != null) {
+        if (searchScope instanceof GlobalSearchScope) {
+          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
+            (GlobalSearchScope)searchScope,
+            StdFileTypes.JSP,
+            StdFileTypes.JSPX
+          );
+        }
+        if (!helper.processElementsWithWord(processor1,
+                                     searchScope,
+                                     lastWordInPropertyName,
+                                     UsageSearchContext.IN_FOREIGN_LANGUAGES,
+                                     false)) {
+          return false;
+        }
       }
     }
 
