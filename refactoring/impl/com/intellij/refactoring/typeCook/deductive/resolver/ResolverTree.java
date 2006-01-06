@@ -5,20 +5,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
-import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
+import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
+import gnu.trove.TObjectIntHashMap;
 
 import java.util.*;
-
-import gnu.trove.TObjectIntHashMap;
 
 /**
  * @author db
@@ -215,6 +214,11 @@ public class ResolverTree {
         }
 
         return out.iterator();
+      }
+
+      public boolean hasArc(final PsiTypeVariable from, final PsiTypeVariable to) {
+        final HashSet<PsiTypeVariable> out = outs.get(from);
+        return out != null && out.contains(to);
       }
     });
 

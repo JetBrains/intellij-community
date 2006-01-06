@@ -81,8 +81,7 @@ public class SymbolTable {
 
   public synchronized void dispose() throws CacheCorruptedException {
     try {
-      save();
-      myTrie.close();
+      myTrie.close(); // will call "flush()" if needed
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);

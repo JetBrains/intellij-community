@@ -245,8 +245,8 @@ public class CompileDriver {
     );
     WindowManager.getInstance().getStatusBar(myProject).setInfo("");
 
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, new DependencyCache(myCachesDirectoryPath), this,
-                                                                     !isRebuild && !forceCompile);
+    final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath, myProject);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, dependencyCache, this, !isRebuild && !forceCompile);
     for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
     }
@@ -972,7 +972,7 @@ public class CompileDriver {
         else {
           if (toCompile.contains(sourceFile)) {
             // some crazy users store their resources (which is source file for us) directly in the output dir
-            // we should not delete files with are both output and source files
+            // we should not delete files which are both output and source files
             shouldDelete = !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl));
           }
           else {

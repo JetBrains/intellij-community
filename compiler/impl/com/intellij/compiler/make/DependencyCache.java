@@ -43,10 +43,12 @@ public class DependencyCache {
   private SymbolTable mySymbolTable;
   private final String mySymbolTableFilePath;
   private final String myStoreDirectoryPath;
+  //private final Project myProject;
   private static final @NonNls String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
 
-  public DependencyCache(String storeDirectoryPath) {
+  public DependencyCache(String storeDirectoryPath, final Project project) {
     myStoreDirectoryPath = storeDirectoryPath;
+    //myProject = project;
     LOG.assertTrue(myStoreDirectoryPath != null);
 
     mySymbolTableFilePath = myStoreDirectoryPath + "/" + SYMBOLTABLE_FILE_NAME;
@@ -614,6 +616,7 @@ public class DependencyCache {
     catch (CacheCorruptedException e) {
       LOG.error(e); // todo
     }
+    //mySymbolTable = null;
     try {
       if (mySymbolTable != null) {
         mySymbolTable.dispose();

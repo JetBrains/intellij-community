@@ -11,6 +11,8 @@ import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,6 +34,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.resourceCompiler.ResourceCompiler");
   private final Project myProject;
   private CompilerConfiguration myConfiguration;
+  private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public ResourceCompiler(Project project, CompilerConfiguration compilerConfiguration) {
     myProject = project;
@@ -49,7 +52,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return myConfiguration.isResourceFile(file.getName());
+    return !FILE_TYPE_MANAGER.getFileTypeByFile(file).equals(StdFileTypes.JAVA) && myConfiguration.isResourceFile(file.getName());
   }
 
   public TranslatingCompiler.ExitStatus compile(final CompileContext context, final VirtualFile[] files) {

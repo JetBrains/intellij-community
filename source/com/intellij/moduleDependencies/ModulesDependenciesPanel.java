@@ -1,5 +1,7 @@
 package com.intellij.moduleDependencies;
 
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -22,8 +24,6 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -319,6 +319,17 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
         public Iterator<Module> getOut(final Module n) {
           return graph.getIn(n);
+        }
+
+        public boolean hasArc(final Module from, final Module to) {
+          if (!graph.hasArc(from, to)) {
+            for (final Iterator<Module> it = getOut(from); it.hasNext();) {
+              if (to.equals(it.next())) {
+                return true;
+              }
+            }
+          }
+          return false;
         }
       };
     }

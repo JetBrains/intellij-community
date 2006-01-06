@@ -29,5 +29,8 @@
     <component>
       <implementation-class>com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.compiler.SymbolTableProvider</implementation-class>
+    </component>
   </project-components>
 </components>

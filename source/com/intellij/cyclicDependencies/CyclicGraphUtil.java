@@ -39,6 +39,13 @@ public class CyclicGraphUtil {
         nodes.remove(node);
         return nodes.iterator();
       }
+
+      public boolean hasArc(final Node from, final Node to) {
+        if (from.equals(node) || to.equals(node)) {
+          return false;
+        }
+        return graph.hasArc(from, to);
+      }
     };
 
     final HashSet<Node> inNodes = new HashSet<Node>();

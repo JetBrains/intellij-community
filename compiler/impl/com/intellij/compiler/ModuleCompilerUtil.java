@@ -144,10 +144,13 @@ public final class ModuleCompilerUtil {
 
     final Map<Node, Chunk<Node>> nodeToChunkMap = new HashMap<Node, Chunk<Node>>();
     for (final Node node : graph.getNodes()) {
+      if (nodeToChunkMap.containsKey(node)) {
+        continue;  // the node is already in the chunk
+      }
       final Chunk<Node> chunk = buildChunk(graph, node);
       chunks.add(chunk);
-      for (final Node node1 : chunk.getNodes()) {
-        nodeToChunkMap.put(node1, chunk);
+      for (final Node n : chunk.getNodes()) {
+        nodeToChunkMap.put(n, chunk);
       }
     }
 
@@ -210,12 +213,15 @@ public final class ModuleCompilerUtil {
   }
 
   private static <Node> boolean hasArc(Graph<Node> graph, Node from, Node to) {
+    return graph.hasArc(from, to);
+    /*
     for (Iterator<Node> it = graph.getOut(from); it.hasNext();) {
       if (to.equals(it.next())) {
         return true;
       }
     }
     return false;
+    */
   }
 
 
