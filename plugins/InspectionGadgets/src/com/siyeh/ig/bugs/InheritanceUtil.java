@@ -21,12 +21,13 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 
 class InheritanceUtil{
+
     private InheritanceUtil(){
         super();
     }
 
     public static boolean existsMutualSubclass(PsiClass class1,
-                                                      PsiClass class2){
+                                               PsiClass class2){
         final String className = class1.getQualifiedName();
         if("java.lang.Object".equals(className)){
             return true;
