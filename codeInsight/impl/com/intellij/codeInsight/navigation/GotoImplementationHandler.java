@@ -24,6 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.jetbrains.annotations.NotNull;
 
 public class GotoImplementationHandler implements CodeInsightActionHandler {
   protected interface ResultsFilter {
@@ -39,7 +43,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    if (!(element instanceof PsiMethod) && !(element instanceof PsiClass)) {
+    if (getImplementationSearcher(element) == null) {
       return;
     }
 
@@ -141,16 +145,49 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
   }
 
+  public interface ImplementationSearcher {
+    PsiElement[] getImplementations(PsiElement element);
+  }
+
+  private static Map<Class,ImplementationSearcher> ourSearchers = new HashMap<Class, ImplementationSearcher>(3);
+
+  static {
+    registerImplemetationSearcher(
+      PsiMethod.class,
+      new ImplementationSearcher() {
+        public PsiElement[] getImplementations(PsiElement element) {
+          return getMethodImplementations((PsiMethod)element);
+        }
+      }
+    );
+
+    registerImplemetationSearcher(
+      PsiClass.class,
+      new ImplementationSearcher() {
+        public PsiElement[] getImplementations(PsiElement element) {
+          return getClassImplementations((PsiClass)element);
+        }
+      }
+    );
+  }
+
+  public static <T extends PsiElement> void registerImplemetationSearcher(@NotNull Class<T> clazz, @NotNull ImplementationSearcher searcher) {
+    ourSearchers.put(clazz,searcher);
+  }
+
+  public static ImplementationSearcher getImplementationSearcher(PsiElement sourceElement) {
+    for(Map.Entry<Class,ImplementationSearcher> entry:ourSearchers.entrySet()) {
+      if (entry.getKey().isInstance(sourceElement)) {
+        return entry.getValue();
+      }
+    }
+    return null;
+  }
   private PsiElement[] getSearchResults(PsiElement sourceElement) {
-    if (sourceElement instanceof PsiMethod) {
-      return getMethodImplementations((PsiMethod) sourceElement);
-    }
-    else if (sourceElement instanceof PsiClass) {
-      return getClassImplementations((PsiClass) sourceElement);
-    }
-    else {
-      throw new IllegalArgumentException(sourceElement == null ? null : sourceElement.getClass().getName());
-    }
+    final ImplementationSearcher implementationSearcher = getImplementationSearcher(sourceElement);
+    if (implementationSearcher != null) return implementationSearcher.getImplementations(sourceElement);
+
+    throw new IllegalArgumentException(sourceElement == null ? null : sourceElement.getClass().getName());
   }
 
   private static PsiElement[] getClassImplementations(final PsiClass psiClass) {
