@@ -20,6 +20,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private final SmartPointerManagerImpl mySmartPointerManager;
   private PsiDocumentManagerImpl myPsiDocumentManager;
+  private Document mySyncDocument = null;
 
   public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, SmartPointerManagerImpl smartPointerManager) {
     mySmartPointerManager = smartPointerManager;
@@ -29,6 +30,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public DocumentChangeTransaction getTransaction(final Document document) {
     final Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
     return pair != null ? pair.getFirst() : null;
+  }
+
+  public boolean isInSynchronization(final Document document) {
+    return mySyncDocument == document;
   }
 
   private static interface DocSyncAction {
@@ -223,17 +228,25 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void commitTransaction(Document document){
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return;
-    //if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
+    synchronized(PsiLock.LOCK){
+      try {
+        mySyncDocument = document;
+        //if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
 
-    final PsiElement changeScope = documentChangeTransaction.getChangeScope();
-    final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
-    fakeEvent.setParent(changeScope);
-    fakeEvent.setFile(changeScope.getContainingFile());
-    doSync(fakeEvent, new DocSyncAction() {
-      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-        doCommitTransaction(document, documentChangeTransaction);
+        final PsiElement changeScope = documentChangeTransaction.getChangeScope();
+        final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
+        fakeEvent.setParent(changeScope);
+        fakeEvent.setFile(changeScope.getContainingFile());
+        doSync(fakeEvent, new DocSyncAction() {
+          public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+            doCommitTransaction(document, documentChangeTransaction);
+          }
+        });
       }
-    });
+      finally {
+        mySyncDocument = null;
+      }
+    }
   }
 
   public void doCommitTransaction(final Document document){
