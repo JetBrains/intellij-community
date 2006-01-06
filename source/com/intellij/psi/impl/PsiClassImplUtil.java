@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -210,11 +209,9 @@ public class PsiClassImplUtil {
 
 
     final List<MethodCandidateInfo> list = new ArrayList<MethodCandidateInfo>();
-    processDeclarationsInClassNotCached(psiClass, new FilterScopeProcessor(new OrFilter(new ElementFilter[]{
-      new ClassFilter(PsiMethod.class),
-      new ClassFilter(PsiField.class),
-      new ClassFilter(PsiClass.class)
-    }), null, list) {
+    processDeclarationsInClassNotCached(psiClass, new FilterScopeProcessor(new OrFilter(new ClassFilter(PsiMethod.class),
+                                                                                        new ClassFilter(PsiField.class),
+                                                                                        new ClassFilter(PsiClass.class)), null, list) {
       protected void add(PsiElement element, PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
           methods.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod)element, substitutor));
@@ -277,7 +274,7 @@ public class PsiClassImplUtil {
 
     public Result<Map> compute() {
       final Map<Class<? extends PsiMember>, Map<String, List>> map = buildAllMaps(myClass);
-      return new Result<Map>(map, new Object[]{PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+      return new Result<Map>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 
@@ -286,7 +283,7 @@ public class PsiClassImplUtil {
                                                    PsiElement place, boolean isRaw) {
     if (visited.contains(aClass)) return true;
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
-    if (last instanceof PsiTypeParameterList) return true; //TypeParameterList doesn't see our declarations
+    if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
     final Object data;
     synchronized (PsiLock.LOCK) {
       data = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
@@ -421,7 +418,6 @@ public class PsiClassImplUtil {
     final NameHint nameHint = processor.getHint(NameHint.class);
 
 
-    PsiManager manager = aClass.getManager();
     if (classHint == null || classHint.shouldProcess(PsiField.class)) {
       if (nameHint != null) {
         final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(), false);
@@ -646,16 +642,6 @@ public class PsiClassImplUtil {
       }
     }
     return superType;
-  }
-
-  private static void addReferenceTypes(final PsiReferenceList referenceList, List<PsiClassType> result) {
-    if (referenceList != null) {
-      final PsiClassType[] referenceElements = referenceList.getReferencedTypes();
-      for (final PsiClassType referenceElement : referenceElements) {
-        LOG.assertTrue(referenceElement != null);
-        result.add(referenceElement);
-      }
-    }
   }
 
   public static PsiClass[] getInterfaces(PsiTypeParameter typeParameter) {
