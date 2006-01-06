@@ -16,12 +16,11 @@ public class CyclicDependenciesUtil{
     final DFSTBuilder<Node> dfstBuilder = new DFSTBuilder<Node>(graph);
     final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
     List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>();
-    for (Iterator<Pair<Integer, Integer>> i = sccs.iterator(); i.hasNext();) {
+    for (final Pair<Integer, Integer> scc : sccs) {
       Set<Node> packs = new HashSet<Node>();
-      final Pair<Integer, Integer> p = i.next();
-      final Integer biT = p.getFirst();
+      final Integer biT = scc.getFirst();
       final int binum = biT.intValue();
-      for (int j = 0; j < p.getSecond().intValue(); j++) {
+      for (int j = 0; j < scc.getSecond().intValue(); j++) {
         packs.add(dfstBuilder.getNodeByTNumber(binum + j));
       }
       chunks.add(new Chunk<Node>(packs));
@@ -101,8 +100,7 @@ public class CyclicDependenciesUtil{
 
     public Set<ArrayList<Node>> convert(Set<Path<Node>> paths) {
       Set<ArrayList<Node>> result = new HashSet<ArrayList<Node>>();
-      for (Iterator<Path<Node>> iterator = paths.iterator(); iterator.hasNext();) {
-        Path<Node> path = iterator.next();
+      for (Path<Node> path : paths) {
         result.add(path.getPath());
       }
       return result;
@@ -110,8 +108,7 @@ public class CyclicDependenciesUtil{
 
     private void nextStep(final Set<Node> nextNodes, final Path<Node> path, Set<Path<Node>> result) {
       myCurrentPaths.remove(path);
-      for (Iterator<Node> iterator = nextNodes.iterator(); iterator.hasNext();) {
-        Node node = iterator.next();
+      for (Node node : nextNodes) {
         if (path.getEnd() == node) {
           continue;
         }
