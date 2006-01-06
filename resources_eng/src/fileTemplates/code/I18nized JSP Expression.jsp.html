@@ -1,0 +1,53 @@
+<html>
+<body>
+
+<table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+  <tr>
+    <td colspan="3"><font face="verdana" size="-1">
+    This is a built-in template used for replace text in <b>JSP</b>,
+    e.g.
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+        &lt;<span style="font-weight:bold; color:000080;">html</span>&gt;
+        &lt;<span style="font-weight:bold; color:000080;">body</span>&gt;
+      <font face="verdana" color="#7f0000">Hello!</font>
+      &lt;<span style="font-weight:bold; color:000080;">/body</span>&gt;
+      &lt;<span style="font-weight:bold; color:000080;">/html</span>&gt;
+      <br>
+    with internationalized JSP custom tag usage,
+      e.g.
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      &lt;<span style="font-weight:bold; color:000080;">html</span>&gt;
+      &lt;<span style="font-weight:bold; color:000080;">body</span>&gt;
+      <font face="verdana" color="#7f0000">&lt;bean:message key="HelloKey"/&gt;</font>
+    &lt;<span style="font-weight:bold; color:000080;">/body</span>&gt;
+    &lt;<span style="font-weight:bold; color:000080;">/html</span>&gt;
+    .
+    <p>
+    The template is editable. Along with expressions allowed in JSP context, you can also use the predefined variables that
+    will be then expanded into the corresponding values.</font>
+    </td>
+  </tr>
+</table>
+<table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+  <tr>
+    <td colspan="3"><font face="verdana" size="-1">Predefined variables will take the following values:</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_KEY}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Property key name which is specified in the corresponding properties file.
+    </font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_VALUE}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Property value which is specified in the corresponding properties file.
+      This is an original JSP text selection value.
+    </font></td>
+  </tr>
+
+</table>
+</body>
+</html>

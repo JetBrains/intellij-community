@@ -97,6 +97,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myLocalizedTemplateNames.put(TEMPLATE_FROM_USAGE_METHOD_BODY, IdeBundle.message("template.new.method.body"));
     myLocalizedTemplateNames.put(TEMPLATE_I18NIZED_EXPRESSION, IdeBundle.message("template.i18nized.expression"));
     myLocalizedTemplateNames.put(TEMPLATE_I18NIZED_CONCATENATION, IdeBundle.message("template.i18nized.concatenation"));
+    myLocalizedTemplateNames.put(TEMPLATE_I18NIZED_JSP_EXPRESSION, IdeBundle.message("template.i18nized.jsp.expression"));
     myLocalizedTemplateNames.put(INTERNAL_CLASS_TEMPLATE_NAME, IdeBundle.message("template.class"));
     myLocalizedTemplateNames.put(INTERNAL_INTERFACE_TEMPLATE_NAME, IdeBundle.message("template.interface"));
     myLocalizedTemplateNames.put(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, IdeBundle.message("template.annotationtype"));
@@ -713,7 +714,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
             urls.add(nextURL);
             VirtualFile dir = VfsUtil.findFileByURL(nextURL, myVirtualFileManager);
             if (dir == null) {
-              LOG.assertTrue(false, "Cannot find file by URL: " + nextURL);
+              LOG.error("Cannot find file by URL: " + nextURL);
             }
             if (LOG.isDebugEnabled()) {
               LOG.debug("Top directory: " + dir.getPresentableUrl());

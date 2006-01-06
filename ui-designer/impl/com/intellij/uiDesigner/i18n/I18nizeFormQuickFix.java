@@ -2,8 +2,8 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.i18n.I18nizeQuickFixDialog;
 import com.intellij.codeInsight.i18n.I18nizeQuickFix;
+import com.intellij.codeInsight.i18n.I18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,13 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.util.IncorrectOperationException;
@@ -39,29 +34,17 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
   public void run() {
     final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile formPsiFile = psiManager.findFile(myEditor.getFile());
-    PsiLiteralExpression expr;
-    try {
-      final PsiElementFactory elementFactory = psiManager.getElementFactory();
-      expr = (PsiLiteralExpression) elementFactory.createExpressionFromText("\"" +
-                                                                            StringUtil.escapeStringCharacters(descriptor.getValue()) +
-                                                                            "\"", formPsiFile);
-    }
-    catch (IncorrectOperationException e) {
-      return;
-    }
 
-    final I18nizeQuickFixDialog dlg = new I18nizeQuickFixDialog(project, expr, false);
-    dlg.show();
-    if (!dlg.isOK()) {
+    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, null, descriptor.getValue(), false, false);
+    dialog.show();
+    if (!dialog.isOK()) {
       return;
     }
 
     if (!myEditor.ensureEditable()) {
       return;
     }
-    final Collection<PropertiesFile> propertiesFiles = dlg.getAllPropertiesFiles(project);
+    final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles(project);
     PropertiesFile aPropertiesFile = null;
     for (PropertiesFile file : propertiesFiles) {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
@@ -75,7 +58,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
             try {
-              I18nizeQuickFix.createProperty(project, dlg, propertiesFiles);
+              I18nizeQuickFix.createProperty(project, propertiesFiles, dialog.getKey(), dialog.getValue());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -92,7 +75,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
         String bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
         bundleName = bundleName.replace('.', '/');
         try {
-          setStringDescriptorValue(new StringDescriptor(bundleName, dlg.getKey()));
+          setStringDescriptorValue(new StringDescriptor(bundleName, dialog.getKey()));
         }
         catch (Exception e) {
           LOG.error(e);

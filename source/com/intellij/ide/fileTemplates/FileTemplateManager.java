@@ -19,6 +19,7 @@ public abstract class FileTemplateManager{
   @NonNls public static final String TEMPLATE_FROM_USAGE_METHOD_BODY = "New Method Body.java";
   @NonNls public static final String TEMPLATE_I18NIZED_EXPRESSION = "I18nized Expression.java";
   @NonNls public static final String TEMPLATE_I18NIZED_CONCATENATION = "I18nized Concatenation.java";
+  @NonNls public static final String TEMPLATE_I18NIZED_JSP_EXPRESSION = "I18nized JSP Expression.jsp";
 
   @NonNls public static final String INTERNAL_CLASS_TEMPLATE_NAME = "Class";
   @NonNls public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";

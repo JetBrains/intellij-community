@@ -485,6 +485,8 @@
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
         <reference ref="JavaeeMigrationGroup"/>
+        <separator/>
+        <action id="I18nizeJspTextSelection" class="com.intellij.codeInsight.i18n.I18nizeJSPTextSelectionAction"/>
       </group>
 
       <!-- Build -->
