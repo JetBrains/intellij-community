@@ -272,7 +272,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myReturnType = returnStatementType;
     }
     else if (myOutputVariable != null) {
-      myReturnType = myOutputVariable.getTypeElement().getType();
+      myReturnType = myOutputVariable.getType();
     }
     else if (myGenerateConditionalExit) {
       myReturnType = PsiType.BOOLEAN;
