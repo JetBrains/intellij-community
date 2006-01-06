@@ -93,6 +93,15 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @Nullable public static PsiElement getChildOfAnyType(@NotNull PsiElement element, @NotNull Class... classes) {
+    for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
+      for(Class aClass:classes) {
+        if (aClass.isInstance(child)) return child;
+      }
+    }
+    return null;
+  }
+
   @Nullable public static <T extends PsiElement> T getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
     for(PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()){
       if (aClass.isInstance(child)) return (T)child;

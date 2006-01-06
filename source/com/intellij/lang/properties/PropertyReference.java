@@ -48,18 +48,20 @@ public class PropertyReference implements PsiPolyVariantReference {
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    final String key = getKeyText();
+
     Collection<Property> properties;
     if (myBundleName != null) {
       final PropertiesFile propertiesFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
       if (propertiesFile != null) {
-        properties = propertiesFile.findPropertiesByKey(myKey);
+        properties = propertiesFile.findPropertiesByKey(key);
       }
       else {
         properties = new ArrayList<Property>();
       }
     }
     else {
-      properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
+      properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     final ResolveResult[] result = new ResolveResult[properties.size()];
     int i = 0;
@@ -67,6 +69,10 @@ public class PropertyReference implements PsiPolyVariantReference {
       result[i++] = new PsiElementResolveResult(property);
     }
     return result;
+  }
+
+  protected String getKeyText() {
+    return myKey;
   }
 
   public String getCanonicalText() {
@@ -95,7 +101,7 @@ public class PropertyReference implements PsiPolyVariantReference {
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element instanceof Property && Comparing.strEqual(((Property)element).getKey(), myKey);
+    return element instanceof Property && Comparing.strEqual(((Property)element).getKey(), getKeyText());
   }
 
   public Object[] getVariants() {
@@ -116,11 +122,15 @@ public class PropertyReference implements PsiPolyVariantReference {
     return variants.toArray(new Object[variants.size()]);
   }
 
-  private static void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<String> variants) {
+  protected void addKey(String key, Set<String> variants) {
+    variants.add(key);
+  }
+
+  private void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<String> variants) {
     if (propertiesFile == null) return;
     List<Property> properties = propertiesFile.getProperties();
     for (Property property : properties) {
-      variants.add(property.getKey());
+      addKey(property.getKey(), variants);
     }
   }
 

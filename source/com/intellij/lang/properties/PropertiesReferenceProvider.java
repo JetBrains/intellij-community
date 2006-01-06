@@ -1,19 +1,23 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.i18n.I18nUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.i18n.I18nUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlUtil;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +28,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final Object value;
     String bundleName = null;
+    boolean propertyRefWithPrefix = false;
 
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
@@ -41,10 +46,16 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       }
 
     } else if (element instanceof XmlAttributeValue) {
-      if(PsiTreeUtil.getChildOfType(element, ELExpressionHolder.class) == null &&
-         PsiTreeUtil.getChildOfType(element, JspXmlTagBase.class) == null
-        ) {
+      if(isNonDynamicAttribute(element)) {
         value = ((XmlAttributeValue)element).getValue();
+        final XmlAttribute attribute = (XmlAttribute)element.getParent();
+        if ("key".equals(attribute.getName())) {
+          final XmlTag parent = attribute.getParent();
+          if ("message".equals(parent.getLocalName()) &&
+              Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS,parent.getNamespace()) >= 0) {
+            propertyRefWithPrefix = true;
+          }
+        }
       } else {
         value = null;
       }
@@ -54,10 +65,16 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
 
     if (value instanceof String) {
       String text = (String)value;
-      PsiReference reference = new PropertyReference(text, element, bundleName);
+      PsiReference reference = propertyRefWithPrefix ?
+                               new PrefixBasedPropertyReference(text, element, bundleName):
+                               new PropertyReference(text, element, bundleName);
       return new PsiReference[]{reference};
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  static boolean isNonDynamicAttribute(final PsiElement element) {
+    return PsiTreeUtil.getChildOfAnyType(element, ELExpressionHolder.class,JspXmlTagBase.class) == null;
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
