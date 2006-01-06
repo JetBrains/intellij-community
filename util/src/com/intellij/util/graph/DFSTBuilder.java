@@ -48,15 +48,13 @@ public class DFSTBuilder<Node> {
     Collection<Node> nodes = myGraph.getNodes();
     int indexN = nodes.size();
     HashSet<Node> processed = new HashSet<Node>();
-    for (Iterator<Node> iterator = nodes.iterator(); iterator.hasNext();) {
-      Node node = iterator.next();
+    for (Node node : nodes) {
       if (!myGraph.getIn(node).hasNext()) {
         indexN = traverseSubGraph(node, indexN, processed);
       }
     }
 
-    for (Iterator<Node> iterator = nodes.iterator(); iterator.hasNext();) {
-      Node node = iterator.next();
+    for (Node node : nodes) {
       indexN = traverseSubGraph(node, indexN, processed);
     }
 
@@ -151,11 +149,10 @@ public class DFSTBuilder<Node> {
         myNodeToTNumber.put(v, new Integer(currT));
         myInvT[currT++]=v;
 
-        for (Iterator<Node> iterator = region.iterator(); iterator.hasNext();) {
-          Node w = iterator.next();
+        for (Node w : region) {
           if (w != v) {
             myNodeToTNumber.put(w, new Integer(currT));
-            myInvT[currT++]=w;
+            myInvT[currT++] = w;
           }
         }
       }
