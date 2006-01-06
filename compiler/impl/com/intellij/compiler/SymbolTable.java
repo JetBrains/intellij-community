@@ -18,8 +18,11 @@ import java.io.IOException;
 public class SymbolTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.SymbolTable");
   private final PersistentStringEnumerator myTrie;
-  private IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(0x800);
-  private ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(0x800);
+
+  // both caches should have equal size
+  private static final int STRING_CACHE_SIZE = 0x4000;
+  private IntObjectCache<String> myIndexStringCache = new IntObjectCache<String>(STRING_CACHE_SIZE);
+  private ObjectIntCache<String> myStringIndexCache = new ObjectIntCache<String>(STRING_CACHE_SIZE);
 
   public SymbolTable(File file) throws CacheCorruptedException {
     try {
@@ -52,7 +55,6 @@ public class SymbolTable {
 
     try {
       result = myTrie.enumerate(symbol);
-      myIndexStringCache.cacheObject(result, symbol);
       myStringIndexCache.cacheObject(symbol, result);
       return result;
     }
@@ -71,7 +73,6 @@ public class SymbolTable {
     try {
       result = myTrie.valueOf(id);
       myIndexStringCache.cacheObject(id, result);
-      myStringIndexCache.cacheObject(result, id);
       return result;
     }
     catch (IOException e) {
