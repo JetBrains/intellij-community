@@ -224,7 +224,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     final String version = element.getAttributeValue(VERSION_TAG);
     if (myFile != null && (version == null || !version.equals(VALID_VERSION))) {
       try {
-        element = InspectionProfileConvertor.convertToNewFormat(new File(InspectionProfileManager.getInstance().getProfileDirectory(), myName + CONFIG_FILE_EXTENSION), this);
+        element = InspectionProfileConvertor.convertToNewFormat(myFile, this);
       }
       catch (IOException e) {
         LOG.error(e);
