@@ -42,16 +42,16 @@ public class MissortedModifiersInspection extends ClassInspection {
     public boolean m_requireAnnotationsFirst = true;
 
     static {
-        s_modifierOrder.put("public", Integer.valueOf(0));
-        s_modifierOrder.put("protected", Integer.valueOf(1));
-        s_modifierOrder.put("private", Integer.valueOf(2));
-        s_modifierOrder.put("static", Integer.valueOf(3));
-        s_modifierOrder.put("abstract", Integer.valueOf(4));
-        s_modifierOrder.put("final", Integer.valueOf(5));
-        s_modifierOrder.put("transient", Integer.valueOf(6));
-        s_modifierOrder.put("volatile", Integer.valueOf(7));
-        s_modifierOrder.put("synchronized", Integer.valueOf(8));
-        s_modifierOrder.put("native", Integer.valueOf(9));
+        s_modifierOrder.put(PsiKeyword.PUBLIC, Integer.valueOf(0));
+        s_modifierOrder.put(PsiKeyword.PROTECTED, Integer.valueOf(1));
+        s_modifierOrder.put(PsiKeyword.PRIVATE, Integer.valueOf(2));
+        s_modifierOrder.put(PsiKeyword.STATIC, Integer.valueOf(3));
+        s_modifierOrder.put(PsiKeyword.ABSTRACT, Integer.valueOf(4));
+        s_modifierOrder.put(PsiKeyword.FINAL, Integer.valueOf(5));
+        s_modifierOrder.put(PsiKeyword.TRANSIENT, Integer.valueOf(6));
+        s_modifierOrder.put(PsiKeyword.VOLATILE, Integer.valueOf(7));
+        s_modifierOrder.put(PsiKeyword.SYNCHRONIZED, Integer.valueOf(8));
+        s_modifierOrder.put(PsiKeyword.NATIVE, Integer.valueOf(9));
         s_modifierOrder.put("strictfp", Integer.valueOf(10));
     }
 
@@ -124,18 +124,11 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
     }
 
-    private class MissortedModifiersVisitor
-            extends BaseInspectionVisitor {
-
-        private boolean m_isInClass = false;
+    private class MissortedModifiersVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
-            if (!m_isInClass) {
-                m_isInClass = true;
-                super.visitClass(aClass);
-                checkForMissortedModifiers(aClass);
-                m_isInClass = false;
-            }
+            super.visitClass(aClass);
+            checkForMissortedModifiers(aClass);
         }
 
         public void visitClassInitializer(
@@ -167,42 +160,37 @@ public class MissortedModifiersInspection extends ClassInspection {
         private void checkForMissortedModifiers(
                 PsiModifierListOwner listOwner) {
             final PsiModifierList modifierList = listOwner.getModifierList();
-            if (isModifierListMissorted(modifierList)) {
-                registerError(modifierList);
+            if (!isModifierListMissorted(modifierList)) {
+                return;
             }
+            registerError(modifierList);
         }
 
         private boolean isModifierListMissorted(PsiModifierList modifierList) {
             if (modifierList == null) {
                 return false;
             }
-            final List<PsiElement> simpleModifiers =
-                    new ArrayList<PsiElement>();
             final PsiElement[] children = modifierList.getChildren();
+            int currentModifierIndex = -1;
             for (final PsiElement child : children) {
                 if (child instanceof PsiJavaToken) {
-                    simpleModifiers.add(child);
+                    final String text = child.getText();
+                    final Integer modifierIndex = s_modifierOrder.get(text);
+                    if (modifierIndex == null) {
+                        return false;
+                    }
+                    if (currentModifierIndex >= modifierIndex.intValue()) {
+                        return true;
+                    }
+                    currentModifierIndex = modifierIndex.intValue();
                 }
                 if (child instanceof PsiAnnotation) {
                     if (m_requireAnnotationsFirst &&
-                            simpleModifiers.size() != 0) {
+                        currentModifierIndex != -1) {
                         //things aren't in order, since annotations come first
                         return true;
                     }
                 }
-            }
-            int currentModifierIndex = -1;
-            for (Object simpleModifier : simpleModifiers) {
-                final PsiJavaToken token = (PsiJavaToken)simpleModifier;
-                final String text = token.getText();
-                final Integer modifierIndex = s_modifierOrder.get(text);
-                if (modifierIndex == null) {
-                    return false;
-                }
-                if (currentModifierIndex >= modifierIndex.intValue()) {
-                    return true;
-                }
-                currentModifierIndex = modifierIndex.intValue();
             }
             return false;
         }
