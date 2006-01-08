@@ -600,6 +600,6 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   void setName(String name) {
-    myName = name;
+    myName = new String(name);
   }
 }
