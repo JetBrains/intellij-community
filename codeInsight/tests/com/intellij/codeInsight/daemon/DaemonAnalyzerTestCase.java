@@ -1,7 +1,9 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -9,13 +11,17 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -56,7 +62,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
-    
+
     return infos;
   }
 
@@ -71,9 +77,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
     action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
-    
+
     Collection<HighlightInfo> highlights3 = null;
-    
+
     if (doInspections()) {
       LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
@@ -88,7 +94,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     for (HighlightInfo info : highlights2) {
       list.add(info);
     }
-    
+
     if (highlights3 != null) {
       for (HighlightInfo info : highlights3) {
         list.add(info);
@@ -123,5 +129,24 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected boolean doExternalValidation() {
     return true;
+  }
+
+  protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos,String intentionActionName) throws IncorrectOperationException {
+    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>(1);
+
+    for (HighlightInfo info :infos) {
+      for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
+        IntentionAction action = pair.first.first;
+        availableActions.add(action);
+      }
+    }
+
+    final IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(
+      availableActions,
+      intentionActionName
+    );
+
+    assertNotNull(intentionAction);
+    intentionAction.invoke(myProject, myEditor, myFile);
   }
 }

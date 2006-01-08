@@ -27,6 +27,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected boolean shouldBeAvailableAfterExecution() {
     return false;
   }
+
   protected void doTestFor(final String testName) throws Exception {
     final String relativePath = getBasePath() + "/before" + testName;
     final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;

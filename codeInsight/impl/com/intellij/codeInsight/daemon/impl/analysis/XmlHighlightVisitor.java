@@ -20,6 +20,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
+import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -30,6 +31,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -45,15 +48,13 @@ import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Mike
@@ -183,9 +184,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                 containingFile.getFileType() == StdFileTypes.XML;
           final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
           final int messageLength = namespacePrefix.length();
-          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
+          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.INFORMATION;
 
-          bindMessageToTag(tag, infoType, 0, messageLength, localizedMessage);
+          bindMessageToTag(
+            tag,
+            infoType,
+            0,
+            messageLength,
+            localizedMessage,
+            new CreateNSDeclarationIntentionAction(tag, namespacePrefix)
+          );
         }
       }
     }
@@ -1026,6 +1034,117 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       final PsiElement parent = tagEndStart.getParent();
       parent.deleteChildRange(tagEndStart,parent.getLastChild());
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+
+  private static class CreateNSDeclarationIntentionAction implements IntentionAction {
+    boolean myTaglibDeclaration;
+    private final XmlTag myTag;
+    private final String myNamespacePrefix;
+
+    public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix) {
+      myTag = tag;
+      myNamespacePrefix = namespacePrefix;
+      myTaglibDeclaration = myTag.getContainingFile().getFileType() == StdFileTypes.JSP;
+    }
+
+    public String getText() {
+      return XmlErrorMessages.message(
+        myTaglibDeclaration ?
+        "create.taglib.declaration.quickfix":
+        "create.namespace.declaration.quickfix"
+      );
+    }
+
+    public String getFamilyName() {
+      return getText();
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    private String guessNamespace(PsiFile file, Project project, boolean acceptTaglib, boolean acceptXmlNs) {
+      if (acceptTaglib) {
+        final JspManager instance = JspManager.getInstance(project);
+        final JspFile jspFile = (JspFile)file;
+        final String[] possibleTldUris = instance.getPossibleTldUris(jspFile);
+
+        Arrays.sort(possibleTldUris);
+
+        for(String uri:possibleTldUris) {
+          final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
+          if (tldFileByUri == null) continue;
+          final PsiMetaData metaData = tldFileByUri.getDocument().getMetaData();
+
+          if (metaData instanceof TldDescriptor) {
+            if ( ((TldDescriptor)metaData).getElementDescriptor(myTag) != null) {
+              return uri;
+            }
+          }
+        }
+      }
+
+      if (acceptXmlNs) {
+        final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
+        final String[] availableUrls = instanceEx.getResourceUrls(null,true);
+
+        for(String url:availableUrls) {
+          final XmlFile xmlFile = XmlUtil.findXmlFile(file, url);
+
+          if (xmlFile != null) {
+            final PsiMetaData metaData = xmlFile.getDocument().getMetaData();
+
+            if (metaData instanceof XmlNSDescriptorImpl) {
+              XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(myTag.getLocalName(),url);
+
+              if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
+                return url;
+              }
+            }
+
+          }
+        }
+      }
+
+      if (acceptTaglib) return XmlUtil.JSTL_CORE_URIS[0];
+      else return "someuri";
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
+      final PsiElementFactory elementFactory = rootTag.getManager().getElementFactory();
+      final String namespace = guessNamespace(
+        file,
+        project,
+        myTaglibDeclaration || file instanceof JspFile,
+        !(file instanceof JspFile) || file.getFileType() == StdFileTypes.JSPX
+      );
+
+      if (myTaglibDeclaration) {
+        final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);
+        PsiElement element = childTag.add(elementFactory.createXmlAttribute("prefix", myNamespacePrefix));
+
+        childTag.addAfter(
+          elementFactory.createXmlAttribute("uri",namespace),
+          element
+        );
+
+        element = rootTag.addBefore(
+          childTag, rootTag.getFirstChild()
+        );
+
+        CodeStyleManager.getInstance(project).reformat(element);
+      }
+      else {
+        rootTag.add(
+          elementFactory.createXmlAttribute("xmlns:"+myNamespacePrefix,namespace)
+        );
+      }
     }
 
     public boolean startInWriteAction() {
