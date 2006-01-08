@@ -19,6 +19,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.openapi.progress.ProgressManager;
 
 class InheritanceUtil{
 
@@ -26,7 +28,7 @@ class InheritanceUtil{
         super();
     }
 
-    public static boolean existsMutualSubclass(PsiClass class1,
+    public static boolean existsMutualSubclass(final PsiClass class1,
                                                PsiClass class2){
         final String className = class1.getQualifiedName();
         if("java.lang.Object".equals(className)){
@@ -36,20 +38,46 @@ class InheritanceUtil{
         if("java.lang.Object".equals(class2Name)){
             return true;
         }
-        if(class1.isInheritor(class2, true) || class2.isInheritor(class1, true)){
+        if(class1.isInheritor(class2, true) ||
+           class2.isInheritor(class1, true)){
             return true;
         }
         final PsiManager psiManager = class1.getManager();
         final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
         final SearchScope searchScope = class1.getUseScope();
-        final PsiClass[] inheritors =
-                searchHelper.findInheritors(class1, searchScope, true);
-        for(final PsiClass inheritor : inheritors){
-            if(inheritor.equals(class2) ||
-                    inheritor.isInheritor(class2, true)){
-                return true;
+        final MutualSubclassProcessor processor =
+                new MutualSubclassProcessor(class2);
+        final ProgressManager progressManager = ProgressManager.getInstance();
+        progressManager.runProcess(new Runnable() {
+            public void run() {
+                searchHelper.processInheritors(processor, class1,
+                        searchScope, true);
             }
+        }, null);
+        return processor.hasMutualSubclass();
+    }
+
+    private static class MutualSubclassProcessor
+            implements PsiElementProcessor<PsiClass> {
+
+        private boolean mutualSubClass = false;
+        private PsiClass aClass;
+
+        MutualSubclassProcessor(PsiClass aClass) {
+            this.aClass = aClass;
         }
-        return false;
+
+        public boolean execute(PsiClass inheritor) {
+            if (inheritor.equals(aClass) ||
+                inheritor.isInheritor(aClass, true)) {
+                mutualSubClass = true;
+                return false;
+            }
+            return true;
+        }
+
+        public boolean hasMutualSubclass() {
+            return mutualSubClass;
+        }
     }
 }
