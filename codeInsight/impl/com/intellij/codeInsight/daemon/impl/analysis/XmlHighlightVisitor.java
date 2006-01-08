@@ -184,7 +184,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                 containingFile.getFileType() == StdFileTypes.XML;
           final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
           final int messageLength = namespacePrefix.length();
-          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.INFORMATION;
+          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
 
           bindMessageToTag(
             tag,
