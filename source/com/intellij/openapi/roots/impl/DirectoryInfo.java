@@ -6,7 +6,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ArrayListSet;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.Collections;
 
 public class DirectoryInfo {
   public Module module; // module to which content it belongs or null
@@ -21,7 +22,7 @@ public class DirectoryInfo {
   /**
    *  orderEntry to (classes of) which a directory belongs
    */
-  public Set<OrderEntry> orderEntries = new ArrayListSet<OrderEntry>();
+  private Collection<OrderEntry> orderEntries = null;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -58,5 +59,29 @@ public class DirectoryInfo {
            ", contentRoot=" + contentRoot +
            ", sourceRoot=" + sourceRoot +
            "}";
+  }
+
+  public Collection<OrderEntry> getOrderEntries() {
+    return orderEntries == null ? Collections.<OrderEntry>emptySet() : orderEntries;
+  }
+
+  public void addOrderEntries(final Collection<OrderEntry> orderEntries, final Collection<OrderEntry> parentEntries) {
+    if (this.orderEntries == null || orderEntries.containsAll(this.orderEntries)) {
+      this.orderEntries = orderEntries;
+    }
+    else {
+      ArrayListSet<OrderEntry> tmp = new ArrayListSet<OrderEntry>();
+      tmp.addAll(this.orderEntries);
+      tmp.addAll(orderEntries);
+      this.orderEntries = tmp;
+    }
+
+    if (this.orderEntries.equals(parentEntries)) {
+      this.orderEntries = parentEntries;
+    }
+  }
+
+  public void setOrderEntries(final Collection<OrderEntry> entries) {
+    orderEntries = entries;
   }
 }

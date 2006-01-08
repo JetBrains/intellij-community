@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
   private final Module myModule;
@@ -86,7 +86,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return OrderEntry.EMPTY_ARRAY;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return OrderEntry.EMPTY_ARRAY;
-    final Set<OrderEntry> orderEntries = info.orderEntries;
+    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
     List<OrderEntry> result = new ArrayList<OrderEntry>();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry.getOwnerModule() == myModule) {
@@ -101,7 +101,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return null;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return null;
-    final Set<OrderEntry> orderEntries = info.orderEntries;
+    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry.getOwnerModule() == myModule) return orderEntry;
     }

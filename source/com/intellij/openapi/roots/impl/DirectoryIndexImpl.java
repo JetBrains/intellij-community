@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PendingEventDispatcher;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -134,9 +135,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
-  /**
-   * @fabrique Used in fabrique
-   */
   public void initialize() {
     myNameHelper = PsiManager.getInstance(myProject).getNameHelper();
 
@@ -334,12 +332,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] importedClassRoots = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
           for (VirtualFile importedClassRoot : importedClassRoots) {
-            fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir);
+            fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir, null);
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null);
           }
         }
         else if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -347,18 +345,18 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null);
           }
         }
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (VirtualFile classRoot : classRoots) {
-            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir);
+            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir, null);
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir, null);
           }
         }
       }
@@ -642,7 +640,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                        Module module,
                                        VirtualFile libraryClassRoot,
                                        VirtualFile librarySourceRoot,
-                                       VirtualFile forDir) {
+                                       VirtualFile forDir,
+                                       DirectoryInfo parentInfo) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
     if (forDir != null) {
@@ -666,12 +665,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (info.libraryClassRoot != null) return;
     }
 
-    info.orderEntries.addAll(orderEntries);
+    final Collection<OrderEntry> parentEntries = parentInfo != null ? parentInfo.getOrderEntries() : null;
+    info.addOrderEntries(orderEntries, parentEntries);
 
     final VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
-        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, forDir);
+        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, forDir, info);
       }
     }
   }
@@ -742,6 +742,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     info.packageName = newPackageName;
   }
 
+  @Nullable
   private String getPackageNameForSubdir(String parentPackageName, String subdirName) {
     if (parentPackageName == null) return null;
     if (!myNameHelper.isIdentifier(subdirName)) return null;
@@ -782,8 +783,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot, null);
         }
 
-        if (parentInfo.orderEntries.size() > 0) {
-          fillMapWithOrderEntries(file, parentInfo.orderEntries, null, null, null, null);
+        if (parentInfo.getOrderEntries().size() > 0) {
+          fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, null, parentInfo);
         }
       }
     }

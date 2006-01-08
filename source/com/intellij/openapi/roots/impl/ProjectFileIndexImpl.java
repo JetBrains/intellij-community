@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.Collection;
 
 public class ProjectFileIndexImpl implements ProjectFileIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
@@ -96,7 +96,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     DirectoryIndex directoryIndex = myDirectoryIndex;
     final DirectoryInfo info = directoryIndex.getInfoForDirectory(dir);
     if (info == null) return OrderEntry.EMPTY_ARRAY;
-    final Set<OrderEntry> orderEntries = info.orderEntries;
+    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
     return orderEntries.toArray(new OrderEntry[orderEntries.size()]);
   }
 
