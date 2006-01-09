@@ -318,7 +318,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
     InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
     try {
-      return FileUtil.adaptiveLoadBytes(inputStream);
+      int physicalFileLength = virtualFileImpl.getPhysicalFileLength();
+      LOG.assertTrue(physicalFileLength >= 0);
+      return FileUtil.loadBytes(inputStream, physicalFileLength);
     }
     finally {
       inputStream.close();

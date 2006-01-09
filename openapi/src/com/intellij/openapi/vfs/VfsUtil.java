@@ -44,7 +44,12 @@ public class VfsUtil {
 
   public static String loadText(VirtualFile file) throws IOException{
     InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
-    return FileUtil.loadTextAndClose(reader);
+    try {
+      return new String(FileUtil.loadText(reader, (int)file.getLength()));
+    }
+    finally {
+      reader.close();
+    }
   }
 
   public static void saveText(VirtualFile file, String text) throws IOException {

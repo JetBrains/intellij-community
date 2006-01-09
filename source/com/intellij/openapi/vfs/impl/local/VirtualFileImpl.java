@@ -304,9 +304,10 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    InputStream in = getInputStream();
+    final ProvidedContent content = getProvidedContent();
+    InputStream in = content.getInputStream();
     try {
-      return FileUtil.adaptiveLoadBytes(in);
+      return FileUtil.loadBytes(in, (int)content.getLength());
     }
     finally {
       in.close();

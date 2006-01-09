@@ -13,8 +13,8 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -161,26 +161,13 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   /** Read template from file. */
   private static String readExternal(File file) throws IOException{
-    FileInputStream inputStream = new FileInputStream(file);
-    try {
-      String result = readExternal(inputStream);
-      return result;
-    }
-    finally {
-      inputStream.close();
-    }
+    return StringFactory.createStringFromConstantArray(FileUtil.loadFileText(file, ourEncoding));
   }
 
   /** Read template from URL. */
   private String readExternal(VirtualFile url) throws IOException{
     final Document content = FileDocumentManager.getInstance().getDocument(url);
     return content != null ? content.getText() : new String(url.contentsToByteArray(), ourEncoding);
-  }
-
-  /** Read template from stream. Stream does not closed after reading. */
-  private static String readExternal(InputStream inputStream) throws IOException{
-    Reader fr = new InputStreamReader(inputStream, ourEncoding);
-    return FileUtil.loadTextAndClose(fr);
   }
 
   /** Removes template file.

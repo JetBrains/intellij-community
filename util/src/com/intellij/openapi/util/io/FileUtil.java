@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 public class FileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
@@ -93,10 +93,28 @@ public class FileUtil {
     InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try{
-      return adaptiveLoadText(reader);
+      return loadText(reader, (int)file.length());
     }
     finally{
       reader.close();
+    }
+  }
+
+  public static char[] loadText(Reader reader, int length) throws IOException {
+    char[] chars = new char[length];
+    int count = 0;
+    while (count < chars.length) {
+      int n = reader.read(chars, count, chars.length - count);
+      if (n <= 0) break;
+      count += n;
+    }
+    if (count == chars.length){
+      return chars;
+    }
+    else{
+      char[] newChars = new char[count];
+      System.arraycopy(chars, 0, newChars, 0, count);
+      return newChars;
     }
   }
 
@@ -104,10 +122,21 @@ public class FileUtil {
     InputStream stream = new FileInputStream(file);
     byte[] bytes;
     try{
-      bytes = adaptiveLoadBytes(stream);
+      bytes = loadBytes(stream, (int)file.length());
     }
     finally{
       stream.close();
+    }
+    return bytes;
+  }
+
+  public static byte[] loadBytes(InputStream stream, int length) throws IOException{
+    byte[] bytes = new byte[length];
+    int count = 0;
+    while(count < length) {
+      int n = stream.read(bytes, count, length - count);
+      if (n <= 0) break;
+      count += n;
     }
     return bytes;
   }

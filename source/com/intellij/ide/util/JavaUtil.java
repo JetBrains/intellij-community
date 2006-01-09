@@ -118,7 +118,7 @@ public class JavaUtil {
     Reader reader = null;
     try{
       reader = new BufferedReader(new FileReader(javaFile));
-      char[] chars = FileUtil.adaptiveLoadText(reader);
+      char[] chars = FileUtil.loadFileText(javaFile);
 
       String packageName = getPackageStatement(chars);
       if (packageName != null){
