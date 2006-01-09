@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -47,7 +46,7 @@ public class FieldReferenceInstruction extends Instruction {
 
   public PsiExpression getExpression() { return myExpression; }
 
-  public PsiElement getElementToAssert() {
+  public PsiExpression getElementToAssert() {
     if (mySyntheticFieldName != null) return myExpression;
     return myExpression instanceof PsiArrayAccessExpression
            ? ((PsiArrayAccessExpression)myExpression).getArrayExpression()
