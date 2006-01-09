@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -197,7 +198,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     PsiManager psiManager = PsiManager.getInstance(myProject);
 
     for(VirtualFile file: PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
-      if (!dependentModules.contains(ModuleUtil.getModuleForFile(myProject, file))) {
+      if (!dependentModules.contains(VfsUtil.getModuleForFile(myProject, file))) {
         continue;
       }
 

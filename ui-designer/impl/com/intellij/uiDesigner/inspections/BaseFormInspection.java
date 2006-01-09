@@ -1,27 +1,27 @@
 package com.intellij.uiDesigner.inspections;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.FileCheckingInspection;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -56,7 +56,7 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
 
   @Nullable public ProblemDescriptor[] checkFile(final PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
     if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-      final Module module = ModuleUtil.getModuleForFile(file.getProject(), file.getVirtualFile());
+      final Module module = VfsUtil.getModuleForFile(file.getProject(), file.getVirtualFile());
       if (module == null) {
         return null;
       }

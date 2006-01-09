@@ -7,9 +7,9 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
@@ -30,7 +30,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   private final GuiEditor myEditor;
 
   public UIFormEditor(final Project project, final VirtualFile file){
-    final Module module = ModuleUtil.getModuleForFile(project, file);
+    final Module module = VfsUtil.getModuleForFile(project, file);
     if (module == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("no module for file " + file + " in project " + project);

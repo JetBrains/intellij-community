@@ -8,6 +8,7 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,7 +58,7 @@ public final class FormSourceCodeGenerator {
   }
 
   public void generate(final VirtualFile formFile) {
-    final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
+    final Module module = VfsUtil.getModuleForFile(myProject, formFile);
     if (module == null) {
       return;
     }

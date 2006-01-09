@@ -1,23 +1,21 @@
 package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
@@ -158,7 +156,7 @@ final class BeanStep extends StepAdapter{
       // check whether new class already exists
       {
         final String fullClassName = packageName.length() != 0 ? packageName + "." + shortClassName : shortClassName;
-        final Module module = ModuleUtil.getModuleForFile(myData.myProject, myData.myFormFile);
+        final Module module = VfsUtil.getModuleForFile(myData.myProject, myData.myFormFile);
         if (psiManager.findClass(fullClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null) {
           throw new CommitStepException(UIDesignerBundle.message("error.cannot.create.class.X.because.it.already.exists", fullClassName));
         }

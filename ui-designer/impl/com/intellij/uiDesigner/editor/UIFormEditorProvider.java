@@ -9,8 +9,8 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -23,10 +23,10 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
     return
       FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
-      ModuleUtil.getModuleForFile(project, file) != null;
+      VfsUtil.getModuleForFile(project, file) != null;
   }
 
-  public FileEditor createEditor(final Project project, final VirtualFile file){
+  @NotNull public FileEditor createEditor(final Project project, final VirtualFile file){
     if (file == null){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("file cannot be null");
@@ -53,11 +53,11 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
     //TODO[anton,vova] implement
   }
 
-  public String getEditorTypeId(){
+  @NotNull public String getEditorTypeId(){
     return "ui-designer";
   }
 
-  public FileEditorPolicy getPolicy() {
+  @NotNull public FileEditorPolicy getPolicy() {
     return
       ApplicationManagerEx.getApplicationEx().isInternal() ?
       FileEditorPolicy.NONE : FileEditorPolicy.HIDE_DEFAULT_EDITOR;

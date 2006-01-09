@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -24,8 +23,8 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -172,7 +171,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   private HashMap<Module, ArrayList<VirtualFile>> sortByModules(final VirtualFile[] formFiles) {
     final HashMap<Module, ArrayList<VirtualFile>> module2formFiles = new HashMap<Module,ArrayList<VirtualFile>>();
     for (final VirtualFile formFile : formFiles) {
-      final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
+      final Module module = VfsUtil.getModuleForFile(myProject, formFile);
       if (module != null) {
         ArrayList<VirtualFile> list = module2formFiles.get(module);
         if (list == null) {
@@ -194,7 +193,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       final MyInstrumentationItem item = (MyInstrumentationItem)item1;
       final VirtualFile formFile = item.getFormFile();
 
-      final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
+      final Module module = VfsUtil.getModuleForFile(myProject, formFile);
       if (module != null) {
         ArrayList<MyInstrumentationItem> list = module2formFiles.get(module);
         if (list == null) {

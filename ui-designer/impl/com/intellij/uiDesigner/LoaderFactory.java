@@ -3,14 +3,18 @@ package com.intellij.uiDesigner;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -71,11 +75,8 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   }
 
 
-  /**
-   * @return never null
-   */ 
-  public ClassLoader getLoader(final VirtualFile formFile) {
-    final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
+  @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
+    final Module module = VfsUtil.getModuleForFile(myProject, formFile);
     if (module == null) {
       return getClass().getClassLoader();
     }

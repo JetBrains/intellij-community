@@ -8,21 +8,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import org.jetbrains.annotations.NotNull;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2SourceCompiler");
@@ -146,7 +145,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
+            final Module module = VfsUtil.getModuleForFile(myProject, formFile);
             if (module != null && !processedModules.contains(module)) {
               processedModules.add(module);
               final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);

@@ -2,8 +2,8 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -23,7 +23,7 @@ public class DirectoryUrl extends AbstractUrl {
     Project project = directory.getProject();
     final VirtualFile virtualFile = directory.getVirtualFile();
     if (virtualFile == null) return null;
-    final Module module = ModuleUtil.getModuleForFile(project, virtualFile);
+    final Module module = VfsUtil.getModuleForFile(project, virtualFile);
     return new DirectoryUrl(virtualFile.getUrl(), module != null ? module.getName() : null);
   }
 

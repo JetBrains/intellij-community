@@ -1433,7 +1433,7 @@ public class RefactoringUtil {
       if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return;
     }
 
-    final Module targetModule = ModuleUtil.getModuleForFile(project, vFile);
+    final Module targetModule = VfsUtil.getModuleForFile(project, vFile);
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();

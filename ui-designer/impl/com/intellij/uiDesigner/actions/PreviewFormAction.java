@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditorUtil;
@@ -231,7 +232,7 @@ public final class PreviewFormAction extends AnAction{
       for(String bundleName: bundleSet) {
         for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
           virtualFiles.add(propFile.getVirtualFile());
-          modules.add(ModuleUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
+          modules.add(VfsUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
         }
       }
       FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),

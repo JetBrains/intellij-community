@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -42,7 +43,7 @@ public final class Generator {
    * @param rootContainer output parameter; should be LwRootContainer[1]
    */
   public static FormProperty[] exposeForm(final Project project, final VirtualFile formFile, final LwRootContainer[] rootContainer) throws MyException{
-    final Module module = ModuleUtil.getModuleForFile(project, formFile);
+    final Module module = VfsUtil.getModuleForFile(project, formFile);
     LOG.assertTrue(module != null);
 
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
@@ -328,7 +329,7 @@ public final class Generator {
 
     // put them to the bound class
 
-    final Module module = ModuleUtil.getModuleForFile(data.myProject, data.myFormFile);
+    final Module module = VfsUtil.getModuleForFile(data.myProject, data.myFormFile);
     LOG.assertTrue(module != null);
     final PsiClass boundClass = FormEditingUtil.findClassToBind(module, rootContainer[0].getClassToBind());
     LOG.assertTrue(boundClass != null);

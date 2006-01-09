@@ -7,11 +7,11 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,7 +69,7 @@ public class ExecutionUtil {
   public static Convertor<VirtualFile, Module> fileToModule(final Project project) {
     return new Convertor<VirtualFile, Module>() {
       public Module convert(final VirtualFile file) {
-        return ModuleUtil.getModuleForFile(project, file);
+        return VfsUtil.getModuleForFile(project, file);
       }
     };
   }

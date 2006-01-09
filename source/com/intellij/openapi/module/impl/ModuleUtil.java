@@ -147,12 +147,6 @@ public class ModuleUtil {
     return null;
   }
 
-  @Nullable
-  public static Module getModuleForFile(@NotNull final Project project, @NotNull final VirtualFile file) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return fileIndex.getModuleForFile(file);
-  }
-
   public static void getDependencies(Module module, Set<Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
