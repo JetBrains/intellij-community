@@ -35,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -170,7 +172,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private static String getBuildNumber(String ideaHome) {
     try {
       @NonNls final String buildTxt = "/build.txt";
-      return FileUtil.loadTextAndClose(new FileReader(ideaHome + buildTxt)).trim();
+      return new String(FileUtil.loadFileText(new File(ideaHome + buildTxt))).trim();
     }
     catch (IOException e) {
       return null;
