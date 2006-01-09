@@ -43,24 +43,10 @@ public class PropertyFileGenerator extends Generator{
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
-        final File homeDir = toCanonicalFile(VfsUtil.virtualToIoFile(jdk.getHomeDirectory()));
+        final File homeDir = BuildProperties.toCanonicalFile(VfsUtil.virtualToIoFile(jdk.getHomeDirectory()));
         addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
-
-        final File binPath = toCanonicalFile(new File(jdk.getBinPath()));
-        addProperty(BuildProperties.getJdkBinProperty(jdk.getName()), binPath.getPath().replace(File.separatorChar, '/'));
       }
     }
-  }
-
-  private File toCanonicalFile(final File file) {
-    File canonicalFile;
-    try {
-      canonicalFile = file.getCanonicalFile();
-    }
-    catch (IOException e) {
-      canonicalFile = file;
-    }
-    return canonicalFile;
   }
 
   public void addProperty(String name, String value) {

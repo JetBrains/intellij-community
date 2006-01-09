@@ -148,6 +148,10 @@ public class BuildProperties extends CompositeGenerator {
             fileSet.add(new Include(relativePath.replace(File.separatorChar, '/')));
           }
         }
+
+        final File binPath = toCanonicalFile(new File(jdk.getBinPath()));
+        add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.getRelativePath(homeDir, binPath).replace(File.separatorChar, '/')), 1);
+
         final Path jdkPath = new Path(getJdkPathId(jdkName));
         jdkPath.add(fileSet);
         add(jdkPath);
@@ -156,7 +160,7 @@ public class BuildProperties extends CompositeGenerator {
 
     final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
-    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""), 1);
+    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
     add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null? getJdkPathId(projectJdk.getName()) : ""));
   }
 
@@ -323,5 +327,16 @@ public class BuildProperties extends CompositeGenerator {
 
   public static @NonNls String propertyRef(@NonNls String propertyName) {
     return "${" + propertyName + "}";
+  }
+
+  public static File toCanonicalFile(final File file) {
+    File canonicalFile;
+    try {
+      canonicalFile = file.getCanonicalFile();
+    }
+    catch (IOException e) {
+      canonicalFile = file;
+    }
+    return canonicalFile;
   }
 }
