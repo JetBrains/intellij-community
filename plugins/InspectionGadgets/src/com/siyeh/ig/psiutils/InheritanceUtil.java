@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.openapi.progress.ProgressManager;
 
-class InheritanceUtil{
+public class InheritanceUtil{
 
     private InheritanceUtil(){
         super();
@@ -57,6 +58,12 @@ class InheritanceUtil{
         return processor.hasMutualSubclass();
     }
 
+    public static boolean hasImplementation(PsiClass aClass) {
+        final ConcreteClassProcessor concreteClassProcessor =
+                new ConcreteClassProcessor(aClass);
+        return concreteClassProcessor.hasImplementation();
+    }
+
     private static class MutualSubclassProcessor
             implements PsiElementProcessor<PsiClass> {
 
@@ -78,6 +85,34 @@ class InheritanceUtil{
 
         public boolean hasMutualSubclass() {
             return mutualSubClass;
+        }
+    }
+
+    private static class ConcreteClassProcessor
+            implements PsiElementProcessor<PsiClass> {
+
+        private final PsiClass aClass;
+        private boolean implementation = false;
+
+        ConcreteClassProcessor(PsiClass aClass) {
+            this.aClass = aClass;
+        }
+
+        public boolean execute(PsiClass inheritor) {
+            if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
+                  inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
+                implementation = true;
+                return false;
+            }
+            return true;
+        }
+
+        public boolean hasImplementation() {
+            final PsiManager manager = aClass.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final SearchScope searchScope = aClass.getUseScope();
+            searchHelper.processInheritors(this, aClass, searchScope, true);
+            return implementation;
         }
     }
 }
