@@ -9,7 +9,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
@@ -457,13 +460,13 @@ public class VirtualFileImpl extends VirtualFile {
         final PhysicalFile file = childFiles[i];
         final String name = file.getName();
         int index = -1;
-        if (i < children.length && children[i].myName.equals(name)) {
+        if (i < children.length && children[i].nameEquals(name)) {
           index = i;
         }
         else {
           for (int j = 0; j < children.length; j++) {
             VirtualFileImpl child = myChildren[j];
-            if (child.myName.equals(name)) index = j;
+            if (child.nameEquals(name)) index = j;
           }
         }
 
