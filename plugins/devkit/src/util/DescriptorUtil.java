@@ -21,7 +21,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author swr
@@ -62,5 +65,23 @@ public class DescriptorUtil {
     for (XmlFile pluginXml : pluginXmls) {
       patcher.patchPluginXml(pluginXml, klass);
     }
+  }
+
+  @Nullable
+  public static String getPluginId(Module plugin) {
+    assert PluginModuleType.isOfType(plugin);
+
+    final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
+    if (pluginXml != null) {
+      final XmlTag rootTag = pluginXml.getDocument().getRootTag();
+      if (rootTag != null) {
+        final XmlTag idTag = rootTag.findFirstSubTag("id");
+        if (idTag != null) return idTag.getValue().getTrimmedText();
+
+        final XmlTag nameTag = rootTag.findFirstSubTag("name");
+        if (nameTag != null) return nameTag.getValue().getTrimmedText();
+      }
+    }
+    return null;
   }
 }
