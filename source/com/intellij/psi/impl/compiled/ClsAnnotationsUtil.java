@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.cache.DeclarationView;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
@@ -159,20 +158,6 @@ public class ClsAnnotationsUtil {
     }
     else {
       record.writeInt(0);
-    }
-  }
-
-  public static void writeAnnotationsINT(PsiModifierListOwner owner, RecordDataOutput record) throws IOException {
-    PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      PsiAnnotation[] annotations = modifierList.getAnnotations();
-      RecordUtil.writeINT(record, annotations.length);
-      for (PsiAnnotation annotation : annotations) {
-        RecordUtil.writeSTR(record, annotation.getText());
-      }
-    }
-    else {
-      RecordUtil.writeINT(record, 0);
     }
   }
 }

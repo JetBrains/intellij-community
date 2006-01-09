@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.Internalize;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
@@ -23,7 +22,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -505,57 +503,6 @@ public class RecordUtil {
     if (tag == 0x00) {
       skipNAME(record);
       //skipSTR(record);
-    }
-  }
-
-  public static void skipSTR(DataInput record) throws IOException {
-    final int len = record.readUnsignedByte();
-    if (len < 255) {
-      record.skipBytes(len);
-    }
-    else {
-      final int len2 = record.readInt();
-      record.skipBytes(len2 * 2);
-    }
-  }
-
-  public static String readSTR(DataInput record) throws IOException {
-    final int len = record.readUnsignedByte();
-    if (len < 255) {
-      byte[] b = new byte[len];
-      record.readFully(b);
-      return Internalize.put(new String(b));
-    }
-    else {
-      final int len2 = record.readInt();
-      final char[] res = new char[len2];
-      for (int i = 0; i < res.length; i++) {
-        res[i] = record.readChar();
-      }
-      return Internalize.put(new String(res));
-    }
-  }
-
-  public static void writeSTR(DataOutput record, String str) throws IOException {
-    final int len = str.length();
-    if (len < 255 && PersistentStringEnumerator.isAscii(str)) {
-      record.writeByte(len);
-      record.writeBytes(str);
-    }
-    else {
-      record.writeByte(255);
-      record.writeInt(str.length());
-      record.writeChars(str);
-    }
-  }
-
-  public static int lengthSTR(String str) {
-    final int len = str.length();
-    if (len < 255) {
-      return 1 + len;
-    }
-    else {
-      return 1 + 4 + len * 2;
     }
   }
 
