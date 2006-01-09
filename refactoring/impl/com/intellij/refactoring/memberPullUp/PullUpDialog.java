@@ -20,6 +20,7 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.*;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,7 +111,7 @@ public class PullUpDialog extends DialogWrapper {
 
     myClassCombo = new JComboBox(mySuperClasses.toArray());
     myClassCombo.setRenderer(new ClassCellRenderer());
-    classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", myClass.getQualifiedName()));
+    classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", UsageViewUtil.getLongName(myClass)));
 //    myClassCombo.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
