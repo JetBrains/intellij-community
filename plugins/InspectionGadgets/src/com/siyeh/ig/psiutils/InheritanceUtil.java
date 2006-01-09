@@ -89,7 +89,7 @@ public class InheritanceUtil{
     }
 
     private static class ConcreteClassProcessor
-            implements PsiElementProcessor<PsiClass> {
+            implements PsiElementProcessor<PsiClass>, Runnable {
 
         private final PsiClass aClass;
         private boolean implementation = false;
@@ -108,11 +108,17 @@ public class InheritanceUtil{
         }
 
         public boolean hasImplementation() {
+            final ProgressManager progressManager =
+                    ProgressManager.getInstance();
+            progressManager.runProcess(this, null);
+            return implementation;
+        }
+
+        public void run() {
             final PsiManager manager = aClass.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
             searchHelper.processInheritors(this, aClass, searchScope, true);
-            return implementation;
         }
     }
 }
