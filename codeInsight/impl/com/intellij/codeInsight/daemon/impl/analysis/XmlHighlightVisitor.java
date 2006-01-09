@@ -247,7 +247,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, childByRole.getTextRange(), quickFixAction, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null);
       }
       addToResults(highlightInfo);
     }
