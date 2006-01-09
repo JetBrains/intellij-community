@@ -73,7 +73,7 @@ public interface IntentionAction {
    * Indicate whether this action should be invoked inside write action.
    * Should return false if e.g. modal dialog is shown inside the action.
    * If false is returned the action itself is responsible for starting write action
-   * when needed.
+   * when needed, by calling {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)}.
    *
    * @return true if the intention requires a write action, false otherwise.
    */
