@@ -14,15 +14,13 @@ import org.jetbrains.annotations.NonNls;
  * @author dsl
  */
 @NonNls public class ConditionalOperatorConvertor implements ProjectComponent, IntentionAction {
-  private final Project myProject;
 
   public static ConditionalOperatorConvertor getInstance(Project project) {
-    return (ConditionalOperatorConvertor) project.getComponent(ConditionalOperatorConvertor.class);
+    return project.getComponent(ConditionalOperatorConvertor.class);
   }
 
   public ConditionalOperatorConvertor(Project project, IntentionManager intentionManager) {
-    myProject = project;
-    intentionManager.addAction(this);
+    intentionManager.registerIntentionAndMetaData(this, "Conditional Operator");
   }
 
   public void projectOpened() {
@@ -92,10 +90,8 @@ import org.jetbrains.annotations.NonNls;
       final PsiDeclarationStatement declaration = ((PsiDeclarationStatement)originalStatement);
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       PsiLocalVariable variable = null;
-      for (int i = 0; i < declaredElements.length; i++) {
-        PsiElement declaredElement = declaredElements[i];
-        if (declaredElement instanceof PsiLocalVariable &&
-            PsiTreeUtil.isAncestor(declaredElement, conditionalExpression, true)) {
+      for (PsiElement declaredElement : declaredElements) {
+        if (declaredElement instanceof PsiLocalVariable && PsiTreeUtil.isAncestor(declaredElement, conditionalExpression, true)) {
           variable = (PsiLocalVariable)declaredElement;
           break;
         }

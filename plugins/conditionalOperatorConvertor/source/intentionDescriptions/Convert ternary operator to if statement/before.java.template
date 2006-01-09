@@ -1,0 +1,6 @@
+public class X {
+  void f(boolean isMale) {
+    String title = isMale <spot>?</spot> "Mr." : "Ms.";
+    System.out.println("title = " + title);
+ }
+}
