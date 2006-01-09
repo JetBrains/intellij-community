@@ -135,9 +135,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     final List<IntentionAction> availableActions = new ArrayList<IntentionAction>(1);
 
     for (HighlightInfo info :infos) {
-      for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
-        IntentionAction action = pair.first.first;
-        availableActions.add(action);
+      if (info.quickFixActionRanges != null) {
+        for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
+          IntentionAction action = pair.first.first;
+          availableActions.add(action);
+        }
       }
     }
 

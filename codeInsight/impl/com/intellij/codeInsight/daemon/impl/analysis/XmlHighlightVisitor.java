@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -180,6 +181,24 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         final PsiFile containingFile = tag.getContainingFile();
 
         if (!"xml".equals(namespacePrefix) ) {
+          boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
+
+          // check if there is invalid ns declaration
+          if (taglibDeclaration) {
+            final XmlTag[] directiveTags = ((JspFile)containingFile).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
+            for(XmlTag t:directiveTags) {
+              if (namespacePrefix.equals(t.getAttributeValue("prefix"))) return;
+            }
+          } else {
+            String nsDeclarationAttrName = null;
+            for(XmlTag t = tag; t != null; t = t.getParentTag()) {
+              if (t.hasNamespaceDeclarations()) {
+                if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
+                if (t.getAttributeValue(nsDeclarationAttrName) != null) return;
+              }
+            }
+          }
+
           final boolean error = containingFile.getFileType() == StdFileTypes.JSPX || containingFile.getFileType() == StdFileTypes.XHTML ||
                                 containingFile.getFileType() == StdFileTypes.XML;
           final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
@@ -192,7 +211,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             0,
             messageLength,
             localizedMessage,
-            new CreateNSDeclarationIntentionAction(tag, namespacePrefix)
+            new CreateNSDeclarationIntentionAction(tag, namespacePrefix,taglibDeclaration)
           );
         }
       }
@@ -228,7 +247,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, childByRole.getTextRange(), quickFixAction, null);
       }
       addToResults(highlightInfo);
     }
@@ -1046,10 +1065,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     private final XmlTag myTag;
     private final String myNamespacePrefix;
 
-    public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix) {
+    public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix, boolean taglibDeclaration) {
       myTag = tag;
       myNamespacePrefix = namespacePrefix;
-      myTaglibDeclaration = myTag.getContainingFile().getFileType() == StdFileTypes.JSP;
+      myTaglibDeclaration = taglibDeclaration;
     }
 
     public String getText() {
