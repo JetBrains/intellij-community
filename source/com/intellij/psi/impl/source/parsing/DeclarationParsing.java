@@ -622,19 +622,19 @@ public class DeclarationParsing extends Parsing {
     TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
-    final TreeElement firstParameter = parseTypeParameter(lexer);
-    if (firstParameter != null){
-      TreeUtil.addChildren(result, firstParameter);
-    }
-
-    while(lexer.getTokenType() == COMMA){
-      TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-      lexer.advance();
-      final TreeElement parameter = parseTypeParameter(lexer);
-      if (parameter != null){
-        TreeUtil.addChildren(result, parameter);
+    do{
+      CompositeElement typeParameter = parseTypeParameter(lexer);
+      if (typeParameter == null) {
+        typeParameter = Factory.createErrorElement(JavaErrorMessages.message("expected.type.parameter"));
       }
-    }
+      TreeUtil.addChildren(result, typeParameter);
+      if(lexer.getTokenType() == COMMA) {
+        TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+        lexer.advance();
+      } else {
+        break;
+      }
+    } while(true);
 
     if (lexer.getTokenType() == GT){
       TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
