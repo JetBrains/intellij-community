@@ -461,7 +461,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private void initNamespaceMaps(PsiElement parent) {
     if(myNamespaceMap == null && hasNamespaceDeclarations()){
-      myNamespaceMap = new BidirectionalMap<String, String>();
+      final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
       
       for (final XmlAttribute attribute : attributes) {
@@ -472,22 +472,26 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           
           if (value != null) {
             if (splitIndex < 0) {
-              myNamespaceMap.put("", value);
+              namespaceMap.put("", value);
             }
             else {
-              myNamespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), value);
+              namespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), value);
             }
           }
         }
       }
 
+      myNamespaceMap = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
+
     if(parent instanceof XmlDocument && myNamespaceMap == null){
-      myNamespaceMap = new BidirectionalMap<String, String>();
+      final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
       final String[][] defaultNamespace = XmlUtil.getDefaultNamespaces((XmlDocument)parent);
       for (final String[] prefix2ns : defaultNamespace) {
-        myNamespaceMap.put(prefix2ns[0], prefix2ns[1]);
+        namespaceMap.put(prefix2ns[0], prefix2ns[1]);
       }
+      
+      myNamespaceMap = namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
   }
 
