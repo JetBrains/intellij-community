@@ -321,7 +321,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     if (iteratedValue != null) {
       iteratedValue.accept(this);
       addInstruction(new FieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
-      addInstruction(new PopInstruction());
     }
    //
     int offset = myCurrentFlow.getInstructionCount();
