@@ -2,23 +2,21 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -124,8 +122,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     }
-    getPropertiesList().addChild(ChangeUtil.copyToElement(property));
-    return property;
+    final TreeElement copy = ChangeUtil.copyToElement(property);
+    getPropertiesList().addChild(copy);
+    return copy.getPsi();
   }
 
   private boolean haveToAddNewLine() {
