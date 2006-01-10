@@ -29,7 +29,7 @@ public class InheritanceUtil{
         super();
     }
 
-    public static boolean existsMutualSubclass(final PsiClass class1,
+    public static boolean existsMutualSubclass(PsiClass class1,
                                                PsiClass class2){
         final String className = class1.getQualifiedName();
         if("java.lang.Object".equals(className)){
@@ -43,18 +43,8 @@ public class InheritanceUtil{
            class2.isInheritor(class1, true)){
             return true;
         }
-        final PsiManager psiManager = class1.getManager();
-        final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-        final SearchScope searchScope = class1.getUseScope();
         final MutualSubclassProcessor processor =
-                new MutualSubclassProcessor(class2);
-        final ProgressManager progressManager = ProgressManager.getInstance();
-        progressManager.runProcess(new Runnable() {
-            public void run() {
-                searchHelper.processInheritors(processor, class1,
-                        searchScope, true);
-            }
-        }, null);
+                new MutualSubclassProcessor(class1, class2);
         return processor.hasMutualSubclass();
     }
 
@@ -65,18 +55,20 @@ public class InheritanceUtil{
     }
 
     private static class MutualSubclassProcessor
-            implements PsiElementProcessor<PsiClass> {
+            implements PsiElementProcessor<PsiClass>, Runnable {
 
+        private final PsiClass class1;
+        private final PsiClass class2;
         private boolean mutualSubClass = false;
-        private PsiClass aClass;
 
-        MutualSubclassProcessor(PsiClass aClass) {
-            this.aClass = aClass;
+        MutualSubclassProcessor(PsiClass class1, PsiClass class2) {
+            this.class1 = class1;
+            this.class2 = class2;
         }
 
         public boolean execute(PsiClass inheritor) {
-            if (inheritor.equals(aClass) ||
-                inheritor.isInheritor(aClass, true)) {
+            if (inheritor.equals(class2) ||
+                inheritor.isInheritor(class2, true)) {
                 mutualSubClass = true;
                 return false;
             }
@@ -85,6 +77,13 @@ public class InheritanceUtil{
 
         public boolean hasMutualSubclass() {
             return mutualSubClass;
+        }
+
+        public void run() {
+            final PsiManager psiManager = class1.getManager();
+            final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
+            final SearchScope searchScope = class1.getUseScope();
+            searchHelper.processInheritors(this, class1, searchScope, true);
         }
     }
 
