@@ -570,7 +570,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new ClassFilter(XmlTag.class),
             new AndFilter(
               new TextFilter("property"),
-              new NamespaceFilter(XmlUtil.SPRING_CORE_URI)
+              new NamespaceFilter(XmlUtil.SPRING_CORE_URIS)
             )
           ), 2
         )

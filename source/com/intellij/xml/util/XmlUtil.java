@@ -81,8 +81,11 @@ public class XmlUtil {
   public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   
-  public static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
-  public static final String[] HIBERNATE_URIS = { 
+  private static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
+  private static final String SPRING_CORE_URI2 = "http://www.springframework.org/schema/beans";
+  public static final String SPRING_CORE_URIS[] = new String[] { SPRING_CORE_URI, SPRING_CORE_URI2 };
+
+  public static final String[] HIBERNATE_URIS = {
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
     "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"
   };
