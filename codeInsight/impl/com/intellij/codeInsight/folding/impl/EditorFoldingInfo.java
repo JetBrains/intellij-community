@@ -12,12 +12,12 @@ import com.intellij.util.containers.HashMap;
 import java.util.Map;
 
 class EditorFoldingInfo {
-  private static final Key KEY = Key.create("EditorFoldingInfo.KEY");
+  private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
   private Map<FoldRegion, SmartPsiElementPointer> myFoldRegionToSmartPointerMap = new HashMap<FoldRegion, SmartPsiElementPointer>();
 
   public static EditorFoldingInfo get(Editor editor) {
-    EditorFoldingInfo info = (EditorFoldingInfo)editor.getUserData(KEY);
+    EditorFoldingInfo info = editor.getUserData(KEY);
     if (info == null){
       info = new EditorFoldingInfo();
       editor.putUserData(KEY, info);
