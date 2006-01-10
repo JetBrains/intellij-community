@@ -601,7 +601,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public void initialize(boolean sync) {
     if (myIsLocked) return;
-    initInt();
+    _init();
     if (!myIsLocked) return;
     if (!myVcsWasRebuilt && LvcsConfiguration.getInstance().ADD_LABEL_ON_PROJECT_OPEN) {
       myImplementation.addLabel(LocalVcsBundle.message("local.vcs.label.name.project.opened"), "");
@@ -621,42 +621,27 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  synchronized void _init(boolean recreateAfterError) throws Exception {
-
+  synchronized void _init() {
     myVcsLocation.mkdirs();
     myVcsLocation.mkdir();
-
-    myImplementation._init(myVcsLocation);
     ProgressIndicator progress = getProgress();
     if (progress != null) {
       progress.pushState();
       progress.setText(LocalVcsBundle.message("progress.text.initializing.local.history"));
     }
     try {
+      myImplementation._init(myVcsLocation);
       load();
     }
     catch (Exception e) {
-      if (recreateAfterError) {
-        clearAndRecreateLocation();
-      }
-      else {
-        throw e;
-      }
+      LOG.info(e);
+      clearAndRecreateLocation();
     }
     if (progress != null) {
       progress.popState();
     }
     myIsLocked = true;
     myImplementation.markSourcesAsCurrentInInitialization();
-  }
-
-  private void initInt() {
-    try {
-      _init(true);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   public void rootsChanged(ModuleRootEvent event) {
