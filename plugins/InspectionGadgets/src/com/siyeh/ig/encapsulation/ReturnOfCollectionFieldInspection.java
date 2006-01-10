@@ -17,24 +17,42 @@ package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class ReturnOfCollectionFieldInspection extends StatementInspection{
+
+    /** @noinspection PublicField*/
+    public boolean ignorePrivateMethods = true;
+
     public String getID(){
         return "ReturnOfCollectionOrArrayField";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("return.of.collection.array.field.display.name");
+        return InspectionGadgetsBundle.message(
+                "return.of.collection.array.field.display.name");
     }
 
     public String getGroupDisplayName(){
         return GroupNames.ENCAPSULATION_GROUP_NAME;
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "return.of.collection.array.field.option"), this,
+                "ignorePrivateMethods");
     }
 
     public String buildErrorString(PsiElement location){
@@ -42,9 +60,11 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
         assert field != null;
         final PsiType type = field.getType();
         if(type.getArrayDimensions() > 0){
-            return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.array");
+            return InspectionGadgetsBundle.message(
+                    "return.of.collection.array.field.problem.descriptor.array");
         } else{
-            return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.collection");
+            return InspectionGadgetsBundle.message(
+                    "return.of.collection.array.field.problem.descriptor.collection");
         }
     }
 
@@ -52,14 +72,22 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
         return new ReturnOfCollectionFieldVisitor();
     }
 
-    private static class ReturnOfCollectionFieldVisitor
+    private class ReturnOfCollectionFieldVisitor
             extends StatementInspectionVisitor{
-
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(returnValue == null){
+                return;
+            }
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+            if (containingMethod == null) {
+                return;
+            }
+            if (ignorePrivateMethods &&
+                    containingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
             if(!CollectionUtils.isArrayOrCollectionField(returnValue)){

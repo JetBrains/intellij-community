@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CollectionUtils{
+
     /**
      * @noinspection StaticCollection
      */
@@ -259,17 +260,17 @@ public class CollectionUtils{
      * class C extends C {}
      */
     private static boolean isCollectionClassOrInterface(
-            PsiClass aClass, Set<PsiClass> visitedClasses) {
-        if (!visitedClasses.add(aClass)) {
+            PsiClass aClass, Set<PsiClass> visitedClasses){
+        if (!visitedClasses.add(aClass)){
             return false;
         }
         final String className = aClass.getQualifiedName();
-        if (s_allCollectionClassesAndInterfaces.contains(className)) {
+        if (s_allCollectionClassesAndInterfaces.contains(className)){
             return true;
         }
         final PsiClass[] supers = aClass.getSupers();
-        for (PsiClass aSuper : supers) {
-            if (isCollectionClassOrInterface(aSuper, visitedClasses)) {
+        for (PsiClass aSuper : supers){
+            if (isCollectionClassOrInterface(aSuper, visitedClasses)){
                 return true;
             }
         }
@@ -317,20 +318,22 @@ public class CollectionUtils{
         if(type == null){
             return false;
         }
-        if(!isCollectionClassOrInterface(type)){
+        boolean isArray = false;
+        if(type.getArrayDimensions() > 0){
+            isArray = true;
+        } else if (!isCollectionClassOrInterface(type)){
             return false;
         }
         final PsiElement referent = fieldReference.resolve();
         if(!(referent instanceof PsiField)){
             return false;
         }
-
         final PsiField field = (PsiField) referent;
-        if(type.getArrayDimensions() > 0){
+        if (isArray){
             return !isConstantArrayOfZeroSize(field);
         }
-        final PsiClass valueContainingClass = PsiTreeUtil
-                .getParentOfType(value, PsiClass.class);
+        final PsiClass valueContainingClass =
+                PsiTreeUtil.getParentOfType(value, PsiClass.class);
         if(valueContainingClass == null){
             return false;
         }
