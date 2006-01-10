@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
@@ -39,8 +38,8 @@ public class CommitMessage extends JPanel{
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup messageActionGroup = (ActionGroup)actionManager.getAction("Vcs.MessageActionGroup");
     if (messageActionGroup != null) {
-      ActionToolbar toolbar = actionManager.createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
-      add(toolbar.getComponent(), BorderLayout.SOUTH);
+      JComponent toolbar = actionManager.createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
+      add(toolbar, BorderLayout.SOUTH);
     }
   }
 

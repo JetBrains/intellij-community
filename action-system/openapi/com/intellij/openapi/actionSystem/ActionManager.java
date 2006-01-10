@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * A manager for actions. Used to register and unregister actions, also
  * contains utility methods to easily fetch action by id and id by action.
@@ -131,6 +133,6 @@ public abstract class ActionManager {
    */
   public abstract boolean isGroup(@NotNull String actionId);
 
-  public abstract ActionToolbar createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
+  public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
 
 }

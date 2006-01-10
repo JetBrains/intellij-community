@@ -32,7 +32,7 @@ import java.util.ArrayList;
 /**
  * extended by fabrique
  */
-public class ButtonToolbarImpl extends JPanel implements ActionToolbar {
+public class ButtonToolbarImpl extends JPanel {
   private final ButtonToolbarImpl.MyTimerListener myTimerListener;
 
   private DataManager myDataManager;
