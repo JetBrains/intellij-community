@@ -4,9 +4,8 @@
  */
 package com.intellij.compiler;
 
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,7 +47,7 @@ public class Chunk<Node> {
   }
 
   public String toString() { // for debugging only
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     buf.append("[");
     for (final Node node : myNodes) {
       if (buf.length() > 1) {

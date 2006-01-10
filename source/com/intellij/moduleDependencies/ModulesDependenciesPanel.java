@@ -321,16 +321,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
           return graph.getIn(n);
         }
 
-        public boolean hasArc(final Module from, final Module to) {
-          if (!graph.hasArc(from, to)) {
-            for (final Iterator<Module> it = getOut(from); it.hasNext();) {
-              if (to.equals(it.next())) {
-                return true;
-              }
-            }
-          }
-          return false;
-        }
       };
     }
   }

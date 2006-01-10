@@ -72,7 +72,4 @@ public class GraphGenerator<Node> implements Graph <Node>{
     return myOuts.get(n).iterator();
   }
 
-  public boolean hasArc(final Node from, final Node to) {
-    return myOuts.get(from).contains(to);
-  }
 }

@@ -27,6 +27,4 @@ public interface Graph<Node> {
   Iterator<Node> getIn(Node n);
 
   Iterator<Node> getOut(Node n);
-
-  boolean hasArc(Node from, Node to);
 }

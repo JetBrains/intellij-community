@@ -216,10 +216,6 @@ public class ResolverTree {
         return out.iterator();
       }
 
-      public boolean hasArc(final PsiTypeVariable from, final PsiTypeVariable to) {
-        final HashSet<PsiTypeVariable> out = outs.get(from);
-        return out != null && out.contains(to);
-      }
     });
 
     final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
