@@ -6,6 +6,7 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -41,7 +43,7 @@ import java.util.List;
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   private SelectionPath mySelectionPath;
-  private static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
+  private static final RefEntity[] EMPTY_ELEMENTS_ARRAY = new RefEntity[0];
   private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
   public InspectionTree(final Project project) {
@@ -106,23 +108,23 @@ public class InspectionTree extends Tree {
     return tool;
   }
 
-  public RefElement[] getSelectedElements() {
+  public RefEntity[] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       final InspectionTool selectedTool = getSelectedTool();
       if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
 
-      Set<RefElement> result = new HashSet<RefElement>();
+      Set<RefEntity> result = new HashSet<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
       }
-      return result.toArray(new RefElement[result.size()]);
+      return result.toArray(new RefEntity[result.size()]);
     }
     return EMPTY_ELEMENTS_ARRAY;
   }
 
-  private void addElementsInNode(InspectionTreeNode node, Collection<RefElement> out) {
+  private void addElementsInNode(InspectionTreeNode node, Collection<RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
       out.add(((RefElementNode)node).getElement());
@@ -141,7 +143,7 @@ public class InspectionTree extends Tree {
     final InspectionTool tool = getSelectedTool();
     if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    Set<ProblemDescriptor> descriptors = new com.intellij.util.containers.HashSet<ProblemDescriptor>();
+    HashSet<CommonProblemDescriptor> descriptors = new HashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       traverseDescriptors((InspectionTreeNode)node, descriptors);
@@ -149,7 +151,7 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private void traverseDescriptors(InspectionTreeNode node, Set<ProblemDescriptor> descriptors){
+  private void traverseDescriptors(InspectionTreeNode node, Set<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
       descriptors.add(problemNode.getDescriptor());
@@ -164,7 +166,10 @@ public class InspectionTree extends Tree {
     if (node instanceof RefElementNode){
       result.add(((RefElementNode)node).getElement());
     } else if (node instanceof ProblemDescriptionNode){
-      result.add(((ProblemDescriptionNode)node).getElement());
+      final RefEntity element = ((ProblemDescriptionNode)node).getElement();
+      if (element instanceof RefElement) {
+        result.add((RefElement)element);
+      }
     } else {
       for(int i = 0; i < node.getChildCount(); i++){
         result.addAll(getElementsToSuppressInSubTree((InspectionTreeNode)node.getChildAt(i)));

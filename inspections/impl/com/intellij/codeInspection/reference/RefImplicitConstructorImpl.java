@@ -22,7 +22,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   public boolean isSuspicious() {
-    return getOwnerClass().isSuspicious();
+    return ((RefClassImpl)getOwnerClass()).isSuspicious();
   }
 
   public String getName() {

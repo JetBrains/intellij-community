@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.CommonProblemDescriptorImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -18,17 +19,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class ProblemDescriptorImpl implements ProblemDescriptor {
+public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.ProblemDescriptorImpl");
 
   @NotNull private SmartPsiElementPointer myStartSmartPointer;
   @Nullable private SmartPsiElementPointer myEndSmartPointer;
-  private final String myDescriptionTemplate;
-  private final LocalQuickFix[] myFixes;
+
+
   private ProblemHighlightType myHighlightType;
   private boolean myAfterEndOfLine;
 
   public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
+    super(fixes, descriptionTemplate);
     LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");
     LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
     LOG.assertTrue(endElement.isValid(), "Invalid PsiElement");
@@ -38,18 +40,11 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
       LOG.error("Empty PSI elements should not be passed to createDescriptor");
     }
 
-    if (fixes != null) {
-      myFixes = new LocalQuickFix[fixes.length];
-      System.arraycopy(fixes, 0, myFixes, 0, fixes.length);
-    } else {
-      myFixes = null;
-    }
-
     myHighlightType = highlightType;
     final Project project = startElement.getProject();
     myStartSmartPointer = SmartPointerManager.getInstance(project).createLazyPointer(startElement);
     myEndSmartPointer = startElement == endElement ? null : SmartPointerManager.getInstance(project).createLazyPointer(endElement);
-    myDescriptionTemplate = descriptionTemplate;
+
     myAfterEndOfLine = isAfterEndOfLine;
   }
 
@@ -80,20 +75,12 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
     return document.getLineNumber(psiElement.getTextOffset()) + 1;
   }
 
-  public LocalQuickFix[] getFixes() {
-    return myFixes;
-  }
-
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
   public boolean isAfterEndOfLine() {
     return myAfterEndOfLine;
-  }
-
-  public String getDescriptionTemplate() {
-    return myDescriptionTemplate;
   }
 
   public TextRange getTextRange() {

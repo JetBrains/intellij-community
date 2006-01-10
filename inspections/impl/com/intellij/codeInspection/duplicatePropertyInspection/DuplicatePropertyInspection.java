@@ -3,22 +3,26 @@ package com.intellij.codeInspection.duplicatePropertyInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.DescriptorComposer;
+import com.intellij.codeInspection.ex.DescriptorProviderInspection;
+import com.intellij.codeInspection.ex.HTMLComposer;
+import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -29,6 +33,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,8 +41,6 @@ import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicatePropertyInspection");
@@ -63,7 +66,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public void runInspection(AnalysisScope scope) {
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        checkFile(file, InspectionManagerEx.getInstance(file.getProject()));
+        checkFile(file);
       }
     });
   }
@@ -142,8 +145,12 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     return new JobDescriptor[]{};
   }
 
-  public void checkFile(final PsiFile file, final InspectionManager manager) {
+  public void checkFile(final PsiFile file) {
     if (!(file instanceof PropertiesFile)) return;
+    if (getManager().RUN_WITH_EDITOR_PROFILE &&
+        InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file).getInspectionTool(getShortName()) != this) {
+      return;
+    }
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
     final PropertiesFile propertiesFile = ((PropertiesFile)file);
     final List<Property> properties = propertiesFile.getProperties();
@@ -171,9 +178,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         Map<String, Set<String> > keyToDifferentValues = new HashMap<String, Set<String>>();
-        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, manager, keyToDifferentValues, problemDescriptors, file, original);
-        if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, manager, problemDescriptors, file, original);
-        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
+        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, getManager(), keyToDifferentValues, problemDescriptors, file, original);
+        if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, getManager(), problemDescriptors, file, original);
+        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, getManager(), file, original);
         if (problemDescriptors.size() > 0) {
           addProblemElement(getRefManager().getReference(file), problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
         }

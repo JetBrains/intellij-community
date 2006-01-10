@@ -8,8 +8,8 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
@@ -42,7 +42,7 @@ public abstract class HTMLComposer {
 
   public abstract void compose(StringBuffer buf, RefEntity refEntity);
 
-  public void compose(StringBuffer buf, RefElement refElement, ProblemDescriptor descriptor) {}
+  public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {}
 
   public void composeWithExporter(StringBuffer buf, RefEntity refEntity, HTMLExporter exporter) {
     myExporter = exporter;

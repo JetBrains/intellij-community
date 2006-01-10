@@ -123,7 +123,6 @@ public class VisibilityInspection extends FilteringInspectionTool {
   }
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().findAllDeclarations(); // Find all declaration elements.
     for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(getManager().getProject()).getEntryPoints()) {
       RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
@@ -158,9 +157,10 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
   public boolean queryExternalUsagesRequests() {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (getFilter().accepts(refElement)) {
-          refElement.accept(new RefVisitor() {
+      public void accept(RefEntity refEntity) {
+        if (!(refEntity instanceof RefElement)) return;
+        if (getFilter().accepts((RefElement)refEntity)) {
+          refEntity.accept(new RefVisitor() {
             public void visitField(final RefField refField) {
               if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
                 getManager().enqueueFieldUsagesProcessor(refField, new InspectionManagerEx.UsagesProcessor() {
@@ -221,14 +221,15 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
   public void exportResults(final Element parentNode) {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (getFilter().accepts(refElement)) {
-          Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
+      public void accept(RefEntity refEntity) {
+        if (!(refEntity instanceof RefElement)) return;
+        if (getFilter().accepts((RefElement)refEntity)) {
+          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
           Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
           problemClassElement.addContent(InspectionsBundle.message("inspection.visibility.export.results.visibility"));
           element.addContent(problemClassElement);
           Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-          String possibleAccess = getFilter().getPossibleAccess(refElement);
+          String possibleAccess = getFilter().getPossibleAccess((RefElement)refEntity);
           descriptionElement.addContent(InspectionsBundle.message("inspection.visibility.compose.suggestion", possibleAccess == PsiModifier.PACKAGE_LOCAL ? InspectionsBundle.message("inspection.package.local") : possibleAccess));
           element.addContent(descriptionElement);
         }
@@ -236,7 +237,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
+  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     return myQuickFixActions;
   }
 

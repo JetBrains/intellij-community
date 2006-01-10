@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
@@ -26,28 +27,18 @@ import org.jetbrains.annotations.Nullable;
  * Date: 28-Dec-2005
  */
 public abstract class RefManager {
-
+  public interface RefIterator {
+    void accept(RefEntity refEntity);
+  }
   public abstract void iterate(RefIterator iterator);
 
   public abstract AnalysisScope getScope();
-
-  public abstract int registerGraphAnnotator(RefGraphAnnotator annotator);
-
-  // TODO: move this out of API. Should be called by inspection framework.
-  public abstract void findAllDeclarations();
-
 
   public abstract Project getProject();
   public abstract RefProject getRefProject();
 
   public abstract RefPackage getPackage(String packageName);
-
-  public abstract void removeReference(RefElement refElem);
-
+  public abstract @Nullable RefModule getRefModule(Module module);
   public abstract @Nullable RefElement getReference(PsiElement elem);
   public abstract RefParameter getParameterReference(PsiParameter param, int index);
-
-  public interface RefIterator {
-    void accept(RefElement refElement);
-  }
 }

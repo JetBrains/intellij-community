@@ -13,6 +13,8 @@ import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
@@ -65,13 +67,16 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       } else {
         ((RefPackageImpl)getRefManager().getRefProject().getDefaultPackage()).add(this);
       }
-
+      final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
+      LOG.assertTrue(module != null);
+      ((RefModuleImpl)getRefManager().getRefModule(module)).add(this);
     } else {
       while (!(psiParent instanceof PsiClass || psiParent instanceof PsiMethod || psiParent instanceof PsiField)) {
         psiParent = psiParent.getParent();
       }
-        RefElement refParent = getRefManager().getReference(psiParent);
-        ((RefElementImpl)refParent).add(this);
+      RefElement refParent = getRefManager().getReference(psiParent);
+      LOG.assertTrue (refParent != null);
+      ((RefElementImpl)refParent).add(this);
 
     }
 
@@ -251,6 +256,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   public void addTypeReference(RefElement from) {
     if (from != null) {
       myInTypeReferences.add(from);
+      ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, from, false);
     }
   }
 

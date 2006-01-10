@@ -11,6 +11,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -48,8 +49,9 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract void exportResults(Element parentNode);
 
+  public abstract boolean isGraphNeeded();
   @Nullable
-  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
+  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     return null;
   }
 
@@ -116,7 +118,11 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract Map<String, Set<RefElement>> getPackageContent();
 
-  public abstract void ignoreElement(RefElement refElement);
+  public Set<RefModule> getModuleProblems(){
+    return null;
+  }
+
+  public abstract void ignoreElement(RefEntity refElement);
 
   protected static RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
     final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();

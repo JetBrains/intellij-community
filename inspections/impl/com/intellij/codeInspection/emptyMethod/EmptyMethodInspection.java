@@ -33,20 +33,22 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   @NonNls public static final String SHORT_NAME = "EmptyMethod";
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().findAllDeclarations();
-
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (refElement instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod)refElement;
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
-            addProblemElement(refElement, descriptors);
+            addProblemElement(refMethod, descriptors);
           }
         }
       }
     });
+  }
+
+  public boolean isGraphNeeded() {
+    return true;
   }
 
   @Nullable
@@ -122,9 +124,9 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
   public boolean queryExternalUsagesRequests() {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (getDescriptions(refElement) != null) {
-          refElement.accept(new RefVisitor() {
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
               getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
@@ -178,7 +180,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-      RefElement refElement = getElement(descriptor);
+      RefElement refElement = (RefElement)getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);
         RefMethod refMethod = (RefMethod)refElement;

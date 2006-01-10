@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 public class DefUseTest extends InspectionTestCase {
   private void doTest() throws Exception {
     final InspectionTool tool = new LocalInspectionToolWrapper(new DefUseInspection());
-    tool.initialize(getManager());
     doTest("defUse/" + getTestName(false), tool);
   }
 

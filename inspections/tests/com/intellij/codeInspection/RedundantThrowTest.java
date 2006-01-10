@@ -5,8 +5,7 @@ import com.intellij.codeInspection.unneededThrows.UnneededThrows;
 
 public class RedundantThrowTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    final UnneededThrows tool = new UnneededThrows();
-    tool.initialize(getManager());
+    final UnneededThrows tool = new UnneededThrows();    
     doTest("redundantThrow/" + getTestName(false), tool);
   }
 

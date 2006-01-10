@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
@@ -10,7 +10,6 @@ import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -19,7 +18,7 @@ import java.util.Set;
 public class RefElementNode extends InspectionTreeNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.RefElementNode");
   private boolean myHasDescriptorsUnder = false;
-  private ProblemDescriptor mySingleDescriptor = null;
+  private CommonProblemDescriptor mySingleDescriptor = null;
 
   public RefElementNode(RefElement element) {
     super(element);
@@ -65,11 +64,11 @@ public class RefElementNode extends InspectionTreeNode {
     }
   }
 
-  public void setProblem(ProblemDescriptor descriptor) {
+  public void setProblem(CommonProblemDescriptor descriptor) {
     mySingleDescriptor = descriptor;
   }
 
-  public ProblemDescriptor getProblem() {
+  public CommonProblemDescriptor getProblem() {
     return mySingleDescriptor;
   }
 
@@ -80,10 +79,8 @@ public class RefElementNode extends InspectionTreeNode {
 
     if (!refElement.isValid()) return newChildren;
 
-    Iterator<RefElement> outReferences = refElement.getOutReferences().iterator();
-    while (outReferences.hasNext()) {
-      RefElement refCallee = outReferences.next();
-      if (refCallee.isSuspicious()) {
+    for (RefElement refCallee : refElement.getOutReferences()) {
+      if (((RefElementImpl)refCallee).isSuspicious()) {
         if (notInPath(pathToRoot, refCallee)) newChildren.add(refCallee);
       }
     }
@@ -92,18 +89,16 @@ public class RefElementNode extends InspectionTreeNode {
       RefMethod refMethod = (RefMethod) refElement;
 
       if (!refMethod.isStatic() && !refMethod.isConstructor() && !refMethod.getOwnerClass().isAnonymous()) {
-        for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
-          RefMethod refDerived = iterator.next();
-          if (refDerived.isSuspicious()) {
+        for (RefMethod refDerived : refMethod.getDerivedMethods()) {
+          if (((RefMethodImpl)refDerived).isSuspicious()) {
             if (notInPath(pathToRoot, refDerived)) newChildren.add(refDerived);
           }
         }
       }
     } else if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      for (Iterator<RefClass> iterator = refClass.getSubClasses().iterator(); iterator.hasNext();) {
-        RefClass subClass = iterator.next();
-        if ((subClass.isInterface() || subClass.isAbstract()) && subClass.isSuspicious()) {
+      for (RefClass subClass : refClass.getSubClasses()) {
+        if ((subClass.isInterface() || subClass.isAbstract()) && ((RefClassImpl)subClass).isSuspicious()) {
           if (notInPath(pathToRoot, subClass)) newChildren.add(subClass);
         }
       }
@@ -118,8 +113,8 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   private boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
-    for (int i = 0; i < pathToRoot.length; i++) {
-      InspectionTreeNode node = (InspectionTreeNode) pathToRoot[i];
+    for (TreeNode aPathToRoot : pathToRoot) {
+      InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
       if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;
     }
 

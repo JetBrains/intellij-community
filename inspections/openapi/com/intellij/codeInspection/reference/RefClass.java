@@ -59,7 +59,5 @@ public interface RefClass extends RefElement {
 
   boolean isLocalClass();
 
-  List<RefElement> getClassExporters(); // TODO: remove this as it is only used in IsAccessible
-
   boolean isSelfInheritor(PsiClass psiClass);
 }

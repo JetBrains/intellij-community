@@ -38,7 +38,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
   }
 
   protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
-    super.markReferenced(refFrom, psiFrom, psiWhat, forWriting, forReading, expressionFrom);
+    addInReference(refFrom);
 
     boolean referencedFromClassInitializer = false;
 

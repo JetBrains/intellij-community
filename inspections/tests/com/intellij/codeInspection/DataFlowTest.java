@@ -14,14 +14,12 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 public class DataFlowTest extends InspectionTestCase {
   private void doTest() throws Exception {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
-    tool.initialize(getManager());
     doTest("dataFlow/" + getTestName(false),
            tool);
   }
 
   private void doTest15() throws Exception {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
-    tool.initialize(getManager());
     doTest("dataFlow/" + getTestName(false),
            tool, "java 1.5");
   }

@@ -1,9 +1,8 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
@@ -91,17 +90,26 @@ public abstract class QuickFixAction extends AnAction {
   protected RefElement[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
-    List<RefElement> selection = new ArrayList<RefElement>(Arrays.asList(invoker.getTree().getSelectedElements()));
+    List<RefEntity> selection = new ArrayList<RefEntity>(Arrays.asList(invoker.getTree().getSelectedElements()));
     PsiDocumentManager.getInstance(invoker.getProject()).commitAllDocuments();
     Collections.sort(selection, new Comparator() {
       public int compare(Object o1, Object o2) {
-        RefElement r1 = (RefElement)o1;
-        RefElement r2 = (RefElement)o2;
-        int i1 = r1 instanceof RefImplicitConstructor ? 0 : r1.getElement().getTextOffset();
-        int i2 = r2 instanceof RefImplicitConstructor ? 0 : r2.getElement().getTextOffset();
-        if (i1 < i2) return 1;
-        if (i1 == i2) return 0;
-        return -1;
+        if (o1 instanceof RefElement && o2 instanceof RefElement) {
+          RefElement r1 = (RefElement)o1;
+          RefElement r2 = (RefElement)o2;
+          int i1 = r1 instanceof RefImplicitConstructor ? 0 : r1.getElement().getTextOffset();
+          int i2 = r2 instanceof RefImplicitConstructor ? 0 : r2.getElement().getTextOffset();
+          if (i1 < i2) return 1;
+          if (i1 == i2) return 0;
+          return -1;
+        }
+        if (o1 instanceof RefElement){
+          return 1;
+        }
+        if (o2 instanceof RefElement){
+          return -1;
+        }
+        return ((RefEntity)o1).getName().compareTo(((RefEntity)o2).getName());
       }
     });
 
@@ -110,10 +118,10 @@ public abstract class QuickFixAction extends AnAction {
 
   private void doApplyFix(final Project project,
                           final DescriptorProviderInspection tool,
-                          final ProblemDescriptor[] descriptors) {
+                          final CommonProblemDescriptor[] descriptors) {
     final Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
-    for (ProblemDescriptor descriptor : descriptors) {
-      final PsiElement psiElement = descriptor.getPsiElement();
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       if (psiElement != null && !psiElement.isWritable()) {
         readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
       }
@@ -129,17 +137,23 @@ public abstract class QuickFixAction extends AnAction {
         CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            for (ProblemDescriptor descriptor : descriptors) {
-              final LocalQuickFix[] fixes = descriptor.getFixes();
-              if (descriptor.getPsiElement() != null && fixes != null) {
-                for (LocalQuickFix fix : fixes) {
+            for (CommonProblemDescriptor descriptor : descriptors) {
+              final QuickFix[] fixes = descriptor.getFixes();
+              if (fixes != null) {
+                for (QuickFix fix : fixes) {
                   if (fix != null) {
                     final QuickFixAction quickFixAction = QuickFixAction.this;
                     if (quickFixAction instanceof LocalQuickFixWrapper &&
                         !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
                       continue;
                     }
-                    fix.applyFix(project, descriptor);
+                    if (descriptor instanceof ProblemDescriptor) {
+                      if (((ProblemDescriptor)descriptor).getPsiElement() != null) {
+                        ((LocalQuickFix)fix).applyFix(project, (ProblemDescriptor)descriptor);
+                      }
+                    } else {
+                      ((GlobalQuickFix)fix).applyFix();
+                    }
                     tool.ignoreProblem(descriptor, fix);
                   }
                 }

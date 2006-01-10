@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +43,7 @@ public class QuickFixWrapper implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    myDescriptor.getFixes()[myFixNumber].applyFix(project, myDescriptor);
+    ((LocalQuickFix)myDescriptor.getFixes()[myFixNumber]).applyFix(project, myDescriptor);
     final PsiElement element = myDescriptor.getPsiElement();
     if (element != null) {
       final PsiFile fileForUndo = element.getContainingFile();

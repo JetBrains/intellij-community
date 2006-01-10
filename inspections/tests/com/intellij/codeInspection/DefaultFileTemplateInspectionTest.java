@@ -10,7 +10,6 @@ public class DefaultFileTemplateInspectionTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTool = new LocalInspectionToolWrapper(new DefaultFileTemplateUsageInspection());
-    myTool.initialize(getManager());
   }
 
   private void doTest() throws Exception {

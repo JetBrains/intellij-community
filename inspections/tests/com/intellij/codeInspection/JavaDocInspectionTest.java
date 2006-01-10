@@ -14,8 +14,7 @@ public class JavaDocInspectionTest extends InspectionTestCase {
   private LocalInspectionToolWrapper myWrapper;
   protected void setUp() throws Exception {
     super.setUp();
-    myWrapper = new LocalInspectionToolWrapper(new JavaDocLocalInspection());
-    myWrapper.initialize(getManager());
+    myWrapper = new LocalInspectionToolWrapper(new JavaDocLocalInspection());    
   }
 
   private void doTest() throws Exception {

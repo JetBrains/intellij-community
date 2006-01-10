@@ -432,7 +432,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   public boolean hasSuspiciousCallers() {
     // Directly called from somewhere..
     for (RefElement refCaller : getInReferences()) {
-      if (refCaller.isSuspicious() && !getDerivedMethods().contains(refCaller)) return true;
+      if (((RefElementImpl)refCaller).isSuspicious() && !getDerivedMethods().contains(refCaller)) return true;
     }
 
     // Library override probably called from library code.
@@ -440,11 +440,11 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
     // Class isn't instantiated. Most probably we have problem with class, not method.
     if (!isStatic() && !isConstructor()) {
-      if (getOwnerClass().isSuspicious()) return true;
+      if (((RefClassImpl)getOwnerClass()).isSuspicious()) return true;
 
       // Is an override. Probably called via reference to base class.
       for (RefMethod refSuper : getSuperMethods()) {
-        if (refSuper.isSuspicious()) return true;
+        if (((RefMethodImpl)refSuper).isSuspicious()) return true;
       }
     }
 

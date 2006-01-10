@@ -10,6 +10,8 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
@@ -24,7 +26,7 @@ import java.util.Collection;
 import java.util.Stack;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
   private static final int ACCESS_MODIFIER_MASK = 0x03;
   private static final int ACCESS_PRIVATE = 0x00;
   private static final int ACCESS_PROTECTED = 0x01;
@@ -47,14 +49,15 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private final ArrayList<RefElement> myOutReferences;
   private final ArrayList<RefElement> myInReferences;
 
-  private long myFlags;
   private boolean myIsDeleted ;
+  private Module myModule;
 
   protected RefElementImpl(String name, RefElement owner) {
     super(name);
     myManager = owner.getRefManager();
     myID = null;
     myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(owner.getElement());
 
     myOutReferences = new ArrayList<RefElement>(0);
     myInReferences = new ArrayList<RefElement>(0);
@@ -88,6 +91,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myManager = manager;
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(file);
     myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(file);
 
     myOutReferences = new ArrayList<RefElement>(0);
     myInReferences = new ArrayList<RefElement>(0);
@@ -98,6 +102,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myManager = manager;
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(elem);
     myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(elem);
 
     setAccessModifier(RefUtil.getInstance().getAccessModifier(elem));
 
@@ -149,6 +154,10 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return element != null && element.isPhysical();
   }
 
+  public RefModule getModule() {
+    return myManager.getRefModule(myModule);
+  }
+
   public RefManager getRefManager() {
     return myManager;
   }
@@ -168,6 +177,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
+    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, false);
   }
 
   public boolean isReachable() {
@@ -180,7 +190,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public boolean hasSuspiciousCallers() {
     for (RefElement refCaller : getInReferences()) {
-      if (refCaller.isSuspicious()) return true;
+      if (((RefElementImpl)refCaller).isSuspicious()) return true;
     }
 
     return false;
@@ -210,7 +220,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
     callStack.push(this);
     for (RefElement refCaller : getInReferences()) {
-      if (!refCaller.isSuspicious() || !((RefElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
+      if (!((RefElementImpl)refCaller).isSuspicious() || !((RefElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
       }
@@ -257,18 +267,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public void setIsStatic(boolean isStatic) {
     setFlag(isStatic, IS_STATIC_MASK);
-  }
-
-  public boolean checkFlag(int mask) {
-    return (myFlags & mask) != 0;
-  }
-
-  public void setFlag(boolean b, int mask) {
-    if (b) {
-      myFlags |= mask;
-    } else {
-      myFlags &= ~mask;
-    }
   }
 
   public boolean isUsesDeprecatedApi() {

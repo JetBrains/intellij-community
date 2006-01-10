@@ -14,8 +14,7 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myWrapper = new LocalInspectionToolWrapper(new LocalCanBeFinal());
-    myTool = (LocalCanBeFinal)myWrapper.getTool();
-    myWrapper.initialize(getManager());
+    myTool = (LocalCanBeFinal)myWrapper.getTool();    
   }
 
   private void doTest() throws Exception {

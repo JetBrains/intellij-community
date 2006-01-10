@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
@@ -117,9 +118,9 @@ public class Browser extends JPanel {
     }
   }
 
-  public void showPageFor(RefElement refElement, ProblemDescriptor descriptor) {
+  public void showPageFor(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     try {
-      String html = generateHTML(refElement, descriptor);
+      String html = generateHTML(refEntity, descriptor);
       myHTMLViewer.read(new StringReader(html), null);
       myHTMLViewer.setCaretPosition(0);
     }
@@ -127,7 +128,7 @@ public class Browser extends JPanel {
       showEmpty();
     }
     finally {
-      myCurrentEntity = refElement;
+      myCurrentEntity = refEntity;
     }
   }
 
@@ -177,14 +178,16 @@ public class Browser extends JPanel {
               }
               else if (ref.startsWith("descr:")) {
                 int descriptionIndex = Integer.parseInt(ref.substring("descr:".length()));
-                ProblemDescriptor descriptor = ((DescriptorProviderInspection)getTool()).getDescriptions(
+                CommonProblemDescriptor descriptor = ((DescriptorProviderInspection)getTool()).getDescriptions(
                   (RefElement)myCurrentEntity)[descriptionIndex];
-                PsiElement psiElement = descriptor.getPsiElement();
-                if (psiElement == null) return;
-                VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
-                if (vFile != null) {
-                  TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
-                  fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
+                if (descriptor instanceof ProblemDescriptor) {
+                  PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+                  if (psiElement == null) return;
+                  VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
+                  if (vFile != null) {
+                    TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
+                    fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
+                  }
                 }
               }
               else if (ref.startsWith("invoke:")) {
@@ -265,18 +268,20 @@ public class Browser extends JPanel {
     buf.append("</font></BODY></HTML>");
   }
 
-  private String generateHTML(final RefElement refElement, final ProblemDescriptor descriptor) {
+  private String generateHTML(final RefEntity refEntity, final CommonProblemDescriptor descriptor) {
     final StringBuffer buf = new StringBuffer();
     final Runnable action = new Runnable() {
       public void run() {
-        getComposer().compose(buf, refElement, descriptor);
+        getComposer().compose(buf, refEntity, descriptor);
       }
     };
     ApplicationManager.getApplication().runReadAction(action);
 
     uppercaseFirstLetter(buf);
 
-    appendSuppressSection(refElement, buf);
+    if (refEntity instanceof RefElement) {
+      appendSuppressSection((RefElement)refEntity, buf);
+    }
 
     insertHeaderFooter(buf);
     return buf.toString();

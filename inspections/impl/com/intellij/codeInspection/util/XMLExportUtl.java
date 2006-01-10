@@ -20,42 +20,45 @@ import org.jdom.Element;
 
 public class XMLExportUtl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
-  public static Element createElement(RefElement refElement, Element parentNode, int actualLine) {
-    if (refElement instanceof RefImplicitConstructor) {
-      return createElement((RefElement) refElement.getOwner(), parentNode, actualLine);
+  public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine) {
+    if (refEntity instanceof RefImplicitConstructor) {
+      return createElement(refEntity.getOwner(), parentNode, actualLine);
     }
 
     Element problem = new Element(InspectionsBundle.message("inspection.export.results.problem"));
 
-    PsiElement psiElement = refElement.getElement();
-    PsiFile psiFile = psiElement.getContainingFile();
+    if (refEntity instanceof RefElement) {
+      final RefElement refElement = (RefElement)refEntity;
+      PsiElement psiElement = refElement.getElement();
+      PsiFile psiFile = psiElement.getContainingFile();
 
-    Element fileElement = new Element(InspectionsBundle.message("inspection.export.results.file"));
-    Element lineElement = new Element(InspectionsBundle.message("inspection.export.results.line"));
-    fileElement.addContent(psiFile.getVirtualFile().getUrl());
+      Element fileElement = new Element(InspectionsBundle.message("inspection.export.results.file"));
+      Element lineElement = new Element(InspectionsBundle.message("inspection.export.results.line"));
+      fileElement.addContent(psiFile.getVirtualFile().getUrl());
 
-    if (actualLine == -1) {
-      Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
-      lineElement.addContent(String.valueOf(document.getLineNumber(psiElement.getTextOffset()) + 1));
-    } else {
-      lineElement.addContent(String.valueOf(actualLine));
+      if (actualLine == -1) {
+        Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
+        lineElement.addContent(String.valueOf(document.getLineNumber(psiElement.getTextOffset()) + 1));
+      } else {
+        lineElement.addContent(String.valueOf(actualLine));
+      }
+
+      problem.addContent(fileElement);
+      problem.addContent(lineElement);
     }
 
-    problem.addContent(fileElement);
-    problem.addContent(lineElement);
 
-
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refEntity instanceof RefMethod) {
+      RefMethod refMethod = (RefMethod) refEntity;
       appendMethod(refMethod, problem);
-    } else if (refElement instanceof RefField) {
-      RefField refField = (RefField) refElement;
+    } else if (refEntity instanceof RefField) {
+      RefField refField = (RefField) refEntity;
       appendField(refField, problem);
-    } else if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass)refElement;
+    } else if (refEntity instanceof RefClass) {
+      RefClass refClass = (RefClass)refEntity;
       appendClass(refClass, problem);
     } else {
-      LOG.info("Unknown refElement: " + refElement);
+      LOG.info("Unknown refElement: " + refEntity);
     }
     parentNode.addContent(problem);
 

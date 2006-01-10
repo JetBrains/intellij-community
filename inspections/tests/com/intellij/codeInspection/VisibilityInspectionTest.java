@@ -5,7 +5,6 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 public class VisibilityInspectionTest extends InspectionTestCase {
   private VisibilityInspection myTool = new VisibilityInspection();
   private void doTest() throws Exception {
-    myTool.initialize(getManager());
     doTest("visibility/" + getTestName(false), myTool);
   }
 

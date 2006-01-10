@@ -11,6 +11,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ public class RefManagerImpl extends RefManager {
   private final RefProject myRefProject;
   private HashMap<PsiElement, RefElement> myRefTable;
   private HashMap<String, RefPackage> myPackages;
+  private HashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private PsiMethod myAppMainPattern;
@@ -79,6 +81,11 @@ public class RefManagerImpl extends RefManager {
         }
       }
     }
+    if (myModules != null) {
+      for (RefModule refModule : myModules.values()) {
+        iterator.accept(refModule);
+      }
+    }
   }
 
   public void cleanup() {
@@ -111,10 +118,10 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public int registerGraphAnnotator(RefGraphAnnotator annotator){
+  public void registerGraphAnnotator(RefGraphAnnotator annotator){
     myGraphAnnotators.add(annotator);
     myLastUsedMask *= 2;
-    return myLastUsedMask;
+    annotator.setMask(myLastUsedMask);
   }
 
   public void findAllDeclarations() {
@@ -368,6 +375,21 @@ public class RefManagerImpl extends RefManager {
     }
 
     return (RefParameter)ref;
+  }
+
+  public RefModule getRefModule(Module module) {
+    if (module == null){
+      return null;
+    }
+    if (myModules == null){
+      myModules = new HashMap<Module, RefModule>();
+    }
+    RefModule refModule = myModules.get(module);
+    if (refModule == null){
+      refModule = new RefModuleImpl(module);
+      myModules.put(module, refModule);
+    }
+    return refModule;
   }
 
   private boolean isValidPointForReference() {

@@ -8,17 +8,16 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.RefElementNode;
+import org.jetbrains.annotations.NonNls;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.HashSet;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DeadHTMLComposer extends HTMLComposer {
   private final InspectionTool myTool;
@@ -31,7 +30,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     genPageHeader(buf, refEntity);
 
     if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement) refEntity;
+      RefElementImpl refElement = (RefElementImpl)refEntity;
       if (refElement.isSuspicious() && !refElement.isEntry()) {
         appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
         //noinspection HardCodedStringLiteral
@@ -147,7 +146,7 @@ public class DeadHTMLComposer extends HTMLComposer {
           if (method.isConstructor()) {
             if (nRefs == 0) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.constructor"));
-            } else if (method.isConstructor() && method.isSuspiciousRecursive()) {
+            } else if (method.isConstructor() && ((RefMethodImpl)method).isSuspiciousRecursive()) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.constructor"));
             } else if (nRefs == 1) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.constructor"));
@@ -157,7 +156,7 @@ public class DeadHTMLComposer extends HTMLComposer {
           } else {
             if (nRefs == 0) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.method"));
-            } else if (method.isConstructor() && method.isSuspiciousRecursive()) {
+            } else if (method.isConstructor() && ((RefMethodImpl)method).isSuspiciousRecursive()) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.method"));
             } else if (nRefs == 1) {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.method"));
@@ -165,7 +164,7 @@ public class DeadHTMLComposer extends HTMLComposer {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
             }
           }
-        } else if (refClass.isSuspicious()) {
+        } else if (((RefClassImpl)refClass).isSuspicious()) {
           if (method.isAbstract()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
@@ -181,7 +180,7 @@ public class DeadHTMLComposer extends HTMLComposer {
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
             String classOrInterface = getClassOrInterface(refClass, false);
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
-          } else if (method.isSuspiciousRecursive()) {
+          } else if (((RefMethodImpl)method).isSuspiciousRecursive()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));
           } else {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis18"));
@@ -199,7 +198,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     //noinspection HardCodedStringLiteral
     buf.append("<br><font style=\"font-family:verdana;color:#808080\">");
     if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement;
+      RefClassImpl refClass = (RefClassImpl)refElement;
       if (refClass.isSuspicious()) {
         if (refClass.isUtilityClass()) {
           // Append nothing.
@@ -226,7 +225,7 @@ public class DeadHTMLComposer extends HTMLComposer {
       if (refElement instanceof RefMethod) {
         nUsageCount += getDerivedRefsCount((RefMethod) refElement);
       }
-      if (refElement.isSuspicious()) {
+      if (((RefElementImpl)refElement).isSuspicious()) {
         buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6.suspicious", nUsageCount));
       } else {
         buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6", nUsageCount));

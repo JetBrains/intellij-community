@@ -30,4 +30,7 @@ public abstract class RefGraphAnnotator {
                              RefElement refFrom,
                              boolean referencedFromClassInitializer){
   }
+
+  public void setMask(int mask){
+  }
 }

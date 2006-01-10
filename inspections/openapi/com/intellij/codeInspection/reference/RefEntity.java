@@ -15,16 +15,24 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.util.UserDataHolder;
+
 import java.util.List;
 
 /**
  * User: anna
  * Date: 27-Dec-2005
  */
-public interface RefEntity {
+public interface RefEntity extends UserDataHolder {
   String getName();
 
   List<RefEntity> getChildren();
 
   RefEntity getOwner();
+
+  void accept(final RefVisitor refVisitor);
+
+  boolean checkFlag(final int mask);
+
+  void setFlag(final boolean flag, final int mask);
 }

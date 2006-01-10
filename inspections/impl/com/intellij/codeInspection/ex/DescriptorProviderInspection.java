@@ -1,18 +1,10 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.codeInspection.ui.InspectionPackageNode;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
-import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -24,84 +16,85 @@ import java.util.*;
 /**
  * @author max
  */
-public abstract class DescriptorProviderInspection extends InspectionTool {
-  private HashMap<RefElement, ProblemDescriptor[]> myProblemElements;
+public abstract class DescriptorProviderInspection extends InspectionTool implements ProblemDescriptionsProcessor {
+  private HashMap<RefEntity, CommonProblemDescriptor[]> myProblemElements;
   private HashMap<String, Set<RefElement>> myPackageContents = null;
-  private HashMap<ProblemDescriptor, RefElement> myProblemToElements;
+  private HashSet<RefModule> myModulesProblems = null;
+  private HashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
-  private HashMap<RefElement, Set<LocalQuickFix>> myQuickFixActions;
+  private HashMap<RefEntity, Set<QuickFix>> myQuickFixActions;
 
 
   protected DescriptorProviderInspection() {
-    myProblemElements = new HashMap<RefElement, ProblemDescriptor[]>();
-    myProblemToElements = new HashMap<ProblemDescriptor, RefElement>();
-    myQuickFixActions = new HashMap<RefElement, Set<LocalQuickFix>>();
+    myProblemElements = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+    myProblemToElements = new HashMap<CommonProblemDescriptor, RefEntity>();
+    myQuickFixActions = new HashMap<RefEntity, Set<QuickFix>>();
   }
 
-  protected void addProblemElement(RefElement refElement, ProblemDescriptor[] descriptions) {
+  public void addProblemElement(RefEntity refElement, CommonProblemDescriptor[] descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
     myProblemElements.put(refElement, descriptions);
-    for (ProblemDescriptor description : descriptions) {
+    for (CommonProblemDescriptor description : descriptions) {
       myProblemToElements.put(description, refElement);
       collectQuickFixes(description.getFixes(), refElement);
     }
   }
 
-  private void collectQuickFixes(final LocalQuickFix[] fixes, final RefElement refElement) {
+  private void collectQuickFixes(final QuickFix[] fixes, final RefEntity refEntity) {
     if (fixes != null) {
-      Set<LocalQuickFix> localQuickFixes = myQuickFixActions.get(refElement);
+      Set<QuickFix> localQuickFixes = myQuickFixActions.get(refEntity);
       if (localQuickFixes == null) {
-        localQuickFixes = new java.util.HashSet<LocalQuickFix>();
-        myQuickFixActions.put(refElement, localQuickFixes);
+        localQuickFixes = new HashSet<QuickFix>();
+        myQuickFixActions.put(refEntity, localQuickFixes);
       }
       localQuickFixes.addAll(Arrays.asList(fixes));
     }
   }
 
-  public void ignoreElement(RefElement refElement) {
-    if (refElement == null) return;
-    myProblemElements.remove(refElement);
-    myQuickFixActions.remove(refElement);
+  public void ignoreElement(RefEntity refEntity) {
+    if (refEntity == null) return;
+    myProblemElements.remove(refEntity);
+    myQuickFixActions.remove(refEntity);
   }
 
   public void ignoreProblem(ProblemDescriptor problem) {
-    RefElement refElement = myProblemToElements.get(problem);
+    RefEntity refElement = myProblemToElements.get(problem);
     if (refElement != null) ignoreProblem(refElement, problem, -1);
   }
 
-  public void ignoreProblem(RefElement refElement, ProblemDescriptor problem, int idx) {
-    if (refElement == null) return;
-    final Set<LocalQuickFix> localQuickFixes = myQuickFixActions.get(refElement);
-    final LocalQuickFix[] fixes = problem.getFixes();
+  public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {
+    if (refEntity == null) return;
+    final Set<QuickFix> localQuickFixes = myQuickFixActions.get(refEntity);
+    final QuickFix[] fixes = problem.getFixes();
     if (isIgnoreProblem(fixes, localQuickFixes, idx)){
       myProblemToElements.remove(problem);
-      ProblemDescriptor[] descriptors = myProblemElements.get(refElement);
+      CommonProblemDescriptor[] descriptors = myProblemElements.get(refEntity);
       if (descriptors != null) {
-        ArrayList<ProblemDescriptor> newDescriptors = new ArrayList<ProblemDescriptor>(Arrays.asList(descriptors));
+        ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<CommonProblemDescriptor>(Arrays.asList(descriptors));
         newDescriptors.remove(problem);
-        myQuickFixActions.put(refElement, null);
+        myQuickFixActions.put(refEntity, null);
         if (newDescriptors.size() > 0) {
-          myProblemElements.put(refElement, newDescriptors.toArray(new ProblemDescriptor[newDescriptors.size()]));
-          for (ProblemDescriptor descriptor : newDescriptors) {
-            collectQuickFixes(descriptor.getFixes(), refElement);
+          myProblemElements.put(refEntity, newDescriptors.toArray(new ProblemDescriptor[newDescriptors.size()]));
+          for (CommonProblemDescriptor descriptor : newDescriptors) {
+            collectQuickFixes(descriptor.getFixes(), refEntity);
           }
         }
         else {
-          myProblemElements.remove(refElement);
+          myProblemElements.remove(refEntity);
         }
       }
     }
   }
 
-  private boolean isIgnoreProblem(LocalQuickFix[] problemFixes, Set<LocalQuickFix> fixes, int idx){
+  private boolean isIgnoreProblem(QuickFix[] problemFixes, Set<QuickFix> fixes, int idx){
     if (problemFixes == null || fixes == null) {
       return true;
     }
     if (problemFixes.length <= idx){
       return true;
     }
-    for (LocalQuickFix fix : problemFixes) {
+    for (QuickFix fix : problemFixes) {
       if (fix != problemFixes[idx] && !fixes.contains(fix)){
         return false;
       }
@@ -117,13 +110,13 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     myPackageContents = null;
   }
 
-  public ProblemDescriptor[] getDescriptions(RefElement refElement) {
-    if (!refElement.isValid()) {
-      ignoreElement(refElement);
+  public CommonProblemDescriptor[] getDescriptions(RefEntity refEntity) {
+    if (refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) {
+      ignoreElement(refEntity);
       return null;
     }
 
-    return myProblemElements.get(refElement);
+    return myProblemElements.get(refEntity);
   }
 
   public HTMLComposer getComposer() {
@@ -135,18 +128,17 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
 
   public void exportResults(final Element parentNode) {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(final RefElement refElement) {
-        if (myProblemElements.containsKey(refElement)) {
-          ProblemDescriptor[] descriptions = getDescriptions(refElement);
-          for (ProblemDescriptor description : descriptions) {
-            int line = description.getLineNumber();
+      public void accept(final RefEntity refEntity) {
+        if (myProblemElements.containsKey(refEntity)) {
+          CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
+          for (CommonProblemDescriptor description : descriptions) {
             @NonNls final String template = description.getDescriptionTemplate();
-            final PsiElement psiElement = description.getPsiElement();
-            final String text = psiElement.getText();
+            int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
+            final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
             @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
             problemText = problemText.replaceAll(" #loc ", " ");
 
-            Element element = XMLExportUtl.createElement(refElement, parentNode, line);
+            Element element = XMLExportUtl.createElement(refEntity, parentNode, line);
             Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(getDisplayName());
             element.addContent(problemClassElement);
@@ -158,12 +150,16 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
             catch (IllegalDataException e) {
               //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
               System.out.println("Cannot save results for "
-                                 + refElement.getElement().getContainingFile().getVirtualFile().getPath());
+                                 + refEntity.getName());
             }
           }
         }
       }
     });
+  }
+
+  public boolean isGraphNeeded() {
+    return false;
   }
 
   public boolean hasReportedProblems() {
@@ -172,15 +168,20 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
 
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefElement>>();
-    final Set<RefElement> elements = myProblemElements.keySet();
-    for (RefElement element : elements) {
-      String packageName = RefUtil.getInstance().getPackageName(element);
-      Set<RefElement> content = myPackageContents.get(packageName);
-      if (content == null) {
-        content = new HashSet<RefElement>();
-        myPackageContents.put(packageName, content);
+    myModulesProblems = new HashSet<RefModule>();
+    final Set<RefEntity> elements = myProblemElements.keySet();
+    for (RefEntity element : elements) {
+      if (element instanceof RefElement) {
+        String packageName = RefUtil.getInstance().getPackageName(element);
+        Set<RefElement> content = myPackageContents.get(packageName);
+        if (content == null) {
+          content = new HashSet<RefElement>();
+          myPackageContents.put(packageName, content);
+        }
+        content.add((RefElement)element);
+      } else if (element instanceof RefModule){
+        myModulesProblems.add((RefModule)element);
       }
-      content.add(element);
     }
   }
 
@@ -192,8 +193,8 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
       Set<RefElement> elements = myPackageContents.get(p);
       for (RefElement refElement : elements) {
         final RefElementNode elemNode = addNodeToParent(refElement, pNode);
-        final ProblemDescriptor[] problems = myProblemElements.get(refElement);
-        for (ProblemDescriptor problem : problems) {
+        final CommonProblemDescriptor[] problems = myProblemElements.get(refElement);
+        for (CommonProblemDescriptor problem : problems) {
           elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection)));
         }
         if (problems.length == 1){
@@ -202,6 +203,14 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
       }
       content.add(pNode);
     }
+    for (RefModule refModule : myModulesProblems) {
+      InspectionModuleNode moduleNode = new InspectionModuleNode(refModule.getModule());
+      final CommonProblemDescriptor[] problems = myProblemElements.get(refModule);
+      for (CommonProblemDescriptor problem : problems) {
+        moduleNode.add(new ProblemDescriptionNode(refModule, problem, !(this instanceof DuplicatePropertyInspection)));
+      }
+      content.add(moduleNode);
+    }
     return content.toArray(new InspectionTreeNode[content.size()]);
   }
 
@@ -209,13 +218,17 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     return myPackageContents;
   }
 
-  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
+  public Set<RefModule> getModuleProblems() {
+    return myModulesProblems;
+  }
+
+  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     if (refElements == null) return null;
     Map<Class, QuickFixAction> result = new java.util.HashMap<Class, QuickFixAction>();
-    for (RefElement refElement : refElements) {
-      final Set<LocalQuickFix> localQuickFixes = myQuickFixActions.get(refElement);
+    for (RefEntity refElement : refElements) {
+      final Set<QuickFix> localQuickFixes = myQuickFixActions.get(refElement);
       if (localQuickFixes != null){
-        for (LocalQuickFix fix : localQuickFixes) {
+        for (QuickFix fix : localQuickFixes) {
           final Class klass = fix.getClass();
           final QuickFixAction quickFixAction = result.get(klass);
           if (quickFixAction != null){
@@ -238,14 +251,14 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
   }
 
-  protected RefElement getElement(ProblemDescriptor descriptor) {
+  protected RefEntity getElement(ProblemDescriptor descriptor) {
     return myProblemToElements.get(descriptor);
   }
 
-  public void ignoreProblem(final ProblemDescriptor descriptor, final LocalQuickFix fix) {
-    RefElement refElement = myProblemToElements.get(descriptor);
+  public void ignoreProblem(final CommonProblemDescriptor descriptor, final QuickFix fix) {
+    RefEntity refElement = myProblemToElements.get(descriptor);
     if (refElement != null) {
-      final LocalQuickFix[] fixes = descriptor.getFixes();
+      final QuickFix[] fixes = descriptor.getFixes();
       for (int i = 0; i < fixes.length; i++) {
         if (fixes[i] == fix){
           ignoreProblem(refElement, descriptor, i);

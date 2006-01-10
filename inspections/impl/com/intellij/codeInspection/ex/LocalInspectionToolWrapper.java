@@ -122,6 +122,10 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     });
   }
 
+  public boolean isGraphNeeded() {
+    return false;
+  }
+
   public String getDisplayName() {
     return myTool.getDisplayName();
   }

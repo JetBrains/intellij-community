@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
@@ -38,15 +39,17 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     resetFilter();
     myPackageContents = new HashMap<String, Set<RefElement>>();
     getManager().getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
+      public void accept(RefEntity refEntity) {
+        if (!(refEntity instanceof RefElement)) return;
+        RefElement refElement = (RefElement) refEntity;
         if (!myIgnoreElements.contains(refElement) && refElement.isValid() && getFilter().accepts(refElement)) {
-          String packageName = RefUtil.getInstance().getPackageName(refElement);
+          String packageName = RefUtil.getInstance().getPackageName(refEntity);
           Set<RefElement> content = myPackageContents.get(packageName);
           if (content == null) {
             content = new HashSet<RefElement>();
             myPackageContents.put(packageName, content);
           }
-          content.add(refElement);
+          content.add((RefElement)refEntity);
         }
       }
     });
@@ -62,12 +65,16 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return myPackageContents;
   }
 
-  public void ignoreElement(RefElement refElement) {
-    myIgnoreElements.add(refElement);
+  public void ignoreElement(RefEntity refEntity) {
+    myIgnoreElements.add((RefElement)refEntity);
   }
 
   public void cleanup() {
     super.cleanup();
     myPackageContents.clear();
+  }
+
+  public boolean isGraphNeeded() {
+    return true;
   }
 }

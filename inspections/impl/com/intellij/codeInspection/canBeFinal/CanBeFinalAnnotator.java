@@ -23,8 +23,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
   private RefManager myManager;
   public static int CAN_BE_FINAL_MASK;
 
-  public CanBeFinalAnnotator(final CanBeFinalInspection inspection) {
-    myManager = inspection.getRefManager();
+  public CanBeFinalAnnotator(RefManager manager) {
+    myManager = manager;
   }
 
   public void initialize(RefElement refElement) {
@@ -199,7 +199,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     }
   }
 
-  public static void registerMask(final int mask) {
+  public void setMask(int mask) {
     CAN_BE_FINAL_MASK = mask;
   }
 }

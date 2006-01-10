@@ -12,10 +12,7 @@ import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.ex.*;
@@ -26,12 +23,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.OccurenceNavigatorSupport;
-import com.intellij.ide.actions.NextOccurenceToolbarAction;
-import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
+import com.intellij.ide.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -126,22 +118,24 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           if (refNode.hasDescriptorsUnder()) return null;
           final RefElement element = refNode.getElement();
           if (element == null || !element.isValid()) return null;
-          final ProblemDescriptor problem = refNode.getProblem();
+          final CommonProblemDescriptor problem = refNode.getProblem();
           if (problem != null) {
-            final PsiElement psiElement = problem.getPsiElement();
-            if (psiElement == null || !psiElement.isValid()) return null;
-            return getOpenFileDescriptor(psiElement);
+            return navigate(problem);
           }
           return getOpenFileDescriptor(element);
         }
         else if (node instanceof ProblemDescriptionNode) {
-          if (!((ProblemDescriptionNode)node).getElement().isValid()) return null;
-          final PsiElement psiElement = ((ProblemDescriptionNode)node).getDescriptor().getPsiElement();
-
-          if (psiElement == null || !psiElement.isValid()) return null;
-          return getOpenFileDescriptor(psiElement);
+          if (!((ProblemDescriptionNode)node).isValid()) return null;
+          final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+          return navigate(descriptor);
         }
         return null;
+      }
+
+      private Navigatable navigate(final CommonProblemDescriptor descriptor) {
+        final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+        if (psiElement == null || !psiElement.isValid()) return null;
+        return getOpenFileDescriptor(psiElement);
       }
 
       public String getNextOccurenceActionName() {
@@ -218,14 +212,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     });
 
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     add(mySplitter, BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CloseAction());
     group.add(new RerunAction(this));
     group.add(manager.createToggleAutoscrollAction());
     group.add(manager.createGroupBySeverityAction());
-    group.add(new PreviousOccurenceToolbarAction(getOccurenceNavigator()));
-    group.add(new NextOccurenceToolbarAction(getOccurenceNavigator()));
+    group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
+    group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(new ExportHTMLAction());
     group.add(new EditSettingsAction());
     group.add(new HelpAction());
@@ -242,6 +237,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myBrowser.dispose();
     myTree = null;
     myOccurenceNavigator = null;
+  }
+
+  private void hectorCorrections(final Set<String> profiles){
+    final Map<VirtualFile, String> hectorAssignments = InspectionProjectProfileManager.getInstance(myProject).getHectorAssignments();
+    for (VirtualFile vFile : hectorAssignments.keySet()) {
+      if (myScope.contains(vFile)){
+        profiles.add(hectorAssignments.get(vFile));
+      }
+    }
   }
 
   private static OpenFileDescriptor getOpenFileDescriptor(PsiElement psiElement) {
@@ -282,6 +286,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         myInspectionProfile.cleanup();
       } else {
         final Set<String> profiles = myScope.getActiveInspectionProfiles();
+        hectorCorrections(profiles);
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
           ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
@@ -400,7 +405,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
-          final ProblemDescriptor problem = refElementNode.getProblem();
+          final CommonProblemDescriptor problem = refElementNode.getProblem();
           RefElement refSelected = refElementNode.getElement();
           if (problem != null) {
             showInBrowser(refSelected, problem);
@@ -437,10 +442,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     setCursor(currentCursor);
   }
 
-  public void showInBrowser(final RefElement refElement, ProblemDescriptor descriptor) {
+  public void showInBrowser(final RefEntity refEntity, CommonProblemDescriptor descriptor) {
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
-    myBrowser.showPageFor(refElement, descriptor);
+    myBrowser.showPageFor(refEntity, descriptor);
     setCursor(currentCursor);
   }
 
@@ -504,6 +509,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     if (manager.RUN_WITH_EDITOR_PROFILE){
       final Set<String> profiles = myScope.getActiveInspectionProfiles();
+      hectorCorrections(profiles);
       for (String profileName : profiles) {
         processProfile((InspectionProfile)inspectionProfileManager.getProfile(profileName), tools);
       }
@@ -512,6 +518,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     for (InspectionTool tool : tools.keySet()) {
+      tool.updateContent();
       final boolean hasProblems = tool.hasReportedProblems();
       if (hasProblems) {
         addTool(tool, tools.get(tool), isGroupedBySeverity);
@@ -682,49 +689,74 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final InspectionTreeNode node = (InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent();
     if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-      final ProblemDescriptor descriptor = problemNode.getDescriptor();
-      final RefElement element = problemNode.getElement();
+      final CommonProblemDescriptor descriptor = problemNode.getDescriptor();
+      final RefEntity element = problemNode.getElement();
       invokeFix(element, descriptor, idx);
     }
     else if (node instanceof RefElementNode) {
       RefElementNode elementNode = (RefElementNode)node;
       RefElement element = elementNode.getElement();
-      ProblemDescriptor descriptor = elementNode.getProblem();
+      CommonProblemDescriptor descriptor = elementNode.getProblem();
       if (descriptor != null) {
         invokeFix(element, descriptor, idx);
       }
     }
   }
 
-  private void invokeFix(final RefElement element, final ProblemDescriptor descriptor, final int idx) {
-    final LocalQuickFix[] fixes = descriptor.getFixes();
+  private void invokeFix(final RefEntity element, final CommonProblemDescriptor descriptor, final int idx) {
+    final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > idx && fixes[idx] != null) {
-      PsiElement psiElement = element.getElement();
-      if (psiElement != null && psiElement.isValid()) {
-        if (!psiElement.isWritable()) {
-          final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject)
-            .ensureFilesWritable(psiElement.getContainingFile().getVirtualFile());
-          if (operationStatus.hasReadonlyFiles()) {
-            return;
-          }
-        }
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Runnable command = new Runnable() {
-              public void run() {
-                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-                fixes[idx].applyFix(myProject, descriptor);
-              }
-            };
-            CommandProcessor.getInstance().executeCommand(myProject, command, fixes[idx].getName(), null);
-            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myTree.getSelectedTool());
-            if (tool != null) {
-              tool.ignoreProblem(element, descriptor, idx);
+      if (element instanceof RefElement) {
+        PsiElement psiElement = ((RefElement)element).getElement();
+        if (psiElement != null && psiElement.isValid()) {
+          if (!psiElement.isWritable()) {
+            final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject)
+              .ensureFilesWritable(psiElement.getContainingFile().getVirtualFile());
+            if (operationStatus.hasReadonlyFiles()) {
+              return;
             }
-            update();
           }
-        });
+
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              Runnable command = new Runnable() {
+                public void run() {
+                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+                  if (descriptor instanceof ProblemDescriptor){
+                    ((LocalQuickFix)fixes[idx]).applyFix(myProject, (ProblemDescriptor)descriptor);
+                  } else {
+                    ((GlobalQuickFix)fixes[idx]).applyFix();
+                  }
+                }
+              };
+              CommandProcessor.getInstance().executeCommand(myProject, command, fixes[idx].getName(), null);
+              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myTree.getSelectedTool());
+              if (tool != null) {
+                tool.ignoreProblem(element, descriptor, idx);
+              }
+              update();
+            }
+          });
+        }
+      } else {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              Runnable command = new Runnable() {
+                public void run() {
+                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+                  if (!(descriptor instanceof ProblemDescriptor)){
+                    ((GlobalQuickFix)fixes[idx]).applyFix();
+                  }
+                }
+              };
+              CommandProcessor.getInstance().executeCommand(myProject, command, fixes[idx].getName(), null);
+              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myTree.getSelectedTool());
+              if (tool != null) {
+                tool.ignoreProblem(element, descriptor, idx);
+              }
+              update();
+            }
+          });
       }
     }
   }
@@ -772,12 +804,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
       //noinspection ConstantConditions
       final @NotNull InspectionTool tool = myTree.getSelectedTool();
-      List<RefElement> selectedElements = new ArrayList<RefElement>();
+      List<RefEntity> selectedElements = new ArrayList<RefEntity>();
       final TreePath[] selectionPaths = myTree.getSelectionPaths();
       for (TreePath path : selectionPaths) {
         traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
       }
-      final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefElement[selectedElements.size()]));
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -801,7 +833,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     public void actionPerformed(AnActionEvent e) {
       final InspectionTool tool = myTree.getSelectedTool();
       assert tool != null;
-      List<RefElement> selectedElements = new ArrayList<RefElement>();
+      List<RefEntity> selectedElements = new ArrayList<RefEntity>();
       final TreePath[] selectionPaths = myTree.getSelectionPaths();
       for (TreePath path : selectionPaths) {
         traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
@@ -870,9 +902,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       PsiElement psiElement = item.getElement();
       if (psiElement == null) return null;
 
-      if (refElementNode.getProblem() != null) {
-        psiElement = refElementNode.getProblem().getPsiElement();
-        if (psiElement == null) return null;
+      final CommonProblemDescriptor problem = refElementNode.getProblem();
+      if (problem != null) {
+        if (problem instanceof ProblemDescriptor) {
+          psiElement = ((ProblemDescriptor)problem).getPsiElement();
+          if (psiElement == null) return null;
+        }
+        else {
+          return null;
+        }
       }
 
       if (DataConstants.NAVIGATABLE.equals(dataId)) {
@@ -886,7 +924,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     }
     else if (selectedNode instanceof ProblemDescriptionNode && DataConstants.NAVIGATABLE.equals(dataId)) {
-      PsiElement psiElement = ((ProblemDescriptionNode)selectedNode).getDescriptor().getPsiElement();
+      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)selectedNode).getDescriptor();
+      PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       if (psiElement == null || !psiElement.isValid()) return null;
       return new OpenFileDescriptor(myProject, psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
     }
@@ -895,10 +934,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   private PsiElement[] collectPsiElements() {
-    RefElement[] refElements = myTree.getSelectedElements();
+    RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
-    for (RefElement refElement : refElements) {
-      PsiElement psiElement = refElement.getElement();
+    for (RefEntity refElement : refElements) {
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         psiElements.add(psiElement);
       }
@@ -927,7 +966,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final InspectionTool tool = myTree.getSelectedTool();
     if (tool == null) return;
 
-    List<RefElement> selectedElements = new ArrayList<RefElement>();
+    List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     for (TreePath selectionPath : selectionPaths) {
       traverseRefElements((InspectionTreeNode)selectionPath.getLastPathComponent(), selectedElements);
@@ -980,9 +1019,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
                           }
                         });
                       }
-                      final List<RefElement> elementsToIgnore = new ArrayList<RefElement>();
+                      final List<RefEntity> elementsToIgnore = new ArrayList<RefEntity>();
                       traverseRefElements(node, elementsToIgnore);
-                      for (RefElement element : elementsToIgnore) {
+                      for (RefEntity element : elementsToIgnore) {
                         tool.ignoreElement(element);
                       }
                     }
@@ -1025,7 +1064,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         if (action.isAvailable(myProject, null, file)) {
           return new AnAction(action.getText()) {
             public void actionPerformed(AnActionEvent e) {
-              final List<RefElement> elementsToSuppress = new ArrayList<RefElement>();
+              final List<RefEntity> elementsToSuppress = new ArrayList<RefEntity>();
               traverseRefElements((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent(), elementsToSuppress);
               invokeSuppressAction(action, refElement, tool, elementsToSuppress);
             }
@@ -1035,7 +1074,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       return null;
     }
 
-  private void traverseRefElements(@NotNull InspectionTreeNode node, List<RefElement> elementsToSuppress){
+  private void traverseRefElements(@NotNull InspectionTreeNode node, List<RefEntity> elementsToSuppress){
     if (node instanceof RefElementNode){
       elementsToSuppress.add(((RefElementNode)node).getElement());
     } else if (node instanceof ProblemDescriptionNode){
@@ -1047,7 +1086,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-  private void invokeSuppressAction(final IntentionAction action, final RefElement element, final InspectionTool tool, final List<RefElement> elementsToSuppress) {
+  private void invokeSuppressAction(final IntentionAction action, final RefElement element, final InspectionTool tool, final List<RefEntity> elementsToSuppress) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -1059,7 +1098,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
                   public void run() {
                     try {
                       action.invoke(myProject, null, element.getElement().getContainingFile());
-                      for (RefElement refElement : elementsToSuppress) {
+                      for (RefEntity refElement : elementsToSuppress) {
                         tool.ignoreElement(refElement);
                       }
                       InspectionResultsView.this.update();
@@ -1104,6 +1143,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (myScope.isValid()) {
       if (myInspectionProfile == null) {
         final Set<String> profiles = myScope.getActiveInspectionProfiles();
+        hectorCorrections(profiles);
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
           ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();

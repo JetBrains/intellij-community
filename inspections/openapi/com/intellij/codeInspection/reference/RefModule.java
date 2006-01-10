@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.module.Module;
 
 /**
- * See {@link InspectionManager#createProblemDescriptor(PsiElement, String, LocalQuickFix, ProblemHighlightType) } for method descriptions.
+ * User: anna
+ * Date: 09-Jan-2006
  */
-public interface ProblemDescriptor extends CommonProblemDescriptor{
-  PsiElement getPsiElement();
-  PsiElement getStartElement();
-  PsiElement getEndElement();
-  int getLineNumber();
-  ProblemHighlightType getHighlightType();
-  boolean isAfterEndOfLine();
+public interface RefModule extends RefEntity {
+  Module getModule();
 }

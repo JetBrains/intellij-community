@@ -9,12 +9,10 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -24,22 +22,25 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
   }
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().findAllDeclarations();
-
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (refElement instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod) refElement;
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod) refEntity;
             if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
-            addProblemElement(refElement, descriptors);
+            addProblemElement(refMethod, descriptors);
           }
         }
       }
     });
   }
 
+  public boolean isGraphNeeded() {
+    return true;
+  }
+
+  @Nullable
   private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
     if (refMethod.isConstructor()) return null;
     if (refMethod.isLibraryOverride()) return null;
@@ -65,9 +66,9 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
 
   public boolean queryExternalUsagesRequests() {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (getDescriptions(refElement) != null) {
-          refElement.accept(new RefVisitor() {
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
               getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {

@@ -109,17 +109,21 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   }
 
   public void runInspection(AnalysisScope scope) {
-    final int mask = getRefManager().registerGraphAnnotator(new CanBeFinalAnnotator(this));
-    CanBeFinalAnnotator.registerMask(mask);
-    getRefManager().findAllDeclarations();
+  }
+
+  public void initialize(InspectionManagerEx manager) {
+    super.initialize(manager);
+    final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
+    refManager.registerGraphAnnotator(new CanBeFinalAnnotator(refManager));
   }
 
   public boolean queryExternalUsagesRequests() {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (filter.accepts(refElement)) {
-          refElement.accept(new RefVisitor() {
+      public void accept(RefEntity refEntity) {
+        if (!(refEntity instanceof RefElement)) return;
+        if (filter.accepts((RefElement)refEntity)) {
+          refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
               if (!refMethod.isStatic() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                   !(refMethod instanceof RefImplicitConstructor)) {
@@ -185,9 +189,10 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
 
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (filter.accepts(refElement)) {
-          Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
+      public void accept(RefEntity refEntity) {
+        if (!(refEntity instanceof RefElement)) return;
+        if (filter.accepts((RefElement)refEntity)) {
+          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
           Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
           problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final"));
           element.addContent(problemClassElement);
@@ -200,7 +205,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
+  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     return myQuickFixActions;
   }
 

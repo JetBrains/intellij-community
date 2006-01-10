@@ -8,17 +8,14 @@
  */
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefParameter;
 
 public abstract class RefFilter {
   // Default accepts implementation accepts element if one under unaccepted one. Thus it will accept all and only upper level classes.
   public int getElementProblemCount(RefElement refElement) {
     if (refElement instanceof RefParameter) return 0;
-    final PsiElement element = refElement.getElement();
-    if (element instanceof PsiDocCommentOwner && !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, "UnusedDeclaration")) return 0;
     RefEntity refOwner = refElement.getOwner();
     if (refOwner == null || !(refOwner instanceof RefElement)) return 1;
 

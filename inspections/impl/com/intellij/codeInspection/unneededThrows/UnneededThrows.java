@@ -11,15 +11,13 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,22 +33,25 @@ public class UnneededThrows extends DescriptorProviderInspection {
   @NonNls public static final String SHORT_NAME = "UnneededThrows";
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().findAllDeclarations();
-
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (refElement instanceof RefMethod && !refElement.isSyntheticJSP()) {
-          RefMethod refMethod = (RefMethod)refElement;
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
+          RefMethod refMethod = (RefMethod)refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
-            addProblemElement(refElement, descriptors);
+            addProblemElement(refMethod, descriptors);
           }
         }
       }
     });
   }
 
+  public boolean isGraphNeeded() {
+    return true;
+  }
+
+  @Nullable
   private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod) {
     if (refMethod.isLibraryOverride()) return null;
     if (refMethod.getSuperMethods().size() > 0) return null;
@@ -106,9 +107,9 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
   public boolean queryExternalUsagesRequests() {
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (getDescriptions(refElement) != null) {
-          refElement.accept(new RefVisitor() {
+      public void accept(RefEntity refEntity) {
+        if (getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
               getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
@@ -157,7 +158,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-      RefElement refElement = getElement(descriptor);
+      RefElement refElement = (RefElement)getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod)refElement;
         removeExcessiveThrows(refMethod);
@@ -171,7 +172,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
     private void removeExcessiveThrows(RefMethod refMethod) {
       try {
         Project project = getManager().getProject();
-        ProblemDescriptor[] problems = getDescriptions(refMethod);
+        ProblemDescriptor[] problems = (ProblemDescriptor[])getDescriptions(refMethod);
         if (problems == null) return;
         PsiManager psiManager = PsiManager.getInstance(project);
         List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();

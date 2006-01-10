@@ -20,8 +20,7 @@ import com.intellij.openapi.project.Project;
 /**
  * @author max
  */
-public interface LocalQuickFix {
-  String getName();
+public interface LocalQuickFix extends QuickFix{
 
   /**
    * Called to apply the fix.
@@ -30,6 +29,4 @@ public interface LocalQuickFix {
    */
   void applyFix(Project project, ProblemDescriptor descriptor);
 
-  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-  String getFamilyName();
 }

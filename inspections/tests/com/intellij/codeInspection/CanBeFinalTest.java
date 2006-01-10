@@ -17,7 +17,6 @@ public class CanBeFinalTest extends InspectionTestCase {
 
   private void doTest() throws Exception {
     final CanBeFinalInspection tool = new CanBeFinalInspection();
-    tool.initialize(getManager());
     tool.REPORT_CLASSES = true;
     tool.REPORT_FIELDS = true;
     tool.REPORT_METHODS = true;
@@ -66,7 +65,6 @@ public class CanBeFinalTest extends InspectionTestCase {
 
   public void testSCR7737() throws Exception {
     CanBeFinalInspection tool = new CanBeFinalInspection();
-    tool.initialize(getManager());
     tool.REPORT_CLASSES = false;
     tool.REPORT_FIELDS = false;
     tool.REPORT_METHODS = true;

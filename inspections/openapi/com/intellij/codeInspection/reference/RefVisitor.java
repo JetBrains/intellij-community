@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 public class RefVisitor {
-  public void visitElement(RefElement elem) {
+  public void visitElement(RefEntity elem) {
 
   }
 
@@ -38,5 +38,9 @@ public class RefVisitor {
 
   public void visitFile(RefFile file) {
     visitElement(file);
+  }
+
+  public void visitModule(RefModule module){
+    visitElement(module);
   }
 }

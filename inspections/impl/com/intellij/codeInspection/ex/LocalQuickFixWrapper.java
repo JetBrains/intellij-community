@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
  * @author max
  */
 public class LocalQuickFixWrapper extends QuickFixAction {
-  private LocalQuickFix myFix;
+  private QuickFix myFix;
   private String myText;
-  public LocalQuickFixWrapper(LocalQuickFix fix, DescriptorProviderInspection tool) {
+  public LocalQuickFixWrapper(QuickFix fix, DescriptorProviderInspection tool) {
     super(fix.getName(), tool);
     myTool = tool;
     myFix = fix;
@@ -56,7 +56,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return true;
   }
 
-  public LocalQuickFix getFix() {
+  public QuickFix getFix() {
     return myFix;
   }
 }

@@ -26,6 +26,8 @@ import java.util.Collection;
  * Date: 27-Dec-2005
  */
 public interface RefElement extends RefEntity{
+  RefModule getModule();
+
   boolean isValid();
 
   RefManager getRefManager();
@@ -37,11 +39,6 @@ public interface RefElement extends RefEntity{
   boolean isReachable();
 
   boolean isReferenced();
-
-  // TODO: These two should be specific for dead-code.
-  boolean hasSuspiciousCallers();
-  boolean isSuspiciousRecursive();
-  boolean isSuspicious();
 
   Collection<RefElement> getOutReferences();
 
@@ -62,10 +59,4 @@ public interface RefElement extends RefEntity{
   String getAccessModifier();
 
   URL getURL();
-
-  void accept(final RefVisitor refVisitor);
-
-  boolean checkFlag(final int mask);
-
-  void setFlag(final boolean flag, final int mask);
 }

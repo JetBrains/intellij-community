@@ -1,8 +1,9 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,11 +36,11 @@ public class DescriptorComposer extends HTMLComposer {
       if (myTool.getDescriptions(refElement) != null) {
         appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
 
-        ProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
+        CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
         startList();
         for (int i = 0; i < descriptions.length; i++) {
-          final ProblemDescriptor description = descriptions[i];
+          final CommonProblemDescriptor description = descriptions[i];
 
           startListItem(buf);
           composeDescription(description, i, buf);
@@ -56,12 +57,12 @@ public class DescriptorComposer extends HTMLComposer {
     }
   }
 
-  public void compose(StringBuffer buf, RefElement refElement, ProblemDescriptor descriptor) {
-    ProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
+  public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
+    CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
     int problemIdx = -1;
     for (int i = 0; i < descriptions.length; i++) {
-      ProblemDescriptor description = descriptions[i];
+      CommonProblemDescriptor description = descriptions[i];
       if (description == descriptor) {
         problemIdx = i;
         break;
@@ -76,7 +77,7 @@ public class DescriptorComposer extends HTMLComposer {
     appendAfterHeaderIndention(buf);
 
     composeDescription(descriptor, problemIdx, buf);
-    final LocalQuickFix[] fixes = descriptor.getFixes();
+    final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
       //noinspection HardCodedStringLiteral
       buf.append("<br><br>");
@@ -86,7 +87,7 @@ public class DescriptorComposer extends HTMLComposer {
       appendAfterHeaderIndention(buf);
 
       int idx = 0;
-      for (LocalQuickFix fix : fixes) {
+      for (QuickFix fix : fixes) {
         //noinspection HardCodedStringLiteral
         buf.append("<font style=\"font-family:verdana;\"");
         //noinspection HardCodedStringLiteral
@@ -102,8 +103,8 @@ public class DescriptorComposer extends HTMLComposer {
     }
   }
 
-  protected void composeDescription(final ProblemDescriptor description, int i, StringBuffer buf) {
-    PsiElement expression = description.getPsiElement();
+  protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf) {
+    PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuffer anchor = new StringBuffer();
     if (expression != null) {
       VirtualFile vFile = expression.getContainingFile().getVirtualFile();
@@ -135,7 +136,7 @@ public class DescriptorComposer extends HTMLComposer {
     if (descriptionTemplate != null) {
       //noinspection HardCodedStringLiteral
       String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
-      final int lineNumber = description.getLineNumber();
+      final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
       StringBuffer lineAnchor = new StringBuffer();
       if (expression != null && lineNumber > 0) {
         VirtualFile vFile = expression.getContainingFile().getVirtualFile();

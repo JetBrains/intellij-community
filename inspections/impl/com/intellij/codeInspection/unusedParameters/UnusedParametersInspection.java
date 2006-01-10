@@ -12,10 +12,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefParameter;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,8 +41,6 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
   private QuickFixAction[] myQuickFixActions;
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().findAllDeclarations();
-
     // Do additional search of problem elements outside the scope.
     final Runnable action = new Runnable() {
       public void run() {
@@ -56,9 +51,9 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
               final PsiSearchHelper helper = PsiManager.getInstance(getManager().getProject()).getSearchHelper();
 
               getRefManager().iterate(new RefManager.RefIterator() {
-                public void accept(RefElement refElement) {
-                  if (filter.accepts(refElement)) {
-                    RefMethod refMethod = (RefMethod) refElement;
+                public void accept(RefEntity refEntity) {
+                  if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
+                    RefMethod refMethod = (RefMethod) refEntity;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
                     if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                       PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getManager().getProject()), true);
@@ -111,11 +106,11 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
   public void exportResults(final Element parentNode) {
     final UnusedParametersFilter filter = getFilter();
     getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefElement refElement) {
-        if (filter.accepts(refElement)) {
-          ArrayList unusedParameters = filter.getUnusedParameters((RefMethod)refElement);
+      public void accept(RefEntity refEntity) {
+        if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
+          ArrayList unusedParameters = filter.getUnusedParameters((RefMethod)refEntity);
           for (int i = 0; i < unusedParameters.size(); i++) {
-            Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
+            Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
             Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
             element.addContent(problemClassElement);
@@ -130,7 +125,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
+  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     return myQuickFixActions;
   }
 
@@ -194,11 +189,13 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
       }
     }
 
-    ParameterInfo[] parameterInfos = (ParameterInfo[]) newParameters.toArray(new ParameterInfo[newParameters.size()]);
+    ParameterInfo[] parameterInfos = newParameters.toArray(new ParameterInfo[newParameters.size()]);
 
     ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getManager().getProject(),
                                                                 psiMethod,
-                                                                false, null, psiMethod.getName(),
+                                                                false,
+                                                                null,
+                                                                psiMethod.getName(),
                                                                 psiMethod.getReturnType(),
                                                                 parameterInfos);
 

@@ -21,7 +21,7 @@ package com.intellij.codeInspection;
 public interface InspectionToolProvider {
   /**
    * Query method for inspection tools provided by a plugin.
-   * @return classes that extend {@link LocalInspectionTool}
+   * @return classes that extend {@link InspectionProfileEntry}
    */
   Class[] getInspectionClasses();
 }

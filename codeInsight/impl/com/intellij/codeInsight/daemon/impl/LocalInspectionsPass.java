@@ -162,7 +162,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
       List<IntentionAction> options = getStandardIntentionOptions(tool, problemDescriptor.getPsiElement());
-      final LocalQuickFix[] fixes = problemDescriptor.getFixes();
+      final QuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
@@ -186,7 +186,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = ((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile));
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile);
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
@@ -230,7 +230,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfile inspectionProfile = ((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile));
+      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
@@ -249,7 +249,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
       infos.add(highlightInfo);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
-      final LocalQuickFix[] fixes = descriptor.getFixes();
+      final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);

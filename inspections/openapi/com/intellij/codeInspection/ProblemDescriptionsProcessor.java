@@ -15,16 +15,14 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.reference.RefEntity;
 
 /**
- * See {@link InspectionManager#createProblemDescriptor(PsiElement, String, LocalQuickFix, ProblemHighlightType) } for method descriptions.
+ * User: anna
+ * Date: 09-Jan-2006
  */
-public interface ProblemDescriptor extends CommonProblemDescriptor{
-  PsiElement getPsiElement();
-  PsiElement getStartElement();
-  PsiElement getEndElement();
-  int getLineNumber();
-  ProblemHighlightType getHighlightType();
-  boolean isAfterEndOfLine();
+public interface ProblemDescriptionsProcessor {
+  CommonProblemDescriptor [] getDescriptions(RefEntity refEntity);
+  void ignoreElement(RefEntity refEntity);
+  void addProblemElement(final RefEntity refEntity, final CommonProblemDescriptor[] commonProblemDescriptors);
 }

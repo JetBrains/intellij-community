@@ -4,6 +4,7 @@ import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.canBeStatic.CanBeStaticInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
@@ -32,6 +33,7 @@ import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.unneededThrows.UnneededThrows;
 import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
+import com.intellij.codeInspection.unnessecaryModuleDependency.UnnessecaryModuleDependencyInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
@@ -104,6 +106,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       HtmlStyleLocalInspection.class,
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
+      BooleanMethodIsAlwaysInvertedInspection.class,
+      UnnessecaryModuleDependencyInspection.class
       };
   }
 }
