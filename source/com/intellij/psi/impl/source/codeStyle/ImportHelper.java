@@ -548,25 +548,25 @@ public class ImportHelper{
     final PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
-      for(final PsiReference references : child.getReferences()){
-        if (!(references instanceof PsiJavaReference)) continue;
-        final PsiJavaReference reference = (PsiJavaReference)references;
+      for(final PsiReference reference : child.getReferences()){
+        if (!(reference instanceof PsiJavaReference)) continue;
+        final PsiJavaReference javaReference = (PsiJavaReference)reference;
         PsiJavaCodeReferenceElement referenceElement = null;
-        if (reference instanceof GenericReference){
-          if(((GenericReference)reference).getContextReference() != null) continue;
+        if (javaReference instanceof GenericReference){
+          if(((GenericReference)javaReference).getContextReference() != null) continue;
         }
-        if (references instanceof PsiJavaCodeReferenceElement) {
+        if (reference instanceof PsiJavaCodeReferenceElement) {
           referenceElement = (PsiJavaCodeReferenceElement)child;
           if (referenceElement.getQualifier() != null) {
             continue;
           }
-          if (references instanceof PsiJavaCodeReferenceElementImpl
-              && ((PsiJavaCodeReferenceElementImpl)references).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+          if (reference instanceof PsiJavaCodeReferenceElementImpl
+              && ((PsiJavaCodeReferenceElementImpl)reference).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
             continue;
           }
         }
 
-        final JavaResolveResult resolveResult = reference.advancedResolve(true);
+        final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
         PsiElement refElement = resolveResult.getElement();
         if (refElement == null && referenceElement != null) {
           refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
