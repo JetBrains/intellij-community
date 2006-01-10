@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 /**
  * @author cdr
  */
-public class PropertyReference implements PsiPolyVariantReference {
+public class PropertyReference implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
@@ -136,5 +137,9 @@ public class PropertyReference implements PsiPolyVariantReference {
 
   public boolean isSoft() {
     return false;
+  }
+
+  public String getUnresolvedMessage() {
+    return PropertiesBundle.message("unresolved.property.key");
   }
 }
