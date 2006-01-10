@@ -130,4 +130,7 @@ public abstract class ActionManager {
    * @since 5.1
    */
   public abstract boolean isGroup(@NotNull String actionId);
+
+  public abstract ActionToolbar createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
+
 }
