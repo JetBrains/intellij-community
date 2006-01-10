@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
-import com.intellij.util.ArrayUtil;
 
 public abstract class Logger {
   public interface Factory {
@@ -61,6 +61,10 @@ public abstract class Logger {
 
   public void warn(@NonNls String message) {
     warn(message, null);
+  }
+
+  public void warn(Throwable t) {
+    warn("", t);
   }
 
 
