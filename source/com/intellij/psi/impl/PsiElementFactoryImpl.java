@@ -36,6 +36,8 @@ import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -85,6 +87,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return myDummyJavaFile;
   }
 
+  @NotNull
   public PsiClass getArrayClass() {
     if (ARRAY_CLASS == null) {
       try {
@@ -106,6 +109,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return ARRAY_CLASS;
   }
 
+  @NotNull
   public PsiClassType getArrayClassType(PsiType componentType) {
     PsiClass arrayClass = getArrayClass();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -117,10 +121,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createType(arrayClass, substitutor);
   }
 
+  @NotNull
   public PsiClassType createType(PsiClass resolve, PsiSubstitutor substitutor) {
     return new PsiImmediateClassType(resolve, substitutor);
   }
 
+  @NotNull
   public PsiClass createClass(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public class " + name + "{ }";
@@ -132,6 +138,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return classes[0];
   }
 
+  @NotNull
   public PsiClass createInterface(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public interface " + name + "{ }";
@@ -143,10 +150,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return classes[0];
   }
 
+  @NotNull
   public PsiTypeElement createTypeElement(PsiType psiType) {
     return new LightTypeElement(myManager, psiType);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createReferenceElementByType(PsiClassType type) {
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
@@ -156,6 +165,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightClassReference(myManager, type.getPresentableText(), resolveResult.getElement(), resolveResult.getSubstitutor());
   }
 
+  @NotNull
   public PsiField createField(String name, PsiType type) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     if (type == PsiType.NULL) {
@@ -171,6 +181,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
 
+  @NotNull
   public PsiMethod createMethod(String name, PsiType returnType) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     if (returnType == PsiType.NULL) {
@@ -184,6 +195,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
+  @NotNull
   public PsiMethod createConstructor() {
     try {
       @NonNls String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
@@ -198,6 +210,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
   }
 
+  @NotNull
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
     @NonNls String text = "class _Dummy_ { {} }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
@@ -206,6 +219,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiClassInitializer)CodeStyleManager.getInstance(myManager.getProject()).reformat(psiClassInitializer);
   }
 
+  @NotNull
   public PsiParameter createParameter(String name, PsiType type) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     if (type == PsiType.NULL) {
@@ -227,6 +241,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
+  @NotNull
   public PsiCodeBlock createCodeBlock() {
     try {
       PsiCodeBlock block = createCodeBlockFromText("{}", null);
@@ -238,15 +253,18 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
   }
 
+  @NotNull
   public PsiClassType createType(PsiClass aClass) {
     return new PsiImmediateClassType(aClass, aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : createRawSubstitutor(aClass));
   }
 
+  @NotNull
   public PsiClassType createType(PsiJavaCodeReferenceElement classReference) {
     LOG.assertTrue(classReference != null);
     return new PsiClassReferenceType(classReference);
   }
 
+  @NotNull
   public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
                                     long modificationStamp, final boolean physical) {
     final MockVirtualFile virtualFile = new MockVirtualFile(name, fileType, text, modificationStamp);
@@ -307,10 +325,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
 
+  @NotNull
   public PsiType detachType(PsiType type) {
     return type.accept(TypeDetacher.INSTANCE);
   }
 
+  @NotNull
   public PsiSubstitutor createRawSubstitutor(PsiTypeParameterListOwner owner) {
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(owner);
     if (!iterator.hasNext()) return PsiSubstitutor.EMPTY;
@@ -321,22 +341,27 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return PsiSubstitutorImpl.createSubstitutor(substMap);
   }
 
+  @NotNull
   public PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map) {
     return PsiSubstitutorImpl.createSubstitutor(map);
   }
 
+  @Nullable
   public PsiPrimitiveType createPrimitiveType(String text) {
     return ourPrimitiveTypesMap.get(text);
   }
 
+  @NotNull
   public PsiClassType createTypeByFQClassName(String qName) {
     return createTypeByFQClassName(qName, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
+  @NotNull
   public PsiClassType createTypeByFQClassName(String qName, GlobalSearchScope resolveScope) {
     return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope));
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createClassReferenceElement(PsiClass aClass) {
     final String text;
     if (aClass instanceof PsiAnonymousClass) {
@@ -348,15 +373,18 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightClassReference(myManager, text, aClass);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createReferenceElementByFQClassName(String qName, GlobalSearchScope resolveScope) {
     String shortName = PsiNameHelper.getShortClassName(qName);
     return new LightClassReference(myManager, shortName, qName, resolveScope);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createFQClassNameReferenceElement(String qName, GlobalSearchScope resolveScope) {
     return new LightClassReference(myManager, qName, qName, resolveScope);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createPackageReferenceElement(PsiPackage aPackage)
     throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
@@ -365,17 +393,20 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightPackageReference(myManager, aPackage);
   }
 
+  @NotNull
   public PsiPackageStatement createPackageStatement(String name) throws IncorrectOperationException {
     final PsiJavaFile javaFile = (PsiJavaFile)createFileFromText("dummy.java", "package " + name + ";");
     final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
     return packageStatement;
   }
 
+  @NotNull
   public XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException {
     return createTagFromText(
         "<implicit-properties-ant-declaration-tag-for-intellij-idea xmlns=\"" + XmlUtil.ANT_URI + "\"/>");
   }
 
+  @NotNull
   public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(String text,
                                                                       PsiElement context,
                                                                       boolean isPhysical,
@@ -386,6 +417,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return result;
   }
 
+  @NotNull
   public PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =
@@ -397,6 +429,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(annotationElement);
   }
 
+  @NotNull
   public PsiImportStaticStatement createImportStaticStatement(PsiClass aClass, String memberName) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
@@ -410,6 +443,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiImportStaticStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
+  @NotNull
   public PsiParameterList createParameterList(String[] names, PsiType[] types) throws IncorrectOperationException {
     @NonNls String text = "void method(";
     String sep = "";
@@ -424,6 +458,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return method.getParameterList();
   }
 
+  @NotNull
   public PsiReferenceList createReferenceList(PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
     @NonNls String text = "void method() ";
     if (references.length > 0) text += "throws ";
@@ -437,6 +472,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return method.getThrowsList();
   }
 
+  @NotNull
   public PsiCatchSection createCatchSection(PsiClassType exceptionType,
                                             String exceptionName,
                                             PsiElement context) throws IncorrectOperationException {
@@ -479,6 +515,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     psiCatchSection.getCatchBlock().replace(codeBlockFromText);
   }
 
+  @NotNull
   public XmlText createDisplayText(String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagTextUtil.getCDATAQuote(s) + "</a>");
     final XmlText[] textElements = tagFromText.getValue().getTextElements();
@@ -486,10 +523,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return textElements[0];
   }
 
+  @NotNull
   public XmlTag createXHTMLTagFromText(String text) throws IncorrectOperationException {
     return ((XmlFile)createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
+  @NotNull
   public PsiElement createWhiteSpaceFromText(@NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, null).getTreeElement();
     final LeafElement newElement = Factory.createLeafElement(
@@ -504,10 +543,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return newElement.getPsi();
   }
 
+  @NotNull
   public PsiFile createFileFromText(final String name, final FileType fileType, final CharSequence text) {
     return createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), false);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement createPackageReferenceElement(String packageName)
     throws IncorrectOperationException {
     if (packageName.length() == 0) {
@@ -516,6 +557,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightPackageReference(myManager, packageName);
   }
 
+  @NotNull
   public PsiReferenceExpression createReferenceExpression(PsiClass aClass) throws IncorrectOperationException {
     String text;
     if (aClass instanceof PsiAnonymousClass) {
@@ -527,6 +569,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightClassReferenceExpression(myManager, text, aClass);
   }
 
+  @NotNull
   public PsiReferenceExpression createReferenceExpression(PsiPackage aPackage) throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
@@ -534,11 +577,13 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightPackageReferenceExpression(myManager, aPackage);
   }
 
+  @NotNull
   public PsiIdentifier createIdentifier(String text) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, text);
     return new LightIdentifier(myManager, text);
   }
 
+  @NotNull
   public PsiKeyword createKeyword(String text) throws IncorrectOperationException {
     if (!myManager.getNameHelper().isKeyword(text)) {
       throw new IncorrectOperationException("\"" + text + "\" is not a keyword.");
@@ -546,6 +591,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new LightKeyword(myManager, text);
   }
 
+  @NotNull
   public PsiImportStatement createImportStatement(PsiClass aClass) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
@@ -559,6 +605,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
+  @NotNull
   public PsiImportStatement createImportStatementOnDemand(String packageName) throws IncorrectOperationException {
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create import statement for default package.");
@@ -573,6 +620,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
+  @NotNull
   public PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
     throws IncorrectOperationException {
     if (!myManager.getNameHelper().isIdentifier(name)) {
@@ -604,6 +652,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   }
 
+  @NotNull
   public PsiDeclarationStatement createVariableDeclarationStatement(String name,
                                                                     PsiType type,
                                                                     PsiExpression initializer)
@@ -611,6 +660,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createVariableDeclarationStatement(name, type, initializer, true);
   }
 
+  @NotNull
   public PsiDocTag createParamTag(String parameterName, @NonNls String description) throws IncorrectOperationException {
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(" * @param ");
@@ -625,6 +675,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createDocTagFromText(buffer.toString(), null);
   }
 
+  @NotNull
   public PsiDocTag createDocTagFromText(String docTagText, PsiElement context) throws IncorrectOperationException {
     StringBuffer buffer = new StringBuffer();
     buffer.append("/**\n");
@@ -634,6 +685,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return comment.getTags()[0];
   }
 
+  @NotNull
   public PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException {
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(docCommentText);
@@ -642,6 +694,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return method.getDocComment();
   }
 
+  @NotNull
   public PsiFile createFileFromText(String name, String text){
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
@@ -663,6 +716,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createFileFromText(fileName, fileType, text);
   }
 
+  @NotNull
   public PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException {
     @NonNls String fileText = "class _Dummy_ { " + text + " }";
     PsiJavaFile aFile = createDummyJavaFile(fileText);
@@ -673,6 +727,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return classes[0];
   }
 
+  @NotNull
   public PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
@@ -692,10 +747,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return new JavaParsingContext(holderElement.getCharTable(), languageLevel);
   }
 
+  @NotNull
   public PsiMethod createMethodFromText(String text, PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException {
     return createMethodFromTextInner(text, context, languageLevel);
   }
 
+  @NotNull
   public PsiMethod createMethodFromText(String text, PsiElement context) throws IncorrectOperationException {
     return createMethodFromTextInner(text, context, myManager.getEffectiveLanguageLevel());
   }
@@ -711,6 +768,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(decl);
   }
 
+  @NotNull
   public PsiParameter createParameterFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement param = getJavaParsingContext(holderElement).getDeclarationParsing().parseParameterText(text.toCharArray());
@@ -721,6 +779,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(param);
   }
 
+  @NotNull
   public PsiType createTypeFromText(String text, PsiElement context) throws IncorrectOperationException {
     PsiPrimitiveType primitiveType = ourPrimitiveTypesMap.get(text);
     if (primitiveType != null) return primitiveType;
@@ -734,6 +793,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return psiTypeElement.getType();
   }
 
+  @NotNull
   public PsiCodeBlock createCodeBlockFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement treeElement = getJavaParsingContext(holderElement).getStatementParsing().parseCodeBlockText(myManager, text.toCharArray());
@@ -744,6 +804,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiCodeBlock)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
+  @NotNull
   public PsiStatement createStatementFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
     TreeElement treeElement = getJavaParsingContext(treeHolder).getStatementParsing().parseStatementText(text.toCharArray());
@@ -754,6 +815,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
+  @NotNull
   public PsiExpression createExpressionFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
     final CompositeElement treeElement = ExpressionParsing.parseExpressionText(myManager, text.toCharArray(), 0,
@@ -765,6 +827,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
+  @NotNull
   public PsiComment createCommentFromText(String text, PsiElement context) throws IncorrectOperationException {
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiElement[] children = aFile.getChildren();
@@ -793,16 +856,19 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiJavaFile) createFileFromText(type, fileName, chars, startOffset, endOffset);
   }
 
+  @NotNull
   public XmlTag createTagFromText(String text) throws IncorrectOperationException {
     return ((XmlFile)createFileFromText("dummy.xml", text)).getDocument().getRootTag();
   }
 
+  @NotNull
   public XmlAttribute createXmlAttribute(String name, String value) throws IncorrectOperationException {
     XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument()
       .getRootTag();
     return tag.getAttributes()[0];
   }
 
+  @NotNull
   public PsiExpressionCodeFragment createExpressionCodeFragment(String text,
                                                                 PsiElement context,
                                                                 final PsiType expectedType,
@@ -813,6 +879,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return result;
   }
 
+  @NotNull
   public PsiCodeFragment createCodeBlockCodeFragment(String text, PsiElement context, boolean isPhysical) {
     final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager.getProject(),
                                                                ElementType.STATEMENTS,
@@ -823,12 +890,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return result;
   }
 
+  @NotNull
   public PsiTypeCodeFragment createTypeCodeFragment(String text, PsiElement context, boolean isPhysical) {
 
     return createTypeCodeFragment(text, context, false, isPhysical, false);
   }
 
 
+  @NotNull
   public PsiTypeCodeFragment createTypeCodeFragment(String text,
                                                     PsiElement context,
                                                     boolean isVoidValid,
@@ -836,6 +905,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createTypeCodeFragment(text, context, true, isPhysical, false);
   }
 
+  @NotNull
   public PsiTypeCodeFragment createTypeCodeFragment(String text,
                                                     PsiElement context,
                                                     boolean isVoidValid,
@@ -854,6 +924,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
 
+  @NotNull
   public PsiTypeParameter createTypeParameterFromText(String text, PsiElement context)
     throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();

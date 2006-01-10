@@ -38,7 +38,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspDirectiveKind;
@@ -835,7 +834,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           if(hasBadResolve) {
             String message;
             if (reference instanceof EmptyResolveMessageProvider) {
-              message = ((GenericReference)reference).getUnresolvedMessage();
+              message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessage();
             }
             else {
               message = XmlErrorMessages.message("cannot.resolve.symbol");

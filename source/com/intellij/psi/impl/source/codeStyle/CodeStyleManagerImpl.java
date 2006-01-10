@@ -91,14 +91,17 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public void projectClosed() { }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   public PsiElement reformat(PsiElement element) throws IncorrectOperationException {
     return reformat(element, false);
   }
 
+  @NotNull
   public PsiElement reformat(PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
@@ -1011,7 +1014,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expr;
       final Object value = literalExpression.getValue();
       if (value instanceof String) {
-        final String stringValue = ((String)value);
+        final String stringValue = (String)value;
         String[] names = getSuggestionsByValue(stringValue);
         if (names.length > 0) {
           return new NamesByExprInfo(null, constantValueToConstantName(names));
