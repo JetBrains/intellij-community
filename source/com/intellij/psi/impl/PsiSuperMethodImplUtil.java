@@ -1,6 +1,5 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
@@ -14,7 +13,6 @@ import java.util.*;
 
 public class PsiSuperMethodImplUtil {
   private static final Key<CachedValue<Map<MethodSignature, HierarchicalMethodSignatureImpl>>> SIGNATURES_KEY = Key.create("MAP_KEY");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSuperMethodImplUtil");
 
   private PsiSuperMethodImplUtil() {
   }
@@ -64,15 +62,10 @@ public class PsiSuperMethodImplUtil {
     return true;
   }
 
-  public static HierarchicalMethodSignatureImpl getHierarchicalMethodSignature(final PsiClass parentClass, final PsiMethod method) {
-    return getSignaturesMap(parentClass).get(method.getSignature(PsiSubstitutor.EMPTY));
-  }
-
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return null;
     return DeepestSuperMethodsSearch.search(method).findFirst();
   }
-
 
   private static void buildMethodHierarchy(PsiClass aClass,
                                            PsiSubstitutor substitutor,

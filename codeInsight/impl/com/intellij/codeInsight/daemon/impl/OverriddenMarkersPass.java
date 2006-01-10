@@ -138,7 +138,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, derived, PsiSubstitutor.EMPTY);
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       MethodSignature signature = method.getSignature(substitutor);
-      PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(derived, signature);
+      PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(derived, signature, false);
       if (method1 != null) {
         if (method1.hasModifierProperty(PsiModifier.STATIC) ||
             (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !manager.arePackagesTheSame(parentClass, derived))) {

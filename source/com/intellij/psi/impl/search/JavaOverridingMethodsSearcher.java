@@ -31,7 +31,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
-        PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
+        PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
         if (method1 == null ||
             method1.hasModifierProperty(PsiModifier.STATIC) ||
             (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {

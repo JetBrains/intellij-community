@@ -22,11 +22,7 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.MethodDeepestSuperSearcher");
 
   public boolean execute(final PsiMethod method, final Processor<PsiMethod> consumer) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return true;
-
-    HierarchicalMethodSignatureImpl hierarchical = PsiSuperMethodImplUtil.getHierarchicalMethodSignature(aClass, method);
-    LOG.assertTrue(hierarchical != null);
+    final HierarchicalMethodSignature hierarchical = method.getHierarchicalMethodSignature();
     HierarchicalMethodSignature deepest = findDeepestSuperOrSelfSignature(hierarchical);
     if (deepest == hierarchical) return true;
     if (deepest != null) return consumer.process(deepest.getMethod());

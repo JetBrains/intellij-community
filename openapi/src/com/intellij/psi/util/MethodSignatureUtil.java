@@ -216,13 +216,27 @@ public class MethodSignatureUtil {
     return null;
   }
 
-  public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature) {
-    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), false);
+  public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature, final boolean checkBases) {
+    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
       PsiSubstitutor substitutor = pair.second;
       MethodSignature foundMethodSignature = method.getSignature(substitutor);
       if (isSubsignature(methodSignature, foundMethodSignature)) return method;
+    }
+    return null;
+  }
+
+  public static PsiMethod findMethodBySuperMethod(final PsiClass aClass, PsiMethod method, final boolean checkBases) {
+    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(method.getName(), checkBases);
+    for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
+      PsiMethod candidate = pair.first;
+      PsiSubstitutor substitutor = pair.second;
+      MethodSignature candidateSignature = candidate.getSignature(substitutor);
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(method.getContainingClass(), candidate.getContainingClass(), substitutor);
+      if (superSubstitutor == null) continue;
+      MethodSignature superSignature = method.getSignature(superSubstitutor);
+      if (isSubsignature(superSignature, candidateSignature)) return candidate;
     }
     return null;
   }
