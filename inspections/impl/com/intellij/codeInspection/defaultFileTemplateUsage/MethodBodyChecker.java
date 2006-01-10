@@ -27,10 +27,14 @@ import java.util.Comparator;
 public class MethodBodyChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.MethodBodyChecker");
   private static final Map<Pair<PsiType,FileTemplate>, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<Pair<PsiType, FileTemplate>, PsiMethod>();
-  private final static Project DEFAULT_PROJECT = ProjectManager.getInstance().getDefaultProject();
-  private final static PsiClassType OBJECT_TYPE = PsiType.getJavaLangObject(PsiManager.getInstance(DEFAULT_PROJECT), GlobalSearchScope.allScope(DEFAULT_PROJECT));
+  private static Project DEFAULT_PROJECT;
+  private static PsiClassType OBJECT_TYPE;
 
   private static PsiMethod getTemplateMethod(PsiType returnType, List<HierarchicalMethodSignature> superSignatures, final PsiClass aClass) {
+    if (DEFAULT_PROJECT == null) {
+      DEFAULT_PROJECT = ProjectManager.getInstance().getDefaultProject();
+      OBJECT_TYPE = PsiType.getJavaLangObject(PsiManager.getInstance(DEFAULT_PROJECT), GlobalSearchScope.allScope(DEFAULT_PROJECT));
+    }
     if (!(returnType instanceof PsiPrimitiveType)) {
       returnType = OBJECT_TYPE;
     }
