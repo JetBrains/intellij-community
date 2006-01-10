@@ -122,9 +122,10 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * If fileName is already associated with any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    *
+   * @param file - a file to ask for file type association
    * @return Known file type or null. Never returns {@link StdFileTypes#UNKNOWN}.
    */
-  public abstract @NotNull FileType getKnownFileTypeOrAssociate(VirtualFile file);
+  public abstract @Nullable FileType getKnownFileTypeOrAssociate(VirtualFile file);
 
   /**
    * Adds an extension to the list of extensions associated with a file type.

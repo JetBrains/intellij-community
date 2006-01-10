@@ -28,6 +28,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -945,7 +946,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
   }
-  @NotNull
+
+  @Nullable
   public FileType getKnownFileTypeOrAssociate(VirtualFile file) {
     return FileTypeChooser.getKnownFileTypeOrAssociate(file);
   }
