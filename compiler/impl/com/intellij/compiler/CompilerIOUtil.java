@@ -28,10 +28,11 @@ public class CompilerIOUtil {
 
     while (charsRead < length) {
       synchronized (BUFF) {
-        final int bytesRead = Math.min((length - charsRead) * 2, BUFF.length);
-        stream.readFully(BUFF, 0, bytesRead);
+        final byte[] buff = BUFF;
+        final int bytesRead = Math.min((length - charsRead) * 2, buff.length);
+        stream.readFully(buff, 0, bytesRead);
         for (int i = 0 ; i < bytesRead; i += 2) {
-          chars[charsRead++] = (char)((BUFF[i] << 8) + BUFF[i + 1]);
+          chars[charsRead++] = (char)((buff[i] << 8) + buff[i + 1]);
         }
       }
     }
@@ -54,14 +55,15 @@ public class CompilerIOUtil {
     int charsWritten = 0;
     while (charsWritten < len) {
       synchronized (BUFF) {
-        final int bytesWritten = Math.min((len - charsWritten) * 2, BUFF.length);
+        final byte[] buff = BUFF;
+        final int bytesWritten = Math.min((len - charsWritten) * 2, buff.length);
         for (int i = 0; i < bytesWritten; i += 2) {
           char aChar = s.charAt(charsWritten++);
-          BUFF[i] = (byte)((aChar >>> 8) & 0xFF);
-          BUFF[i + 1] = (byte)((aChar) & 0xFF);
+          buff[i] = (byte)((aChar >>> 8) & 0xFF);
+          buff[i + 1] = (byte)((aChar) & 0xFF);
         }
 
-        stream.write(BUFF, 0, bytesWritten);
+        stream.write(buff, 0, bytesWritten);
       }
     }
   }

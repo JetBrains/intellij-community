@@ -119,7 +119,7 @@ public class FileUtil {
   }
 
   public static byte[] loadFileBytes(File file) throws IOException {
-    InputStream stream = new FileInputStream(file);
+    final InputStream stream = new BufferedInputStream(new FileInputStream(file));
     byte[] bytes;
     try{
       bytes = loadBytes(stream, (int)file.length());
