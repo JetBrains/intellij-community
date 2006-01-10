@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.FileInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
@@ -32,28 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import java.util.*;
 
-public class MissortedModifiersInspection extends ClassInspection {
-
-    /** @noinspection StaticCollection*/
-    @NonNls static final Map<String, Integer> s_modifierOrder =
-            new HashMap<String, Integer>(11);
+public class MissortedModifiersInspection extends FileInspection {
 
     /** @noinspection PublicField*/
     public boolean m_requireAnnotationsFirst = true;
-
-    static {
-        s_modifierOrder.put(PsiKeyword.PUBLIC, Integer.valueOf(0));
-        s_modifierOrder.put(PsiKeyword.PROTECTED, Integer.valueOf(1));
-        s_modifierOrder.put(PsiKeyword.PRIVATE, Integer.valueOf(2));
-        s_modifierOrder.put(PsiKeyword.STATIC, Integer.valueOf(3));
-        s_modifierOrder.put(PsiKeyword.ABSTRACT, Integer.valueOf(4));
-        s_modifierOrder.put(PsiKeyword.FINAL, Integer.valueOf(5));
-        s_modifierOrder.put(PsiKeyword.TRANSIENT, Integer.valueOf(6));
-        s_modifierOrder.put(PsiKeyword.VOLATILE, Integer.valueOf(7));
-        s_modifierOrder.put(PsiKeyword.SYNCHRONIZED, Integer.valueOf(8));
-        s_modifierOrder.put(PsiKeyword.NATIVE, Integer.valueOf(9));
-        s_modifierOrder.put("strictfp", Integer.valueOf(10));
-    }
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -175,7 +157,8 @@ public class MissortedModifiersInspection extends ClassInspection {
             for (final PsiElement child : children) {
                 if (child instanceof PsiJavaToken) {
                     final String text = child.getText();
-                    final Integer modifierIndex = s_modifierOrder.get(text);
+                    final Integer modifierIndex =
+                            ModifierComparator.getModifierIndex(text);
                     if (modifierIndex == null) {
                         return false;
                     }
@@ -186,13 +169,50 @@ public class MissortedModifiersInspection extends ClassInspection {
                 }
                 if (child instanceof PsiAnnotation) {
                     if (m_requireAnnotationsFirst &&
-                        currentModifierIndex != -1) {
+                            currentModifierIndex != -1) {
                         //things aren't in order, since annotations come first
                         return true;
                     }
                 }
             }
             return false;
+        }
+    }
+
+    private static class ModifierComparator implements Comparator<String> {
+
+        /** @noinspection StaticCollection*/
+        @NonNls private static final Map<String, Integer> s_modifierOrder =
+                new HashMap<String, Integer>(11);
+
+        static {
+            s_modifierOrder.put(PsiModifier.PUBLIC, Integer.valueOf(0));
+            s_modifierOrder.put(PsiModifier.PROTECTED, Integer.valueOf(1));
+            s_modifierOrder.put(PsiModifier.PRIVATE, Integer.valueOf(2));
+            s_modifierOrder.put(PsiModifier.STATIC, Integer.valueOf(3));
+            s_modifierOrder.put(PsiModifier.ABSTRACT, Integer.valueOf(4));
+            s_modifierOrder.put(PsiModifier.FINAL, Integer.valueOf(5));
+            s_modifierOrder.put(PsiModifier.TRANSIENT, Integer.valueOf(6));
+            s_modifierOrder.put(PsiModifier.VOLATILE, Integer.valueOf(7));
+            s_modifierOrder.put(PsiModifier.SYNCHRONIZED, Integer.valueOf(8));
+            s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(9));
+            s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(10));
+        }
+
+        public int compare(String o1, String o2) {
+            final Integer ordinal1 = s_modifierOrder.get(o1);
+            if (ordinal1 == null) {
+                return 0;
+            }
+            final Integer ordinal2 = s_modifierOrder.get(o2);
+            if (ordinal2 == null) {
+                return 0;
+            }
+            return ordinal1.intValue() - ordinal2.intValue();
+        }
+
+        public static Integer getModifierIndex(String modifier) {
+            return s_modifierOrder.get(modifier);
         }
     }
 }

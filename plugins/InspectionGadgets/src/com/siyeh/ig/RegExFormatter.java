@@ -1,8 +1,3 @@
-/**
- * (c) 2004 Carp Technologies BV
- * Hengelosestraat 705, 7521PA Enschede
- * Created: Feb 3, 2004, 5:44:43 PM
- */
 /*
  * Copyright 2003-2005 Dave Griffith
  *
@@ -25,10 +20,8 @@ import java.text.ParseException;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class RegExFormatter extends DefaultFormatter {
+
     public RegExFormatter() {
         super();
         setOverwriteMode(false);

@@ -18,56 +18,49 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.psiutils.InheritanceUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AbstractClassNeverImplementedInspection extends ClassInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new AbstractClassNeverImplementedVisitor();
-  }
-
-  private static class AbstractClassNeverImplementedVisitor extends BaseInspectionVisitor {
-
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (hasImplementation(aClass)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "abstract.class.never.implemented.display.name");
     }
 
-    private static boolean hasImplementation(PsiClass aClass) {
-      final PsiManager psiManager = aClass.getManager();
-      final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-      final SearchScope searchScope = aClass.getUseScope();
-      final PsiClass[] inheritors =
-        searchHelper.findInheritors(aClass, searchScope, true);
-      for (final PsiClass inheritor : inheritors) {
-        if (!inheritor.isInterface() && !inheritor.isAnnotationType() &&
-            !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          return true;
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "abstract.class.never.implemented.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstractClassNeverImplementedVisitor();
+    }
+
+    private static class AbstractClassNeverImplementedVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (InheritanceUtil.hasImplementation(aClass)) {
+                return;
+            }
+            registerClassError(aClass);
         }
-      }
-
-      return false;
     }
-
-  }
 }

@@ -19,13 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofIncompatibleInterfaceInspection
         extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.display.name");
+        return InspectionGadgetsBundle.message(
+                "instanceof.with.incompatible.interface.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -33,7 +36,8 @@ public class InstanceofIncompatibleInterfaceInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "instanceof.with.incompatible.interface.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -43,10 +47,9 @@ public class InstanceofIncompatibleInterfaceInspection
     private static class InstanceofIncompatibleInterfaceVisitor
             extends BaseInspectionVisitor{
 
-
-        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression){
+        public void visitInstanceOfExpression(
+                @NotNull PsiInstanceOfExpression expression){
             super.visitInstanceOfExpression(expression);
-
             final PsiTypeElement castTypeElement = expression.getCheckType();
             if(castTypeElement == null){
                 return;
@@ -55,23 +58,21 @@ public class InstanceofIncompatibleInterfaceInspection
             if(!(castType instanceof PsiClassType)){
                 return;
             }
-            final PsiClass castClass = ((PsiClassType) castType).resolve();
+            final PsiClassType castClassType = (PsiClassType)castType;
+            final PsiExpression operand = expression.getOperand();
+            final PsiType operandType = operand.getType();
+            if(!(operandType instanceof PsiClassType)){
+                return;
+            }
+            final PsiClassType operandClassType = (PsiClassType)operandType;
+            final PsiClass castClass = castClassType.resolve();
             if(castClass == null){
                 return;
             }
             if(!castClass.isInterface()){
                 return;
             }
-            final PsiExpression operand = expression.getOperand();
-            if(operand == null){
-                return;
-            }
-            final PsiType operandType = operand.getType();
-            if(!(operandType instanceof PsiClassType)){
-                return;
-            }
-            final PsiClass operandClass =
-                    ((PsiClassType) operandType).resolve();
+            final PsiClass operandClass = operandClassType.resolve();
             if(operandClass == null){
                 return;
             }
@@ -81,5 +82,4 @@ public class InstanceofIncompatibleInterfaceInspection
             registerError(castTypeElement);
         }
     }
-
 }

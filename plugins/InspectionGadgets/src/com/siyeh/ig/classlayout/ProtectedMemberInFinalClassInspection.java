@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class ProtectedMemberInFinalClassInspection extends ClassInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "protected.member.in.final.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +36,8 @@ public class ProtectedMemberInFinalClassInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "protected.member.in.final.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -61,29 +63,25 @@ public class ProtectedMemberInFinalClassInspection extends ClassInspection {
             if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
-            if (methodOverrides(method)) {
-                return;
-            }
+	        if (method.findSuperMethods().length != 0) {
+	            return;
+	        }
             registerModifierError(PsiModifier.PROTECTED, method);
         }
 
-        private static boolean methodOverrides(PsiMethod meth) {
-          return meth.findSuperMethods().length != 0;
-        }
-
-        public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerModifierError(PsiModifier.PROTECTED, field);
-        }
+	    public void visitField(@NotNull PsiField field) {
+	        //no call to super, so we don't drill into anonymous classes
+	        if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
+	            return;
+	        }
+	        final PsiClass containingClass = field.getContainingClass();
+	        if (containingClass == null) {
+	            return;
+	        }
+	        if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+	            return;
+	        }
+	        registerModifierError(PsiModifier.PROTECTED, field);
+	    }
     }
 }

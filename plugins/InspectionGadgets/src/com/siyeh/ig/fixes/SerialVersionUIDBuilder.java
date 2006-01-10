@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2005 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
+
     @NonNls private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
 
     private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
@@ -48,9 +46,11 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
     private List<MemberSignature> staticInitializers;
     private boolean assertStatement = false;
     private boolean classObjectAccessExpression = false;
-    private Map<PsiElement, String> memberMap = new HashMap<PsiElement, String>();
+    private Map<PsiElement, String> memberMap =
+            new HashMap<PsiElement, String>();
 
-    private static final Comparator<PsiClass> INTERFACE_COMPARATOR = new Comparator<PsiClass>(){
+    private static final Comparator<PsiClass> INTERFACE_COMPARATOR =
+            new Comparator<PsiClass>(){
         public int compare(PsiClass object1, PsiClass object2){
             if(object1 == null && object2 == null)
             {
@@ -368,7 +368,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         assertStatement = true;
     }
 
-    public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression){
+    public void visitClassObjectAccessExpression(
+            PsiClassObjectAccessExpression expression){
         final PsiTypeElement operand = expression.getOperand();
         final PsiType type = operand.getType();
         if(!(type instanceof PsiPrimitiveType)){
@@ -377,14 +378,14 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         super.visitClassObjectAccessExpression(expression);
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression methodCallExpression){
         // for navigating the psi tree in the order javac navigates its AST
-        final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-        if(argumentList != null){
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            for(final PsiExpression expression : expressions){
-                expression.accept(this);
-            }
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        for(final PsiExpression expression : expressions){
+            expression.accept(this);
         }
         final PsiReferenceExpression methodExpression =
                 methodCallExpression.getMethodExpression();
@@ -418,7 +419,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
+    public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression){
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         final PsiElement elementParentClass =
@@ -429,7 +431,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                 .equals(elementParentClass)){
             return;
         }
-        PsiElement parentOfParentClass = ClassUtils.getContainingClass(expressionParentClass);
+        PsiElement parentOfParentClass =
+                ClassUtils.getContainingClass(expressionParentClass);
         while(parentOfParentClass != null &&
                 !parentOfParentClass.equals(clazz)){
             if(!(expressionParentClass instanceof PsiAnonymousClass)){

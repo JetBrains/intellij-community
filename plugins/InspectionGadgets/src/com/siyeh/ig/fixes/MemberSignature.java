@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2005 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import java.lang.reflect.Modifier;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class MemberSignature implements Comparable
 {
     @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
@@ -134,7 +131,8 @@ public class MemberSignature implements Comparable
 
     public static String createMethodSignature(PsiMethod method)
     {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] parameters = parameterList.getParameters();
         final StringBuffer signatureBuffer = new StringBuffer();
         signatureBuffer.append('(');
         for(final PsiParameter parameter : parameters){
@@ -226,17 +224,17 @@ public class MemberSignature implements Comparable
             {
                 final PsiClassType classType = (PsiClassType)internalType;
                 PsiClass psiClass = classType.resolve();
-                                if (psiClass != null)
-                                {
-                                        final StringBuffer postFix = new StringBuffer("");
-                                        PsiClass containingClass = psiClass.getContainingClass();
-                                        while (containingClass != null)
-                                        {
-                                                // construct name for inner classes
-                                                postFix.insert(0, psiClass.getName()).insert(0, '$');
-                                                psiClass = containingClass;
-                                                containingClass = psiClass.getContainingClass();
-                                        }
+                if (psiClass != null)
+                {
+                    final StringBuffer postFix = new StringBuffer("");
+                    PsiClass containingClass = psiClass.getContainingClass();
+                    while (containingClass != null)
+                    {
+                        // construct name for inner classes
+                        postFix.insert(0, psiClass.getName()).insert(0, '$');
+                        psiClass = containingClass;
+                        containingClass = psiClass.getContainingClass();
+                    }
                     final String qualifiedName = psiClass.getQualifiedName();
                     if(qualifiedName == null)
                     {
@@ -245,9 +243,10 @@ public class MemberSignature implements Comparable
                     }
                     else
                     {
-                        buffer.append(qualifiedName.replace('.', '/') + postFix);
+                        buffer.append(qualifiedName.replace('.', '/'));
+                        buffer.append(postFix);
                     }
-                                }
+                }
             }
             else
             {

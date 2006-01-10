@@ -1,7 +1,17 @@
-/**
- * (c) 2004 Carp Technologies BV
- * Hengelosestraat 705, 7521PA Enschede
- * Created: Sep 7, 2005, 11:12:51 PM
+/*
+ * Copyright 2003-2005 Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.siyeh.ig.controlflow;
 
@@ -16,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
-  public String getDisplayName() {
-      return InspectionGadgetsBundle.message("pointless.indexof.comparison.display.name");
-  }
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "pointless.indexof.comparison.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -41,9 +49,11 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             value = createContainsExpressionValue(sign, true);
         }
         if (value) {
-          return InspectionGadgetsBundle.message("pointless.indexof.comparison.always.true.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "pointless.indexof.comparison.always.true.problem.descriptor");
         } else {
-          return InspectionGadgetsBundle.message("pointless.indexof.comparison.always.false.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "pointless.indexof.comparison.always.false.problem.descriptor");
         }
     }
 
@@ -59,12 +69,12 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
         }
         if (flipped) {
             if (tokenType.equals(JavaTokenType.GT) ||
-                tokenType.equals(JavaTokenType.GE)) {
+                    tokenType.equals(JavaTokenType.GE)) {
                 return false;
             }
         } else {
             if (tokenType.equals(JavaTokenType.LT) ||
-                tokenType.equals(JavaTokenType.LE)) {
+                    tokenType.equals(JavaTokenType.LE)) {
                 return false;
             }
         }
@@ -77,30 +87,31 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
     private static class PointlessIndexOfComparisonVisitor
             extends BaseInspectionVisitor {
-      @NonNls private static final String INDEX_OF_METHOD = "indexOf";
 
-      public void visitBinaryExpression(PsiBinaryExpression expression) {
-          super.visitBinaryExpression(expression);
-          final PsiExpression rhs = expression.getROperand();
-          if (rhs == null) {
-              return;
-          }
-          if (!ComparisonUtils.isComparison(expression)) {
-              return;
-          }
-          final PsiExpression lhs = expression.getLOperand();
-          if (lhs instanceof PsiMethodCallExpression) {
-              final PsiJavaToken sign = expression.getOperationSign();
-              if (isPointLess(lhs, sign, rhs, false)) {
-                  registerError(expression);
-              }
-          } else if (rhs instanceof PsiMethodCallExpression) {
-              final PsiJavaToken sign = expression.getOperationSign();
-              if (isPointLess(rhs, sign, lhs, true)) {
-                  registerError(expression);
-              }
-          }
-      }
+        @NonNls private static final String INDEX_OF_METHOD = "indexOf";
+
+        public void visitBinaryExpression(PsiBinaryExpression expression) {
+            super.visitBinaryExpression(expression);
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
+                return;
+            }
+            if (!ComparisonUtils.isComparison(expression)) {
+                return;
+            }
+            final PsiExpression lhs = expression.getLOperand();
+            if (lhs instanceof PsiMethodCallExpression) {
+                final PsiJavaToken sign = expression.getOperationSign();
+                if (isPointLess(lhs, sign, rhs, false)) {
+                    registerError(expression);
+                }
+            } else if (rhs instanceof PsiMethodCallExpression) {
+                final PsiJavaToken sign = expression.getOperationSign();
+                if (isPointLess(rhs, sign, lhs, true)) {
+                    registerError(expression);
+                }
+            }
+        }
 
         private static boolean isPointLess(PsiExpression lhs, PsiJavaToken sign,
                                            PsiExpression rhs, boolean flipped) {
@@ -117,32 +128,33 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             if (!(object instanceof Integer)) {
                 return false;
             }
-            final Integer constant = (Integer)object;
+            final Integer integer = (Integer)object;
+            final int constant = integer.intValue();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType == null) {
                 return false;
             }
             if (flipped) {
                 if (constant < 0 && (tokenType.equals(JavaTokenType.GT) ||
-                                     tokenType.equals(JavaTokenType.LE))) {
+                        tokenType.equals(JavaTokenType.LE))) {
                     return true;
                 } else if (constant < -1 &&
-                           (tokenType.equals(JavaTokenType.GE) ||
-                            tokenType.equals(JavaTokenType.LT) ||
-                            tokenType.equals(JavaTokenType.NE) ||
-                            tokenType.equals(JavaTokenType.EQEQ))) {
+                        (tokenType.equals(JavaTokenType.GE) ||
+                                tokenType.equals(JavaTokenType.LT) ||
+                                tokenType.equals(JavaTokenType.NE) ||
+                                tokenType.equals(JavaTokenType.EQEQ))) {
                     return true;
                 }
 
             } else {
                 if (constant < 0 && (tokenType.equals(JavaTokenType.LT) ||
-                                     tokenType.equals(JavaTokenType.GE))) {
+                        tokenType.equals(JavaTokenType.GE))) {
                     return true;
                 } else if (constant < -1 &&
-                           (tokenType.equals(JavaTokenType.LE) ||
-                            tokenType.equals(JavaTokenType.GT) ||
-                            tokenType.equals(JavaTokenType.NE) ||
-                            tokenType.equals(JavaTokenType.EQEQ))) {
+                        (tokenType.equals(JavaTokenType.LE) ||
+                                tokenType.equals(JavaTokenType.GT) ||
+                                tokenType.equals(JavaTokenType.NE) ||
+                                tokenType.equals(JavaTokenType.EQEQ))) {
                     return true;
                 }
             }
