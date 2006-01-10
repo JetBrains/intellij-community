@@ -359,15 +359,43 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-      addWindowListener(new MyWindowListener());
+      initDialog();
     }
 
     public MyDialog(Frame owner, DialogWrapper dialogWrapper) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
+      initDialog();
+    }
+
+    private void initDialog() {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       addWindowListener(new MyWindowListener());
+      addComponentListener(new ComponentAdapter() {
+        @SuppressWarnings({"RefusedBequest"})
+        public void componentResized(ComponentEvent e) {
+          final JRootPane pane = getRootPane();
+          final Dimension minSize = pane.getMinimumSize();
+          final Dimension size = pane.getSize();
+          final Dimension winSize = getSize();
+          if (minSize.width > size.width) {
+            winSize.width += minSize.width - size.width;
+          }
+          if (minSize.height > size.height) {
+            winSize.height += minSize.height - size.height;
+          }
+
+          if (!winSize.equals(getSize())) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                if (isShowing()) {
+                  setSize(winSize);
+                }
+              }
+            });
+          }
+        }
+      });
     }
 
     public FocusTrackback getFocusTrackback() {
@@ -391,29 +419,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     protected JRootPane createRootPane() {
-      return new JRootPane() {
-        public void reshape(int x, int y, int width, int height) {
-          Dimension minSize = getMinimumSize();
-          if (width < minSize.width || height < minSize.height) {
-            Window window = MyDialog.this;
-
-            Dimension size = window.getSize();
-            if (width < minSize.width) {
-              size.width = size.width - width + minSize.width;
-              width = minSize.width;
-            }
-
-            if (height < minSize.height) {
-              size.height = size.height - height + minSize.height;
-              height = minSize.height;
-            }
-
-            window.setSize(size);
-          }
-
-          super.reshape(x, y, width, height);
-        }
-      };
+      return new JRootPane();
     }
 
     public void show() {
