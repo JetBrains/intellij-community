@@ -6,8 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -86,6 +84,7 @@ public class WelcomeScreen {
   private static Icon DEVELOPER_SLOGAN;
 
   @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
+  @NonNls private static final String PLUGIN_WEBSITE = "http://www.jetbrains.com/idea/plugins/plugin_developers.html";
 
   @NonNls protected static final String TAHOMA_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(TAHOMA_FONT_NAME, Font.PLAIN, 11);
@@ -336,20 +335,23 @@ public class WelcomeScreen {
 
     docsGroup.appendButtonForAction(actionManager.getAction(IdeActions.ACTION_KEYMAP_REFERENCE));
 
-    if (new File(PLUGIN_URL).isFile()) {
-      MyActionButton pluginDev = new MyActionButton(PLUGIN_ICON, null) {
-        protected void onPress(InputEvent e) {
-          try {
+    MyActionButton pluginDev = new MyActionButton(PLUGIN_ICON, null) {
+      protected void onPress(InputEvent e) {
+        try {
+          if (new File(PLUGIN_URL).isFile()) {
             BrowserUtil.launchBrowser(PLUGIN_URL);
           }
-          catch(IllegalStateException ex) {
-            // ignore
+          else {
+            BrowserUtil.launchBrowser(PLUGIN_WEBSITE);
           }
         }
-      };
-      docsGroup.addButton(pluginDev, UIBundle.message("welcome.screen.plugin.development.action.name"),
-                          UIBundle.message("welcome.screen.plugin.development.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
-    }
+        catch(IllegalStateException ex) {
+          // ignore
+        }
+      }
+    };
+    docsGroup.addButton(pluginDev, UIBundle.message("welcome.screen.plugin.development.action.name"),
+                        UIBundle.message("welcome.screen.plugin.development.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   private void addDefaultQuickStartActions(final ActionGroupDescriptor quickStarts, final ActionManager actionManager) {
