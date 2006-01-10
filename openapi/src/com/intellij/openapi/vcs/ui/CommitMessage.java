@@ -15,63 +15,32 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.openapi.editor.actions.ContentChooser;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class CommitMessage extends JPanel{
 
   private final JTextArea myCommentArea = new JTextArea();
-  private final JButton myHistory = new JButton(VcsBundle.message("botton.text.commit.messages.history"));
 
-  public CommitMessage(final VcsConfiguration configuration, final Project project) {
+  public CommitMessage() {
     super(new BorderLayout());
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
     add(new JLabel(VcsBundle.message("label.commit.comment")), BorderLayout.NORTH);
-    final ArrayList<String> recentMessages = configuration.getRecentMessages();
-    Collections.reverse(recentMessages);
 
-    if (!recentMessages.isEmpty()) {
-      final JPanel buttonPanel = new JPanel(new BorderLayout());
-      buttonPanel.add(myHistory, BorderLayout.EAST);
-      add(buttonPanel, BorderLayout.SOUTH);
 
-      myHistory.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final ContentChooser<String> contentChooser = new ContentChooser<String>(project, VcsBundle.message("dialog.title.choose.commit.message.from.history"), false){
-            protected void removeContentAt(final String content) {
-              configuration.removeMessage(content);
-            }
-
-            protected String getStringRepresentationFor(final String content) {
-              return content;
-            }
-
-            protected List<String> getContents() {
-              return recentMessages;
-            }
-          };
-          contentChooser.show();
-          if (contentChooser.isOK()) {
-            final int selectedIndex = contentChooser.getSelectedIndex();
-            if (selectedIndex >= 0) {
-              setText(contentChooser.getAllContents().get(selectedIndex));
-            }
-          }
-          myCommentArea.requestFocus();
-        }
-      });
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionGroup messageActionGroup = (ActionGroup)actionManager.getAction("Vcs.MessageActionGroup");
+    if (messageActionGroup != null) {
+      ActionToolbar toolbar = actionManager.createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
+      add(toolbar.getComponent(), BorderLayout.SOUTH);
     }
   }
 
@@ -94,5 +63,9 @@ public class CommitMessage extends JPanel{
     myCommentArea.setSelectionStart(0);
     myCommentArea.setSelectionEnd(myCommentArea.getText().length());
 
+  }
+
+  public void requestFocusInMessage() {
+    myCommentArea.requestFocus();
   }
 }

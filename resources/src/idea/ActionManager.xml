@@ -1315,5 +1315,9 @@
 
     </group>
 
+    <group id="Vcs.MessageActionGroup">
+      <action id="Vcs.ShowMessageHistory" text="_History" class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"/> 
+    </group>
+
   </actions>
 </component>

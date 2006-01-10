@@ -56,4 +56,6 @@ public interface CheckinProjectPanel extends Refreshable {
   Collection<VirtualFile> getRoots();
 
   void setCommitMessage(final String currentDescription);
+
+  String getMessage();
 }
