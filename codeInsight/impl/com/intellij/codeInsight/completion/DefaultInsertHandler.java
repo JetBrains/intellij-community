@@ -240,10 +240,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private void handleParenses(final boolean hasParams, final boolean needParenth, int tailType){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    final boolean myGenerateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
     boolean insertRightParenth = !settings.INSERT_SINGLE_PARENTH
-      || (settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams)
-      || myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null
-      || (tailType != TailType.NONE && tailType != TailType.LPARENTH);
+                                 || (settings.INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS && !hasParams)
+                                 || myGenerateAnonymousBody
+                                 || (tailType != TailType.NONE && tailType != TailType.LPARENTH);
 
 //    if(tailType == TailType.LPARENTH) tailType = TailType.NONE; //???
     if (needParenth){
@@ -270,7 +271,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           myDocument.insertString(myState.tailOffset++, " ");
           myState.caretOffset ++;
         }
-        if (insertRightParenth && tailType != TailType.CALL_RPARENTH){
+        if (insertRightParenth &&
+            (tailType != TailType.CALL_RPARENTH || myGenerateAnonymousBody)
+           ){
           myDocument.insertString(myState.tailOffset, "()");
           myState.tailOffset += 2;
           if (hasParams){
