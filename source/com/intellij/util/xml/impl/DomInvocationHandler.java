@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -301,7 +302,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    return doInvoke(JavaMethodSignature.getSignature(method), args);
+    try {
+      return doInvoke(JavaMethodSignature.getSignature(method), args);
+    }
+    catch (InvocationTargetException ex) {
+      throw ex.getTargetException();
+    }
   }
 
   public final Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {

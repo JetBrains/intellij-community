@@ -5,7 +5,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.impl.AdvancedProxy;
-import com.intellij.util.xml.JavaMethodSignature;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -97,29 +96,35 @@ public class ModelMerger {
         }
         return null;
       }
-      if (MergedObject.class.equals(method.getDeclaringClass())) {
-        return findImplementation((Class<Object>)args[0]);
-      }
-      final Class returnType = method.getReturnType();
-      if (Collection.class.isAssignableFrom(returnType)) {
-        return getMergedImplementations(method, args,
-                                        DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
-      }
 
-      if (GenericValue.class.isAssignableFrom(returnType)) {
-        return new MergedGenericValue(method, args);
-      }
-
-      if (void.class == returnType) {
-        for (final T t : myImplementations) {
-          method.invoke(t, args);
+      try {
+        if (MergedObject.class.equals(method.getDeclaringClass())) {
+          return findImplementation((Class<Object>)args[0]);
         }
-        return null;
+        final Class returnType = method.getReturnType();
+        if (Collection.class.isAssignableFrom(returnType)) {
+          return getMergedImplementations(method, args,
+                                          DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
+        }
+
+        if (GenericValue.class.isAssignableFrom(returnType)) {
+          return new MergedGenericValue(method, args);
+        }
+
+        if (void.class == returnType) {
+          for (final T t : myImplementations) {
+            method.invoke(t, args);
+          }
+          return null;
+        }
+
+        List<Object> results = getMergedImplementations(method, args, method.getReturnType());
+
+        return results.isEmpty() ? null : results.get(0);
       }
-
-      List<Object> results = getMergedImplementations(method, args, method.getReturnType());
-
-      return results.isEmpty() ? null : results.get(0);
+      catch (InvocationTargetException ex) {
+        throw ex.getTargetException();
+      }
     }
 
     private List<Object> getMergedImplementations(final Method method, final Object[] args, final Class returnType)
