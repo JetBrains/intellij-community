@@ -3,20 +3,19 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.Table;
-import com.intellij.idea.ActionsBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -27,8 +26,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,7 +51,7 @@ public class GenerateAntBuildDialog extends DialogWrapper{
   public GenerateAntBuildDialog(Project project) {
     super(project, false);
     myProject = project;
-    setTitle(ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
+    setTitle(CompilerBundle.message("generate.ant.build.title"));
     init();
     loadSettings();
   }
