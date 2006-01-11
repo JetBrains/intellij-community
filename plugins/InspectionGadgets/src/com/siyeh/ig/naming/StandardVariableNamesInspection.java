@@ -16,9 +16,8 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.VariableInspection;
@@ -32,67 +31,109 @@ import java.util.Map;
 
 public class StandardVariableNamesInspection extends VariableInspection {
 
-  @NonNls private static final Map<String, String> s_expectedTypes = new HashMap<String, String>(10);
-  private final RenameFix fix = new RenameFix();
+    @NonNls static final Map<String, String> s_expectedTypes =
+            new HashMap<String, String>(13);
+    @NonNls static final Map<String, String> s_boxingClasses =
+            new HashMap<String, String>(8);
 
-  static {
-    s_expectedTypes.put("b", "byte");
-    s_expectedTypes.put("c", "char");
-    s_expectedTypes.put("ch", "char");
-    s_expectedTypes.put("d", "double");
-    s_expectedTypes.put("f", "float");
-    s_expectedTypes.put("i", "int");
-    s_expectedTypes.put("j", "int");
-    s_expectedTypes.put("k", "int");
-    s_expectedTypes.put("m", "int");
-    s_expectedTypes.put("n", "int");
-    s_expectedTypes.put("l", "long");
-    s_expectedTypes.put("s", "java.lang.String");
-    s_expectedTypes.put("str", "java.lang.String");
-  }
+    static {
+        s_expectedTypes.put("b", "byte");
+        s_expectedTypes.put("c", "char");
+        s_expectedTypes.put("ch", "char");
+        s_expectedTypes.put("d", "double");
+        s_expectedTypes.put("f", "float");
+        s_expectedTypes.put("i", "int");
+        s_expectedTypes.put("j", "int");
+        s_expectedTypes.put("k", "int");
+        s_expectedTypes.put("m", "int");
+        s_expectedTypes.put("n", "int");
+        s_expectedTypes.put("l", "long");
+        s_expectedTypes.put("s", "java.lang.String");
+        s_expectedTypes.put("str", "java.lang.String");
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final String variableName = location.getText();
-    final String expectedType = s_expectedTypes.get(variableName);
-    return InspectionGadgetsBundle.message("standard.variable.names.problem.descriptor", expectedType);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ExceptionNameDoesntEndWithExceptionVisitor();
-  }
-
-  private static class ExceptionNameDoesntEndWithExceptionVisitor extends BaseInspectionVisitor {
-
-    public void visitVariable(@NotNull PsiVariable var) {
-      super.visitVariable(var);
-      final String variableName = var.getName();
-      final String expectedType = s_expectedTypes.get(variableName);
-      if (expectedType == null) {
-        return;
-      }
-      final PsiType type = var.getType();
-      if (type == null) {
-        return;
-      }
-      final String typeText = type.getCanonicalText();
-      if (typeText.equals(expectedType)) {
-        return;
-      }
-      registerVariableError(var);
+        s_boxingClasses.put("int", "java.lang.Integer");
+        s_boxingClasses.put("short", "java.lang.Short");
+        s_boxingClasses.put("boolean", "java.lang.Boolean");
+        s_boxingClasses.put("long", "java.lang.Long");
+        s_boxingClasses.put("byte", "java.lang.Byte");
+        s_boxingClasses.put("float", "java.lang.Float");
+        s_boxingClasses.put("double", "java.lang.Double");
+        s_boxingClasses.put("char", "java.lang.Character");
     }
 
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "standard.variable.names.display.name");
+    }
 
-  }
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new RenameFix();
+    }
+
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    public String getGroupDisplayName() {
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    }
+
+    public String buildErrorString(PsiElement location) {
+        final String variableName = location.getText();
+        final String expectedType = s_expectedTypes.get(variableName);
+        final PsiManager manager = location.getManager();
+        final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+        if (!LanguageLevel.JDK_1_3.equals(languageLevel) &&
+                !LanguageLevel.JDK_1_4.equals(languageLevel)) {
+            final String boxedType = s_boxingClasses.get(expectedType);
+            if (boxedType != null) {
+                return InspectionGadgetsBundle.message(
+                        "standard.variable.names.problem.descriptor2",
+                        expectedType, boxedType);
+            }
+        }
+        return InspectionGadgetsBundle.message(
+                "standard.variable.names.problem.descriptor", expectedType);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExceptionNameDoesntEndWithExceptionVisitor();
+    }
+
+    private static class ExceptionNameDoesntEndWithExceptionVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitVariable(@NotNull PsiVariable variable) {
+            super.visitVariable(variable);
+            final String variableName = variable.getName();
+            final String expectedType = s_expectedTypes.get(variableName);
+            if (expectedType == null) {
+                return;
+            }
+            final PsiType type = variable.getType();
+            if (type == null) {
+                return;
+            }
+            final String typeText = type.getCanonicalText();
+            if (expectedType.equals(typeText)) {
+                return;
+            }
+            final PsiManager manager = variable.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (!LanguageLevel.JDK_1_4.equals(languageLevel) &&
+                    LanguageLevel.JDK_1_5.equals(languageLevel)) {
+                final PsiPrimitiveType unboxedType =
+                        PsiPrimitiveType.getUnboxedType(type);
+                if (unboxedType == null) {
+                    return;
+                }
+                final String unboxedTypeText = unboxedType.getCanonicalText();
+                if (expectedType.equals(unboxedTypeText)) {
+                    return;
+                }
+            }
+            registerVariableError(variable);
+        }
+    }
 }
