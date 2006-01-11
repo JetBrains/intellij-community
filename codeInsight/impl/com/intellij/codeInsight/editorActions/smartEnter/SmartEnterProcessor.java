@@ -21,6 +21,8 @@ import com.intellij.util.text.CharArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -172,7 +174,7 @@ public class SmartEnterProcessor {
     CodeStyleManager.getInstance(myProject).reformat(atCaret);
   }
 
-  private void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
+  private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
     res.add(0, atCaret);
     if (doNotStepInto(atCaret)) {
       if (!recurse) return;
@@ -185,7 +187,7 @@ public class SmartEnterProcessor {
     }
   }
 
-  private boolean doNotStepInto(PsiElement element) {
+  private static boolean doNotStepInto(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiCodeBlock || element instanceof PsiStatement || element instanceof PsiMethod;
   }
 
@@ -215,16 +217,18 @@ public class SmartEnterProcessor {
     getEnterHandler().execute(myEditor, ((EditorEx) myEditor).getDataContext());
   }
 
-  private EditorActionHandler getEnterHandler() {
+  private static EditorActionHandler getEnterHandler() {
     return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 
+  @Nullable
   private PsiElement getStatementAtCaret() {
     int caret = myEditor.getCaretModel().getOffset();
     return getStatementAtCaret(myEditor, caret, myPsiFile);
   }
 
-  private PsiElement getStatementAtCaret(Editor editor, int caret, PsiFile psiFile) {
+  @Nullable
+  private static PsiElement getStatementAtCaret(Editor editor, int caret, PsiFile psiFile) {
     final Document doc = editor.getDocument();
     CharSequence chars = doc.getCharsSequence();
     int offset = CharArrayUtil.shiftBackward(chars, caret - 1, " \t");
