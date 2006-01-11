@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
-  private static final Icon PLUGIN_MODULE_ICON = IconLoader.getIcon("/general/pluginManager.png");
+  private static final Icon PLUGIN_MODULE_ICON = IconLoader.getIcon("/modules/pluginModule.png");
   private static final Icon PLUGIN_MODULE_NODE_ICON = IconLoader.getIcon("/nodes/plugin.png");
   private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
   private static PluginModuleType ourInstance = new PluginModuleType();
