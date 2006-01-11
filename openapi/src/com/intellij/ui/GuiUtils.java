@@ -45,7 +45,7 @@ public class GuiUtils {
   public static final int lengthForFileField = 25;
 
   public static JPanel constructFieldWithBrowseButton(JComponent aComponent, ActionListener aActionListener) {
-    EnableablePanel result = new EnableablePanel(new BorderLayout(2, 0));
+    JPanel result = new JPanel(new BorderLayout(2, 0));
     result.add(aComponent, BorderLayout.CENTER);
     FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
