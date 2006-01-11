@@ -19,11 +19,13 @@
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
     <Base>
-      <setting name="state" value="1" />
+      <setting name="state" value="2" />
     </Base>
     <LanguageOptions name="$TEMPLATE$">
       <option name="templateOptions">
@@ -38,7 +40,7 @@
           <option name="filler" value=" " />
         </value>
       </option>
-      <option name="notice" value="Copyright (c) 2000-&amp;#36;{today.year} JetBrains s.r.o. All Rights Reserved." />
+      <option name="notice" value="Copyright (c) &amp;#36;today.year, Your Corporation. All Rights Reserved." />
       <option name="keyword" value="Copyright" />
       <option name="fileTypeOverride" value="4" />
       <option name="relativeBefore" value="true" />
