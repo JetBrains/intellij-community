@@ -1,7 +1,17 @@
-/**
- * (c) 2004 Carp Technologies BV
- * Hengelosestraat 705, 7521PA Enschede
- * Created: Jan 10, 2006, 9:39:41 PM
+/*
+ * Copyright 2006 Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.siyeh.ig.performance;
 
@@ -18,13 +28,11 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-/**
- * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
- */
 public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
 
-    String isEmptyCall = "";
+    @NonNls String isEmptyCall = "";
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -59,7 +67,6 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)descriptor.getPsiElement();
             PsiExpression operand = binaryExpression.getLOperand();
-            String newExpression;
             if (!(operand instanceof PsiMethodCallExpression)) {
                 operand = binaryExpression.getROperand();
             }
@@ -75,7 +82,7 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
             if (qualifierExpression ==  null) {
                 return;
             }
-            newExpression = qualifierExpression.getText();
+            @NonNls String newExpression = qualifierExpression.getText();
             final PsiJavaToken sign = binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!JavaTokenType.EQEQ.equals(tokenType)) {
