@@ -408,28 +408,15 @@ class FormatProcessor {
   }
 
   private void adjustLineIndent() {
-    int alignOffset = getAlignOffset();
-    if (alignOffset == -1) {
+    IndentData alignOffset = getAlignOffset();
+    if (alignOffset == null) {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       final IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
       whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
     }
     else {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-      AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
-      if (previousIndentedBlock == null) {
-        whiteSpace.setSpaces(alignOffset, 0);
-      }
-      else {
-        int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
-        if (indentOffset > alignOffset) {
-          whiteSpace.setSpaces(alignOffset, 0);
-        }
-        else {
-          whiteSpace.setSpaces(alignOffset - indentOffset, indentOffset);
-        }
-
-      }
+      whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
     }
   }
 
@@ -542,17 +529,35 @@ class FormatProcessor {
     }
   }
 
-  private int getAlignOffset() {
+  private IndentData getAlignOffset() {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
       if (alignment != null && alignment.getOffsetRespBlockBefore(myCurrentBlock) != null) {
-        return getOffsetBefore(alignment.getOffsetRespBlockBefore(myCurrentBlock).getBlock());
+        final LeafBlockWrapper block = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+        final WhiteSpace whiteSpace = block.getWhiteSpace();
+        if (whiteSpace.containsLineFeeds()) {
+          return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
+        } else {
+          final int offsetBeforeBlock = getOffsetBefore(block.getBlock());
+          final AbstractBlockWrapper prevIndentedBlock = getPreviousIndentedBlock();
+          if (prevIndentedBlock == null) {
+            return new IndentData(0, offsetBeforeBlock);
+          } else {
+            final int parentIndent = prevIndentedBlock.getWhiteSpace().getIndentOffset();
+            if (parentIndent > offsetBeforeBlock) {
+              return new IndentData(0, offsetBeforeBlock);
+            } else {
+              return new IndentData(parentIndent, offsetBeforeBlock - parentIndent);
+            }
+          }
+        }
+
       }
       else {
         current = current.getParent();
-        if (current == null) return -1;
-        if (current.getStartOffset() != myCurrentBlock.getStartOffset()) return -1;
+        if (current == null) return null;
+        if (current.getStartOffset() != myCurrentBlock.getStartOffset()) return null;
       }
     }
   }
