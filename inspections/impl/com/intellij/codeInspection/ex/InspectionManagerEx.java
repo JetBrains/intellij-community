@@ -94,6 +94,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
   private InspectionProfile myExternalProfile = null;
+
   public boolean RUN_WITH_EDITOR_PROFILE = false;
 
   public InspectionManagerEx(Project project) {
@@ -144,6 +145,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myUIOptions, element);
 
+    DefaultJDOMExternalizer.readExternal(this, element);
+
     Element profileElement = element.getChild("profile");
     if (profileElement != null) {
       myCurrentProfileName = profileElement.getAttributeValue("name");
@@ -156,6 +159,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(myUIOptions, element);
+    DefaultJDOMExternalizer.writeExternal(this, element);
 
     Element profileElement = new Element("profile");
     profileElement.setAttribute("name", myCurrentProfileName);
@@ -931,53 +935,6 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     }
   }
 
-  /* private void processTools(final AnalysisScope scope,
-                              final InspectionProjectProfileManager profileManager,
-                              Condition<InspectionTool> processing) {
-      final Set<String> profiles = scope.getActiveInspectionProfiles();
-      for (String profile : profiles) {
-        final InspectionProfile inspectionProfile = ((InspectionProfile)profileManager.getProfile(profile));
-        final InspectionTool[] tools = inspectionProfile.getInspectionTools();
-        for (InspectionTool tool : tools) {
-          if (inspectionProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName())) && !(tool instanceof LocalInspectionToolWrapper))
-          {
-            try {
-              processing.value(tool);
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
-          }
-        }
-      }
-    }
-
-    private ArrayList<LocalInspectionToolWrapper> initJobDescriptors(InspectionTool[] tools, final AnalysisScope scope) {
-      myJobDescriptors = new ArrayList<JobDescriptor>();
-      ArrayList<LocalInspectionToolWrapper> localTools = new ArrayList<LocalInspectionToolWrapper>();
-      for (InspectionTool tool : tools) {
-        if (tool instanceof LocalInspectionToolWrapper) {
-          LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)tool;
-          wrapper.initialize(this);
-          localTools.add(wrapper);
-          appendJobDescriptor(LOCAL_ANALYSIS);
-        }
-        else {
-          JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
-          for (JobDescriptor jobDescriptor : jobDescriptors) {
-            appendJobDescriptor(jobDescriptor);
-          }
-        }
-      }
-
-      BUILD_GRAPH.setTotalAmount(scope.getFileCount());
-      LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-      return localTools;
-    }
-  */
    private void appendJobDescriptor(JobDescriptor job) {
      if (!myJobDescriptors.contains(job)) {
        myJobDescriptors.add(job);

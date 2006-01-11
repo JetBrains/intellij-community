@@ -434,7 +434,6 @@
 
       <group id="AnalyzeMenu" popup="true">
         <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-        <action id="InspectCodeWithEditorProfile" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
         <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
         <separator/>
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>

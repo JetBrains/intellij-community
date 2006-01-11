@@ -37,7 +37,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    LabeledComponent component = new LabeledComponent();
+    final LabeledComponent component = new LabeledComponent();
     component.setText(InspectionsBundle.message("inspection.action.profile.label"));
     component.setLabelLocation(BorderLayout.WEST);
     final ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
@@ -88,13 +88,15 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
-    final JCheckBox runWithEditorSettings = new JCheckBox("Run With Editor Settings", manager.RUN_WITH_EDITOR_PROFILE);
+    final JCheckBox runWithEditorSettings = new JCheckBox(InspectionsBundle.message("run.with.editor.settings.dialog.option"), manager.RUN_WITH_EDITOR_PROFILE);
     runWithEditorSettings.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         manager.RUN_WITH_EDITOR_PROFILE = runWithEditorSettings.isSelected();
+        component.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
       }
     });
     JPanel panel = new JPanel(new BorderLayout());
+    component.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
     panel.add(component, BorderLayout.NORTH);
     panel.add(runWithEditorSettings, BorderLayout.SOUTH);
     return panel;
