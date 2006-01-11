@@ -682,22 +682,24 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     final Set<RefModule> modules = tool.getModuleProblems();
-    final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
-    Collections.sort(sortedModules, RefEntityAlphabeticalComparator.getInstance());
-    for (RefModule module : sortedModules) {
-      appendPackageReference(packageIndex, module.getName());
-      StringBuffer contentIndex = new StringBuffer();
-      contentIndex.append("<html><body>");
+    if (modules != null) {
+      final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
+      Collections.sort(sortedModules, RefEntityAlphabeticalComparator.getInstance());
+      for (RefModule module : sortedModules) {
+        appendPackageReference(packageIndex, module.getName());
+        StringBuffer contentIndex = new StringBuffer();
+        contentIndex.append("<html><body>");
 
-      contentIndex.append("<a HREF=\"");
-      contentIndex.append(exporter.getURL(module));
-      contentIndex.append("\" target=\"elementFrame\">");
-      contentIndex.append(module.getName());
-      contentIndex.append("</a><br>");
-      exporter.createPage(module);
+        contentIndex.append("<a HREF=\"");
+        contentIndex.append(exporter.getURL(module));
+        contentIndex.append("\" target=\"elementFrame\">");
+        contentIndex.append(module.getName());
+        contentIndex.append("</a><br>");
+        exporter.createPage(module);
 
-      contentIndex.append("</body></html>");
-      HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myProject);
+        contentIndex.append("</body></html>");
+        HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myProject);
+      }
     }
 
 
