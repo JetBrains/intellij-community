@@ -2,7 +2,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -722,10 +721,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
               final Vector<String> watchManual = new Vector<String>();
 
-              int numDir = FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
+              FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
+              /*
               if (numDir == 0) {
                 FileWatcher.setup(new String[]{PathManager.getBinPath()}, new boolean[] {false}, new Vector());
               }
+              */
 
               myFilesToWatchManual.clear();
               for (int i = 0; i < watchManual.size(); i++) {
