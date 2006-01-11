@@ -504,6 +504,7 @@ public abstract class HTMLComposer {
   }
 
   protected void appendResolution(StringBuffer buf, InspectionTool tool, RefEntity where) {
+    if (myExporter != null) return;
     QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
     if (quickFixes != null) {
       boolean listStarted = false;

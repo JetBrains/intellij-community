@@ -90,6 +90,8 @@ public class RefManagerImpl extends RefManager {
 
   public void cleanup() {
     myRefTable = null;
+    myPackages = null;
+    myModules = null;
     myGraphAnnotators.clear();
   }
 

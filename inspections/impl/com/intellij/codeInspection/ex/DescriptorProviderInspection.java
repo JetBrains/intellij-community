@@ -87,7 +87,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
-  private boolean isIgnoreProblem(QuickFix[] problemFixes, Set<QuickFix> fixes, int idx){
+  private static boolean isIgnoreProblem(QuickFix[] problemFixes, Set<QuickFix> fixes, int idx){
     if (problemFixes == null || fixes == null) {
       return true;
     }
@@ -108,6 +108,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     myProblemToElements.clear();
     myQuickFixActions.clear();
     myPackageContents = null;
+    myModulesProblems = null;
   }
 
   public CommonProblemDescriptor[] getDescriptions(RefEntity refEntity) {

@@ -1,9 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -11,7 +9,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -199,10 +199,10 @@ public class Browser extends JPanel {
               else if (ref.startsWith("invokelocal:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
                 if (actionNumber > -1) {
-                  myView.invokeLocalFix(actionNumber);
+                  invokeLocalFix(actionNumber);
                 }
               } else if (ref.startsWith("suppress:")){
-                myView.getSuppressAction((RefElement)myCurrentEntity, getTool()).actionPerformed(null);
+                SuppressInspectionToolbarAction.getSuppressAction((RefElement)myCurrentEntity, getTool(), myView).actionPerformed(null);
               }
               else {
                 int offset = Integer.parseInt(ref);
@@ -306,7 +306,7 @@ public class Browser extends JPanel {
     if (tool != null) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null){//dummy entry points
-        final AnAction suppressAction = myView.getSuppressAction(refElement, tool);
+        final AnAction suppressAction = SuppressInspectionToolbarAction.getSuppressAction(refElement, tool, myView);
         if (suppressAction != null){
           @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
           buf.append(font);
@@ -406,7 +406,7 @@ public class Browser extends JPanel {
     }
   }
 
-  private URL getDescriptionUrl(InspectionTool tool) {
+  private static URL getDescriptionUrl(InspectionTool tool) {
     Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
     return ResourceUtil.getResource(aClass, "/inspectionDescriptions", tool.getDescriptionFileName());
   }
@@ -419,13 +419,81 @@ public class Browser extends JPanel {
     return null;
   }
 
-  @Nullable
-  private HTMLComposer getComposer() {
-    final InspectionTool tool = getTool();
-    if (tool != null){
-      return tool.getComposer();
+  public void invokeLocalFix(int idx) {
+    if (myView.getTree().getSelectionCount() != 1) return;
+    final InspectionTreeNode node = (InspectionTreeNode)myView.getTree().getSelectionPath().getLastPathComponent();
+    if (node instanceof ProblemDescriptionNode) {
+      final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+      final CommonProblemDescriptor descriptor = problemNode.getDescriptor();
+      final RefEntity element = problemNode.getElement();
+      invokeFix(element, descriptor, idx);
     }
-    return null;
+    else if (node instanceof RefElementNode) {
+      RefElementNode elementNode = (RefElementNode)node;
+      RefElement element = elementNode.getElement();
+      CommonProblemDescriptor descriptor = elementNode.getProblem();
+      if (descriptor != null) {
+        invokeFix(element, descriptor, idx);
+      }
+    }
+  }
+
+  private void invokeFix(final RefEntity element, final CommonProblemDescriptor descriptor, final int idx) {
+    final QuickFix[] fixes = descriptor.getFixes();
+    if (fixes != null && fixes.length > idx && fixes[idx] != null) {
+      if (element instanceof RefElement) {
+        PsiElement psiElement = ((RefElement)element).getElement();
+        if (psiElement != null && psiElement.isValid()) {
+          if (!psiElement.isWritable()) {
+            final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myView.getProject())
+              .ensureFilesWritable(psiElement.getContainingFile().getVirtualFile());
+            if (operationStatus.hasReadonlyFiles()) {
+              return;
+            }
+          }
+
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              Runnable command = new Runnable() {
+                public void run() {
+                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
+                  if (descriptor instanceof ProblemDescriptor){
+                    ((LocalQuickFix)fixes[idx]).applyFix(myView.getProject(), (ProblemDescriptor)descriptor);
+                  } else {
+                    ((GlobalQuickFix)fixes[idx]).applyFix();
+                  }
+                }
+              };
+              CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
+              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+              if (tool != null) {
+                tool.ignoreProblem(element, descriptor, idx);
+              }
+              myView.update();
+            }
+          });
+        }
+      } else {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              Runnable command = new Runnable() {
+                public void run() {
+                  CommandProcessor.getInstance().markCurrentCommandAsComplex(myView.getProject());
+                  if (!(descriptor instanceof ProblemDescriptor)){
+                    ((GlobalQuickFix)fixes[idx]).applyFix();
+                  }
+                }
+              };
+              CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
+              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+              if (tool != null) {
+                tool.ignoreProblem(element, descriptor, idx);
+              }
+              myView.update();
+            }
+          });
+      }
+    }
   }
 }
 
