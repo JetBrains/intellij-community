@@ -77,7 +77,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
 
-    private static final int NUM_INSPECTIONS = 500;
+    private static final int NUM_INSPECTIONS = 520;
     private final List<Class<? extends LocalInspectionTool>> m_inspectionClasses =
             new ArrayList<Class<? extends LocalInspectionTool>>(NUM_INSPECTIONS);
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
@@ -97,6 +97,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             try {
                 stream = new FileOutputStream(args[0]);
             } catch (final FileNotFoundException e) {
+                System.err.println(e.getMessage());
                 return;
             }
             out = new PrintStream(stream);
@@ -113,17 +114,17 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         final int numQuickFixes = countQuickFixes(classes, out);
         out.println(InspectionGadgetsBundle.message(
                 "create.documentation.count.inspections.message",
-                classes.length));
+                Integer.valueOf(classes.length)));
         out.println(InspectionGadgetsBundle.message(
                 "create.documentation.count.quick.fixes.message",
-                numQuickFixes));
+                Integer.valueOf(numQuickFixes)));
         String currentGroupName="";
 
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
-                        aClass.newInstance();
+                         aClass.newInstance();
                 final String groupDisplayName =
                         inspection.getGroupDisplayName();
                 if(!groupDisplayName.equals(currentGroupName)){
@@ -513,6 +514,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MarkerInterfaceInspection.class);
         m_inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
         m_inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
+        m_inspectionClasses.add(InterfaceNeverImplementedInspection.class);
         m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
         m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);
         m_inspectionClasses.add(ExtendsAnnotationInspection.class);
@@ -856,6 +858,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ZeroLengthArrayInitializationInspection.class);
         m_inspectionClasses.add(CallToSimpleGetterInClassInspection.class);
         m_inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
+        m_inspectionClasses.add(SizeReplaceableByIsEmptyInspection.class);
     }
 
     private void registerJ2MEInspections(){

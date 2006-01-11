@@ -19,12 +19,12 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
@@ -87,8 +87,6 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
 
     private static class PointlessIndexOfComparisonVisitor
             extends BaseInspectionVisitor {
-
-        @NonNls private static final String INDEX_OF_METHOD = "indexOf";
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
@@ -166,7 +164,7 @@ public class PointlessIndexOfComparisonInspection extends ExpressionInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            return INDEX_OF_METHOD.equals(methodName);
+            return HardcodedMethodConstants.INDEX_OF.equals(methodName);
         }
     }
 }

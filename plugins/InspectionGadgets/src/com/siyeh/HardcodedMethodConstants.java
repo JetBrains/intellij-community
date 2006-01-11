@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
     public static final String GET_CONNECTION = "getConnection";
     public static final String HASH_CODE = "hashCode";
     public static final String HAS_NEXT = "hasNext";
+    public static final String INDEX_OF = "indexOf";
     public static final String JAVA_LANG = "java.lang";
     public static final String ITERATOR = "iterator";
     public static final String LENGTH = "length";
