@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -18,7 +19,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.lang.properties.psi.Property;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
 
@@ -139,9 +139,18 @@ public class CompletionData {
 
   public LookupItemPreferencePolicy completeFieldName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
+
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
-    final String prefix = context.prefix;
     final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
+    final String prefix = context.prefix;
+
+    if (var.getType() == PsiType.VOID ||
+        prefix.startsWith(CompletionUtil.IS_PREFIX) ||
+        prefix.startsWith(CompletionUtil.GET_PREFIX) ||
+        prefix.startsWith(CompletionUtil.SET_PREFIX)) {
+      return CompletionUtil.completeVariableNameForRefactoring(var.getProject(), set, prefix, var.getType(), variableKind);
+    }
+
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
     LookupItemUtil.addLookupItems(set, suggestedNames, prefix);
@@ -161,13 +170,6 @@ public class CompletionData {
       };
 
       LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix);
-    }
-
-    if (var.getType() == PsiType.VOID ||
-        prefix.startsWith(CompletionUtil.IS_PREFIX) ||
-        prefix.startsWith(CompletionUtil.GET_PREFIX) ||
-        prefix.startsWith(CompletionUtil.SET_PREFIX)) {
-      return null;
     }
 
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), prefix), prefix);
