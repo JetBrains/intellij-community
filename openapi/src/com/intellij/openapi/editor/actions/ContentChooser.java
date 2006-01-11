@@ -24,6 +24,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.CommonBundle;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,7 +35,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
 
@@ -42,7 +44,6 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private JList myList;
   private java.util.List<Data> myAllContents;
 
-  private JTextArea myTextArea;
   private Editor myViewer;
   private final boolean myUseIdeaEditor;
 
@@ -99,6 +100,15 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           close(OK_EXIT_CODE);
         }
+        else {
+          final char aChar = e.getKeyChar();
+          if (aChar >= '0' && aChar <= '9') {
+            int idx = aChar == '0' ? 9 : aChar - '1';
+            if (idx < myAllContents.size()) {
+              myList.setSelectedIndex(idx);
+            }
+          }
+        }
       }
     });
 
@@ -142,14 +152,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       myViewer.getSettings().setLineMarkerAreaShown(false);
       mySplitter.setSecondComponent(myViewer.getComponent());
     } else {
-      myTextArea = new JTextArea(fullString);
-      myTextArea.setRows(3);
-      myTextArea.setWrapStyleWord(true);
-      myTextArea.setLineWrap(true);
-      myTextArea.setSelectionStart(0);
-      myTextArea.setSelectionEnd(myTextArea.getText().length());
-      myTextArea.setEditable(false);
-      mySplitter.setSecondComponent(new JScrollPane(myTextArea));
+      final JTextArea textArea = new JTextArea(fullString);
+      textArea.setRows(3);
+      textArea.setWrapStyleWord(true);
+      textArea.setLineWrap(true);
+      textArea.setSelectionStart(0);
+      textArea.setSelectionEnd(textArea.getText().length());
+      textArea.setEditable(false);
+      mySplitter.setSecondComponent(new JScrollPane(textArea));
     }
     mySplitter.revalidate();
   }
@@ -164,16 +174,30 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void rebuildListContent() {
     java.util.List<Data> allContents = new ArrayList<Data>(getContents());
-    ArrayList<Data> contents = new ArrayList<Data>();
-    ArrayList shortened = new ArrayList();
-    for (int i = 0; i < allContents.size(); i++) {
-      Data content = allContents.get(i);
+    ArrayList<String> shortened = new ArrayList<String>();
+    for (Data content : allContents) {
       String fullString = getStringRepresentationFor(content);
       if (fullString != null) {
         fullString = StringUtil.convertLineSeparators(fullString, "\n");
-        contents.add(content);
-        int lastNewLineIdx = fullString.indexOf('\n');
-        shortened.add(lastNewLineIdx == -1 ? fullString : fullString.substring(0, lastNewLineIdx) + " ...");
+        int newLineIdx = fullString.indexOf('\n');
+        if (newLineIdx == -1) {
+          shortened.add(fullString.trim());
+        }
+        else {
+          int lastLooked = 0;
+          do  {
+            int nextLineIdx = fullString.indexOf("\n", lastLooked);
+            if (nextLineIdx > lastLooked) {
+              shortened.add(fullString.substring(lastLooked, nextLineIdx).trim() + " ...");
+              break;
+            }
+            else if (nextLineIdx == -1) {
+              shortened.add(" ...");
+              break;
+            }
+            lastLooked = nextLineIdx + 1;
+          } while (true);
+        }
       }
     }
 
@@ -194,17 +218,13 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return myAllContents;
   }
 
-  private class MyListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(
-      JList list,
-      Object value,
-      int index,
-      boolean isSelected,
-      boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+  private static class MyListCellRenderer extends ColoredListCellRenderer {
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setIcon(textIcon);
-      setText((String)value);
-      return this;
+      if (index <= 9) {
+        append(String.valueOf((index + 1) % 10) + "  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
+      append((String) value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }
