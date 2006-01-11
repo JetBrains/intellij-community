@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
@@ -92,7 +93,7 @@ public class Browser extends JPanel {
   }
 
   private void showPageFromHistory(RefEntity newEntity) {
-    final InspectionTool tool = getTool();
+    InspectionTool tool = getTool(newEntity);
     try {
       if (!(newEntity instanceof RefElement) || tool instanceof DescriptorProviderInspection){
         showEmpty();
@@ -101,7 +102,7 @@ public class Browser extends JPanel {
       if (tool instanceof FilteringInspectionTool){
         if (tool instanceof DeadCodeInspection || ((FilteringInspectionTool)tool).getFilter().accepts((RefElement)newEntity)) {
           try {
-            String html = generateHTML(newEntity);
+            String html = generateHTML(newEntity, tool);
             myHTMLViewer.read(new StringReader(html), null);
             myHTMLViewer.setCaretPosition(0);
           }
@@ -179,7 +180,7 @@ public class Browser extends JPanel {
               else if (ref.startsWith("descr:")) {
                 int descriptionIndex = Integer.parseInt(ref.substring("descr:".length()));
                 CommonProblemDescriptor descriptor = ((DescriptorProviderInspection)getTool()).getDescriptions(
-                  (RefElement)myCurrentEntity)[descriptionIndex];
+                  myCurrentEntity)[descriptionIndex];
                 if (descriptor instanceof ProblemDescriptor) {
                   PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
                   if (psiElement == null) return;
@@ -237,18 +238,18 @@ public class Browser extends JPanel {
     }
   }
 
-  private String generateHTML(final RefEntity refEntity) {
+  private String generateHTML(final RefEntity refEntity, final InspectionTool tool) {
     final StringBuffer buf = new StringBuffer();
     if (refEntity instanceof RefElement) {
       final Runnable action = new Runnable() {
         public void run() {
-          getComposer().compose(buf, refEntity);
+          tool.getComposer().compose(buf, refEntity);
         }
       };
       ApplicationManager.getApplication().runReadAction(action);
     }
     else {
-      getComposer().compose(buf, refEntity);
+      tool.getComposer().compose(buf, refEntity);
     }
 
     uppercaseFirstLetter(buf);
@@ -272,7 +273,8 @@ public class Browser extends JPanel {
     final StringBuffer buf = new StringBuffer();
     final Runnable action = new Runnable() {
       public void run() {
-        getComposer().compose(buf, refEntity, descriptor);
+        InspectionTool tool = getTool(refEntity);
+        tool.getComposer().compose(buf, refEntity, descriptor);
       }
     };
     ApplicationManager.getApplication().runReadAction(action);
@@ -285,6 +287,18 @@ public class Browser extends JPanel {
 
     insertHeaderFooter(buf);
     return buf.toString();
+  }
+
+  private InspectionTool getTool(final RefEntity refEntity) {
+    InspectionTool tool = getTool();
+    assert tool != null;
+    final InspectionManagerEx manager = tool.getManager();
+    if (manager.RUN_WITH_EDITOR_PROFILE && refEntity instanceof RefElement){
+      PsiElement element = ((RefElement)refEntity).getElement();
+      if (element == null) return tool;
+      tool = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfile(element).getInspectionTool(tool.getShortName());
+    }
+    return tool;
   }
 
   private void appendSuppressSection(final RefElement refElement, final StringBuffer buf) {

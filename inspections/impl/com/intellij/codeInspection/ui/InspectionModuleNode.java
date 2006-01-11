@@ -21,4 +21,12 @@ public class InspectionModuleNode extends InspectionTreeNode{
   public Icon getIcon(boolean expanded) {
     return myModule.getModuleType().getNodeIcon(expanded);
   }
+
+  public Module getModule(){
+    return myModule;
+  }
+
+  public String getName(){
+    return myModule.getName();
+  }
 }

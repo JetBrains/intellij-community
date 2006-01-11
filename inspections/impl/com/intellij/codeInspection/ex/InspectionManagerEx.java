@@ -233,7 +233,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public boolean isSuppressed(PsiElement element, String id) {
     if (element instanceof PsiDocCommentOwner){
-      return isToCheckMember((PsiDocCommentOwner)element, id);
+      return !isToCheckMember((PsiDocCommentOwner)element, id);
     }
     return false;
   }

@@ -56,7 +56,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     @NonNls String message = descriptor.getDescriptionTemplate();
 
-    if (psiElement != null && psiElement.isValid() && message != null) {
+    if (psiElement != null && psiElement.isValid()) {
       message = message.replaceAll("<[^>]*>", "");
       if (isReplaceProblemDescriptorTemplateMessage){
         message = StringUtil.replace(message, "#ref", psiElement.getText());
@@ -70,6 +70,6 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
       message = XmlUtil.unescape(message);
       return message;
     }
-    return "";
+    return message;
   }
 }

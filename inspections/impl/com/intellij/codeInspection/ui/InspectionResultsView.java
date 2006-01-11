@@ -289,7 +289,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         hectorCorrections(profiles);
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
-          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
+          ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();
         }
       }
     }
@@ -454,15 +454,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (tool.hasReportedProblems()) {
       final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : GroupNames.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
       InspectionNode toolNode = new InspectionNode(tool);
-      if (((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).RUN_WITH_EDITOR_PROFILE){
-        for (int i = 0; i < parentNode.getChildCount(); i++) {
-          InspectionNode node = (InspectionNode)parentNode.getChildAt(i);
-          if (node.getTool().getShortName().compareTo(tool.getShortName()) == 0){
-            toolNode = node;
-            break;
-          }
-        }
-      }
       initToolNode(tool, toolNode, parentNode);
       if (tool instanceof DeadCodeInspection) {
         final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
@@ -473,12 +464,59 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-  private static void initToolNode(InspectionTool tool, InspectionNode toolNode, InspectionTreeNode parentNode) {
+  private void initToolNode(InspectionTool tool, InspectionNode toolNode, InspectionTreeNode parentNode) {
     final InspectionTreeNode[] contents = tool.getContents();
     for (InspectionTreeNode content : contents) {
-      toolNode.add(content);
+      mergeBranch(content, toolNode);
     }
-    parentNode.add(toolNode);
+    mergeBranch(toolNode, parentNode);
+  }
+
+  private void mergeBranch(InspectionTreeNode child, InspectionTreeNode parent){
+    if (((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).RUN_WITH_EDITOR_PROFILE){
+      for(int i = 0; i < parent.getChildCount(); i++){
+        InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
+        if (child.getClass() != current.getClass()){
+          continue;
+        }
+        if (current instanceof InspectionPackageNode){
+          if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0){
+            processDepth(child, current);
+            return;
+          }
+        } else if (current instanceof RefElementNode){
+          if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0){
+            processDepth(child, current);
+            return;
+          }
+        } else if (current instanceof InspectionNode){
+          if (((InspectionNode)current).getTool().getShortName().compareTo(
+              ((InspectionNode)child).getTool().getShortName()) == 0){
+            processDepth(child, current);
+            return;
+          }
+        } else if (current instanceof InspectionModuleNode){
+          if (((InspectionModuleNode)current).getName().compareTo(
+              ((InspectionModuleNode)child).getName()) == 0){
+            processDepth(child, current);
+            return;
+          }
+        } else if (current instanceof ProblemDescriptionNode){
+          if (((ProblemDescriptionNode)current).getDescriptor().getDescriptionTemplate().compareTo(
+              ((ProblemDescriptionNode)child).getDescriptor().getDescriptionTemplate()) == 0){
+            processDepth(child, current);
+            return;
+          }
+        }
+      }
+    }
+    parent.add(child);
+  }
+
+  private void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {
+    for (int j = 0; j < child.getChildCount(); j ++){
+      mergeBranch((InspectionTreeNode)child.getChildAt(j), current);
+    }
   }
 
   private void regsisterActionShortcuts(InspectionTool tool) {
@@ -511,7 +549,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       final Set<String> profiles = myScope.getActiveInspectionProfiles();
       hectorCorrections(profiles);
       for (String profileName : profiles) {
-        processProfile((InspectionProfile)inspectionProfileManager.getProfile(profileName), tools);
+        processProfile((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName), tools);
       }
     } else {
       processProfile(myInspectionProfile, tools);
@@ -530,7 +568,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return resultsFound;
   }
 
-  private void processProfile(final InspectionProfile profile, final Map<InspectionTool, HighlightDisplayLevel> tools) {
+  private static void processProfile(final InspectionProfile profile, final Map<InspectionTool, HighlightDisplayLevel> tools) {
     final InspectionTool[] inspectionTools = profile.getInspectionTools();
     for (InspectionTool tool : inspectionTools) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
@@ -1040,6 +1078,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
               for (RefElement refElement : elementsToSuppress) {
                 final PsiElement element = refElement.getElement();
                 if (element instanceof PsiFile) continue;
+                if (element == null || !element.isValid()) continue;
                 final PsiFile file = element.getContainingFile();
                 final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
                 if (action.isAvailable(myProject, null, file)) {
@@ -1074,7 +1113,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       return null;
     }
 
-  private void traverseRefElements(@NotNull InspectionTreeNode node, List<RefEntity> elementsToSuppress){
+  private static void traverseRefElements(@NotNull InspectionTreeNode node, List<RefEntity> elementsToSuppress){
     if (node instanceof RefElementNode){
       elementsToSuppress.add(((RefElementNode)node).getElement());
     } else if (node instanceof ProblemDescriptionNode){
@@ -1146,7 +1185,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         hectorCorrections(profiles);
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
-          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
+          ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();
         }
       }
       final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));

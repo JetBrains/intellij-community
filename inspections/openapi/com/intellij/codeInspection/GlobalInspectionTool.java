@@ -42,7 +42,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     final HashMap<RefEntity, List<CommonProblemDescriptor>> holder = new HashMap<RefEntity, List<CommonProblemDescriptor>>();
     manager.getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefEntity refEntity) {
-        if (!manager.isSuppressed(refEntity, getShortName())) return;
+        if (manager.isSuppressed(refEntity, getShortName())) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager);
         if (descriptors != null){
           List<CommonProblemDescriptor> problemDescriptors = holder.get(refEntity);

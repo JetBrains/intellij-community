@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInspection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: anna
  * Date: 04-Jan-2006
  */
 public interface CommonProblemDescriptor {
-  String getDescriptionTemplate();
+  @NotNull String getDescriptionTemplate();
   QuickFix[] getFixes();
 }
