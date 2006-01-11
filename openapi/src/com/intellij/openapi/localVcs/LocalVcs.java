@@ -50,7 +50,7 @@ public abstract class LocalVcs {
 
   public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
-  public abstract LvcsRevision[] getChanges(String path, LvcsLabel label, boolean upToDateOnly);
+  public abstract LvcsRevision[] getChanges(String path, LvcsLabel label);
 
   public abstract LvcsRevision[] getChanges(LvcsLabel label1, LvcsLabel label2);
 
