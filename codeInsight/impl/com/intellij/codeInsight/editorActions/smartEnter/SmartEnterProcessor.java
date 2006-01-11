@@ -55,7 +55,6 @@ public class SmartEnterProcessor {
     //ourFixers.add(new CompletionFixer());
 
 
-    ourEnterProcessors.add(new ValidLiteralBreakerEnterProcessor());
     ourEnterProcessors.add(new CommentBreakerEnterProcessor());
     ourEnterProcessors.add(new AfterSemicolonEnterProcessor());
     ourEnterProcessors.add(new BreakingControlFlowEnterProcessor());
