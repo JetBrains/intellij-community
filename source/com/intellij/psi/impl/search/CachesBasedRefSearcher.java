@@ -58,7 +58,6 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     if (!ignoreAccessScope) {
       SearchScope accessScope = refElement.getUseScope();
       searchScope = originalScope.intersectWith(accessScope);
-      if (searchScope == null) return true;
     }
     else {
       searchScope = originalScope;
