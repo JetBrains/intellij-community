@@ -383,6 +383,16 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoint;
   }
 
+  public WildcardMethodBreakpoint addMethodBreakpoint(String classPattern, String methodName) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    WildcardMethodBreakpoint breakpoint = WildcardMethodBreakpoint.create(myProject, classPattern, methodName);
+    if (breakpoint == null) {
+      return null;
+    }
+    addBreakpoint(breakpoint);
+    return breakpoint;
+  }
+
   /**
    * @return null if not found or a breakpoint object
    */
@@ -454,7 +464,7 @@ public class BreakpointManager implements JDOMExternalizable {
                   if (factory != null) {
                     for (Iterator i = group.getChildren("breakpoint").iterator(); i.hasNext();) {
                       Element breakpointNode = (Element)i.next();
-                      Breakpoint breakpoint = factory.createBreakpoint(myProject);
+                      Breakpoint breakpoint = factory.createBreakpoint(myProject, breakpointNode);
                       breakpoint.readExternal(breakpointNode);
                       addBreakpoint(breakpoint);
                       nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);

@@ -4,11 +4,12 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.HelpID;
+import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.debugger.ui.breakpoints.actions.*;
-import com.intellij.debugger.HelpID;
-import com.intellij.debugger.DebuggerBundle;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +19,7 @@ import java.awt.event.ActionEvent;
  *         Date: Apr 26, 2005
  */
 public class LineBreakpointFactory extends BreakpointFactory{
-  public Breakpoint createBreakpoint(Project project) {
+  public Breakpoint createBreakpoint(Project project, final Element element) {
     return new LineBreakpoint(project);
   }
 

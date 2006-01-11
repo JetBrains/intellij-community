@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import javax.swing.*;
  */
 public abstract class BreakpointFactory implements ApplicationComponent{
 
-  public abstract Breakpoint createBreakpoint(Project project);
+  public abstract Breakpoint createBreakpoint(Project project, final Element element);
 
   public abstract String getBreakpointCategory();
 

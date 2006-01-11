@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ import javax.swing.*;
  *         Date: Apr 26, 2005
  */
 public class AnyExceptionBreakpointFactory extends BreakpointFactory{
-  public Breakpoint createBreakpoint(Project project) {
+  public Breakpoint createBreakpoint(Project project, final Element element) {
     return new AnyExceptionBreakpoint(project);
   }
 

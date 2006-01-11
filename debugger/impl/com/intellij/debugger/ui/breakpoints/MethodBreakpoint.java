@@ -4,6 +4,8 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -11,14 +13,14 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -28,12 +30,11 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Iterator;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.MethodBreakpoint");
@@ -74,8 +75,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     if(psiFile instanceof PsiJavaFile) {
       int line = getLineIndex();
       final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), document.getLineStartOffset(line), " \t");
-      PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiFile, offset);
-      return method;
+      return DebuggerUtilsEx.findPsiMethod(psiFile, offset);
     }
     return null;
   }
@@ -100,8 +100,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
-  protected void createRequestForPreparedClass(DebugProcessImpl debugProcess,
-                                               ReferenceType classType) {
+  protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
     try {
       boolean hasMethod = false;
       for (Iterator iterator = classType.allMethods().iterator(); iterator.hasNext();) {
@@ -191,45 +190,41 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getDisplayName() {
-    StringBuffer buffer = new StringBuffer();
-    if(isValid()) {
-      final String className = getClassName();
-      final boolean classNameExists = className != null && className.length() > 0;
-      if (classNameExists) {
-        buffer.append(className);
-      }
-      if(myMethodName != null) {
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      if(isValid()) {
+        final String className = getClassName();
+        final boolean classNameExists = className != null && className.length() > 0;
         if (classNameExists) {
-          buffer.append(".");
+          buffer.append(className);
         }
-        buffer.append(myMethodName);
+        if(myMethodName != null) {
+          if (classNameExists) {
+            buffer.append(".");
+          }
+          buffer.append(myMethodName);
+        }
       }
+      else {
+        buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
+      }
+      return buffer.toString();
     }
-    else {
-      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
     }
-    return buffer.toString();
   }
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    Method method = null;
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      method = entryEvent.method();
-    }
-    else if (event instanceof MethodExitEvent) {
-      MethodExitEvent exitEvent = (MethodExitEvent)event;
-      method = exitEvent.method();
-    }
-    if (method == null) {
-      return false;
-    }
-    String signature = method.signature();
-    String name = method.name();
-    if (!(myMethodName.equals(name) && mySignature.getName(context.getDebugProcess()).equals(signature))) {
+    if (!matchesEvent(event, context.getDebugProcess())) {
       return false;
     }
     return super.evaluateCondition(context, event);
+  }
+
+  public boolean matchesEvent(final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+    final Method method = event.location().method();
+    return method != null && myMethodName.equals(method.name()) && mySignature.getName(process).equals(method.signature());
   }
 
   public static MethodBreakpoint create(Project project, Document document, int lineIndex) {
@@ -238,47 +233,43 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
 
-  /*
-   not needed for a while
-  public static MethodBreakpoint create(Method method) {
-    return null;
-  }
-  */
-
   /**
    * finds FQ method's class name and method's signature
    */
   private static MethodDescriptor getMethodDescriptor(final Project project, final PsiJavaFile psiJavaFile, final int line) {
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiJavaFile);
-    if(document == null) return null;
+    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+    final Document document = docManager.getDocument(psiJavaFile);
+    if(document == null) {
+      return null;
+    }
     final int endOffset = document.getLineEndOffset(line);
-    final MethodDescriptor[] descriptor = new MethodDescriptor[]{null};
-    PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
-      public void run() {
+    final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
+      public MethodDescriptor compute() {
         try {
           PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
-          if(method == null || document.getLineNumber(method.getTextOffset()) < line) return;
+          if (method == null || document.getLineNumber(method.getTextOffset()) < line) {
+            return null;
+          }
 
           int methodNameOffset = method.getNameIdentifier().getTextOffset();
-          descriptor[0] = new MethodDescriptor();
+          final MethodDescriptor descriptor =
+            new MethodDescriptor();
           //noinspection HardCodedStringLiteral
-          descriptor[0].methodName = method.isConstructor() ? "<init>" : method.getName();
-          descriptor[0].methodSignature = JVMNameUtil.getJVMSignature(method);
-          descriptor[0].isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-          descriptor[0].methodLine = document.getLineNumber(methodNameOffset);
+          descriptor.methodName = method.isConstructor() ? "<init>" : method.getName();
+          descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
+          descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+          descriptor.methodLine = document.getLineNumber(methodNameOffset);
+          return descriptor;
         }
-        catch (EvaluateException e) {
-          descriptor[0] = null;
+        catch (EvaluateException ignored) {
         }
+        return null;
       }
     });
-    if (descriptor[0] == null) {
+    if (descriptor == null || descriptor.methodName == null || descriptor.methodSignature == null) {
       return null;
     }
-    if (descriptor[0].methodName == null || descriptor[0].methodSignature == null) {
-      return null;
-    }
-    return descriptor[0];
+    return descriptor;
   }
 
   private EventRequest findRequest(DebugProcessImpl debugProcess, Class requestClass) {

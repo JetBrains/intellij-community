@@ -3,8 +3,8 @@
  * Use is subject to license terms.
  */
 package com.intellij.debugger.ui.breakpoints;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
@@ -678,23 +678,12 @@ public class BreakpointTree extends CheckboxTree {
       }
       
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
-      final String className;
-      final String packageName;
-      if (breakpoint instanceof ExceptionBreakpoint) {
-        final ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
-        className = exceptionBreakpoint.getQualifiedName();
-        packageName = exceptionBreakpoint.getPackageName();
+      final String className = breakpoint.getClassName();
+      if (className == null) {
+        return node;
       }
-      else if (breakpoint instanceof BreakpointWithHighlighter) {
-        final BreakpointWithHighlighter breakpointWithHighlighter = (BreakpointWithHighlighter)breakpoint;
-        className = breakpointWithHighlighter.getClassName();
-        packageName = breakpointWithHighlighter.getPackageName();
-      }
-      else {
-        className = null;
-        packageName = null;
-      }
-      if (className == null || packageName == null) {
+      final String packageName = breakpoint.getPackageName();
+      if (packageName == null) {
         return node;
       }
       return attachNodeToParent(new ClassDescriptor(className, packageName), node);

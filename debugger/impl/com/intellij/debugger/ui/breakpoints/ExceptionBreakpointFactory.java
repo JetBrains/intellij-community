@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,7 +26,7 @@ import java.awt.event.ActionEvent;
  *         Date: Apr 26, 2005
  */
 public class ExceptionBreakpointFactory extends BreakpointFactory{
-  public Breakpoint createBreakpoint(Project project) {
+  public Breakpoint createBreakpoint(Project project, final Element element) {
     return new ExceptionBreakpoint(project);
   }
 
@@ -101,7 +102,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
       TreeClassChooser chooser =
         TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser(
           DebuggerBundle.message("add.exception.breakpoint.classchooser.title"), GlobalSearchScope.allScope(myProject),
-                                                                                     throwableClass, true, true, null);
+          throwableClass, true, true, null);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelectedClass();
       String qName = (selectedClass != null)? selectedClass.getQualifiedName() : null;

@@ -4,6 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
@@ -14,8 +17,8 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -31,9 +34,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
@@ -47,10 +47,9 @@ import java.util.List;
 public abstract class Breakpoint extends FilteredRequestor implements ClassPrepareRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.Breakpoint");
 
-  public boolean ENABLED      = true;
-
-  public String  SUSPEND_POLICY         = DebuggerSettings.SUSPEND_ALL;
-  public boolean LOG_ENABLED            = false;
+  public boolean ENABLED = true;
+  public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
+  public boolean LOG_ENABLED = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
@@ -76,7 +75,15 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public abstract String getDisplayName ();
 
-  public abstract Icon getIcon        ();
+  public String getClassName() {
+    return null;
+  }
+
+  public String getPackageName() {
+    return null;
+  }
+
+  public abstract Icon getIcon();
 
   public abstract void reload();
 

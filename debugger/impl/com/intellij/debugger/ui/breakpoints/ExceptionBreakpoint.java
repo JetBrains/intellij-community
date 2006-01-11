@@ -4,12 +4,14 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -73,7 +75,7 @@ public class ExceptionBreakpoint extends Breakpoint {
     return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
   }
 
-  public String getQualifiedName() {
+  public String getClassName() {
     return myQualifiedName;
   }
 
@@ -187,10 +189,10 @@ public class ExceptionBreakpoint extends Breakpoint {
   }
 
   public PsiElement getEvaluationElement() {
-    if (getQualifiedName() == null) {
+    if (getClassName() == null) {
       return null;
     }
-    return PsiManager.getInstance(myProject).findClass(getQualifiedName(), GlobalSearchScope.allScope(myProject));
+    return PsiManager.getInstance(myProject).findClass(getClassName(), GlobalSearchScope.allScope(myProject));
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
@@ -205,12 +207,6 @@ public class ExceptionBreakpoint extends Breakpoint {
     //noinspection HardCodedStringLiteral
     String packageName = parentNode.getAttributeValue("package_name");
     myPackageName = packageName != null? packageName : calcPackageName(packageName);
-  }
-
-  public static ExceptionBreakpoint read(Project project, Element parentNode) throws InvalidDataException {
-    ExceptionBreakpoint exceptionBreakpoint = new ExceptionBreakpoint(project);
-    exceptionBreakpoint.readExternal(parentNode);
-    return exceptionBreakpoint;
   }
 
 }

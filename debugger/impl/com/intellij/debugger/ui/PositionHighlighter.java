@@ -1,21 +1,18 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerColors;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
-import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
-import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,18 +26,20 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.event.LocatableEvent;
+import com.sun.jdi.event.MethodEntryEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -188,15 +187,32 @@ public class PositionHighlighter {
       final List<Pair<Breakpoint, Event>> eventsOutOfLine = new ArrayList<Pair<Breakpoint, Event>>();
 
       for (Iterator<Pair<Breakpoint, Event>> iterator = events.iterator(); iterator.hasNext();) {
-        Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-        Breakpoint breakpoint = eventDescriptor.getFirst();
+        final Pair<Breakpoint, Event> eventDescriptor = iterator.next();
+        final Breakpoint breakpoint = eventDescriptor.getFirst();
+        // filter breakpoints that do not match the event
+        if (breakpoint instanceof MethodBreakpoint) {
+          try {
+            if (!((MethodBreakpoint)breakpoint).matchesEvent((LocatableEvent)eventDescriptor.getSecond(), myContext.getDebugProcess())) {
+              continue;
+            }
+          }
+          catch (EvaluateException ignored) {
+          }
+        }
+        else if (breakpoint instanceof WildcardMethodBreakpoint) {
+          if (!((WildcardMethodBreakpoint)breakpoint).matchesEvent((LocatableEvent)eventDescriptor.getSecond())) {
+            continue;
+          }
+        }
+
         if(breakpoint instanceof BreakpointWithHighlighter) {
           breakpoint.reload();
-          SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
+          final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
           if(sourcePosition == null || sourcePosition.getLine() != lineIndex) {
             eventsOutOfLine.add(eventDescriptor);
           }
-        } else {
+        }
+        else {
           eventsOutOfLine.add(eventDescriptor);
         }
       }
@@ -209,23 +225,29 @@ public class PositionHighlighter {
           }
 
           public String getTooltipText() {
-            DebugProcessImpl debugProcess = DebuggerManagerEx.getInstanceEx(myProject).getContext().getDebugProcess();
+            DebugProcessImpl debugProcess = myContext.getDebugProcess();
             if(debugProcess != null) {
-              StringBuffer buf = new StringBuffer();
+              final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+              try {
                 //noinspection HardCodedStringLiteral
                 buf.append("<html><body>");
-              for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
-                Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-                buf.append(((DebugProcessEvents)debugProcess).getEventText(eventDescriptor));
-                if(iterator.hasNext()) {
+                for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
+                  Pair<Breakpoint, Event> eventDescriptor = iterator.next();
+                  buf.append(((DebugProcessEvents)debugProcess).getEventText(eventDescriptor));
+                  if(iterator.hasNext()) {
                     //noinspection HardCodedStringLiteral
                     buf.append("<br>");
+                  }
                 }
-              }
                 //noinspection HardCodedStringLiteral
                 buf.append("</body></html>");
-              return buf.toString();
-            } else {
+                return buf.toString();
+              }
+              finally {
+                StringBuilderSpinAllocator.dispose(buf);
+              }
+            }
+            else {
               return null;
             }
           }
@@ -298,14 +320,13 @@ public class PositionHighlighter {
       if (position == null) {
         return;
       }
-
       boolean isExecutionPoint = false;
-
       try {
         StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
         final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
-        isExecutionPoint = (thread != null)? frameProxy.equals(thread.frame(0)) : false;
-      } catch(Throwable th) {
+        isExecutionPoint = thread != null && frameProxy.equals(thread.frame(0));
+      }
+      catch(Throwable th) {
         LOG.debug(th);
       }
 
@@ -321,31 +342,45 @@ public class PositionHighlighter {
       final SourcePosition position1 = position;
       if(isExecutionPoint) {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-            public void run() {
-              SourcePosition position2 = updatePositionFromBreakpoint(events, position1);
-              showExecutionPoint(position2, events);
-            }
-          });
-      } else {
+          public void run() {
+            final SourcePosition highlightPosition = getHighlightPosition(events, position1);
+            showExecutionPoint(highlightPosition, events);
+          }
+        });
+      }
+      else {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-            public void run() {
-              showSelection(position1);
-            }
-          });
+          public void run() {
+            showSelection(position1);
+          }
+        });
       }
     }
 
-    private SourcePosition updatePositionFromBreakpoint(final List<Pair<Breakpoint, Event>> events, SourcePosition position) {
+    private SourcePosition getHighlightPosition(final List<Pair<Breakpoint, Event>> events, SourcePosition position) {
       for (Iterator<Pair<Breakpoint, Event>> iterator = events.iterator(); iterator.hasNext();) {
-        Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-        Breakpoint breakpoint = eventDescriptor.getFirst();
-        if(breakpoint instanceof LineBreakpoint || breakpoint instanceof MethodBreakpoint) {
+        final Pair<Breakpoint, Event> eventDescriptor = iterator.next();
+        final Breakpoint breakpoint = eventDescriptor.getFirst();
+        if(breakpoint instanceof LineBreakpoint) {
           breakpoint.reload();
-
-
-          SourcePosition breakPosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
+          final SourcePosition breakPosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
           if(breakPosition != null && breakPosition.getLine() != position.getLine()) {
             position = SourcePosition.createFromLine(position.getFile(), breakPosition.getLine());
+          }
+        }
+        else if(breakpoint instanceof MethodBreakpoint) {
+          final MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
+          methodBreakpoint.reload();
+          final SourcePosition breakPosition = methodBreakpoint.getSourcePosition();
+          final LocatableEvent event = (LocatableEvent)eventDescriptor.getSecond();
+          if(breakPosition != null && breakPosition.getFile().equals(position.getFile()) && breakPosition.getLine() != position.getLine() && event instanceof MethodEntryEvent) {
+            try {
+              if (methodBreakpoint.matchesEvent(event, myContext.getDebugProcess())) {
+                position = SourcePosition.createFromLine(position.getFile(), breakPosition.getLine());
+              }
+            }
+            catch (EvaluateException ignored) {
+            }
           }
         }
       }

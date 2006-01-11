@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,18 +68,29 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
 
   public void initFrom(Breakpoint breakpoint) {
     super.initFrom(breakpoint);
-    MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
-
-    myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);
-    myWatchExitCheckBox.setSelected(methodBreakpoint.WATCH_EXIT);
+    if (breakpoint instanceof MethodBreakpoint) {
+      MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
+      myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);
+      myWatchExitCheckBox.setSelected(methodBreakpoint.WATCH_EXIT);
+    }
+    else if (breakpoint instanceof WildcardMethodBreakpoint){
+      final WildcardMethodBreakpoint methodBreakpoint = ((WildcardMethodBreakpoint)breakpoint);
+      myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);
+      myWatchExitCheckBox.setSelected(methodBreakpoint.WATCH_EXIT);
+    }
   }
 
   public void saveTo(Breakpoint breakpoint, Runnable afterUpdate) {
-    MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
-
-    methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
-    methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
-    
+    if (breakpoint instanceof MethodBreakpoint) {
+      MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
+      methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
+      methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
+    }
+    else if (breakpoint instanceof WildcardMethodBreakpoint){
+      final WildcardMethodBreakpoint methodBreakpoint = ((WildcardMethodBreakpoint)breakpoint);
+      methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
+      methodBreakpoint.WATCH_EXIT = myWatchExitCheckBox.isSelected();
+    }
     super.saveTo(breakpoint, afterUpdate);
   }
 }
