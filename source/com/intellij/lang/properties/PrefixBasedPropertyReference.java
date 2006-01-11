@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
   private boolean myPrefixEvaluated;
   private boolean myDynamic;
   @Nullable private String myKeyPrefix;
-  private static final String PREFIX_ATTR_NAME = "prefix";
+  @NonNls private static final String PREFIX_ATTR_NAME = "prefix";
 
   public PrefixBasedPropertyReference(String key, final PsiElement element, @Nullable final String bundleName) {
     super(key, element, bundleName);

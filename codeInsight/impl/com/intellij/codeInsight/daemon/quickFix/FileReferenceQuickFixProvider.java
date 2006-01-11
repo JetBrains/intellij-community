@@ -25,22 +25,17 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 18, 2005
- * Time: 10:40:31 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class FileReferenceQuickFixProvider {
   public static void registerQuickFix(final HighlightInfo info, final PsiReference reference) {
-    final FileReference fileReference = ((FileReference)reference);
+    final FileReference fileReference = (FileReference)reference;
     final FileReferenceSet fileReferenceSet = fileReference.getFileReferenceSet();
     int index = Arrays.asList(fileReferenceSet.getAllReferences()).indexOf(fileReference);
 
     if (index < 0) return;
     final String newFileName = fileReference.getCanonicalText();
-    if (newFileName.indexOf('\\') != -1 ||
-        (SystemInfo.isWindows && newFileName.indexOf(':') != -1)) return;
+    if (newFileName.indexOf('\\') != -1 || SystemInfo.isWindows && newFileName.indexOf(':') != -1) return;
     final PsiDirectory directory;
 
     if(index > 0) {
@@ -61,7 +56,7 @@ public class FileReferenceQuickFixProvider {
       }
     } else {
       final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
-      final PsiElement psiElement = (!defaultContexts.isEmpty())?defaultContexts.iterator().next():null;
+      final PsiElement psiElement = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
       
       if (psiElement instanceof PsiDirectory) {
         directory = (PsiDirectory)psiElement;
@@ -153,8 +148,9 @@ public class FileReferenceQuickFixProvider {
 
         public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           if (isdirectory) {
-            PsiDirectory newdirectory = directory.createSubdirectory(newFileName);
-          } else {
+            directory.createSubdirectory(newFileName);
+          }
+          else {
             PsiFile newfile = directory.createFile(newFileName);
             FileEditorManager.getInstance(directory.getProject()).openFile(newfile.getVirtualFile(), true);
           }

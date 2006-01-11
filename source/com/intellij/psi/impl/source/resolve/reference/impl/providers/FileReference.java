@@ -80,7 +80,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
 
           for (WebDirectoryElement child : children) {
             if (equalsTo(child)) {
-              resolved = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
+              resolved = child.isDirectory() ? child : child.getOriginalFile();
               break;
             }
           }
@@ -132,7 +132,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
       if (context instanceof WebDirectoryElement) {
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
         for (WebDirectoryElement child : children) {
-          PsiFileSystemItem item = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
+          PsiFileSystemItem item = child.isDirectory() ? child : child.getOriginalFile();
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       } else if (context instanceof PsiDirectory) {

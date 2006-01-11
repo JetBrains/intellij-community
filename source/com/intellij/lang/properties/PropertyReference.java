@@ -1,5 +1,7 @@
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.codeInsight.i18n.CreatePropertyFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
@@ -9,21 +11,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.i18n.I18nUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author cdr
  */
-public class PropertyReference implements PsiPolyVariantReference, EmptyResolveMessageProvider {
+public class PropertyReference implements PsiPolyVariantReference, EmptyResolveMessageProvider, QuickFixProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
@@ -141,5 +145,10 @@ public class PropertyReference implements PsiPolyVariantReference, EmptyResolveM
 
   public String getUnresolvedMessage() {
     return PropertiesBundle.message("unresolved.property.key");
+  }
+
+  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, myBundleName);
+    QuickFixAction.registerQuickFixAction(info, fix, null);
   }
 }
