@@ -14,14 +14,15 @@ public class PersistentStringEnumerator {
   private static final int FIRST_VECTOR_OFFSET = 4;
   private static final int DIRTY_MAGIC = 0xbabe0589;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac;
-
-  private byte[] buffer = new byte[256];
-
+  private static final int STRING_HEADER_SIZE = 9;
   private static final int BITS_PER_LEVEL = 4;
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
   private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
+
+  private byte[] buffer = new byte[255 + STRING_HEADER_SIZE];
   private boolean myClosed = false;
+  private boolean myDirty = false;
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -37,20 +38,19 @@ public class PersistentStringEnumerator {
   public PersistentStringEnumerator(File file, int initialSize) throws IOException {
     myStorage = new MappedFile(file, initialSize);
     if (myStorage.length() == 0) {
-      myStorage.writeInt(DIRTY_MAGIC);
+      markDirty(true);
       allocVector();
     }
-    else if (myStorage.getInt(0) != CORRECTLY_CLOSED_MAGIC) {
-      myStorage.close();
-      throw new CorruptedException(file);
-    }
     else {
-      myStorage.putInt(0, DIRTY_MAGIC);
+      if (myStorage.getInt(0) != CORRECTLY_CLOSED_MAGIC) {
+        myStorage.close();
+        throw new CorruptedException(file);
+      }
     }
   }
 
   public int enumerate(String value) throws IOException {
-    myStorage.putInt(0, DIRTY_MAGIC);
+    markDirty(true);
 
     int depth = 0;
     final int valueHC = value.hashCode();
@@ -70,12 +70,12 @@ public class PersistentStringEnumerator {
 
     if (vector == 0) {
       // Empty slot
-      final int newId = writeNewString(value);
+      final int newId = writeNewString(value, valueHC);
       myStorage.putInt(pos, -newId);
       return newId;
     }
     else {
-      int collision = Math.abs(vector);
+      int collision = -vector;
       boolean splitVector = false;
       int candidateHC;
       do {
@@ -94,7 +94,7 @@ public class PersistentStringEnumerator {
       }
       while (collision != 0);
 
-      final int newId = writeNewString(value);
+      final int newId = writeNewString(value, valueHC);
       if (splitVector) {
         depth--;
         do {
@@ -119,7 +119,6 @@ public class PersistentStringEnumerator {
         myStorage.putInt(newId, vector);
         myStorage.putInt(pos, -newId);
       }
-
       return newId;
     }
   }
@@ -130,7 +129,8 @@ public class PersistentStringEnumerator {
 
   private int allocVector() throws IOException {
     final int pos = (int)myStorage.length();
-    myStorage.put(pos, EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
+    myStorage.seek(pos);
+    myStorage.put(EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
     return pos;
   }
 
@@ -138,7 +138,7 @@ public class PersistentStringEnumerator {
     return -myStorage.getInt(idx);
   }
 
-  public static boolean isAscii(final String str) {
+  private static boolean isAscii(final String str) {
     for (int i = 0; i != str.length(); ++ i) {
       final char c = str.charAt(i);
       if (c < 0 || c >= 128) {
@@ -148,24 +148,32 @@ public class PersistentStringEnumerator {
     return true;
   }
 
-  private int writeNewString(final String value) {
+  private int writeNewString(final String value, int hashCode) {
     try {
       final MappedFile storage = myStorage;
       final int pos = (int)storage.length();
       storage.seek(pos);
-      storage.writeInt(0);
-      storage.writeInt(value.hashCode());
 
       int len = value.length();
       if (len < 255 && isAscii(value)) {
-        storage.writeByte((byte)len);
         final byte[] buf = buffer;
+        buf[0] = buf[1] = buf[2] = buf[3] = 0;
+        buf[7] = (byte)(hashCode & 0xFF);
+        hashCode >>>= 8;
+        buf[6] = (byte)(hashCode & 0xFF);
+        hashCode >>>= 8;
+        buf[5] = (byte)(hashCode & 0xFF);
+        hashCode >>>= 8;
+        buf[4] = (byte)(hashCode & 0xFF);
+        buf[8] = (byte)len;
         for (int i = 0; i < len; i++) {
-          buf[i] = (byte)value.charAt(i);
+          buf[i + STRING_HEADER_SIZE] = (byte)value.charAt(i);
         }
-        storage.put(buf, 0, len);
+        storage.put(buf, 0, len + STRING_HEADER_SIZE);
       }
       else {
+        storage.writeInt(0);
+        storage.writeInt(hashCode);
         storage.writeByte((byte)0xFF);
         storage.writeUTF(value);
       }
@@ -219,7 +227,22 @@ public class PersistentStringEnumerator {
   }
 
   public void flush() throws IOException {
-    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+    markDirty(false);
     myStorage.flush();
+  }
+
+  private void markDirty(boolean dirty) throws IOException {
+    if (myDirty) {
+      if (!dirty) {
+        myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+        myDirty = false;
+      }
+    }
+    else {
+      if (dirty) {
+        myStorage.putInt(0, DIRTY_MAGIC);
+        myDirty = true;
+      }
+    }
   }
 }
