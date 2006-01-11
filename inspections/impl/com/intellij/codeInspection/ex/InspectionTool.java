@@ -118,6 +118,7 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract Map<String, Set<RefElement>> getPackageContent();
 
+  @Nullable
   public Set<RefModule> getModuleProblems(){
     return null;
   }

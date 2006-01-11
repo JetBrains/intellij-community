@@ -503,8 +503,8 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected void appendResolution(StringBuffer buf, InspectionTool tool, RefElement where) {
-    QuickFixAction[] quickFixes = tool.getQuickFixes(new RefElement[] {where});
+  protected void appendResolution(StringBuffer buf, InspectionTool tool, RefEntity where) {
+    QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
     if (quickFixes != null) {
       boolean listStarted = false;
       for (int i = 0; i < quickFixes.length; i++) {

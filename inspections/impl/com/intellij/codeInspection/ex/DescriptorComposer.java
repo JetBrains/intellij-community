@@ -4,7 +4,6 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,32 +27,27 @@ public class DescriptorComposer extends HTMLComposer {
   }
 
   public void compose(StringBuffer buf, RefEntity refEntity) {
-    if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement)refEntity;
+    genPageHeader(buf, refEntity);      
+    if (myTool.getDescriptions(refEntity) != null) {
+      appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
 
-      genPageHeader(buf, refElement);
+      CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
-      if (myTool.getDescriptions(refElement) != null) {
-        appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
+      startList();
+      for (int i = 0; i < descriptions.length; i++) {
+        final CommonProblemDescriptor description = descriptions[i];
 
-        CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
-
-        startList();
-        for (int i = 0; i < descriptions.length; i++) {
-          final CommonProblemDescriptor description = descriptions[i];
-
-          startListItem(buf);
-          composeDescription(description, i, buf);
-          doneListItem(buf);
-        }
-
-        doneList(buf);
-
-        appendResolution(buf, myTool, refElement);
+        startListItem(buf);
+        composeDescription(description, i, buf);
+        doneListItem(buf);
       }
-      else {
-        appendNoProblems(buf);
-      }
+
+      doneList(buf);
+
+      appendResolution(buf, myTool, refEntity);
+    }
+    else {
+      appendNoProblems(buf);
     }
   }
 

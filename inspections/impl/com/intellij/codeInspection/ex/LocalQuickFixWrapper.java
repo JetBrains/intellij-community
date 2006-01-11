@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
@@ -23,7 +24,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     e.getPresentation().setText(myText);
   }
 
-  public String getText(RefElement where) {
+  public String getText(RefEntity where) {
     return myText;
   }
 

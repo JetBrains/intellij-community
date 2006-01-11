@@ -69,7 +69,7 @@ public abstract class QuickFixAction extends AnAction {
     return false;
   }
 
-  public String getText(RefElement where) {
+  public String getText(RefEntity where) {
     return getTemplatePresentation().getText();
   }
 

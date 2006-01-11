@@ -22,6 +22,7 @@ import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.ide.*;
 import com.intellij.lang.java.JavaLanguage;
@@ -679,6 +680,26 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       contentIndex.append("</body></html>");
       HTMLExporter.writeFile(exporter.getRootFolder(), packageName + "-index.html", contentIndex, myProject);
     }
+
+    final Set<RefModule> modules = tool.getModuleProblems();
+    final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
+    Collections.sort(sortedModules, RefEntityAlphabeticalComparator.getInstance());
+    for (RefModule module : sortedModules) {
+      appendPackageReference(packageIndex, module.getName());
+      StringBuffer contentIndex = new StringBuffer();
+      contentIndex.append("<html><body>");
+
+      contentIndex.append("<a HREF=\"");
+      contentIndex.append(exporter.getURL(module));
+      contentIndex.append("\" target=\"elementFrame\">");
+      contentIndex.append(module.getName());
+      contentIndex.append("</a><br>");
+      exporter.createPage(module);
+
+      contentIndex.append("</body></html>");
+      HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myProject);
+    }
+
 
     packageIndex.append("</body></html>");
 

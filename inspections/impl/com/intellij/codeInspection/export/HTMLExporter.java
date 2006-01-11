@@ -11,6 +11,7 @@ package com.intellij.codeInspection.export;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,22 +30,22 @@ public class HTMLExporter {
   private final String myRootFolder;
   private Project myProject;
   private int myFileCounter;
-  private final HashMap<RefElement,String> myElementToFilenameMap;
+  private final HashMap<RefEntity,String> myElementToFilenameMap;
   private final HTMLComposer myComposer;
-  private final HashSet<RefElement> myGeneratedReferences;
-  private final HashSet<RefElement> myGeneratedPages;
+  private final HashSet<RefEntity> myGeneratedReferences;
+  private final HashSet<RefEntity> myGeneratedPages;
 
   public HTMLExporter(String rootFolder, HTMLComposer composer, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
-    myElementToFilenameMap = new HashMap<RefElement, String>();
+    myElementToFilenameMap = new HashMap<RefEntity, String>();
     myFileCounter = 0;
     myComposer = composer;
-    myGeneratedPages = new HashSet<RefElement>();
-    myGeneratedReferences = new HashSet<RefElement>();
+    myGeneratedPages = new HashSet<RefEntity>();
+    myGeneratedReferences = new HashSet<RefEntity>();
   }
 
-  public void createPage(RefElement element) {
+  public void createPage(RefEntity element) {
     final String currentFileName = fileNameForElement(element);
     StringBuffer buf = new StringBuffer();
     appendNavBar(buf, element);
@@ -53,11 +54,13 @@ public class HTMLExporter {
     myGeneratedPages.add(element);
   }
 
-  private void appendNavBar(@NonNls final StringBuffer buf, RefElement element) {
+  private void appendNavBar(@NonNls final StringBuffer buf, RefEntity element) {
     buf.append("<a href=\"../index.html\" target=\"_top\">");
     buf.append(InspectionsBundle.message("inspection.export.inspections.link.text"));
     buf.append("</a>  ");
-    myComposer.appendElementReference(buf, element, InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
+    if (element instanceof RefElement) {
+      myComposer.appendElementReference(buf, (RefElement)element, InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
+    }
     buf.append("<hr>");
   }
 
@@ -96,12 +99,12 @@ public class HTMLExporter {
     }
   }
 
-  public String getURL(RefElement element) {
+  public String getURL(RefEntity element) {
     myGeneratedReferences.add(element);
     return fileNameForElement(element);
   }
 
-  private String fileNameForElement(RefElement element) {
+  private String fileNameForElement(RefEntity element) {
     @NonNls String fileName = myElementToFilenameMap.get(element);
 
     if (fileName == null) {
@@ -112,9 +115,9 @@ public class HTMLExporter {
     return fileName;
   }
 
-  private Set<RefElement> getReferencesWithoutPages() {
-    HashSet<RefElement> result = new HashSet<RefElement>();
-    for (RefElement refElement : myGeneratedReferences) {
+  private Set<RefEntity> getReferencesWithoutPages() {
+    HashSet<RefEntity> result = new HashSet<RefEntity>();
+    for (RefEntity refElement : myGeneratedReferences) {
       if (!myGeneratedPages.contains(refElement)) {
         result.add(refElement);
       }
@@ -124,9 +127,9 @@ public class HTMLExporter {
   }
 
   public void generateReferencedPages() {
-    Set<RefElement> extras = getReferencesWithoutPages();
+    Set<RefEntity> extras = getReferencesWithoutPages();
     while (extras.size() > 0) {
-      for (RefElement refElement : extras) {
+      for (RefEntity refElement : extras) {
         createPage(refElement);
       }
       extras = getReferencesWithoutPages();

@@ -81,6 +81,5 @@ public abstract class InspectionProfileEntry {
     DefaultJDOMExternalizer.writeExternal(this, node);
   }
 
-  public void exportResults(Element parentNode){
-  }
+
 }
