@@ -347,7 +347,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
       final PsiElement element = refElement.getElement();
-      if (element instanceof PsiDocCommentOwner && !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
+      if (!(element instanceof PsiDocCommentOwner) || !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
 
       if (refElement instanceof RefField) {
         RefField refField = (RefField)refElement;

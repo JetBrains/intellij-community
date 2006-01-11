@@ -69,7 +69,9 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
       LOG.assertTrue(module != null);
-      ((RefModuleImpl)getRefManager().getRefModule(module)).add(this);
+      final RefModuleImpl refModule = ((RefModuleImpl)getRefManager().getRefModule(module));
+      LOG.assertTrue(refModule != null);
+      refModule.add(this);
     } else {
       while (!(psiParent instanceof PsiClass || psiParent instanceof PsiMethod || psiParent instanceof PsiField)) {
         psiParent = psiParent.getParent();
