@@ -18,9 +18,12 @@ package com.siyeh.ig.controlflow;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 public class LoopConditionNotUpdatedInsideLoopInspection
@@ -51,11 +54,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            checkCondition(condition, body);
+            checkCondition(condition, statement);
         }
 
         private void checkCondition(
@@ -68,10 +67,23 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             } else if (expression instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)expression;
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                final PsiExpression rhs = binaryExpression.getROperand();
-                checkCondition(lhs, context);
-                checkCondition(rhs, context);
+                PsiExpression lhs = binaryExpression.getLOperand();
+                PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs == null) {
+                    return;
+                }
+                lhs = ParenthesesUtils.stripParentheses(lhs);
+                rhs = ParenthesesUtils.stripParentheses(rhs);
+                if (ComparisonUtils.isComparison(binaryExpression)) {
+                    if (lhs instanceof PsiLiteralExpression) {
+                        checkCondition(rhs, context);
+                    } else if (rhs instanceof PsiLiteralExpression) {
+                        checkCondition(lhs, context);
+                    }
+                } else {
+                    checkCondition(rhs, context);
+                    checkCondition(lhs, context);
+                }
             } else if (expression instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
                         (PsiReferenceExpression)expression;
@@ -88,6 +100,15 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                             context)) {
                         registerError(expression);
                     }
+                }
+            } else if (expression instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression)expression;
+                final PsiJavaToken sign = prefixExpression.getOperationSign();
+                final IElementType tokenType = sign.getTokenType();
+                if (JavaTokenType.EXCL.equals(tokenType)) {
+                    final PsiExpression operand = prefixExpression.getOperand();
+                    checkCondition(operand, context);
                 }
             }
         }
