@@ -23,10 +23,9 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizer {
   public static void write(Element root, @NonNls String name, String value) {
-    Element element = new Element("setting");
+    @NonNls Element element = new Element("setting");
     element.setAttribute("name", name);
     element.setAttribute("value", value == null ? "" : value);
     root.addContent(element);
@@ -51,10 +50,10 @@ public class JDOMExternalizer {
     }
   }
 
-  public static String readString(Element root, @NonNls String name) {
+  public static String readString(@NonNls Element root, @NonNls String name) {
     List list = root.getChildren("setting");
-    for (int i = 0; i < list.size(); i++) {
-      Element element = (Element)list.get(i);
+    for (Object aList : list) {
+      @NonNls Element element = (Element)aList;
       String childName = element.getAttributeValue("name");
       if (Comparing.strEqual(childName, name)) {
         return element.getAttributeValue("value");

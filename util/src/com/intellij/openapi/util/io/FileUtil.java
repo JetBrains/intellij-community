@@ -429,11 +429,11 @@ public class FileUtil {
     return candidate.getName();
   }
 
-  public static String toSystemDependentName(@NonNls String aFileName) {
+  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
     return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 
-  public static String toSystemIndependentName(@NotNull String aFileName) {
+  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
     return aFileName.replace('\\', '/');
   }
 

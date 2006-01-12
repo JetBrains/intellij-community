@@ -18,11 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:00:51 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesFilesManager implements ApplicationComponent {
   private final Set<VirtualFile> myPropertiesFiles = new THashSet<VirtualFile>();

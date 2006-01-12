@@ -43,6 +43,9 @@
       <interface-class>com.intellij.codeInsight.intention.QuickFixFactory</interface-class>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.i18n.LastSelectedPropertiesFileStore</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

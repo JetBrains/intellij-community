@@ -16,6 +16,8 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 
 import java.util.Collection;
 
@@ -35,7 +37,12 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
 
-    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, null, descriptor.getValue(), false, false);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(myEditor.getFile());
+    final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, psiFile, null, descriptor.getValue(), false, false){
+      protected String getDimensionServiceKey() {
+        return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";
+      }
+    };
     dialog.show();
     if (!dialog.isOK()) {
       return;
