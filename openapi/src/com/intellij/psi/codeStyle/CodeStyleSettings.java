@@ -21,15 +21,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public CodeStyleSettings() {
@@ -52,7 +49,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     PARAMETER_TYPE_TO_NAME.addPair("*Exception", "e");
   }
 
-  private static void initGeneralLocalVariable(TypeToNameMap map) {
+  private static void initGeneralLocalVariable(@NonNls TypeToNameMap map) {
     map.addPair("int", "i");
     map.addPair("byte", "b");
     map.addPair("char", "c");
@@ -591,7 +588,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
   public TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  public TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
+  @NonNls public TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
   public TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
@@ -684,52 +681,52 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int FOR_BRACE_FORCE = DO_NOT_FORCE;
 
 //----------------- EJB NAMING CONVENTIONS -------------
-  public String ENTITY_EB_PREFIX = "";         //EntityBean EJB Class name prefix
-  public String ENTITY_EB_SUFFIX = "Bean";     //EntityBean EJB Class name suffix
-  public String ENTITY_HI_PREFIX = "";         //EntityBean Home interface name prefix
-  public String ENTITY_HI_SUFFIX = "Home";     //EntityBean Home interface name suffix
-  public String ENTITY_RI_PREFIX = "";         //EntityBean Remote interface name prefix
-  public String ENTITY_RI_SUFFIX = "";         //EntityBean Remote interface name prefix
-  public String ENTITY_LHI_PREFIX = "Local";   //EntityBean local Home interface name prefix
-  public String ENTITY_LHI_SUFFIX = "Home";    //EntityBean local Home interface name suffix
-  public String ENTITY_LI_PREFIX = "Local";    //EntityBean local interface name prefix
-  public String ENTITY_LI_SUFFIX = "";         //EntityBean local interface name suffix
-  public String ENTITY_DD_PREFIX = "";         //EntityBean deployment descriptor name prefix
-  public String ENTITY_DD_SUFFIX = "EJB";      //EntityBean deployment descriptor name suffix
-  public String ENTITY_VO_PREFIX = "";
-  public String ENTITY_VO_SUFFIX = "VO";
-  public String ENTITY_PK_CLASS = "java.lang.String";
+  @NonNls public String ENTITY_EB_PREFIX = "";         //EntityBean EJB Class name prefix
+  @NonNls public String ENTITY_EB_SUFFIX = "Bean";     //EntityBean EJB Class name suffix
+  @NonNls public String ENTITY_HI_PREFIX = "";         //EntityBean Home interface name prefix
+  @NonNls public String ENTITY_HI_SUFFIX = "Home";     //EntityBean Home interface name suffix
+  @NonNls public String ENTITY_RI_PREFIX = "";         //EntityBean Remote interface name prefix
+  @NonNls public String ENTITY_RI_SUFFIX = "";         //EntityBean Remote interface name prefix
+  @NonNls public String ENTITY_LHI_PREFIX = "Local";   //EntityBean local Home interface name prefix
+  @NonNls public String ENTITY_LHI_SUFFIX = "Home";    //EntityBean local Home interface name suffix
+  @NonNls public String ENTITY_LI_PREFIX = "Local";    //EntityBean local interface name prefix
+  @NonNls public String ENTITY_LI_SUFFIX = "";         //EntityBean local interface name suffix
+  @NonNls public String ENTITY_DD_PREFIX = "";         //EntityBean deployment descriptor name prefix
+  @NonNls public String ENTITY_DD_SUFFIX = "EJB";      //EntityBean deployment descriptor name suffix
+  @NonNls public String ENTITY_VO_PREFIX = "";
+  @NonNls public String ENTITY_VO_SUFFIX = "VO";
+  @NonNls public String ENTITY_PK_CLASS = "java.lang.String";
 
-  public String SESSION_EB_PREFIX = "";        //SessionBean EJB Class name prefix
-  public String SESSION_EB_SUFFIX = "Bean";    //SessionBean EJB Class name suffix
-  public String SESSION_HI_PREFIX = "";        //SessionBean Home interface name prefix
-  public String SESSION_HI_SUFFIX = "Home";    //SessionBean Home interface name suffix
-  public String SESSION_RI_PREFIX = "";        //SessionBean Remote interface name prefix
-  public String SESSION_RI_SUFFIX = "";        //SessionBean Remote interface name prefix
-  public String SESSION_LHI_PREFIX = "Local";  //SessionBean local Home interface name prefix
-  public String SESSION_LHI_SUFFIX = "Home";   //SessionBean local Home interface name suffix
-  public String SESSION_LI_PREFIX = "Local";   //SessionBean local interface name prefix
-  public String SESSION_LI_SUFFIX = "";        //SessionBean local interface name suffix
-  public String SESSION_DD_PREFIX = "";        //SessionBean deployment descriptor name prefix
-  public String SESSION_DD_SUFFIX = "EJB";     //SessionBean deployment descriptor name suffix
+  @NonNls public String SESSION_EB_PREFIX = "";        //SessionBean EJB Class name prefix
+  @NonNls public String SESSION_EB_SUFFIX = "Bean";    //SessionBean EJB Class name suffix
+  @NonNls public String SESSION_HI_PREFIX = "";        //SessionBean Home interface name prefix
+  @NonNls public String SESSION_HI_SUFFIX = "Home";    //SessionBean Home interface name suffix
+  @NonNls public String SESSION_RI_PREFIX = "";        //SessionBean Remote interface name prefix
+  @NonNls public String SESSION_RI_SUFFIX = "";        //SessionBean Remote interface name prefix
+  @NonNls public String SESSION_LHI_PREFIX = "Local";  //SessionBean local Home interface name prefix
+  @NonNls public String SESSION_LHI_SUFFIX = "Home";   //SessionBean local Home interface name suffix
+  @NonNls public String SESSION_LI_PREFIX = "Local";   //SessionBean local interface name prefix
+  @NonNls public String SESSION_LI_SUFFIX = "";        //SessionBean local interface name suffix
+  @NonNls public String SESSION_DD_PREFIX = "";        //SessionBean deployment descriptor name prefix
+  @NonNls public String SESSION_DD_SUFFIX = "EJB";     //SessionBean deployment descriptor name suffix
 
-  public String MESSAGE_EB_PREFIX = "";        //MessageBean EJB Class name prefix
-  public String MESSAGE_EB_SUFFIX = "Bean";    //MessageBean EJB Class name suffix
-  public String MESSAGE_DD_PREFIX = "";        //MessageBean deployment descriptor name prefix
-  public String MESSAGE_DD_SUFFIX = "EJB";     //MessageBean deployment descriptor name suffix
+  @NonNls public String MESSAGE_EB_PREFIX = "";        //MessageBean EJB Class name prefix
+  @NonNls public String MESSAGE_EB_SUFFIX = "Bean";    //MessageBean EJB Class name suffix
+  @NonNls public String MESSAGE_DD_PREFIX = "";        //MessageBean deployment descriptor name prefix
+  @NonNls public String MESSAGE_DD_SUFFIX = "EJB";     //MessageBean deployment descriptor name suffix
 //----------------- Servlet NAMING CONVENTIONS -------------
-  public String SERVLET_CLASS_PREFIX = "";           //SERVLET Class name prefix
-  public String SERVLET_CLASS_SUFFIX = "";           //SERVLET Class name suffix
-  public String SERVLET_DD_PREFIX = "";              //SERVLET deployment descriptor name prefix
-  public String SERVLET_DD_SUFFIX = "";              //SERVLET deployment descriptor name suffix
+  @NonNls public String SERVLET_CLASS_PREFIX = "";           //SERVLET Class name prefix
+  @NonNls public String SERVLET_CLASS_SUFFIX = "";           //SERVLET Class name suffix
+  @NonNls public String SERVLET_DD_PREFIX = "";              //SERVLET deployment descriptor name prefix
+  @NonNls public String SERVLET_DD_SUFFIX = "";              //SERVLET deployment descriptor name suffix
 //----------------- Web Filter NAMING CONVENTIONS -------------
-  public String FILTER_CLASS_PREFIX = "";          //Filter Class name prefix
-  public String FILTER_CLASS_SUFFIX = "";          //Filter Class name suffix
-  public String FILTER_DD_PREFIX = "";             //Filter deployment descriptor name prefix
-  public String FILTER_DD_SUFFIX = "";             //Filter deployment descriptor name suffix
+  @NonNls public String FILTER_CLASS_PREFIX = "";          //Filter Class name prefix
+  @NonNls public String FILTER_CLASS_SUFFIX = "";          //Filter Class name suffix
+  @NonNls public String FILTER_DD_PREFIX = "";             //Filter deployment descriptor name prefix
+  @NonNls public String FILTER_DD_SUFFIX = "";             //Filter deployment descriptor name suffix
 
-  public String LISTENER_CLASS_PREFIX = "";          //Listener Class name prefix
-  public String LISTENER_CLASS_SUFFIX = "";          //Listener Class name suffix
+  @NonNls public String LISTENER_CLASS_PREFIX = "";          //Listener Class name prefix
+  @NonNls public String LISTENER_CLASS_SUFFIX = "";          //Listener Class name suffix
 
 //------------------------------------------------------------------------
 
@@ -801,13 +798,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean HTML_SPACE_AROUND_TAG_NAME = false;
   public boolean HTML_SPACE_INSIDE_EMPTY_TAG = false;
 
-  public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
-  public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
-  public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body";
+  @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
+  @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
+  @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body";
   public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 100;
-  public String HTML_TEXT_ELEMENTS = "a,b,img,span,i,em";
-  public String HTML_KEEP_WHITESPACES_INSIDE = "span";
-  public String HTML_PLACE_ON_NEW_LINE = "html,table,form,frame,iframe";
+  @NonNls public String HTML_TEXT_ELEMENTS = "a,b,img,span,i,em";
+  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span";
+  @NonNls public String HTML_PLACE_ON_NEW_LINE = "html,table,form,frame,iframe";
 
 
   // ---------------------------------------------------------------------------------------
@@ -839,9 +836,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int ENUM_CONSTANTS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
   //----------------------------------------------------------------------------------------
   
-  //-----------------------------------I18n Inspection settings-----------------------------
-  public String NON_NLS_MARKER_COMMENT = "NON-NLS";
-
   private CodeStyleSettings myParentSettings;
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -849,11 +843,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     importOldIndentOptions(element);
   }
 
-  private void importOldIndentOptions(Element element) {
+  private void importOldIndentOptions(@NonNls Element element) {
     final List options = element.getChildren("option");
-    for (int i = 0; i < options.size(); i++) {
-      Element option = (Element)options.get(i);
-      final String name = option.getAttributeValue("name");
+    for (Object option1 : options) {
+      @NonNls Element option = (Element)option1;
+      @NonNls final String name = option.getAttributeValue("name");
       if ("TAB_SIZE".equals(name)) {
         final int value = Integer.valueOf(option.getAttributeValue("value")).intValue();
         JAVA_INDENT_OPTIONS.TAB_SIZE = value;
@@ -969,11 +963,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       return null;
     }
 
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(@NonNls Element element) throws InvalidDataException {
       myPatterns.clear();
       myNames.clear();
       for (final Object o : element.getChildren("pair")) {
-        Element e = (Element)o;
+        @NonNls Element e = (Element)o;
 
         String pattern = e.getAttributeValue("type");
         String name = e.getAttributeValue("name");
@@ -990,7 +984,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       for (int i = 0; i < myPatterns.size(); i++) {
         String pattern = myPatterns.get(i);
         String name = myNames.get(i);
-        Element element = new Element("pair");
+        @NonNls Element element = new Element("pair");
         parentNode.addContent(element);
         element.setAttribute("type", pattern);
         element.setAttribute("name", name);
@@ -1034,11 +1028,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
     public int hashCode() {
       int code = 0;
-      for (int i = 0; i < myPatterns.size(); i++) {
-        code += myPatterns.get(i).hashCode();
+      for (String myPattern : myPatterns) {
+        code += myPattern.hashCode();
       }
-      for (int i = 0; i < myNames.size(); i++) {
-        code += myNames.get(i).hashCode();
+      for (String myName : myNames) {
+        code += myName.hashCode();
       }
       return code;
     }
@@ -1050,7 +1044,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       final String packageName;
       final boolean withSubpackages;
 
-      public Entry(String packageName, boolean withSubpackages) {
+      public Entry(@NonNls String packageName, boolean withSubpackages) {
         this.packageName = packageName;
         this.withSubpackages = withSubpackages;
       }
@@ -1150,8 +1144,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public boolean contains(String packageName) {
-      for (int i = 0; i < myEntries.size(); i++) {
-        Entry entry = myEntries.get(i);
+      for (Entry entry : myEntries) {
         if (packageName.startsWith(entry.packageName)) {
           if (packageName.length() == entry.packageName.length()) return true;
           if (entry.withSubpackages) {
@@ -1162,13 +1155,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       return false;
     }
 
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(@NonNls Element element) throws InvalidDataException {
       myEntries.clear();
 
       for (final Object o : element.getChildren("package")) {
-        Element e = (Element)o;
+        @NonNls Element e = (Element)o;
         String packageName = e.getAttributeValue("name");
-        boolean withSubpackages = "true".equals(e.getAttributeValue("withSubpackages"));
+        boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
         if (packageName == null) {
           throw new InvalidDataException();
         }
@@ -1177,12 +1170,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (int i = 0; i < myEntries.size(); i++) {
-        Entry entry = myEntries.get(i);
-        Element element = new Element("package");
+      for (Entry entry : myEntries) {
+        @NonNls Element element = new Element("package");
         parentNode.addContent(element);
         element.setAttribute("name", entry.packageName);
-        element.setAttribute("withSubpackages", entry.withSubpackages ? "true" : "false");
+        element.setAttribute("withSubpackages", Boolean.toString(entry.withSubpackages));
       }
     }
   }
@@ -1197,7 +1189,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       private final String myPackageName;
       private final boolean myWithSubpackages;
 
-      public PackageEntry(String packageName, boolean withSubpackages) {
+      public PackageEntry(@NonNls String packageName, boolean withSubpackages) {
         myPackageName = packageName;
         myWithSubpackages = withSubpackages;
       }
@@ -1295,17 +1287,18 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       myEntries.clear();
       List children = element.getChildren();
       for (final Object aChildren : children) {
-        Element e = (Element)aChildren;
-        if ("package".equals(e.getName())) {
+        @NonNls Element e = (Element)aChildren;
+        @NonNls String name = e.getName();
+        if ("package".equals(name)) {
           String packageName = e.getAttributeValue("name");
-          boolean withSubpackages = "true".equals(e.getAttributeValue("withSubpackages"));
+          boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
           if (packageName == null) {
             throw new InvalidDataException();
           }
           myEntries.add(new PackageEntry(packageName, withSubpackages));
         }
         else {
-          if ("emptyLine".equals(e.getName())) {
+          if ("emptyLine".equals(name)) {
             myEntries.add(new EmptyLineEntry());
           }
         }
@@ -1315,18 +1308,17 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (int i = 0; i < myEntries.size(); i++) {
-        Object o = myEntries.get(i);
-        if (o instanceof PackageEntry) {
-          PackageEntry entry = (PackageEntry)o;
-          Element element = new Element("package");
+      for (Entry myEntry : myEntries) {
+        if (myEntry instanceof PackageEntry) {
+          PackageEntry entry = (PackageEntry)myEntry;
+          @NonNls Element element = new Element("package");
           parentNode.addContent(element);
           element.setAttribute("name", entry.getPackageName());
           element.setAttribute("withSubpackages", entry.isWithSubpackages() ? "true" : "false");
         }
         else {
-          if (o instanceof EmptyLineEntry) {
-            Element element = new Element("emptyLine");
+          if (myEntry instanceof EmptyLineEntry) {
+            @NonNls Element element = new Element("emptyLine");
             parentNode.addContent(element);
           }
         }
