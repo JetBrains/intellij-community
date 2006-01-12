@@ -50,8 +50,6 @@ public class PersistentStringEnumerator {
   }
 
   public int enumerate(String value) throws IOException {
-    markDirty(true);
-
     int depth = 0;
     final int valueHC = value.hashCode();
     int hc = valueHC;
@@ -150,6 +148,8 @@ public class PersistentStringEnumerator {
 
   private int writeNewString(final String value, int hashCode) {
     try {
+      markDirty(true);
+      
       final MappedFile storage = myStorage;
       final int pos = (int)storage.length();
       storage.seek(pos);
