@@ -397,10 +397,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           }
         }
         catch (Exception e) {
-          LOG.error(new PluginException(e, app.getPlugin(descriptor.getPluginId())));
+          LOG.error(new PluginException(e, descriptor.getPluginId()));
         }
         catch (Error e) {
-          LOG.error(new PluginException(e, app.getPlugin(descriptor.getPluginId())));
+          LOG.error(new PluginException(e, descriptor.getPluginId()));
         }
       }
     }
@@ -550,7 +550,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
       catch (Exception e) {
         if (descriptor != null) {
-          LOG.error(new PluginException(e, descriptor));
+          LOG.error(new PluginException(e, descriptor.getPluginId()));
         }
         else {
           LOG.error(e);
@@ -558,7 +558,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
       catch (Error e) {
         if (descriptor != null) {
-          LOG.error(new PluginException(e, descriptor));
+          LOG.error(new PluginException(e, descriptor.getPluginId()));
         }
         else {
           throw e;

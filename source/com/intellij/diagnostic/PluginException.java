@@ -1,6 +1,6 @@
 package com.intellij.diagnostic;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -11,24 +11,30 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use Options | File Templates.
  */
 public class PluginException extends RuntimeException {
-  private IdeaPluginDescriptor myDescriptor;
+  private PluginId myPluginId;
 
-  public PluginException(Throwable e, IdeaPluginDescriptor descriptor) {
-    super (e.getMessage(), e);
-    myDescriptor = descriptor;
+  public PluginException(String message, Throwable cause, PluginId pluginId) {
+    super(message, cause);
+    myPluginId = pluginId;
   }
 
-  public IdeaPluginDescriptor getDescriptor() {
-    return myDescriptor;
+  public PluginException(Throwable e, PluginId pluginId) {
+    super (e.getMessage(), e);
+    myPluginId = pluginId;
+  }
+
+  public PluginId getPluginId() {
+    return myPluginId;
   }
 
   public String getMessage() {
     @NonNls String message = super.getMessage();
 
-    if (message == null)
+    if (message == null) {
       message = "";
+    }
 
-    message += " [Plugin: " + myDescriptor.getName() + "]";
+    message += " [Plugin: " + myPluginId.toString() + "]";
     return message;
   }
 }

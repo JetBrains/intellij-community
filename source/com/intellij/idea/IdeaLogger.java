@@ -87,12 +87,11 @@ public class IdeaLogger extends Logger {
       ourErrorsOccurred = new Exception(mess + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
     }
 
-    myLogger.error(message + (detailString.length() > 0 ? "\nDetails: " + detailString : ""));
+    myLogger.error(message + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
     logErrorHeader();
     if (t.getCause() != null) {
       myLogger.error("Original exception: ", t.getCause());
     }
-    myLogger.error(message + (detailString.length() > 0 ? "\nDetails: " + detailString : ""), t);
   }
 
   private void logErrorHeader() {

@@ -366,7 +366,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
     else if (t instanceof PluginException) {
-      return ((PluginException)t).getDescriptor().getPluginId();
+      return ((PluginException)t).getPluginId();
     }
 
     return null;

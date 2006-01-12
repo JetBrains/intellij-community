@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
@@ -99,7 +100,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
         myFormatVersion = Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
-        LOG.error("Invalid value in plugin.xml format version: " + internalVersionString);
+        LOG.error(new PluginException("Invalid value in plugin.xml format version: " + internalVersionString, e, myId));
       }
     }
 
@@ -175,7 +176,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private String createDescriptionKey(final PluginId id) {
+  private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
   }
 
