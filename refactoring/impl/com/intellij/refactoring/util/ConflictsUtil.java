@@ -98,7 +98,7 @@ public class ConflictsUtil {
       else { // method somewhere in base class
         if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
           String protoMethodInfo = getMethodPrototypeString(prototype);
-          String className = getDescription(method.getContainingClass(), false);
+          String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
           if (!prototype.hasModifierProperty(PsiModifier.PRIVATE)) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
