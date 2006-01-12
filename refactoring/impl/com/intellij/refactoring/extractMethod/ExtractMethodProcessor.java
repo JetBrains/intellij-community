@@ -404,7 +404,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         (PsiReturnStatement)myElementFactory.createStatementFromText("return " + outVariableName + ";", null);
       }
       else if (myGenerateConditionalExit) {
-        returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return false;", null);
+        returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return true;", null);
       }
       else {
         returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return;", null);
@@ -468,7 +468,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       body.addRange(myElements[0], myElements[myElements.length - 1]);
       if (myGenerateConditionalExit) {
-        body.add(myElementFactory.createStatementFromText("return true;", null));
+        body.add(myElementFactory.createStatementFromText("return false;", null));
       }
       else if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
         body.add(returnStatement);
