@@ -574,7 +574,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     try {
       PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
       if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;
-      PsiMethod appPremain = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
+      PsiMethod appPremain = factory.createMethodFromText("void premain(String args, java.lang.instrument.Instrumentation i);", null);
       if (MethodSignatureUtil.areSignaturesEqual(method, appPremain)) return true;
     }
     catch (IncorrectOperationException e) {
