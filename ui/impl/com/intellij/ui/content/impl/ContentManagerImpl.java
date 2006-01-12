@@ -1,16 +1,18 @@
 package com.intellij.ui.content.impl;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.content.*;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.content.*;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -194,6 +196,10 @@ public class ContentManagerImpl implements ContentManager {
 
   public String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
+  }
+
+  public List<AnAction> getAdditionalPopupActions(final Content content) {
+    return null;
   }
 
   public boolean canCloseAllContents() {

@@ -1,13 +1,17 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -16,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentManagerImpl;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -59,6 +64,52 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     });
     SelectInManager selectInManager = SelectInManager.getInstance(myCurrentProject);
     selectInManager.addTarget(createSelectInTarget());
+  }
+
+  public List<AnAction> getAdditionalPopupActions(final Content content) {
+    List<AnAction> actions = new ArrayList<AnAction>();
+    actions.add(new AnAction(IdeBundle.message("action.rename.favorites.list")) {
+      public void actionPerformed(AnActionEvent e) {
+        renameFavoritesList(content);
+      }
+    });
+    return actions;
+  }
+
+  private void renameFavoritesList(final Content content) {
+    final FavoritesTreeViewPanel favoritesPanel = ((FavoritesTreeViewPanel)content.getComponent());
+    final String oldName = favoritesPanel.getName();
+    final String s =
+      Messages.showInputDialog(myCurrentProject,
+                               IdeBundle.message("prompt.input.favorites.list.new.name"),
+                               IdeBundle.message("title.rename.favorites.list"),
+                               Messages.getInformationIcon(), oldName,
+                               new InputValidator() {
+                                 public boolean checkInput(String inputString) {
+                                   return inputString != null && inputString.trim().length() > 0;
+                                 }
+                                 public boolean canClose(String inputString) {
+                                   final boolean isNew = ArrayUtil.find(
+                                     FavoritesViewImpl.getInstance(myCurrentProject).getAvailableFavoritesLists(),
+                                     inputString.trim()) == -1;
+                                   if (!isNew) {
+                                     Messages.showErrorDialog(myCurrentProject,
+                                                              IdeBundle.message("error.favorites.list.already.exists",
+                                                                                inputString.trim()),
+                                                              IdeBundle.message("title.unable.to.add.favorites.list"));
+                                     return false;
+                                   }
+                                   return inputString.trim().length() > 0;
+                                 }
+                               });
+    if (s != null && s.length() > 0) {
+      myName2FavoritesListSet.remove(oldName);
+      favoritesPanel.setName(s);
+      content.setDisplayName(s);
+      myName2FavoritesListSet.put(s, content);
+      myCurrentFavoritesList = s;
+      myActions.remove(oldName);
+    }
   }
 
   private SelectInTarget createSelectInTarget() {

@@ -257,6 +257,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     return myName;
   }
 
+  public void setName(String name){
+    myName = name;
+  }
+
   private PsiElement[] getSelectedPsiElements() {
     final Object[] elements = getSelectedNodeElements();
     if (elements == null) {

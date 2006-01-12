@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -356,6 +357,13 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         group.addSeparator();
         group.add(new MyNextTabAction());
         group.add(new MyPreviousTabAction());
+        final List<AnAction> additionalActions = myManager.getAdditionalPopupActions(content);
+        if (additionalActions != null) {
+          group.addSeparator();
+          for (AnAction anAction : additionalActions) {
+            group.add(anAction);
+          }
+        }
         ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
         menu.getComponent().show(myTabbedPaneWrapper.getComponent(), x, y);
       }

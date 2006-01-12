@@ -1,8 +1,8 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,17 +19,21 @@ public class SendToFavoritesGroup extends ActionGroup{
     }
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = favoritesView.getCurrentTreeViewPanel().getSelectedNodeDescriptors();
-    final String[] allAddActionNamesButThis = favoritesView.getAllAddActionNamesButThis();
-    if (selectedNodeDescriptors == null ||
-        allAddActionNamesButThis == null){
+    if (selectedNodeDescriptors == null ){
       return AnAction.EMPTY_ARRAY;
     }
     int idx = 0;
-    AnAction[] actions = new AnAction[allAddActionNamesButThis.length + 2];
-    for (String addAction : allAddActionNamesButThis) {
-      actions[idx++] = new SendToFavoritesAction(addAction);
+    AnAction[] actions;
+    final String[] allAddActionNamesButThis = favoritesView.getAllAddActionNamesButThis();
+    if (allAddActionNamesButThis != null) {
+      actions = new AnAction[allAddActionNamesButThis.length + 2];
+      for (String addAction : allAddActionNamesButThis) {
+        actions[idx++] = new SendToFavoritesAction(addAction);
+      }
+      actions[idx++] = Separator.getInstance();
+    } else {
+      actions = new AnAction[1];
     }
-    actions[idx++] = Separator.getInstance();
     actions[idx] = new SendToNewFavoritesListAction();
     return actions;
   }

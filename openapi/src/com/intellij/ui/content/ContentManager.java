@@ -15,7 +15,10 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.actionSystem.AnAction;
+
 import javax.swing.*;
+import java.util.List;
 
 public interface ContentManager {
   boolean canCloseContents();
@@ -58,4 +61,6 @@ public interface ContentManager {
   void removeContentManagerListener(ContentManagerListener l);
 
   String getCloseAllButThisActionName();
+
+  List<AnAction> getAdditionalPopupActions(final Content content);
 }
