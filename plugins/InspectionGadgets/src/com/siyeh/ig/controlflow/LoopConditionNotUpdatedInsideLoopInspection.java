@@ -17,12 +17,10 @@ package com.siyeh.ig.controlflow;
 
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhileStatement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 public class LoopConditionNotUpdatedInsideLoopInspection
@@ -53,19 +51,45 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
-            checkCondition(condition);
-            if (!(condition instanceof PsiBinaryExpression)) {
+            final PsiStatement body = statement.getBody();
+            if (body == null) {
                 return;
             }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)condition;
-            checkCondition(binaryExpression);
+            checkCondition(condition, body);
         }
 
         private void checkCondition(
-                PsiExpression expression) {
-            //if ()
-            //final PsiExpression lhs = expression.getLOperand();
+                PsiExpression expression, PsiStatement context) {
+            if (expression instanceof PsiInstanceOfExpression) {
+                final PsiInstanceOfExpression instanceOfExpression =
+                        (PsiInstanceOfExpression)expression;
+                final PsiExpression operand = instanceOfExpression.getOperand();
+                checkCondition(operand, context);
+            } else if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)expression;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                final PsiExpression rhs = binaryExpression.getROperand();
+                checkCondition(lhs, context);
+                checkCondition(rhs, context);
+            } else if (expression instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)expression;
+                final PsiElement element = referenceExpression.resolve();
+                if (element instanceof PsiLocalVariable) {
+                    final PsiLocalVariable variable = (PsiLocalVariable)element;
+                    if (!VariableAccessUtils.variableIsAssigned(variable,
+                            context)) {
+                        registerError(expression);
+                    }
+                } else if (element instanceof PsiParameter) {
+                    final PsiParameter parameter = (PsiParameter)element;
+                    if (!VariableAccessUtils.variableIsAssigned(parameter,
+                            context)) {
+                        registerError(expression);
+                    }
+                }
+            }
         }
     }
 }
