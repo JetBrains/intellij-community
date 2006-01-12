@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -36,6 +37,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * User: anna
@@ -116,7 +119,14 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       mySandboxHome.setSelectedItem(sandboxHome);
       myModified = false;
     } else {
-      mySandboxHome.setText("");
+      @NonNls String defaultSandbox = "";
+      try {
+        defaultSandbox = new File(PathManager.getConfigPath()).getParentFile().getCanonicalPath() + File.separator + "sandbox";
+      }
+      catch (IOException e) {
+        //can't be on running instance
+      }
+      mySandboxHome.setText(defaultSandbox);
     }
   }
 
