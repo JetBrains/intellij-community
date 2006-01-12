@@ -45,43 +45,6 @@ public class ITNProxy {
   @NonNls private static final String HTTP_POST = "POST";
 
 
-  public static int getBuildNumber () throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)new URL (BUILD_NUMBER_URL).openConnection();
-
-    connection.setAllowUserInteraction(true);
-    connection.connect();
-    int responseCode = connection.getResponseCode();
-    int buildNumber = -1;
-
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      InputStream is = connection.getInputStream();
-
-      int c;
-      while ((c = is.read()) != -1) {
-        baos.write (c);
-      }
-
-      try {
-        buildNumber = Integer.valueOf(baos.toString().trim()).intValue();
-      } catch (NumberFormatException ex) {
-        // Tibor!!!! :-E
-      }
-    }
-
-    connection.disconnect();
-
-    switch (responseCode) {
-      case HttpURLConnection.HTTP_OK:
-        break;
-      default:
-        // some problems
-        throw new IOException(DiagnosticBundle.message("error.report.connection.failure", responseCode));
-    }
-
-    return buildNumber;
-  }
-
   public static String getThreadStatus (int threadId) throws IOException {
     HttpURLConnection connection = (HttpURLConnection)new URL (CHECK_THREAD_URL + threadId).openConnection();
 

@@ -1,26 +1,19 @@
 package com.intellij.errorreport;
 
-import com.intellij.diagnostic.ErrorReportConfigurable;
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.errorreport.bean.BeanWrapper;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.bean.ExceptionBean;
 import com.intellij.errorreport.bean.NotifierBean;
 import com.intellij.errorreport.error.*;
 import com.intellij.errorreport.itn.ITNProxy;
+import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.util.net.HttpConfigurable;
-import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Vector;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,72 +38,14 @@ public class ErrorReportSender {
   protected ErrorReportSender () {
   }
 
-  protected static String authorizeEmail (String email) throws IOException, XmlRpcException {
-    XmlRpcClient client = new XmlRpcClient(REPORT_URL);
-    Vector params = new Vector ();
-    params.add(PARAM_EMAIL);
-    params.add(email);
-
-    String notifierId = (String) client.execute(RemoteMethods.ERROR_AUTHORIZE, params);
-    return notifierId;
-  }
-
-  protected static String authorizeEAP (String eapLogin) throws IOException, XmlRpcException {
-    XmlRpcClient client = new XmlRpcClient(REPORT_URL);
-    Vector params = new Vector ();
-    params.add(PARAM_EAP);
-    params.add(eapLogin);
-
-    String notifierId = (String) client.execute(RemoteMethods.ERROR_AUTHORIZE, params);
-    return notifierId;
-  }
-
-  protected static ExceptionBean checkException (Throwable e) throws IOException, XmlRpcException, NoSuchExceptionException {
-    if (e instanceof StackOverflowError) {
-      throw new NoSuchExceptionException(e.getMessage());
-    }
-
-    XmlRpcClient client = new XmlRpcClient(REPORT_URL);
-    Vector params = new Vector ();
-    ExceptionBean exceptionBean = new ExceptionBean(e);
-    params.add(exceptionBean.getHashCode());
-
-    try {
-      final Object result = client.execute(RemoteMethods.ERROR_CHECK_EXCEPTION, params);
-      if (result instanceof Throwable) throw new XmlRpcException(-1, ((Throwable)result).getMessage(), (Throwable)result);
-      Hashtable hashtable = (Hashtable) result;
-      return BeanWrapper.getException(hashtable);
-    } catch (XmlRpcException ex) {
-      if (NoSuchExceptionException.isException(ex))
-        throw new NoSuchExceptionException(ex.getMessage());
-      else
-        throw ex;
-    }
-  }
-
-  protected static void postError (ErrorBean error, ExceptionBean exceptionBean)
-    throws IOException, XmlRpcException {
-    XmlRpcClient client = new XmlRpcClient(REPORT_URL);
-    Vector params = new Vector ();
-    params.add(BeanWrapper.getHashtable(error));
-    params.add(BeanWrapper.getHashtable(exceptionBean));
-
-    client.execute(RemoteMethods.ERROR_POST_ERROR, params);
-  }
-
   class SendTask {
     private NotifierBean notifierBean;
     private ErrorBean errorBean;
     private Throwable throwable;
     private ExceptionBean exceptionBean;
-    private boolean newThread = false;
-    private int buildNumber = -1;
 
     private ITask [] prepareTasks = null;
     private ITask [] doTasks = null;
-    @NonNls private static final String STATUS_OPEN = "Open";
-    @NonNls private static final String STATUS_SUBMITTED = "Submitted";
-    @NonNls private static final String STATUS_MORE_INFO_NEEDED = "More info needed";
 
     public SendTask(Throwable throwable) {
       this.throwable = throwable;
@@ -130,10 +65,10 @@ public class ErrorReportSender {
       if (prepareTasks == null)
         prepareTasks =  new ITask [] {
           new ITask () {
-            private boolean cheked = false;
+            private boolean checked = false;
 
             public boolean isSuccessful() {
-              return cheked;
+              return checked;
             }
 
             public String getDescription() {
@@ -142,94 +77,21 @@ public class ErrorReportSender {
 
             public void run() {
               try {
-                int itnBuildNumber = ITNProxy.getBuildNumber();
-                ApplicationInfoEx appInfo =
-                  (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(
-                    ApplicationInfo.class);
-                String strNumber = appInfo.getBuildNumber();
-                buildNumber = -1;
-                try {
-                  buildNumber = Integer.valueOf(strNumber).intValue();
-                } catch (NumberFormatException e) {
-
+                UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+                if (newVersion != null) {
+                  throw new NewBuildException(Integer.toString(newVersion.getLatestBuild()));
                 }
-
-                if (itnBuildNumber > 0 &&
-                    buildNumber > 0 &&
-                    itnBuildNumber > buildNumber) {
-                  throw new NewBuildException (Integer.toString(itnBuildNumber));
-                }
-
-                cheked = true;
-              }
-              catch (IOException e) {
-                throw new SendException(e);
+                checked = true;
+                exceptionBean = new ExceptionBean(throwable);
               }
               catch (NewBuildException e) {
                 throw new SendException(e);
               }
-            }
-          },
-          new ITask () {
-            private boolean checked = false;
-
-            public String getDescription() {
-              return DiagnosticBundle.message("error.report.step.check.exception");
-            }
-
-            public boolean isSuccessful() {
-              return checked;
-            }
-
-            public void run() {
-              try {
-                exceptionBean = ErrorReportSender.checkException(throwable);
-                newThread = false;
-                checked = true;
-              } catch (NoSuchExceptionException e) {
-                exceptionBean = new ExceptionBean(throwable);
-                newThread = true;
-                checked = true;
-              } catch (Exception e) {
+              catch (ConnectionException e) {
                 throw new SendException(e);
               }
             }
-          },
-
-          new ITask () {
-            private boolean checked = false;
-
-            public String getDescription() {
-              return DiagnosticBundle.message("error.report.step.check.thread.status");
-            }
-
-            public boolean isSuccessful() {
-              return checked;
-            }
-
-            public void run() {
-              if (! newThread) {
-                try {
-                  String threadStatus = ITNProxy.getThreadStatus(exceptionBean.getItnThreadId());
-                  checked = true;
-
-                  if (! threadStatus.equals(STATUS_OPEN) &&
-                      ! threadStatus.equals(STATUS_SUBMITTED) &&
-                      ! threadStatus.equals(STATUS_MORE_INFO_NEEDED)) {
-                    ErrorReportConfigurable.getInstance().addClosed(exceptionBean.getHashCode(),
-                                                                    Integer.toString(exceptionBean.getItnThreadId()));
-                    throw new ThreadClosedException (threadStatus, exceptionBean.getItnThreadId());
-                  }
-                }
-                catch (IOException e) {
-                  throw new SendException(e);
-                }
-                catch (ThreadClosedException e) {
-                  throw new SendException(e);
-                }
-              }
-            }
-          },
+          }
         };
       return prepareTasks;
     }
@@ -252,57 +114,16 @@ public class ErrorReportSender {
               try {
                 errorBean.setExceptionHashCode(exceptionBean.getHashCode());
 
-                String notifierId = null;
-
-                if (notifierBean.getEmail() != null && notifierBean.getEmail().length() > 0) {
-                  notifierId = ErrorReportSender.authorizeEmail(notifierBean.getEmail());
-
-                  authorized = true;
-                } else if (notifierBean.getItnLogin() != null &&
-                           notifierBean.getItnLogin().length() > 0) {
-                  if (newThread) {
-                    int threadId = ITNProxy.postNewThread(
-                      notifierBean.getItnLogin(),
-                      notifierBean.getItnPassword(),
-                      errorBean, exceptionBean,
-                      IdeaLogger.getOurCompilationTimestamp());
-                    exceptionBean.setItnThreadId(threadId);
-                  } else {
-                    ITNProxy.postNewComment(notifierBean.getItnLogin(),
-                                            notifierBean.getItnPassword(),
-                                            exceptionBean.getItnThreadId(),
-                                            errorBean.getDescription());
-                  }
-                  notifierId = ErrorReportSender.authorizeEAP(notifierBean.getItnLogin());
+                if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
+                  int threadId = ITNProxy.postNewThread(
+                    notifierBean.getItnLogin(),
+                    notifierBean.getItnPassword(),
+                    errorBean, exceptionBean,
+                    IdeaLogger.getOurCompilationTimestamp());
+                  exceptionBean.setItnThreadId(threadId);
 
                   authorized = true;
                 }
-                errorBean.setNotifierId(notifierId);
-              } catch (Exception e) {
-                throw new SendException(e);
-              }
-            }
-          },
-          new ITask () {
-            private boolean sent = false;
-
-            public boolean isSuccessful() {
-              return sent;
-            }
-
-            public String getDescription() {
-              return DiagnosticBundle.message("error.report.step.send");
-            }
-
-            public void run() {
-              exceptionBean.setBuildNumber(Integer.toString(buildNumber));
-              exceptionBean.setProductCode(PRODUCT_CODE);
-              exceptionBean.setScrambled(buildNumber > 0);
-              exceptionBean.setDate(new Date ());
-
-              try {
-                ErrorReportSender.postError(errorBean, exceptionBean);
-                sent = true;
               } catch (Exception e) {
                 throw new SendException(e);
               }
