@@ -15,18 +15,14 @@
  */
 package com.intellij.codeInspection.unneededThrows;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,29 +117,19 @@ public class UnusedThrowsDeclaration extends LocalInspectionTool {
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
 
-    return inspectionManager.createProblemDescriptor(referenceElement, description, new LocalQuickFix []{ new RemoveFix(method, exceptionType)}, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    final LocalQuickFix quickFixes = new RemoveFix(method, exceptionType);
+    return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unnededThrows.UnnusedThrowsDeclaration");
-
   private static class RemoveFix implements LocalQuickFix {
-
-    private final PsiMethod myMethod;
-    private final PsiClassType myThrowsClassType;
+    private final MethodThrowsFix myQuickFix;
 
     public RemoveFix(PsiMethod method, PsiClassType exceptionClass) {
-      myMethod = method;
-      myThrowsClassType = exceptionClass;
+      myQuickFix = new MethodThrowsFix(method, exceptionClass, false, false);
     }
 
     public String getName() {
-      String methodName = PsiFormatUtil.formatMethod(myMethod,
-                                                     PsiSubstitutor.EMPTY,
-                                                     PsiFormatUtil.SHOW_NAME,
-                                                     0);
-      return QuickFixBundle.message("fix.throws.list.remove.exception",
-                                    myThrowsClassType.getCanonicalText(),
-                                    methodName);
+      return myQuickFix.getText();
     }
 
     public String getFamilyName() {
@@ -151,19 +137,9 @@ public class UnusedThrowsDeclaration extends LocalInspectionTool {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-      PsiFile file = myMethod.getContainingFile();
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-      PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
-      try {
-        for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-          if (referenceElement.getCanonicalText().equals(myThrowsClassType.getCanonicalText())) {
-            referenceElement.delete();
-            break;
-          }
-        }
-        UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
+      final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+      if (myQuickFix.isAvailable(project, null, psiFile)) {
+        myQuickFix.invoke(project, null, psiFile);
       }
     }
   }

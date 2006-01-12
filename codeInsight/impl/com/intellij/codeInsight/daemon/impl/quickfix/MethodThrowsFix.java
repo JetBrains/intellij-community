@@ -51,8 +51,8 @@ public class MethodThrowsFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
-    boolean alreadyThrows = false;
     try {
+      boolean alreadyThrows = false;
       for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
         if (referenceElement.getCanonicalText().equals(myThrowsClassType.getCanonicalText())) {
           alreadyThrows = true;
