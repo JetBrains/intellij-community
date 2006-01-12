@@ -29,7 +29,6 @@ import java.util.List;
 /**
  * @author Mike
  */
-@SuppressWarnings({"ALL"})
 public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor myEditor;
 
@@ -121,7 +120,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
-  
+
   protected VirtualFile configureByFiles(final VirtualFile[] vFiles, final File projectRoot) throws IOException {
     myFile = null;
     myEditor = null;
@@ -134,11 +133,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     File dir = createTempDirectory();
     myFilesToDelete.add(dir);
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    EditorInfo[] editorInfos = new EditorInfo[vFiles.length];
+
     final VirtualFile[] newVFiles = new VirtualFile[vFiles.length];
-    final RangeMarker[] caretMarkers = new RangeMarker[vFiles.length];
-    final RangeMarker[] selStartMarkers = new RangeMarker[vFiles.length];
-    final RangeMarker[] selEndMarkers = new RangeMarker[vFiles.length];
-    final String[] newFileTexts = new String[vFiles.length];
 
     boolean projectCopied = false;
 
@@ -153,32 +150,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       final String fileText =  vFile.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
 
       String newFileText = null;
-      RangeMarker caretMarker = null;
-      RangeMarker selStartMarker = null;
-      RangeMarker selEndMarker = null;
-
       if (fileText != null) {
-        Document document = EditorFactory.getInstance().createDocument(fileText);
+        EditorInfo editorInfo = new EditorInfo(fileText);
+        editorInfos[i] = editorInfo;
 
-        int caretIndex = fileText.indexOf(CARET_MARKER);
-        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-        caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-        selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-        selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-        if (caretMarker != null) {
-          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-        }
-        if (selStartMarker != null) {
-          document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-        }
-        if (selEndMarker != null) {
-          document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-        }
-
-        newFileText = document.getText();
+        newFileText = editorInfo.getNewFileText();
       }
 
       VirtualFile newVFile;
@@ -190,18 +166,14 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         String path = vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length());
         newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
 
-        doWrite(newFileText, newVFile, writersToClose, content, streamsToClose);
+        doWrite(newFileText, newVFile, content, streamsToClose);
       }
       else {
         newVFile = vDir.createChildData(this, vFile.getName());
-        doWrite(newFileText, newVFile, writersToClose, content, streamsToClose);
+        doWrite(newFileText, newVFile, content, streamsToClose);
       }
 
       newVFiles[i]=newVFile;
-      newFileTexts[i]=newFileText;
-      selEndMarkers[i]=selEndMarker;
-      selStartMarkers[i]=selStartMarker;
-      caretMarkers[i]=caretMarker;
     }
 
     for(int i = writersToClose.size() -1; i >= 0 ; --i) {
@@ -225,26 +197,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       Editor editor = createEditor(newVFile);
       if (myEditor==null) myEditor = editor;
 
-      if (caretMarkers[i] != null) {
-        int caretLine = StringUtil.offsetToLineNumber(newFileTexts[i], caretMarkers[i].getStartOffset());
-        int caretCol = caretMarkers[i].getStartOffset() - StringUtil.lineColToOffset(newFileTexts[i], caretLine, 0);
-        LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-      }
-
-      if (selStartMarkers[i] != null) {
-        editor.getSelectionModel().setSelection(selStartMarkers[i].getStartOffset(), selEndMarkers[i].getStartOffset());
+      EditorInfo editorInfo = editorInfos[i];
+      if (editorInfo != null) {
+        editorInfo.applyToEditor(editor);
       }
     }
 
     return vDir;
   }
 
-  private void doWrite(final String newFileText,
-                       final VirtualFile newVFile,
-                       final List<Writer> writersToClose,
-                       final byte[] content,
-                       final List<OutputStream> streamsToClose) throws IOException {
+  private void doWrite(final String newFileText, final VirtualFile newVFile, final byte[] content, final List<OutputStream> streamsToClose) throws IOException {
     if (newFileText != null) {
       VfsUtil.saveText(newVFile, newFileText);
     } else {
@@ -314,15 +276,13 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     myEditor = createEditor(myFile.getVirtualFile());
 
-    com.intellij.codeInsight.CodeInsightTestData data = (com.intellij.codeInsight.CodeInsightTestData) myTestDataBefore;
-
-    int selectionStart;
-    int selectionEnd;
+    CodeInsightTestData data = (CodeInsightTestData) myTestDataBefore;
 
     LogicalPosition pos = new LogicalPosition(data.getLineNumber() - 1, data.getColumnNumber() - 1);
     myEditor.getCaretModel().moveToLogicalPosition(pos);
 
-    selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
+    int selectionEnd;
+    int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
 
     if (data.getSelectionStartColumnNumber() >= 0) {
       selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
@@ -425,7 +385,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
 
-    com.intellij.codeInsight.CodeInsightTestData data = (com.intellij.codeInsight.CodeInsightTestData) myTestDataAfter;
+    CodeInsightTestData data = (CodeInsightTestData) myTestDataAfter;
 
     if (data.getColumnNumber() >= 0) {
       assertEquals(dataName + ":caretColumn", data.getColumnNumber(), myEditor.getCaretModel().getLogicalPosition().column + 1);
