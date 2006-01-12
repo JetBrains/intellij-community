@@ -20,6 +20,9 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.quickFix.JavaClassReferenceQuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider");
   private static final char SEPARATOR = '.';
-  private static final ReferenceType ourType = new ReferenceType(ReferenceType.JAVA_CLASS);
+  public static final ReferenceType CLASS_REFERENCE_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   private @Nullable Map<CustomizationKey, Object> myOptions;
 
@@ -47,7 +50,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   );
 
   public PsiReference[] getReferencesByElement(PsiElement element){
-    return getReferencesByElement(element, ourType);
+    return getReferencesByElement(element, CLASS_REFERENCE_TYPE);
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
@@ -165,7 +168,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
     private void reparse(PsiElement element){
       final String text;
-      
+
       if (element instanceof XmlAttributeValue) {
         text = StringUtil.stripQuotesAroundValue( element.getText() );
       } else if (element instanceof XmlTag) {
@@ -191,7 +194,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       return myType;
     }
 
-    public class JavaReference extends GenericReference implements PsiJavaReference {
+    public class JavaReference extends GenericReference implements PsiJavaReference, QuickFixProvider {
       private final int myIndex;
       private TextRange myRange;
       private final String myText;
@@ -355,6 +358,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
         if(javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
         return new JavaResolveResult[]{javaResolveResult};
+      }
+
+      public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+        JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference);
       }
     }
 

@@ -245,7 +245,6 @@ public class CreateFromUsageUtils {
     PsiDirectory sourceDir = sourceFile.getContainingDirectory();
 
     final PsiManager manager = referenceElement.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
 
     PsiDirectory targetDirectory = null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -262,7 +261,18 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
 
-    final PsiDirectory directory = targetDirectory;
+    return createClass(createInterface, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
+  }
+
+  public static PsiClass createClass(final boolean createInterface,
+                                      final PsiDirectory directory,
+                                      final String name,
+                                      final PsiManager manager,
+                                      final PsiElement contextElement,
+                                      final PsiFile sourceFile,
+                                      final String superClassName) {
+    final PsiElementFactory factory = manager.getElementFactory();
+
     return ApplicationManager.getApplication().runWriteAction(
       new Computable<PsiClass>() {
         public PsiClass compute() {
@@ -288,7 +298,7 @@ public class CreateFromUsageUtils {
                             });
                 return null;
               }
-              if (!manager.getResolveHelper().isAccessible(targetClass, referenceElement, null)) {
+              if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
                 targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
               }
             }

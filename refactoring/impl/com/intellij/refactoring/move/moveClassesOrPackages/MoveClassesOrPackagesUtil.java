@@ -26,6 +26,8 @@ import com.intellij.ide.util.DirectoryChooserModuleTreeView;
 import java.util.*;
 import java.io.File;
 
+import org.jetbrains.annotations.Nullable;
+
 public class MoveClassesOrPackagesUtil {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil");
@@ -337,24 +339,38 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
-  public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                              final VirtualFile[] contentSourceRoots,
-                                              final PsiDirectory initialDirectory) {
-    Project project = targetPackage.getManager().getProject();
-    List<PsiDirectory> targetDirectories = new ArrayList<PsiDirectory>();
-    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
-    buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
+  public static @Nullable PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
+                                                                                 PsiDirectory initialDirectory, Project project,
+                                                                                 Map<PsiDirectory, String> relativePathsToCreate) {
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
     chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(
-      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      targetDirectories,
       initialDirectory,
       project,
       relativePathsToCreate
     );
     chooser.show();
     if (!chooser.isOK()) return null;
-    final PsiDirectory selectedDirectory = chooser.getSelectedDirectory();
+    return chooser.getSelectedDirectory();
+  }
+
+  public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
+                                             final VirtualFile[] contentSourceRoots,
+                                             final PsiDirectory initialDirectory) {
+    Project project = targetPackage.getManager().getProject();
+    List<PsiDirectory> targetDirectories = new ArrayList<PsiDirectory>();
+    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
+    buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
+
+    final PsiDirectory selectedDirectory = chooseDirectory(
+      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      initialDirectory,
+      project,
+      relativePathsToCreate
+    );
+
+    if (selectedDirectory == null) return null;
     final VirtualFile virt = selectedDirectory.getVirtualFile();
     final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virt);
     LOG.assertTrue(sourceRootForFile != null);
@@ -362,9 +378,9 @@ public class MoveClassesOrPackagesUtil {
   }
 
   private static void buildDirectoryList(PackageWrapper aPackage,
-                                  VirtualFile[] contentSourceRoots,
-                                  List<PsiDirectory> targetDirectories,
-                                  Map<PsiDirectory, String> relativePathsToCreate) {
+                                         VirtualFile[] contentSourceRoots,
+                                         List<PsiDirectory> targetDirectories,
+                                         Map<PsiDirectory, String> relativePathsToCreate) {
 
     sourceRoots:
     for (VirtualFile root : contentSourceRoots) {
