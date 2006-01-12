@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,9 +10,9 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -47,6 +51,7 @@ public class EnterHandler extends EditorWriteActionHandler {
   private EditorActionHandler myOriginalHandler;
   private static final String DOC_COMMENT_SUFFIX = "*/";
   private static final String DOC_COMMENT_PREFIX = "/**";
+  private static final String CSTYLE_COMMENT_PREFIX = "/*";
   private static final char DOC_COMMENT_ASTERISK = '*';
   private static final String DOC_COMMENT_ASTERISK_STRING = "*";
 
@@ -284,7 +289,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     return true;
   }
 
-  private static boolean isDocCommentComplete(PsiDocComment comment) {
+  private static boolean isCommentComplete(PsiComment comment) {
     String commentText = comment.getText();
     if (!commentText.endsWith(DOC_COMMENT_SUFFIX)) return false;
 
@@ -411,6 +416,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         boolean isInsideJava = PsiUtil.getLanguageAtOffset(myFile, offset) == StdLanguages.JAVA;
 
         boolean docStart = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_PREFIX);
+        boolean cStyleStart = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, CSTYLE_COMMENT_PREFIX);
         boolean docAsterisk = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_ASTERISK_STRING);
         boolean slashSlash = isInsideJava && CharArrayUtil.regionMatches(chars, lineStart, "//") &&
                              chars.charAt(CharArrayUtil.shiftForward(chars, myOffset, " \t")) != '\n';
@@ -424,7 +430,7 @@ public class EnterHandler extends EditorWriteActionHandler {
               docStart = false;
             }
             else {
-              if (isDocCommentComplete(comment)) {
+              if (isCommentComplete(comment)) {
                 if (myOffset >= commentEnd) {
                   docAsterisk = false;
                   docStart = false;
@@ -436,6 +442,36 @@ public class EnterHandler extends EditorWriteActionHandler {
               }
               else {
                 generateJavadoc();
+              }
+            }
+          }
+          else {
+            docStart = false;
+          }
+        }
+        else if (cStyleStart) {
+          PsiElement element = myFile.findElementAt(lineStart);
+          if (element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+            final PsiComment comment = (PsiComment)element;
+            int commentEnd = comment.getTextRange().getEndOffset();
+            if (myOffset >= commentEnd) {
+              docStart = false;
+            }
+            else {
+              if (isCommentComplete(comment)) {
+                if (myOffset >= commentEnd) {
+                  docAsterisk = false;
+                  docStart = false;
+                }
+                else {
+                  docAsterisk = true;
+                  docStart = false;
+                }
+              }
+              else {
+                myDocument.insertString(myOffset, " " + DOC_COMMENT_SUFFIX);
+                int lstart = CharArrayUtil.shiftBackwardUntil(chars, myOffset, "\n");
+                myDocument.insertString(myOffset, chars.subSequence(lstart, myOffset));
               }
             }
           }
@@ -629,6 +665,25 @@ public class EnterHandler extends EditorWriteActionHandler {
         else {
           docAsterisk = false;
         }
+      }
+      else if (element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+        // Check if C-Style comment already uses asterisks.
+        boolean usesAstersk = false;
+        int commentLine = myDocument.getLineNumber(element.getTextRange().getStartOffset());
+        if (commentLine < myDocument.getLineCount() - 1) {
+          int nextLineOffset = myDocument.getLineStartOffset(commentLine + 1);
+          if (nextLineOffset < element.getTextRange().getEndOffset()) {
+            final CharSequence chars = myDocument.getCharsSequence();
+            nextLineOffset = CharArrayUtil.shiftForward(chars, nextLineOffset, " \t");
+            usesAstersk = chars.charAt(nextLineOffset) == '*';
+          }
+        }
+        if (usesAstersk) {
+          removeTrailingSpaces(myDocument, myOffset);
+          myDocument.insertString(myOffset, "* ");
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        }
+        docAsterisk = usesAstersk;
       }
       else {
         docAsterisk = false;

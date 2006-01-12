@@ -2,9 +2,11 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,8 +22,12 @@ public class CommentBreakerEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     if (isModified) return false;
     final PsiElement atCaret = psiElement.getContainingFile().findElementAt(editor.getCaretModel().getOffset());
-    if (PsiTreeUtil.getParentOfType(atCaret, PsiComment.class, false) != null) {
+    final PsiComment comment = PsiTreeUtil.getParentOfType(atCaret, PsiComment.class, false);
+    if (comment != null) {
       plainEnter(editor);
+      if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        EditorModificationUtil.insertStringAtCaret(editor, "// ");
+      }
       return true;
     }
     return false;
@@ -33,7 +39,7 @@ public class CommentBreakerEnterProcessor implements EnterProcessor {
 
   private EditorActionHandler getEnterHandler() {
     EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-        IdeActions.ACTION_EDITOR_ENTER
+        IdeActions.ACTION_EDITOR_START_NEW_LINE
     );
     return enterHandler;
   }
