@@ -82,7 +82,7 @@ public class DomUIFactory {
       return new PsiClassTableCellEditor(element);
     }
 
-    if (Enum.class.equals(type)) {
+    if (Enum.class.isAssignableFrom(type)) {
       return new DefaultCellEditor(removeBorder(EnumControl.createEnumComboBox(type)));
     }
 

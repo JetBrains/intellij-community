@@ -10,13 +10,26 @@ import com.intellij.openapi.util.Comparing;
  */
 public class NamedEnumUtil {
 
-  public static <T extends Enum&NamedEnum> T getEnumElementByValue(final Class<T> enumClass, final String value) {
-    for (final T t : enumClass.getEnumConstants()) {
-      if (Comparing.equal(t.getValue(), value)) {
-        return t;
+  public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value) {
+    if (NamedEnum.class.isAssignableFrom(enumClass)) {
+      for (final T t : enumClass.getEnumConstants()) {
+        if (Comparing.equal(((NamedEnum)t).getValue(), value)) {
+          return t;
+        }
       }
+    } else {
+      return (T) Enum.valueOf(enumClass, value);
     }
     return null;
+  }
+
+  public static <T extends Enum> String getEnumValueByElement(final T element) {
+    if (element == null) return null;
+    if (element.getClass().isAssignableFrom(NamedEnum.class)) {
+      return ((NamedEnum) element).getValue();
+    } else {
+      return element.name();
+    }
   }
 
 }
