@@ -1156,4 +1156,41 @@ public class HighlightMethodUtil {
       }
     }
   }
+
+  public static boolean isSerializationRelatedMethod(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null || method.isConstructor()) return false;
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    String name = method.getName();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiType returnType = method.getReturnType();
+    if ("readObjectNoData".equals(name)) {
+      if (parameters.length != 0) return false;
+      if (!TypeConversionUtil.isVoidType(returnType)) return false;
+      return HighlightUtil.isSerializable(aClass);
+    }
+    if ("readObject".equals(name)) {
+      if (parameters.length != 1) return false;
+      if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
+      if (!TypeConversionUtil.isVoidType(returnType)) return false;
+      return HighlightUtil.isSerializable(aClass);
+    }
+    if ("readResolve".equals(name)) {
+      if (parameters.length != 0) return false;
+      if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
+      return HighlightUtil.isSerializable(aClass);
+    }
+    if ("writeReplace".equals(method.getName())) {
+      if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
+      if (parameters.length != 0) return false;
+      return HighlightUtil.isSerializable(aClass);
+    }
+    if ("writeObject".equals(method.getName())) {
+      if (!TypeConversionUtil.isVoidType(returnType)) return false;
+      if (parameters.length != 1) return false;
+      if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
+      return HighlightUtil.isSerializable(aClass);
+    }
+    return false;
+  }
 }

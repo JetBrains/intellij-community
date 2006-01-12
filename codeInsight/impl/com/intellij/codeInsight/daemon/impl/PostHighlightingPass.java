@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -45,11 +46,9 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,11 +89,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final CodeStyleManagerEx myStyleManager;
   private int myCurentEntryIndex;
   private boolean myHasMissortedImports;
-  private static final @NonNls String WRITE_OBJECT_METHOD = "writeObject";
-  private static final @NonNls String WRITE_REPLACE_METHOD = "writeReplace";
-  private static final @NonNls String READ_RESOLVE_METHOD = "readResolve";
-  private static final @NonNls String READ_OBJECT_METHOD = "readObject";
-  private static final @NonNls String READ_OBJECT_NO_DATA_METHOD = "readObjectNoData";
 
   public PostHighlightingPass(Project project,
                               PsiFile file,
@@ -353,11 +347,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
       if (PsiUtil.hasErrorElementChild(method)) return null;
-      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) ||
-           method.hasModifierProperty(PsiModifier.STATIC))
+      if ((method.isConstructor() || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC))
           && !method.hasModifierProperty(PsiModifier.NATIVE)
+          && !HighlightMethodUtil.isSerializationRelatedMethod(method)
+          && !isMainMethod(method)
       ) {
-        if (isMainMethod(method)) return null;
         if (!myRefCountHolder.isReferenced(parameter)) {
           PsiIdentifier identifier = parameter.getNameIdentifier();
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
@@ -383,11 +377,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(method)) {
-        if (isWriteObjectMethod(method) ||
-            isWriteReplaceMethod(method) ||
-            isReadObjectMethod(method) ||
-            isReadObjectNoDataMethod(method) ||
-            isReadResolveMethod(method) ||
+        if (HighlightMethodUtil.isSerializationRelatedMethod(method) ||
             isIntentionalPrivateConstructor(method)
         ) {
           return null;
@@ -507,65 +497,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
 
     return status == FileStatus.NOT_CHANGED;
-  }
-
-  private static boolean isWriteObjectMethod(PsiMethod method) {
-    if (!WRITE_OBJECT_METHOD.equals(method.getName())) return false;
-    PsiType returnType = method.getReturnType();
-    if (!TypeConversionUtil.isVoidType(returnType)) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-    if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass == null || HighlightUtil.isSerializable(aClass);
-  }
-
-  private static boolean isWriteReplaceMethod(PsiMethod method) {
-    if (!WRITE_REPLACE_METHOD.equals(method.getName())) return false;
-    PsiType returnType = method.getReturnType();
-    if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass == null || HighlightUtil.isSerializable(aClass);
-  }
-
-  private static boolean isReadResolveMethod(PsiMethod method) {
-    if (!READ_RESOLVE_METHOD.equals(method.getName())) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiType returnType = method.getReturnType();
-    if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass == null || HighlightUtil.isSerializable(aClass);
-  }
-
-  private static boolean isReadObjectMethod(PsiMethod method) {
-    if (!READ_OBJECT_METHOD.equals(method.getName())) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-
-    if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
-
-    PsiType returnType = method.getReturnType();
-    if (!TypeConversionUtil.isVoidType(returnType)) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass == null || HighlightUtil.isSerializable(aClass);
-  }
-
-  private static boolean isReadObjectNoDataMethod(PsiMethod method) {
-    if (!READ_OBJECT_NO_DATA_METHOD.equals(method.getName())) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) return false;
-    PsiType returnType = method.getReturnType();
-    if (!TypeConversionUtil.isVoidType(returnType)) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass == null || HighlightUtil.isSerializable(aClass);
   }
 
   private static boolean isMainMethod(PsiMethod method) {

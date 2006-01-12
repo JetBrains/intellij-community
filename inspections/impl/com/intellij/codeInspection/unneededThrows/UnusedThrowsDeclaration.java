@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
@@ -115,25 +116,12 @@ public class UnusedThrowsDeclaration extends LocalInspectionTool {
       }
     }
 
-    if (isSerializationRelatedStuff(aClass, method, exceptionType)) return null;
+    if (HighlightMethodUtil.isSerializationRelatedMethod(method)) return null;
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
 
     final LocalQuickFix quickFixes = new RemoveFix(method, exceptionType);
     return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-  }
-
-  private static boolean isSerializationRelatedStuff(final PsiClass aClass, final PsiMethod method, final PsiClassType exceptionType) {
-    if (HighlightUtil.isSerializable(aClass)) {
-      @NonNls String name = method.getName();
-      String fqn = exceptionType.getCanonicalText();
-      if ("writeObject".equals(name) && method.hasModifierProperty(PsiModifier.PRIVATE) && fqn.equals("java.io.IOException") ||
-          "readObject".equals(name) && method.hasModifierProperty(PsiModifier.PRIVATE) && (fqn.equals("java.io.IOException") || fqn.equals("java.lang.ClassNotFoundException")) ||
-          "writeReplace".equals(name) && fqn.equals("java.io.ObjectStreamException") ||
-          "readResolve".equals(name) && fqn.equals("java.io.ObjectStreamException"))
-        return true;
-    }
-    return false;
   }
 
   private static class RemoveFix implements LocalQuickFix {
