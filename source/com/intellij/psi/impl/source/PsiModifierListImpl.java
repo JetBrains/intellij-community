@@ -249,18 +249,19 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
         DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
         String[] annotationStrings = view.getAnnotations(parentId);
-        myCachedAnnotations = new PsiAnnotation[annotationStrings.length];
+        PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
             final PsiAnnotation annotation = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
             LOG.assertTrue(annotation != null);
-            myCachedAnnotations[i] = annotation;
+            temp[i] = annotation;
           }
           catch (IncorrectOperationException e) {
             LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
             return PsiAnnotation.EMPTY_ARRAY;
           }
         }
+        myCachedAnnotations = temp;
       }
     }
     return myCachedAnnotations;
