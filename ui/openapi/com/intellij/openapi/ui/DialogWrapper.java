@@ -15,19 +15,19 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.project.Project;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class DialogWrapper {
   /**
@@ -304,6 +304,7 @@ public abstract class DialogWrapper {
    * center of the dialog's content pane. The implementation can return <code>null</code>
    * value. In this case there will be no options panel.
    */
+  @Nullable
   protected abstract JComponent createCenterPanel();
 
   /**
