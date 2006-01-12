@@ -120,10 +120,10 @@
 
     <group id="JavaeeMigrationGroup">
       <action id="MigrateToEjb30" class="com.intellij.j2ee15.module.view.actions.MigrateToEjb30Action"/>
+      <action id="GeneratePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.GeneratePersistenceUnitAction"/>
     </group>
 
     <group id="J2EEGenerateGroup">
-      <action id="GeneratePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.GeneratePersistenceUnitAction"/>      
       <action id="CreatePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.CreatePersistenceUnitAction"/>
 
       <action id="CreateSessionBean" class="com.intellij.j2ee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
@@ -483,7 +483,6 @@
         <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction"/>
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-        <reference ref="JavaeeMigrationGroup"/>
         <separator/>
         <action id="I18nizeJspTextSelection" class="com.intellij.codeInsight.i18n.I18nizeJSPTextSelectionAction"/>
       </group>
@@ -767,6 +766,8 @@
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ExternalToolsGroup"/>
       <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="ChangeScheme">
@@ -852,6 +853,8 @@
       <separator/>
       <reference ref="ModuleSettings"/>
       <reference ref="MoveModuleToGroup"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="J2EEViewPopupMenu">
@@ -894,6 +897,8 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ModuleSettings"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="FavoritesViewPopupMenu">
@@ -937,6 +942,8 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ModuleSettings"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -959,6 +966,8 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="TypeHierarchyPopupMenu">
