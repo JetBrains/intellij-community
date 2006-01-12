@@ -180,16 +180,17 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     else {
       if (myCachedAnnotations == null) {
         String[] annotationStrings = getRepositoryManager().getMethodView().getParameterAnnotations(getRepositoryId())[getIndex()];
-        myCachedAnnotations = new PsiAnnotation[annotationStrings.length];
+        PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
-            myCachedAnnotations[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
-            LOG.assertTrue(myCachedAnnotations[i] != null);
+            temp[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
+            LOG.assertTrue(temp[i] != null);
           }
           catch (IncorrectOperationException e) {
             LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
           }
         }
+        myCachedAnnotations = temp;
       }
       return myCachedAnnotations;
     }
