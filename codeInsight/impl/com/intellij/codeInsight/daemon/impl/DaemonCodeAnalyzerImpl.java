@@ -436,7 +436,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void stopProcess(boolean toRestartAlarm) {
     myAlarm.cancelAllRequests();
     if (toRestartAlarm && !myDisposed && myInitialized && myIsFrameFocused) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+      //LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
     }
     myUpdateProgress.cancel();
@@ -520,7 +520,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, highlights);
 
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    if (codeAnalyzer != null && codeAnalyzer instanceof DaemonCodeAnalyzerImpl) {
+    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
       ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
     }
   }

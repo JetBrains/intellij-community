@@ -67,7 +67,9 @@ public class EditorTracker {
         setActiveWindow(myIdeFrame);
       }
     });
-    myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
+    if (myIdeFrame != null) {
+      myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
+    }
 
     myEditorFactoryListener = new MyEditorFactoryListener(myProject);
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
@@ -197,7 +199,9 @@ public class EditorTracker {
   public void dispose() {
     myEditorFactoryListener.dispose();
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-    myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
+    if (myIdeFrame != null) {
+      myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
+    }
   }
 
   public Editor[] getActiveEditors() {
