@@ -307,10 +307,11 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public PsiType[] getTypeParameters() {
     if (myTypeParametersCachedTypes == null) {
-      myTypeParametersCachedTypes = new PsiType[myTypeParameters.length];
-      for (int i = 0; i < myTypeParametersCachedTypes.length; i++) {
-        myTypeParametersCachedTypes[myTypeParametersCachedTypes.length - i - 1] = myTypeParameters[i].getType();
+      PsiType[] types = new PsiType[myTypeParameters.length];
+      for (int i = 0; i < types.length; i++) {
+        types[types.length - i - 1] = myTypeParameters[i].getType();
       }
+      myTypeParametersCachedTypes = types;
     }
 
     return myTypeParametersCachedTypes;
