@@ -8,9 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParameterInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfo");
@@ -31,11 +32,11 @@ public class ParameterInfo {
     setType(aType);
   }
 
-  public ParameterInfo(int oldParameterIndex, String name, PsiType aType, String defaultValue) {
+  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue) {
     this(oldParameterIndex, name, aType, defaultValue, false);
   }
 
-  public ParameterInfo(int oldParameterIndex, String name, PsiType aType, String defaultValue, boolean useAnyVariable) {
+  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue, boolean useAnyVariable) {
     this(oldParameterIndex, name, aType);
     this.defaultValue = defaultValue;
     this.useAnySingleVariable = useAnyVariable;

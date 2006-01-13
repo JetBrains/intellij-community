@@ -2,14 +2,15 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
 public class EditorInfo {
-  public static final String CARET_MARKER = "<caret>";
-  public static final String SELECTION_START_MARKER = "<selection>";
-  public static final String SELECTION_END_MARKER = "</selection>";
+  @NonNls public static final String CARET_MARKER = "<caret>";
+  @NonNls public static final String SELECTION_START_MARKER = "<selection>";
+  @NonNls public static final String SELECTION_END_MARKER = "</selection>";
 
   String newFileText = null;
   RangeMarker caretMarker = null;

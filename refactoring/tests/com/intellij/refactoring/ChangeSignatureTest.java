@@ -3,7 +3,6 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -205,7 +204,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   }
 
   private void doTest(String newVisibility, String newName, String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
-    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);;
+    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
   private void doTest(String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
@@ -230,7 +229,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException;
   }
 
-  private class SimpleParameterGen implements GenParams {
+  private static class SimpleParameterGen implements GenParams {
     private final ParameterInfo[] myInfos;
 
     private SimpleParameterGen(ParameterInfo[] infos) {
@@ -238,8 +237,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }
 
     public ParameterInfo[] genParams(PsiMethod method) {
-      for (int i = 0; i < myInfos.length; i++) {
-        ParameterInfo info = myInfos[i];
+      for (ParameterInfo info : myInfos) {
         info.updateFromMethod(method);
       }
       return myInfos;
@@ -250,7 +248,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException;
   }
 
-  private class SimpleExceptionsGen implements GenExceptions {
+  private static class SimpleExceptionsGen implements GenExceptions {
     private final ThrownExceptionInfo[] myInfos;
 
     public SimpleExceptionsGen() {
@@ -262,8 +260,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }
 
     public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-      for (int i = 0; i < myInfos.length; i++) {
-        ThrownExceptionInfo info = myInfos[i];
+      for (ThrownExceptionInfo info : myInfos) {
         info.updateFromMethod(method);
       }
       return myInfos;
