@@ -2,6 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -55,12 +56,12 @@ public final class GridChangeUtil {
   public static void deleteRow(final RadContainer grid, final int rowIndex) {
     deleteCell(grid, rowIndex, true);
   }
-  
+
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row inserted, otherwise column  
    * @param isBefore if true, row/column will be inserted before row/column with given index, otherwise after   
-   */ 
+   */
   private static void insertRowOrColumn(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
     check(grid, isRow, cellIndex);
 
@@ -71,14 +72,14 @@ public final class GridChangeUtil {
       // beforeIndex can actually be equal to get{Row|Column}Count an case we add row after the last row/column
       beforeIndex++;
     }
-    
+
     final GridLayoutManager newLayout = copyLayout(oldLayout, isRow ? 1 : 0, isRow ? 0 : 1);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
       adjustConstraintsOnInsert(constraints, isRow, beforeIndex);
     }
-    
+
     grid.setLayout(newLayout);
   }
 
@@ -124,7 +125,7 @@ public final class GridChangeUtil {
    * @param isRow if true, row is deleted, otherwise column
    * @param mustBeEmpty
    * @return true if specified row/column can be deleted
-   */  
+   */
   private static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean mustBeEmpty) {
     check(grid, isRow, cellIndex);
 
@@ -157,18 +158,18 @@ public final class GridChangeUtil {
 
     return true;
   }
-  
+
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is deleted, otherwise column
-   */  
+   */
   private static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
     if (!canDeleteCell(grid, cellIndex, isRow, false)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cell cannot be deleted");
     }
-    
+
     final GridLayoutManager oldLayout = (GridLayoutManager)grid.getLayout();
 
     final GridLayoutManager newLayout = copyLayout(oldLayout, isRow ? -1 : 0, isRow ? 0 : -1);
@@ -185,7 +186,7 @@ public final class GridChangeUtil {
         addToSpan(constraints, isRow, -1);
       }
     }
-    
+
     grid.setLayout(newLayout);
   }
 
@@ -195,15 +196,11 @@ public final class GridChangeUtil {
     final int span = constraints.getSpan(isRow);
     return cell <= cellIndex && cellIndex <= cell + span - 1;
   }
-  
+
   /**
    * check whether passed container is grid and cellIndex is in proper range
-   */ 
-  private static void check(final RadContainer grid, final boolean isRow, final int cellIndex){
-    if (grid == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("grid cannot be null");
-    }
+   */
+  private static void check(@NotNull RadContainer grid, final boolean isRow, final int cellIndex){
     if (!grid.isGrid()){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("container must be grid");

@@ -1282,6 +1282,8 @@
       <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
       <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
       <separator/>
+      <group id="GuiDesigner.SurroundGroup" class="com.intellij.uiDesigner.actions.SurroundActionGroup" popup="true"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
@@ -1296,6 +1298,8 @@
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
+      <separator/>
+      <reference ref="GuiDesigner.SurroundGroup"/>
     </group>
 
     <group id="GuiDesigner.PropertyInspectorPopupMenu">

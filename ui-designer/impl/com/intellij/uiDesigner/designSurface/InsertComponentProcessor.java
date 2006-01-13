@@ -207,53 +207,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   public void processComponentInsert(final Point point, final ComponentItem item) {
     myEditor.getActiveDecorationLayer().removeFeedback();
-    final String id = myEditor.generateId();
-    if (JScrollPane.class.getName().equals(item.getClassName())) {
-      myInsertedComponent = new RadScrollPane(myEditor.getModule(), id);
-    }
-    else if (item == Palette.getInstance(myEditor.getProject()).getPanelItem()) {
-      myInsertedComponent = new RadContainer(myEditor.getModule(), id);
-    }
-    else {
-      if (VSpacer.class.getName().equals(item.getClassName())) {
-        myInsertedComponent = new RadVSpacer(myEditor.getModule(), id);
-      }
-      else if (HSpacer.class.getName().equals(item.getClassName())) {
-        myInsertedComponent = new RadHSpacer(myEditor.getModule(), id);
-      }
-      else if (JTabbedPane.class.getName().equals(item.getClassName())) {
-        myInsertedComponent = new RadTabbedPane(myEditor.getModule(), id);
-      }
-      else if (JSplitPane.class.getName().equals(item.getClassName())) {
-        myInsertedComponent = new RadSplitPane(myEditor.getModule(), id);
-      }
-      else {
-        final ClassLoader loader = LoaderFactory.getInstance(myEditor.getProject()).getLoader(myEditor.getFile());
-        try {
-          final Class aClass = Class.forName(item.getClassName(), true, loader);
-          myInsertedComponent = new RadAtomicComponent(myEditor.getModule(), aClass, id);
-        }
-        catch (final Exception exc) {
-          //noinspection NonConstantStringShouldBeStringBuffer
-          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
-          if (errorDescription == null) {
-            errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
-            final String message = FormEditingUtil.getExceptionMessage(exc);
-            if (message != null) {
-              errorDescription += ": " + message;
-            }
-          }
-          myInsertedComponent = RadErrorComponent.create(
-            myEditor.getModule(),
-            id,
-            item.getClassName(),
-            null,
-            errorDescription
-          );
-        }
-      }
-    }
-    myInsertedComponent.init(item);
+    myInsertedComponent = createInsertedComponent(myEditor, item);
 
     myEditor.setDesignTimeInsets(2);
 
@@ -315,6 +269,58 @@ public final class InsertComponentProcessor extends EventProcessor {
         null
       );
     }
+  }
+
+  public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
+    RadComponent result;
+    final String id = editor.generateId();
+    if (JScrollPane.class.getName().equals(item.getClassName())) {
+      result = new RadScrollPane(editor.getModule(), id);
+    }
+    else if (item == Palette.getInstance(editor.getProject()).getPanelItem()) {
+      result = new RadContainer(editor.getModule(), id);
+    }
+    else {
+      if (VSpacer.class.getName().equals(item.getClassName())) {
+        result = new RadVSpacer(editor.getModule(), id);
+      }
+      else if (HSpacer.class.getName().equals(item.getClassName())) {
+        result = new RadHSpacer(editor.getModule(), id);
+      }
+      else if (JTabbedPane.class.getName().equals(item.getClassName())) {
+        result = new RadTabbedPane(editor.getModule(), id);
+      }
+      else if (JSplitPane.class.getName().equals(item.getClassName())) {
+        result = new RadSplitPane(editor.getModule(), id);
+      }
+      else {
+        final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
+        try {
+          final Class aClass = Class.forName(item.getClassName(), true, loader);
+          result = new RadAtomicComponent(editor.getModule(), aClass, id);
+        }
+        catch (final Exception exc) {
+          //noinspection NonConstantStringShouldBeStringBuffer
+          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
+          if (errorDescription == null) {
+            errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
+            final String message = FormEditingUtil.getExceptionMessage(exc);
+            if (message != null) {
+              errorDescription += ": " + message;
+            }
+          }
+          result = RadErrorComponent.create(
+            editor.getModule(),
+            id,
+            item.getClassName(),
+            null,
+            errorDescription
+          );
+        }
+      }
+    }
+    result.init(item);
+    return result;
   }
 
   private void checkBindTopLevelPanel() {

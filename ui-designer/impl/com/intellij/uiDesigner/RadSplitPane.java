@@ -3,11 +3,10 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.LwSplitPane;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -38,7 +37,7 @@ public final class RadSplitPane extends RadContainer {
     return isEmptySplitComponent(component);
   }
 
-  private boolean isEmptySplitComponent(final Component component) {
+  private static boolean isEmptySplitComponent(final Component component) {
     return component == null || ((JComponent)component).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT) == null;
   }
 
@@ -119,8 +118,11 @@ public final class RadSplitPane extends RadContainer {
     if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())) {
       splitPane.setLeftComponent(delegee);
     }
-    else {
+    else if (LwSplitPane.POSITION_RIGHT.equals(component.getCustomLayoutConstraints())) {
       splitPane.setRightComponent(delegee);
+    }
+    else {
+      throw new IllegalStateException("invalid layout constraints on component added to RadSplitPane");
     }
   }
 

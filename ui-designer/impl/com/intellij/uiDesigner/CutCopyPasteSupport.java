@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
+import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -151,7 +152,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
     try {
       //noinspection HardCodedStringLiteral
-      final org.jdom.Document document = SAX_BUILDER.build(new StringReader(serializedComponents), "UTF-8");
+      final Document document = SAX_BUILDER.build(new StringReader(serializedComponents), "UTF-8");
 
       final Element rootElement = document.getRootElement();
       if (!rootElement.getName().equals(ELEMENT_SERIALIZED)) {

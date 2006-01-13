@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.lw.*;
@@ -92,13 +93,14 @@ public final class FormEditingUtil {
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
+    GridLayoutManager layout = (GridLayoutManager) parent.getLayout();
     for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
-      if (GridChangeUtil.isRowEmpty(parent, row)) {
+      if (row < layout.getRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
         GridChangeUtil.deleteRow(parent, row);
       }
     }
     for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
-      if (GridChangeUtil.isColumnEmpty(parent, col)) {
+      if (col < layout.getColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
         GridChangeUtil.deleteColumn(parent, col);
       }
     }
