@@ -34,102 +34,119 @@ import org.jetbrains.annotations.NonNls;
 
 public class ConfusingElseInspection extends StatementInspection {
 
-  private final ConfusingElseFix fix = new ConfusingElseFix();
+    private final ConfusingElseFix fix = new ConfusingElseFix();
 
-  public String getID() {
-    return "ConfusingElseBranch";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ConfusingElseVisitor();
-  }
-
-  @Nullable
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class ConfusingElseFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("confusing.else.unwrap.quickfix");
+    public String getID() {
+        return "ConfusingElseBranch";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
-      final PsiIfStatement ifStatement = (PsiIfStatement)ifKeyword.getParent();
-      assert ifStatement != null;
-      final PsiExpression condition = ifStatement.getCondition();
-      final PsiStatement thenBranch = ifStatement.getThenBranch();
-      @NonNls final String text = "if(" + condition.getText() + ')' + thenBranch.getText();
-      final PsiStatement elseBranch = ifStatement.getElseBranch();
-      if (elseBranch instanceof PsiBlockStatement) {
-        final PsiBlockStatement elseBlock = (PsiBlockStatement)elseBranch;
-        final PsiCodeBlock block = elseBlock.getCodeBlock();
-        final PsiElement[] children = block.getChildren();
-        if (children.length > 2) {
-          final PsiElement containingElement = ifStatement.getParent();
-          assert containingElement != null;
-          final PsiElement added =
-            containingElement.addRangeAfter(children[1],
-                                            children[children
-                                              .length -
-                                                      2],
-                                            ifStatement);
-          final CodeStyleManager codeStyleManager =
-            CodeStyleManager.getInstance(project);
-          codeStyleManager.reformat(added);
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConfusingElseVisitor();
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
+    }
+
+    private static class ConfusingElseFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "confusing.else.unwrap.quickfix");
         }
-      }
-      else {
-        final PsiElement containingElement = ifStatement.getParent();
 
-        assert containingElement != null;
-        final PsiElement added =
-          containingElement.addAfter(elseBranch, ifStatement);
-        final CodeStyleManager codeStyleManager =
-          CodeStyleManager.getInstance(project);
-        codeStyleManager.reformat(added);
-      }
-      replaceStatement(ifStatement, text);
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement ifKeyword = descriptor.getPsiElement();
+            final PsiIfStatement ifStatement =
+                    (PsiIfStatement)ifKeyword.getParent();
+            assert ifStatement != null;
+            final PsiExpression condition = ifStatement.getCondition();
+            final String conditionText;
+            if (condition == null) {
+                conditionText = "";
+            } else {
+                conditionText = condition.getText();
+            }
+            final PsiStatement thenBranch = ifStatement.getThenBranch();
+            if (thenBranch == null) {
+                return;
+            }
+            @NonNls final String text = "if(" + conditionText + ')' +
+                    thenBranch.getText();
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
+            if (elseBranch == null) {
+                return;
+            }
+            if (elseBranch instanceof PsiBlockStatement) {
+                final PsiBlockStatement elseBlock =
+                        (PsiBlockStatement)elseBranch;
+                final PsiCodeBlock block = elseBlock.getCodeBlock();
+                final PsiElement[] children = block.getChildren();
+                if (children.length > 2) {
+                    final PsiElement containingElement =
+                            ifStatement.getParent();
+                    assert containingElement != null;
+                    final PsiElement added =
+                            containingElement.addRangeAfter(children[1],
+                                    children[children .length - 2],
+                                    ifStatement);
+                    final CodeStyleManager codeStyleManager =
+                            CodeStyleManager.getInstance(project);
+                    codeStyleManager.reformat(added);
+                }
+            } else {
+                final PsiElement containingElement = ifStatement.getParent();
+
+                assert containingElement != null;
+                final PsiElement added =
+                        containingElement.addAfter(elseBranch, ifStatement);
+                final CodeStyleManager codeStyleManager =
+                        CodeStyleManager.getInstance(project);
+                codeStyleManager.reformat(added);
+            }
+            replaceStatement(ifStatement, text);
+        }
     }
-  }
 
-  private static class ConfusingElseVisitor extends StatementInspectionVisitor {
+    private static class ConfusingElseVisitor
+            extends StatementInspectionVisitor {
 
-    public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiStatement thenBranch = statement.getThenBranch();
-      if (thenBranch == null) {
-        return;
-      }
-      final PsiStatement elseBranch = statement.getElseBranch();
-      if (elseBranch == null) {
-        return;
-      }
-      if (elseBranch instanceof PsiIfStatement) {
-        return;
-      }
-      if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
-        return;
-      }
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+            super.visitIfStatement(statement);
+            final PsiStatement thenBranch = statement.getThenBranch();
+            if (thenBranch == null) {
+                return;
+            }
+            final PsiStatement elseBranch = statement.getElseBranch();
+            if (elseBranch == null) {
+                return;
+            }
+            if (elseBranch instanceof PsiIfStatement) {
+                return;
+            }
+            if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
+                return;
+            }
+            final PsiStatement nextStatement =
+                    PsiTreeUtil.getNextSiblingOfType(statement,
+                            PsiStatement.class);
 
-      final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-
-      if (nextStatement == null) {
-        return;
-      }
-      if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
-        return;         //protecting against an edge case where both branches return
-        // and are followed by a case label
-      }
-
-      final PsiElement elseToken = statement.getElseElement();
-      registerError(elseToken);
+            if (nextStatement == null) {
+                return;
+            }
+            if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
+                return;
+                //protecting against an edge case where both branches return
+                // and are followed by a case label
+            }
+            final PsiElement elseToken = statement.getElseElement();
+            registerError(elseToken);
+        }
     }
-  }
 }

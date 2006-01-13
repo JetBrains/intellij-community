@@ -24,83 +24,88 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryDefaultInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryDefaultVisitor();
-  }
-
-  private static class UnnecessaryDefaultVisitor
-    extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      if (!switchStatementContainsUnnecessaryDefault(statement)) {
-        return;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      final PsiStatement[] statements = body.getStatements();
-      for (int i = statements.length - 1; i >= 0; i--) {
-        final PsiStatement child = statements[i];
-        if (child instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement label =
-            (PsiSwitchLabelStatement)child;
-          if (label.isDefaultCase()) {
-            registerStatementError(label);
-          }
-        }
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    private static boolean switchStatementContainsUnnecessaryDefault(PsiSwitchStatement statement) {
-      final PsiExpression expression = statement.getExpression();
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClass aClass = ((PsiClassType)type).resolve();
-      if (aClass == null) {
-        return false;
-      }
-      if (!aClass.isEnum()) {
-        return false;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      boolean containsDefault = false;
-      int numCases = 0;
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          if (((PsiSwitchLabelStatement)child).isDefaultCase()) {
-            containsDefault = true;
-          }
-          else {
-            numCases++;
-          }
-        }
-      }
-      if (!containsDefault) {
-        return false;
-      }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        if (field.getType().equals(type)) {
-          numEnums++;
-        }
-      }
-      return numEnums == numCases;
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryDefaultVisitor();
     }
-  }
+
+    private static class UnnecessaryDefaultVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+            super.visitSwitchStatement(statement);
+            if (!switchStatementContainsUnnecessaryDefault(statement)) {
+                return;
+            }
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            for (int i = statements.length - 1; i >= 0; i--) {
+                final PsiStatement child = statements[i];
+                if (child instanceof PsiSwitchLabelStatement) {
+                    final PsiSwitchLabelStatement label =
+                            (PsiSwitchLabelStatement)child;
+                    if (label.isDefaultCase()) {
+                        registerStatementError(label);
+                    }
+                }
+            }
+        }
+
+        private static boolean switchStatementContainsUnnecessaryDefault(
+                PsiSwitchStatement statement) {
+            final PsiExpression expression = statement.getExpression();
+            if (expression == null) {
+                return false;
+            }
+            final PsiType type = expression.getType();
+            if (type == null) {
+                return false;
+            }
+            if (!(type instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClass aClass = ((PsiClassType)type).resolve();
+            if (aClass == null) {
+                return false;
+            }
+            if (!aClass.isEnum()) {
+                return false;
+            }
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return false;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            boolean containsDefault = false;
+            int numCases = 0;
+            for (final PsiStatement child : statements) {
+                if (child instanceof PsiSwitchLabelStatement) {
+                    if (((PsiSwitchLabelStatement)child).isDefaultCase()) {
+                        containsDefault = true;
+                    }
+                    else {
+                        numCases++;
+                    }
+                }
+            }
+            if (!containsDefault) {
+                return false;
+            }
+            final PsiField[] fields = aClass.getFields();
+            int numEnums = 0;
+            for (final PsiField field : fields) {
+                final PsiType fieldType = field.getType();
+                if (fieldType.equals(type)) {
+                    numEnums++;
+                }
+            }
+            return numEnums == numCases;
+        }
+    }
 }

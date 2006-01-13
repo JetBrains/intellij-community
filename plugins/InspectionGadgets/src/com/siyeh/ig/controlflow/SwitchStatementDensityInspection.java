@@ -29,70 +29,76 @@ import javax.swing.*;
 
 public class SwitchStatementDensityInspection extends StatementInspection {
 
-  private static final int DEFAULT_DENSITY_LIMIT = 20;
-  /**
-   * @noinspection PublicField
-   */
-  public int m_limit = DEFAULT_DENSITY_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+    private static final int DEFAULT_DENSITY_LIMIT = 20;
+    /**
+     * this is public for the DefaultJDOMExternalizer thingy
+     * @noinspection PublicField
+     */
+    public int m_limit = DEFAULT_DENSITY_LIMIT;
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  private int getLimit() {
-    return m_limit;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.density.min.option"),
-                                              this, "m_limit");
-  }
-
-  protected String buildErrorString(PsiElement location) {
-    final PsiSwitchStatement statement = (PsiSwitchStatement)location.getParent();
-    final double density = calculateDensity(statement);
-    final int intDensity = (int)(density * 100.0);
-    return InspectionGadgetsBundle.message("switch.statement.density.problem.descriptor", intDensity);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SwitchStatementWithTooFewBranchesVisitor();
-  }
-
-  private class SwitchStatementWithTooFewBranchesVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      final double density = calculateDensity(statement);
-      if (density * 100.0 > getLimit()) {
-        return;
-      }
-      registerStatementError(statement);
-    }
-  }
-
-  private static double calculateDensity(PsiSwitchStatement statement) {
-    final PsiCodeBlock body = statement.getBody();
-    final int numBranches = SwitchUtils.calculateBranchCount(statement);
-    final StatementCountVisitor visitor = new StatementCountVisitor();
-    body.accept(visitor);
-    final int numStatements = visitor.getNumStatements();
-    return (double)numBranches / (double)numStatements;
-  }
-
-  private static class StatementCountVisitor extends PsiRecursiveElementVisitor {
-    private int numStatements = 0;
-
-    public void visitStatement(@NotNull PsiStatement psiStatement) {
-      super.visitStatement(psiStatement);
-      numStatements++;
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public int getNumStatements() {
-      return numStatements;
+    public JComponent createOptionsPanel() {
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "switch.statement.density.min.option"), this, "m_limit");
     }
-  }
+
+    protected String buildErrorString(PsiElement location) {
+        final PsiSwitchStatement statement =
+                (PsiSwitchStatement)location.getParent();
+        final double density = calculateDensity(statement);
+        final int intDensity = (int)(density * 100.0);
+        return InspectionGadgetsBundle.message(
+                "switch.statement.density.problem.descriptor", intDensity);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementWithTooFewBranchesVisitor();
+    }
+
+    private class SwitchStatementWithTooFewBranchesVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            final double density = calculateDensity(statement);
+            if (density * 100.0 > m_limit) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
+
+    private static double calculateDensity(PsiSwitchStatement statement) {
+        final PsiCodeBlock body = statement.getBody();
+        if (body == null) {
+            return -1.0;
+        }
+        final int numBranches = SwitchUtils.calculateBranchCount(statement);
+        final StatementCountVisitor visitor = new StatementCountVisitor();
+        body.accept(visitor);
+        final int numStatements = visitor.getNumStatements();
+        return (double)numBranches / (double)numStatements;
+    }
+
+    private static class StatementCountVisitor
+            extends PsiRecursiveElementVisitor {
+
+        private int numStatements = 0;
+
+        public void visitStatement(@NotNull PsiStatement psiStatement) {
+            super.visitStatement(psiStatement);
+            numStatements++;
+        }
+
+        public int getNumStatements() {
+            return numStatements;
+        }
+    }
 }

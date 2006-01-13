@@ -29,50 +29,55 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchStatementWithTooFewBranchesInspection extends StatementInspection {
+public class SwitchStatementWithTooFewBranchesInspection
+        extends StatementInspection {
 
-  private static final int DEFAULT_BRANCH_LIMIT = 2;
-  /**
-   * @noinspection PublicField
-   */
-  public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+    private static final int DEFAULT_BRANCH_LIMIT = 2;
+    /**
+     * this is public for the DefaultJDOMExternalizer thingy
+     * @noinspection PublicField
+     */
+    public int m_limit = DEFAULT_BRANCH_LIMIT;
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  private int getLimit() {
-    return m_limit;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
-                                              this, "m_limit");
-  }
-
-  protected String buildErrorString(PsiElement location) {
-    final PsiSwitchStatement statement = (PsiSwitchStatement)location.getParent();
-    assert statement != null;
-    final int numBranches = SwitchUtils.calculateBranchCount(statement);
-    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", numBranches);
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SwitchStatementWithTooFewBranchesVisitor();
-  }
-
-  private class SwitchStatementWithTooFewBranchesVisitor extends StatementInspectionVisitor {
-
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
-      final int numBranches = SwitchUtils.calculateBranchCount(statement);
-      if (numBranches >= getLimit()) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-  }
+
+    public JComponent createOptionsPanel() {
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "switch.statement.with.too.few.branches.min.option"),
+                this, "m_limit");
+    }
+
+    protected String buildErrorString(PsiElement location) {
+        final PsiSwitchStatement statement =
+                (PsiSwitchStatement)location.getParent();
+        assert statement != null;
+        final int numBranches = SwitchUtils.calculateBranchCount(statement);
+        return InspectionGadgetsBundle.message(
+                "switch.statement.with.too.few.branches.problem.descriptor",
+                numBranches);
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementWithTooFewBranchesVisitor();
+    }
+
+    private class SwitchStatementWithTooFewBranchesVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitSwitchStatement(
+                @NotNull PsiSwitchStatement statement) {
+            final PsiCodeBlock body = statement.getBody();
+            if (body == null) {
+                return;
+            }
+            final int numBranches = SwitchUtils.calculateBranchCount(statement);
+            if (numBranches >= m_limit) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

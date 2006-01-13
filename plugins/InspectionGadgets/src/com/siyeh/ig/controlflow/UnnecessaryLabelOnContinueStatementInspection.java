@@ -26,97 +26,107 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
-public class UnnecessaryLabelOnContinueStatementInspection extends StatementInspection {
+public class UnnecessaryLabelOnContinueStatementInspection
+        extends StatementInspection {
 
-  private final UnnecessaryLabelOnContinueStatementFix fix = new UnnecessaryLabelOnContinueStatementFix();
+    private final UnnecessaryLabelOnContinueStatementFix fix =
+            new UnnecessaryLabelOnContinueStatementFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class UnnecessaryLabelOnContinueStatementFix extends InspectionGadgetsFix {
-    @NonNls private static final String CONTINUE_STATEMENT = "continue;";
-
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement continueKeywordElement = descriptor.getPsiElement();
-      final PsiContinueStatement continueStatement =
-        (PsiContinueStatement)continueKeywordElement.getParent();
-      replaceStatement(continueStatement,
-                       CONTINUE_STATEMENT);
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessaryLabelOnContinueStatementVisitor();
-  }
-
-  private static class UnnecessaryLabelOnContinueStatementVisitor extends StatementInspectionVisitor {
-    private PsiStatement currentContainer = null;
-
-
-    public void visitForStatement(@NotNull PsiForStatement statement) {
-      final PsiStatement prevContainer = currentContainer;
-      currentContainer = statement;
-      super.visitForStatement(statement);
-      currentContainer = prevContainer;
+    public boolean isEnabledByDefault() {
+        return true;
     }
 
-    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-      final PsiStatement prevContainer = currentContainer;
-      currentContainer = statement;
-      super.visitDoWhileStatement(statement);
-      currentContainer = prevContainer;
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
 
-    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
-      final PsiStatement prevContainer = currentContainer;
-      currentContainer = statement;
-      super.visitForeachStatement(statement);
-      currentContainer = prevContainer;
+    private static class UnnecessaryLabelOnContinueStatementFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.label.remove.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement continueKeywordElement =
+                    descriptor.getPsiElement();
+            final PsiContinueStatement continueStatement =
+                    (PsiContinueStatement)continueKeywordElement.getParent();
+            replaceStatement(continueStatement,
+                    PsiKeyword.CONTINUE);
+        }
     }
 
-    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-      final PsiStatement prevContainer = currentContainer;
-      currentContainer = statement;
-      super.visitWhileStatement(statement);
-      currentContainer = prevContainer;
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryLabelOnContinueStatementVisitor();
     }
 
-    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      super.visitContinueStatement(statement);
-      final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
-      if (labelIdentifier == null) {
-        return;
-      }
-      final String labelText = labelIdentifier.getText();
-      if (labelText == null || labelText.length() == 0) {
-        return;
-      }
-      final PsiStatement continuedStatement = statement.findContinuedStatement();
-      if (continuedStatement == null) {
-        return;
-      }
-      if (currentContainer == null) {
-        return;
-      }
-      if (continuedStatement.equals(currentContainer)) {
-        registerStatementError(statement);
-      }
+    private static class UnnecessaryLabelOnContinueStatementVisitor
+            extends StatementInspectionVisitor {
+
+        private PsiStatement currentContainer = null;
+
+        public void visitForStatement(@NotNull PsiForStatement statement) {
+            final PsiStatement prevContainer = currentContainer;
+            currentContainer = statement;
+            super.visitForStatement(statement);
+            currentContainer = prevContainer;
+        }
+
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
+            final PsiStatement prevContainer = currentContainer;
+            currentContainer = statement;
+            super.visitDoWhileStatement(statement);
+            currentContainer = prevContainer;
+        }
+
+        public void visitForeachStatement(
+                @NotNull PsiForeachStatement statement) {
+            final PsiStatement prevContainer = currentContainer;
+            currentContainer = statement;
+            super.visitForeachStatement(statement);
+            currentContainer = prevContainer;
+        }
+
+        public void visitWhileStatement(
+                @NotNull PsiWhileStatement statement) {
+            final PsiStatement prevContainer = currentContainer;
+            currentContainer = statement;
+            super.visitWhileStatement(statement);
+            currentContainer = prevContainer;
+        }
+
+        public void visitContinueStatement(
+                @NotNull PsiContinueStatement statement) {
+            super.visitContinueStatement(statement);
+            final PsiIdentifier labelIdentifier =
+                    statement.getLabelIdentifier();
+            if (labelIdentifier == null) {
+                return;
+            }
+            final String labelText = labelIdentifier.getText();
+            if (labelText == null || labelText.length() == 0) {
+                return;
+            }
+            final PsiStatement continuedStatement =
+                    statement.findContinuedStatement();
+            if (continuedStatement == null) {
+                return;
+            }
+            if (currentContainer == null) {
+                return;
+            }
+            if (continuedStatement.equals(currentContainer)) {
+                registerStatementError(statement);
+            }
+        }
     }
-  }
 }

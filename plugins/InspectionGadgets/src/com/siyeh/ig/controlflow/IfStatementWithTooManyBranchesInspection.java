@@ -28,66 +28,69 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class IfStatementWithTooManyBranchesInspection extends StatementInspection {
+public class IfStatementWithTooManyBranchesInspection
+        extends StatementInspection {
 
-  private static final int DEFAULT_BRANCH_LIMIT = 3;
-  /**
-   * @noinspection PublicField
-   */
-  public int m_limit = DEFAULT_BRANCH_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
+    private static final int DEFAULT_BRANCH_LIMIT = 3;
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
+    /**
+     * this is public for the DefaultJDOMExternalizer thingy
+     * @noinspection PublicField
+     */
+    public int m_limit = DEFAULT_BRANCH_LIMIT;
 
-  private int getLimit() {
-    return m_limit;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"),
-                                              this, "m_limit");
-  }
-
-  protected String buildErrorString(PsiElement location) {
-    final PsiIfStatement statement = (PsiIfStatement)location.getParent();
-    final int branches = calculateNumBranches(statement);
-    return InspectionGadgetsBundle.message("if.statement.with.too.many.branches.problem.descriptor", branches);
-  }
-
-  private int calculateNumBranches(PsiIfStatement statement) {
-    final PsiStatement branch = statement.getElseBranch();
-    if (branch == null) {
-      return 1;
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-    if (!(branch instanceof PsiIfStatement)) {
-      return 2;
+
+    public JComponent createOptionsPanel() {
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "if.statement.with.too.many.branches.max.option"),
+                this, "m_limit");
     }
-    return 1 + calculateNumBranches((PsiIfStatement)branch);
-  }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new IfStatementWithTooManyBranchesVisitor();
-  }
+    protected String buildErrorString(PsiElement location) {
+        final PsiIfStatement statement = (PsiIfStatement)location.getParent();
+        final int branches = calculateNumBranches(statement);
+        return InspectionGadgetsBundle.message(
+                "if.statement.with.too.many.branches.problem.descriptor",
+                branches);
+    }
 
-  private class IfStatementWithTooManyBranchesVisitor extends StatementInspectionVisitor {
-
-    public void visitIfStatement(@NotNull PsiIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement) {
-        final PsiIfStatement parentStatement = (PsiIfStatement)parent;
-        final PsiStatement elseBranch = parentStatement.getElseBranch();
-        if (statement.equals(elseBranch)) {
-          return;
+    private static int calculateNumBranches(PsiIfStatement statement) {
+        final PsiStatement branch = statement.getElseBranch();
+        if (branch == null) {
+            return 1;
         }
-      }
-      final int branches = calculateNumBranches(statement);
-      if (branches <= getLimit()) {
-        return;
-      }
-      registerStatementError(statement);
+        if (!(branch instanceof PsiIfStatement)) {
+            return 2;
+        }
+        return 1 + calculateNumBranches((PsiIfStatement)branch);
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new IfStatementWithTooManyBranchesVisitor();
+    }
+
+    private class IfStatementWithTooManyBranchesVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+            super.visitIfStatement(statement);
+            final PsiElement parent = statement.getParent();
+            if (parent instanceof PsiIfStatement) {
+                final PsiIfStatement parentStatement = (PsiIfStatement)parent;
+                final PsiStatement elseBranch = parentStatement.getElseBranch();
+                if (statement.equals(elseBranch)) {
+                    return;
+                }
+            }
+            final int branches = calculateNumBranches(statement);
+            if (branches <= m_limit) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

@@ -22,10 +22,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -33,204 +34,195 @@ import java.util.Set;
 
 public class ConstantIfStatementInspection extends StatementInspection {
 
-  private final ConstantIfStatementFix fix = new ConstantIfStatementFix();
+    private final ConstantIfStatementFix fix = new ConstantIfStatementFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ConstantIfStatementVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class ConstantIfStatementFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
-      final PsiIfStatement statement =
-        (PsiIfStatement)ifKeyword.getParent();
-      assert statement != null;
-      final PsiStatement thenBranch = statement.getThenBranch();
-      final PsiStatement elseBranch = statement.getElseBranch();
-      final PsiExpression condition = statement.getCondition();
-      if (isFalse(condition)) {
-        if (elseBranch != null) {
-          replaceStatementWithUnwrapping(elseBranch, statement);
-        }
-        else {
-          deleteElement(statement);
-        }
-      }
-      else {
-        replaceStatementWithUnwrapping(thenBranch, statement);
-      }
-    }
-
-    private void replaceStatementWithUnwrapping(PsiStatement branch,
-                                                PsiIfStatement statement)
-      throws IncorrectOperationException {
-      if (branch instanceof PsiBlockStatement) {
-        final PsiCodeBlock parentBlock = PsiTreeUtil
-          .getParentOfType(branch, PsiCodeBlock.class);
-        if (parentBlock == null) {
-          final String elseText = branch.getText();
-          replaceStatement(statement, elseText);
-          return;
-        }
-        final PsiCodeBlock block = ((PsiBlockStatement)branch)
-          .getCodeBlock();
-        final boolean hasConflicts = containsConflictingDeclarations(block,
-                                                                     parentBlock);
-        if (hasConflicts) {
-          final String elseText = branch.getText();
-          replaceStatement(statement, elseText);
-        }
-        else {
-          final PsiElement containingElement = statement.getParent();
-          final PsiElement[] children = block.getChildren();
-          if (children.length > 2) {
-            assert containingElement != null;
-            final PsiElement added =
-              containingElement.addRangeBefore(children[1],
-                                               children[children .length - 2],
-                                               statement);
-            final PsiManager manager = statement.getManager();
-            final Project project = manager.getProject();
-            final CodeStyleManager codeStyleManager =
-              CodeStyleManager.getInstance(project);
-            codeStyleManager.reformat(added);
-            statement.delete();
-          }
-        }
-      }
-      else {
-        final String elseText = branch.getText();
-        replaceStatement(statement, elseText);
-      }
-    }
-  }
-
-  private static class ConstantIfStatementVisitor
-    extends BaseInspectionVisitor {
-    public void visitIfStatement(PsiIfStatement statment) {
-      super.visitIfStatement(statment);
-      final PsiExpression condition = statment.getCondition();
-      if (condition == null) {
-        return;
-      }
-      final PsiStatement thenBranch = statment.getThenBranch();
-      if (thenBranch == null) {
-        return;
-      }
-      if (isTrue(condition) || isFalse(condition)) {
-        registerStatementError(statment);
-      }
-    }
-  }
-
-  private static boolean containsConflictingDeclarations(
-    PsiCodeBlock block,
-    PsiCodeBlock parentBlock) {
-    final PsiStatement[] statements = block.getStatements();
-
-    final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
-    for (final PsiStatement statement : statements) {
-      if (statement instanceof PsiDeclarationStatement) {
-        final PsiDeclarationStatement declaration =
-          (PsiDeclarationStatement)statement;
-        final PsiElement[] vars = declaration.getDeclaredElements();
-        for (PsiElement var : vars) {
-          if (var instanceof PsiLocalVariable) {
-            declaredVars.add(var);
-          }
-        }
-      }
-    }
-    for (Object declaredVar : declaredVars) {
-      final PsiLocalVariable variable =
-        (PsiLocalVariable)declaredVar;
-      final String variableName = variable.getName();
-      if (conflictingDeclarationExists(variableName, parentBlock,
-                                       block)) {
+    public boolean isEnabledByDefault() {
         return true;
-      }
     }
 
-    return false;
-  }
-
-  private static boolean conflictingDeclarationExists(String name,
-                                                      PsiCodeBlock parentBlock,
-                                                      PsiCodeBlock exceptBlock) {
-    final ConflictingDeclarationVisitor visitor =
-      new ConflictingDeclarationVisitor(name, exceptBlock);
-    parentBlock.accept(visitor);
-    return visitor.hasConflictingDeclaration();
-  }
-
-  private static class ConflictingDeclarationVisitor
-    extends PsiRecursiveElementVisitor {
-    private final String variableName;
-    private final PsiCodeBlock exceptBlock;
-    private boolean hasConflictingDeclaration = false;
-
-    ConflictingDeclarationVisitor(String variableName,
-                                  PsiCodeBlock exceptBlock) {
-      super();
-      this.variableName = variableName;
-      this.exceptBlock = exceptBlock;
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConstantIfStatementVisitor();
     }
 
-    public void visitElement(@NotNull PsiElement element) {
-      if (!hasConflictingDeclaration) {
-        super.visitElement(element);
-      }
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
 
-    public void visitCodeBlock(PsiCodeBlock block) {
-      if (hasConflictingDeclaration) {
-        return;
-      }
-      if (block.equals(exceptBlock)) {
-        return;
-      }
-      super.visitCodeBlock(block);
+    private static class ConstantIfStatementFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement ifKeyword = descriptor.getPsiElement();
+            final PsiIfStatement statement =
+                    (PsiIfStatement)ifKeyword.getParent();
+            assert statement != null;
+            final PsiStatement thenBranch = statement.getThenBranch();
+            final PsiStatement elseBranch = statement.getElseBranch();
+            final PsiExpression condition = statement.getCondition();
+            if (BoolUtils.isFalse(condition)) {
+                if (elseBranch != null) {
+                    replaceStatementWithUnwrapping(elseBranch, statement);
+                } else {
+                    deleteElement(statement);
+                }
+            } else {
+                replaceStatementWithUnwrapping(thenBranch, statement);
+            }
+        }
+
+        private static void replaceStatementWithUnwrapping(
+                PsiStatement branch, PsiIfStatement statement)
+                throws IncorrectOperationException {
+            if (branch instanceof PsiBlockStatement) {
+                final PsiCodeBlock parentBlock =
+                        PsiTreeUtil .getParentOfType(branch,
+                                PsiCodeBlock.class);
+                if (parentBlock == null) {
+                    final String elseText = branch.getText();
+                    replaceStatement(statement, elseText);
+                    return;
+                }
+                final PsiCodeBlock block =
+                        ((PsiBlockStatement)branch).getCodeBlock();
+                final boolean hasConflicts =
+                        containsConflictingDeclarations(block, parentBlock);
+                if (hasConflicts) {
+                    final String elseText = branch.getText();
+                    replaceStatement(statement, elseText);
+                } else {
+                    final PsiElement containingElement = statement.getParent();
+                    final PsiElement[] children = block.getChildren();
+                    if (children.length > 2) {
+                        assert containingElement != null;
+                        final PsiElement added =
+                                containingElement.addRangeBefore(children[1],
+                                        children[children .length - 2],
+                                        statement);
+                        final PsiManager manager = statement.getManager();
+                        final Project project = manager.getProject();
+                        final CodeStyleManager codeStyleManager =
+                                CodeStyleManager.getInstance(project);
+                        codeStyleManager.reformat(added);
+                        statement.delete();
+                    }
+                }
+            } else {
+                final String elseText = branch.getText();
+                replaceStatement(statement, elseText);
+            }
+        }
+
+        private static boolean containsConflictingDeclarations(
+                PsiCodeBlock block, PsiCodeBlock parentBlock) {
+            final PsiStatement[] statements = block.getStatements();
+
+            final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
+            for (final PsiStatement statement : statements) {
+                if (statement instanceof PsiDeclarationStatement) {
+                    final PsiDeclarationStatement declaration =
+                            (PsiDeclarationStatement)statement;
+                    final PsiElement[] vars = declaration.getDeclaredElements();
+                    for (PsiElement var : vars) {
+                        if (var instanceof PsiLocalVariable) {
+                            declaredVars.add(var);
+                        }
+                    }
+                }
+            }
+            for (Object declaredVar : declaredVars) {
+                final PsiLocalVariable variable =
+                        (PsiLocalVariable)declaredVar;
+                final String variableName = variable.getName();
+                if (conflictingDeclarationExists(variableName, parentBlock,
+                        block)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static boolean conflictingDeclarationExists(
+                String name, PsiCodeBlock parentBlock,
+                PsiCodeBlock exceptBlock) {
+            final ConflictingDeclarationVisitor visitor =
+                    new ConflictingDeclarationVisitor(name, exceptBlock);
+            parentBlock.accept(visitor);
+            return visitor.hasConflictingDeclaration();
+        }
     }
 
-    public void visitVariable(@NotNull PsiVariable variable) {
-      if (hasConflictingDeclaration) {
-        return;
-      }
-      super.visitVariable(variable);
-      if (variable.getName().equals(variableName)) {
-        hasConflictingDeclaration = true;
-      }
+    private static class ConstantIfStatementVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitIfStatement(PsiIfStatement statment) {
+            super.visitIfStatement(statment);
+            final PsiExpression condition = statment.getCondition();
+            if (condition == null) {
+                return;
+            }
+            final PsiStatement thenBranch = statment.getThenBranch();
+            if (thenBranch == null) {
+                return;
+            }
+            if (BoolUtils.isTrue(condition) || BoolUtils.isFalse(condition)) {
+                registerStatementError(statment);
+            }
+        }
     }
 
-    public boolean hasConflictingDeclaration() {
-      return hasConflictingDeclaration;
+    private static class ConflictingDeclarationVisitor
+            extends PsiRecursiveElementVisitor {
+
+        private final String variableName;
+        private final PsiCodeBlock exceptBlock;
+        private boolean hasConflictingDeclaration = false;
+
+        ConflictingDeclarationVisitor(String variableName,
+                                      PsiCodeBlock exceptBlock) {
+            super();
+            this.variableName = variableName;
+            this.exceptBlock = exceptBlock;
+        }
+
+        public void visitElement(@NotNull PsiElement element) {
+            if (!hasConflictingDeclaration) {
+                super.visitElement(element);
+            }
+        }
+
+        public void visitCodeBlock(PsiCodeBlock block) {
+            if (hasConflictingDeclaration) {
+                return;
+            }
+            if (block.equals(exceptBlock)) {
+                return;
+            }
+            super.visitCodeBlock(block);
+        }
+
+        public void visitVariable(@NotNull PsiVariable variable) {
+            if (hasConflictingDeclaration) {
+                return;
+            }
+            super.visitVariable(variable);
+            final String name = variable.getName();
+            if (name.equals(variableName)) {
+                hasConflictingDeclaration = true;
+            }
+        }
+
+        public boolean hasConflictingDeclaration() {
+            return hasConflictingDeclaration;
+        }
     }
-  }
-
-  private static boolean isFalse(PsiExpression expression) {
-    final String text = expression.getText();
-    return PsiKeyword.FALSE.equals(text);
-  }
-
-  private static boolean isTrue(PsiExpression expression) {
-    final String text = expression.getText();
-    return PsiKeyword.TRUE.equals(text);
-  }
 }

@@ -24,58 +24,71 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InfiniteLoopStatementInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new InfiniteLoopStatementsVisitor();
-  }
-
-  private static class InfiniteLoopStatementsVisitor extends StatementInspectionVisitor {
-
-
-    public void visitForStatement(@NotNull PsiForStatement statement) {
-      super.visitForStatement(statement);
-      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return;
-      }
-      if (ControlFlowUtils.statementContainsReturn(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "infinite.loop.statement.display.name");
     }
 
-    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-
-      super.visitWhileStatement(statement);
-      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return;
-      }
-      if (ControlFlowUtils.statementContainsReturn(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
-      super.visitDoWhileStatement(statement);
-      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return;
-      }
-      if (ControlFlowUtils.statementContainsReturn(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public boolean isEnabledByDefault() {
+        return true;
     }
 
-  }
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "infinite.loop.statement.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new InfiniteLoopStatementsVisitor();
+    }
+
+    private static class InfiniteLoopStatementsVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitForStatement(@NotNull PsiForStatement statement) {
+            super.visitForStatement(statement);
+            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+                return;
+            }
+            if (ControlFlowUtils.statementContainsReturn(statement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+
+            super.visitWhileStatement(statement);
+            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+                return;
+            }
+            if (ControlFlowUtils.statementContainsReturn(statement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
+            super.visitDoWhileStatement(statement);
+            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+                return;
+            }
+            if (ControlFlowUtils.statementContainsReturn(statement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

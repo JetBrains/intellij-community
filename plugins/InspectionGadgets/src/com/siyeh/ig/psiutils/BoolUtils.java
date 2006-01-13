@@ -36,22 +36,31 @@ public class BoolUtils {
         return JavaTokenType.EXCL.equals(tokenType);
     }
 
+    @Nullable
     private static PsiExpression getNegated(@NotNull PsiExpression expression) {
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) expression;
         final PsiExpression operand = prefixExp.getOperand();
+        if (operand == null) {
+            return null;
+        }
         return ParenthesesUtils.stripParentheses(operand);
     }
 
-    public static String getNegatedExpressionText(
-            @NotNull PsiExpression condition) {
+    public static String getNegatedExpressionText(PsiExpression condition) {
+        if (condition == null) {
+            return "";
+        }
         if (condition instanceof PsiParenthesizedExpression) {
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)condition;
             final PsiExpression contentExpression =
                     parenthesizedExpression.getExpression();
             return '(' +getNegatedExpressionText(contentExpression) + ')';
-        }else if (isNegation(condition)) {
+        } else if (isNegation(condition)) {
             final PsiExpression negated = getNegated(condition);
+            if (negated == null) {
+                return "";
+            }
             return negated.getText();
         } else if (ComparisonUtils.isComparison(condition)) {
             final PsiBinaryExpression binaryExpression =
@@ -71,11 +80,19 @@ public class BoolUtils {
         }
     }
 
-    public static boolean isTrue(@Nullable PsiExpression test) {
-        if (test == null) {
+    public static boolean isTrue(@Nullable PsiExpression expression) {
+        if (expression == null) {
             return false;
         }
-        final String text = test.getText();
+        final String text = expression.getText();
         return PsiKeyword.TRUE.equals(text);
+    }
+
+    public static boolean isFalse(PsiExpression expression) {
+        if (expression == null) {
+            return false;
+        }
+        final String text = expression.getText();
+        return PsiKeyword.FALSE.equals(text);
     }
 }

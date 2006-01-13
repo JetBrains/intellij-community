@@ -19,21 +19,23 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IgnoreResultOfCallInspection extends ExpressionInspection{
+
     /** @noinspection PublicField*/
     public boolean m_reportAllNonLibraryCalls = false;
 
@@ -56,8 +59,9 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         "java.math.BigDecimal,.*," +
         "java.net.InetAddress,.*";
 
-    private final List<ReturnCheckSpecification> callsToCheck = new ArrayList<ReturnCheckSpecification>(32);
-    private final Object lock = new Object();
+    final List<ReturnCheckSpecification> callsToCheck =
+            new ArrayList<ReturnCheckSpecification>(32);
+    final Object lock = new Object();
 
     {
         parseCallCheckString();
@@ -91,14 +95,17 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         synchronized(lock){
 
             boolean first=true;
-            for(ReturnCheckSpecification returnCheckSpecification : callsToCheck){
+            for(ReturnCheckSpecification returnCheckSpecification :
+                    callsToCheck){
                 if(first){
                     first = false;
                 } else{
                     buffer.append(',');
                 }
-                final String methodName = returnCheckSpecification.getMethodName();
-                final String className = returnCheckSpecification.getClassName();
+                final String methodName =
+                        returnCheckSpecification.getMethodName();
+                final String className =
+                        returnCheckSpecification.getClassName();
                 buffer.append(className);
                 buffer.append(',');
                 buffer.append(methodName);
@@ -112,7 +119,8 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("result.of.method.call.ignored.display.name");
+        return InspectionGadgetsBundle.message(
+                "result.of.method.call.ignored.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -139,7 +147,8 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;
         final String className = containingClass.getName();
-        return InspectionGadgetsBundle.message("result.of.method.call.ignored.problem.descriptor", className);
+        return InspectionGadgetsBundle.message(
+                "result.of.method.call.ignored.problem.descriptor", className);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -148,7 +157,8 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
     private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor{
 
-        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement){
+        public void visitExpressionStatement(
+                @NotNull PsiExpressionStatement statement){
             super.visitExpressionStatement(statement);
             if(!(statement.getExpression() instanceof PsiMethodCallExpression)){
                 return;
@@ -183,7 +193,8 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             }
             final List<ReturnCheckSpecification> callsToCheckCopy;
             synchronized(lock){
-                callsToCheckCopy = new ArrayList<ReturnCheckSpecification>(callsToCheck);
+                callsToCheckCopy =
+                        new ArrayList<ReturnCheckSpecification>(callsToCheck);
             }
             for(ReturnCheckSpecification spec : callsToCheckCopy){
                 final Pattern methodNamePattern = spec.getMethodNamePattern();
@@ -206,6 +217,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     }
 
     private class Form{
+
         JPanel contentPanel;
         JButton addButton;
         JButton deleteButton;
@@ -232,16 +244,18 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect =
+                                    table.getCellRect(listSize, 0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
+                            final TableCellEditor editor =
+                                    table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
-                }
-            });
-
+                        }
+                    });
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
@@ -284,6 +298,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
     private class ReturnCheckSpecificationTableModel
             extends AbstractTableModel{
+
         public int getRowCount(){
             synchronized(lock){
                 return callsToCheck.size();
@@ -296,9 +311,11 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
         public String getColumnName(int columnIndex){
             if(columnIndex == 0){
-                return InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title");
+                return InspectionGadgetsBundle.message(
+                        "result.of.method.call.ignored.class.column.title");
             }
-            return InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title");
+            return InspectionGadgetsBundle.message(
+                    "result.of.method.call.ignored.method.column.title");
         }
 
         public Class getColumnClass(int columnIndex){

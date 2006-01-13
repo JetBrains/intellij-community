@@ -21,19 +21,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class NegatedIfElseInspection extends StatementInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
     private final NegatedIfElseFix fix = new NegatedIfElseFix();
@@ -59,7 +60,8 @@ public class NegatedIfElseInspection extends StatementInspection {
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("negated.if.else.ignore.option"),
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "negated.if.else.ignore.option"),
                 this, "m_ignoreNegatedNullComparison");
     }
 
@@ -70,7 +72,8 @@ public class NegatedIfElseInspection extends StatementInspection {
     private static class NegatedIfElseFix extends InspectionGadgetsFix {
 
         public String getName(){
-            return InspectionGadgetsBundle.message("negated.if.else.invert.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "negated.if.else.invert.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -79,8 +82,17 @@ public class NegatedIfElseInspection extends StatementInspection {
             final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
             assert ifStatement != null;
             final PsiStatement elseBranch = ifStatement.getElseBranch();
+            if (elseBranch == null) {
+                return;
+            }
             final PsiStatement thenBranch = ifStatement.getThenBranch();
+            if (thenBranch == null) {
+                return;
+            }
             final PsiExpression condition = ifStatement.getCondition();
+            if (condition == null) {
+                return;
+            }
             final String negatedCondition =
                     BoolUtils.getNegatedExpressionText(condition);
             String elseText = elseBranch.getText();
@@ -99,7 +111,6 @@ public class NegatedIfElseInspection extends StatementInspection {
     }
 
     private class NegatedIfElseVisitor extends StatementInspectionVisitor {
-      @NonNls private static final String NULL = "null";
 
       public void visitIfStatement(@NotNull PsiIfStatement statement) {
           super.visitIfStatement(statement);
@@ -150,7 +161,8 @@ public class NegatedIfElseInspection extends StatementInspection {
                     if (m_ignoreNegatedNullComparison) {
                         final String lhsText = lhs.getText();
                         final String rhsText = rhs.getText();
-                        return !NULL.equals(lhsText) && !NULL.equals(rhsText);
+                        return !PsiKeyword.NULL.equals(lhsText) &&
+                                !PsiKeyword.NULL.equals(rhsText);
                     } else {
                         return true;
                     }

@@ -63,8 +63,8 @@ public class EnumSwitchStatementWhichMissesCasesInspection
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "enum.switch.statement.which.misses.cases.option"), this,
-                "ignoreSwitchStatementsWithDefault");
+                        "enum.switch.statement.which.misses.cases.option"),
+                this, "ignoreSwitchStatementsWithDefault");
     }
 
     public BaseInspectionVisitor buildVisitor() {

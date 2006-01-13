@@ -64,7 +64,8 @@ public class OverlyComplexBooleanExpressionInspection
     private final InspectionGadgetsFix fix = new ExtractMethodFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("overly.complex.boolean.expression.display.name");
+        return InspectionGadgetsBundle.message(
+                "overly.complex.boolean.expression.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -117,7 +118,8 @@ public class OverlyComplexBooleanExpressionInspection
     }
 
     protected String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("overly.complex.boolean.expression.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "overly.complex.boolean.expression.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -244,7 +246,8 @@ public class OverlyComplexBooleanExpressionInspection
                     (PsiBinaryExpression)expression;
             final PsiJavaToken sign = binaryExpression.getOperationSign();
             final String signText = sign.getText();
-            if (s_booleanOperators.contains(signText) && !operator.equals(signText)) {
+            if (s_booleanOperators.contains(signText) &&
+                !operator.equals(signText)) {
                 return false;
             }
             final PsiExpression lOperand = binaryExpression.getLOperand();

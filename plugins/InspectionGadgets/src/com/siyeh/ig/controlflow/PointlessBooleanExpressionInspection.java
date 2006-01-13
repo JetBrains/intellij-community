@@ -57,9 +57,11 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
+          InspectionGadgetsBundle.message(
+                  "pointless.boolean.expression.ignore.option"),
                 this, "m_ignoreExpressionsContainingConstants");
     }
+    
     private final BooleanLiteralComparisonFix fix =
             new BooleanLiteralComparisonFix();
 
@@ -81,12 +83,14 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression)location;
             return InspectionGadgetsBundle
-              .message("string.can.be.simplified.problem.descriptor", calculateSimplifiedBinaryExpression(expression));
+              .message("string.can.be.simplified.problem.descriptor",
+                      calculateSimplifiedBinaryExpression(expression));
         } else{
             final PsiPrefixExpression expression =
                     (PsiPrefixExpression)location;
             return InspectionGadgetsBundle
-              .message("string.can.be.simplified.problem.descriptor", calculateSimplifiedPrefixExpression(expression));
+              .message("string.can.be.simplified.problem.descriptor",
+                      calculateSimplifiedPrefixExpression(expression));
         }
     }
 
@@ -168,9 +172,9 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             PsiPrefixExpression expression){
         final PsiExpression operand = expression.getOperand();
         if(isTrue(operand)){
-            return Boolean.FALSE.toString();
+            return PsiKeyword.FALSE;
         } else{
-            return Boolean.TRUE.toString();
+            return PsiKeyword.TRUE;
         }
     }
 
@@ -181,7 +185,8 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     private  class BooleanLiteralComparisonFix
             extends InspectionGadgetsFix{
         public String getName(){
-            return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -263,12 +268,10 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             registerError(expression);
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if(sign == null){
-                return;
-            }
             final PsiExpression operand = expression.getOperand();
             final IElementType tokenType = sign.getTokenType();
             if(!(!tokenType.equals(JavaTokenType.EXCL) ||
@@ -276,30 +279,30 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                 registerError(expression);
             }
         }
-    }
 
-    private  boolean equalityExpressionIsPointless(PsiExpression lhs,
-                                                         PsiExpression rhs){
-        return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
-    }
+        private  boolean equalityExpressionIsPointless(PsiExpression lhs,
+                                                       PsiExpression rhs){
+            return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
+        }
 
-    private  boolean andExpressionIsPointless(PsiExpression lhs,
-                                                    PsiExpression rhs){
-        return isTrue(lhs) || isTrue(rhs);
-    }
+        private  boolean andExpressionIsPointless(PsiExpression lhs,
+                                                  PsiExpression rhs){
+            return isTrue(lhs) || isTrue(rhs);
+        }
 
-    private  boolean orExpressionIsPointless(PsiExpression lhs,
-                                                   PsiExpression rhs){
-        return isFalse(lhs) || isFalse(rhs);
-    }
+        private  boolean orExpressionIsPointless(PsiExpression lhs,
+                                                 PsiExpression rhs){
+            return isFalse(lhs) || isFalse(rhs);
+        }
 
-    private  boolean xorExpressionIsPointless(PsiExpression lhs,
-                                                    PsiExpression rhs){
-        return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
-    }
+        private  boolean xorExpressionIsPointless(PsiExpression lhs,
+                                                  PsiExpression rhs){
+            return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
+        }
 
-    private  boolean notExpressionIsPointless(PsiExpression arg){
-        return isFalse(arg) || isTrue(arg);
+        private  boolean notExpressionIsPointless(PsiExpression arg){
+            return isFalse(arg) || isTrue(arg);
+        }
     }
 
     private  boolean isTrue(PsiExpression expression){

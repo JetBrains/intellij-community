@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.psi.*;
 
 public class ConditionalUtils{
+    
     private ConditionalUtils(){
         super();
     }
@@ -46,10 +47,10 @@ public class ConditionalUtils{
         }
         final PsiReturnStatement returnStatement =
                 (PsiReturnStatement) statement;
-        if(returnStatement.getReturnValue() == null){
+        final PsiExpression returnValue = returnStatement.getReturnValue();
+        if (returnValue == null) {
             return false;
         }
-        final PsiExpression returnValue = returnStatement.getReturnValue();
         final String returnValueText = returnValue.getText();
         return value.equals(returnValueText);
     }
@@ -76,5 +77,4 @@ public class ConditionalUtils{
         final String rhsText = rhs.getText();
         return value.equals(rhsText);
     }
-
 }
