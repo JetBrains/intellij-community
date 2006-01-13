@@ -17,7 +17,6 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import gnu.trove.THashMap;
@@ -25,7 +24,6 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +31,6 @@ import java.util.Map;
 
 public class MethodSignatureUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureUtil");
-
-  private static final Key<CachedValue<MethodSignatureToMethods>> METHOD_SIGNATURES_COLLECTION_KEY = Key.create("METHOD_SIGNATURES_COLLECTION");
 
   public static MethodSignature createMethodSignature(@NonNls String name,
                                                       PsiParameterList parameterTypes,
@@ -107,24 +103,6 @@ public class MethodSignatureUtil {
     return false;
   }
 
-  /**
-   * @return Map: PsiMethod method -> List overrideEquivalentMethods list of override candidates methods declared in aClass ancestors including self
-   */
-  public static MethodSignatureToMethods getOverrideEquivalentMethods(PsiClass aClass) {
-    CachedValue<MethodSignatureToMethods> cachedValue = aClass.getUserData(METHOD_SIGNATURES_COLLECTION_KEY);
-    if (cachedValue == null) {
-      MethodSignaturesProvider methodSignaturesProvider = new MethodSignaturesProvider(aClass);
-      cachedValue = aClass.getManager().getCachedValuesManager().createCachedValue(methodSignaturesProvider,false);
-      aClass.putUserData(METHOD_SIGNATURES_COLLECTION_KEY, cachedValue);
-    }
-
-    MethodSignatureToMethods map = cachedValue.getValue();
-    if (map == null) {
-      LOG.error("Return null for '" + PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_FQ_NAME));
-    }
-    return map;
-  }
-
   public static int computeHashCode(final MethodSignature methodSignature) {
     int result = methodSignature.getName().hashCode();
 
@@ -155,49 +133,6 @@ public class MethodSignatureUtil {
 
     public void put(MethodSignature methodSignature, List<MethodSignatureBackedByPsiMethod> overrideEquivalentsList) {
       myMap.put(methodSignature, overrideEquivalentsList);
-    }
-  }
-
-  private static class MethodSignaturesProvider
-    implements CachedValueProvider<MethodSignatureToMethods> {
-    private final PsiClass myClass;
-
-    MethodSignaturesProvider(PsiClass aClass) {
-      myClass = aClass;
-    }
-
-    public Result<MethodSignatureToMethods> compute() {
-      long start = System.currentTimeMillis();
-      try {
-        MethodSignatureToMethods sameSignatureMethods = new MethodSignatureToMethods();
-        computeMap(sameSignatureMethods, myClass);
-
-        return new Result<MethodSignatureToMethods>
-          (sameSignatureMethods, myClass, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-      finally {
-        if (LOG.isDebugEnabled()) {
-          long finish = System.currentTimeMillis();
-          LOG.debug("Method collection built for " + PsiFormatUtil.formatClass(myClass, PsiFormatUtil.SHOW_FQ_NAME) + " in " +
-                    (finish - start) +
-                    " ms");
-        }
-      }
-    }
-
-    private static void computeMap(MethodSignatureToMethods sameSignatureMethodsMap, final PsiClass aClass) {
-      List<Pair<PsiMethod, PsiSubstitutor>> allMethodsList = aClass.getAllMethodsAndTheirSubstitutors();
-      for (Pair<PsiMethod, PsiSubstitutor> pair : allMethodsList) {
-        PsiMethod method = pair.getFirst();
-        PsiSubstitutor substitutor = pair.getSecond();
-        final MethodSignature methodSignature = method.getSignature(substitutor);
-        List<MethodSignatureBackedByPsiMethod> sameSignatureMethodList = sameSignatureMethodsMap.get(methodSignature);
-        if (sameSignatureMethodList == null) {
-          sameSignatureMethodList = new ArrayList<MethodSignatureBackedByPsiMethod>(5);
-          sameSignatureMethodsMap.put(methodSignature, sameSignatureMethodList);
-        }
-        sameSignatureMethodList.add((MethodSignatureBackedByPsiMethod)methodSignature);
-      }
     }
   }
 
