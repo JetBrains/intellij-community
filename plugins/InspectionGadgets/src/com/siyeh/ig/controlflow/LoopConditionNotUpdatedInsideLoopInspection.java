@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class LoopConditionNotUpdatedInsideLoopInspection
         extends StatementInspection {
@@ -57,16 +58,31 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             checkCondition(condition, statement);
         }
 
-        private void checkCondition(
-                PsiExpression expression, PsiStatement context) {
-            if (expression instanceof PsiInstanceOfExpression) {
+        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+            super.visitDoWhileStatement(statement);
+            final PsiExpression condition = statement.getCondition();
+            checkCondition(condition, statement);
+        }
+
+        public void visitForStatement(PsiForStatement statement) {
+            super.visitForStatement(statement);
+            final PsiExpression condition = statement.getCondition();
+            checkCondition(condition, statement);
+        }
+
+        private void checkCondition(@Nullable PsiExpression condition,
+                                    @NotNull PsiStatement context) {
+            if (condition == null) {
+                return;
+            }
+            if (condition instanceof PsiInstanceOfExpression) {
                 final PsiInstanceOfExpression instanceOfExpression =
-                        (PsiInstanceOfExpression)expression;
+                        (PsiInstanceOfExpression)condition;
                 final PsiExpression operand = instanceOfExpression.getOperand();
                 checkCondition(operand, context);
-            } else if (expression instanceof PsiBinaryExpression) {
+            } else if (condition instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression)expression;
+                        (PsiBinaryExpression)condition;
                 PsiExpression lhs = binaryExpression.getLOperand();
                 PsiExpression rhs = binaryExpression.getROperand();
                 if (rhs == null) {
@@ -80,30 +96,27 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                     } else if (rhs instanceof PsiLiteralExpression) {
                         checkCondition(lhs, context);
                     }
-                } else {
-                    checkCondition(rhs, context);
-                    checkCondition(lhs, context);
                 }
-            } else if (expression instanceof PsiReferenceExpression) {
+            } else if (condition instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
-                        (PsiReferenceExpression)expression;
+                        (PsiReferenceExpression)condition;
                 final PsiElement element = referenceExpression.resolve();
                 if (element instanceof PsiLocalVariable) {
                     final PsiLocalVariable variable = (PsiLocalVariable)element;
                     if (!VariableAccessUtils.variableIsAssigned(variable,
                             context)) {
-                        registerError(expression);
+                        registerError(condition);
                     }
                 } else if (element instanceof PsiParameter) {
                     final PsiParameter parameter = (PsiParameter)element;
                     if (!VariableAccessUtils.variableIsAssigned(parameter,
                             context)) {
-                        registerError(expression);
+                        registerError(condition);
                     }
                 }
-            } else if (expression instanceof PsiPrefixExpression) {
+            } else if (condition instanceof PsiPrefixExpression) {
                 final PsiPrefixExpression prefixExpression =
-                        (PsiPrefixExpression)expression;
+                        (PsiPrefixExpression)condition;
                 final PsiJavaToken sign = prefixExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (JavaTokenType.EXCL.equals(tokenType)) {
