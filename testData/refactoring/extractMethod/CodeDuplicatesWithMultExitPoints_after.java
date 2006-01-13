@@ -6,7 +6,7 @@ class A {
    }
 
     private boolean newMethod(Object o) {
-        if (o == null) return false;
-        return true;
+        if (o == null) return true;
+        return false;
     }
 }
