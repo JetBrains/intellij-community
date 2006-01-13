@@ -216,7 +216,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
       for (int index : selectedIndices) {
         if (firstVisibleIndex <= index && index <= lastVisibleIndex) {
           Rectangle cellBounds = list.getCellBounds(index, index);
-          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height / 2);
+          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height);
           break;
         }
       }
@@ -228,7 +228,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
         int row = selectionRows[i];
         Rectangle rowBounds = tree.getRowBounds(row);
         if (visibleRect.y <= rowBounds.y && rowBounds.y <= visibleRect.y + visibleRect.height) {
-          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, rowBounds.y + rowBounds.height / 2);
+          popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 4, rowBounds.y + rowBounds.height);
           break;
         }
       }

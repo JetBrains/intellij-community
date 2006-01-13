@@ -96,7 +96,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  public ImplementationViewComponent(PsiElement[] elements) {
+  public ImplementationViewComponent(PsiElement[] elements, final boolean requestFocus) {
     super(new BorderLayout());
     myElements = new PsiElement[elements.length];
     myIndex = 0;
@@ -141,6 +141,13 @@ public class ImplementationViewComponent extends JPanel {
     JPanel toolbarPanel = new JPanel(new FlowLayout());
     toolbarPanel.add(toolbar.getComponent());
 
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myHint != null) {
+          myHint.hide();
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myElements.length > 1) {
       myFileChooser = new JComboBox(files);
@@ -189,16 +196,18 @@ public class ImplementationViewComponent extends JPanel {
 
     updateControls();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myFileChooser != null) {
-          myFileChooser.requestFocus();
+    if (requestFocus) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myFileChooser != null) {
+            myFileChooser.requestFocus();
+          }
+          else {
+            myViewingPanel.requestFocus();
+          }
         }
-        else {
-          myViewingPanel.requestFocus();
-        }
-      }
-    });
+      });
+    }
   }
 
   private void updateControls() {
