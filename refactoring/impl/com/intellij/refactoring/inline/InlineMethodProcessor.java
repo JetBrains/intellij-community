@@ -17,8 +17,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -31,11 +31,10 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
@@ -1065,7 +1064,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       LOG.debug(controlFlow.toString());
     }
 
-    Instruction[] instructions = controlFlow.getInstructions();
+    Instruction[] instructions = controlFlow.getInstructions().clone();
 
     // temporary replace all return's with empty statements in the flow
     for (PsiReturnStatement aReturn : returns) {
