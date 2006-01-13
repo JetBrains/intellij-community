@@ -126,6 +126,7 @@ public class PersistentStringEnumerator {
   }
 
   private int allocVector() throws IOException {
+    markDirty(true);
     final int pos = (int)myStorage.length();
     myStorage.seek(pos);
     myStorage.put(EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
