@@ -113,10 +113,9 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     String expString =
       lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
     final PsiElement parent = exp.getParent();
-    if (parent != null && parent instanceof PsiExpression) {
+    if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecendence((PsiExpression)parent) <
-          ParenthesesUtils.SHIFT_PRECEDENCE) {
+          ParenthesesUtils.getPrecendence((PsiExpression)parent) < ParenthesesUtils.SHIFT_PRECEDENCE) {
         expString = '(' + expString + ')';
       }
     }

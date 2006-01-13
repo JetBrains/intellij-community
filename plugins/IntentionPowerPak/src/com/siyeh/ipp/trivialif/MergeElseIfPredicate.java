@@ -56,6 +56,6 @@ class MergeElseIfPredicate implements PsiElementPredicate{
         if(statements.length != 1){
             return false;
         }
-        return statements[0] != null && statements[0] instanceof PsiIfStatement;
+      return statements[0] instanceof PsiIfStatement;
     }
 }
