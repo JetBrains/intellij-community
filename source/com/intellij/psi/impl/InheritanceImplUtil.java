@@ -4,9 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.searches.SuperClassSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.Processor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,16 +13,6 @@ public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
-    if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
-
-    return !SuperClassSearch.search(candidateClass).forEach(new Processor<PsiClass>() {
-      public boolean process(final PsiClass psiClass) {
-        return !InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, checkDeep);
-      }
-    });
-  }
-
-  public static boolean isJavaInheritor(final PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }

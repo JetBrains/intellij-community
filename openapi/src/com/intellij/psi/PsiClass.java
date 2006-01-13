@@ -300,6 +300,9 @@ public interface PsiClass
 
   /**
    * Checks if this class is an inheritor of the specified base class.
+   * Only java inheritance rules are considered.
+   * Note that {@link com.intellij.psi.search.searches.ClassInheritorsSearch}
+   *  may return classes that are inheritors in broader, e.g. in ejb sense, but not in java sense.
    *
    * @param baseClass the base class to check the inheritance.
    * @param checkDeep if false, only direct inheritance is checked; if true, the base class is
