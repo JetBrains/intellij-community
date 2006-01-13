@@ -217,7 +217,7 @@ class FoldingPolicy {
     PsiElement first = file.getFirstChild();
     if (first instanceof PsiWhiteSpace) first = first.getNextSibling();
     PsiElement element = first;
-    while (element != null && element instanceof PsiComment) {
+    while (element instanceof PsiComment) {
       element = element.getNextSibling();
       if (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();

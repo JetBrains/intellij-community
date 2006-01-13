@@ -459,8 +459,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
-        if (targetComponent != null && targetComponent instanceof RadContainer) {
-          RadContainer container = (RadContainer) targetComponent;
+        if (targetComponent instanceof RadContainer) {
+          RadContainer container = (RadContainer)targetComponent;
           RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
           container.drop(components);
         }

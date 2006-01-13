@@ -76,7 +76,7 @@ public class RefManagerImpl extends RefManager {
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
-        if (refDefaultConstructor != null && refDefaultConstructor instanceof RefImplicitConstructor) {
+        if (refDefaultConstructor instanceof RefImplicitConstructor) {
           iterator.accept(refClass.getDefaultConstructor());
         }
       }

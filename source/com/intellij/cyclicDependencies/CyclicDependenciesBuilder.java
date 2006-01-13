@@ -72,7 +72,7 @@ public class CyclicDependenciesBuilder{
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     getScope().accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        if (file != null && file instanceof PsiJavaFile) {
+        if (file instanceof PsiJavaFile) {
           PsiJavaFile psiJavaFile = (PsiJavaFile)file;
           if (getScope().contains(psiJavaFile)) {
             final PsiPackage aPackage = findPackage(psiJavaFile.getPackageName());
@@ -81,8 +81,7 @@ public class CyclicDependenciesBuilder{
             }
           }
           final Set<PsiPackage> packs = getPackageHierarhy(psiJavaFile.getPackageName());
-          final ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(),
-                                                                                    new AnalysisScope(psiJavaFile));
+          final ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), new AnalysisScope(psiJavaFile));
           builder.setTotalFileCount(getScope().getFileCount());
           builder.setInitialFileCount(++myFileCount);
           builder.analyze();
@@ -96,8 +95,7 @@ public class CyclicDependenciesBuilder{
             }
             for (Iterator<PsiFile> it = psiFiles.iterator(); it.hasNext();) {
               PsiFile psiFile = it.next();
-              if (!(psiFile instanceof PsiJavaFile) ||
-                  !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
+              if (!(psiFile instanceof PsiJavaFile) || !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
                   !getScope().contains(psiFile)) {
                 continue;
               }
@@ -213,7 +211,7 @@ public class CyclicDependenciesBuilder{
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       getScope().accept(new PsiRecursiveElementVisitor() {
         public void visitFile(PsiFile file) {
-          if (file != null && file instanceof PsiJavaFile) {
+          if (file instanceof PsiJavaFile) {
             PsiJavaFile psiJavaFile = (PsiJavaFile)file;
             final PsiPackage aPackage = psiManager.findPackage(psiJavaFile.getPackageName());
             if (aPackage != null) {

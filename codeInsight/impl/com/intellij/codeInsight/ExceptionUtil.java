@@ -60,7 +60,7 @@ public class ExceptionUtil {
       if (expr == null) return PsiClassType.EMPTY_ARRAY;
       PsiType exception = expr.getType();
       List<PsiClassType> array = new ArrayList<PsiClassType>();
-      if (exception != null && exception instanceof PsiClassType) {
+      if (exception instanceof PsiClassType) {
         array.add((PsiClassType)exception);
       }
       addExceptions(array, getThrownExceptions(expr));

@@ -103,7 +103,7 @@ public class RefElementNode extends InspectionTreeNode {
         }
       }
 
-      if (refClass.getDefaultConstructor() != null && refClass.getDefaultConstructor() instanceof RefImplicitConstructor) {
+      if (refClass.getDefaultConstructor() instanceof RefImplicitConstructor) {
         Set<RefElement> fromConstructor = getPossibleChildren(refClass.getDefaultConstructor());
         newChildren.addAll(fromConstructor);
       }

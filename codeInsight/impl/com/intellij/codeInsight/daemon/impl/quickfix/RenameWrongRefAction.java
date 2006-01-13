@@ -117,7 +117,7 @@ public class RenameWrongRefAction implements IntentionAction {
           PsiExpression qualifier = refExpression.getQualifierExpression();
           if (qualifier instanceof PsiReferenceExpression) {
             PsiElement e = ((PsiReferenceExpression) qualifier).resolve();
-            myFilterStatics = e != null && e instanceof PsiClass;
+            myFilterStatics = e instanceof PsiClass;
           } else if (qualifier == null) {
             PsiModifierListOwner scope = PsiTreeUtil.getParentOfType(refExpression, PsiModifierListOwner.class);
             myFilterStatics = scope != null && scope.hasModifierProperty(PsiModifier.STATIC);

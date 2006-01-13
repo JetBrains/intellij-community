@@ -947,10 +947,8 @@ public class PluginManagerMain {
         }
       }, IdeBundle.message("progress.download.plugins"), true, null);
     } catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof IOException)
-        throw (IOException)e.getCause();
-      else
-        throw e;
+      if (e.getCause() instanceof IOException) throw (IOException)e.getCause();
+      else throw e;
     }
     return result[0];
   }
@@ -980,10 +978,8 @@ public class PluginManagerMain {
         }
       }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
     } catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof IOException)
-        throw (IOException)e.getCause();
-      else
-        throw e;
+      if (e.getCause() instanceof IOException) throw (IOException)e.getCause();
+      else throw e;
     }
 
     return result[0];

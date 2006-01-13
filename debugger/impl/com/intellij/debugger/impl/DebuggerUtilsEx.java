@@ -142,9 +142,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean isCharOrInteger(Value value) {
-    return value != null &&
-           value instanceof CharValue ||
-           isInteger(value);
+    return value instanceof CharValue || isInteger(value);
   }
 
   private static Set<String> myCharOrIntegers;

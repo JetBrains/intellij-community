@@ -91,7 +91,7 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
 
   public static FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project, String favoritesViewPane) {
     final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
-    while (node.getParentDescriptor() != null && node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
+    while (node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
       FavoritesTreeNodeDescriptor favoritesDescriptor = (FavoritesTreeNodeDescriptor)node.getParentDescriptor();
       if (favoritesDescriptor.getElement() == favoritesTreeViewPanel.getFavoritesTreeStructure().getRootElement()) {
         return node;

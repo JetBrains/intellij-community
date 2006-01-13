@@ -781,8 +781,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement) firstChild.getFirstChild();
             if (refElement != null) {
               PsiElement element = refElement.resolve();
-              if (element != null && element instanceof PsiClass) {
-                String fqName = ((PsiClass) element).getQualifiedName();
+              if (element instanceof PsiClass) {
+                String fqName = ((PsiClass)element).getQualifiedName();
                 if (documentedExceptions == null) {
                   documentedExceptions = new HashSet<String>();
                 }
@@ -790,7 +790,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                   if (problems == null) {
                     problems = new ArrayList<ProblemDescriptor>(2);
                   }
-                  problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
+                  problems.add(createDescriptor(tag.getNameElement(),
+                                                InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
                 }
                 documentedExceptions.add(fqName);
               }

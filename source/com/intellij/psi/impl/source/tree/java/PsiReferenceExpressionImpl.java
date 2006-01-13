@@ -234,7 +234,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
         if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
           PsiType type = ((PsiExpression)SourceTreeToPsiMap.treeElementToPsi(qualifier)).getType();
-          if (type != null && type instanceof PsiArrayType) {
+          if (type instanceof PsiArrayType) {
             return PsiType.INT;
           }
         }

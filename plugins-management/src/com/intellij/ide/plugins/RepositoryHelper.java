@@ -117,10 +117,8 @@ public class RepositoryHelper {
         temp.delete();
       }
     } catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof InterruptedException)
-        return null;
-      else
-        throw e;
+      if (e.getCause() instanceof InterruptedException) return null;
+      else throw e;
     }
 
     return handler.getRoot();
@@ -210,10 +208,8 @@ public class RepositoryHelper {
 
         cleanFile = false;
       } catch (RuntimeException e) {
-        if (e.getCause() != null && e.getCause() instanceof InterruptedException)
-          return null;
-        else
-          throw e;
+        if (e.getCause() instanceof InterruptedException) return null;
+        else throw e;
       } finally {
         fos.close();
         if (cleanFile)

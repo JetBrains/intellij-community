@@ -57,8 +57,8 @@ public final class Match {
    */
   public ReturnValue getOutputVariableValue(PsiVariable outputParameter) {
     final PsiElement decl = myDeclarationCorrespondence.get(outputParameter);
-    if (decl != null && decl instanceof PsiVariable)  {
-      return new VariableReturnValue((PsiVariable) decl);
+    if (decl instanceof PsiVariable) {
+      return new VariableReturnValue((PsiVariable)decl);
     }
     final PsiElement parameterValue = getParameterValue(outputParameter);
     if (parameterValue instanceof PsiExpression) {

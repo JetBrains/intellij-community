@@ -93,7 +93,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     else {
       PsiType type = occurence.outermostType;
       PsiExpression result = RefactoringUtil.outermostParenthesizedExpression(expression);
-      while(type != null && type instanceof PsiArrayType && result.getParent() instanceof PsiArrayAccessExpression) {
+      while(type instanceof PsiArrayType && result.getParent() instanceof PsiArrayAccessExpression) {
         type = ((PsiArrayType) type).getComponentType();
         result = RefactoringUtil.outermostParenthesizedExpression((PsiArrayAccessExpression) result.getParent());
       }

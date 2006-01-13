@@ -1296,7 +1296,7 @@ public class HighlightUtil {
                            JavaErrorMessages.message("duplicate.default.switch.label") :
                            JavaErrorMessages.message("duplicate.switch.label", value);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               value == null ? (PsiElement)statement : caseValue,
+                                               value == null ? statement : caseValue,
                                                description);
     }
 
@@ -1830,10 +1830,9 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMustBeThrowable(PsiType type, PsiElement context, boolean addCastIntention) {
+    if (type == null) return null;
     PsiElementFactory factory = context.getManager().getElementFactory();
     PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
-    if (throwable == null) return null;
-    if (type == null) return null;
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange());
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {
@@ -1891,13 +1890,13 @@ public class HighlightUtil {
         String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
-        List<IntentionAction> options = new ArrayList<IntentionAction>();
         if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
           return null;
         }
 
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
+        List<IntentionAction> options = new ArrayList<IntentionAction>();
         QuickFixAction.registerQuickFixAction(info, new ImportClassAction(ref), options);
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace(), options);
         if (ref instanceof PsiReferenceExpression) {
@@ -2005,7 +2004,7 @@ public class HighlightUtil {
     final FileHighlighingSetting highlightingLevel = highlightFlag
                                                      ? FileHighlighingSetting.FORCE_HIGHLIGHTING
                                                      : FileHighlighingSetting.SKIP_HIGHLIGHTING;
-    if (file != null && file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
+    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
       final JspClass jspClass = (JspClass)((JspFile)file).getJavaRoot();
       component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
@@ -2040,7 +2039,7 @@ public class HighlightUtil {
     final FileHighlighingSetting inspectionLevel = inspectionFlag
                                                    ? FileHighlighingSetting.FORCE_HIGHLIGHTING
                                                    : FileHighlighingSetting.SKIP_INSPECTION;
-    if (file != null && file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
+    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
       final JspClass jspClass = (JspClass)((JspFile)file).getJavaRoot();
       component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), inspectionLevel);

@@ -73,7 +73,7 @@ public class DeleteCatchFix implements IntentionAction {
       final PsiElement catchSection = myCatchParameter.getParent();
       //save previous element to move caret to
       PsiElement previousElement = catchSection.getPrevSibling();
-      while (previousElement != null && previousElement instanceof PsiWhiteSpace) {
+      while (previousElement instanceof PsiWhiteSpace) {
         previousElement = previousElement.getPrevSibling();
       }
       catchSection.delete();

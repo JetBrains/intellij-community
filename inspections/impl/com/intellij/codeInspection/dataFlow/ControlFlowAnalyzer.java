@@ -1074,7 +1074,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiType type = expr.getType();
 
     final DfaValue dfaValue;
-    if (type != null && type instanceof PsiClassType) {
+    if (type instanceof PsiClassType) {
       dfaValue = myFactory.getTypeFactory().create(type);
     }
     else {

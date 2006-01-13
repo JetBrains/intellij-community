@@ -586,18 +586,20 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @since 1.1
    */
   public void setActivationWindow(Window window){
-    if(window!=null&&window instanceof Dialog){
-      Dialog tmpDialog=(Dialog)window;
-      if(tmpDialog.isModal()){
-        myOwnerWindow=window;
-        myModallyActivated=true;
-      } else{
-        myOwnerWindow=null;
-        myModallyActivated=false;
+    if (window instanceof Dialog) {
+      Dialog tmpDialog = (Dialog)window;
+      if (tmpDialog.isModal()) {
+        myOwnerWindow = window;
+        myModallyActivated = true;
       }
-    } else{
-      myOwnerWindow=null;
-      myModallyActivated=false;
+      else {
+        myOwnerWindow = null;
+        myModallyActivated = false;
+      }
+    }
+    else {
+      myOwnerWindow = null;
+      myModallyActivated = false;
     }
   }
 

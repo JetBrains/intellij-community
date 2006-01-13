@@ -23,7 +23,7 @@ public class ExtractClassUtil {
       public void run() {
         final PsiElement classElement = classPointer.getElement();
         final PsiElement interfaceElement = interfacePointer.getElement();
-        if (classElement != null && classElement instanceof PsiClass && interfaceElement != null && interfaceElement instanceof PsiClass) {
+        if (classElement instanceof PsiClass && interfaceElement instanceof PsiClass) {
           final PsiClass superClass = (PsiClass) interfaceElement;
           String superClassName = superClass.getName();
           String className = ((PsiClass) classElement).getName();
