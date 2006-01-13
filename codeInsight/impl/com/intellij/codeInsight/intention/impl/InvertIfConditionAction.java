@@ -165,7 +165,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
       return;
     }
 
-    if (flow.getInstructions().length == 0) {
+    if (flow.getSize() == 0) {
       ifStatement.setElseBranch(thenBranch);
       PsiStatement statement = factory.createStatementFromText("{}", null);
       statement = (PsiStatement) CodeStyleManager.getInstance(project).reformat(statement);
