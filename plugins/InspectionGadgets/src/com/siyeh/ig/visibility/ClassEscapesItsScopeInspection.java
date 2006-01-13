@@ -65,10 +65,9 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
             if(returnClass == null){
                 return;
             }
-            if(returnClass.getParent() != null &&
-                               returnClass.getParent() instanceof PsiTypeParameterList){
-                return;//if it's a type parameter, it's okay.  Must be a better way to check this.
-            }
+          if (returnClass.getParent() instanceof PsiTypeParameterList) {
+            return;//if it's a type parameter, it's okay.  Must be a better way to check this.
+          }
             if(!isLessRestrictiveScope(method, returnClass)){
                 return;
             }

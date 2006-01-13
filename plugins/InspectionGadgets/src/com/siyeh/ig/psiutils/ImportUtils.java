@@ -125,16 +125,16 @@ public class ImportUtils{
                     continue;
                 }
                 final PsiElement element = ref.resolve();
-                if(element != null && element instanceof PsiPackage){
-                    final PsiPackage aPackage = (PsiPackage) element;
-                    final PsiClass[] classes = aPackage.getClasses();
-                    for(final PsiClass aClass : classes){
-                        final String className = aClass.getName();
-                        if(shortName.equals(className)){
-                            return true;
-                        }
-                    }
+              if (element instanceof PsiPackage) {
+                final PsiPackage aPackage = (PsiPackage)element;
+                final PsiClass[] classes = aPackage.getClasses();
+                for (final PsiClass aClass : classes) {
+                  final String className = aClass.getName();
+                  if (shortName.equals(className)) {
+                    return true;
+                  }
                 }
+              }
             }
         }
         if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {

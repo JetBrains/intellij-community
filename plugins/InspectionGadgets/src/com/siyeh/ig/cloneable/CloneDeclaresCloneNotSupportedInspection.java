@@ -110,14 +110,13 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
             final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : referenceElements){
                 final PsiElement referencedElement = referenceElement.resolve();
-                if(referencedElement != null &&
-                        referencedElement instanceof PsiClass){
-                    final PsiClass aClass = (PsiClass) referencedElement;
-                    final String className = aClass.getQualifiedName();
-                    if("java.lang.CloneNotSupportedException".equals(className)){
-                        return;
-                    }
+              if (referencedElement instanceof PsiClass) {
+                final PsiClass aClass = (PsiClass)referencedElement;
+                final String className = aClass.getQualifiedName();
+                if ("java.lang.CloneNotSupportedException".equals(className)) {
+                  return;
                 }
+              }
             }
 
             registerMethodError(method);

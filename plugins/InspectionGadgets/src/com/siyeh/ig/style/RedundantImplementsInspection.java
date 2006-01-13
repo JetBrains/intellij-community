@@ -85,10 +85,9 @@ public class RedundantImplementsInspection extends ClassInspection {
         extendsList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement implementsElement : extendsElements) {
         final PsiElement referent = implementsElement.resolve();
-        if (referent != null && referent instanceof PsiClass) {
+        if (referent instanceof PsiClass) {
           final PsiClass implementedClass = (PsiClass)referent;
-          checkExtendedInterface(implementedClass, implementsElement,
-                                 extendsElements);
+          checkExtendedInterface(implementedClass, implementsElement, extendsElements);
         }
       }
     }
@@ -105,10 +104,9 @@ public class RedundantImplementsInspection extends ClassInspection {
         implementsList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement implementsElement : implementsElements) {
         final PsiElement referent = implementsElement.resolve();
-        if (referent != null && referent instanceof PsiClass) {
+        if (referent instanceof PsiClass) {
           final PsiClass implementedClass = (PsiClass)referent;
-          checkImplementedClass(implementedClass, implementsElement,
-                                extendsElements, implementsElements);
+          checkImplementedClass(implementedClass, implementsElement, extendsElements, implementsElements);
         }
       }
     }
@@ -119,8 +117,7 @@ public class RedundantImplementsInspection extends ClassInspection {
                                        PsiJavaCodeReferenceElement[] implementsElements) {
       for (final PsiJavaCodeReferenceElement extendsElement : extendsElements) {
         final PsiElement extendsReferent = extendsElement.resolve();
-        if (extendsReferent != null &&
-            extendsReferent instanceof PsiClass) {
+        if (extendsReferent instanceof PsiClass) {
           final PsiClass extendedClass = (PsiClass)extendsReferent;
           if (extendedClass.isInheritor(implementedClass, true)) {
             registerError(implementsElement);
@@ -132,12 +129,9 @@ public class RedundantImplementsInspection extends ClassInspection {
         if (!testImplementElement.equals(implementsElement)) {
           final PsiElement implementsReferent =
             testImplementElement.resolve();
-          if (implementsReferent != null &&
-              implementsReferent instanceof PsiClass) {
-            final PsiClass testImplementedClass =
-              (PsiClass)implementsReferent;
-            if (testImplementedClass.isInheritor(implementedClass,
-                                                 true)) {
+          if (implementsReferent instanceof PsiClass) {
+            final PsiClass testImplementedClass = (PsiClass)implementsReferent;
+            if (testImplementedClass.isInheritor(implementedClass, true)) {
               registerError(implementsElement);
               return;
             }
@@ -154,12 +148,9 @@ public class RedundantImplementsInspection extends ClassInspection {
         if (!testImplementElement.equals(implementsElement)) {
           final PsiElement implementsReferent =
             testImplementElement.resolve();
-          if (implementsReferent != null &&
-              implementsReferent instanceof PsiClass) {
-            final PsiClass testImplementedClass =
-              (PsiClass)implementsReferent;
-            if (testImplementedClass.isInheritor(implementedClass,
-                                                 true)) {
+          if (implementsReferent instanceof PsiClass) {
+            final PsiClass testImplementedClass = (PsiClass)implementsReferent;
+            if (testImplementedClass.isInheritor(implementedClass, true)) {
               registerError(implementsElement);
               return;
             }

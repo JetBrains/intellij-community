@@ -268,7 +268,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
     private void checkExpression(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent != null && parent instanceof PsiParenthesizedExpression) {
+      if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
       final PsiType expressionType = expression.getType();

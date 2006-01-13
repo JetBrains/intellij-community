@@ -85,10 +85,9 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
     String expString =
       lhsText + operator + ShiftUtils.getLogBaseTwo(rhs);
     final PsiElement parent = expression.getParent();
-    if (parent != null && parent instanceof PsiExpression) {
+    if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecendence((PsiExpression)parent) <
-          ParenthesesUtils.SHIFT_PRECEDENCE) {
+          ParenthesesUtils.getPrecendence((PsiExpression)parent) < ParenthesesUtils.SHIFT_PRECEDENCE) {
         expString = '(' + expString + ')';
       }
     }
