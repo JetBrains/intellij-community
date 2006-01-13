@@ -9,7 +9,7 @@ class Test{
   }
 
     private boolean newMethod() {
-        if (cond2) return false;
-        return true;
+        if (cond2) return true;
+        return false;
     }
 }
