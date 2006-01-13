@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 
 import java.util.*;
 
@@ -166,21 +167,16 @@ public class TypeConversionUtil {
         }
       }
       else {
-        //In jls2 check for method in both interfaces with the same signature but different return types.
         if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
-          Collection<List<MethodSignatureBackedByPsiMethod>> fromClassAllMethods = MethodSignatureUtil.getOverrideEquivalentMethods(fromClass)
-            .values();
-          final MethodSignatureUtil.MethodSignatureToMethods toClassAllMethods = MethodSignatureUtil.getOverrideEquivalentMethods(toClass);
+          //In jls2 check for method in both interfaces with the same signature but different return types.
+          Collection<HierarchicalMethodSignature> fromClassMethodSignatures = fromClass.getVisibleSignatures();
+          Collection<HierarchicalMethodSignature> toClassMethodSignatures = toClass.getVisibleSignatures();
 
-          for (List<MethodSignatureBackedByPsiMethod> sameSignatureMethods : fromClassAllMethods) {
-            final MethodSignatureBackedByPsiMethod fromMethodSignature = sameSignatureMethods.get(0);
-            PsiMethod fromClassMethod = fromMethodSignature.getMethod();
-            List<MethodSignatureBackedByPsiMethod> toClassMethods = toClassAllMethods.get(fromClassMethod.getSignature(PsiSubstitutor.EMPTY));
-            if (toClassMethods != null) {
-              final PsiType fromClassReturnType = fromClassMethod.getReturnType();
-              for (MethodSignatureBackedByPsiMethod toClassSignature : toClassMethods) {
-                PsiMethod toClassMethod = toClassSignature.getMethod();
-                final PsiType toClassReturnType = toClassMethod.getReturnType();
+          for (HierarchicalMethodSignature fromMethodSignature : fromClassMethodSignatures) {
+            for (HierarchicalMethodSignature toMethodSignature : toClassMethodSignatures) {
+              if (fromMethodSignature.equals(toMethodSignature)) {
+                final PsiType fromClassReturnType = fromMethodSignature.getMethod().getReturnType();
+                final PsiType toClassReturnType = toMethodSignature.getMethod().getReturnType();
                 if (fromClassReturnType != null
                     && toClassReturnType != null
                     && !fromClassReturnType.equals(toClassReturnType)) {
