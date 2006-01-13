@@ -29,6 +29,8 @@ public interface XmlElementType {
   IElementType XML_COMMENT = new IXmlElementType("XML_COMMENT");
   IElementType XML_TAG = new IXmlElementType("XML_TAG");
   IElementType XML_ELEMENT_DECL = new IXmlElementType("XML_ELEMENT_DECL");
+  IElementType XML_CONDITIONAL_SECTION = new IXmlElementType("XML_CONDITIONAL_SECTION");
+  
   IElementType XML_ATTLIST_DECL = new IXmlElementType("XML_ATTLIST_DECL");
   IElementType XML_NOTATION_DECL = new IXmlElementType("XML_NOTATION_DECL");
   IElementType XML_ENTITY_DECL = new IXmlElementType("XML_ENTITY_DECL");

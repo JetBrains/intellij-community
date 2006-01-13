@@ -81,27 +81,30 @@ public class XmlParsing implements ElementType {
 
   public void parseGenericXml(Lexer lexer, CompositeElement root, Set<String> names) {
     boolean rootTagChecked = false;
-    while (lexer.getTokenType() != null) {
-      if (lexer.getTokenType() == XML_ATTLIST_DECL_START) {
+    IElementType tokenType;
+
+    while ((tokenType = lexer.getTokenType()) != null) {
+      if (tokenType == XML_ATTLIST_DECL_START) {
         TreeUtil.addChildren(root, parseAttlistDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_ELEMENT_DECL_START) {
+      else if (tokenType == XML_ELEMENT_DECL_START) {
         TreeUtil.addChildren(root, parseElementDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
+      else if (tokenType == XML_ENTITY_DECL_START) {
         TreeUtil.addChildren(root, parseEntityDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_NOTATION_DECL_START) {
+      else if (tokenType == XML_NOTATION_DECL_START) {
         TreeUtil.addChildren(root, parseNotationDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
+      else if (tokenType == XML_ENTITY_REF_TOKEN) {
         TreeUtil.addChildren(root, parseEntityRef(lexer));
       }
       else if (parseProcessingInstruction(root, lexer)) {
       }
       else if (_parseTag(root, lexer, names)) {
+      } else if (parseConditionalSection(root, lexer)) {
       }
-      else if (lexer.getTokenType() != null) {
+      else if (tokenType != null) {
         if (!rootTagChecked) {
           //checkRootTag(root);
           rootTagChecked = true;
@@ -174,6 +177,34 @@ public class XmlParsing implements ElementType {
         addToken(decl, lexer);
       }
     }
+  }
+
+  private boolean parseConditionalSection(CompositeElement parent, Lexer lexer) {
+    if (lexer.getTokenType() != XML_CONDITIONAL_SECTION_START) {
+      return false;
+    }
+    CompositeElement conditionalSection = Factory.createCompositeElement(XML_CONDITIONAL_SECTION);
+    TreeUtil.addChildren(parent, conditionalSection);
+
+    addToken(conditionalSection, lexer);
+    IElementType tokenType = lexer.getTokenType();
+    if (tokenType != XML_CONDITIONAL_IGNORE &&
+        tokenType != XML_CONDITIONAL_INCLUDE &&
+        tokenType != XML_ENTITY_REF_TOKEN) {
+      return true;
+    }
+    addToken(conditionalSection, lexer);
+    if (lexer.getTokenType() != XML_MARKUP_START) {
+      return true;
+    }
+
+    parseMarkupContent(lexer, conditionalSection);
+
+    if (lexer.getTokenType() != XML_CONDITIONAL_SECTION_END) {
+      return true;
+    }
+    addToken(conditionalSection, lexer);
+    return true;
   }
 
   private boolean parseProcessingInstruction(CompositeElement parent, Lexer lexer) {
@@ -416,6 +447,7 @@ public class XmlParsing implements ElementType {
       }
       else if (lexer.getTokenType() == XML_NOTATION_DECL_START) {
         TreeUtil.addChildren(decl, parseNotationDecl(lexer));
+      } else if (parseConditionalSection(decl, lexer)) {
       }
       else {
         break;

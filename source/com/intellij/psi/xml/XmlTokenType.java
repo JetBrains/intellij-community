@@ -39,7 +39,11 @@ public interface XmlTokenType {
   IElementType XML_MARKUP_END = new IXmlLeafElementType("XML_MARKUP_END");
 
   IElementType XML_CDATA_START = new IXmlLeafElementType("XML_CDATA_START");
+  IElementType XML_CONDITIONAL_SECTION_START = new IXmlLeafElementType("XML_CONDITIONAL_SECTION_START");
+  IElementType XML_CONDITIONAL_INCLUDE = new IXmlLeafElementType("XML_CONDITIONAL_INCLUDE");
+  IElementType XML_CONDITIONAL_IGNORE = new IXmlLeafElementType("XML_CONDITIONAL_IGNORE");
   IElementType XML_CDATA_END = new IXmlLeafElementType("XML_CDATA_END");
+  IElementType XML_CONDITIONAL_SECTION_END = new IXmlLeafElementType("XML_CONDITIONAL_SECTION_END");
 
   IElementType XML_ELEMENT_DECL_START = new IXmlLeafElementType("XML_ELEMENT_DECL_START");
   IElementType XML_NOTATION_DECL_START = new IXmlLeafElementType("XML_NOTATION_DECL_START");

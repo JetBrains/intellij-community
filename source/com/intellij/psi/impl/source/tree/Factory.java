@@ -113,6 +113,8 @@ public class Factory implements Constants {
     }
     else if (type == XML_TAG) {
       element = new XmlTagImpl();
+    } else if (type == XML_CONDITIONAL_SECTION) {
+      element = new XmlConditionalSectionImpl();
     }
     else if (type == HTML_TAG) {
       element = new HtmlTagImpl();
