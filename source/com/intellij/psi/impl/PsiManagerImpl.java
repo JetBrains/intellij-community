@@ -8,6 +8,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,10 +52,9 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.Language;
-import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1073,6 +1073,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return psiClass;
     }
 
+    @NotNull
     public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
       final PsiClass[] classes = myFileManager.findClasses(qualifiedName, scope);
       if (classes.length == 0 && myCurrentMigration != null) {
@@ -1094,6 +1095,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return aPackage;
     }
 
+    @NotNull
     public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
       final String qualifiedName = psiPackage.getQualifiedName();
@@ -1113,6 +1115,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
     }
 
+    @NotNull
     public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
