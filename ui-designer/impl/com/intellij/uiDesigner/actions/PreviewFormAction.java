@@ -21,13 +21,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditorUtil;
@@ -41,8 +40,8 @@ import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -219,7 +218,7 @@ public final class PreviewFormAction extends AnAction{
       new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
         public boolean visit(final IComponent component, final StringDescriptor descriptor) {
           if (descriptor.getBundleName() != null) {
-            bundleSet.add(descriptor.getBundleName());
+            bundleSet.add(descriptor.getDottedBundleName());
           }
           return true;
         }

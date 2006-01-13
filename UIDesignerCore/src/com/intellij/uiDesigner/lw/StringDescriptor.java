@@ -86,6 +86,10 @@ public final class StringDescriptor {
     return myBundleName;
   }
 
+  public String getDottedBundleName() {
+    return myBundleName == null ? null : myBundleName.replace('/', '.');
+  }
+
   /**
    * @return not <code>null</code> value if this is non "trivial" StringDescriptor.
    */

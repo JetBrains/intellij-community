@@ -114,13 +114,13 @@ public final class StringEditorDialog extends DialogWrapper{
 
   private PropertiesFile getPropertiesFile(final StringDescriptor descriptor) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myModule.getProject());
-    return manager.findPropertiesFile(myModule, descriptor.getBundleName(), myLocale);
+    return manager.findPropertiesFile(myModule, descriptor.getDottedBundleName(), myLocale);
   }
 
   public static void saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
                                                final Locale locale, final String editedValue) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
-    PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getBundleName(), locale);
+    PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
       final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
       if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
@@ -326,7 +326,8 @@ public final class StringEditorDialog extends DialogWrapper{
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             Project project = myModule.getProject();
-            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(MyResourceBundleCard.this.myTfBundleName.getText(), myModule, myLocale);
+            final String bundleNameText = MyResourceBundleCard.this.myTfBundleName.getText().replace('/', '.');
+            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(bundleNameText, myModule, myLocale);
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
@@ -373,7 +374,7 @@ public final class StringEditorDialog extends DialogWrapper{
               return;
             }
             final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myModule.getProject());
-            final PropertiesFile bundle = manager.findPropertiesFile(myModule, bundleName, myLocale);
+            final PropertiesFile bundle = manager.findPropertiesFile(myModule, bundleName.replace('/', '.'), myLocale);
             if(bundle == null){
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.bundle.does.not.exist", bundleName),

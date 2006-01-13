@@ -80,7 +80,7 @@ public final class StringEditor extends PropertyEditor{
       else{ // bundled value
         textField.setEditable(false);
         textField.setBackground(UIUtil.getTextFieldBackground());
-        textField.setText("[" + descriptor.getKey() + " / " + descriptor.getBundleName().replace('/', '.') + "]");
+        textField.setText("[" + descriptor.getKey() + " / " + descriptor.getDottedBundleName() + "]");
       }
     }
     else{

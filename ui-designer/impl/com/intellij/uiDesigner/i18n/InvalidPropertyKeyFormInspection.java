@@ -33,8 +33,8 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
   }
 
   @Nullable
-  private String checkDescriptor(final StringDescriptor descriptor, final Module module) {
-    final String bundleName = descriptor.getBundleName();
+  private static String checkDescriptor(final StringDescriptor descriptor, final Module module) {
+    final String bundleName = descriptor.getDottedBundleName();
     final String key = descriptor.getKey();
     if (bundleName == null && key == null) return null;
     if (bundleName == null) {
