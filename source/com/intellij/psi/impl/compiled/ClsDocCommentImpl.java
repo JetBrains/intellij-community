@@ -58,8 +58,9 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
 
   public PsiDocTag[] getTags() {
     if (myTags == null){
-      myTags = new PsiDocTag[1];
-      myTags[0] = new ClsDocTagImpl(this, "@deprecated");
+      PsiDocTag[] tags = new PsiDocTag[1];
+      tags[0] = new ClsDocTagImpl(this, "@deprecated");
+      myTags = tags;
     }
     return myTags;
   }
