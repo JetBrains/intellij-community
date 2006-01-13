@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -9,15 +10,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import gnu.trove.THashSet;
-
-import java.util.Set;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Project myProject;
@@ -58,7 +53,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void updateByChange(PsiElement child) {
-    printDiff(child.getContainingFile());
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable(){
@@ -125,78 +119,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
         return;
       }
       parent = pparent;
-    }
-  }
-
-  private PsiElement copy;
-  Set<PsiElement> oldElements = new THashSet<PsiElement>();
-  private void printDiff(final PsiFile containingFile) {
-    if (containingFile != null && "x.xml".equals(containingFile.getName()))
-    try {
-      if (copy == null) {
-        return;
-      }
-      //printDiff(copy, containingFile);
-      containingFile.accept(new PsiRecursiveElementVisitor() {
-        private boolean ignore;
-        public void visitElement(PsiElement element) {
-          if (!ignore && !oldElements.remove(element)) {
-            ignore = true;
-            System.out.println("'"+first(element)+"' added");
-            super.visitElement(element);
-            ignore = false;
-          }
-          else {
-            super.visitElement(element);
-          }
-        }
-      });
-      for (PsiElement element : oldElements) {
-        System.out.println("'"+first(element)+"' removed");
-      }
-    }
-    finally {
-      copy = containingFile.copy();
-      oldElements.clear();
-      containingFile.accept(new PsiRecursiveElementVisitor() {
-        public void visitElement(PsiElement element) {
-          oldElements.add(element);
-          super.visitElement(element);
-        }
-      });
-    }
-  }
-
-  private static String first(String s, int len) {
-    if (s == null) {
-      return null;
-    }
-    if (s.length() > len) {
-      s = s.substring(0, len) + " ...";
-    }
-    return s;
-  }
-  private static String first(PsiElement s) { return s == null ? null : first(s.getClass() + ": "+s.getText(), 80); }
-  private static void printDiff(final PsiElement element1, final PsiElement element2) {
-    if (Comparing.strEqual(element1.getText(), element2.getText())) return;
-    if (element1 instanceof LeafPsiElement || element2 instanceof LeafPsiElement) {
-      System.out.println("'"+first(element1)+" -> '"+first(element2)+"'");
-      return;
-    }
-    final PsiElement[] children1 = element1.getChildren();
-    final PsiElement[] children2 = element2.getChildren();
-    for (int i = 0; i < Math.max(children1.length, children2.length); i++) {
-      if (i >= children1.length) {
-        System.out.println("'"+first(element2)+"' -> '"+"<add>'");
-        continue;
-      }
-      PsiElement child1 = children1[i];
-      if (i >= children2.length) {
-        System.out.println("'"+first(element1)+"' -> '"+"<delete>'");
-        continue;
-      }
-      PsiElement child2 = children2[i];
-      printDiff(child1, child2);
     }
   }
 }
