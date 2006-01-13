@@ -64,10 +64,11 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
         else {
           count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
         }
-        myRepositoryParameters = new PsiParameterImpl[count];
-        for (int i = 0; i < myRepositoryParameters.length; i++) {
-          myRepositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
+        PsiParameterImpl[] temp = new PsiParameterImpl[count];
+        for (int i = 0; i < count; i++) {
+          temp[i] = new PsiParameterImpl(myManager, this, i);
         }
+        myRepositoryParameters = temp;
       }
       return myRepositoryParameters;
     }
