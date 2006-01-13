@@ -10,10 +10,9 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class FileEditorManagerEx extends FileEditorManager {
   public static FileEditorManagerEx getInstanceEx(Project project) {
@@ -50,6 +49,13 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public abstract EditorWindow getCurrentWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
+
+  /**
+   * Closes editors for the file opened in particular window.
+   *
+   * @param file file to be closed. Cannot be null.
+   */
+  public abstract void closeFile(VirtualFile file, EditorWindow window);
 
   /**
    * @return <code>true</code> if there are two tab groups, othrwise the

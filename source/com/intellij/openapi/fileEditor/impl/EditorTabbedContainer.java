@@ -1,19 +1,21 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ide.actions.HideAllToolWindowsAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.plaf.beg.BegTabbedPaneUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
@@ -21,8 +23,6 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -182,7 +182,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         if (MouseEvent.MOUSE_RELEASED == e.getID()) {
           final VirtualFile file = getFileAt(e.getX(), e.getY());
           if (file != null) {
-            myWindow.closeFile(file);
+            FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
           }
         }
       }
@@ -190,7 +190,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         if (MouseEvent.MOUSE_RELEASED == e.getID()) {
           final VirtualFile file = getFileAt(e.getX(), e.getY());
           if (file != null) {
-            myWindow.closeFile(file);
+            FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
           }
         }
       }

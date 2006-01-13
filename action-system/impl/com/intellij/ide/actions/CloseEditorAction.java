@@ -1,44 +1,32 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeBundle;
 
 public class CloseEditorAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    CommandProcessor.getInstance().executeCommand(
-        project, new Runnable(){
-        public void run() {
-          EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
-          if (window != null) {
-            final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-            closeFileInWindow(vFile, window);
-          }
-          else {
-            final FileEditorManagerEx fileEditorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
-            window = fileEditorManager.getCurrentWindow();
-            if (window != null) {
-              final VirtualFile vFile = window.getSelectedFile();
-              closeFileInWindow(vFile, window);
-            }
-          }
-        }
-      }, IdeBundle.message("command.close.active.editor"), null
-    );
-  }
 
-  private void closeFileInWindow(final VirtualFile vFile, final EditorWindow window) {
-    if (vFile != null && window.isFileOpen(vFile)) {
-      window.closeFile(vFile);
+    final FileEditorManagerEx editorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
+    EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    VirtualFile file;
+    if (window == null) {
+      window = editorManager.getCurrentWindow();
+      file = window.getSelectedFile();
+    }
+    else {
+      file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+    }
+    if (window != null && file != null) {
+      editorManager.closeFile(file, window);
     }
   }
 

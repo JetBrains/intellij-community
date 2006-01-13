@@ -22,8 +22,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -222,6 +222,10 @@ import java.util.Map;
       EditorFactory.getInstance().releaseEditor(editor);
       myVirtualFile2Editor.remove(file);
     }
+  }
+
+  public void closeFile(VirtualFile file, EditorWindow window) {
+    closeFile(file);
   }
 
   public VirtualFile[] getSelectedFiles() {

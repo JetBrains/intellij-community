@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -320,6 +321,31 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public void setCurrentWindow(final EditorWindow window) {
     mySplitters.setCurrentWindow(window, true);
+  }
+
+  public void closeFile(final VirtualFile file, final EditorWindow window) {
+    if (file == null) {
+      throw new IllegalArgumentException("file cannot be null");
+    }
+    assertThread();
+
+    CommandProcessor.getInstance().executeCommand(
+        myProject, new Runnable(){
+        public void run() {
+          if (window.isFileOpen(file)) {
+            window.closeFile(file);
+            final EditorWindow[] windows = mySplitters.findWindows(file);
+            if (windows == null || windows.length == 0) { // no more windows containing this file left
+              final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
+              if (request != null) {
+                LocalFileSystem.getInstance().removeWatchedRoot(request);
+              }
+            }
+            myDispatcher.getMulticaster().fileClosed(FileEditorManagerImpl.this, file);
+          }
+        }
+      }, IdeBundle.message("command.close.active.editor"), null
+    );
   }
 
   //============================= EditorManager methods ================================
