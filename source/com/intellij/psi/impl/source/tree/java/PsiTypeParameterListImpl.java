@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
@@ -20,7 +19,7 @@ import com.intellij.psi.tree.TokenSet;
 public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implements PsiTypeParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl");
 
-  private static final TokenSet CLASS_PARAMETER_BIT_SET = TokenSet.create(new IElementType[]{TYPE_PARAMETER});
+  private static final TokenSet CLASS_PARAMETER_BIT_SET = TokenSet.create(TYPE_PARAMETER);
   private static final PsiElementArrayConstructor<PsiTypeParameter> CLASS_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeParameter>() {
     public PsiTypeParameter[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeParameter[length] : PsiTypeParameter.EMPTY_ARRAY;
@@ -28,7 +27,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   };
 
   private PsiTypeParameter[] myRepositoryClassParameters;
-  private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(new IElementType[]{ElementType.TYPE_PARAMETER});
+  private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(ElementType.TYPE_PARAMETER);
 
   public PsiTypeParameterListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -84,10 +83,11 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
           count = treeElement.countChildren(CLASS_PARAMETER_BIT_SET);
         }
 
-        myRepositoryClassParameters = new PsiTypeParameter[count];
-        for (int i = 0; i < myRepositoryClassParameters.length; i++) {
-          myRepositoryClassParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
+        PsiTypeParameter[] typeParameters = new PsiTypeParameter[count];
+        for (int i = 0; i < typeParameters.length; i++) {
+          typeParameters[i] = new PsiTypeParameterImpl(myManager, this, i);
         }
+        myRepositoryClassParameters = typeParameters;
       }
 
       return myRepositoryClassParameters;
