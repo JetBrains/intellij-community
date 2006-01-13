@@ -51,11 +51,13 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
 
     if (myElementDescriptors==null) {
       XmlElementDescriptor[] elementsDescriptors = myDelegate.getElementsDescriptors(context);
-      myElementDescriptors = new XmlElementDescriptor[elementsDescriptors.length];
+      XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
 
       for (int i = 0; i < elementsDescriptors.length; i++) {
-        myElementDescriptors[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i] );
+        temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i] );
       }
+
+      myElementDescriptors = temp;
     }
 
     return myElementDescriptors;
@@ -88,11 +90,13 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
 
     if (myAttributeDescriptors==null) {
       final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors();
-      myAttributeDescriptors = new XmlAttributeDescriptor[attributesDescriptors.length];
+      XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
 
       for (int i = 0; i < attributesDescriptors.length; i++) {
-        myAttributeDescriptors[i] = new HtmlAttributeDescriptorImpl( attributesDescriptors[i] );
+        temp[i] = new HtmlAttributeDescriptorImpl( attributesDescriptors[i] );
       }
+
+      myAttributeDescriptors = temp;
     }
     return myAttributeDescriptors;
   }
