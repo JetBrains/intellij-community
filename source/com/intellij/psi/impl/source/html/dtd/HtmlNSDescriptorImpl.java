@@ -15,11 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 2, 2004
- * Time: 4:18:58 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl");
@@ -39,15 +35,16 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
     if (myCachedDecls == null) {
-      myCachedDecls = new HashMap<String, XmlElementDescriptor>();
-      XmlElementDescriptor[] elements = (myDelegate!=null)?myDelegate.getRootElementsDescriptors(null):XmlElementDescriptor.EMPTY_ARRAY;
+      HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
+      XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
 
       for (XmlElementDescriptor element : elements) {
-        myCachedDecls.put(
+        decls.put(
           element.getName(),
           new HtmlElementDescriptorImpl(element)
         );
-      };
+      }
+      myCachedDecls = decls;
     }
     return myCachedDecls;
   }
@@ -64,11 +61,11 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   }
 
   public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
-    return (myDelegate!=null)?myDelegate.getRootElementsDescriptors(document):XmlElementDescriptor.EMPTY_ARRAY;
+    return myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(document);
   }
 
   public XmlFile getDescriptorFile() {
-    return (myDelegate!=null)?myDelegate.getDescriptorFile():null;
+    return myDelegate == null ? null : myDelegate.getDescriptorFile();
   }
 
   public boolean isHierarhyEnabled() {
@@ -76,7 +73,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   }
 
   public PsiElement getDeclaration() {
-    return (myDelegate!=null)?myDelegate.getDeclaration():null;
+    return myDelegate == null ? null : myDelegate.getDeclaration();
   }
 
   public boolean processDeclarations(PsiElement context,
@@ -84,15 +81,15 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
                                      PsiSubstitutor substitutor,
                                      PsiElement lastElement,
                                      PsiElement place) {
-    return (myDelegate!=null)?myDelegate.processDeclarations(context, processor, substitutor, lastElement, place):true;
+    return myDelegate == null || myDelegate.processDeclarations(context, processor, substitutor, lastElement, place);
   }
 
   public String getName(PsiElement context) {
-    return (myDelegate!=null)?myDelegate.getName(context):"";
+    return myDelegate == null ? "" : myDelegate.getName(context);
   }
 
   public String getName() {
-    return (myDelegate!=null)?myDelegate.getName():"";
+    return myDelegate == null ? "" : myDelegate.getName();
   }
 
   public void init(PsiElement element) {
@@ -100,6 +97,6 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   }
 
   public Object[] getDependences() {
-    return (myDelegate!=null)?myDelegate.getDependences():null;
+    return myDelegate == null ? null : myDelegate.getDependences();
   }
 }

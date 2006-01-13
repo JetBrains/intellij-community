@@ -12,9 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -65,7 +63,7 @@ public class FileManagerImpl implements FileManager {
   private HashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = null;
 
   private Map<String,PsiClass> myNameToClassMap = new HashMap<String, PsiClass>(); // used only in mode without repository
-  private HashSet<String> myNontrivialPackagePrefixes = null;
+  private Set<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
   private static final @NonNls String JAVA_EXTENSION = ".java";
@@ -354,7 +352,7 @@ public class FileManagerImpl implements FileManager {
       vFile = virtualFile.getParent();
     }
 
-    if (vFile == null) return GlobalSearchScope.allScope(myManager.getProject());;
+    if (vFile == null) return GlobalSearchScope.allScope(myManager.getProject());
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -370,16 +368,17 @@ public class FileManagerImpl implements FileManager {
 
   public Collection<String> getNonTrivialPackagePrefixes() {
     if (myNontrivialPackagePrefixes == null) {
-      myNontrivialPackagePrefixes = new HashSet<String>();
+      Set<String> names = new HashSet<String>();
       final ProjectRootManager rootManager = myProjectRootManager;
       final VirtualFile[] sourceRoots = rootManager.getContentSourceRoots();
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
       for (final VirtualFile sourceRoot : sourceRoots) {
         final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
         if (packageName != null && packageName.length() > 0) {
-          myNontrivialPackagePrefixes.add(packageName);
+          names.add(packageName);
         }
       }
+      myNontrivialPackagePrefixes = names;
     }
     return myNontrivialPackagePrefixes;
   }
