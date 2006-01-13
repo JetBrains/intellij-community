@@ -77,7 +77,7 @@ class PrintManager {
       painter = textPainter;
     }
     else {
-      ArrayList filesList = new ArrayList();
+      ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
       boolean isRecursive = printSettings.isIncludeSubdirectories();
       addToPsiFileList(psiDirectory[0], filesList, isRecursive);
 
@@ -139,16 +139,15 @@ class PrintManager {
                                                                       CodeEditorBundle.message("print.progress"), true, project);
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList filesList, boolean isRecursive) {
+  private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList<PsiFile> filesList, boolean isRecursive) {
     PsiFile[] files = psiDirectory.getFiles();
-    for(int i = 0; i < files.length; i++) {
-      Object obj = files[i];
-      filesList.add(obj);
+    for (PsiFile file : files) {
+      filesList.add(file);
     }
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
-      for(int i = 0; i < directories.length; i++) {
-        addToPsiFileList(directories[i], filesList, isRecursive);
+      for (PsiDirectory directory : directories) {
+        addToPsiFileList(directory, filesList, isRecursive);
       }
     }
   }
