@@ -288,10 +288,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public boolean canContainTag(String localName, String namespace) {
-    return _canContainTag(localName, namespace, myTag);
+    return _canContainTag(localName, namespace, myTag, new HashSet<XmlTag>(5));
   }
 
-  private boolean _canContainTag(String localName, String namespace, XmlTag tag) {
+  private boolean _canContainTag(String localName, String namespace, XmlTag tag,Set<XmlTag> visited) {
+    if (visited.contains(tag)) return false;
+    visited.add(tag);
+
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "any")) {
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(tag.getAttributeValue("namespace"))) {
         return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
@@ -303,7 +306,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (ref != null) {
         XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
-        if (groupTag != null && _canContainTag(localName, namespace, groupTag)) return true;
+        if (groupTag != null && _canContainTag(localName, namespace, groupTag,visited)) return true;
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
@@ -325,7 +328,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     XmlTag[] subTags = tag.getSubTags();
     for (int i = 0; i < subTags.length; i++) {
       XmlTag subTag = subTags[i];
-      if (_canContainTag(localName, namespace, subTag)) return true;
+      if (_canContainTag(localName, namespace, subTag, visited)) return true;
     }
 
     return false;
