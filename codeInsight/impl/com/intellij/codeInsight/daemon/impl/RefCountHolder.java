@@ -120,7 +120,7 @@ public class RefCountHolder {
 
   public synchronized boolean isReferenced(PsiNamedElement element) {
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
-    if(array != null && !isParameterUsedRecursively(element, array)) return true;
+    if(array != null && array.size() > 0 && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(element);
     return usedStatus == Boolean.TRUE;
