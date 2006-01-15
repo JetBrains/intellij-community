@@ -1,9 +1,10 @@
 package com.intellij.cyclicDependencies;
 
 import com.intellij.compiler.Chunk;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 
 import java.util.*;
 
@@ -14,17 +15,21 @@ import java.util.*;
 public class CyclicDependenciesUtil{
   public static <Node> List<Chunk<Node>> buildChunks(Graph<Node> graph) {
     final DFSTBuilder<Node> dfstBuilder = new DFSTBuilder<Node>(graph);
-    final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
-    List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>();
-    for (final Pair<Integer, Integer> scc : sccs) {
-      Set<Node> packs = new HashSet<Node>();
-      final Integer biT = scc.getFirst();
-      final int binum = biT.intValue();
-      for (int j = 0; j < scc.getSecond().intValue(); j++) {
-        packs.add(dfstBuilder.getNodeByTNumber(binum + j));
+    final TIntArrayList sccs = dfstBuilder.getSCCs();
+    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>();
+    sccs.forEach(new TIntProcedure() {
+      int myTNumber = 0;
+      public boolean execute(int size) {
+        Set<Node> packs = new HashSet<Node>();
+        for (int j = 0; j < size; j++) {
+          packs.add(dfstBuilder.getNodeByTNumber(myTNumber + j));
+        }
+        chunks.add(new Chunk<Node>(packs));
+        myTNumber += size;
+        return true;
       }
-      chunks.add(new Chunk<Node>(packs));
-    }
+    });
+
     return chunks;
   }
 

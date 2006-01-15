@@ -12,11 +12,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 
 import java.util.*;
 
@@ -123,22 +124,26 @@ public final class ModuleCompilerUtil {
 
   public static <Node> Graph<Chunk<Node>> toChunkGraph(final Graph<Node> graph) {
     final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
-    final LinkedList<Pair<Integer, Integer>> sccs = builder.getSCCs();
+    final TIntArrayList sccs = builder.getSCCs();
 
     final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
     final Map<Node, Chunk<Node>> nodeToChunkMap = new HashMap<Node, Chunk<Node>>();
-    for (Pair<Integer, Integer> scc : sccs) {
-      final int num = scc.getFirst();
-      final int size = scc.getSecond();
-      final Set<Node> chunkNodes = new HashSet<Node>();
-      final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
-      chunks.add(chunk);
-      for (int j = 0; j < size; j++) {
-        final Node node = builder.getNodeByTNumber(num + j);
-        chunkNodes.add(node);
-        nodeToChunkMap.put(node, chunk);
+    sccs.forEach(new TIntProcedure() {
+      int myTNumber = 0;
+      public boolean execute(int size) {
+        final Set<Node> chunkNodes = new HashSet<Node>();
+        final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
+        chunks.add(chunk);
+        for (int j = 0; j < size; j++) {
+          final Node node = builder.getNodeByTNumber(myTNumber + j);
+          chunkNodes.add(node);
+          nodeToChunkMap.put(node, chunk);
+        }
+
+        myTNumber += size;
+        return true;
       }
-    }
+    });
 
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Chunk<Node>>() {
       public Collection<Chunk<Node>> getNodes() {

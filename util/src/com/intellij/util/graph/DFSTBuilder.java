@@ -21,6 +21,8 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
+import gnu.trove.TIntArrayList;
+
 /**
  *  @author dsl, ven
  */
@@ -34,7 +36,7 @@ public class DFSTBuilder<Node> {
   private Comparator<Node> myComparator = null;
   private boolean myNBuilt = false;
   private boolean myTBuilt = false;
-  private LinkedList<Pair<Integer, Integer>> mySCCs = null;
+  private TIntArrayList mySCCs = null;
   private Node[] myInvT;
 
   public DFSTBuilder(Graph<Node> graph) {
@@ -132,7 +134,7 @@ public class DFSTBuilder<Node> {
     if (myTBuilt) return;
 
     myInvT = (Node[])new Object[myGraph.getNodes().size()];
-    mySCCs = new LinkedList<Pair<Integer, Integer>> ();
+    mySCCs = new TIntArrayList ();
 
     int currT = 0;
     int size = myGraph.getNodes().size();
@@ -144,7 +146,7 @@ public class DFSTBuilder<Node> {
       if (!myNodeToTNumber.containsKey(v)) {
         final Set<Node> region = region(v);
 
-        mySCCs.addLast(new Pair<Integer, Integer>(new Integer(currT), new Integer (region.size())));
+        mySCCs.add(region.size());
 
         myNodeToTNumber.put(v, new Integer(currT));
         myInvT[currT++]=v;
@@ -177,7 +179,12 @@ public class DFSTBuilder<Node> {
       return myInvT[n];
     }
 
-  public LinkedList<Pair<Integer, Integer>> getSCCs (){
+  /**
+   *
+   * @return the list containing the number of nodes in strongly connected components.
+   * Respective nodes could be obtained via {@link #getNodeByTNumber(int)}. 
+   */
+  public TIntArrayList getSCCs (){
     if (!myNBuilt){
       buildDFST();
     }

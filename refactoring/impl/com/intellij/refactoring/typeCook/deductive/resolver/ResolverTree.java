@@ -16,6 +16,8 @@ import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 
 import java.util.*;
 
@@ -218,17 +220,20 @@ public class ResolverTree {
 
     });
 
-    final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
+    final TIntArrayList sccs = dfstBuilder.getSCCs();
     final HashMap<PsiTypeVariable, Integer> index = new HashMap<PsiTypeVariable, Integer>();
 
-    for (final Pair<Integer, Integer> p : sccs) {
-      final Integer biT = p.getFirst();
-      final int binum = biT.intValue();
+    sccs.forEach(new TIntProcedure() {
+      int myTNumber = 0;
 
-      for (int j = 0; j < p.getSecond().intValue(); j++) {
-        index.put(dfstBuilder.getNodeByTNumber(binum + j), biT);
+      public boolean execute(int size) {
+        for (int j = 0; j < size; j++) {
+          index.put(dfstBuilder.getNodeByTNumber(myTNumber + j), myTNumber);
+        }
+        myTNumber += size;
+        return true;
       }
-    }
+    });
 
     for (final Constraint constraint : candidates) {
       if (index.get(constraint.getLeft()).equals(index.get(constraint.getRight()))) {
