@@ -101,9 +101,8 @@ public abstract class EditorComposite{
           return wrapper.getComponent().requestDefaultFocus();
         }
       };
-      for(int i=0;i<editors.length;i++){
-        FileEditor editor = editors[i];
-        wrapper.addTab(editor.getName(),editor.getComponent());
+      for (FileEditor editor : editors) {
+        wrapper.addTab(editor.getName(), editor.getComponent());
       }
       myTabbedPaneWrapper.addChangeListener(new MyChangeListener());
     }
