@@ -43,7 +43,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.ui.UIBundle;
@@ -565,8 +564,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireFileContentReloaded(final VirtualFile file, final Document document) {
     List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (int i = 0; i < listeners.size(); i++) {
-      FileDocumentManagerListener listener = listeners.get(i);
+    for (FileDocumentManagerListener listener : listeners) {
       try {
         listener.fileContentReloaded(file, document);
       }
@@ -578,8 +576,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireBeforeFileContentReload(final VirtualFile file, final Document document) throws VetoDocumentReloadException {
     List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (int i = 0; i < listeners.size(); i++) {
-      FileDocumentManagerListener listener = listeners.get(i);
+    for (FileDocumentManagerListener listener : listeners) {
       try {
         listener.beforeFileContentReload(file, document);
       }
@@ -591,8 +588,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireFileContentLoaded(VirtualFile file, DocumentEx document) {
     List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (int i = 0; i < listeners.size(); i++) {
-      FileDocumentManagerListener listener = listeners.get(i);
+    for (FileDocumentManagerListener listener : listeners) {
       try {
         listener.fileContentLoaded(file, document);
       }
