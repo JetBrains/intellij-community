@@ -26,8 +26,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     myProviders = new ArrayList<FileEditorProvider>();
     mySharedProviderList = new ArrayList<FileEditorProvider>();
 
-    for (int i = 0; i < providers.length; i++) {
-      FileEditorProvider provider = providers[i];
+    for (FileEditorProvider provider : providers) {
       registerProvider(provider);
     }
   }
