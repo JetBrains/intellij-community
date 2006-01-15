@@ -125,8 +125,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   public static String getLastUsedLogUrl() {
-    String lastUrl = PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_LAST_URL);
-    return lastUrl;
+    return PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_LAST_URL);
   }
 
   public static UnscrambleSupport getSavedUnscrambler() {
@@ -242,7 +241,7 @@ public class UnscrambleDialog extends DialogWrapper{
   private static List<UnscrambleSupport> getRegisteredUnscramblers() {
     List<UnscrambleSupport> unscrambleComponents = new ArrayList<UnscrambleSupport>();
     Class[] interfaces = ApplicationManager.getApplication().getComponentInterfaces();
-    for (final Class anInterface : interfaces) {
+    for (final Class<?> anInterface : interfaces) {
       Object component = ApplicationManager.getApplication().getComponent(anInterface);
       if (component instanceof UnscrambleSupport) {
         unscrambleComponents.add((UnscrambleSupport)component);
