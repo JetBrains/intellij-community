@@ -35,7 +35,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
   @NonNls private static final String TYPE_ID = "text-editor";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
-  private static final Key TEXT_EDITOR_KEY = Key.create("textEditor");
+  private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
   @NonNls public static final String LINE_ATTR = "line";
   @NonNls public static final String COLUMN_ATTR = "column";
   @NonNls public static final String SELECTION_START_ATTR = "selection-start";
@@ -58,18 +58,13 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     return !fileType.isBinary() || fileType == StdFileTypes.CLASS;
   }
 
-  public FileEditor createEditor(Project project, final VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  @NotNull
+  public FileEditor createEditor(Project project, @NotNull final VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file);
   }
 
-  public void disposeEditor(FileEditor editor) {
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
+  public void disposeEditor(@NotNull FileEditor editor) {
     ((TextEditorImpl)editor).dispose();
   }
 
@@ -124,10 +119,12 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     }
   }
 
+  @NotNull
   public String getEditorTypeId() {
     return TYPE_ID;
   }
 
+  @NotNull
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
@@ -145,7 +142,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
       throw new IllegalArgumentException("editor cannot be null");
     }
 
-    TextEditor textEditor = (TextEditor)editor.getUserData(TEXT_EDITOR_KEY);
+    TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
       textEditor = new DummyTextEditor(editor);
       putTextEditor(editor, textEditor);
@@ -186,12 +183,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
     if (editor instanceof TextEditor) {
       Document document = ((TextEditor)editor).getEditor().getDocument();
-      if (document != null) {
-        return new Document[]{document};
-      }
-      else {
-        return null;
-      }
+      return new Document[]{document};
     }
     return null;
   }
@@ -230,7 +222,9 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
     public StructureViewBuilder getStructureViewBuilder() {
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-      return file.getFileType().getStructureViewBuilder(file, myEditor.getProject());
+      final Project project = myEditor.getProject();
+      LOG.assertTrue(project != null);
+      return file.getFileType().getStructureViewBuilder(file, project);
     }
 
     @NotNull
