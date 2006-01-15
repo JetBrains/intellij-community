@@ -42,9 +42,10 @@ class IteratorUtils {
         private boolean doesCallIteratorNext = false;
 
         public void visitElement(@NotNull PsiElement element){
-            if(!doesCallIteratorNext){
-                super.visitElement(element);
+            if (doesCallIteratorNext) {
+                return;
             }
+            super.visitElement(element);
         }
 
         public void visitMethodCallExpression(
@@ -71,11 +72,6 @@ class IteratorUtils {
             }
             final PsiClass containingClass = method.getContainingClass();
             if(!isIterator(containingClass)){
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier!=null && !(qualifier instanceof PsiThisExpression)){
                 return;
             }
             doesCallIteratorNext = true;
