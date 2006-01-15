@@ -1,13 +1,11 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * Author: msk
@@ -32,8 +30,8 @@ public class EditorWithProviderComposite extends EditorComposite {
 
   public boolean isModified() {
     final FileEditor [] editors = getEditors ();
-    for (int i = 0; i < editors.length; i++) {
-      if (editors[i].isModified ()) {
+    for (FileEditor editor : editors) {
+      if (editor.isModified()) {
         return true;
       }
     }
