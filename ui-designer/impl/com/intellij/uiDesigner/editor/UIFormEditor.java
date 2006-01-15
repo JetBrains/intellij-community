@@ -106,16 +106,10 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return new MyEditorState(modificationStamp, ids);
   }
 
-  public void setState(final FileEditorState state){
-    if (state == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("state cannot be null");
-    }
-
+  public void setState(@NotNull final FileEditorState state){
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
-    for (int i = 0; i < ids.length; i++) {
-      final String id = ids[i];
+    for (final String id : ids) {
       final RadComponent component = FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
       if (component != null) {
         component.setSelected(true);
@@ -123,12 +117,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
   }
 
-  public void selectComponent(final String binding){
-    if (binding == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("binding cannot be null");
-    }
-
+  public void selectComponent(@NotNull final String binding){
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
 
     FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor<RadComponent>() {
