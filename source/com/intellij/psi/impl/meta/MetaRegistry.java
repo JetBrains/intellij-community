@@ -14,10 +14,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlAttributeDecl;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -75,7 +72,12 @@ public class MetaRegistry {
       addMetadataBinding(
           new OrFilter(
               new AndFilter(
-                  new ContentFilter(new ClassFilter(XmlElementDecl.class)),
+                  new ContentFilter(
+                    new OrFilter(
+                      new ClassFilter(XmlElementDecl.class),
+                      new ClassFilter(XmlConditionalSection.class)
+                    )
+                  ),
                   new ClassFilter(XmlDocument.class)
               ),
               new ClassFilter(XmlMarkupDecl.class)

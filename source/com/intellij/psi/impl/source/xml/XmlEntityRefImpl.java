@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -39,6 +40,30 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return resolveEntity(this, text, targetFile);
   }
 
+  public static XmlEntityDecl getCachedEntity(PsiFile file, String name) {
+    final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
+    CachedValue<XmlEntityDecl> cachedValue = cachingMap.get(name);
+    if (cachedValue != null) return cachedValue.getValue();
+    return null;
+  }
+
+  public static void cacheParticularEntity(PsiFile file, final XmlEntityDecl decl) {
+    final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
+    final String name = decl.getName();
+    cachingMap.put(
+      name,
+      file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
+        public Result<XmlEntityDecl> compute() {
+          if (decl.isValid() && name.equals(decl.getName()))
+            return new Result<XmlEntityDecl>(decl,decl);
+          cachingMap.put(name,null);
+          return new Result<XmlEntityDecl>(null,null);
+        }
+      },
+      false
+    ));
+  }
+
   public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
     final String entityName = text.substring(1, text.length() - 1);
 
@@ -47,11 +72,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
 
     final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : element;
-    Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
-    if (map == null){
-      map = new HashMap<String,CachedValue<XmlEntityDecl>>();
-      targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
-    }
+    Map<String, CachedValue<XmlEntityDecl>> map = getCachingMap(targetElement);
 
     CachedValue<XmlEntityDecl> value = map.get(entityName);
     if (value == null) {
@@ -70,6 +91,15 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
 
     return value.getValue();
+  }
+
+  private static Map<String, CachedValue<XmlEntityDecl>> getCachingMap(final PsiElement targetElement) {
+    Map<String, CachedValue<XmlEntityDecl>> map = targetElement.getUserData(XML_ENTITY_DECL_MAP);
+    if (map == null){
+      map = new HashMap<String,CachedValue<XmlEntityDecl>>();
+      targetElement.putUserData(XML_ENTITY_DECL_MAP, map);
+    }
+    return map;
   }
 
   private static CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
@@ -118,7 +148,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
       if (notfound &&       // no dtd ref at all
           targetElement instanceof XmlFile &&
-          deps.size() == 1
+          deps.size() == 1 &&
+          ((XmlFile)targetElement).getFileType() != StdFileTypes.DTD
          ) {
         final XmlTag rootTag = ((XmlFile)targetElement).getDocument().getRootTag();
 
@@ -173,5 +204,13 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   public void accept(PsiElementVisitor visitor) {
     visitor.visitXmlElement(this);
+  }
+
+  public static void copyEntityCaches(final XmlFile file, final XmlFile context) {
+    final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
+    for(Map.Entry<String,CachedValue<XmlEntityDecl>> entry:getCachingMap(context).entrySet()) {
+      cachingMap.put(entry.getKey(), entry.getValue());
+    }
+
   }
 }

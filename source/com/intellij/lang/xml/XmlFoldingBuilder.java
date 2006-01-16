@@ -40,12 +40,17 @@ public class XmlFoldingBuilder implements FoldingBuilder {
       xmlDocument = (XmlDocument)psiElement;
     }
     
-    XmlTag rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
+    XmlElement rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
+    if (rootTag == null) {
+      rootTag = xmlDocument;
+    }
     List<FoldingDescriptor> foldings = null;
 
     if (rootTag != null) {
       foldings = new ArrayList<FoldingDescriptor>();
-      addElementsToFold(foldings, rootTag, document);
+
+      if (rootTag instanceof XmlTag) addElementsToFold(foldings, rootTag, document);
+      else doAddForChildren(xmlDocument, foldings, document);
     }
 
     return foldings != null ? foldings.toArray(new FoldingDescriptor[foldings.size()]):FoldingDescriptor.EMPTY;
@@ -55,38 +60,44 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     if (addToFold(foldings, tag, document) ||
         tag instanceof JspXmlRootTag // has no name but has content
       ) {
-      final PsiElement[] children = tag.getChildren();
-      
-      for (PsiElement child : children) {
-        ProgressManager.getInstance().checkCanceled();
-        
-        if (child instanceof XmlTag) {
-          addElementsToFold(foldings, (XmlElement)child, document);
-        }
-        else if(child instanceof XmlComment) {
-          addToFold(foldings, (PsiElement)child, document);
-        } else if (child instanceof XmlText) {
-          final PsiElement[] grandChildren = child.getChildren();
-          
-          for(PsiElement grandChild:grandChildren) {
-            ProgressManager.getInstance().checkCanceled();
-            
-            if (grandChild instanceof XmlComment) {
-              addToFold(foldings, grandChild, document);
-            }
+      doAddForChildren(tag, foldings, document);
+    }
+  }
+
+  private void doAddForChildren(final XmlElement tag, final List<FoldingDescriptor> foldings, final Document document) {
+    final PsiElement[] children = tag.getChildren();
+
+    for (PsiElement child : children) {
+      ProgressManager.getInstance().checkCanceled();
+
+      if (child instanceof XmlTag ||
+          child instanceof XmlConditionalSection
+         ) {
+        addElementsToFold(foldings, (XmlElement)child, document);
+      }
+      else if(child instanceof XmlComment) {
+        addToFold(foldings, (PsiElement)child, document);
+      } else if (child instanceof XmlText) {
+        final PsiElement[] grandChildren = child.getChildren();
+
+        for(PsiElement grandChild:grandChildren) {
+          ProgressManager.getInstance().checkCanceled();
+
+          if (grandChild instanceof XmlComment) {
+            addToFold(foldings, grandChild, document);
           }
-        } else {
-          final Language language = child.getLanguage();
-          if (!(language instanceof XMLLanguage) && language != Language.ANY) {
-            final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
+        }
+      } else {
+        final Language language = child.getLanguage();
+        if (!(language instanceof XMLLanguage) && language != Language.ANY) {
+          final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
 
-            if (foldingBuilder != null) {
-              final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
+          if (foldingBuilder != null) {
+            final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
 
-              if (foldingDescriptors != null) {
-                for (FoldingDescriptor descriptor : foldingDescriptors) {
-                  foldings.add(descriptor);
-                }
+            if (foldingDescriptors != null) {
+              for (FoldingDescriptor descriptor : foldingDescriptors) {
+                foldings.add(descriptor);
               }
             }
           }
@@ -129,9 +140,21 @@ public class XmlFoldingBuilder implements FoldingBuilder {
       final TextRange textRange = element.getTextRange();
       int commentStartOffset = getCommentStartOffset(xmlComment);
       int commentEndOffset = getCommentStartEnd(xmlComment);
-      
+
       if (textRange.getEndOffset() - textRange.getStartOffset() > commentStartOffset + commentEndOffset) {
         return new TextRange(textRange.getStartOffset() + commentStartOffset, textRange.getEndOffset() - commentEndOffset);
+      } else {
+        return null;
+      }
+    } else if (element instanceof XmlConditionalSection) {
+      final XmlConditionalSection conditionalSection = (XmlConditionalSection)element;
+      final TextRange textRange = element.getTextRange();
+      final PsiElement bodyStart = conditionalSection.getBodyStart();
+      int startOffset = bodyStart != null ? bodyStart.getStartOffsetInParent() : 3;
+      int endOffset = 3;
+
+      if (textRange.getEndOffset() - textRange.getStartOffset() > startOffset + endOffset) {
+        return new TextRange(textRange.getStartOffset() + startOffset, textRange.getEndOffset() - endOffset);
       } else {
         return null;
       }
@@ -169,7 +192,10 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
   public String getPlaceholderText(ASTNode node) {
     final PsiElement psi = node.getPsi();
-    if (psi instanceof XmlTag || psi instanceof XmlComment) return "...";
+    if (psi instanceof XmlTag ||
+        psi instanceof XmlComment ||
+        psi instanceof XmlConditionalSection
+       ) return "...";
     return null;
   }
 

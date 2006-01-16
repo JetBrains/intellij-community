@@ -102,7 +102,8 @@ public class XmlParsing implements ElementType {
       else if (parseProcessingInstruction(root, lexer)) {
       }
       else if (_parseTag(root, lexer, names)) {
-      } else if (parseConditionalSection(root, lexer)) {
+      }
+      else if (parseConditionalSection(root, lexer)) {
       }
       else if (tokenType != null) {
         if (!rootTagChecked) {
@@ -193,7 +194,13 @@ public class XmlParsing implements ElementType {
         tokenType != XML_ENTITY_REF_TOKEN) {
       return true;
     }
-    addToken(conditionalSection, lexer);
+
+    if (tokenType == XML_ENTITY_REF_TOKEN) {
+      TreeUtil.addChildren(conditionalSection, parseEntityRef(lexer) );
+    } else {
+      addToken(conditionalSection, lexer);
+    }
+
     if (lexer.getTokenType() != XML_MARKUP_START) {
       return true;
     }
@@ -431,30 +438,36 @@ public class XmlParsing implements ElementType {
   }
 
   private void parseMarkupContent(Lexer lexer, CompositeElement decl) {
-    if (lexer.getTokenType() == XML_MARKUP_START) {
+    IElementType tokenType = lexer.getTokenType();
+    if (tokenType == XML_MARKUP_START) {
       addToken(decl, lexer);
     }
 
     while (true) {
-      if (lexer.getTokenType() == XML_ELEMENT_DECL_START) {
+      tokenType = lexer.getTokenType();
+      
+      if (tokenType == XML_ELEMENT_DECL_START) {
         TreeUtil.addChildren(decl, parseElementDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_ATTLIST_DECL_START) {
+      else if (tokenType == XML_ATTLIST_DECL_START) {
         TreeUtil.addChildren(decl, parseAttlistDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
+      else if (tokenType == XML_ENTITY_DECL_START) {
         TreeUtil.addChildren(decl, parseEntityDecl(lexer));
       }
-      else if (lexer.getTokenType() == XML_NOTATION_DECL_START) {
+      else if (tokenType == XML_NOTATION_DECL_START) {
         TreeUtil.addChildren(decl, parseNotationDecl(lexer));
-      } else if (parseConditionalSection(decl, lexer)) {
+      } else if (tokenType == XML_ENTITY_REF_TOKEN) {
+        TreeUtil.addChildren(decl, parseEntityRef(lexer));
+      }
+      else if (parseConditionalSection(decl, lexer)) {
       }
       else {
         break;
       }
     }
 
-    if (lexer.getTokenType() == XML_MARKUP_END) {
+    if (tokenType == XML_MARKUP_END) {
       addToken(decl, lexer);
     }
   }

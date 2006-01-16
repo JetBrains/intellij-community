@@ -4,6 +4,7 @@ import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
@@ -221,7 +222,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     if (myAttlistDecl != null) return myAttlistDecl;
 
     final List result = new ArrayList();
-    ((XmlElement)getDeclaration().getParent()).processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
+    XmlElement xmlElement = PsiTreeUtil.getParentOfType(getDeclaration(),XmlDocument.class);
+    xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
     myAttlistDecl = (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
     return myAttlistDecl;
   }

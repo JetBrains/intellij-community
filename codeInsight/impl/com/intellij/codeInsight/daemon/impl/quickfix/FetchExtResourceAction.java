@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -30,10 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author mike
@@ -209,9 +207,16 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                 ExternalResourceManagerImpl.getInstance().addResource(dtdUrl, resPath);
                 VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/'));
 
-                List<String> strings = extractEmbeddedFileReferences(virtualFile, psiManager);
-                for (Iterator<String> iterator = strings.iterator(); iterator.hasNext();) {
-                  String s = iterator.next();
+                Set<String> linksToProcess = new HashSet<String>();
+                Set<String> processedLinks = new HashSet<String>();
+                VirtualFile contextFile = virtualFile;
+                linksToProcess.addAll( extractEmbeddedFileReferences(virtualFile, null, psiManager) );
+
+                while(!linksToProcess.isEmpty()) {
+                  String s = linksToProcess.iterator().next();
+                  linksToProcess.remove(s);
+                  processedLinks.add(s);
+
                   if (s.startsWith(HTTP_PROTOCOL)) {
                     // do not support absolute references
                     continue;
@@ -223,14 +228,19 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                     resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath);
                   }
                   catch (IOException e) {
-                    nestedException[0] = new FetchingResourceIOException(e,resourceUrl);
+                    nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
                     break;
                   }
 
                   ExternalResourceManagerImpl.getInstance().addResource(resourceUrl, resourcePath);
-                  LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
+                  virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
                   resourceUrls.add(resourceUrl);
                   downloadedResources.add(resourcePath);
+
+                  final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
+                  for(String u:newLinks) {
+                    if (!processedLinks.contains(u)) linksToProcess.add(u);
+                  }
                 }
               }
             });
@@ -314,12 +324,15 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return resPath;
   }
 
-  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, PsiManager psiManager) {
-    PsiFile file = psiManager.findFile(vFile);
+  public static List<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
     final List<String> result = new LinkedList<String>();
+    if (context != null) {
+      XmlEntityRefImpl.copyEntityCaches(file, context);
+    }
 
-    if (file instanceof XmlFile) {
-      XmlUtil.processXmlElements((XmlFile)file,new PsiElementProcessor() {
+    XmlUtil.processXmlElements(
+      file,
+      new PsiElementProcessor() {
         public boolean execute(PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             String candidateName = null;
@@ -343,7 +356,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             if(tag.getLocalName().equals(INCLUDE_TAG)) {
               //String namespace = tag.getNamespace();
               // we do not check for namespace here since there are many schema defs like
-              // http://www.w3.org/1999/XMLSchema, http://www.w3.org/2001/XMLSchema, add your own here 
+              // http://www.w3.org/1999/XMLSchema, http://www.w3.org/2001/XMLSchema, add your own here
 
               String schemaLocation = ((XmlTag)element).getAttributeValue("schemaLocation");
               if (schemaLocation!=null) {
@@ -355,10 +368,22 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           return true;
         }
 
-      }, true);
+      },
+      true,
+      true
+    );
+    return result;
+  }
+
+  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, VirtualFile contextVFile, PsiManager psiManager) {
+    PsiFile file = psiManager.findFile(vFile);
+
+    if (file instanceof XmlFile) {
+      PsiFile contextFile = contextVFile != null? psiManager.findFile(contextVFile):null;
+      return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile:null);
     }
 
-    return result;
+    return Collections.emptyList();
   }
 
   private byte[] fetchData(final Project project, final String dtdUrl, ProgressIndicator indicator) throws IOException {

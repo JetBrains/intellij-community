@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -245,54 +246,80 @@ public class XmlUtil {
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag, boolean wideFlag) {
     if (element == null) return true;
     PsiFile baseFile = element.getContainingFile();
-    return _processXmlElements(element, processor, baseFile, deepFlag, wideFlag);
+    return new XmlElementProcessor(processor, baseFile).processXmlElements(
+      element,
+      deepFlag,
+      wideFlag
+    );
   }
 
-  private static boolean _processXmlElements(PsiElement element,
-                                             PsiElementProcessor processor,
-                                             PsiFile targetFile,
-                                             boolean deepFlag,
-                                             boolean wideFlag) {
-    if (deepFlag) if (!processor.execute(element)) return false;
+  private static class XmlElementProcessor {
+    private PsiElementProcessor processor;
+    private PsiFile targetFile;
 
-    if (element instanceof XmlEntityRef) {
-      XmlEntityRef ref = (XmlEntityRef)element;
+    XmlElementProcessor(PsiElementProcessor _processor,PsiFile _targetFile) {
+      processor = _processor;
+      targetFile = _targetFile;
+    }
 
-      PsiElement newElement = parseEntityRef(targetFile, ref, true);
-      if (newElement == null) return true;
+    private boolean processXmlElements(PsiElement element,
+                                       boolean deepFlag,
+                                       boolean wideFlag) {
+        if (deepFlag) if (!processor.execute(element)) return false;
 
-      while (newElement != null) {
-        if (!processElement(newElement, processor, targetFile, deepFlag, wideFlag)) return false;
-        newElement = newElement.getNextSibling();
+        PsiElement startFrom = element.getFirstChild();
+
+        if (element instanceof XmlEntityRef) {
+          XmlEntityRef ref = (XmlEntityRef)element;
+
+          PsiElement newElement = parseEntityRef(targetFile, ref, true);
+          if (newElement == null) {
+            newElement = parseEntityRef(targetFile, ref, true);
+          }
+          if (newElement == null) return true;
+
+          while (newElement != null) {
+            if (!processElement(newElement, deepFlag, wideFlag)) return false;
+            newElement = newElement.getNextSibling();
+          }
+
+          return true;
+        } else if (element instanceof XmlConditionalSection) {
+          XmlConditionalSection xmlConditionalSection = ((XmlConditionalSection)element);
+          if (!xmlConditionalSection.isIncluded()) return true;
+          startFrom = xmlConditionalSection.getBodyStart();
+        }
+
+        for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
+          if (!processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
+        }
+
+      if (element instanceof XmlEntityDecl) {
+          XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+          XmlEntityRefImpl.cacheParticularEntity(element.getContainingFile(), xmlEntityDecl);
+        }
+        return true;
       }
 
-      return true;
-    }
-
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!processElement(child, processor, targetFile, deepFlag, wideFlag) && !wideFlag) return false;
-    }
-
-    return true;
-  }
-
-  private static boolean processElement(PsiElement child,
-                                        PsiElementProcessor processor,
-                                        PsiFile targetFile,
-                                        boolean deepFlag,
-                                        boolean wideFlag) {
-    if (deepFlag) {
-      if (!_processXmlElements(child, processor, targetFile, true, wideFlag)) {
-        return false;
+      private boolean processElement(PsiElement child,
+                                     boolean deepFlag,
+                                     boolean wideFlag) {
+        if (deepFlag) {
+          if (!processXmlElements(child, true, wideFlag)) {
+            return false;
+          }
+        }
+        else {
+          if (child instanceof XmlEntityRef) {
+            if (!processXmlElements(child, false, wideFlag)) return false;
+          } else if (child instanceof XmlConditionalSection) {
+            if (!processXmlElements(child, false, wideFlag)) return false;
+          }
+          else if (!processor.execute(child)) return false;
+        }
+        return true;
       }
-    }
-    else {
-      if (child instanceof XmlEntityRef) {
-        if (!_processXmlElements(child, processor, targetFile, false, wideFlag)) return false;
-      }
-      else if (!processor.execute(child)) return false;
-    }
-    return true;
+
   }
 
   private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref, boolean cacheValue) {

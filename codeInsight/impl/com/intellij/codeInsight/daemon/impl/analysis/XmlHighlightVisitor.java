@@ -403,6 +403,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       XmlTag parentTag = (XmlTag)parent;
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
+      if ("para".equals(name)) {
+        int a = 1;
+      }
       if (parentDescriptor != null) {
         elementDescriptor = tag instanceof JspDirective ? tag.getDescriptor() : parentDescriptor.getElementDescriptor(tag);
       }
