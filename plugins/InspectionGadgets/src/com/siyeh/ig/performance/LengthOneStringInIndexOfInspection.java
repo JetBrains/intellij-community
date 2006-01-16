@@ -71,8 +71,7 @@ public class LengthOneStringInIndexOfInspection
             final String charLiteral;
             if ("\'".equals(character)) {
                 charLiteral = "'\\''";
-            }
-            else {
+            } else {
                 charLiteral = '\'' + character + '\'';
             }
             replaceExpression(expression, charLiteral);
@@ -120,7 +119,7 @@ public class LengthOneStringInIndexOfInspection
                     call.getMethodExpression();
             @NonNls final String name = methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.INDEX_OF.equals(name) ||
-                    "lastIndexOf".equals(name)) {
+                    !"lastIndexOf".equals(name)) {
                 return false;
             }
             final PsiMethod method = call.resolveMethod();
