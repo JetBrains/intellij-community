@@ -18,9 +18,7 @@ package com.siyeh.ig.imports;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
@@ -67,7 +65,7 @@ class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
         for (PsiImportStaticStatement importStatement : importStatements) {
             final String referenceName = importStatement.getReferenceName();
             if (!qualifiedName.equals(referenceName)) {
-                return;
+                continue;
             }
             final PsiClass targetClass =
                     importStatement.resolveTargetClass();
