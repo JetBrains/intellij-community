@@ -26,7 +26,9 @@ import java.util.Comparator;
  */
 public class MethodBodyChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.MethodBodyChecker");
-  private static final Map<Pair<PsiType,FileTemplate>, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<Pair<PsiType, FileTemplate>, PsiMethod>();
+
+  // pair(return type canonical name, file template name) -> method template
+  private static final Map<Pair<String,String>, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<Pair<String, String>, PsiMethod>();
   private static Project DEFAULT_PROJECT;
   private static PsiClassType OBJECT_TYPE;
 
@@ -39,8 +41,8 @@ public class MethodBodyChecker {
       returnType = OBJECT_TYPE;
     }
     try {
-      final FileTemplate fileTemplate = getMethodFileTemplate(superSignatures, true);
-      Pair<PsiType, FileTemplate> key = Pair.create(returnType, fileTemplate);
+      final String fileTemplateName = getMethodFileTemplate(superSignatures, true).getName();
+      Pair<String,String> key = Pair.create(returnType.getCanonicalText(), fileTemplateName);
       PsiMethod method = TEMPLATE_METHOD_BODIES.get(key);
       if (method == null) {
         method = PsiManager.getInstance(DEFAULT_PROJECT).getElementFactory().createMethod("x", returnType);
@@ -84,7 +86,7 @@ public class MethodBodyChecker {
   }
 
   private static FileTemplate getMethodFileTemplate(final List<HierarchicalMethodSignature> superSignatures,
-                                                    final boolean useDefaultTemplate) throws IncorrectOperationException {
+                                                    final boolean useDefaultTemplate) {
     FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate template;
     if (superSignatures.size() == 0) {
