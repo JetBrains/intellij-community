@@ -226,6 +226,10 @@ public class PersistentStringEnumerator {
     return myClosed;
   }
 
+  public boolean isDirty() {
+    return myDirty;
+  }
+
   public void flush() throws IOException {
     markDirty(false);
     myStorage.flush();
