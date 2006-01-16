@@ -21,7 +21,21 @@ public class PaletteWindow extends JPanel implements Scrollable {
     myProject = project;
     setLayout(new PaletteLayoutManager());
     myPalette = Palette.getInstance(project);
+    myPalette.addListener(new Palette.Listener() {
+      public void groupsChanged(Palette palette) {
+        refreshPalette();
+      }
+    });
 
+    refreshPalette();
+  }
+
+  private void refreshPalette() {
+    for(PaletteGroup group: myGroups) {
+      remove(group);
+      remove(group.getComponentList());
+    }
+    myGroups.clear();
     for (GroupItem groupItem : myPalette.getGroups()) {
       PaletteGroup group = new PaletteGroup(groupItem);
       myGroups.add(group);
@@ -31,6 +45,7 @@ public class PaletteWindow extends JPanel implements Scrollable {
       group.setComponentList(componentList);
       componentList.addListSelectionListener(new MyListSelectionListener());
     }
+    revalidate();
   }
 
   public Dimension getPreferredScrollableViewportSize() {
