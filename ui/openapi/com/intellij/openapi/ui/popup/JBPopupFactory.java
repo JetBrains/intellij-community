@@ -37,7 +37,7 @@ public abstract class JBPopupFactory {
   public abstract TreePopup createTree(JBPopup parent, TreePopupStep step, Object parentValue);
   public abstract TreePopup createTree(TreePopupStep step);
 
-  public abstract JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent);
+  public abstract JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent, final boolean requestFocus);
 
   /**
    * @return location as close as possible to the action origin. Method has special handling of

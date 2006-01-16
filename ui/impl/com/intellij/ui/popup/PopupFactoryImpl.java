@@ -145,8 +145,8 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     return new TreePopupImpl(aStep);
   }
 
-  public JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent) {
-    return new JBPopupImpl(content, prefferableFocusComponent);
+  public JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent, final boolean requestFocus) {
+    return new JBPopupImpl(content, prefferableFocusComponent, requestFocus);
   }
 
   public RelativePoint guessBestPopupLocation(DataContext dataContext) {

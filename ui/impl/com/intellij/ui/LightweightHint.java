@@ -1,11 +1,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.util.ui.BlockBorder;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.JBPopupImpl;
 import gnu.trove.THashMap;
 
 import javax.swing.*;
@@ -23,9 +25,13 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   private final JComponent myComponent;
   private JComponent myFocusBackComponent;
-  private final Map<Key,Object> myUserMap = new THashMap<Key, Object>(1);
+  private final Map<Key, Object> myUserMap = new THashMap<Key, Object>(1);
   private final EventListenerList myListenerList = new EventListenerList();
   private MyEscListener myEscListener;
+  private JBPopup myPopup;
+  private JComponent myParentComponent;
+  private Rectangle myLastShownRect = null;
+  private boolean myIsRealPopup = false;
 
   public LightweightHint(final JComponent component) {
     LOG.assertTrue(component != null);
@@ -38,34 +44,47 @@ public class LightweightHint implements Hint, UserDataHolder {
    * appears on 250 layer.
    */
   public void show(final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
-    LOG.assertTrue(parentComponent != null);
+    myParentComponent = parentComponent;
+    LOG.assertTrue(myParentComponent != null);
 
     myFocusBackComponent = focusBackComponent;
 
-    final Dimension preferredSize = myComponent.getPreferredSize();
-
-    LOG.assertTrue(parentComponent.isShowing());
+    LOG.assertTrue(myParentComponent.isShowing());
     myEscListener = new MyEscListener();
-    myComponent.registerKeyboardAction(myEscListener,
-                                       KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+    myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
-    final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
+    if (fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)))) {
+      final Dimension preferredSize = myComponent.getPreferredSize();
+      final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
-    myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+      myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
 
-    layeredPane.add(myComponent, new Integer(250 + layeredPane.getComponentCount()));
+      layeredPane.add(myComponent, new Integer(250 + layeredPane.getComponentCount()));
 
-    myComponent.validate();
-    myComponent.repaint();
+      myComponent.validate();
+      myComponent.repaint();
+    }
+    else {
+      myIsRealPopup = true;
+      myPopup = JBPopupFactory.getInstance().createComponentPopup(myComponent, focusBackComponent, false);
+      myPopup.show(new RelativePoint(myParentComponent, new Point(x, y)));
+    }
+  }
+
+  private boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation) {
+    final Rectangle lpRect = new Rectangle(pane.getLocationOnScreen().x, pane.getLocationOnScreen().y, pane.getWidth(), pane.getHeight());
+    RelativePoint p = desiredLocation;
+    Rectangle componentRect =
+      new Rectangle(p.getScreenPoint().x, p.getScreenPoint().y, component.getPreferredSize().width, component.getPreferredSize().height);
+    return lpRect.contains(componentRect);
   }
 
   private void fireHintHidden() {
     final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      final HintListener listener = (HintListener)listeners[i];
-      listener.hintHidden(new EventObject(this));
+    for (EventListener listener : listeners) {
+      ((HintListener)listener).hintHidden(new EventObject(this));
     }
   }
 
@@ -73,19 +92,30 @@ public class LightweightHint implements Hint, UserDataHolder {
    * Sets location of the hint in the layered pane coordinate system.
    */
   public final void setLocation(final int x, final int y) {
-    myComponent.setLocation(x, y);
-    myComponent.validate();
-    myComponent.repaint();
+    if (myIsRealPopup) {
+      if (myPopup == null) return;
+      ((JBPopupImpl)myPopup).setLocation(new RelativePoint(myParentComponent, new Point(x, y)));
+    }
+    else {
+      myComponent.setLocation(x, y);
+      myComponent.validate();
+      myComponent.repaint();
+    }
   }
 
   /**
    * x and y are in layered pane coordinate system
    */
   public final void setBounds(final int x, final int y, final int width, final int height) {
-    myComponent.setBounds(x, y, width, height);
-    myComponent.setLocation(x, y);
-    myComponent.validate();
-    myComponent.repaint();
+    if (myIsRealPopup) {
+      setLocation(x, y);
+    }
+    else {
+      myComponent.setBounds(x, y, width, height);
+      myComponent.setLocation(x, y);
+      myComponent.validate();
+      myComponent.repaint();
+    }
   }
 
   /**
@@ -96,24 +126,31 @@ public class LightweightHint implements Hint, UserDataHolder {
   }
 
   public boolean isVisible() {
-    return myComponent.isShowing();
+    return myIsRealPopup ? myPopup != null : myComponent.isShowing();
   }
 
   public void hide() {
     if (isVisible()) {
-      final Rectangle bounds = myComponent.getBounds();
-      final JLayeredPane layeredPane = myComponent.getRootPane().getLayeredPane();
+      if (myIsRealPopup) {
+        myPopup.cancel();
+        myPopup = null;
+        myLastShownRect = null;
+      }
+      else {
+        final Rectangle bounds = myComponent.getBounds();
+        final JLayeredPane layeredPane = myComponent.getRootPane().getLayeredPane();
 
-      try {
-        if(myFocusBackComponent != null){
-          LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+        try {
+          if(myFocusBackComponent != null){
+            LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+          }
+          layeredPane.remove(myComponent);
         }
-        layeredPane.remove(myComponent);
+        finally {
+          LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
+        }
+        layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
       }
-      finally {
-        LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-      }
-      layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
     }
     if (myEscListener != null) {
       myComponent.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
