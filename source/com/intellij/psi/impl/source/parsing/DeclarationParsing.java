@@ -918,25 +918,16 @@ public class DeclarationParsing extends Parsing {
     TreeUtil.addChildren(list, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
-    TreeElement classReference = parseJavaCodeReference(lexer, true, true);
-    if (classReference != null){
-      TreeUtil.addChildren(list, classReference);
-      while(true){
-        if (lexer.getTokenType() != referenceDelimiter) break;
-        TreeElement comma = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
-        lexer.advance();
-        TreeUtil.addChildren(list, comma);
-
-        classReference = parseJavaCodeReference(lexer, true, true);
-        if (classReference == null){
-          TreeUtil.addChildren(list, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
-          break;
-        }
-        TreeUtil.addChildren(list, classReference);
+    while (true) {
+      TreeElement classReference = parseJavaCodeReference(lexer, true, true);
+      if (classReference == null) {
+        classReference = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
       }
-    }
-    else{
-      TreeUtil.addChildren(list, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
+      TreeUtil.addChildren(list, classReference);
+      if (lexer.getTokenType() != referenceDelimiter) break;
+      TreeElement delimiter = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+      lexer.advance();
+      TreeUtil.addChildren(list, delimiter);
     }
 
     return list;
@@ -987,7 +978,7 @@ public class DeclarationParsing extends Parsing {
       return param;
     } else{
       TreeUtil.addChildren(param, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
-      return (TreeElement)param.getFirstChildNode();
+      return param.getFirstChildNode();
     }
   }
 }
