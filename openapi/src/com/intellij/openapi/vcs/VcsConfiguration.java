@@ -34,7 +34,6 @@ import java.util.List;
 public final class VcsConfiguration implements JDOMExternalizable, ProjectComponent {
   @NonNls private static final String VALUE_ATTR = "value";
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
-  public boolean CHECK_CODE_SMELLS_BEFORE_FILE_COMMIT = true;
 
   public enum StandardOption {
     CHECKIN(VcsBundle.message("vcs.command.name.checkin")),
@@ -46,8 +45,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     UPDATE(VcsBundle.message("vcs.command.name.update"));
 
     StandardOption(final String id) {
-     myId = id;
-   }
+      myId = id;
+    }
 
     private final String myId;
 
@@ -61,8 +60,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     REMOVE(VcsBundle.message("vcs.command.name.remove"));
 
     StandardConfirmation(final String id) {
-     myId = id;
-   }
+      myId = id;
+    }
 
     private final String myId;
 
@@ -81,7 +80,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public float CHECKIN_DIALOG_SPLITTER_PROPORTION = 0.8f;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
-  public boolean OPTIMIZE_IMPORTS_BEFORE_FILE_COMMIT = false;
 
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
@@ -171,7 +169,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     while (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
       myLastCommitMessages.remove(0);
     }
-    
+
     myLastCommitMessages.add(comment);
   }
 

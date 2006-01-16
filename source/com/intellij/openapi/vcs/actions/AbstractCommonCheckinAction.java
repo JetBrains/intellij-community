@@ -116,7 +116,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   private List<VcsException> checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
     List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-    if (ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue() 
+    if (ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue()
         || OptionsDialog.shiftIsPressed(context.getModifiers())) {
 
 
@@ -170,37 +170,30 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
             return;
           }
 
-          final Runnable checkinAction = new Runnable() {
+          CheckinProjectPanelImpl checkinProjectPanel = (CheckinProjectPanelImpl)dialog.getCheckinProjectPanel();
+          final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = checkinProjectPanel.getCheckinOperations();
+          Runnable checkinAction = new Runnable() {
             public void run() {
-              CheckinProjectPanelImpl checkinProjectPanel = (CheckinProjectPanelImpl)dialog.getCheckinProjectPanel();
-              final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = checkinProjectPanel.getCheckinOperations();
-              Runnable checkinAction = new Runnable() {
+
+              for (CheckinEnvironment checkinEnvironment : checkinOperations.keySet()) {
+                vcsExceptions.addAll(checkinEnvironment.commit(dialog, project));
+              }
+
+              final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(getActionName(context), "", true);
+              VirtualFileManager.getInstance().refresh(true, new Runnable() {
                 public void run() {
-
-                  for (CheckinEnvironment checkinEnvironment : checkinOperations.keySet()) {
-                    vcsExceptions.addAll(checkinEnvironment.commit(dialog, project));
+                  lvcsAction.finish();
+                  FileStatusManager.getInstance(project).fileStatusesChanged();
+                  if (refreshablePanel != null) {
+                    refreshablePanel.refresh();
                   }
-
-                  final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(getActionName(context), "", true);
-                  VirtualFileManager.getInstance().refresh(true, new Runnable() {
-                    public void run() {
-                      lvcsAction.finish();
-                      FileStatusManager.getInstance(project).fileStatusesChanged();
-                      if (refreshablePanel != null) {
-                        refreshablePanel.refresh();
-                      }
-                      refreshFileView(project);
-                    }
-                  });
-                  AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
+                  refreshFileView(project);
                 }
-              };
-              ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, getActionName(context), true, project);
+              });
+              AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
             }
           };
-
-          AbstractVcsHelper.getInstance(project).optimizeImportsAndReformatCode(dialog.getCheckinProjectPanel().getVirtualFiles(),
-                                                                                VcsConfiguration.getInstance(project), checkinAction, true);
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, getActionName(context), true, project);
 
 
         }

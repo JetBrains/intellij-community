@@ -19,10 +19,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.checkin.BeforeCheckinHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Manages the version control systems used by a specific project.
@@ -59,7 +61,7 @@ public abstract class ProjectLevelVcsManager {
    * Checks if all files in the specified array are managed by the specified VCS.
    *
    * @param abstractVcs the VCS to check.
-   * @param files the files to check.
+   * @param files       the files to check.
    * @return true if all files are managed by the VCS, false otherwise.
    */
   public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
@@ -69,7 +71,7 @@ public abstract class ProjectLevelVcsManager {
    *
    * @param file the file to check.
    * @return the VCS instance, or null if the file does not belong to any module or the module
-   * it belongs to is not under version control.
+   *         it belongs to is not under version control.
    */
   public abstract AbstractVcs getVcsFor(VirtualFile file);
 
@@ -121,4 +123,11 @@ public abstract class ProjectLevelVcsManager {
   @NotNull
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                @NotNull AbstractVcs vcs);
+
+
+  public abstract List<BeforeCheckinHandler> getRegisteredBeforeCheckinHandlers();
+
+  public abstract void registerBeforeCheckinHandler(BeforeCheckinHandler handler);
+
+  public abstract void unregisterBeforeCheckinHandler(BeforeCheckinHandler handler);
 }

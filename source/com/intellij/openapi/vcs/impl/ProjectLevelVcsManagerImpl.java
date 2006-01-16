@@ -33,8 +33,8 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +60,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.checkin.BeforeCheckinHandler;
+import com.intellij.openapi.vcs.checkin.CodeAnalisysBeforeCheckinHandler;
+import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.fileView.impl.VirtualAndPsiFileDataProvider;
@@ -77,8 +80,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -109,6 +112,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
+  private final List<BeforeCheckinHandler> myRegisteredBeforeCheckinHandlers = new ArrayList<BeforeCheckinHandler>();
 
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
@@ -213,6 +217,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
     myLineStatusTrackers = new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
 
+    registerBeforeCheckinHandler(new StandardBeforeCheckinHandler(myProject));
+    registerBeforeCheckinHandler(new CodeAnalisysBeforeCheckinHandler(myProject));
+
     initialize();
 
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
@@ -305,7 +312,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       vcs.shutdown();
     }
     catch (VcsException e) {
-      e.printStackTrace();
+      LOG.info(e);
     }
     myVcss.remove(vcs);
     myCachedVCSs = null;
@@ -461,14 +468,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (myLineStatusUpdateAlarms.containsKey(document)) {
       alarm = myLineStatusUpdateAlarms.get(document);
       alarm.cancelAllRequests();
-    } else {
+    }
+    else {
       alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       myLineStatusUpdateAlarms.put(document, alarm);
     }
 
     final LineStatusTracker tracker = createTrackerForDocument(document);
 
-    alarm.addRequest(new Runnable(){
+    alarm.addRequest(new Runnable() {
       public void run() {
         try {
           try {
@@ -636,7 +644,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptions.get(actionName);
   }
 
-  private final Map<String, VcsShowConfirmationOption.Value> myReadValue = new com.intellij.util.containers.HashMap<String, VcsShowConfirmationOption.Value>();
+  private final Map<String, VcsShowConfirmationOption.Value> myReadValue =
+    new com.intellij.util.containers.HashMap<String, VcsShowConfirmationOption.Value>();
 
   public void readExternal(Element element) throws InvalidDataException {
     List subElements = element.getChildren(OPTIONS_SETTING);
@@ -709,5 +718,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NotNull
   public VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
     return myConfirmations.get(option.getId());
+  }
+
+  public List<BeforeCheckinHandler> getRegisteredBeforeCheckinHandlers() {
+    return Collections.unmodifiableList(myRegisteredBeforeCheckinHandlers);
+  }
+
+  public void registerBeforeCheckinHandler(BeforeCheckinHandler handler) {
+    myRegisteredBeforeCheckinHandlers.add(handler);
+  }
+
+  public void unregisterBeforeCheckinHandler(BeforeCheckinHandler handler) {
+    myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 }

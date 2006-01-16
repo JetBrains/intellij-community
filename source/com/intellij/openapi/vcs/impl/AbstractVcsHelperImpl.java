@@ -95,7 +95,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           return;
         }
 
-        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null){
+        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null) {
           protected boolean canHideWarnings() {
             return false;
           }
@@ -105,7 +105,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           public void run() {
             final MessageView messageView = myProject.getComponent(MessageView.class);
             final String tabDisplayName = VcsBundle.message("code.smells.error.messages.tab.name");
-            final Content content = PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
+            final Content content =
+              PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
             content.putUserData(KEY, errorTreeView);
             messageView.addContent(content);
             messageView.setSelectedContent(content);
@@ -149,7 +150,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           return;
         }
 
-        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null){
+        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null) {
           protected boolean canHideWarnings() {
             return false;
           }
@@ -158,7 +159,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         commandProcessor.executeCommand(myProject, new Runnable() {
           public void run() {
             final MessageView messageView = myProject.getComponent(MessageView.class);
-            final Content content = PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
+            final Content content =
+              PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
             content.putUserData(KEY, errorTreeView);
             messageView.addContent(content);
             messageView.setSelectedContent(content);
@@ -184,7 +186,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   private int getErrorCategory(VcsException exception) {
     if (exception.isWarning()) {
       return MessageCategory.WARNING;
-    } else {
+    }
+    else {
       return MessageCategory.ERROR;
     }
   }
@@ -348,7 +351,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     return "AbstractVcsHelper";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
   }
@@ -367,7 +371,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                  final AbstractVcs abstractVcs,
                                  final Object checkinParameters,
                                  final ArrayList<VcsException> exceptions) {
-    final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
+    final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations =
+      ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject,
                                                              abstractVcs);
@@ -439,7 +444,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       }
     };
 
-    if (optimizeImports(configuration, checkinProject)) {
+    if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
       new OptimizeImportsProcessor(myProject, getPsiFiles(files), reformatCodeAndPerformCheckout).run();
     }
     else {
@@ -485,7 +490,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       if (version2.getRevisionNumber().compareTo(version1.getRevisionNumber()) > 0) {
         request.setContents(content2, content1);
         request.setContentTitles(version2.getRevisionNumber().asString(), version1.getRevisionNumber().asString());
-      } else {
+      }
+      else {
         request.setContents(content1, content2);
         request.setContentTitles(version1.getRevisionNumber().asString(), version2.getRevisionNumber().asString());
       }
@@ -528,7 +534,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public void showRevisions(List<AbstractRevisions> revisions, final String title, String commitMessage, String commitMessageTitle) {
     final TreeTable directoryDiffTree = PeerFactory.getInstance().getUIHelper()
-        .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
+      .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
     new ShowRevisionChangesAction(myProject).registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, directoryDiffTree);
 
     FrameWrapper frameWrapper = new FrameWrapper("vcs.showRevisions");
@@ -545,7 +551,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                              final String commitMessageTitle) {
     if (commitMessage == null || commitMessageTitle == null) {
       return new JScrollPane(directoryDiffTree);
-    } else {
+    }
+    else {
       final JPanel result = new JPanel(new BorderLayout());
       result.add(new JScrollPane(directoryDiffTree), BorderLayout.CENTER);
       final JTextArea textArea = new JTextArea(commitMessage);
@@ -595,7 +602,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         }
       }
     }, VcsBundle.message("checking.code.smells.progress.title"), true, myProject);
-    
+
     if (!completed) throw new ProcessCanceledException();
 
     return result;
@@ -653,7 +660,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
       return new DocumentContent(FileDocumentManager.getInstance().getDocument(vFile), vFile.getFileType());
-    } else {
+    }
+    else {
       return new SimpleContent(new String(version.getContent()), FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
     }
   }
@@ -661,11 +669,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   private boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
     return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT :
            configuration.REFORMAT_BEFORE_FILE_COMMIT;
-  }
-
-  private boolean optimizeImports(final VcsConfiguration configuration, boolean checkinProject) {
-    return checkinProject ? configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT :
-           configuration.OPTIMIZE_IMPORTS_BEFORE_FILE_COMMIT;
   }
 
   private PsiFile[] getPsiFiles(Collection<VirtualFile> selectedFiles) {
@@ -726,8 +729,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     public void contentAdded(ContentManagerEvent event) {
     }
+
     public void contentRemoveQuery(ContentManagerEvent event) {
     }
+
     public void selectionChanged(ContentManagerEvent event) {
     }
   }
