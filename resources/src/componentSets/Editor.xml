@@ -42,33 +42,40 @@
     <component>
       <interface-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.fileEditor.impl.EditorHistoryManager</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.SelectInEditorManager</interface-class>
       <implementation-class>com.intellij.ide.impl.SelectInEditorManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeEditor.printing.ExportToHTMLSettings</interface-class>
       <implementation-class>com.intellij.codeEditor.printing.ExportToHTMLSettings</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

@@ -22,6 +22,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
@@ -248,6 +249,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     registerComponent(interfaceClass, implementationClass, options, false, false);
   }
 
+  @NotNull
   public synchronized Class[] getComponentInterfaces() {
     return myComponentInterfaces.toArray(new Class[myComponentInterfaces.size()]);
   }
@@ -268,6 +270,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return components.toArray(new BaseComponent[components.size()]);
   }
 
+  @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
     Class[] componentClasses;
     synchronized (this) {
@@ -452,15 +455,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myInterfaceToOptionsMap.get(componentInterfaceClass);
   }
 
-  public void loadComponentsConfiguration(String layer) {
-    loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer);
+  public void loadComponentsConfiguration(String layer, final boolean loadDummies) {
+    loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer, loadDummies);
   }
 
-  private void loadComponentsConfiguration(String descriptor, String layer) {
-    loadComponentsConfiguration(descriptor, layer, new ArrayList<String>());
+  private void loadComponentsConfiguration(String descriptor, String layer, boolean loadDummies) {
+    loadComponentsConfiguration(descriptor, layer, new ArrayList<String>(), loadDummies);
   }
 
-  private void loadComponentsConfiguration(String descriptor, String layer, ArrayList<String> loadedIncludes) {
+  private void loadComponentsConfiguration(String descriptor, String layer, ArrayList<String> loadedIncludes, boolean loadDummies) {
     try {
       Element root = ourDescriptorToRootMap.get(descriptor);
       if (root == null) {
@@ -483,70 +486,72 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
           if (includeName != null && !loadedIncludes.contains(includeName)) {
             loadedIncludes.add(includeName);
-            loadComponentsConfiguration(includeName, layer, loadedIncludes);
+            loadComponentsConfiguration(includeName, layer, loadedIncludes, loadDummies);
           }
         }
       }
 
-      loadComponentsConfiguration(root.getChild(layer));
+      loadComponentsConfiguration(root.getChild(layer), loadDummies);
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
 
-  public void loadComponentsConfiguration(final Element element) {
-    loadComponentsConfiguration(element, null);
+  private void loadComponentsConfiguration(final Element element, boolean loadDummies) {
+    loadComponentsConfiguration(element, null, loadDummies);
   }
 
-  public void loadComponentsConfiguration(final Element element, IdeaPluginDescriptor descriptor) {
+  public void loadComponentsConfiguration(final Element element, IdeaPluginDescriptor descriptor, final boolean loadDummies) {
     if (element == null) return;
     final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (final Object o : element.getChildren()) {
+    for (final Object o : element.getChildren(COMPONENT_ELEMENT)) {
       try {
         Element child = (Element)o;
-        if (COMPONENT_ELEMENT.equals(child.getName())) {
-          String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
-          String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
-          if (headless) {
-            String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
-            if (headlessImplClass != null) {
-              if (headlessImplClass.trim().length() == 0) continue;
-              implClass = headlessImplClass;
-            }
-          }
-
-          if (interfaceClass == null) interfaceClass = implClass;
-
-          Map<String, String> options = null;
-
-          final List optionElements = child.getChildren(OPTION_ELEMENT);
-          if (optionElements.size() != 0) {
-            options = new HashMap<String, String>();
-            for (final Object optionElement : optionElements) {
-              Element e = (Element)optionElement;
-              String name = e.getAttributeValue(NAME_ATTR);
-              String value = e.getAttributeValue(VALUE_ATTR);
-              options.put(name, value);
-            }
-          }
-
-          if (!isComponentSuitable(options)) continue;
-
-          ClassLoader loader = null;
-          if (descriptor != null) {
-            loader = descriptor.getPluginClassLoader();
-          }
-          if (loader == null) {
-            loader = getClass().getClassLoader();
-          }
-
-          interfaceClass = interfaceClass.trim();
-          implClass = implClass.trim();
-
-          registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
-                            isTrue(options, "lazy"));
+        boolean skipForDummyProject = child.getChild("skipForDummyProject") != null;
+        if (!loadDummies && skipForDummyProject) {
+          continue;
         }
+        String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
+        String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
+        if (headless) {
+          String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
+          if (headlessImplClass != null) {
+            if (headlessImplClass.trim().length() == 0) continue;
+            implClass = headlessImplClass;
+          }
+        }
+
+        if (interfaceClass == null) interfaceClass = implClass;
+
+        Map<String, String> options = null;
+
+        final List optionElements = child.getChildren(OPTION_ELEMENT);
+        if (optionElements.size() != 0) {
+          options = new HashMap<String, String>();
+          for (final Object optionElement : optionElements) {
+            Element e = (Element)optionElement;
+            String name = e.getAttributeValue(NAME_ATTR);
+            String value = e.getAttributeValue(VALUE_ATTR);
+            options.put(name, value);
+          }
+        }
+
+        if (!isComponentSuitable(options)) continue;
+
+        ClassLoader loader = null;
+        if (descriptor != null) {
+          loader = descriptor.getPluginClassLoader();
+        }
+        if (loader == null) {
+          loader = getClass().getClassLoader();
+        }
+
+        interfaceClass = interfaceClass.trim();
+        implClass = implClass.trim();
+
+        registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
+                          isTrue(options, "lazy"));
       }
       catch (Exception e) {
         if (descriptor != null) {

@@ -87,13 +87,16 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ProjectModulesConfigurable</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ModuleEditorState</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.compiler.options.CompilerConfigurable</implementation-class>
+      <skipForDummyProject/>
     </component>
     <!--
     <component>
@@ -103,10 +106,12 @@
     <component>
       <interface-class>com.intellij.application.options.ProjectCodeStyleConfigurable</interface-class>
       <implementation-class>com.intellij.application.options.ProjectCodeStyleConfigurable</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.configurable.VcsManagerConfigurable</implementation-class>
-    </component>        
+      <skipForDummyProject/>
+    </component>
     <!--<component>-->
     <!--  <implementation-class>com.intellij.j2ee.web.WebConfigurable</implementation-class>-->
     <!--</component>-->

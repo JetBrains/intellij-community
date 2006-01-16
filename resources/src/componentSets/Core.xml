@@ -150,6 +150,7 @@
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
@@ -166,6 +167,7 @@
     <component>
       <interface-class>com.intellij.psi.impl.source.jsp.JspManager</interface-class>
       <implementation-class>com.intellij.psi.impl.source.jsp.JspManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.psi.text.BlockSupport</interface-class>
@@ -193,15 +195,18 @@
     <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable</implementation-class>
+      <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry</interface-class>
       <implementation-class>com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.PomModel</interface-class>
@@ -210,27 +215,33 @@
     <component>
       <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
       <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.java.PomJavaAspect</interface-class>
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
       <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
       <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.psi.search.scope.packageSet.NamedScopeManager</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.project.ProjectReloadState</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectReloadStateImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 

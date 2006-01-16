@@ -13,6 +13,7 @@
       <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
       <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

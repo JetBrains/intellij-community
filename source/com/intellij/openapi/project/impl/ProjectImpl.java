@@ -16,7 +16,6 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,7 +57,7 @@ import java.util.*;
 /**
  *
  */
-public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, AreaInstance {
+public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   private ProjectManagerImpl myManager;
@@ -243,16 +242,17 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
   }
 
   public void loadProjectComponents() {
-    loadComponentsConfiguration(PROJECT_LAYER);
+    boolean realProject = !isDummy();
+    loadComponentsConfiguration(PROJECT_LAYER, realProject);
 
-    if (PluginManager.shouldLoadPlugins()) {
+    if (realProject && PluginManager.shouldLoadPlugins()) {
       final Application app = ApplicationManager.getApplication();
       final IdeaPluginDescriptor[] plugins = app.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element projectComponents = plugin.getProjectComponents();
         if (projectComponents != null) {
-          loadComponentsConfiguration(projectComponents, plugin);
+          loadComponentsConfiguration(projectComponents, plugin, true);
         }
       }
     }

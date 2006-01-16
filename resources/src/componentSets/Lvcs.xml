@@ -10,6 +10,7 @@
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcs</interface-class>
       <implementation-class>com.intellij.localVcs.common.CommonLVCS</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>

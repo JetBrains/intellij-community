@@ -69,38 +69,47 @@
       <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
       <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
       <option name="workspace" value="true"/>
-    </component>   
+      <skipForDummyProject/>
+    </component>
     <component>
       <interface-class>com.intellij.find.FindManager</interface-class>
       <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.usages.UsageViewManager</interface-class>
       <implementation-class>com.intellij.usages.impl.UsageViewManagerImpl</implementation-class>      
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.find.findInProject.FindInProjectManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.find.replaceInProject.ReplaceInProjectManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
       <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ant.AntConfiguration</interface-class>
       <implementation-class>com.intellij.ant.impl.AntConfigurationImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.util.TreeClassChooserFactory</interface-class>
       <implementation-class>com.intellij.ide.util.TreeClassChooserFactoryImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ant.impl.AntWorkspaceConfiguration</interface-class>
       <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
 
   </project-components>

@@ -52,14 +52,17 @@
     <component>
       <interface-class>com.intellij.codeInsight.AutoPopupController</interface-class>
       <implementation-class>com.intellij.codeInsight.AutoPopupController</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>
@@ -68,15 +71,18 @@
     <component>
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.javadoc.JavaDocManager</interface-class>
       <implementation-class>com.intellij.codeInsight.javadoc.JavaDocManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
       <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</headless-implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.intention.IntentionManager</interface-class>
@@ -86,21 +92,26 @@
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.guess.GuessManager</interface-class>
       <implementation-class>com.intellij.codeInsight.guess.impl.GuessManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.ExpectedTypesProvider</interface-class>
       <implementation-class>com.intellij.codeInsight.ExpectedTypesProviderImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

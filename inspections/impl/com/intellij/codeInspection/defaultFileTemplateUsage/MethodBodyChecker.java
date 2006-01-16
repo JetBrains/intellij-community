@@ -7,19 +7,20 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Comparator;
 
 /**
  * @author Alexey
@@ -34,7 +35,8 @@ public class MethodBodyChecker {
 
   private static PsiMethod getTemplateMethod(PsiType returnType, List<HierarchicalMethodSignature> superSignatures, final PsiClass aClass) {
     if (DEFAULT_PROJECT == null) {
-      DEFAULT_PROJECT = ProjectManager.getInstance().getDefaultProject();
+      //DEFAULT_PROJECT = ProjectManager.getInstance().getDefaultProject();
+      DEFAULT_PROJECT = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
       OBJECT_TYPE = PsiType.getJavaLangObject(PsiManager.getInstance(DEFAULT_PROJECT), GlobalSearchScope.allScope(DEFAULT_PROJECT));
     }
     if (!(returnType instanceof PsiPrimitiveType)) {

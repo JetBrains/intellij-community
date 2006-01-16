@@ -109,7 +109,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   }
 
   public void loadModuleComponents() {
-    loadComponentsConfiguration(MODULE_LAYER);
+    loadComponentsConfiguration(MODULE_LAYER, true);
 
     if (PluginManager.shouldLoadPlugins()) {
       final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
@@ -118,7 +118,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
         final Element moduleComponents = plugin.getModuleComponents();
         if (moduleComponents != null) {
-          loadComponentsConfiguration(moduleComponents, plugin);
+          loadComponentsConfiguration(moduleComponents, plugin, true);
         }
       }
     }

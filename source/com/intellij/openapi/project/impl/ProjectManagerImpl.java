@@ -185,7 +185,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
-  private String canonicalize(final String filePath) {
+  private static String canonicalize(final String filePath) {
     if (filePath == null) return null;
     try {
       String canonicalPath = new File(filePath).getCanonicalPath();

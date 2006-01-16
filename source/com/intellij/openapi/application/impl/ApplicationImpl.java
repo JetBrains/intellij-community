@@ -155,7 +155,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void loadApplicationComponents() {
-    loadComponentsConfiguration(APPLICATION_LAYER);
+    loadComponentsConfiguration(APPLICATION_LAYER, true);
 
     if (PluginManager.shouldLoadPlugins()) {
       final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
@@ -163,7 +163,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element appComponents = plugin.getAppComponents();
         if (appComponents != null) {
-          loadComponentsConfiguration(appComponents, plugin);
+          loadComponentsConfiguration(appComponents, plugin, true);
         }
       }
     }

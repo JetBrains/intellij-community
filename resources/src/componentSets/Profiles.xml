@@ -15,15 +15,19 @@
     <component>
       <interface-class>com.intellij.profile.scope.ProfileScopeFactory</interface-class>
       <implementation-class>com.intellij.profile.scope.ProfileScopeFactoryImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileManager</implementation-class>
+      <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.profile.ui.InspectionProfileConfigurable</implementation-class>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>
