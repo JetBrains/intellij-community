@@ -4,10 +4,10 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -39,7 +39,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
   }
-
+                                         
   public XmlNSDescriptorImpl() {
   }
 
