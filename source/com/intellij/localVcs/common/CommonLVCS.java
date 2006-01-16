@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.testFramework.MockVirtualFile;
+import com.intellij.util.io.ByteBufferUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -317,6 +318,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     catch (IOException e) {
       LOG.error(e);
     }
+    LOG.info( "Closed local history at " + myVcsLocation.getAbsolutePath() );
+    LOG.info("TOTAL MAPPED BYTES = " + ByteBufferUtil.TOTAL_MAPPED_BYTES);
   }
 
   public VirtualFileListener getVirtualFileListener() {

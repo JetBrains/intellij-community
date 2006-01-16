@@ -42,6 +42,7 @@ public class MappedFile {
     raf.close();
     myRealSize = myFile.length();
     getBuffer().position((int)myPosition);
+    ByteBufferUtil.TOTAL_MAPPED_BYTES += myRealSize;
   }
 
 
