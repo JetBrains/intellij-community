@@ -1625,34 +1625,4 @@ public class CompileDriver {
     ModulesConfigurator.showDialog(myProject, moduleNameToSelect, tabNameToSelect, false);
   }
 
-  private static class VfsSnapshot {
-    private THashMap<String, VirtualFile> myUrlToFile;
-    private THashMap<VirtualFile, String> myFileToUrl;
-
-    public VfsSnapshot(final VirtualFile[] files) {
-      myUrlToFile = new THashMap<String, VirtualFile>(files.length);
-      myFileToUrl = new THashMap<VirtualFile, String>(files.length);
-      for (final VirtualFile file : files) {
-        final String url = file.getUrl();
-        myUrlToFile.put(url, file);
-        myFileToUrl.put(file, url);
-      }
-    }
-
-    public VirtualFile getFileByUrl(final String url) {
-      return myUrlToFile.get(url);
-    }
-
-    public String getUrlByFile(final VirtualFile file) {
-      return myFileToUrl.get(file);
-    }
-
-    public void forEachUrl(TObjectProcedure<String> p) {
-      myUrlToFile.forEachKey(p);
-    }
-
-    public int size() {
-      return myUrlToFile.size();
-    }
-  }
 }

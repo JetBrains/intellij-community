@@ -433,7 +433,7 @@ public class VfsUtil {
   }
 
   public static String pathToUrl(@NotNull String path) {
-    return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
+    return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
   }
 
   public static File virtualToIoFile(VirtualFile file) {
