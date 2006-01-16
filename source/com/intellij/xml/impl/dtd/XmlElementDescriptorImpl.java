@@ -218,11 +218,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return result.toArray(new XmlAttlistDecl[result.size()]);
   }
 
+  private static Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
+
   private XmlAttlistDecl[] getAttlistDecls() {
     if (myAttlistDecl != null) return myAttlistDecl;
 
     final List result = new ArrayList();
-    XmlElement xmlElement = PsiTreeUtil.getParentOfType(getDeclaration(),XmlDocument.class);
+    final XmlElement xmlElement = (XmlElement)PsiTreeUtil.getParentOfType(getDeclaration(),ourParentClassesToScanAttributes);
     xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
     myAttlistDecl = (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
     return myAttlistDecl;
