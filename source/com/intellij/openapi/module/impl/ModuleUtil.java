@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.module.impl;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -17,12 +18,11 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ide.highlighter.ModuleFileType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -99,7 +99,7 @@ public class ModuleUtil {
   }
 
   @Nullable
-  public static Module findModuleForPsiElement(@Nullable PsiElement element) {
+  public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     if (!element.isValid()) return null;
     Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
