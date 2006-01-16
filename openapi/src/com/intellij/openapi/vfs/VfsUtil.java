@@ -23,6 +23,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -553,5 +555,15 @@ public class VfsUtil {
   public static boolean isValidName(String name) {
     if (name.indexOf('\\') >= 0) return false;
     return name.indexOf('/') < 0;
+  }
+
+  public static String getUrlForLibraryRoot(File libraryRoot) {
+    String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
+    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == StdFileTypes.ARCHIVE) {
+      return VirtualFileManager.constructUrl(JarFileSystem.getInstance().getProtocol(), path + JarFileSystem.JAR_SEPARATOR);
+    }
+    else {
+      return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
+    }
   }
 }

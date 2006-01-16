@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -146,12 +148,16 @@ public class JavaModuleBuilder extends ModuleBuilder {
       final String sourceLibraryPath = libInfo.second;
       Library library = libraryTable.createLibrary();
       Library.ModifiableModel modifiableModel = library.getModifiableModel();
-      modifiableModel.addRoot(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(moduleLibraryPath)), OrderRootType.CLASSES);
+      modifiableModel.addRoot(getUrlByPath(moduleLibraryPath), OrderRootType.CLASSES);
       if (sourceLibraryPath != null) {
-        modifiableModel.addRoot(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(sourceLibraryPath)), OrderRootType.SOURCES);
+        modifiableModel.addRoot(getUrlByPath(sourceLibraryPath), OrderRootType.SOURCES);
       }
       modifiableModel.commit();
     }
+  }
+
+  private static String getUrlByPath(final String path) {
+    return VfsUtil.getUrlForLibraryRoot(new File(path));
   }
 
   public void addModuleLibrary(String moduleLibraryPath, String sourcePath) {
