@@ -20,6 +20,7 @@ import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -39,6 +40,10 @@ import java.util.Iterator;
  */
 public abstract class BaseTableView extends Table {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
+
+  public BaseTableView() {
+    this(new ListTableModel(ColumnInfo.EMPTY_ARRAY));
+  }
 
   public BaseTableView(final ListTableModel model) {
     super(model);

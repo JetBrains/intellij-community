@@ -31,7 +31,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class TableView extends BaseTableView implements ItemsProvider, SelectionProvider{
+public class TableView extends BaseTableView implements ItemsProvider, SelectionProvider {
+  public TableView() {
+    this(new ListTableModel(ColumnInfo.EMPTY_ARRAY));
+  }
+
   public TableView(final ListTableModel model) {
     super(model);
     setModel(model);
@@ -41,7 +45,6 @@ public class TableView extends BaseTableView implements ItemsProvider, Selection
   public void setModel(final ListTableModel model) {
     super.setModel(model);
     getTableHeader().setDefaultRenderer(new TableHeaderRenderer(model));
-
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
