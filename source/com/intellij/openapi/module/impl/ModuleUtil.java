@@ -99,7 +99,7 @@ public class ModuleUtil {
   }
 
   @Nullable
-  public static Module findModuleForPsiElement(@NotNull PsiElement element) {
+  public static Module findModuleForPsiElement(@Nullable PsiElement element) {
     if (!element.isValid()) return null;
     Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
