@@ -222,14 +222,15 @@ public class RepositoryHelper {
       if (contentDisposition == null) {
         // try to find filename in URL
         String usedURL = connection.getURL().toString();
-        int startPos = usedURL.lastIndexOf("/");
-
-        fileName = usedURL.substring(startPos + 1);
+        final int startPos = usedURL.lastIndexOf("/");
+        final int endPos = usedURL.lastIndexOf("?");
+        fileName = usedURL.substring(startPos + 1, endPos < startPos? usedURL.length() : endPos);
         if (fileName.length() == 0) {
           return null;
         }
 
-      } else {
+      }
+      else {
         int startIdx = contentDisposition.indexOf(FILENAME);
         if (startIdx != -1) {
           fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
