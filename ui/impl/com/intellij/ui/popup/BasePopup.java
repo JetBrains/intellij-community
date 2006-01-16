@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.BoldLabel;
@@ -20,8 +22,8 @@ import com.intellij.ui.popup.util.ElementFilter;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ui.BlockBorder;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -280,6 +282,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     getStep().canceled();
   }
 
+  public boolean isVisible() {
+    return myPopup != null;
+  }
+
+  public Component getContent() {
+    return myContent;
+  }
+
   public void showInCenterOf(Component aContainer) {
     final JComponent component = getTargetComponent(aContainer);
 
@@ -301,6 +311,24 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
       return ((JDialog) aComponent).getRootPane();
     }
   }
+
+  public void showCenteredInCurrentWindow(Project project) {
+    Window window = null;
+
+    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
+    if(focusedComponent!=null){
+      if(focusedComponent instanceof Window){
+        window=(Window)focusedComponent;
+      }else{
+        window=SwingUtilities.getWindowAncestor(focusedComponent);
+      }
+    }
+    if (window == null) {
+      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    }
+
+    showInCenterOf(window);
+  }  
 
   public void showUnderneathOf(Component aComponent) {
     final JComponent component = getTargetComponent(aComponent);

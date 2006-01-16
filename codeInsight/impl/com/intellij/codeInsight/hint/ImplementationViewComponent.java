@@ -50,6 +50,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +58,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -80,11 +80,11 @@ public class ImplementationViewComponent extends JPanel {
   private JPanel myBinaryPanel;
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
-  private LightweightHint myHint;
+  private JBPopup myHint;
   private static final @NonNls String TEXT_PAGE_KEY = "Text";
   private static final @NonNls String BINARY_PAGE_KEY = "Binary";
 
-  public void setHint(final LightweightHint hint) {
+  public void setHint(final JBPopup hint) {
     myHint = hint;
   }
 
@@ -96,7 +96,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  public ImplementationViewComponent(PsiElement[] elements, final boolean requestFocus) {
+  public ImplementationViewComponent(PsiElement[] elements) {
     super(new BorderLayout());
     myElements = new PsiElement[elements.length];
     myIndex = 0;
@@ -144,7 +144,7 @@ public class ImplementationViewComponent extends JPanel {
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myHint != null) {
-          myHint.hide();
+          myHint.cancel();
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -195,19 +195,10 @@ public class ImplementationViewComponent extends JPanel {
     setPreferredSize(new Dimension(600, 400));
 
     updateControls();
+  }
 
-    if (requestFocus) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (myFileChooser != null) {
-            myFileChooser.requestFocus();
-          }
-          else {
-            myViewingPanel.requestFocus();
-          }
-        }
-      });
-    }
+  public JComponent getPrefferedFocusableComponent() {
+    return myFileChooser != null ? myFileChooser : myViewingPanel;
   }
 
   private void updateControls() {
@@ -378,7 +369,7 @@ public class ImplementationViewComponent extends JPanel {
     @Override public void actionPerformed(AnActionEvent e) {
       super.actionPerformed(e);
       if (myHint.isVisible()) {
-        myHint.hide();
+        myHint.cancel();
       }
     }
   }
@@ -392,7 +383,7 @@ public class ImplementationViewComponent extends JPanel {
       super.actionPerformed(e);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myHint.getComponent().requestFocusInWindow();
+          myHint.getContent().requestFocusInWindow();
         }
       });
     }

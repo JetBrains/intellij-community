@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
@@ -38,10 +37,7 @@ public abstract class JBPopupFactory {
   public abstract TreePopup createTree(JBPopup parent, TreePopupStep step, Object parentValue);
   public abstract TreePopup createTree(TreePopupStep step);
 
-  public abstract JBPopup createPreconfiguredListPopup(String title,
-                                                       JList list,
-                                                       Runnable runnable,
-                                                       Project project);
+  public abstract JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent);
 
   /**
    * @return location as close as possible to the action origin. Method has special handling of

@@ -32,7 +32,6 @@
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
@@ -43,13 +42,12 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
-import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -60,8 +58,7 @@ public class ShowImplementationsAction extends AnAction {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    final JComponent contextComponent = (JComponent)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-    RelativePoint hintPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    final RelativePoint hintPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     if (project == null || file == null) return;
 
@@ -124,22 +121,22 @@ public class ShowImplementationsAction extends AnAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickdefinition.lookup");
     }
 
-    ImplementationViewComponent component = new ImplementationViewComponent(impls, true);
+    // These two invokeLaters necessary for the focus to get back to the editor after progress dialog in inheritance
+    // search. To be removed after progress indicator will no longer be a modal dialog.
 
-    LightweightHint hint = new LightweightHint(component);
-
-    component.setHint(hint);
-
-    if (editor != null) {
-      HintManager.getInstance().showEditorHint(hint, editor, HintManager.UNDER,
-                                               HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_ESCAPE, 0, true);
-    }
-    else {
-      if (contextComponent != null) {
-        final Point abs = hintPosition.getPoint(contextComponent);
-        hint.show(contextComponent, abs.x, abs.y, contextComponent);
+    final PsiElement[] implsFinal = impls;
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            final ImplementationViewComponent component = new ImplementationViewComponent(implsFinal);
+            final JBPopup popup = JBPopupFactory.getInstance().createComponentPopup(component, component.getPrefferedFocusableComponent());
+            popup.show(hintPosition);
+            component.setHint(popup);
+          }
+        });
       }
-    }
+    });
   }
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiFile file, PsiElement element) {

@@ -11,10 +11,8 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.ui.popup.util.BaseStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -25,8 +23,10 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PopupFactoryImpl extends JBPopupFactory implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
@@ -145,51 +145,8 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     return new TreePopupImpl(aStep);
   }
 
-  public JBPopup createPreconfiguredListPopup(final String title, final JList list, final Runnable runnable, Project project) {
-    return new BasePopup(new BaseStep() {
-      public String getTitle() {
-        return title;
-      }
-
-      public PopupStep onChosen(final Object selectedValue) {
-        runnable.run();
-        return PopupStep.FINAL_CHOICE;
-      }
-
-      public boolean hasSubstep(final Object selectedValue) {
-        return false;
-      }
-
-      public void canceled() {
-      }
-
-      public String getTextFor(final Object value) {
-        return value.toString();
-      }
-
-      public List getValues() {
-        return Collections.EMPTY_LIST;
-      }
-    }) {
-      protected JComponent createContent() {
-        return list;
-      }
-
-      protected void requestFocus() {
-        list.requestFocus();
-      }
-
-      protected InputMap getInputMap() {
-        return list.getInputMap();
-      }
-
-      protected ActionMap getActionMap() {
-        return list.getActionMap();
-      }
-
-      protected void onChildSelectedFor(Object value) {
-      }
-    };
+  public JBPopup createComponentPopup(JComponent content, JComponent prefferableFocusComponent) {
+    return new JBPopupImpl(content, prefferableFocusComponent);
   }
 
   public RelativePoint guessBestPopupLocation(DataContext dataContext) {

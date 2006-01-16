@@ -4,15 +4,11 @@
  */
 package com.intellij.ui.popup.list;
 
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.BasePopup;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -244,84 +240,6 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     if (cellBounds != null) {
       list.scrollRectToVisible(cellBounds);
     }
-  }
-
-  public static void main(String[] args) {
-
-    System.setProperty("is.popup.test", "true");
-
-    final JFrame jFrame = new JFrame();
-    jFrame.setBounds(1200, 10, 100, 100);
-    Container pane = jFrame.getContentPane();
-    pane.setLayout(new BorderLayout());
-    pane.add(new JScrollPane(new JTree()), BorderLayout.CENTER);
-    final JLabel label = new JLabel("Click me");
-    pane.add(label, BorderLayout.NORTH);
-
-    final String root = "root";
-
-    final AbstractTreeStructure s = new AbstractTreeStructure() {
-      public Object[] getChildElements(Object element) {
-        return new Object[0];
-      }
-
-      public Object getParentElement(Object element) {
-        return null;
-      }
-
-      public Object getRootElement() {
-        return root;
-      }
-
-      public void commit() {
-
-      }
-
-      @NotNull
-      public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-        return new NodeDescriptor(null, null) {
-          public Object getElement() {
-            return root;
-          }
-
-          public boolean update() {
-            return true;
-          }
-        };
-      }
-
-      public boolean hasSomethingToCommit() {
-        return false;
-      }
-    };
-
-    label.addMouseListener(new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
-
-        final BaseListPopupStep<String> list = new BaseListPopupStep<String>("Title", new String[]{"One", "OneTwo", "TwoOne", "Two"}) {
-          public PopupStep onChosen(String selectedValue) {
-            return new BaseListPopupStep<String>("Step", new String[]{"One", "Two", "Three", "Four"});
-          }
-
-          public boolean hasSubstep(String selectedValue) {
-            return true;
-          }
-
-//          public boolean isSelectable(Object value) {
-//            return value.toString().startsWith("One");
-//          }
-
-          public String getIndexedString(String value) {
-            return value.toString();
-          }
-        };
-
-        new ListPopupImpl(list).showUnderneathOf(label);
-      }
-    });
-
-    jFrame.show();
-
   }
 
   protected void process(KeyEvent aEvent) {

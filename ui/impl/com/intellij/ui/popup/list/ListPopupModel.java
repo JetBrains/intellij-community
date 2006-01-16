@@ -16,7 +16,7 @@ import java.util.List;
 class ListPopupModel extends AbstractListModel {
 
   private List myOriginalList;
-  private List myFilteredList = new ArrayList();
+  private List<Object> myFilteredList = new ArrayList<Object>();
 
   private ElementFilter myFilter;
   private ListPopupStep myStep;
@@ -36,8 +36,7 @@ class ListPopupModel extends AbstractListModel {
     myFullMatchIndex = -1;
     myStartsWithIndex = -1;
 
-    for (int i = 0; i < myOriginalList.size(); i++) {
-      Object each = (Object) myOriginalList.get(i);
+    for (Object each : myOriginalList) {
       if (myFilter.shouldBeShowing(each)) {
         addToFiltered(each);
       }
