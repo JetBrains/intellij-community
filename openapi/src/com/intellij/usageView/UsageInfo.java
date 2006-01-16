@@ -94,7 +94,8 @@ public class UsageInfo {
   }
 
   public final boolean isWritable() {
-    return getElement().isWritable();
+    PsiElement element = getElement();
+    return element == null || element.isWritable();
   }
 
   public boolean equals(Object o) {
