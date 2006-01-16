@@ -51,6 +51,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -114,12 +115,12 @@ public class ClasspathPanel extends JPanel {
         Object[] elements = new Object[count];
         for (int idx = 0; idx < count; idx++) {
           elements[idx] = myModel.getItemAt(idx);
-        };
+        }
         return elements;
       }
 
       public String getElementText(Object element) {
-        return getCellAppearance(((TableItem)element), false).getText();
+        return getCellAppearance((TableItem)element, false).getText();
       }
 
       public void selectElement(Object element, String selectedText) {
@@ -496,7 +497,8 @@ public class ClasspathPanel extends JPanel {
         },
         new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)),
         new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable()),
-        new ChooseAndAddAction<Module>(4, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
+        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), ApplicationServersManager.getInstance().getLibraryTable()),
+        new ChooseAndAddAction<Module>(5, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }

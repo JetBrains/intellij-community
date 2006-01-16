@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -642,11 +643,14 @@ public class LibraryTableEditor {
     public MyDialogWrapper(final Component parent) {
       super(parent, true);
       final String tableLevel = LibraryTableEditor.this.myLibraryTable.getTableLevel();
-      if (tableLevel == LibraryTablesRegistrar.PROJECT_LEVEL) {
+      if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(tableLevel)) {
         setTitle(ProjectBundle.message("library.configure.project.title"));
       }
-      else if (tableLevel == LibraryTablesRegistrar.APPLICATION_LEVEL) {
+      else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(tableLevel)) {
         setTitle(ProjectBundle.message("library.configure.global.title"));
+      }
+      else if (ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(tableLevel)) {
+        setTitle(ProjectBundle.message("library.configure.appserver.title"));
       }
       init();
     }

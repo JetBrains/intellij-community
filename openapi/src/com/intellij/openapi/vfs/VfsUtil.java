@@ -432,7 +432,7 @@ public class VfsUtil {
     return VirtualFileManager.extractPath(url);
   }
 
-  public static String pathToUrl(String path) {
+  public static String pathToUrl(@NotNull String path) {
     return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
   }
 
