@@ -39,7 +39,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
   }
-                                         
+                                          
   public XmlNSDescriptorImpl() {
   }
 
