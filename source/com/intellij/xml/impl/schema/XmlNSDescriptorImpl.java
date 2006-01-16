@@ -19,6 +19,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -57,6 +58,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private final Map<Pair<String, String>, CachedValue<XmlElementDescriptor>> myDescriptorsMap = new HashMap<Pair<String,String>, CachedValue<XmlElementDescriptor>>();
   private final Map<Pair<String, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = new HashMap<Pair<String,XmlTag>, CachedValue<TypeDescriptor>>();
 
+  @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
     return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>(),false);
   }
