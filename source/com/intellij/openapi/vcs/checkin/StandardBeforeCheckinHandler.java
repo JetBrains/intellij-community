@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -37,6 +38,7 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
                                 null).run();
     }
 
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     return ReturnResult.COMMIT;
   }
