@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
   private final PsiJavaFile myFile;
 
-  public JavaFileTreeModel(PsiJavaFile file) {
+  public JavaFileTreeModel(@NotNull PsiJavaFile file) {
     super(file);
     myFile = file;
   }
