@@ -18,18 +18,21 @@ package com.siyeh.ig.imports;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
-    private final PsiImportStatement m_import;
-    private boolean m_used = false;
+class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
-    ImportIsUsedVisitor(PsiImportStatement importStatement) {
+    private final Collection<PsiImportStatement> importStatements;
+
+    ImportsAreUsedVisitor(PsiImportStatement[] importStatements) {
         super();
-        m_import = importStatement;
+        this.importStatements = new ArrayList(Arrays.asList(importStatements));
     }
 
     public void visitElement(PsiElement element) {
-        if (m_used) {
+        if (importStatements.isEmpty()) {
             return;
         }
         super.visitElement(element);
@@ -48,10 +51,6 @@ class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
             // responsible
             return;
         }
-        final String importName = m_import.getQualifiedName();
-        if (importName == null) {
-            return;
-        }
         final PsiElement element = reference.resolve();
         if (!(element instanceof PsiClass)) {
             return;
@@ -61,23 +60,37 @@ class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
         if (qualifiedName == null) {
             return;
         }
-        if (m_import.isOnDemand()) {
-            final int lastComponentIndex = qualifiedName.lastIndexOf((int) '.');
-            if (lastComponentIndex > 0) {
-                final String packageName = qualifiedName.substring(0,
-                        lastComponentIndex);
-                if (importName.equals(packageName)) {
-                    m_used = true;
-                }
+        for (PsiImportStatement importStatement : importStatements) {
+            final String importName = importStatement.getQualifiedName();
+            if (importName == null) {
+                return;
             }
-        } else {
-            if (importName.equals(qualifiedName)) {
-                m_used = true;
+            if (importStatement.isOnDemand()) {
+                final int lastComponentIndex =
+                        qualifiedName.lastIndexOf((int) '.');
+                if (lastComponentIndex > 0) {
+                    final String packageName = qualifiedName.substring(0,
+                            lastComponentIndex);
+                    if (importName.equals(packageName)) {
+                        importStatements.remove(importStatement);
+                        break;
+                    }
+                }
+            } else {
+                if (importName.equals(qualifiedName)) {
+                    importStatements.remove(importStatement);
+                    break;
+                }
             }
         }
     }
 
-    public boolean isUsed() {
-        return m_used;
+    public PsiImportStatement[] getUnusedImportStatements() {
+        if (importStatements.isEmpty()) {
+            return PsiImportStatement.EMPTY_ARRAY;
+        } else {
+            return importStatements.toArray(
+                    new PsiImportStatement[importStatements.size()]);
+        }
     }
 }

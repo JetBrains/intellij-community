@@ -18,9 +18,9 @@ package com.siyeh.ig.imports;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends ClassInspection {
@@ -43,7 +43,6 @@ public class OnDemandImportInspection extends ClassInspection {
 
     private static class PackageImportVisitor extends BaseInspectionVisitor {
 
-
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             final PsiElement parent = aClass.getParent();
@@ -61,18 +60,14 @@ public class OnDemandImportInspection extends ClassInspection {
             }
             final PsiImportList importList = file.getImportList();
             if (importList != null) {
-                final PsiImportStatement[] importStatements = importList.getImportStatements();
-                for(final PsiImportStatement importStatement : importStatements){
-                    final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
-
+                final PsiImportStatement[] importStatements =
+                        importList.getImportStatements();
+                for(PsiImportStatement importStatement : importStatements){
                     if(importStatement.isOnDemand()){
-                        if(reference != null){
-                            registerError(reference);
-                        }
+                        registerError(importStatement);
                     }
                 }
             }
         }
-
     }
 }

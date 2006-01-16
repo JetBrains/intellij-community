@@ -28,7 +28,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticImportInspection extends ClassInspection{
-    private final StaticImportFix fix = new StaticImportFix();
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("static.import.display.name");
@@ -39,7 +38,8 @@ public class StaticImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("static.import.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "static.import.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -51,8 +51,10 @@ public class StaticImportInspection extends ClassInspection{
     }
 
     public static class StaticImportFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("static.import.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "static.import.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -60,7 +62,8 @@ public class StaticImportInspection extends ClassInspection{
             final PsiElement reference = descriptor.getPsiElement();
             final PsiImportStaticStatement importStatment =
                     (PsiImportStaticStatement) reference.getParent();
-            final PsiJavaFile file = (PsiJavaFile) importStatment.getContainingFile();
+            final PsiJavaFile file =
+                    (PsiJavaFile) importStatment.getContainingFile();
 
            // final List references = qualifyReferences(importStatment, file);
          //   importStatment.delete();
@@ -72,6 +75,7 @@ public class StaticImportInspection extends ClassInspection{
     }
 
     private static class StaticImportVisitor extends BaseInspectionVisitor{
+
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){
@@ -91,14 +95,10 @@ public class StaticImportInspection extends ClassInspection{
             if(importList == null){
                 return;
             }
-            final PsiImportStaticStatement[] importStatements = importList
-                    .getImportStaticStatements();
+            final PsiImportStaticStatement[] importStatements =
+                    importList.getImportStaticStatements();
             for(final PsiImportStaticStatement importStatement : importStatements){
-                final PsiJavaCodeReferenceElement reference = importStatement
-                        .getImportReference();
-                if(reference != null){
-                    registerError(reference);
-                }
+                registerError(importStatement);
             }
         }
     }

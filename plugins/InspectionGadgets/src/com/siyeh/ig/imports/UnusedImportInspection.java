@@ -27,28 +27,28 @@ public class UnusedImportInspection extends FileInspection {
 
     private final DeleteImportFix fix = new DeleteImportFix();
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message("unused.import.display.name");
     }
 
-    public String getGroupDisplayName(){
+    public String getGroupDisplayName() {
         return GroupNames.IMPORTS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    public String buildErrorString(PsiElement location) {
         return InspectionGadgetsBundle.message(
                 "unused.import.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    public BaseInspectionVisitor buildVisitor() {
         return new UnusedImportVisitor();
     }
 
-    private static class UnusedImportVisitor extends BaseInspectionVisitor{
+    private static class UnusedImportVisitor extends BaseInspectionVisitor {
 
         public void visitJavaFile(PsiJavaFile file) {
             final PsiImportList importList = file.getImportList();
@@ -56,37 +56,43 @@ public class UnusedImportInspection extends FileInspection {
                 return;
             }
             final PsiClass[] classes = file.getClasses();
-            final PsiImportStatementBase[] importStatements =
-                    importList.getAllImportStatements();
-            for (PsiImportStatementBase importStatement : importStatements) {
-                if (!isNecessaryImport(importStatement, classes)) {
-                    registerError(importStatement);
-                }
+            final PsiImportStatement[] importStatements =
+                    importList.getImportStatements();
+            checkImports(importStatements, classes);
+            final PsiImportStaticStatement[] importStaticStatements =
+                    importList.getImportStaticStatements();
+            checkStaticImports(importStaticStatements, classes);
+        }
+
+        private void checkStaticImports(
+                PsiImportStaticStatement[] importStaticStatements,
+                PsiClass[] classes) {
+            final StaticImportsAreUsedVisitor visitor =
+                    new StaticImportsAreUsedVisitor(importStaticStatements);
+            for (PsiClass aClass : classes) {
+                aClass.accept(visitor);
+            }
+            final PsiImportStaticStatement[] unusedImportStaticStatements =
+                    visitor.getUnusedImportStaticStatements();
+            for (PsiImportStaticStatement importStaticStatement :
+                    unusedImportStaticStatements) {
+                registerError(importStaticStatement);
             }
         }
 
-        private static boolean isNecessaryImport(
-                PsiImportStatementBase importStatement, PsiClass[] classes){
-            if (importStatement instanceof PsiImportStatement) {
-                final PsiImportStatement statement =
-                        (PsiImportStatement)importStatement;
-                final ImportIsUsedVisitor visitor =
-                        new ImportIsUsedVisitor(statement);
-                for(PsiClass aClasses : classes){
-                    aClasses.accept(visitor);
-                }
-                return visitor.isUsed();
-            } else if (importStatement instanceof PsiImportStaticStatement) {
-                final PsiImportStaticStatement statement =
-                        (PsiImportStaticStatement)importStatement;
-                final StaticImportIsUsedVisitor visitor =
-                        new StaticImportIsUsedVisitor(statement);
-                for(PsiClass aClasses : classes){
-                    aClasses.accept(visitor);
-                }
-                return visitor.isUsed();
+        private void checkImports(PsiImportStatement[] importStatements,
+                                  PsiClass[] classes) {
+            final ImportsAreUsedVisitor visitor =
+                    new ImportsAreUsedVisitor(importStatements);
+            for (PsiClass aClass : classes) {
+                aClass.accept(visitor);
             }
-            return false;
+            final PsiImportStatement[] unusedImportStatements =
+                    visitor.getUnusedImportStatements();
+            for (PsiImportStatement unusedImportStatement :
+                    unusedImportStatements) {
+                registerError(unusedImportStatement);
+            }
         }
     }
 }
