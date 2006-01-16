@@ -29,13 +29,12 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
   public ReturnResult perform(VirtualFile[] filesToBeCommited) {
 
     if (getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
-      new OptimizeImportsProcessor(myProject, getPsiFiles(filesToBeCommited),
-                                   null).run();
+      new OptimizeImportsProcessor(myProject, getPsiFiles(filesToBeCommited), null).run();
     }
 
+
     if (getSettings().REFORMAT_BEFORE_PROJECT_COMMIT) {
-      new ReformatCodeProcessor(myProject, getPsiFiles(filesToBeCommited),
-                                null).run();
+      new ReformatCodeProcessor(myProject, getPsiFiles(filesToBeCommited), null).run();
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
