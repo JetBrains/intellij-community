@@ -10,6 +10,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,21 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
     @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
-    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseEmbeddedCompilerSettings.getInstance(myProject), false, false);
+    final IOException[] ex = new IOException[]{null};
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseEmbeddedCompilerSettings.getInstance(myProject), false, false);
+        }
+        catch (IOException e) {
+          ex[0] = e;
+        }
+      }
+    });
+    if (ex[0] != null) {
+      throw ex[0];
+    }
+
 
     Process process = new Process() {
       public OutputStream getOutputStream() {
@@ -162,7 +177,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     }
     ArrayList<URL> urls = null;
     try {
-      urls = new ArrayList<URL>((ArrayList<URL>)pluginClass.getDeclaredMethod("getUrls").invoke(classLoader));
+      @NonNls final String getUrlsMethod = "getUrls";
+      urls = new ArrayList<URL>((ArrayList<URL>)pluginClass.getDeclaredMethod(getUrlsMethod).invoke(classLoader));
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
