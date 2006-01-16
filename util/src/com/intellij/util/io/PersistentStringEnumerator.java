@@ -42,7 +42,14 @@ public class PersistentStringEnumerator {
       allocVector();
     }
     else {
-      if (myStorage.getInt(0) != CORRECTLY_CLOSED_MAGIC) {
+      int sign;
+      try {
+        sign = myStorage.getInt(0);
+      }
+      catch(Exception e) {
+        sign = DIRTY_MAGIC;
+      }
+      if (sign != CORRECTLY_CLOSED_MAGIC) {
         myStorage.close();
         throw new CorruptedException(file);
       }
