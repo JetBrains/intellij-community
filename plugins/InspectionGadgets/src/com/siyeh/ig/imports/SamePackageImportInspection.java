@@ -26,10 +26,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends ClassInspection{
-    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("import.from.same.package.display.name");
+        return InspectionGadgetsBundle.message(
+                "import.from.same.package.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,11 +37,12 @@ public class SamePackageImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("import.from.same.package.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "import.from.same.package.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new DeleteImportFix();
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -49,6 +50,7 @@ public class SamePackageImportInspection extends ClassInspection{
     }
 
     private static class SamePackageImportVisitor extends BaseInspectionVisitor{
+
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){
@@ -72,19 +74,26 @@ public class SamePackageImportInspection extends ClassInspection{
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
             for(final PsiImportStatement importStatement : importStatements){
-                final PsiJavaCodeReferenceElement reference = importStatement
-                        .getImportReference();
+                final PsiJavaCodeReferenceElement reference =
+                        importStatement.getImportReference();
                 if(reference != null){
                     final String text = importStatement.getQualifiedName();
                     if(importStatement.isOnDemand()){
                         if(packageName.equals(text)){
                             registerError(importStatement);
                         }
-                    } else{
-                        final int classNameIndex = text.lastIndexOf((int) '.');
-                        final String parentName = classNameIndex < 0?"":
-                                text.substring(0, classNameIndex);
-                        if(packageName.equals(parentName)){
+                    } else {
+                        if (text == null) {
+                            return;
+                        }
+                        final int classNameIndex = text.lastIndexOf((int)'.');
+                        final String parentName;
+                        if (classNameIndex < 0) {
+                            parentName = "";
+                        } else {
+                            parentName = text.substring(0, classNameIndex);
+                        }
+                        if (packageName.equals(parentName)) {
                             registerError(importStatement);
                         }
                     }

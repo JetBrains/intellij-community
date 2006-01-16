@@ -28,10 +28,10 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends ClassInspection{
-    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("java.lang.import.display.name");
+        return InspectionGadgetsBundle.message(
+                "java.lang.import.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,11 +39,12 @@ public class JavaLangImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("java.lang.import.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "java.lang.import.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new DeleteImportFix();
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -51,6 +52,7 @@ public class JavaLangImportInspection extends ClassInspection{
     }
 
     private static class JavaLangImportVisitor extends BaseInspectionVisitor{
+
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){
@@ -91,11 +93,12 @@ public class JavaLangImportInspection extends ClassInspection{
                         if(classNameIndex < 0){
                             return;
                         }
-                        final String parentName = text
-                                .substring(0, classNameIndex);
-                        if(HardcodedMethodConstants.JAVA_LANG.equals(parentName)){
-                            if(!ImportUtils
-                                    .hasOnDemandImportConflict(text, file)){
+                        final String parentName =
+                                text.substring(0, classNameIndex);
+                        if(HardcodedMethodConstants.JAVA_LANG.equals(
+                                parentName)){
+                            if(!ImportUtils.hasOnDemandImportConflict(text,
+                                    file)){
                                 registerError(importStatement);
                             }
                         }

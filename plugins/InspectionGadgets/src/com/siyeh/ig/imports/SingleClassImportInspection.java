@@ -24,9 +24,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleClassImportInspection extends ClassInspection{
-    public String getDisplayName(){
 
-        return InspectionGadgetsBundle.message("single.class.import.display.name");
+    public String getDisplayName(){
+        return InspectionGadgetsBundle.message(
+                "single.class.import.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -34,7 +35,8 @@ public class SingleClassImportInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("single.class.import.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "single.class.import.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -42,6 +44,7 @@ public class SingleClassImportInspection extends ClassInspection{
     }
 
     private static class PackageImportVisitor extends BaseInspectionVisitor{
+
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){

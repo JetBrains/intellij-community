@@ -25,8 +25,6 @@ import com.siyeh.ig.fixes.DeleteImportFix;
 
 public class UnusedImportInspection extends FileInspection {
 
-    private final DeleteImportFix fix = new DeleteImportFix();
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unused.import.display.name");
     }
@@ -41,7 +39,7 @@ public class UnusedImportInspection extends FileInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new DeleteImportFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -30,10 +30,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class RedundantImportInspection extends ClassInspection {
-    private final DeleteImportFix fix = new DeleteImportFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("redundant.import.display.name");
+        return InspectionGadgetsBundle.message(
+                "redundant.import.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,11 +41,12 @@ public class RedundantImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("redundant.import.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "redundant.import.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new DeleteImportFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -54,45 +55,45 @@ public class RedundantImportInspection extends ClassInspection {
 
     private static class RedundantImportVisitor extends BaseInspectionVisitor {
 
-
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if(aClass.getContainingFile() instanceof JspFile){
+            if(aClass.getContainingFile() instanceof JspFile) {
                 return;
             }
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
-            if(file == null){
+            if(file == null) {
                 return;
             }
             if (!file.getClasses()[0].equals(aClass)) {
                 return;
             }
             final PsiImportList importList = file.getImportList();
-            if(importList == null)
-            {
+            if(importList == null) {
                 return;
             }
-            final PsiImportStatement[] importStatements = importList.getImportStatements();
-            final Set<String> imports = new HashSet<String>(importStatements.length);
-            for(final PsiImportStatement importStatement : importStatements){
+            final PsiImportStatement[] importStatements =
+                    importList.getImportStatements();
+            final Set<String> imports =
+                    new HashSet<String>(importStatements.length);
+            for(final PsiImportStatement importStatement : importStatements) {
                 final String text = importStatement.getQualifiedName();
-                if(text == null){
+                if(text == null) {
                     return;
                 }
-                if(imports.contains(text)){
+                if(imports.contains(text)) {
                     registerError(importStatement);
                 }
-                if(!importStatement.isOnDemand()){
+                if(!importStatement.isOnDemand()) {
                     final int classNameIndex = text.lastIndexOf((int) '.');
-                    if(classNameIndex < 0){
+                    if(classNameIndex < 0) {
                         return;
                     }
                     final String parentName = text.substring(0, classNameIndex);
-                    if(imports.contains(parentName)){
-                        if(!ImportUtils.hasOnDemandImportConflict(text, file)){
+                    if(imports.contains(parentName)) {
+                        if(!ImportUtils.hasOnDemandImportConflict(text, file)) {
                             registerError(importStatement);
                         }
                     }
@@ -100,6 +101,5 @@ public class RedundantImportInspection extends ClassInspection {
                 imports.add(text);
             }
         }
-
     }
 }

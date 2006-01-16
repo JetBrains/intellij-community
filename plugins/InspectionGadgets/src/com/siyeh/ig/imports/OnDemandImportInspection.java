@@ -50,9 +50,7 @@ public class OnDemandImportInspection extends ClassInspection {
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) parent;
-
-            if(aClass.getContainingFile() instanceof JspFile)
-            {
+            if(aClass.getContainingFile() instanceof JspFile) {
                 return;
             }
             if (!file.getClasses()[0].equals(aClass)) {
