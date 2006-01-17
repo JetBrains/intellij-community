@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MockFileSystem extends VirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
   public static final String PROTOCOL = "mock";
@@ -20,8 +22,7 @@ public class MockFileSystem extends VirtualFileSystem {
     if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);
     String[] components = path.split(":");
     MyVirtualFile file = myRoot;
-    for (int i = 0; i < components.length; i++) {
-      String component = components[i];
+    for (String component : components) {
       file = file.getOrCreate(component);
     }
     return file;
@@ -68,6 +69,7 @@ public class MockFileSystem extends VirtualFileSystem {
       myParent = parent;
     }
 
+    @NotNull
     public VirtualFileSystem getFileSystem() {
       return MockFileSystem.this;
     }
@@ -86,7 +88,8 @@ public class MockFileSystem extends VirtualFileSystem {
     }
 
     public String getPath() {
-      return getParent() == null ? getName() : getParent().getPath() + "/" + getName();
+      final MockFileSystem.MyVirtualFile parent = getParent();
+      return parent == null ? getName() : parent.getPath() + "/" + getName();
     }
 
     public MyVirtualFile getParent() { return myParent; }
