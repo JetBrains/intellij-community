@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -455,7 +456,8 @@ public class IterationState {
     myMergedAttributes.setEffectType(effectType);
   }
 
-  private Color ifDiffers(final Color c1, final Color c2) {
+  @Nullable
+  private static Color ifDiffers(final Color c1, final Color c2) {
     return c1 == c2 ? null : c1;
   }
 
@@ -480,6 +482,7 @@ public class IterationState {
     return myCurrentFold;
   }
 
+  @Nullable
   public Color getPastFileEndBackground() {
     boolean isInCaretRow = myEditor.getCaretModel().getLogicalPosition().line >= myDocument.getLineCount() - 1;
 
