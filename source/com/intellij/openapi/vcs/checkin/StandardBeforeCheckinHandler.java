@@ -1,8 +1,5 @@
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -26,20 +23,7 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
   }
 
 
-
-  public    ReturnResult    perform(VirtualFile[] filesToBeCommited) {
-
-    if (getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
-      new OptimizeImportsProcessor(myProject, getPsiFiles(filesToBeCommited), null).run();
-    }
-
-
-    if (getSettings().REFORMAT_BEFORE_PROJECT_COMMIT) {
-      new ReformatCodeProcessor(myProject, getPsiFiles(filesToBeCommited), null).run();
-    }
-
-    FileDocumentManager.getInstance().saveAllDocuments();
-
+  public ReturnResult perform(VirtualFile[] filesToBeCommited) {
     return ReturnResult.COMMIT;
   }
 
