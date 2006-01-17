@@ -1316,7 +1316,7 @@ public class RefactoringUtil {
   public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < elements.length; i++) {
-      if (i > 0) buffer.append(" ,");
+      if (i > 0) buffer.append(", ");
       buffer.append(UsageViewUtil.getType(elements[i]));
       buffer.append(" ");
       buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
