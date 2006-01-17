@@ -38,8 +38,8 @@ public class LengthOneStringInIndexOfInspection
     public String buildErrorString(PsiElement location) {
         final String text = location.getText();
         final int length = text.length();
-        final String transformedText = '\'' + text.substring(1, length - 1) +
-                '\'';
+        final String transformedText =
+                '\'' + text.substring(1, length - 1) + '\'';
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.problem.descriptor",
                 transformedText);
@@ -89,10 +89,7 @@ public class LengthOneStringInIndexOfInspection
                 return;
             }
             final String value = (String)expression.getValue();
-            if (value == null) {
-                return;
-            }
-            if (value.length() != 1) {
+            if (value == null || value.length() != 1) {
                 return;
             }
             if (!isArgumentOfIndexOf(expression)) {
@@ -118,7 +115,7 @@ public class LengthOneStringInIndexOfInspection
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             @NonNls final String name = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.INDEX_OF.equals(name) ||
+            if (!HardcodedMethodConstants.INDEX_OF.equals(name) &&
                     !"lastIndexOf".equals(name)) {
                 return false;
             }
