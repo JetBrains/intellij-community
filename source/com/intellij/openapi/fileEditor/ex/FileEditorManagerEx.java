@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -35,12 +36,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
-  /**
-   * @param editor never null
-   * 
-   * @return can be null
-   */
-  public abstract VirtualFile getFile(FileEditor editor);
+  @Nullable
+  public abstract VirtualFile getFile(@NotNull FileEditor editor);
 
   /**
    *
