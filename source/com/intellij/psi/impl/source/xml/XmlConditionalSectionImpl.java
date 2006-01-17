@@ -22,7 +22,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
     super(XML_CONDITIONAL_SECTION);
   }
 
-  public boolean isIncluded() {
+  public boolean isIncluded(PsiFile targetFile) {
     ASTNode child = findChildByType(XML_CONDITIONAL_SECTION_START);
 
     if (child != null) {
@@ -39,16 +39,11 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
 
         if (elementType == XML_ENTITY_REF) {
           XmlEntityRef xmlEntityRef = (XmlEntityRef)child.getPsi();
-          PsiElement originalElement = getUserData(ORIGINAL_ELEMENT);
-          PsiFile targetFile = (originalElement != null)?originalElement.getContainingFile(): null;
+
           final String text = xmlEntityRef.getText();
           String name = text.substring(1,text.length() - 1);
 
           PsiElement psiElement = targetFile != null ? XmlEntityRefImpl.getCachedEntity( targetFile, name): null;
-
-          if (psiElement == null) {
-            psiElement = XmlEntityRefImpl.getCachedEntity( getContainingFile(), name);
-          }
 
           if (psiElement instanceof XmlEntityDecl) {
             final XmlEntityDecl decl = (XmlEntityDecl)psiElement;

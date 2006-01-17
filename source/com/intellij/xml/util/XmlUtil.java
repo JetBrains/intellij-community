@@ -273,9 +273,6 @@ public class XmlUtil {
           XmlEntityRef ref = (XmlEntityRef)element;
 
           PsiElement newElement = parseEntityRef(targetFile, ref, true);
-          if (newElement == null) {
-            newElement = parseEntityRef(targetFile, ref, true);
-          }
           if (newElement == null) return true;
 
           while (newElement != null) {
@@ -286,7 +283,7 @@ public class XmlUtil {
           return true;
         } else if (element instanceof XmlConditionalSection) {
           XmlConditionalSection xmlConditionalSection = ((XmlConditionalSection)element);
-          if (!xmlConditionalSection.isIncluded()) return true;
+          if (!xmlConditionalSection.isIncluded(targetFile)) return true;
           startFrom = xmlConditionalSection.getBodyStart();
         }
 
@@ -294,10 +291,6 @@ public class XmlUtil {
           if (!processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
         }
 
-      if (element instanceof XmlEntityDecl) {
-          XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-          XmlEntityRefImpl.cacheParticularEntity(element.getContainingFile(), xmlEntityDecl);
-        }
         return true;
       }
 
@@ -316,6 +309,10 @@ public class XmlUtil {
             if (!processXmlElements(child, false, wideFlag)) return false;
           }
           else if (!processor.execute(child)) return false;
+        }
+        if (child instanceof XmlEntityDecl) {
+          XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
+          XmlEntityRefImpl.cacheParticularEntity(targetFile, xmlEntityDecl);
         }
         return true;
       }
@@ -406,6 +403,7 @@ public class XmlUtil {
         public CachedValueProvider.Result<PsiElement> compute() {
           final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
           if (res == null) return new Result<PsiElement>(res, new Object[]{targetFile});
+          if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
           return new CachedValueProvider.Result<PsiElement>(res, new Object[]{res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef});
         }
       }, false);
@@ -845,10 +843,19 @@ public class XmlUtil {
   }
 
   public static PsiNamedElement findRealNamedElement(final PsiNamedElement _element) {
-    final PsiElement userData = _element.getUserData(XmlElement.DEPENDING_ELEMENT);
+    return findRealNamedElement(_element, _element);
+  }
+
+  public static PsiNamedElement findRealNamedElement(final PsiNamedElement _element, PsiElement responsibleElement) {
+    final PsiElement userData = responsibleElement.getUserData(XmlElement.DEPENDING_ELEMENT);
 
     if (userData instanceof XmlFile) {
       final String name = _element.getName();
+      if (_element instanceof XmlEntityDecl) {
+        final XmlEntityDecl cachedEntity = XmlEntityRefImpl.getCachedEntity((PsiFile)userData, name);
+        if (cachedEntity != null) return cachedEntity;
+      }
+
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
       XmlUtil.processXmlElements((XmlFile)userData,new PsiElementProcessor() {
@@ -869,7 +876,6 @@ public class XmlUtil {
 
     return null;
   }
-
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
     String myName = null;

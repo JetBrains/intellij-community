@@ -1,6 +1,7 @@
 package com.intellij.psi.xml;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,6 +11,6 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface XmlConditionalSection extends XmlElement {
-  boolean isIncluded();
+  boolean isIncluded(PsiFile target);
   PsiElement getBodyStart();
 }

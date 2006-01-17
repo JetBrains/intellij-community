@@ -194,7 +194,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final IOException[] nestedException = new IOException[1];
 
     try {
-      final String resPath = fetchOneFile(indicator, dtdUrl, project, extResourcesPath);
+      final String resPath = fetchOneFile(indicator, dtdUrl, project, extResourcesPath, null);
       if (resPath == null) return;
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
@@ -225,16 +225,14 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                   String resourcePath;
 
                   try {
-                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath);
+                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, s);
                   }
                   catch (IOException e) {
                     nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
                     break;
                   }
 
-                  ExternalResourceManagerImpl.getInstance().addResource(resourceUrl, resourcePath);
                   virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
-                  resourceUrls.add(resourceUrl);
                   downloadedResources.add(resourcePath);
 
                   final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
@@ -292,7 +290,8 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private String fetchOneFile(final ProgressIndicator indicator,
                               final String resourceUrl,
                               Project project,
-                              String extResourcesPath) throws IOException {
+                              String extResourcesPath,
+                              String refname) throws IOException {
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {
@@ -303,10 +302,19 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     byte[] bytes = fetchData(project, resourceUrl, indicator);
     if (bytes == null) return null;
-    int slashIndex = resourceUrl.lastIndexOf("/");
-    String resPath = extResourcesPath + File.separatorChar +
-                     Integer.toHexString(resourceUrl.hashCode()) + "_" +
-                     resourceUrl.substring(slashIndex + 1);
+    int slashIndex = resourceUrl.lastIndexOf('/');
+    String resPath = extResourcesPath + File.separatorChar;
+
+    if (refname != null) { // resource is known under refname so need to save it
+      resPath += refname;
+      int refnameSlashIndex = resPath.lastIndexOf('/');
+      if (refnameSlashIndex != -1) {
+        new File(resPath.substring(0,refnameSlashIndex)).mkdirs();
+      }
+    } else {
+      resPath += Integer.toHexString(resourceUrl.hashCode()) + "_" + resourceUrl.substring(slashIndex + 1);
+    }
+
     if (resourceUrl.indexOf('.',slashIndex) == -1) {
       // remote url does not contain file with extension
       resPath += "." + StdFileTypes.XML.getDefaultExtension();

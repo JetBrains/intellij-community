@@ -206,7 +206,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     visitor.visitXmlElement(this);
   }
 
-  public static void copyEntityCaches(final XmlFile file, final XmlFile context) {
+  public static void copyEntityCaches(final PsiFile file, final PsiFile context) {
     final Map<String, CachedValue<XmlEntityDecl>> cachingMap = getCachingMap(file);
     for(Map.Entry<String,CachedValue<XmlEntityDecl>> entry:getCachingMap(context).entrySet()) {
       cachingMap.put(entry.getKey(), entry.getValue());

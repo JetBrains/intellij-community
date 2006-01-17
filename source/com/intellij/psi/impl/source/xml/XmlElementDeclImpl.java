@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -18,8 +17,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
-import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -99,29 +96,44 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   
   public PsiElement getOriginalElement() {
     if (isPhysical()) return super.getOriginalElement();
-    
-    final PsiNamedElement element = XmlUtil.findRealNamedElement(this);
-      
+
+    return getOriginalElement(getResponsibleElement());
+  }
+
+  private PsiElement getOriginalElement(PsiElement responsibleElement) {
+    final PsiNamedElement element = XmlUtil.findRealNamedElement(this,responsibleElement);
+
     if (element != null) {
       return element;
     }
-    
+
     return this;
   }
-  
+
   public boolean canNavigate() {
     if (!isPhysical()) {
-      final PsiElement userData = getUserData(DEPENDING_ELEMENT);
-      if (userData instanceof XmlFile && getOriginalElement() != this) return true;
+      PsiElement responsibleElement = getResponsibleElement();
+      final PsiElement userData = responsibleElement.getUserData(DEPENDING_ELEMENT);
+      if (userData instanceof XmlFile) return true;
     }
 
     return super.canNavigate();
   }
 
+  private PsiElement getResponsibleElement() {
+    PsiElement responsibleElement  = this;
+    PsiElement parent = getParent();
+    while(parent instanceof XmlConditionalSection) {
+      responsibleElement = parent;
+      parent = parent.getParent();
+    }
+    return responsibleElement;
+  }
+
   public void navigate(boolean requestFocus) {
     if (!isPhysical()) {
       PsiElement element = getOriginalElement();
-      
+
       if (element != this) {
         ((Navigatable)element).navigate(requestFocus);
         return;
