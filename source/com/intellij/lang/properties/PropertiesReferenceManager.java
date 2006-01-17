@@ -10,14 +10,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -133,10 +134,15 @@ public class PropertiesReferenceManager implements ProjectComponent {
     if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
     Collection<Property> result = new ArrayList<Property>(virtualFiles.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (VirtualFile file : virtualFiles) {
-      PsiFile psiFile = psiManager.findFile(file);
+    for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
+      VirtualFile virtualFile = iterator.next();
+      if (!virtualFile.isValid()) {
+        iterator.remove();
+        continue;
+      }
+      PsiFile psiFile = psiManager.findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) {
-        virtualFiles.remove(file);
+        iterator.remove();
         continue;
       }
       List<Property> properties = ((PropertiesFile)psiFile).findPropertiesByKey(key);
@@ -157,6 +163,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     return result.toArray(new PropertiesFile[result.size()]);
   }
 
+  @Nullable
   public PropertiesFile findPropertiesFile(final Module module, final String bundleName, final Locale locale) {
     PropertiesFile[] propFiles = findPropertiesFiles(module, bundleName);
     if (locale != null) {
