@@ -26,7 +26,8 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
   }
 
 
-  public ReturnResult perform(VirtualFile[] filesToBeCommited) {
+
+  public    ReturnResult    perform(VirtualFile[] filesToBeCommited) {
 
     if (getSettings().OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
       new OptimizeImportsProcessor(myProject, getPsiFiles(filesToBeCommited), null).run();
