@@ -14,12 +14,12 @@ import junit.framework.TestCase;
 public class UtilsTest extends TestCase{
   public void testPathStartsWith() {
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jeka"));
-    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jek"));
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/local/"));
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/"));
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr"));
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/"));
 
+    assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jek"));
     assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/aaa"));
     assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jeka/"));
     assertFalse(FileUtil.startsWith("/usr/local/jeka", "/aaa"));
