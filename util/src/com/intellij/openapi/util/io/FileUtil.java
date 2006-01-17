@@ -463,8 +463,13 @@ public class FileUtil {
     if (path2.length() > path1.length()) return false;
     if (!path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, path2.length())) return false;
     if (path1.length() == path2.length()) return true;
-    final char terminator = path1.charAt(path2.length());
-    return terminator == '/' || terminator == File.separatorChar;
+    char last2 = path2.charAt(path2.length() - 1);
+    char last1 = path1.charAt(path2.length() - 1);
+    char next1 = path1.charAt(path2.length());
+    if (next1 == '/' || next1 == File.separatorChar) return true;
+    if ((last1 == '/' || last1 == File.separatorChar) && (last2 == '/' || last2 == File.separatorChar)) return true;
+
+    return false;
   }
 
   public static boolean pathsEqual(String path1, String path2) {
