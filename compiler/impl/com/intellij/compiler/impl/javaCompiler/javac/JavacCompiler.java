@@ -11,17 +11,15 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +75,7 @@ public class JavacCompiler extends ExternalCompiler {
                                    CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }
-      if (isOfVersion(versionString, "1.0")) {
+      if (CompilerUtil.isOfVersion(versionString, "1.0")) {
         Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.1_0_compilation.not.supported"), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }
@@ -152,12 +150,12 @@ public class JavacCompiler extends ExternalCompiler {
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
-    final boolean isVersion1_0 = isOfVersion(versionString, "1.0");
-    final boolean isVersion1_1 = isOfVersion(versionString, "1.1");
-    final boolean isVersion1_2 = isOfVersion(versionString, "1.2");
-    final boolean isVersion1_3 = isOfVersion(versionString, "1.3");
-    final boolean isVersion1_4 = isOfVersion(versionString, "1.4");
-    final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0");
+    final boolean isVersion1_0 = CompilerUtil.isOfVersion(versionString, "1.0");
+    final boolean isVersion1_1 = CompilerUtil.isOfVersion(versionString, "1.1");
+    final boolean isVersion1_2 = CompilerUtil.isOfVersion(versionString, "1.2");
+    final boolean isVersion1_3 = CompilerUtil.isOfVersion(versionString, "1.3");
+    final boolean isVersion1_4 = CompilerUtil.isOfVersion(versionString, "1.4");
+    final boolean isVersion1_5 = CompilerUtil.isOfVersion(versionString, "1.5") || CompilerUtil.isOfVersion(versionString, "5.0");
 
     final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
 
@@ -191,21 +189,7 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(JAVAC_MAIN_CLASS);
     }
 
-    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
-    if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
-      commandLine.add("-source");
-      commandLine.add("1.5");
-    }
-    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_4)) {
-      commandLine.add("-source");
-      commandLine.add("1.4");
-    }
-    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
-      if (isVersion1_4 || isVersion1_5) {
-        commandLine.add("-source");
-        commandLine.add("1.3");
-      }
-    }
+    CompilerUtil.addSourceCommandLineSwitch(jdk, myProject, commandLine);
 
     commandLine.add("-verbose");
 
@@ -321,29 +305,6 @@ public class JavacCompiler extends ExternalCompiler {
       return new MockJdkWrapper(jdkHomePath, jdk);
     }
     return jdk;
-  }
-
-  private LanguageLevel getApplicableLanguageLevel(String versionString) {
-    LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel();
-
-    final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0");
-    if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!isVersion1_5) {
-        languageLevel = LanguageLevel.JDK_1_4;
-      }
-    }
-
-    if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.4") && !isVersion1_5) {
-        languageLevel = LanguageLevel.JDK_1_3;
-      }
-    }
-
-    return languageLevel;
-  }
-
-  private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.contains(checkedVersion);
   }
 
   public void compileFinished() {

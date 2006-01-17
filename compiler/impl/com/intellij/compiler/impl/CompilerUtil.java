@@ -14,12 +14,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Collection;
+import java.util.*;
+import java.util.List;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -149,7 +156,7 @@ public class CompilerUtil {
     }
   }
 
-  public static void addLocaleOptions(final java.util.List<String> commandLine, final boolean launcherUsed) {
+  public static void addLocaleOptions(final List<String> commandLine, final boolean launcherUsed) {
     // need to specify default encoding so that javac outputs messages in 'correct' language
     //noinspection HardCodedStringLiteral
     commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
@@ -172,5 +179,49 @@ public class CompilerUtil {
       //noinspection HardCodedStringLiteral
       commandLine.add((launcherUsed? "-J" : "") + "-Duser.region=" + region);
     }
+  }
+
+  public static void addSourceCommandLineSwitch(final ProjectJdk jdk, final Project project, @NonNls final List<String> commandLine) {
+    final String versionString = jdk.getVersionString();
+    if (versionString == null || "".equals(versionString)) {
+      throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
+    }
+
+    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString, project);
+    if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
+      commandLine.add("-source");
+      commandLine.add("1.5");
+    }
+    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_4)) {
+      commandLine.add("-source");
+      commandLine.add("1.4");
+    }
+    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
+      commandLine.add("-source");
+      commandLine.add("1.3");
+    }
+  }
+
+  public static LanguageLevel getApplicableLanguageLevel(String versionString, final Project project) {
+    LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(project).getLanguageLevel();
+
+    final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0") || isOfVersion(versionString, "1.6.");
+    if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
+      if (!isVersion1_5) {
+        languageLevel = LanguageLevel.JDK_1_4;
+      }
+    }
+
+    if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
+      if (!isOfVersion(versionString, "1.4") && !isVersion1_5) {
+        languageLevel = LanguageLevel.JDK_1_3;
+      }
+    }
+
+    return languageLevel;
+  }
+
+  public static boolean isOfVersion(String versionString, String checkedVersion) {
+    return versionString.contains(checkedVersion);
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.options.CompilerConfigurable;
@@ -8,17 +9,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -187,7 +187,7 @@ public class JikesCompiler extends ExternalCompiler {
     final ProjectJdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();
 
-    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
+    final LanguageLevel applicableLanguageLevel = CompilerUtil.getApplicableLanguageLevel(versionString,myProject);
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
       commandLine.add("-source");
       commandLine.add("1.4"); // -source 1.5 not supported yet by jikes, so use the highest possible version
@@ -198,23 +198,6 @@ public class JikesCompiler extends ExternalCompiler {
     }
   }
 
-  private LanguageLevel getApplicableLanguageLevel(String versionString) {
-    LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel();
-
-    if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!(isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0"))) {
-        languageLevel = LanguageLevel.JDK_1_4;
-      }
-    }
-
-    if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.4") && !isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0")) {
-        languageLevel = LanguageLevel.JDK_1_3;
-      }
-    }
-
-    return languageLevel;
-  }
 
   public void compileFinished() {
     if (myTempFile != null) {
@@ -223,8 +206,5 @@ public class JikesCompiler extends ExternalCompiler {
     }
   }
 
-  private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.contains(checkedVersion);
-  }
 }
 

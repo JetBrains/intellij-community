@@ -15,11 +15,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,24 +136,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
     final ProjectJdk jdk = chunk.getJdk();
-    final String versionString = jdk.getVersionString();
-    if (versionString == null || "".equals(versionString)) {
-      throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
-    }
-          
-    final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
-    if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
-      commandLine.add("-source");
-      commandLine.add("1.5");
-    }
-    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_4)) {
-      commandLine.add("-source");
-      commandLine.add("1.4");
-    }
-    else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
-      commandLine.add("-source");
-      commandLine.add("1.3");
-    }
+    CompilerUtil.addSourceCommandLineSwitch(jdk, myProject, commandLine);
 
     final String bootCp = chunk.getCompilationBootClasspath();
 
@@ -207,24 +188,6 @@ public class EclipseCompiler extends ExternalCompiler {
     }
   }
 
-  private LanguageLevel getApplicableLanguageLevel(String versionString) {
-    LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel();
-
-    if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0") && !isOfVersion(versionString, "1.6.")) {
-        languageLevel = LanguageLevel.JDK_1_4;
-      }
-    }
-
-    if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.4") && !isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0") && !isOfVersion(versionString, "1.6.")) {
-        languageLevel = LanguageLevel.JDK_1_3;
-      }
-    }
-
-    return languageLevel;
-  }
-
   public void compileFinished() {
     for (final File myTempFile : myTempFiles) {
       FileUtil.delete(myTempFile);
@@ -232,7 +195,4 @@ public class EclipseCompiler extends ExternalCompiler {
     myTempFiles.clear();
   }
 
-  private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.contains(checkedVersion);
-  }
 }
