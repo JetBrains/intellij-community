@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class MockVirtualFile extends VirtualFile {
   private FileType myFileType;
@@ -25,7 +27,7 @@ public class MockVirtualFile extends VirtualFile {
   protected long myActualTimeStamp = myTimeStamp;
   private boolean myIsWritable = true;
   private VirtualFileListener myListener = null;
-  private static final Charset CHARSET = Charset.forName("UTF-8");
+  @NonNls private static final Charset CHARSET = Charset.forName("UTF-8");
 
   public MockVirtualFile() {
   }
@@ -54,9 +56,47 @@ public class MockVirtualFile extends VirtualFile {
     myListener = listener;
   }
 
+  private static class MyVirtualFileSystem extends VirtualFileSystem {
+    @NonNls private final static String PROTOCOL = "mock";
+
+    public String getProtocol() {
+      return PROTOCOL;
+    }
+
+    @Nullable
+    public VirtualFile findFileByPath(String path) {
+      return null;
+    }
+
+    public void refresh(boolean asynchronous) {}
+
+    @Nullable
+    public VirtualFile refreshAndFindFileByPath(String path) {
+      return null;
+    }
+
+    public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {}
+
+    protected void deleteFile(Object requestor, VirtualFile vFile) throws IOException {}
+
+    protected void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {}
+
+    protected void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {}
+
+    protected VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
+      throw new IOException("Cannot create files");
+    }
+
+    protected VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
+      throw new IOException("Cannot create directories");
+    }
+  }
+
+  private static MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
+
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return null;
+    return ourFileSystem;
   }
 
   public FileType getFileType() {
@@ -93,7 +133,7 @@ public class MockVirtualFile extends VirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    return null;
+    throw new IOException("Cannot get input stream");
   }
 
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
@@ -104,7 +144,7 @@ public class MockVirtualFile extends VirtualFile {
       }
     };
   }
-                                                           
+
   public byte[] contentsToByteArray() throws IOException {
     return getContent().toString().getBytes(getCharset().name());
   }
