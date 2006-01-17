@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.palette.impl.PaletteManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -143,7 +144,7 @@ class DesignDropTargetListener implements DropTargetListener {
         new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myEditor.getPaletteWindow().clearActiveItem();
+            PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
           }
         });
       }

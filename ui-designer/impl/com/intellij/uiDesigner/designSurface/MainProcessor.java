@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.*;
+import com.intellij.ide.palette.impl.PaletteManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +37,8 @@ public final class MainProcessor extends EventProcessor{
     if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         if ((myCurrentProcessor != null && myCurrentProcessor.isDragActive()) ||
-            (myEditor.getPaletteWindow().getActiveItem() != null && myCurrentProcessor != myInsertComponentProcessor)) {
+            (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null &&
+             myCurrentProcessor != myInsertComponentProcessor)) {
           myEditor.setDesignTimeInsets(12);
         }
       }
@@ -113,7 +115,7 @@ public final class MainProcessor extends EventProcessor{
 
     Cursor cursor = Cursor.getDefaultCursor();
     if(id==MouseEvent.MOUSE_MOVED){
-      if (myEditor.getPaletteWindow().getActiveItem() != null) {
+      if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
         cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
       }
       else {
@@ -237,7 +239,7 @@ public final class MainProcessor extends EventProcessor{
     }
     */
 
-    final ComponentItem selectedItem = myEditor.getPaletteWindow().getActiveItem();
+    final ComponentItem selectedItem = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
     if (selectedItem != null) {
       myInsertComponentProcessor.setSticky(e.isControlDown());
       myCurrentProcessor = myInsertComponentProcessor;
@@ -294,8 +296,8 @@ public final class MainProcessor extends EventProcessor{
         return true;
       }
     }
-    else if (myEditor.getPaletteWindow().getActiveItem() != null) {
-      myEditor.getPaletteWindow().clearActiveItem();
+    else if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
+      PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
       myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
       return true;
     }

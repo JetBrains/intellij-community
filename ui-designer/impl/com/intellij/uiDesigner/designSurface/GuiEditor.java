@@ -32,8 +32,6 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.PaletteWindow;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
@@ -43,8 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.dnd.DropTarget;
 import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Locale;
@@ -717,10 +715,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     else {
       return myInvalidCard;
     }
-  }
-
-  public PaletteWindow getPaletteWindow() {
-    return Palette.getInstance(getProject()).getPaletteWindow();
   }
 
   @NotNull

@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +13,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.PaletteWindow;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,6 @@ public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InsertComponentProcessor");
 
   private final GuiEditor myEditor;
-  private final PaletteWindow myPalette;
   private boolean mySticky;
   private DropInfo myDropInfo;
   private RadComponent myInsertedComponent;
@@ -41,7 +40,6 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
-    myPalette = editor.getPaletteWindow();
     myGridInsertProcessor = new GridInsertProcessor(editor);
   }
 
@@ -183,7 +181,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private void processMouseReleased() {
     if (!mySticky) {
-      myPalette.clearActiveItem();
+      PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
     }
 
     if (myDropInfo != null) {
@@ -202,7 +200,8 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
-    processComponentInsert(e.getPoint(), myPalette.getActiveItem());
+    final ComponentItem item = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
+    processComponentInsert(e.getPoint(), item);
   }
 
   public void processComponentInsert(final Point point, final ComponentItem item) {

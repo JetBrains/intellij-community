@@ -5,17 +5,22 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.SimpleTransferable;
+import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.util.HashMap;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ComponentItem implements Cloneable{
+public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
 
   private String myClassName;
@@ -246,6 +251,16 @@ public final class ComponentItem implements Cloneable{
     result = 29 * result + (myToolTipText != null ? myToolTipText.hashCode() : 0);
     result = 29 * result + (myPropertyName2intitialValue != null ? myPropertyName2intitialValue.hashCode() : 0);
     return result;
+  }
+
+  public void customizeCellRenderer(ColoredListCellRenderer cellRenderer, boolean selected, boolean hasFocus) {
+    cellRenderer.setIcon(getSmallIcon());
+    cellRenderer.append(getClassShortName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    cellRenderer.setToolTipText(getToolTipText());
+  }
+
+  public Transferable createTransferable() {
+    return new SimpleTransferable<ComponentItem>(this, ComponentItem.class);
   }
 
   private static final class MySmallIcon implements Icon{

@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.ide.palette.PaletteItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -8,7 +10,7 @@ import java.util.ArrayList;
 /**
  * @author Vladimir Kondratyev
  */
-public final class GroupItem implements Cloneable{
+public final class GroupItem implements Cloneable, PaletteGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.GroupItem");
 
   @NotNull private String myName;
@@ -87,5 +89,13 @@ public final class GroupItem implements Cloneable{
     }
 
     return false;
+  }
+
+  public int getItemCount() {
+    return myItems.size();
+  }
+
+  public PaletteItem getItemAt(int index) {
+    return myItems.get(index);
   }
 }

@@ -90,4 +90,6 @@ public interface ExtensionPoints {
    * @see com.intellij.psi.search.IndexPatternProvider
    */
   @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
+
+  @NonNls String PALETTE_ITEM_PROVIDER = "com.intellij.paletteItemProvider";
 }

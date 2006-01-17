@@ -1,8 +1,8 @@
-package com.intellij.uiDesigner.palette;
+package com.intellij.ide.palette.impl;
 
+import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.uiDesigner.SimpleTransferable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -20,18 +20,18 @@ import java.awt.event.MouseMotionAdapter;
  * @author yole
  */
 public class PaletteComponentList extends JList {
-  private GroupItem myGroupItem;
+  private PaletteGroup myGroup;
   private int myHoverIndex = -1;
 
-  public PaletteComponentList(final GroupItem groupItem) {
-    myGroupItem = groupItem;
+  public PaletteComponentList(PaletteGroup group) {
+    myGroup = group;
     setModel(new AbstractListModel() {
       public int getSize() {
-        return myGroupItem.getItems().size();
+        return myGroup.getItemCount();
       }
 
       public Object getElementAt(int index) {
-        return myGroupItem.getItems().get(index);
+        return myGroup.getItemAt(index);
       }
     });
 
@@ -65,7 +65,8 @@ public class PaletteComponentList extends JList {
       protected Transferable createTransferable(JComponent c) {
         final Object selectedValue = getSelectedValue();
         if (selectedValue != null) {
-          return new SimpleTransferable<ComponentItem>((ComponentItem) selectedValue, ComponentItem.class);
+          PaletteItem paletteItem = (PaletteItem) selectedValue;
+          return paletteItem.createTransferable();
         }
         return null;
       }
@@ -113,7 +114,7 @@ public class PaletteComponentList extends JList {
     }
   }
 
-  public void takeFocusFrom(PaletteGroup paletteGroup, int indexToSelect) {
+  public void takeFocusFrom(PaletteGroupHeader paletteGroup, int indexToSelect) {
     if (indexToSelect == -1) {
       //this is not 'our' CategoryButton so we'll assume it's the one below this category list
       indexToSelect = getModel().getSize() - 1;
@@ -147,12 +148,10 @@ public class PaletteComponentList extends JList {
     private Border myHoverBorder = BorderFactory.createLineBorder(Color.BLUE);
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      ComponentItem componentItem = (ComponentItem) value;
+      PaletteItem paletteItem = (PaletteItem) value;
       clear();
       setBorder(index == myHoverIndex ? myHoverBorder : null);
-      setIcon(componentItem.getSmallIcon());
-      append(componentItem.getClassShortName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      setToolTipText(componentItem.getToolTipText());
+      paletteItem.customizeCellRenderer(this, selected, hasFocus);
     }
   }
 
@@ -180,10 +179,10 @@ public class PaletteComponentList extends JList {
       Component next = focusNext
                        ? policy.getComponentAfter(container, PaletteComponentList.this)
                        : policy.getComponentBefore(container, PaletteComponentList.this);
-      if (null != next && next instanceof PaletteGroup) {
+      if (null != next && next instanceof PaletteGroupHeader) {
         clearSelection();
         next.requestFocus();
-        ((PaletteGroup)next).scrollRectToVisible(next.getBounds());
+        ((PaletteGroupHeader)next).scrollRectToVisible(next.getBounds());
       }
     }
   }

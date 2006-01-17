@@ -7,11 +7,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwXmlReader;
@@ -53,7 +50,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /*Listeners, etc*/
   private final ArrayList<Listener> myListeners;
   private Project myProject;
-  private PaletteWindow myPaletteWindow;
 
   /**
    * Predefined item for javax.swing.JPanel
@@ -119,23 +115,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
   public void projectOpened() {
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myPaletteWindow = new PaletteWindow(myProject);
-        ToolWindowManager.getInstance(myProject).registerToolWindow("Palette",
-                                                                    new JScrollPane(myPaletteWindow),
-                                                                    ToolWindowAnchor.RIGHT);
-      }
-    });
   }
 
   public void projectClosed() {
     LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
-
-    if (myPaletteWindow != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow("Palette");
-      myPaletteWindow = null;
-    }
   }
 
   public void readExternal(@NotNull final Element element) {
@@ -847,10 +830,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       }
     }
     return null;
-  }
-
-  public PaletteWindow getPaletteWindow() {
-    return myPaletteWindow;
   }
 
   /**
