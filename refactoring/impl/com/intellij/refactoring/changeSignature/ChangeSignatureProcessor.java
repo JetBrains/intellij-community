@@ -956,15 +956,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         EjbDeclMethodRole declRole = (EjbDeclMethodRole) myChangeInfo.ejbRole;
 
         String newName = myChangeInfo.newName;
-        final PsiMethod[] oldImpl = declRole.suggestImplementations();
-        for (int i = 0; i < oldImpl.length; i++) {
-          PsiMethod oldMethod = oldImpl[i];
+        for (PsiMethod oldMethod : declRole.suggestImplementations()) {
           if (oldMethod.getName().equals(method.getName())) {
-            PsiMethod newDeclMethod = (PsiMethod) method.copy();
+            PsiMethod newDeclMethod = (PsiMethod)method.copy();
             newDeclMethod.getNameIdentifier().replace(myChangeInfo.newNameIdentifier);
-            EjbDeclMethodRole newDeclRole = new EjbDeclMethodRole(newDeclMethod, declRole.getEjb(), declRole.getEnterpriseBean(), declRole.getType());
-
-            newName = newDeclRole.suggestImplementations()[i].getName();
+            newName = EjbDeclMethodRole.suggestImplNames(newDeclMethod.getName(), declRole.getType(), declRole.getEnterpriseBean())[0];
             break;
           }
         }
@@ -1018,7 +1014,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
+  private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
                                                  final PsiMethod method,
                                                  final PsiParameterList list,
                                                  boolean[] toRemoveParm) throws IncorrectOperationException {
@@ -1032,7 +1028,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {
+  private static PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {
     PsiSubstitutor substitutor;
     if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
       substitutor = PsiSubstitutor.EMPTY;
