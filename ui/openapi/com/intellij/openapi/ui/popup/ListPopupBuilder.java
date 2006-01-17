@@ -149,7 +149,7 @@ public class ListPopupBuilder {
     return myPopup;
   }
 
-  public void closePopup(boolean shouldPerformAction) {
+  private void closePopup(boolean shouldPerformAction) {
     myPopup.cancel();
     myList.removeMouseListener(myMouseListener);
     myList.removeKeyListener(myKeyListener);
@@ -160,7 +160,6 @@ public class ListPopupBuilder {
       }
     }
   }
-
 
   public static JScrollPane createScrollPane(final JList list) {
     int modelSize = list.getModel().getSize();
