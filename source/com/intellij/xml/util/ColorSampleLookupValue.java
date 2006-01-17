@@ -312,6 +312,10 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myColor;
   }
 
+  public boolean isBold() {
+    return false;
+  }
+
   public int getPriority() {
     return Character.isLowerCase(myName.charAt(0)) ? HIGHER:NORMAL;
   }

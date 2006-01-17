@@ -160,6 +160,14 @@ class LookupCellRenderer implements ListCellRenderer {
     return myPanel;
   }
 
+  private boolean isBold(Object o) {
+    return o instanceof PsiKeyword ||
+           o instanceof PsiExpression ||
+           (o instanceof LookupValueWithUIHint &&
+            ((LookupValueWithUIHint)o).isBold()
+           );
+  }
+
   private JLabel getLabel0(LookupItem item){
     Object o = item.getObject();
     String prefix = myLookup.getPrefix().toLowerCase();
@@ -175,7 +183,7 @@ class LookupCellRenderer implements ListCellRenderer {
       icon = null;
     }
     boolean highlighted = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
-    boolean bold = highlighted || o instanceof PsiKeyword || o instanceof PsiExpression;
+    boolean bold = highlighted || isBold(o);
     boolean strikeout = isToStrikeout(item);
 
     StrikeoutLabel label = myLabel0;
@@ -201,7 +209,7 @@ class LookupCellRenderer implements ListCellRenderer {
       icon = getIcon(item);
     }
     boolean highlighted = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
-    boolean bold = highlighted || o instanceof PsiKeyword || o instanceof PsiExpression;
+    boolean bold = highlighted || isBold(o);
     boolean overstrike = isToStrikeout(item);
 
     StrikeoutLabel label = myLabel1;

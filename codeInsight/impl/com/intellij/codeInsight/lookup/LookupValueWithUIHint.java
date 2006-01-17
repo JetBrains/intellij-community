@@ -12,4 +12,5 @@ import java.awt.*;
 public interface LookupValueWithUIHint extends PresentableLookupValue {
   String getTypeHint();
   Color getColorHint();
+  boolean isBold();
 }
