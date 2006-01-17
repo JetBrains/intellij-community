@@ -104,11 +104,15 @@ public class ContainerUtil {
   }
 
   public static <T> T find(Object[] array, Condition<T> condition) {
-    for (int i = 0; i < array.length; i++) {
-      T element = (T)array[i];
+    for (Object anArray : array) {
+      T element = (T)anArray;
       if (condition.value(element)) return element;
     }
     return null;
+  }
+
+  public static <T> T find(Iterable<T> iterable, Condition<T> condition) {
+    return find(iterable.iterator(), condition);
   }
 
   public static <T> T find(Iterator<T> iterator, Condition<T> condition) {
@@ -117,6 +121,16 @@ public class ContainerUtil {
       if (condition.value(value)) return value;
     }
     return null;
+  }
+
+  public static <T> List<T> find(Collection<? extends T> collection, Condition<T> condition) {
+    final ArrayList<T> result = new ArrayList<T>();
+    for (final T t : collection) {
+      if (condition.value(t)) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 
   public static <T> void removeDuplicates(Collection<T> collection) {

@@ -14,6 +14,7 @@ import java.awt.*;
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   private String myName;
+  private String myGroupID;
   private Project myProject;
 
   protected WriteCommandAction(Project project) {
@@ -25,12 +26,22 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     myProject = project;
   }
 
+  protected WriteCommandAction(final Project project, final String name, final String groupID) {
+    myName = name;
+    myGroupID = groupID;
+    myProject = project;
+  }
+
   public final Project getProject() {
     return myProject;
   }
 
   public final String getCommandName() {
     return myName;
+  }
+
+  public String getGroupID() {
+    return myGroupID;
   }
 
   public RunResult<T> execute() {
@@ -74,7 +85,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         results[0].run();
         results[0] = null;
       }
-    }, getCommandName(), null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+    }, getCommandName(), getGroupID(), UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
 
     return result;
   }
