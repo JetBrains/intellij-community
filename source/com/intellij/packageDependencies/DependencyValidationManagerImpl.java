@@ -1,9 +1,15 @@
 package com.intellij.packageDependencies;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -11,16 +17,19 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DependencyValidationManagerImpl extends DependencyValidationManager implements JDOMExternalizable {
+public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private Project myProject;
   private ContentManager myContentManager;
@@ -28,9 +37,69 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
   @NonNls private static final String TO_SCOPE_KEY = "to_scope";
   @NonNls private static final String IS_DENY_KEY = "is_deny";
+  private NamedScope myProjectScope;
+  private NamedScope myProjectTestScope;
+  private List<NamedScope> myPredifinedScopes;
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;
+  }
+
+  public NamedScope getProjectScope() {
+    if (myProjectScope == null) {
+      myProjectScope = new NamedScope(IdeBundle.message("predifined.scope.production.name"), new PackageSet() {
+        public boolean contains(PsiFile file, NamedScopesHolder holder) {
+          return file.getProject() == myProject;
+        }
+
+        public PackageSet createCopy() {
+          return this;
+        }
+
+        public String getText() {
+          return "src:*..*";
+        }
+
+        public int getNodePriority() {
+          return 0;
+        }
+      });
+    }
+    return myProjectScope;
+  }
+
+  public NamedScope getProjectTestScope() {
+    if (myProjectTestScope == null) {
+      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+      myProjectTestScope = new NamedScope(IdeBundle.message("predifined.scope.tests.name"), new PackageSet() {
+        public boolean contains(PsiFile file, NamedScopesHolder holder) {
+          return file.getProject() == myProject && index.isInTestSourceContent(file.getVirtualFile());
+        }
+
+        public PackageSet createCopy() {
+          return this;
+        }
+
+        public String getText() {
+          return "test:*..*";
+        }
+
+        public int getNodePriority() {
+          return 0;
+        }
+      });
+    }
+    return myProjectTestScope;
+  }
+
+  @Nullable
+  public List<NamedScope> getPredefinedScopes() {
+    if (myPredifinedScopes == null){
+      myPredifinedScopes = new ArrayList<NamedScope>();
+      myPredifinedScopes.add(getProjectScope());
+      myPredifinedScopes.add(getProjectTestScope());
+    }
+    return myPredifinedScopes;
   }
 
   public boolean hasRules() {
