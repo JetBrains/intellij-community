@@ -1,17 +1,11 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -19,8 +13,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -172,21 +164,6 @@ public class Descriptor {
     return myGroup;
   }
 
-
-  public static JPanel createDependencyConigurationPanel() {
-    final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
-    editDependencies.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Project project = (Project)DataManager.getInstance().getDataContext(editDependencies).getData(DataConstants.PROJECT);
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
-      }
-    });
-
-    JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    depPanel.add(editDependencies);
-    return depPanel;
-  }
 
   public static JPanel createUnusedSymbolSettingsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
     JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +33,16 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   @NonNls private static final String PATTERN_ATT = "pattern";
 
   public NamedScope[] getScopes() {
+    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    List<NamedScope> list = getPredefinedScopes();
+    if (list != null){
+      scopes.addAll(list);
+    }
+    scopes.addAll(myScopes);
+    return scopes.toArray(new NamedScope[scopes.size()]);
+  }
+
+  public NamedScope[] getEditableScopes(){
     return myScopes.toArray(new NamedScope[myScopes.size()]);
   }
 
@@ -47,14 +58,14 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
     myScopes.add(scope);
   }
 
-  private Element writeScope(NamedScope scope) {
+  private static Element writeScope(NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
     setElement.setAttribute(NAME_ATT, scope.getName());
     setElement.setAttribute(PATTERN_ATT, scope.getValue().getText());
     return setElement;
   }
 
-  private NamedScope readScope(Element setElement) throws ParsingException {
+  private static NamedScope readScope(Element setElement) throws ParsingException {
     PackageSet set = PackageSetFactory.getInstance().compile(setElement.getAttributeValue(PATTERN_ATT));
     String name = setElement.getAttributeValue(NAME_ATT);
     return new NamedScope(name, set);
@@ -62,9 +73,9 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     List sets = element.getChildren(SCOPE_TAG);
-    for (int i = 0; i < sets.size(); i++) {
+    for (Object set : sets) {
       try {
-        addScope(readScope((Element)sets.get(i)));
+        addScope(readScope((Element)set));
       }
       catch (ParsingException e) {
         // Skip damaged set
@@ -73,16 +84,27 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (int i = 0; i < myScopes.size(); i++) {
-      element.addContent(writeScope(myScopes.get(i)));
+    for (NamedScope myScope : myScopes) {
+      element.addContent(writeScope(myScope));
     }
   }
 
+  @Nullable
   public NamedScope getScope(String name) {
-    for (int i = 0; i < myScopes.size(); i++) {
-      NamedScope scope = myScopes.get(i);
+    for (NamedScope scope : myScopes) {
       if (name.equals(scope.getName())) return scope;
     }
+    final List<NamedScope> predefinedScopes = getPredefinedScopes();
+    if (predefinedScopes != null){
+      for (NamedScope scope : predefinedScopes) {
+        if (name.equals(scope.getName())) return scope;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public List<NamedScope> getPredefinedScopes(){
     return null;
   }
 }

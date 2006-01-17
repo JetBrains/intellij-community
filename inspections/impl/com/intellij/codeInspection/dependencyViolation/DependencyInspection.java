@@ -19,9 +19,11 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.Descriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
@@ -34,6 +36,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
@@ -60,7 +65,18 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   }
 
   public JComponent createOptionsPanel() {
-    return Descriptor.createDependencyConigurationPanel();
+    final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
+    editDependencies.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        Project project = (Project)DataManager.getInstance().getDataContext(editDependencies).getData(DataConstants.PROJECT);
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
+      }
+    });
+
+    JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    depPanel.add(editDependencies);
+    return depPanel;
   }
 
   @Nullable

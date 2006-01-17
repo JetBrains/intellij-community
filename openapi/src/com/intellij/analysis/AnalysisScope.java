@@ -478,24 +478,39 @@ public class AnalysisScope {
     } else if (myType == FILE || myType == DIRECTORY){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
-      result.add(profileManager.getProfile(((PsiFile)myElement).getVirtualFile()));
+      result.add(profileManager.getProfile((PsiFile)myElement));
     } else if (myType == PACKAGE){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
       final PsiDirectory[] psiDirectories = ((PsiPackage)myElement).getDirectories();
-      for (PsiDirectory directory : psiDirectories) {
-        result.add(profileManager.getProfile(directory.getVirtualFile()));
-      }
+      processDirectories(psiDirectories, result, profileManager);
     }
     return result;
   }
 
+  private static void processDirectories(final PsiDirectory[] psiDirectories,
+                                         final Set<String> result,
+                                         final ProjectProfileManager profileManager) {
+    for (PsiDirectory directory : psiDirectories) {
+      final PsiFile[] psiFiles = directory.getFiles();
+      for (PsiFile file : psiFiles) {
+        result.add(profileManager.getProfile(file));
+      }
+      processDirectories(directory.getSubdirectories(), result, profileManager);
+    }
+  }
+
   private void processModule(final Set<String> result, final Module module) {
-    final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myModule.getProject(), Profile.INSPECTION);
+    final Project project = myModule.getProject();
+    final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(project, Profile.INSPECTION);
     LOG.assertTrue(profileManager != null);
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+    final PsiDirectory[] dirs = new PsiDirectory[files.length];
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    int i = 0;
     for (VirtualFile file : files) {
-      result.add(profileManager.getProfile(file));
+      dirs[i++] = psiManager.findDirectory(file);
     }
+    processDirectories(dirs, result, profileManager);
   }
 }

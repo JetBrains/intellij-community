@@ -845,7 +845,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
           InspectionProfile profile;
           if (runWithEditorSettings){
-            profile = profileManager.getProfile(file);
+            profile = profileManager.getProfile((PsiElement)file);
           } else {
             profile = (InspectionProfile)profileManager.getProfile(myCurrentProfileName);
             if (profile == null){

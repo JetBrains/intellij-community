@@ -195,8 +195,7 @@ public class HectorComponent extends JPanel {
       }
     });
     reloadProfiles(inspectionManager,
-                   inspectionProfile == null ? ((InspectionProfile)InspectionProjectProfileManager.getInstance(myFile.getProject())
-                     .getProfile(myFile)).getName() : inspectionProfile.first);
+                   inspectionProfile == null ? InspectionProjectProfileManager.getInstance(myFile.getProject()).getProfile(myFile) : inspectionProfile.first);
     myProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myHint != null && myHint.isVisible()) myHint.hide();
@@ -303,13 +302,12 @@ public class HectorComponent extends JPanel {
     if (myUseProfile != myUsePerFileProfile.isSelected()) return true;
     if (myUseProfile) {
       return !Comparing.equal(myProfile,
-                              ((InspectionProfile)InspectionProjectProfileManager.getInstance(myFile.getProject()).getProfile(myFile))
-      );
+                              InspectionProjectProfileManager.getInstance(myFile.getProject()).getProfile(myFile));
     }
     return false;
   }
 
-  private int getValue(boolean isSyntaxHighlightingEnabled, boolean isInspectionsHighlightingEnabled) {
+  private static int getValue(boolean isSyntaxHighlightingEnabled, boolean isInspectionsHighlightingEnabled) {
     if (!isSyntaxHighlightingEnabled && !isInspectionsHighlightingEnabled) {
       return 1;
     }

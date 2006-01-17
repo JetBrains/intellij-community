@@ -50,7 +50,10 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -59,8 +62,8 @@ import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.scope.ProfileScope;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
@@ -721,7 +724,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       restart();
     }
 
-    public void profileActivated(ProfileScope scope, Profile oldProfile, Profile profile) {
+    public void profileActivated(NamedScope scope, Profile oldProfile, Profile profile) {
       restart();
     }
   }

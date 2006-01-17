@@ -148,7 +148,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public void checkFile(final PsiFile file) {
     if (!(file instanceof PropertiesFile)) return;
     if (getManager().RUN_WITH_EDITOR_PROFILE &&
-        InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file).getInspectionTool(getShortName()) != this) {
+        InspectionProjectProfileManager.getInstance(file.getProject()).getProfile((PsiElement)file).getInspectionTool(getShortName()) != this) {
       return;
     }
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();

@@ -58,8 +58,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     comboboxWithBrowseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final Profile selectedProfile = (Profile)comboboxWithBrowseButton.getComboBox().getSelectedItem();
-        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), selectedProfile.isLocal(), selectedProfile.isLocal() ? profileManager : projectProfileManager){
+        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), true, projectProfileManager){
           protected void init() {
             super.init();
             setOKButtonText(CommonBundle.getOkButtonText());

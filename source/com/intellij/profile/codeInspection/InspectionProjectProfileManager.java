@@ -16,17 +16,15 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
@@ -57,42 +55,26 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
-  public InspectionProfile getProfile(@NotNull final PsiElement psiElement){
+  public String getProfile(PsiFile psiFile) {
+    return getProfile((PsiElement)psiFile).getName();
+  }
+
+  public InspectionProfileImpl getProfile(@NotNull final PsiElement psiElement){
     final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiElement.getProject()).getInspectionProfile(psiElement);
     if (inspectionProfilePair != null && inspectionProfilePair.second) {
-      InspectionProfile inspectionProfile = (InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(inspectionProfilePair.first);
+      Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(inspectionProfilePair.first);
       if (inspectionProfile != null){
-        return inspectionProfile;
+        return (InspectionProfileImpl)inspectionProfile;
       }
     }
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null){
-      return (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    }
-    final Profile profile = getProfile(getProfile(virtualFile));
-    if (profile != null) return (InspectionProfile)profile;
-    return (InspectionProfile)myApplicationProfileManager.getRootProfile();
+
+    final String profile = super.getProfile(psiFile);
+    if (profile != null) return (InspectionProfileImpl)getProfile(profile);
+    return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
   }
 
-  public void copy(ProjectProfileManager manager) {
-    super.copy(manager);
-    myHectorSettings.clear();
-    myHectorSettings.putAll(((InspectionProjectProfileManager)manager).myHectorSettings);
-    HighlightingSettingsPerFile.getInstance(myProject).correctProfileSettings(myHectorSettings);
-  }
-
-  public boolean isModified(ProjectProfileManager manager) {
-    if (super.isModified(manager)) return true;
-    InspectionProjectProfileManager inspectionManager = (InspectionProjectProfileManager)manager;
-    if (inspectionManager.myHectorSettings.size() != myHectorSettings.size()) return true;
-    for (VirtualFile file : myHectorSettings.keySet()) {
-      if (!inspectionManager.myHectorSettings.containsKey(file)) return true;
-      if (!Comparing.equal(inspectionManager.myHectorSettings.get(file), myHectorSettings.get(file))) return true;
-    }
-    return false;
-  }
 
   public String changeHectorSettingsForFile(VirtualFile file, String profile){
     String projectProfileName = updateProjectProfiles(profile);
@@ -110,13 +92,6 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public Map<VirtualFile, String> getHectorAssignments() {
     return myHectorSettings;
-  }
-
-  public ProjectProfileManager getModifiableModel() {
-    if (myModel == null){
-      myModel = new InspectionProjectProfileManager(myProject);
-    }
-    return myModel;
   }
 
   public void updateAdditionalSettings() {

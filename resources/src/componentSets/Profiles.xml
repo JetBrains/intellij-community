@@ -5,18 +5,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.profile.codeStyle.CodeStyleProfileManager</implementation-class>
-    </component>      
-    <component>
-      <interface-class>com.intellij.profile.ui.ProfileUIFactory</interface-class>
-      <implementation-class>com.intellij.profile.ui.ProfileUIFactoryImpl</implementation-class>
     </component>
   </application-components>
   <project-components>
-    <component>
-      <interface-class>com.intellij.profile.scope.ProfileScopeFactory</interface-class>
-      <implementation-class>com.intellij.profile.scope.ProfileScopeFactoryImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
       <skipForDummyProject/>

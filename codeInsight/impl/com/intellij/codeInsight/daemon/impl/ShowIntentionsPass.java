@@ -237,7 +237,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (javadocKey == null){
         HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
       }
-      if (((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile)).getErrorLevel(javadocKey) ==
+      if (((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile)).getErrorLevel(javadocKey) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
       }

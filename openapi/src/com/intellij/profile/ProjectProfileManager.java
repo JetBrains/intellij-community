@@ -17,11 +17,11 @@ package com.intellij.profile;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.scope.ProfileScope;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * User: anna
@@ -40,21 +40,22 @@ public abstract class ProjectProfileManager implements ProfileManager, JDOMExter
     return null;
   }
 
-  public abstract String assignProfileToScope(String profile, ProfileScope scope);
+  public abstract String assignProfileToScope(String profile, NamedScope scope);
 
-  public abstract void deassignProfileFromScope(ProfileScope scope);
+  public abstract void deassignProfileFromScope(NamedScope scope);
 
-  public abstract String getProfile(VirtualFile vFile);
+  public abstract String getProfile(PsiFile psiFile);
 
-  public abstract String getProfile(ProfileScope scope);
+  public abstract String getProfile(NamedScope scope);
 
-  public abstract boolean isProperProfile(ProfileScope scope);
-
-  public abstract Map<ProfileScope,String> getProfilesUsedInProject();
+  public abstract LinkedHashMap<NamedScope,String> getProfilesUsedInProject();
 
   public abstract void clearProfileScopeAssignments();
 
   public abstract boolean useProjectLevelProfileSettings();
 
   public abstract void useProjectLevelProfileSettings(boolean useProjectLevelSettings);
+
+  public abstract String getProjectProfile();
+  public abstract void setProjectProfile(final String projectProfile);
 }

@@ -15,7 +15,8 @@
  */
 package com.intellij.profile;
 
-import com.intellij.profile.scope.ProfileScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -23,5 +24,5 @@ import com.intellij.profile.scope.ProfileScope;
  */
 public abstract class ProfileChangeAdapter {
   public void profileChanged(Profile profile){}
-  public void profileActivated(ProfileScope scope, Profile oldProfile, Profile profile){}
+  public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile){}
 }

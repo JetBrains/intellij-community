@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 public class CodeInspectionOnEditorAction extends AnAction {
@@ -34,7 +35,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final AnalysisScope scope = new AnalysisScope(psiFile);
     inspectionManagerEx.setCurrentScope(scope);
     final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getProfile(psiFile);
+      InspectionProjectProfileManager.getInstance(project).getProfile((PsiElement)psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -18,6 +18,7 @@ package com.intellij.packageDependencies;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,10 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
   public static DependencyValidationManager getInstance(Project project) {
     return project.getComponent(DependencyValidationManager.class);
   }
+
+  public abstract NamedScope getProjectScope();
+
+  public abstract NamedScope getProjectTestScope();
 
   public abstract boolean hasRules();
 

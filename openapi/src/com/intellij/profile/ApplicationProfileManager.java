@@ -16,7 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.profile.scope.ProfileScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -58,7 +58,7 @@ public abstract class ApplicationProfileManager implements ProfileManager{
 
   public abstract void fireProfileChanged(Profile profile);
 
-  public abstract void fireProfileChanged(Profile oldProfile, Profile profile, ProfileScope scope);
+  public abstract void fireProfileChanged(Profile oldProfile, Profile profile, @Nullable NamedScope scope);
 
   public abstract void setRootProfile(String rootProfile);
 

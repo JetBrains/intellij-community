@@ -93,7 +93,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
 
-    final LocalInspectionTool[] tools = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile).getHighlightingLocalInspectionTools();
+    final LocalInspectionTool[] tools = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile).getHighlightingLocalInspectionTools();
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : workSet) {
@@ -186,7 +186,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile);
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile);
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
@@ -230,7 +230,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(myFile);
+      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 

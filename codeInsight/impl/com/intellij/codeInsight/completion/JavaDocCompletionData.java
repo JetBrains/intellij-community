@@ -126,7 +126,7 @@ public class JavaDocCompletionData extends CompletionData {
       }
 
       InspectionProfileImpl inspectionProfile =
-        (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(position.getProject()).getProfile(position);
+        InspectionProjectProfileManager.getInstance(position.getProject()).getProfile(position);
       final InspectionTool inspectionTool = inspectionProfile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
       JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
       final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");

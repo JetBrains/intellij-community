@@ -16,6 +16,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
@@ -53,12 +54,12 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     InspectionProfileImpl inspectionProfile =
-      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
-    editToolSettings(project, inspectionProfile, true);
+      InspectionProjectProfileManager.getInstance(file.getProject()).getProfile((PsiElement)file);
+    editToolSettings(project, inspectionProfile, false);
   }
 
-  public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean editorHighlighting){
-    return editToolSettings(project, inspectionProfile, editorHighlighting, myShortName, InspectionProjectProfileManager.getInstance(project));
+  public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfiles){
+    return editToolSettings(project, inspectionProfile, canChooseDifferentProfiles, myShortName, InspectionProjectProfileManager.getInstance(project));
   }
 
   public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName, final ProfileManager manager) {
