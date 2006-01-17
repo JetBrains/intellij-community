@@ -94,7 +94,8 @@ abstract class Mover {
     }
 
     afterMove(editor, file);
-
+    whatToMove.firstElement = null;
+    whatToMove.lastElement = null;
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
