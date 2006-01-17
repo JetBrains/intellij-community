@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way to many garbage in AbrstractList.iterator() produced otherwize.
 public class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   private TextAttributes myMergedAttributes = new TextAttributes();
@@ -219,7 +220,8 @@ public class IterationState {
   private int getGuardedBlockEnd(int start) {
     java.util.List<RangeMarker> blocks = myDocument.getGuardedBlocks();
     int min = myEnd;
-    for (RangeMarker block : blocks) {
+    for (int i = 0; i < blocks.size(); i++) {
+      RangeMarker block = blocks.get(i);
       if (block.getStartOffset() > start) {
         min = Math.min(min, block.getStartOffset());
       }
@@ -295,8 +297,8 @@ public class IterationState {
     }
     else if (myCurrentHighlighters.size() > 0) {
       ArrayList<RangeHighlighterImpl> copy = new ArrayList<RangeHighlighterImpl>(myCurrentHighlighters.size());
-      for (RangeHighlighterImpl current : myCurrentHighlighters) {
-        highlighter = current;
+      for (int i = 0; i < myCurrentHighlighters.size(); i++) {
+        highlighter = myCurrentHighlighters.get(i);
         if (highlighter.getAffectedAreaEndOffset() > myStartOffset) {
           copy.add(highlighter);
         }
@@ -381,7 +383,8 @@ public class IterationState {
 
     myCachedAttributesList.clear();
 
-    for (RangeHighlighterImpl highlighter : myCurrentHighlighters) {
+    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
+      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
         myCachedAttributesList.add(selection);
         selection = null;
@@ -425,7 +428,8 @@ public class IterationState {
     EffectType effectType = EffectType.BOXED;
     int fontType = 0;
 
-    for (TextAttributes attrs : myCachedAttributesList) {
+    for (int i = 0; i < myCachedAttributesList.size(); i++) {
+      TextAttributes attrs = myCachedAttributesList.get(i);
       if (fore == null) {
         fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
       }
@@ -492,7 +496,8 @@ public class IterationState {
       });
     }
 
-    for (RangeHighlighterImpl highlighter : myCurrentHighlighters) {
+    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
+      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
         return caret;
       }

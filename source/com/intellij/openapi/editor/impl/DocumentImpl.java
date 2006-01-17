@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -13,7 +14,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -177,8 +177,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myGuardedBlocks;
   }
 
+  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
   public RangeMarker getOffsetGuard(int offset) {
-    for (RangeMarker block : myGuardedBlocks) {
+    for (int i = 0; i < myGuardedBlocks.size(); i++) {
+      RangeMarker block = myGuardedBlocks.get(i);
       if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
     }
 

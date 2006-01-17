@@ -492,6 +492,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
+  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwize in AbstractList.iterator()
   void refresh(VirtualFile file,
                boolean recursive,
                boolean storeStatus,
@@ -502,19 +503,22 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
       if (!recursive && isRoot && ((VirtualFileImpl)file).areChildrenCached()) {
         final VirtualFile[] children = file.getChildren();
-        for (VirtualFile child : children) {
+        for (int i = 0; i < children.length; i++) {
+          VirtualFile child = children[i];
           ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
         }
       }
     }
     else {
       synchronized (LOCK) {
-        for (VirtualFile fileToWatch : myFilesToWatchManual) {
+        for (int i = 0; i < myFilesToWatchManual.size(); i++) {
+          VirtualFile fileToWatch = myFilesToWatchManual.get(i);
           if (VfsUtil.isAncestor(fileToWatch, file, false)) {
             ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
             if (isRoot && !recursive && ((VirtualFileImpl) file).areChildrenCached()) {
               VirtualFile[] children = file.getChildren();
-              for (VirtualFile child : children) {
+              for (int j = 0; j < children.length; j++) {
+                VirtualFile child = children[j];
                 ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
               }
             }
@@ -542,7 +546,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
         if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
           VirtualFile[] children = file.getChildren();
-          for (VirtualFile child : children) {
+          for (int i = 0; i < children.length; i++) {
+            VirtualFile child = children[i];
             if (status == DIRTY_STATUS &&
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
