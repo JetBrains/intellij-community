@@ -1,30 +1,28 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateStateListener;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListPopup;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -125,15 +123,13 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         });
       }
     };
-    ListPopup listPopup = new ListPopup(QuickFixBundle.message("target.class.chooser.title"), list, runnable, project);
-    LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
-    Point caretLocation = editor.logicalPositionToXY(caretPosition);
-    int x = caretLocation.x;
-    int y = caretLocation.y;
-    Point location = editor.getContentComponent().getLocationOnScreen();
-    x += location.x;
-    y += location.y;
-    listPopup.show(x, y);
+
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setTitle(QuickFixBundle.message("target.class.chooser.title")).
+      setItemChoosenCallback(runnable).
+      createPopup().
+      showInBestPositionFor(editor);
   }
 
   protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {

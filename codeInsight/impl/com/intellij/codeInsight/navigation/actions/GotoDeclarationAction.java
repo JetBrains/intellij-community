@@ -9,18 +9,14 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListPopup;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
@@ -77,15 +73,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
       String title = CodeInsightBundle.message("declaration.navigation.title", elements[0] instanceof PsiNamedElement ? ((PsiNamedElement)elements[0]).getName():elements[0].getText());
-      ListPopup listPopup = NavigationUtil.getPsiElementPopup(elements, title, project);
-      LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
-      Point caretLocation = editor.logicalPositionToXY(caretPosition);
-      int x = caretLocation.x;
-      int y = caretLocation.y;
-      Point location = editor.getContentComponent().getLocationOnScreen();
-      x += location.x;
-      y += location.y;
-      listPopup.show(x, y);
+      NavigationUtil.getPsiElementPopup(elements, title).showInBestPositionFor(editor);
     }
   }
 

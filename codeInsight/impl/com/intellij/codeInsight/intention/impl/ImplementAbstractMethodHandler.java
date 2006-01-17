@@ -16,16 +16,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.ui.ListPopup;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -93,14 +92,12 @@ public class ImplementAbstractMethodHandler {
       }
     };
 
-    ListPopup listPopup = new ListPopup(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title"), myList, runnable, myProject);
-    LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
-    Point caretLocation = myEditor.logicalPositionToXY(caretPosition);
-    int x = caretLocation.x;
-    int y = caretLocation.y;
-    x += myLocation.x;
-    y += myLocation.y;
-    listPopup.show(x, y);
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(myList).
+      setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
+      setItemChoosenCallback(runnable).
+      createPopup().
+      showInBestPositionFor(myEditor);
   }
 
   private void implementInClass(final PsiClass psiClass) {

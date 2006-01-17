@@ -15,9 +15,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
@@ -32,8 +34,6 @@ import com.intellij.openapi.vcs.ui.impl.CheckinPanelRootNode;
 import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.editor.Document;
 import com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -174,11 +174,6 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
     public void drawDottedRectangle(Graphics g, int x, int y, int i, int i1) {
       BegTreeHandleUtil.drawDottedRectangle(g,x,y,i,i1);
-    }
-
-    public void showListPopup(String title, JList list, Runnable finishAction, Project project, int x, int y) {
-      new ListPopup(title, list, finishAction, project).show(x, y);
-
     }
 
     public void installSmartExpander(JTree tree) {

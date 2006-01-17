@@ -2,8 +2,8 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -12,8 +12,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -61,10 +59,12 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
     for (Iterator each = myTags.iterator(); each.hasNext();) {
       model.addElement(each.next());
     }
-    Rectangle bounds = myMoreLabel.getBounds();
-    Point location = new Point(bounds.x + 20, bounds.y);
-    SwingUtilities.convertPointToScreen(location, this);
-    PeerFactory.getInstance().getUIHelper().showListPopup(com.intellij.CvsBundle.message("list.popup.text.tags"), myList, EmptyRunnable.getInstance(), myProject, location.x, location.y);
+
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(myList).
+      setTitle(com.intellij.CvsBundle.message("list.popup.text.tags")).
+      createPopup().
+      showUnderneathOf(myMoreLabel);
   }
 
   public void setTags(Collection tags) {

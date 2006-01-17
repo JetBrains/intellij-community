@@ -12,13 +12,12 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListPopup;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
@@ -99,64 +98,37 @@ public class ShowRecentFilesAction extends AnAction {
       list.clearSelection();
     }
     new MyListSpeedSearch(list);
+    list.setCellRenderer(new RecentFilesRenderer(project));
 
-    Window window = null;
-
-    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    if(focusedComponent!=null){
-      if(focusedComponent instanceof Window){
-        window=(Window)focusedComponent;
-      }else{
-        window=SwingUtilities.getWindowAncestor(focusedComponent);
-      }
-    }
-    if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    }
-
-    Rectangle r;
-    if (window != null) {
-      r = window.getBounds();
-    }
-    else {
-      r = WindowManagerEx.getInstanceEx().getScreenBounds();
-    }
-
-    ListPopup popup = new MyListPopup(list, runnable, project);
-
+    /*
+    TODO:
     if (model.getSize() > 0) {
       Dimension listPreferredSize = list.getPreferredSize();
       list.setVisibleRowCount(0);
       Dimension viewPreferredSize = new Dimension(listPreferredSize.width, Math.min(listPreferredSize.height, r.height - 20));
       ((JViewport)list.getParent()).setPreferredSize(viewPreferredSize);
     }
+    */
 
-    popup.getWindow().pack();
-    Dimension popupSize=popup.getSize();
-    int x = r.x + r.width/2 - popupSize.width/2;
-    int y = r.y + r.height/2 - popupSize.height/2;
-
-    popup.show(x,y);
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setTitle(IdeBundle.message("title.popup.recent.files")).
+      setItemChoosenCallback(runnable).
+      addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
+      createPopup().showCenteredInCurrentWindow(project);
   }
 
-  private static class MyListPopup extends ListPopup {
-    public MyListPopup(JList list, Runnable runnable, Project project) {
-      super(" " + IdeBundle.message("title.popup.recent.files") + " ", list, runnable, project);
-      list.setCellRenderer(new RecentFilesRenderer(project));
-    }
-
-    // TODO[anton,vova] use actions and local shortcuts instead
-    protected KeyStroke[] getAdditionalSelectKeystrokes() {
-      Shortcut[] shortcuts=KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE);
-      for (int i = 0; i < shortcuts.length; i++) {
-        Shortcut shortcut = shortcuts[i];
-        if (shortcut instanceof KeyboardShortcut) {
-          return new KeyStroke[] {((KeyboardShortcut)shortcut).getFirstKeyStroke()};
-        }
+  private static KeyStroke getAdditionalSelectKeystroke() {
+    Shortcut[] shortcuts=KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE);
+    for (int i = 0; i < shortcuts.length; i++) {
+      Shortcut shortcut = shortcuts[i];
+      if (shortcut instanceof KeyboardShortcut) {
+        return ((KeyboardShortcut)shortcut).getFirstKeyStroke();
       }
-      return new KeyStroke[0];
     }
+    return null;
   }
+
 
   private static class RecentFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;

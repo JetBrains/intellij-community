@@ -9,25 +9,22 @@ import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListPopup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.HashMap;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 
 public class GotoImplementationHandler implements CodeInsightActionHandler {
   protected interface ResultsFilter {
@@ -259,16 +256,11 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
       };
 
-      String title = CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName(), elements.length);
-      ListPopup listPopup = new ListPopup(title, list, runnable, project);
-      LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
-      Point caretLocation = editor.logicalPositionToXY(caretPosition);
-      int x = caretLocation.x;
-      int y = caretLocation.y;
-      Point editorLocation = editor.getContentComponent().getLocationOnScreen();
-      x += editorLocation.x;
-      y += editorLocation.y;
-      listPopup.show(x, y);
+      JBPopupFactory.getInstance().createListPopupBuilder().
+        setList(list).
+        setTitle(CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName(), elements.length)).
+        setItemChoosenCallback(runnable).
+        createPopup().showInBestPositionFor(editor);
     }
   }
 }

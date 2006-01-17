@@ -5,16 +5,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListPopup;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -48,15 +45,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
                      CodeInsightBundle.message("goto.super.method.chooser.title") :
                      CodeInsightBundle.message("goto.super.class.chooser.title");
 
-      ListPopup listPopup = NavigationUtil.getPsiElementPopup(superElements, title, project);
-      LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
-      Point caretLocation = editor.logicalPositionToXY(caretPosition);
-      int x = caretLocation.x;
-      int y = caretLocation.y;
-      Point location = editor.getContentComponent().getLocationOnScreen();
-      x += location.x;
-      y += location.y;
-      listPopup.show(x, y);
+      NavigationUtil.getPsiElementPopup(superElements, title).showInBestPositionFor(editor);
     }
   }
 

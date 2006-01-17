@@ -16,6 +16,8 @@ public abstract class JBPopupFactory {
     return ApplicationManager.getApplication().getComponent(JBPopupFactory.class);
   }
 
+  public ListPopupBuilder createListPopupBuilder() {return new ListPopupBuilder();}
+
   public abstract ListPopup createConfirmation(String title, Runnable onYes, int defaultOptionIndex);
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, int defaultOptionIndex);
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, Runnable onNo, int defaultOptionIndex);

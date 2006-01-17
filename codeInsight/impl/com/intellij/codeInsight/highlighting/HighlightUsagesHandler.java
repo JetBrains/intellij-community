@@ -12,13 +12,13 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
@@ -30,13 +30,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListPopup;
 import com.intellij.util.containers.IntArrayList;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class HighlightUsagesHandler extends HighlightHandlerBase {
   /*
@@ -257,16 +254,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            String title = CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title");
-            ListPopup listPopup = new ListPopup(title, myList, callback, myProject);
-            LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
-            Point caretLocation = myEditor.logicalPositionToXY(caretPosition);
-            int x = caretLocation.x;
-            int y = caretLocation.y;
-            Point location = myEditor.getContentComponent().getLocationOnScreen();
-            x += location.x;
-            y += location.y;
-            listPopup.show(x, y);
+            JBPopupFactory.getInstance().createListPopupBuilder().
+              setList(myList).
+              setTitle(CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")).
+              setItemChoosenCallback(callback).
+              createPopup().
+              showInBestPositionFor(myEditor);
           }
         });
       }

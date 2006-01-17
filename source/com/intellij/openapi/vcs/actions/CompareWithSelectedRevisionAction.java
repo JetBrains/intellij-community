@@ -1,8 +1,10 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
@@ -19,7 +21,6 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -220,48 +221,13 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     }
     new ListSpeedSearch(list);
 
-    Window window = null;
-
-    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      if (focusedComponent instanceof Window) {
-        window = (Window)focusedComponent;
-      }
-      else {
-        window = SwingUtilities.getWindowAncestor(focusedComponent);
-      }
-    }
-    if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    }
-
-    Rectangle r;
-    if (window != null) {
-      r = window.getBounds();
-    }
-    else {
-      r = WindowManagerEx.getInstanceEx().getScreenBounds();
-    }
-
-    ListPopup popup = new ListPopup(VcsBundle.message("lookup.title.vcs.file.revisions"), createListMainPanel(list),list, runnable, project);
-
-    if (model.getSize() > 0) {
-      Dimension listPreferredSize = list.getPreferredSize();
-      list.setVisibleRowCount(0);
-      Dimension viewPreferredSize = new Dimension(listPreferredSize.width, Math.min(listPreferredSize.height, r.height - 20));
-      final Container parent = list.getParent();
-      if (parent instanceof JComponent) {
-        //noinspection RedundantCast
-        ((JComponent)parent).setPreferredSize(viewPreferredSize);
-      }
-    }
-
-    popup.getWindow().pack();
-    Dimension popupSize = popup.getSize();
-    int x = r.x + r.width / 2 - popupSize.width / 2;
-    int y = r.y + r.height / 2 - popupSize.height / 2;
-
-    popup.show(x, y);
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setContentPane(createListMainPanel(list)).
+      setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
+      setItemChoosenCallback(runnable).
+      createPopup().
+      showCenteredInCurrentWindow(project);
   }
 
   private JPanel createListMainPanel(final JList list) {

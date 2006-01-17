@@ -51,8 +51,6 @@ public interface UIHelper {
 
   void drawDottedRectangle(Graphics g, int x, int y, int i, int i1);
 
-  void showListPopup(String title, JList list, Runnable finishAction, Project project, int x, int y);
-
   void installSmartExpander(JTree tree);
 
   void installSelectionSaver(JTree tree);

@@ -7,14 +7,14 @@ import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListPopup;
+import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
@@ -74,17 +74,16 @@ class LineMarkerNavigator {
 
   private static void openTargets(MouseEvent e, PsiMember[] targets, String title, ListCellRenderer listRenderer) {
     if (targets.length == 0) return;
-    Project project = targets[0].getProject();
     if (targets.length == 1){
       targets[0].navigate(true);
     }
     else{
       final JList list = new JList(targets);
       list.setCellRenderer(listRenderer);
-      ListPopup listPopup = new ListPopup(
-        title,
-        list,
-        new Runnable() {
+      JBPopupFactory.getInstance().createListPopupBuilder().
+        setTitle(title).
+        setList(list).
+        setItemChoosenCallback(new Runnable() {
           public void run() {
             int[] ids = list.getSelectedIndices();
             if (ids == null || ids.length == 0) return;
@@ -95,14 +94,8 @@ class LineMarkerNavigator {
               ((PsiMember)selected).navigate(true);
             }
           }
-        },
-        project
-      );
-
-      Point p = new Point(e.getPoint());
-      SwingUtilities.convertPointToScreen(p, e.getComponent());
-
-      listPopup.show(p.x, p.y);
+        }).createPopup().
+        show(new RelativePoint(e));
     }
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -47,7 +48,6 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.ListPopup;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -625,8 +625,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         changeView(viewWrapper.myViewPane.getId());
       }
     };
-    ListPopup popup = new ListPopup(" " + IdeBundle.message("title.popup.views") + " ", list, runnable, myProject);
-    popup.show(loc.x + size.width / 2 - popup.getSize().width / 2, loc.y + size.height / 2 - popup.getSize().height / 2);
+
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setTitle(IdeBundle.message("title.popup.views")).
+      setItemChoosenCallback(runnable).
+      createPopup().showInCenterOf(getComponent());
   }
 
   public void setCurrentViewId(String viewId) {

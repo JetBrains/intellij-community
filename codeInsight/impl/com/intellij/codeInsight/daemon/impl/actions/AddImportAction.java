@@ -13,16 +13,15 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiImportStaticReferenceElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.ListPopup;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
@@ -74,10 +73,13 @@ public class AddImportAction implements QuestionAction {
         addImport(myReference, myTargetClasses[index]);
       }
     };
-    ListPopup listPopup = new ListPopup(QuickFixBundle.message("class.to.import.chooser.title"), list, runnable, myProject);
-    Point caretLocation = myEditor.logicalPositionToXY(myEditor.getCaretModel().getLogicalPosition());
-    Point location = myEditor.getContentComponent().getLocationOnScreen();
-    listPopup.show(caretLocation.x + location.x, caretLocation.y + location.y);
+
+    JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
+      setItemChoosenCallback(runnable).
+      createPopup().
+      showInBestPositionFor(myEditor);
   }
 
   private void addImport(final PsiJavaCodeReferenceElement ref, final PsiClass targetClass) {

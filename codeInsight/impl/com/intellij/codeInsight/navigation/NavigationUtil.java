@@ -3,10 +3,10 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ListPopup;
 
 import javax.swing.*;
 
@@ -14,16 +14,12 @@ import javax.swing.*;
  * @author ven
  */
 public final class NavigationUtil {
-  public static ListPopup getPsiElementPopup(PsiElement[] elements, String title, final Project project) {
+  public static JBPopup getPsiElementPopup(PsiElement[] elements, String title) {
     PsiElementListCellRenderer renderer = new GotoSymbolCellRenderer();
-    return getPsiElementPopup(elements, renderer, title, project);
-
+    return getPsiElementPopup(elements, renderer, title);
   }
 
-  public static ListPopup getPsiElementPopup(final PsiElement[] elements,
-                                             final PsiElementListCellRenderer renderer,
-                                             final String title,
-                                             final Project project) {
+  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title) {
     final JList list = new JList(elements);
     list.setCellRenderer(renderer);
     renderer.installSpeedSearch(list);
@@ -42,7 +38,10 @@ public final class NavigationUtil {
       }
     };
 
-    ListPopup listPopup = new ListPopup(title, list, runnable, project);
-    return listPopup;
+    return JBPopupFactory.getInstance().createListPopupBuilder().
+      setList(list).
+      setTitle(title).
+      setItemChoosenCallback(runnable).
+      createPopup();
   }
 }
