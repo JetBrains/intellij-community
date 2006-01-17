@@ -4,11 +4,10 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +28,6 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
   }
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
-    Document document = editor.getDocument();
     if (!file.isWritable()){
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
         return;
@@ -66,7 +64,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     int line = editor.getCaretModel().getLogicalPosition().line;
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
-    Object[] newMembers = null;
+    Object[] newMembers;
     try{
       Object[] prototypes = generateMemberPrototypes(aClass, members);
       newMembers = GenerateMembersUtil.insertMembersAtOffset(project, editor.getDocument(), aClass.getContainingFile(), offset, prototypes);
@@ -108,7 +106,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
   }
 
   protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] members) throws IncorrectOperationException {
-    ArrayList array = new ArrayList();
+    ArrayList<Object> array = new ArrayList<Object>();
     for (Object member : members) {
       Object[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {

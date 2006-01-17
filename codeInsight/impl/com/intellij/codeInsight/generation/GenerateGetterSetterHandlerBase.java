@@ -1,16 +1,15 @@
 package com.intellij.codeInsight.generation;
 
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
+import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbClassRoleEnum;
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
-import com.intellij.j2ee.j2eeDom.ejb.EntityBean;
-import com.intellij.j2ee.j2eeDom.xmlData.ObjectsList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.model.common.EntityBean;
+import com.intellij.javaee.model.common.CmpField;
 
 import java.util.ArrayList;
 
@@ -22,7 +21,7 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
   }
 
   protected Object[] getAllOriginalMembers(PsiClass aClass) {
-    ArrayList array = new ArrayList();
+    ArrayList<Object> array = new ArrayList<Object>();
 
     try{
       PsiField[] fields = aClass.getFields();
@@ -41,13 +40,13 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
     return array.toArray(new Object[array.size()]);
   }
 
-  private void getCmpFields(ArrayList list, PsiClass psiClass) throws IncorrectOperationException {
+  private void getCmpFields(ArrayList<Object> list, PsiClass psiClass) throws IncorrectOperationException {
     final EjbClassRole classRole = EjbRolesUtil.getEjbRole(psiClass);
     if (classRole == null || classRole.getType() != EjbClassRoleEnum.EJB_CLASS_ROLE_EJB_CLASS) return;
     if (!EjbUtil.isCMP2x(classRole.getEnterpriseBean())) return;
-    ObjectsList<CmpField> cmpFields = ((EntityBean)classRole.getEjb()).getCmpFields();
-    for (int i = 0; i < cmpFields.size(); i++) {
-      CmpField field = cmpFields.get(i);
+
+
+    for (final CmpField field : ((EntityBean)classRole.getEnterpriseBean()).getCmpFields()) {
       if (generateMemberPrototypes(psiClass, field).length > 0) {
         list.add(field);
       }

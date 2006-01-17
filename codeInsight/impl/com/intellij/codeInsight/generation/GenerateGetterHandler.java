@@ -2,12 +2,12 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.model.common.CmpField;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   public GenerateGetterHandler() {
@@ -38,7 +38,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
       final PsiElementFactory factory = psiManager.getElementFactory();
 
       final PsiType objectType = PsiType.getJavaLangObject(psiManager, aClass.getResolveScope());
-      final String methodName = PropertyUtil.suggestGetterName(field.getName(), objectType);
+      final String methodName = PropertyUtil.suggestGetterName(field.getFieldName().getValue(), objectType);
 
       final PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {

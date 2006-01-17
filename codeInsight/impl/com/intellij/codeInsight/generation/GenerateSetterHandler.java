@@ -2,13 +2,13 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.model.common.CmpField;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
@@ -39,7 +39,8 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
       final PsiType objectType = PsiType.getJavaLangObject(psiManager, aClass.getResolveScope());
 
-      final String methodName = PropertyUtil.suggestSetterName(field.getName());
+      final String name = field.getFieldName().getValue();
+      final String methodName = PropertyUtil.suggestSetterName(name);
 
       final PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {
@@ -51,7 +52,7 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
       }
 
       final CmpFieldTypeExpression expression = new CmpFieldTypeExpression(psiManager);
-      String parameterName = codeStyleManager.propertyNameToVariableName(field.getName(), VariableKind.PARAMETER);
+      String parameterName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
 
       final PsiMethod method = factory.createMethod(methodName, objectType);
       method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);

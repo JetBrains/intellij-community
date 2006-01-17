@@ -2,9 +2,6 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.IdeBundle;
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
-import com.intellij.j2ee.j2eeDom.ejb.CmrField;
-import com.intellij.j2ee.j2eeDom.ejb.EntityBean;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +25,9 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.javaee.model.common.CmpField;
+import com.intellij.javaee.model.common.CmrField;
+import com.intellij.javaee.model.common.EntityBean;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -179,7 +179,7 @@ public class MemberChooser extends DialogWrapper {
       }
       else if (object instanceof CmrField) {
         CmrField field = (CmrField)object;
-        final EntityBean bean = field.getEntityBean();
+        final EntityBean bean = field.getOppositeField().getOppositeEntity();
         EntityBeanNode beanNode = (EntityBeanNode)map.get(bean);
 
         if (beanNode == null) {
@@ -199,14 +199,13 @@ public class MemberChooser extends DialogWrapper {
 
   public void selectElements(Object[] elements) {
     ArrayList<TreePath> selectionPaths = new ArrayList<TreePath>();
-    for (int i = 0; i < elements.length; i++) {
-      Object element = elements[i];
+    for (Object element : elements) {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
       if (treeNode != null) {
         selectionPaths.add(new TreePath(treeNode.getPath()));
       }
     }
-    myTree.setSelectionPaths((TreePath[])selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+    myTree.setSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
   }
 
 
@@ -713,7 +712,7 @@ public class MemberChooser extends DialogWrapper {
     private String myText;
 
     public EntityBeanNode(EntityBean bean) {
-      myText = bean.getName();
+      myText = bean.getEjbName().getValue();
       myIcon = IconUtilEx.getIcon(bean, 0, null);
     }
 
@@ -733,7 +732,7 @@ public class MemberChooser extends DialogWrapper {
 
     public CmpFieldNode(CmpField field) {
       myField = field;
-      myText = field.getName();
+      myText = field.getFieldName().getValue();
       myIcon = IconUtilEx.getIcon(field, 0, null);
     }
 
@@ -757,7 +756,7 @@ public class MemberChooser extends DialogWrapper {
 
     public CmrFieldNode(CmrField field) {
       myField = field;
-      myText = field.getName();
+      myText = field.getCmrFieldName().getValue();
       myIcon = IconUtilEx.getIcon(field, 0, null);
     }
 

@@ -15,11 +15,11 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee15.model.common.EjbRootElement;
-import com.intellij.j2ee15.model.common.EntityBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.model.common.EjbRootElement;
+import com.intellij.javaee.model.common.EntityBean;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -292,8 +292,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
         if (psiElement == null) continue;
         String accessLevel = getFilter().getPossibleAccess(refElement);
