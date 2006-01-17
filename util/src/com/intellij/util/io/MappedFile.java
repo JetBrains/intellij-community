@@ -41,14 +41,10 @@ public class MappedFile {
     myHolder = new ByteBufferUtil.ByteBufferHolder(raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, raf.length()), myFile);
     raf.close();
     myRealSize = myFile.length();
-    getBuffer().position((int)myPosition);
+    myHolder.getBuffer().position((int)myPosition);
     ByteBufferUtil.TOTAL_MAPPED_BYTES += myRealSize;
   }
 
-
-  private ByteBuffer getBuffer() {
-    return myHolder.getBuffer();
-  }
 
   public short getShort(int index) throws IOException {
     seek(index);
@@ -104,7 +100,7 @@ public class MappedFile {
       throw new EOFException();
     }
 
-    getBuffer().get(dst, offset, length);
+    myHolder.getBuffer().get(dst, offset, length);
     myPosition += length;
   }
 
@@ -115,7 +111,7 @@ public class MappedFile {
 
   public void seek(long pos) throws IOException {
     ensureSize(pos);
-    getBuffer().position((int)pos);
+    myHolder.getBuffer().position((int)pos);
     myPosition = pos;
     if (pos > mySize) {
       mySize = pos;
@@ -135,7 +131,7 @@ public class MappedFile {
   public void put(final byte[] src, final int offset, final int length) throws IOException {
     ensureSize(myPosition + length);
 
-    getBuffer().put(src, offset, length);
+    myHolder.getBuffer().put(src, offset, length);
     myPosition += length;
     if (myPosition > mySize) {
       mySize = myPosition;
@@ -143,15 +139,13 @@ public class MappedFile {
   }
 
   public void flush() {
-    final ByteBuffer buf = getBuffer();
+    final ByteBuffer buf = myHolder.getBuffer();
     if (buf instanceof MappedByteBuffer) {
       ((MappedByteBuffer)buf).force();
     }
   }
 
   public void close() {
-    if (getBuffer() == null) return;
-
     unmap();
     try {
       RandomAccessFile raf = new RandomAccessFile(myFile, RW);
