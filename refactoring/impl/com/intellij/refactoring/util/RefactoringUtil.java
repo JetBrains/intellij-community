@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -1318,7 +1317,7 @@ public class RefactoringUtil {
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < elements.length; i++) {
       if (i > 0) buffer.append(" ,");
-      buffer.append(buffer.append(UsageViewUtil.getType(elements[i])));
+      buffer.append(UsageViewUtil.getType(elements[i]));
       buffer.append(" ");
       buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
     }
