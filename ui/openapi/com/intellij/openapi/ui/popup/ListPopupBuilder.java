@@ -68,7 +68,8 @@ public class ListPopupBuilder {
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
     if (myTitle != null) {
-      JLabel label = new JLabel(" " + myTitle + " ");
+      final String title = myTitle.startsWith("<html>") ? myTitle : " " + myTitle + " ";
+      JLabel label = new JLabel(title);
       label.setHorizontalAlignment(JLabel.CENTER);
       contentPane.add(label, BorderLayout.NORTH);
     }
