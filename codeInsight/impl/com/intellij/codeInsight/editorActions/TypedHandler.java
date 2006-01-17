@@ -629,7 +629,8 @@ public class TypedHandler implements TypedActionHandler {
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset - 1);
-
+    if (element == null) return;
+    
     ASTNode prevLeaf = element.getNode();
     if (!"/".equals(prevLeaf.getText())) return;
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
