@@ -324,14 +324,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return true;
   }
 
-  public <T> T getUserData(Key<T> key) {
-    return null;
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    throw new RuntimeException("PsiPackage is not peresisitent. Cannot store user data in it.");
-  }
-
   public void accept(PsiElementVisitor visitor) {
     visitor.visitPackage(this);
   }
