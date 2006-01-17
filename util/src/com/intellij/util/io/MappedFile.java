@@ -38,10 +38,24 @@ public class MappedFile {
 
   private void map() throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    myHolder = new ByteBufferUtil.ByteBufferHolder(raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, raf.length()), myFile);
-    raf.close();
+    final FileChannel channel = raf.getChannel();
+    MappedByteBuffer buf = null;
+    try {
+      buf = channel.map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
+    }
+    catch (IOException e) {
+      new RuntimeException("Mapping failed: " + myFile.getAbsolutePath(), e);
+    }
+    finally {
+      channel.close();
+      raf.close();
+    }
+    if (buf == null) {
+      new RuntimeException("Mapping failed: " + myFile.getAbsolutePath());
+    }
+    myHolder = new ByteBufferUtil.ByteBufferHolder(buf, myFile);
     myRealSize = myFile.length();
-    myHolder.getBuffer().position((int)myPosition);
+    buf.position((int)myPosition);
     ByteBufferUtil.TOTAL_MAPPED_BYTES += myRealSize;
   }
 
