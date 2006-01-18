@@ -33,7 +33,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
       invoke((PsiClass) element);
     }
     else {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_SIGNATURE, project);
     }
   }
