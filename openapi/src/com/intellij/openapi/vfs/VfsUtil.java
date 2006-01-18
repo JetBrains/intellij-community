@@ -543,6 +543,7 @@ public class VfsUtil {
         while (src.getParent() != commonAncestor) {
           buffer.append("..").append(separatorChar);
           src = src.getParent();
+          assert src != null;
         }
       }
       buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
