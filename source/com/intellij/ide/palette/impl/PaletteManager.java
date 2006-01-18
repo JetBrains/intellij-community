@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -25,6 +26,7 @@ public class PaletteManager implements ProjectComponent {
   private Project myProject;
   private FileEditorManager myFileEditorManager;
   private PaletteWindow myPaletteWindow;
+  private ToolWindow myPaletteToolWindow;
   private PaletteManager.MyFileEditorManagerListener myListener;
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
@@ -38,9 +40,9 @@ public class PaletteManager implements ProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myPaletteWindow = new PaletteWindow(myProject);
-        ToolWindowManager.getInstance(myProject).registerToolWindow("Palette",
-                                                                    new JScrollPane(myPaletteWindow),
-                                                                    ToolWindowAnchor.RIGHT);
+        myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette",
+                                                                                          new JScrollPane(myPaletteWindow),
+                                                                                          ToolWindowAnchor.RIGHT);
       }
     });
   }
@@ -91,17 +93,27 @@ public class PaletteManager implements ProjectComponent {
     return null;
   }
 
+  private void processFileEditorChange() {
+    myPaletteWindow.refreshPaletteIfChanged();
+    if (myPaletteWindow.getActiveGroupCount() == 0) {
+      myPaletteToolWindow.hide(null);
+    }
+    else {
+      myPaletteToolWindow.show(null);
+    }
+  }
+
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
     public void fileOpened(FileEditorManager source, VirtualFile file) {
-      myPaletteWindow.refreshPalette();
+      processFileEditorChange();
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
-      myPaletteWindow.refreshPalette();
+      processFileEditorChange();
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
-      myPaletteWindow.refreshPalette();
+      processFileEditorChange();
     }
   }
 }

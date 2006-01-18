@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,15 +18,18 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.Collections;
 
 /**
  * @author yole
  */
 public class PaletteWindow extends JPanel implements Scrollable {
   private Project myProject;
-  private ArrayList<PaletteGroupHeader> myGroups = new ArrayList<PaletteGroupHeader>();
+  private ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
   private PaletteItemProvider[] myProviders;
   private PaletteWindow.MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
+  private Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
 
   public PaletteWindow(Project project) {
     myProject = project;
@@ -39,31 +43,45 @@ public class PaletteWindow extends JPanel implements Scrollable {
   }
 
   public void refreshPalette() {
-    final VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
-
-    for(PaletteGroupHeader group: myGroups) {
-      remove(group);
-      remove(group.getComponentList());
+    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+      remove(groupHeader);
+      remove(groupHeader.getComponentList());
     }
+    myGroupHeaders.clear();
     myGroups.clear();
 
+    for(PaletteGroup group: collectCurrentGroups()) {
+      PaletteGroupHeader groupHeader = new PaletteGroupHeader(group);
+      myGroupHeaders.add(groupHeader);
+      myGroups.add(group);
+      add(groupHeader);
+      PaletteComponentList componentList = new PaletteComponentList(group);
+      add(componentList);
+      groupHeader.setComponentList(componentList);
+      componentList.addListSelectionListener(new MyListSelectionListener());
+    }
+
+    revalidate();
+  }
+
+  private ArrayList<PaletteGroup> collectCurrentGroups() {
+    ArrayList<PaletteGroup> result = new ArrayList<PaletteGroup>();
+    VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
     if (editedFiles.length > 0) {
       VirtualFile selectedFile = editedFiles [0];
       for(PaletteItemProvider provider: myProviders) {
         PaletteGroup[] groups = provider.getActiveGroups(selectedFile);
-        for(PaletteGroup group: groups) {
-          PaletteGroupHeader groupHeader = new PaletteGroupHeader(group);
-          myGroups.add(groupHeader);
-          add(groupHeader);
-          PaletteComponentList componentList = new PaletteComponentList(group);
-          add(componentList);
-          groupHeader.setComponentList(componentList);
-          componentList.addListSelectionListener(new MyListSelectionListener());
-        }
+        Collections.addAll(result, groups);
       }
     }
+    return result;
+  }
 
-    revalidate();
+  public void refreshPaletteIfChanged() {
+    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups());
+    if (!currentGroups.equals(myGroups)) {
+      refreshPalette();
+    }
   }
 
   public Dimension getPreferredScrollableViewportSize() {
@@ -86,14 +104,18 @@ public class PaletteWindow extends JPanel implements Scrollable {
     return false;
   }
 
+  public int getActiveGroupCount() {
+    return myGroups.size();
+  }
+
   public void clearActiveItem() {
-    for(PaletteGroupHeader group: myGroups) {
+    for(PaletteGroupHeader group: myGroupHeaders) {
       group.getComponentList().clearSelection();
     }
   }
 
   @Nullable public PaletteItem getActiveItem() {
-    for(PaletteGroupHeader group: myGroups) {
+    for(PaletteGroupHeader group: myGroupHeaders) {
       if (group.isSelected() && group.getComponentList().getSelectedValue() != null) {
         return (PaletteItem) group.getComponentList().getSelectedValue();
       }
@@ -110,7 +132,7 @@ public class PaletteWindow extends JPanel implements Scrollable {
       int width = getWidth();
 
       int height = 0;
-      for(PaletteGroupHeader group: myGroups) {
+      for(PaletteGroupHeader group: myGroupHeaders) {
         group.setLocation(0, height);
         group.setSize(width, group.getPreferredSize().height);
         height += group.getPreferredSize().height;
@@ -130,7 +152,7 @@ public class PaletteWindow extends JPanel implements Scrollable {
     public Dimension preferredLayoutSize(Container parent) {
       int height = 0;
       int width = getWidth();
-      for(PaletteGroupHeader group: myGroups) {
+      for(PaletteGroupHeader group: myGroupHeaders) {
         height += group.getHeight();
         if (group.isSelected()) {
           height += group.getComponentList().getPreferredHeight(width);
@@ -149,7 +171,7 @@ public class PaletteWindow extends JPanel implements Scrollable {
       for(int i=e.getFirstIndex(); i <= e.getLastIndex(); i++) {
         if (sourceList.isSelectedIndex(i)) {
           // selection is being added
-          for(PaletteGroupHeader group: myGroups) {
+          for(PaletteGroupHeader group: myGroupHeaders) {
             if (group.getComponentList() != sourceList) {
               group.getComponentList().clearSelection();
             }

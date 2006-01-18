@@ -21,6 +21,8 @@ package com.intellij.ide.palette;
  * @author yole
  */
 public interface PaletteGroup {
+  PaletteGroup[] EMPTY_ARRAY = new PaletteGroup[0];
+
   int getItemCount();
 
   PaletteItem getItemAt(int index);

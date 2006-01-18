@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -29,8 +30,11 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider {
   }
 
   public PaletteGroup[] getActiveGroups(VirtualFile vFile) {
-    final ArrayList<GroupItem> groups = myPalette.getGroups();
-    return groups.toArray(new PaletteGroup[groups.size()]);
+    if (vFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      final ArrayList<GroupItem> groups = myPalette.getGroups();
+      return groups.toArray(new PaletteGroup[groups.size()]);
+    }
+    return PaletteGroup.EMPTY_ARRAY;
   }
 
   public void addListener(PropertyChangeListener listener) {
