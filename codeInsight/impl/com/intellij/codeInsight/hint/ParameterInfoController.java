@@ -231,7 +231,12 @@ class ParameterInfoController {
     else{
       final XmlTag tag = findXmlTag(file, offset);
       if (tag != null) {
-        myComponent.setCurrentItem(tag);
+        final XmlTag currentXmlTag = myComponent.getCurrentXmlTag();
+        if (currentXmlTag == null) myComponent.setCurrentItem(tag);
+        else if (currentXmlTag != tag) {
+          myHint.hide();
+          dispose();
+        }
       }
       else{
         if (findParentOfType(file, offset, PsiAnnotation.class) != null) {

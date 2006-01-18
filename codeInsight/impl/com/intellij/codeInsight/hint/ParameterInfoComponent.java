@@ -295,6 +295,10 @@ class ParameterInfoComponent extends JPanel{
     else if (element instanceof XmlTag)  myCurrentXmlTag = (XmlTag)element;
   }
 
+  public XmlTag getCurrentXmlTag() {
+    return myCurrentXmlTag;
+  }
+
   public void setHighlightedMethod(PsiMethod method) {
     myHighlightedMethod = method;
   }
