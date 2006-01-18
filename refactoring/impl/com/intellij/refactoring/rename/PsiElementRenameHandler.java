@@ -1,5 +1,7 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.ant.impl.dom.impl.PsiAntTarget;
+import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -15,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.HelpID;
@@ -24,9 +25,6 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.ant.impl.dom.impl.PsiAntTarget;
-import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 
 /**
  * created at Nov 13, 2001
@@ -91,13 +89,6 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element instanceof PsiAntTarget || element instanceof PsiAntProperty) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement())) return false;
       return true;
-    }
-    if (element instanceof XmlAttributeValue) {
-      XmlAttribute value = (XmlAttribute)element.getParent();
-      if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
-        return true;
-      }
     }
 
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
