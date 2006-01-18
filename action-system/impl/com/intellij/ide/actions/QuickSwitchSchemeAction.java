@@ -8,11 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author max
@@ -30,7 +28,8 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
 
   protected abstract void fillActions(Project project, DefaultActionGroup group);
 
-  private void showPopup(AnActionEvent e, DefaultActionGroup group) {
+  private static void showPopup(AnActionEvent e, DefaultActionGroup group) {
+    if (group.getChildrenCount() == 0) return;
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(e.getPresentation().getText(),
                               group,
@@ -39,30 +38,6 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
                               true);
 
     popup.showInBestPositionFor(e.getDataContext());
-  }
-
-  private Rectangle getFocusedWindowRect(final AnActionEvent e) {
-    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-    Window window = null;
-    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      if (focusedComponent instanceof Window) {
-        window = (Window) focusedComponent;
-      } else {
-        window = SwingUtilities.getWindowAncestor(focusedComponent);
-      }
-    }
-    if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    }
-
-    Rectangle r;
-    if (window != null) {
-      r = window.getBounds();
-    } else {
-      r = WindowManagerEx.getInstanceEx().getScreenBounds();
-    }
-    return r;
   }
 
   public void update(AnActionEvent e) {
