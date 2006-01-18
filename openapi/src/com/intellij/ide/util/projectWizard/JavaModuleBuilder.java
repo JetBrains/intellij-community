@@ -30,8 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -115,8 +113,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
         final ContentEntry contentEntry = rootModel.addContentEntry(moduleContentRoot);
         final List<Pair<String,String>> sourcePaths = getSourcePaths();
         if (sourcePaths != null) {
-          for (int idx = 0; idx < sourcePaths.size(); idx++) {
-            final Pair<String,String> sourcePath = sourcePaths.get(idx);
+          for (final Pair<String, String> sourcePath : sourcePaths) {
             final VirtualFile sourceRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath.first));
             if (sourceRoot != null) {
               contentEntry.addSourceFolder(sourceRoot, false, sourcePath.second);
@@ -142,8 +139,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
     }
 
     LibraryTable libraryTable = rootModel.getModuleLibraryTable();
-    for (int i = 0; i < myModuleLibraries.size(); i++) {
-      Pair<String, String> libInfo = myModuleLibraries.get(i);
+    for (Pair<String, String> libInfo : myModuleLibraries) {
       final String moduleLibraryPath = libInfo.first;
       final String sourceLibraryPath = libInfo.second;
       Library library = libraryTable.createLibrary();
@@ -166,6 +162,10 @@ public class JavaModuleBuilder extends ModuleBuilder {
 
   public void setModuleJdk(ProjectJdk jdk) {
     myJdk = jdk;
+  }
+
+  public ProjectJdk getModuleJdk() {
+    return myJdk;
   }
 
   @Nullable
