@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -29,7 +30,7 @@ public interface ToolWindow {
    * @param runnable A command to execute right after the window gets activated.  The call is asynchronous since it may require animation.
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void activate(Runnable runnable);
+  void activate(@Nullable Runnable runnable);
 
   /**
    * @return whether the tool window is visible or not.
@@ -41,7 +42,7 @@ public interface ToolWindow {
    * @param runnable A command to execute right after the window shows up.  The call is asynchronous since it may require animation.
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void show(Runnable runnable);
+  void show(@Nullable Runnable runnable);
 
   /**
    * Hides tool window. If the window is active then the method deactivates it.
@@ -49,7 +50,7 @@ public interface ToolWindow {
    * @param runnable A command to execute right after the window hides.  The call is asynchronous since it may require animation.
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void hide(Runnable runnable);
+  void hide(@Nullable Runnable runnable);
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -59,7 +60,7 @@ public interface ToolWindow {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setAnchor(ToolWindowAnchor anchor, Runnable runnable);
+  void setAnchor(ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
   /**
    * @exception IllegalStateException if tool window isn't installed.
@@ -79,7 +80,7 @@ public interface ToolWindow {
   /**
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setType(ToolWindowType type, Runnable runnable);
+  void setType(ToolWindowType type, @Nullable Runnable runnable);
 
   /**
    * @return window icon. Returns <code>null</code> if window has no icon.
@@ -112,7 +113,7 @@ public interface ToolWindow {
    * can be shown and it has button on tool window bar.
    * @exception IllegalStateException if tool window isn't installed.
    */
-  void setAvailable(boolean available, Runnable runnable);
+  void setAvailable(boolean available, @Nullable Runnable runnable);
 
   void installWatcher(ContentManager contentManager);
 
