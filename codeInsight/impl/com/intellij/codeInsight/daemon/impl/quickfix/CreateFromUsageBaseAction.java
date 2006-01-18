@@ -15,7 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -124,8 +124,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
       }
     };
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
+    new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("target.class.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().

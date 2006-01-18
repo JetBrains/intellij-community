@@ -4,7 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
@@ -12,14 +12,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ListPopup;
 import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.TreeTablePopup;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,40 +99,14 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
     };
 
-    Window window = null;
+    treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      if (focusedComponent instanceof Window) {
-        window = (Window)focusedComponent;
-      }
-      else {
-        window = SwingUtilities.getWindowAncestor(focusedComponent);
-      }
-    }
-    if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    }
-
-    Rectangle r;
-    if (window != null) {
-      r = window.getBounds();
-    }
-    else {
-      r = WindowManagerEx.getInstanceEx().getScreenBounds();
-    }
-    TreeUtil.expandAll(treeTable.getTree());
-
-
-    TreeTablePopup popup = new TreeTablePopup(VcsBundle.message("lookup.title.vcs.file.revisions"), createMainPanel(treeTable),treeTable, runnable, project);
-
-    popup.getWindow().pack();
-    Dimension popupSize = popup.getSize();
-    int x = r.x + r.width / 2 - popupSize.width / 2;
-    int y = r.y + r.height / 2 - popupSize.height / 2;
-
-    popup.show(x, y);
-
+    new PopupChooserBuilder(treeTable).
+      setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
+      setItemChoosenCallback(runnable).
+      setSouthComponent(createCommentsPanel(treeTable)).
+      createPopup().
+      showCenteredInCurrentWindow(project);
   }
 
 
@@ -150,22 +120,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   }
 
-  private JPanel createMainPanel(final TreeTableView treeTable) {
-    JScrollPane scrollPane = new JScrollPane(treeTable);
-    treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-    treeTable.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-    if (treeTable.getRowCount() >= 20) {
-      scrollPane.getViewport().setPreferredSize(new Dimension(treeTable.getPreferredScrollableViewportSize().width, 300));
-    }
-    else {
-      scrollPane.getViewport().setPreferredSize(treeTable.getPreferredSize());
-    }
-
+  private JPanel createCommentsPanel(final TreeTableView treeTable) {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(scrollPane, BorderLayout.CENTER);
     final JTextArea textArea = createTextArea();
     treeTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -183,7 +139,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
     });
     final JScrollPane textScrollPane = new JScrollPane(textArea);
-    panel.add(textScrollPane, BorderLayout.SOUTH);
+    panel.add(textScrollPane, BorderLayout.CENTER);
     textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     return panel;
   }
@@ -221,18 +177,15 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     }
     new ListSpeedSearch(list);
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
-      setContentPane(createListMainPanel(list)).
+    new PopupChooserBuilder(list).
+      setSouthComponent(createCommentsPanel(list)).
       setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
       setItemChoosenCallback(runnable).
       createPopup().
       showCenteredInCurrentWindow(project);
   }
 
-  private JPanel createListMainPanel(final JList list) {
-    final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.add(ListPopup.createScrollPane(list), BorderLayout.CENTER);
+  private JPanel createCommentsPanel(final JList list) {
     final JTextArea textArea = createTextArea();
     list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -245,6 +198,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         }
       }
     });
+
+    JPanel jPanel = new JPanel(new BorderLayout());
     final JScrollPane textScrollPane = new JScrollPane(textArea);
     textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);

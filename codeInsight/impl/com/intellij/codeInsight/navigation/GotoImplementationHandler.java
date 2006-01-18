@@ -11,7 +11,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -256,8 +256,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
       };
 
-      JBPopupFactory.getInstance().createListPopupBuilder().
-        setList(list).
+      new PopupChooserBuilder(list).
         setTitle(CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName(), elements.length)).
         setItemChoosenCallback(runnable).
         createPopup().showInBestPositionFor(editor);

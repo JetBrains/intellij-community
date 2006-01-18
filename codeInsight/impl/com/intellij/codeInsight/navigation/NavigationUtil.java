@@ -4,7 +4,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 
@@ -38,8 +38,7 @@ public final class NavigationUtil {
       }
     };
 
-    return JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
+    return new PopupChooserBuilder(list).
       setTitle(title).
       setItemChoosenCallback(runnable).
       createPopup();

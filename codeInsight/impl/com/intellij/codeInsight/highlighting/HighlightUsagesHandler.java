@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
@@ -254,8 +254,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            JBPopupFactory.getInstance().createListPopupBuilder().
-              setList(myList).
+            new PopupChooserBuilder(myList).
               setTitle(CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")).
               setItemChoosenCallback(callback).
               createPopup().

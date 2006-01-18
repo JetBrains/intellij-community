@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiImportStaticReferenceElement;
@@ -74,8 +74,7 @@ public class AddImportAction implements QuestionAction {
       }
     };
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
+    new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().

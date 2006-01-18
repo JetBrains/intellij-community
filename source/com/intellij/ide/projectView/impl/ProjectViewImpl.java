@@ -32,7 +32,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -626,8 +626,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     };
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
+    new PopupChooserBuilder(list).
       setTitle(IdeBundle.message("title.popup.views")).
       setItemChoosenCallback(runnable).
       createPopup().showInCenterOf(getComponent());

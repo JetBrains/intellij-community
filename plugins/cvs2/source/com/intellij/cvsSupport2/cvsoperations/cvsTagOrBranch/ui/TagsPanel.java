@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -60,8 +60,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
       model.addElement(each.next());
     }
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(myList).
+    new PopupChooserBuilder(myList).
       setTitle(com.intellij.CvsBundle.message("list.popup.text.tags")).
       createPopup().
       showUnderneathOf(myMoreLabel);

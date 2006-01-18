@@ -7,7 +7,7 @@ import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -80,9 +80,8 @@ class LineMarkerNavigator {
     else{
       final JList list = new JList(targets);
       list.setCellRenderer(listRenderer);
-      JBPopupFactory.getInstance().createListPopupBuilder().
+      new PopupChooserBuilder(list).
         setTitle(title).
-        setList(list).
         setItemChoosenCallback(new Runnable() {
           public void run() {
             int[] ids = list.getSelectedIndices();

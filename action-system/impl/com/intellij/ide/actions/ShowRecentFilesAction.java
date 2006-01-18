@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -110,8 +110,7 @@ public class ShowRecentFilesAction extends AnAction {
     }
     */
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(list).
+    new PopupChooserBuilder(list).
       setTitle(IdeBundle.message("title.popup.recent.files")).
       setItemChoosenCallback(runnable).
       addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).

@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -92,8 +92,7 @@ public class ImplementAbstractMethodHandler {
       }
     };
 
-    JBPopupFactory.getInstance().createListPopupBuilder().
-      setList(myList).
+    new PopupChooserBuilder(myList).
       setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
       setItemChoosenCallback(runnable).
       createPopup().
