@@ -17,7 +17,9 @@
 
 package com.intellij.ide.palette;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.ui.ColoredListCellRenderer;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
@@ -30,4 +32,6 @@ public interface PaletteItem {
                              boolean hasFocus);
 
   Transferable createTransferable();
+
+  @Nullable ActionGroup getPopupActionGroup();
 }

@@ -8,6 +8,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +24,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PaletteWindow extends JPanel {
+public class PaletteWindow extends JPanel implements DataProvider {
   private Project myProject;
   private ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
   private PaletteItemProvider[] myProviders;
@@ -141,6 +143,13 @@ public class PaletteWindow extends JPanel {
       if (group.isSelected() && group.getComponentList().getSelectedValue() != null) {
         return (PaletteItem) group.getComponentList().getSelectedValue();
       }
+    }
+    return null;
+  }
+
+  @Nullable public Object getData(String dataId) {
+    if (dataId.equals(DataConstants.PROJECT)) {
+      return myProject;
     }
     return null;
   }

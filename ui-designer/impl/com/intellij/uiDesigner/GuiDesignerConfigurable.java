@@ -50,9 +50,10 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
   private final Project myProject;
   private MyGeneralUI myGeneralUI;
   private MyPaletteUI myPaletteUI;
+  private TabbedPaneWrapper myTabbedPane;
 
   /** Invoked by reflection */
-  GuiDesignerConfigurable(final Project project) {
+  public GuiDesignerConfigurable(final Project project) {
     myProject = project;
   }
 
@@ -87,11 +88,15 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     myGeneralUI = new MyGeneralUI();
     myPaletteUI = new MyPaletteUI();
 
-    final TabbedPaneWrapper wrapper = new TabbedPaneWrapper();
-    wrapper.addTab(UIDesignerBundle.message("tab.general"), myGeneralUI.myPanel);
-    wrapper.addTab(UIDesignerBundle.message("tab.palette"), myPaletteUI.myPanel);
+    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane.addTab(UIDesignerBundle.message("tab.general"), myGeneralUI.myPanel);
+    myTabbedPane.addTab(UIDesignerBundle.message("tab.palette"), myPaletteUI.myPanel);
 
-    return wrapper.getComponent();
+    return myTabbedPane.getComponent();
+  }
+
+  public void selectTab(int index) {
+    myTabbedPane.setSelectedIndex(index);
   }
 
   private boolean isPaletteModified(){

@@ -2,6 +2,8 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -10,6 +12,7 @@ import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -261,6 +264,10 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   public Transferable createTransferable() {
     return new SimpleTransferable<ComponentItem>(this, ComponentItem.class);
+  }
+
+  @Nullable public ActionGroup getPopupActionGroup() {
+    return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PalettePopupMenu");
   }
 
   private static final class MySmallIcon implements Icon{

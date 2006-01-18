@@ -3,6 +3,11 @@ package com.intellij.ide.palette.impl;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.PopupHandler;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -42,6 +47,20 @@ public class PaletteComponentList extends JList {
 
       @Override public void mouseExited(MouseEvent e) {
         setHoverIndex(-1);
+      }
+    });
+
+    addMouseListener(new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        int index = locationToIndex(new Point(x, y));
+        if (index >= 0 && index < myGroup.getItemCount()) {
+          PaletteItem item = myGroup.getItemAt(index);
+          ActionGroup group = item.getPopupActionGroup();
+          if (group != null) {
+            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+            popupMenu.getComponent().show(comp, x, y);            
+          }
+        }
       }
     });
 

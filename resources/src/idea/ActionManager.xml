@@ -1308,6 +1308,10 @@
       <action id="GuiDesigner.ResetValue" class="com.intellij.uiDesigner.actions.ResetValueAction"/>
     </group>
 
+    <group id="GuiDesigner.PalettePopupMenu">
+      <action id="GuiDesigner.CustomizePalette" class="com.intellij.uiDesigner.actions.CustomizePaletteAction"/>
+    </group>
+
     <!-- ****************************************************************** -->
 
     <group id="StructuralSearchActions">
