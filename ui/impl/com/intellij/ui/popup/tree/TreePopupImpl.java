@@ -310,7 +310,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
           return;
         }
 
-        final PopupStep queriedStep = myStep.onChosen(userObject);
+        final PopupStep queriedStep = myStep.onChosen(userObject, handleFinalChoices);
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {
           disposeAllParents();
         }
@@ -410,6 +410,12 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);
       super.processKeyEvent(e);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension pref = super.getPreferredSize();
+      return new Dimension(pref.width + 10, pref.height);
     }
 
     protected void paintChildren(Graphics g) {

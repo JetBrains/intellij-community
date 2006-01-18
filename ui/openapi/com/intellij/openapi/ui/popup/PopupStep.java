@@ -13,7 +13,7 @@ public interface PopupStep<T> {
   @Nullable
   String getTitle();
 
-  PopupStep onChosen(T selectedValue);
+  PopupStep onChosen(T selectedValue, final boolean finalChoice);
 
   boolean hasSubstep(T selectedValue);
 

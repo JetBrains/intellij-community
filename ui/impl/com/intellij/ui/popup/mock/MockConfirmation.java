@@ -17,10 +17,10 @@ public class MockConfirmation extends ListPopupImpl {
   }
 
   public void showInCenterOf(Component aContainer) {
-    getStep().onChosen(myOnYesText);
+    getStep().onChosen(myOnYesText, true);
   }
 
   public void showUnderneathOf(Component aComponent) {
-    getStep().onChosen(myOnYesText);
+    getStep().onChosen(myOnYesText, true);
   }
 }

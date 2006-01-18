@@ -64,7 +64,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     return myValues;
   }
 
-  public PopupStep onChosen(T selectedValue) {
+  public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 

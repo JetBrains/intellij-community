@@ -41,6 +41,10 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   protected void beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
+
+    if (myListModel.getSize() < myList.getVisibleRowCount()) {
+      myList.setVisibleRowCount(myListModel.getSize());
+    }
   }
 
   protected void afterShow() {
@@ -52,7 +56,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
       selectFirstSelectableItem();
     }
 
-    if (hasSingleSelectableItemWithSubmenu()) {
+    if (hasSingleSelectableItemWithSubmenu() && getListStep().isAutoSelectionEnabled()) {
       handleSelect(true);
     }
   }
@@ -188,7 +192,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     }
 
 
-    handleNextStep(myStep.onChosen(myList.getSelectedValue()), myList.getSelectedValue());
+    handleNextStep(myStep.onChosen(myList.getSelectedValue(), handleFinalChoices), myList.getSelectedValue());
   }
 
   private void handleNextStep(final PopupStep nextStep, Object parentValue) {

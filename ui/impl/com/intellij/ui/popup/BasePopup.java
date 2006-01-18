@@ -384,18 +384,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     }
 
     public Dimension getPreferredSize() {
-      final Dimension ofContent = getContentPreferredSize();
-
-      if (myTitle != null) {
-        ofContent.height += 30;
-        ofContent.width = Math.max(ofContent.width, myTitle.getPreferredSize().width);
-      }
-      else {
-        ofContent.height += 10;
-      }
-
-      ofContent.width += myScrollPane.getVerticalScrollBar().getPreferredSize().width + 4;
-      return computeNotBiggerDimension(ofContent);
+      return computeNotBiggerDimension(super.getPreferredSize());
     }
 
     private Dimension computeNotBiggerDimension(Dimension ofContent) {
@@ -404,7 +393,6 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
 
       return new Dimension(resultWidth, resultHeight);
     }
-
   }
 
   public BasePopup getParent() {

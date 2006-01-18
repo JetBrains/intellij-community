@@ -51,11 +51,13 @@ public class PopupChooserBuilder {
     myChooserComponent = tree;
   }
 
+  @NotNull
   public PopupChooserBuilder setTitle(@NotNull String title) {
     myTitle = title;
     return this;
   }
 
+  @NotNull
   public PopupChooserBuilder addAdditionalChooseKeystroke(@Nullable KeyStroke keyStroke) {
     if (keyStroke != null) {
       myAdditionalKeystrokes.add(keyStroke);
@@ -63,16 +65,19 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  @NotNull
   public PopupChooserBuilder setItemChoosenCallback(@NotNull Runnable runnable) {
     myItemChoosenRunnable = runnable;
     return this;
   }
 
+  @NotNull
   public PopupChooserBuilder setSouthComponent(@NotNull JComponent cmp) {
     mySouthComponent = cmp;
     return this;
   }
 
+  @NotNull
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
     if (myTitle != null) {
@@ -154,6 +159,7 @@ public class PopupChooserBuilder {
     }
   }
 
+  @NotNull
   public static JScrollPane createScrollPane(final JTable table) {
     if (table instanceof TreeTable) {
       TreeUtil.expandAll(((TreeTable)table).getTree());
@@ -184,6 +190,7 @@ public class PopupChooserBuilder {
     return scrollPane;
   }
 
+  @NotNull
   public static JScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
@@ -213,6 +220,7 @@ public class PopupChooserBuilder {
     return scrollPane;
   }
 
+  @NotNull
   public static JScrollPane createScrollPane(final JList list) {
     list.addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseMoved(MouseEvent e) {

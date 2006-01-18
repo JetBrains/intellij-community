@@ -58,7 +58,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, final Runnable onNo, int defaultOptionIndex) {
 
       final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {
-        public PopupStep onChosen(String selectedValue) {
+        public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
           if (selectedValue.equals(yesText)) {
             onYes.run();
           }
@@ -416,7 +416,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
       return myTitle;
     }
 
-    public PopupStep onChosen(final ActionItem actionChoice) {
+    public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
       if (!actionChoice.isEnabled()) return PopupStep.FINAL_CHOICE;
       final AnAction action = actionChoice.getAction();
       final DataContext dataContext = DataManager.getInstance().getDataContext(myContext);

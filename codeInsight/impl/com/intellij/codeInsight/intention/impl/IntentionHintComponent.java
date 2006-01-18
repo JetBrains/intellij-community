@@ -17,29 +17,30 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListPopupWithChildPopups;
-import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.BufferedImage;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EventListener;
+import java.util.Arrays;
 import java.util.List;
 
 /**
+ * @author max
  * @author Mike
  * @author Valentin
  * @author Eugene Belyaev
@@ -62,20 +63,139 @@ public class IntentionHintComponent extends JPanel {
 
   private static Alarm myAlarm = new Alarm();
 
-  private JList myList;
   private RowIcon myHighlightedIcon;
   private JButton myButton;
 
-  private Icon myBackgroundIcon;
   private final Icon mySmartTagIcon;
 
   private static final int DELAY = 500;
   private MyComponentHint myComponentHint;
   private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 0);
-  private ListPopupWithChildPopups myListPopup;
-  private ListPopupWithChildPopups myParentListPopup;
   private boolean myPopupShown = false;
-  private List<IntentionAction> myQuickFixes;
+  private ListPopup myPopup;
+
+  private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
+    private List<IntentionActionWithTextCaching> myActions;
+    private IntentionManagerSettings mySettings;
+    private List<IntentionAction> myQuickFixes;
+
+    public IntentionListStep(ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
+                             ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions) {
+      mySettings = IntentionManagerSettings.getInstance();
+      List<Pair<IntentionAction, List<IntentionAction>>> allActions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(quickFixes);
+      allActions.addAll(intentions);
+      List<IntentionAction> actions = new ArrayList<IntentionAction>();
+      for (Pair<IntentionAction, List<IntentionAction>> pair : quickFixes) {
+        actions.add(pair.first);
+        if (pair.second != null) {
+          actions.addAll(pair.second);
+        }
+      }
+      myQuickFixes = actions;
+      myActions = Arrays.asList(wrapActions(allActions));
+    }
+
+    private IntentionActionWithTextCaching[] wrapActions(List<Pair<IntentionAction, List<IntentionAction>>> actions) {
+      IntentionActionWithTextCaching [] compositeActions = new IntentionActionWithTextCaching[actions.size()];
+      int index = 0;
+      for (Pair<IntentionAction, List<IntentionAction>> pair : actions) {
+        if (pair.first != null) {
+          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.first);
+          if (pair.second != null) {
+            for (IntentionAction intentionAction : pair.second) {
+              action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
+            }
+          }
+          compositeActions[index ++] = action;
+        }
+      }
+      return compositeActions;
+    }
+
+    public String getTitle() {
+      return null;
+    }
+
+    public boolean isSelectable(final IntentionActionWithTextCaching action) {
+      return true;
+    }
+
+    public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
+      if (finalChoice && !(action.getAction() instanceof EmptyIntentionAction)) {
+        applyAction(action.getAction());
+        return PopupStep.FINAL_CHOICE;
+      }
+
+      if (hasSubstep(action)) {
+        return getSubStep(action);
+      }
+
+      return FINAL_CHOICE;
+    }
+
+    private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
+      final ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+      final List<IntentionAction> optionIntentions = action.getOptionIntentions();
+      for (final IntentionAction optionIntention : optionIntentions) {
+        intentions.add(new Pair<IntentionAction, List<IntentionAction>>(optionIntention, null));
+      }
+      final ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+      final List<IntentionAction> optionFixes = action.getOptionFixes();
+      for (final IntentionAction optionFix : optionFixes) {
+        quickFixes.add(new Pair<IntentionAction, List<IntentionAction>>(optionFix, null));
+      }
+
+      return new IntentionListStep(quickFixes, intentions);
+    }
+
+    public boolean hasSubstep(final IntentionActionWithTextCaching action) {
+      return action.getOptionIntentions().size() + action.getOptionFixes().size() > 0;
+    }
+
+    public List<IntentionActionWithTextCaching> getValues() {
+      return myActions;
+    }
+
+    public String getTextFor(final IntentionActionWithTextCaching action) {
+      return action.getText();
+    }
+
+    public Icon getIconFor(final IntentionActionWithTextCaching value) {
+      final IntentionAction action = value.getAction();
+
+      if (mySettings.isShowLightBulb(action)) {
+        if (myQuickFixes.contains(action)) {
+          return ourQuickFixIcon;
+        }
+        else {
+          return ourIntentionIcon;
+        }
+      }
+      else {
+        if (myQuickFixes.contains(action)) {
+          return ourQuickFixOffIcon;
+        }
+        else {
+          return ourIntentionOffIcon;
+        }
+      }
+    }
+
+    public void canceled() {
+      if (myPopup.getListStep() == this) {
+        // Root canceled. Create new popup. This one cannot be reused.
+        myPopup = JBPopupFactory.getInstance().createWizardStep(this);
+      }
+    }
+
+    public int getDefaultOptionIndex() { return 0; }
+    public ListSeparator getSeparatorAbove(final IntentionActionWithTextCaching value) { return null; }
+    public boolean isMnemonicsNavigationEnabled() { return false; }
+    public MnemonicNavigationFilter<IntentionActionWithTextCaching> getMnemonicNavigationFilter() { return null; }
+    public boolean isSpeedSearchEnabled() { return false; }
+    public boolean isAutoSelectionEnabled() { return false; }
+    public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return null; }
+  }
 
   private static class IntentionActionWithTextCaching {
     private ArrayList<IntentionAction> myOptionIntentions;
@@ -116,23 +236,6 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private IntentionActionWithTextCaching[] wrapActions(List<Pair<IntentionAction, List<IntentionAction>>> actions) {
-    IntentionActionWithTextCaching [] compositeActions = new IntentionActionWithTextCaching[actions.size()];
-    int index = 0;
-    for (Pair<IntentionAction, List<IntentionAction>> pair : actions) {
-      if (pair.first != null) {
-        IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.first);
-        if (pair.second != null) {
-          for (IntentionAction intentionAction : pair.second) {
-            action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
-          }
-        }
-        compositeActions[index ++] = action;
-      }
-    }
-    return compositeActions;
-  }
-
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
                                                          ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
@@ -157,8 +260,8 @@ public class IntentionHintComponent extends JPanel {
 
   public void updateIfNotShowingPopup(ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickfixes,
                                       ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions) {
-    if (myListPopup == null) {
-      initList(quickfixes, intentions);
+    if (!myPopupShown) {
+      myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickfixes, intentions));
     }
   }
 
@@ -183,7 +286,6 @@ public class IntentionHintComponent extends JPanel {
 
   private static Point getHintPosition(Editor editor, int offset) {
     final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
-//    Dimension hintSize = internalComponent.getPreferredSize();
     int line = pos.line;
 
 
@@ -198,15 +300,6 @@ public class IntentionHintComponent extends JPanel {
                                            editor.getComponent().getRootPane().getLayeredPane());
 
     return new Point(location.x, location.y);
-  }
-
-  private IntentionHintComponent(Project project,
-                                 Editor editor,
-                                 ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
-                                 ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
-                                 ListPopupWithChildPopups parentPopup) {
-    this(project, editor, intentions, quickFixes);
-    myParentListPopup = parentPopup;
   }
 
   public IntentionHintComponent(Project project,
@@ -234,12 +327,9 @@ public class IntentionHintComponent extends JPanel {
     myHighlightedIcon.setIcon(mySmartTagIcon, 0);
     myHighlightedIcon.setIcon(ourArrowIcon, 1);
 
-    initList(quickFixes, intentions);
-
     myButton = new JButton(mySmartTagIcon);
     myButton.setFocusable(false);
     myButton.setMargin(INACTIVE_MARGIN);
-//    myButton.setBackground(BACKGROUND_COLOR);
     myButton.setBorderPainted(false);
     myButton.setContentAreaFilled(false);
 
@@ -263,28 +353,11 @@ public class IntentionHintComponent extends JPanel {
     });
 
     myComponentHint = new MyComponentHint(this);
-  }
-
-  private void initList(ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
-                        ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions) {
-    List<Pair<IntentionAction, List<IntentionAction>>> allActions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(quickFixes);
-    allActions.addAll(intentions);
-    List<IntentionAction> actions = new ArrayList<IntentionAction>();
-    for (Pair<IntentionAction, List<IntentionAction>> pair : quickFixes) {
-      actions.add(pair.first);
-      if (pair.second != null) {
-        actions.addAll(pair.second);
-      }
-    }
-    myQuickFixes = actions;
-
-    myList = new MyList(wrapActions(allActions));
-    myList.setCellRenderer(new PopupCellRenderer(myList));
-    myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickFixes, intentions));
   }
 
   private void onMouseExit() {
-    Window ancestor = SwingUtilities.getWindowAncestor(myList);
+    Window ancestor = SwingUtilities.getWindowAncestor(myPopup.getContent());
     if (ancestor == null) {
       myButton.setBackground(BACKGROUND_COLOR);
       myButton.setIcon(mySmartTagIcon);
@@ -308,24 +381,6 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private void updateBackgroundImage(JComponent parentComponent, int x, int y) {
-    Dimension size = getPreferredSize();
-    size.width += 2;
-    size.height += 2;
-    BufferedImage bufferedImage = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
-
-    JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
-    Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
-
-    Graphics2D graphics = bufferedImage.createGraphics();
-    graphics.setClip(0, 0, size.width, size.height);
-    graphics.translate(-layeredPanePoint.x, -layeredPanePoint.y);
-
-    layeredPane.paint(graphics);
-
-    myBackgroundIcon = new ImageIcon(bufferedImage);
-  }
-
   private void updateComponentHintSize() {
     Component component = myComponentHint.getComponent();
     component.setSize(getPreferredSize().width, getHeight());
@@ -333,67 +388,20 @@ public class IntentionHintComponent extends JPanel {
 
   public void closePopup() {
     if (myPopupShown) {
-      myListPopup.closePopup(false);
+      myPopup.cancel();
       myPopupShown = false;
     }
   }
 
   public void showPopup() {
-    myListPopup = new ListPopupWithChildPopups(null, myList, myProject, myParentListPopup, new ListPopupRunnable(), new Runnable(){
-      public void run() {
-        showIntentionHintImpl(false);
-      }
-    });
-
-    final Component component = myComponentHint.getComponent();
-    final EventListener[] listeners = component.getListeners(FocusListener.class);
-    for (EventListener listener : listeners) {
-      ListenerUtil.addFocusListener(myListPopup.getWindow(), (FocusListener)listener);
+    if (isShowing()) {
+      myPopup.show(RelativePoint.getSouthWestOf(this));
+    }
+    else {
+      myPopup.showInBestPositionFor(myEditor);
     }
 
-    myListPopup.getWindow().addWindowListener(new WindowAdapter() {
-      public void windowClosed(WindowEvent e) {
-        HintManager.getInstance().hideAllHints();
-      }
-    });
-
-    showIntentionHintImpl(false);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Point p;
-        if (myParentListPopup != null) {
-          p = new Point(myParentListPopup.getWindow().getWidth(), myParentListPopup.getSelectedHeight());
-          SwingUtilities.convertPointToScreen(p, myParentListPopup.getWindow());
-        }
-        else {
-          p = new Point(0, getHeight());
-          SwingUtilities.convertPointToScreen(p, IntentionHintComponent.this);
-        }
-        myListPopup.show(p.x, p.y, new Runnable() {
-          public void run() {
-            final IntentionActionWithTextCaching action = (IntentionActionWithTextCaching)myList.getSelectedValue();
-            if (action.getOptionIntentions().size() + action.getOptionFixes().size() > 0){
-              openChildPopup(action);
-            } else {
-              showIntentionHintImpl(false);
-            }
-          }
-        }, new Computable<Boolean>(){
-          public Boolean compute() {
-            final IntentionActionWithTextCaching action = (IntentionActionWithTextCaching)myList.getSelectedValue();
-            return Boolean.valueOf(action.getAction() instanceof EmptyIntentionAction &&
-                                   action.getOptionIntentions().size() + action.getOptionFixes().size() > 0);
-          }
-        });
-        myPopupShown = true;
-        onMouseEnter();
-      }
-    });
-  }
-
-  public void paint(Graphics g) {
-    myBackgroundIcon.paintIcon(null, g, 0, 0);
-    super.paint(g);
+    myPopupShown = true;
   }
 
   private class MyComponentHint extends LightweightHint {
@@ -421,7 +429,6 @@ public class IntentionHintComponent extends JPanel {
 
     private void showImpl(JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
       if (!parentComponent.isShowing()) return;
-      updateBackgroundImage(parentComponent, x, y);
       super.show(parentComponent, x, y, focusBackComponent);
     }
 
@@ -440,239 +447,44 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private class ListPopupRunnable implements Runnable {
-    public void run() {
-      if (myList.getSelectedIndex() < 0) return;
-      final IntentionAction action = ((IntentionActionWithTextCaching)myList.getSelectedValue()).getAction();
+  private void applyAction(final IntentionAction action) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        HintManager hintManager = HintManager.getInstance();
+        hintManager.hideAllHints();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          HintManager hintManager = HintManager.getInstance();
-          hintManager.hideAllHints();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            if (action.isAvailable(myProject, myEditor, file)) {
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  try {
+                    action.invoke(myProject, myEditor, file);
+                    DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
+                  }
+                  catch (IncorrectOperationException e1) {
+                    LOG.error(e1);
+                  }
+                }
+              };
 
-              if (action.isAvailable(myProject, myEditor, file)) {
-                Runnable runnable = new Runnable() {
+              if (action.startInWriteAction()) {
+                final Runnable _runnable = runnable;
+                runnable = new Runnable() {
                   public void run() {
-                    try {
-                      action.invoke(myProject, myEditor, file);
-                      DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
-                    }
-                    catch (IncorrectOperationException e1) {
-                      LOG.error(e1);
-                    }
+                    ApplicationManager.getApplication().runWriteAction(_runnable);
                   }
                 };
-
-                if (action.startInWriteAction()) {
-                  final Runnable _runnable = runnable;
-                  runnable = new Runnable() {
-                    public void run() {
-                      ApplicationManager.getApplication().runWriteAction(_runnable);
-                    }
-                  };
-                }
-
-                CommandProcessor.getInstance().executeCommand(myProject, runnable, action.getText(), null);
               }
+
+              CommandProcessor.getInstance().executeCommand(myProject, runnable, action.getText(), null);
             }
-          });
-        }
-      });
-    }
-  }
-
-  private void openChildPopup(final IntentionActionWithTextCaching action) {
-    final ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
-    final List<IntentionAction> optionIntentions = action.getOptionIntentions();
-    for (final IntentionAction optionIntention : optionIntentions) {
-      intentions.add(new Pair<IntentionAction, List<IntentionAction>>(optionIntention, null));
-    }
-    final ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
-    final List<IntentionAction> optionFixes = action.getOptionFixes();
-    for (final IntentionAction optionFix : optionFixes) {
-      quickFixes.add(new Pair<IntentionAction, List<IntentionAction>>(optionFix, null));
-    }
-    final IntentionHintComponent listPopup = new IntentionHintComponent(myProject, myEditor, intentions, quickFixes, myListPopup);
-    listPopup.showPopup();
-  }
-
-  private class PopupCellRenderer implements ListCellRenderer {
-    private final JList myCompositeActionsList;
-    private final JPanel myPanel = new JPanel();
-    private final JLabel myLabel = new JLabel();
-    private final JLabel myBulbLabel = new JLabel();
-    private final JButton myArrowButton = new JButton();
-    private Point myLastMousePoint = null;
-    private int myLastItemIndex = -1;
-    private boolean myMousePressed = false;
-    private final IntentionManagerSettings mySettings;
-
-    public PopupCellRenderer(JList list) {
-      myCompositeActionsList = list;
-      myPanel.setLayout(new BorderLayout());
-      myPanel.add(myBulbLabel, BorderLayout.WEST);
-      myPanel.add(myLabel, BorderLayout.CENTER);
-      myPanel.add(myArrowButton, BorderLayout.EAST);
-      myBulbLabel.setIcon(mySmartTagIcon);
-
-      myLabel.setOpaque(true);
-//      myButton.setOpaque(true);
-      mySettings = IntentionManagerSettings.getInstance();
-
-
-      myArrowButton.setMargin(new Insets(0,0,0,0));
-      myArrowButton.setBorderPainted(false);
-      myArrowButton.setContentAreaFilled(false);
-
-      myArrowButton.setPreferredSize(new Dimension(ourArrowIcon.getIconWidth() + 4, -1));
-      myArrowButton.setMinimumSize(new Dimension(ourArrowIcon.getIconWidth() + 4, -1));
-      myArrowButton.setMaximumSize(new Dimension(ourArrowIcon.getIconWidth() + 4, -1));
-      myCompositeActionsList.addMouseMotionListener(new MouseMotionListener() {
-        public void mouseDragged(MouseEvent e) {
-          updateLastPoint(e);
-        }
-
-        public void mouseMoved(MouseEvent e) {
-          updateLastPoint(e);
-        }
-      });
-      myCompositeActionsList.addMouseListener(new MouseAdapter() {
-        public void mouseEntered(MouseEvent e) {
-          updateLastPoint(e);
-        }
-
-        public void mouseExited(MouseEvent e) {
-          myLastMousePoint = null;
-          myLastItemIndex = -1;
-          myCompositeActionsList.repaint();
-        }
-
-        public void mousePressed(MouseEvent e) {
-          e.consume();
-          myMousePressed = true;
-          myCompositeActionsList.repaint();
-        }
-
-        public void mouseClicked(MouseEvent e) {
-          Point point = e.getPoint();
-          int index = myCompositeActionsList.locationToIndex(point);
-          IntentionActionWithTextCaching action = ((IntentionActionWithTextCaching)myCompositeActionsList.getModel().getElementAt(index));
-          if (isInBulbButton(point)) {
-            //do nothing if click in bulb button - to cope with new behaviour
-            e.consume();
-          } else if (isInArrowButton(point) && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0) {
-            openChildPopup(action);
-            e.consume();
           }
-        }
-
-        public void mouseReleased(MouseEvent e) {
-          e.consume();
-          myMousePressed = false;
-          myCompositeActionsList.repaint();
-        }
-      });
-    }
-
-
-    public boolean isInBulbButton(Point point) {
-      int x = point.x - myCompositeActionsList.getInsets().left;
-      boolean isInButton = x <= myBulbLabel.getPreferredSize().width;
-      return isInButton;
-    }
-
-    public boolean isInArrowButton(Point point) {
-      return point.x - myArrowButton.getX() >= 0;
-    }
-
-    private void updateLastPoint(MouseEvent e) {
-      myLastMousePoint = e.getPoint();
-      myLastItemIndex = myCompositeActionsList.locationToIndex(myLastMousePoint);
-      myCompositeActionsList.repaint();
-    }
-
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      IntentionActionWithTextCaching wrapped = (IntentionActionWithTextCaching)value;
-      IntentionAction action = wrapped.getAction();
-      Color bg;
-      Color fg;
-
-      if (!isSelected) {
-        fg = list.getForeground();
-        bg = list.getBackground();
+        });
       }
-      else {
-        fg = list.getSelectionForeground();
-        bg = list.getSelectionBackground();
-      }
-
-      myLabel.setText(" " + wrapped.getText() + " ");
-      myLabel.setFont(list.getFont());
-
-      myLabel.setForeground(fg);
-      myLabel.setBackground(bg);
-
-      if (mySettings.isShowLightBulb(action)) {
-        if (myQuickFixes.contains(action)) {
-          myBulbLabel.setIcon(ourQuickFixIcon);
-        }
-        else {
-          myBulbLabel.setIcon(ourIntentionIcon);
-        }
-      }
-      else {
-        if (myQuickFixes.contains(action)) {
-          myBulbLabel.setIcon(ourQuickFixOffIcon);
-        }
-        else {
-          myBulbLabel.setIcon(ourIntentionOffIcon);
-        }
-      }
-
-      myArrowButton.setBorderPainted(false);
-      myArrowButton.setIcon(new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight()));
-      if (wrapped.getOptionIntentions().size() + wrapped.getOptionFixes().size() > 0) {
-        myArrowButton.setIcon(ourArrowIcon);
-        myArrowButton.getModel().setArmed(false);
-        myArrowButton.getModel().setPressed(false);
-        if (myLastItemIndex == index) {
-          if (isInArrowButton(myLastMousePoint)) {
-            myArrowButton.getModel().setArmed(myMousePressed);
-            myArrowButton.getModel().setPressed(myMousePressed);
-            myArrowButton.setBorderPainted(true);
-          }
-        }
-      }
-      myArrowButton.setBackground(list.getBackground());
-
-      myPanel.setBackground(list.getBackground());
-      return myPanel;
-    }
-  }
-
-  private static class MyList extends JList {
-    public MyList(IntentionActionWithTextCaching[] actions) {
-      super(actions);
-
-      registerKeyboardAction(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-          IntentionAction action = ((IntentionActionWithTextCaching)getSelectedValue()).getAction();
-          if (action != null) {
-            settings.setShowLightBulb(action, !settings.isShowLightBulb(action));
-          }
-          repaint();
-        }
-      }, KeyStroke.getKeyStroke(' '), WHEN_FOCUSED);
-    }
+    });
   }
 
   public static class EnableDisableIntentionAction implements IntentionAction{

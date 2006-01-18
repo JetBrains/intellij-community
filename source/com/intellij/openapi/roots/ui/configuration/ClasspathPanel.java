@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -51,7 +52,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -252,7 +252,7 @@ public class ClasspathPanel extends JPanel {
           public boolean isSelectable(PopupAction value) {
             return value.isSelectable();
           }
-          public PopupStep onChosen(final PopupAction selectedValue) {
+          public PopupStep onChosen(final PopupAction selectedValue, final boolean finalChoice) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 selectedValue.execute();
