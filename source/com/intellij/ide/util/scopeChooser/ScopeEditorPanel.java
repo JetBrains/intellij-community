@@ -4,6 +4,7 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -17,10 +18,8 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.ide.IdeBundle;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -114,6 +113,10 @@ public class ScopeEditorPanel {
 
   public JPanel getPanel() {
     return myPanel;
+  }
+
+  public JPanel getTreePanel(){
+    return myTreePanel;
   }
 
   private void onTextChange() {
@@ -364,6 +367,13 @@ public class ScopeEditorPanel {
     myDescriptor = descriptor;
     myNameField.setText(descriptor.getName());
     myCurrentScope = descriptor.getSet();
+    myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
+    rebuild(false);
+  }
+
+  public void reset(PackageSet packageSet){
+    myDescriptor = null;
+    myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false);
   }
