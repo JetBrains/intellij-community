@@ -3,31 +3,39 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.openapi.editor.Document;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * author: lesya
  */
-public class DocumentWrapper{
+public class DocumentWrapper {
   private final Document myDocument;
+
   public DocumentWrapper(Document document) {
     myDocument = document;
   }
 
-  public int getLineNum(int offset){
+  public int getLineNum(int offset) {
     return myDocument.getLineNumber(offset);
   }
 
-  public String[] getLines(){
+  public List<String> getLines() {
     return getLines(0, myDocument.getLineCount() - 1);
   }
 
-  public String[] getLines(int from, int to){
+  public List<String> getLines(int from, int to) {
     ArrayList<String> result = new ArrayList<String>();
-    for (int i = from; i <= to; i++){
+    for (int i = from; i <= to; i++) {
       if (i >= myDocument.getLineCount()) break;
-      result.add(getLine(i));
+      final String line = getLine(i);
+      /*
+      if (line.length() > 0 || i < to) {
+        result.add(line);
+      }
+      */
+      result.add(line);
     }
-    return result.toArray(new String[result.size()]);
+    return result;
   }
 
   private String getLine(int i) {

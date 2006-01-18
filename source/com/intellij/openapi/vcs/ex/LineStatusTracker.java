@@ -53,11 +53,11 @@ public class LineStatusTracker implements EditorColorsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private final Document myDocument;
   private final Document myUpToDateDocument;
-  private List<Range> myRanges = new ArrayList<Range>();
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private List<Range> myRanges = new ArrayList<Range>();
   private final Project myProject;
-  private int myHighlighterCount = 0;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private int myHighlighterCount = 0;
 
-  private EditorColorsListener myListener;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private EditorColorsListener myListener;
   private final MyDocumentListener myDocumentListener = new MyDocumentListener();
 
   private boolean myIsReleased = false;
@@ -75,7 +75,7 @@ public class LineStatusTracker implements EditorColorsListener {
     try {
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
-          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));          
+          myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), StringUtil.convertLineSeparators(upToDateContent));
         }
       }, null, null);
       myUpToDateDocument.setReadOnly(true);
@@ -106,19 +106,17 @@ public class LineStatusTracker implements EditorColorsListener {
     }
   }
 
+  @SuppressWarnings({"AutoBoxing"})
   synchronized private RangeHighlighter createHighlighter(Range range) {
-    int first = range.getOffset1() >= myDocument.getLineCount() ? myDocument.getTextLength()
-                : myDocument.getLineStartOffset(range.getOffset1());
+    int first =
+      range.getOffset1() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset1());
 
-    int second = range.getOffset2() >= myDocument.getLineCount() ? myDocument.getTextLength()
-                 : myDocument.getLineStartOffset(range.getOffset2());
+    int second =
+      range.getOffset2() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset2());
 
 
-    RangeHighlighter highlighter = myDocument.getMarkupModel(myProject).addRangeHighlighter(first,
-                                                                                            second,
-                                                                                            HighlighterLayer.FIRST - 1,
-                                                                                            null,
-                                                                                            HighlighterTargetArea.LINES_IN_RANGE);
+    RangeHighlighter highlighter = myDocument.getMarkupModel(myProject)
+      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
     myHighlighterCount++;
     TextAttributes attr = getAttributesFor(range);
     highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());
@@ -131,9 +129,10 @@ public class LineStatusTracker implements EditorColorsListener {
     final int line2 = myDocument.getLineNumber(second);
     final String tooltip;
     if (line1 == line2) {
-       tooltip = VcsBundle.message("tooltip.text.line.changed", line1);
-    } else {
-       tooltip = VcsBundle.message("tooltip.text.lines.changed", line1, line2);
+      tooltip = VcsBundle.message("tooltip.text.line.changed", line1);
+    }
+    else {
+      tooltip = VcsBundle.message("tooltip.text.lines.changed", line1, line2);
     }
 
     highlighter.setErrorStripeTooltip(tooltip);
@@ -153,6 +152,7 @@ public class LineStatusTracker implements EditorColorsListener {
   synchronized void removeHighlighter(RangeHighlighter highlighter) {
     if (highlighter == null) return;
     MarkupModel markupModel = myDocument.getMarkupModel(myProject);
+    //noinspection ConstantConditions
     if (markupModel == null) return;
     markupModel.removeHighlighter(highlighter);
     myHighlighterCount--;
@@ -203,8 +203,12 @@ public class LineStatusTracker implements EditorColorsListener {
       UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
     }
     else {
-      int[] xPoints = new int[]{x, x, x + width - 1};
-      int[] yPoints = new int[]{r.y - 4, r.y + 4, r.y};
+      int[] xPoints = new int[]{x,
+        x,
+        x + width - 1};
+      int[] yPoints = new int[]{r.y - 4,
+        r.y + 4,
+        r.y};
       g.fillPolygon(xPoints, yPoints, 3);
 
       g.setColor(gutter.getFoldingColor(false));
@@ -223,10 +227,7 @@ public class LineStatusTracker implements EditorColorsListener {
         e.consume();
         JComponent comp = (JComponent)e.getComponent(); // shall be EditorGutterComponent, cast is safe.
         JLayeredPane layeredPane = comp.getRootPane().getLayeredPane();
-        Point point = SwingUtilities.convertPoint(comp,
-                                                  ((EditorEx)editor).getGutterComponentEx().getWidth(),
-                                                  e.getY(),
-                                                  layeredPane);
+        Point point = SwingUtilities.convertPoint(comp, ((EditorEx)editor).getGutterComponentEx().getWidth(), e.getY(), layeredPane);
         showActiveHint(range, editor, point);
       }
     };
@@ -281,8 +282,7 @@ public class LineStatusTracker implements EditorColorsListener {
       myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
       if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
 
-      myLinesBeforeChange = myDocument.getLineNumber(e.getOffset() + e.getOldLength())
-                            - myDocument.getLineNumber(e.getOffset());
+      myLinesBeforeChange = myDocument.getLineNumber(e.getOffset() + e.getOldLength()) - myDocument.getLineNumber(e.getOffset());
 
       Range firstChangedRange = getLastRangeBeforeLine(myFirstChangedLine);
 
@@ -294,8 +294,7 @@ public class LineStatusTracker implements EditorColorsListener {
         myUpToDateFirstLine = firstChangedRange.getUOffset1();
       }
       else {
-        myUpToDateFirstLine = firstChangedRange.getUOffset2()
-                              + (myFirstChangedLine - firstChangedRange.getOffset2());
+        myUpToDateFirstLine = firstChangedRange.getUOffset2() + (myFirstChangedLine - firstChangedRange.getOffset2());
       }
 
       Range myLastChangedRange = getLastRangeBeforeLine(myLastChangedLine);
@@ -308,12 +307,12 @@ public class LineStatusTracker implements EditorColorsListener {
         myLastChangedLine = myLastChangedRange.getOffset2();
       }
       else {
-        myUpToDateLastLine = myLastChangedRange.getUOffset2()
-                             + (myLastChangedLine - myLastChangedRange.getOffset2());
+        myUpToDateLastLine = myLastChangedRange.getUOffset2() + (myLastChangedLine - myLastChangedRange.getOffset2());
       }
 
     }
 
+    @Nullable
     private Range getLastRangeBeforeLine(int line) {
       Range result = null;
       for (Range range : myRanges) {
@@ -325,8 +324,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
     public void documentChanged(DocumentEvent e) {
       int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      int linesAfterChange = line
-                             - myDocument.getLineNumber(e.getOffset());
+      int linesAfterChange = line - myDocument.getLineNumber(e.getOffset());
       int linesShift = linesAfterChange - myLinesBeforeChange;
 
       List<Range> rangesAfterChange = getRangesAfter(myLastChangedLine);
@@ -336,8 +334,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
       int newSize = rangesBeforeChange.size() + changedRanges.size() + rangesAfterChange.size();
       if (myRanges.size() != newSize) {
-        LOG.info("Ranges: " + myRanges + "; first changed line: " + myFirstChangedLine +
-                 "; last changed line: " + myLastChangedLine);
+        LOG.info("Ranges: " + myRanges + "; first changed line: " + myFirstChangedLine + "; last changed line: " + myLastChangedLine);
         LOG.assertTrue(false);
       }
 
@@ -359,8 +356,7 @@ public class LineStatusTracker implements EditorColorsListener {
         myRanges.addAll(rangesAfterChange);
 
         if (myHighlighterCount != myRanges.size()) {
-          LOG.assertTrue(false,
-                         "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+          LOG.assertTrue(false, "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
         }
 
         myRanges = mergeRanges(myRanges);
@@ -371,16 +367,15 @@ public class LineStatusTracker implements EditorColorsListener {
         }
 
         if (myHighlighterCount != myRanges.size()) {
-          LOG.assertTrue(false,
-                         "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+          LOG.assertTrue(false, "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
         }
       }
 
     }
 
     private List<Range> getNewChangedRanges() {
-      String[] lines = new DocumentWrapper(myDocument).getLines(myFirstChangedLine, myLastChangedLine);
-      String[] uLines = new DocumentWrapper(myUpToDateDocument)
+      List<String> lines = new DocumentWrapper(myDocument).getLines(myFirstChangedLine, myLastChangedLine);
+      List<String> uLines = new DocumentWrapper(myUpToDateDocument)
         .getLines(myUpToDateFirstLine, myUpToDateLastLine);
       return new RangesBuilder(lines, uLines, myFirstChangedLine, myUpToDateFirstLine).getRanges();
     }
@@ -463,7 +458,7 @@ public class LineStatusTracker implements EditorColorsListener {
   }
 
   public void moveToRange(final Range range, final Editor editor) {
-    final int firstOffset = myDocument.getLineStartOffset(Math.min(range.getOffset1(), myDocument.getLineCount() - 1) );
+    final int firstOffset = myDocument.getLineStartOffset(Math.min(range.getOffset1(), myDocument.getLineCount() - 1));
     editor.getCaretModel().moveToOffset(firstOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
@@ -555,16 +550,16 @@ public class LineStatusTracker implements EditorColorsListener {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              if(!myLineStatusTracker.getDocument().isWritable()) {
-                final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myLineStatusTracker.getProject()).ensureFilesWritable(new VirtualFile[]{myLineStatusTracker.getVirtualFile()});
+              if (!myLineStatusTracker.getDocument().isWritable()) {
+                final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler
+                  .getInstance(myLineStatusTracker.getProject()).ensureFilesWritable(myLineStatusTracker.getVirtualFile());
                 if (operationStatus.hasReadonlyFiles()) return;
               }
               myLineStatusTracker.rollbackChanges(myRange);
             }
           });
         }
-      }, VcsBundle.message("command.name.rollback.change"),
-         null);
+      }, VcsBundle.message("command.name.rollback.change"), null);
 
     }
   }
@@ -573,9 +568,8 @@ public class LineStatusTracker implements EditorColorsListener {
     TextRange currentTextRange = getCurrentTextRange(range);
 
     if (range.getType() == Range.INSERTED) {
-      myDocument.replaceString(currentTextRange.getStartOffset(),
-                               Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()),
-                               "");
+      myDocument
+        .replaceString(currentTextRange.getStartOffset(), Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()), "");
     }
     else if (range.getType() == Range.DELETED) {
       String upToDateContent = getUpToDateContent(range);
@@ -584,16 +578,15 @@ public class LineStatusTracker implements EditorColorsListener {
     else {
 
       String upToDateContent = getUpToDateContent(range);
-      myDocument.replaceString(currentTextRange.getStartOffset(),
-                               Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()), upToDateContent);
+      myDocument.replaceString(currentTextRange.getStartOffset(), Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()),
+                               upToDateContent);
     }
   }
 
   public String getUpToDateContent(Range range) {
     TextRange textRange = getUpToDateRange(range);
     final int startOffset = textRange.getStartOffset();
-    final int endOffset = Math.min(textRange.getEndOffset() + 1,
-                                   myUpToDateDocument.getTextLength());
+    final int endOffset = Math.min(textRange.getEndOffset() + 1, myUpToDateDocument.getTextLength());
     return myUpToDateDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
   }
 
@@ -603,8 +596,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public class ShowDiffAction extends LineStatusTracker.MyAction {
     public ShowDiffAction(LineStatusTracker lineStatusTracker, Range range, Editor editor) {
-      super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png")
-            , lineStatusTracker, range, editor);
+      super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png"), lineStatusTracker, range, editor);
     }
 
     public boolean isEnabled() {
@@ -626,12 +618,10 @@ public class LineStatusTracker implements EditorColorsListener {
     private DiffRequest createDiffData() {
       return new DiffRequest(myLineStatusTracker.getProject()) {
         public DiffContent[] getContents() {
-          return new DiffContent[]{
-            createDiffContent(myLineStatusTracker.getUpToDateDocument(),
-                              myLineStatusTracker.getUpToDateRange(myRange), null),
-            createDiffContent(myLineStatusTracker.getDocument(),
-                              myLineStatusTracker.getCurrentTextRange(myRange), myLineStatusTracker.getVirtualFile())
-          };
+          return new DiffContent[]{createDiffContent(myLineStatusTracker.getUpToDateDocument(),
+                                                     myLineStatusTracker.getUpToDateRange(myRange), null),
+            createDiffContent(myLineStatusTracker.getDocument(), myLineStatusTracker.getCurrentTextRange(myRange),
+                              myLineStatusTracker.getVirtualFile())};
         }
 
         public String[] getContentTitles() {
@@ -713,15 +703,13 @@ public class LineStatusTracker implements EditorColorsListener {
     actionList.remove(globalShowPrevAction);
     actionList.remove(globalShowNextAction);
 
-    JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR,
-                                                                         group, true).getComponent();
+    JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
     final Color background = ((EditorEx)editor).getBackroundColor();
     final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     toolbar.setBackground(background);
 
-    toolbar.setBorder(new SideBorder2(foreground, foreground,
-                                      range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
+    toolbar.setBorder(new SideBorder2(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
 
     JPanel component = new JPanel(new BorderLayout());
     component.setOpaque(false);
@@ -737,11 +725,8 @@ public class LineStatusTracker implements EditorColorsListener {
       EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, getFileName());
       uEditor.setHighlighter(highlighter);
 
-      EditorFragmentComponent editorFragmentComponent = EditorFragmentComponent.createEditorFragmentComponent(uEditor,
-                                                                                                              range.getUOffset1(),
-                                                                                                              range.getUOffset2(),
-                                                                                                              false,
-                                                                                                              false);
+      EditorFragmentComponent editorFragmentComponent =
+        EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getUOffset1(), range.getUOffset2(), false, false);
 
       component.add(editorFragmentComponent, BorderLayout.CENTER);
     }
@@ -756,11 +741,9 @@ public class LineStatusTracker implements EditorColorsListener {
       }
     });
 
-    HintManager.getInstance().showEditorHint(lightweightHint, editor,
-                                             point, HintManager.HIDE_BY_ANY_KEY |
-                                                    HintManager.HIDE_BY_TEXT_CHANGE |
-                                                    HintManager.HIDE_BY_OTHER_HINT |
-                                                    HintManager.HIDE_BY_SCROLLING, -1, false);
+    HintManager.getInstance().showEditorHint(lightweightHint, editor, point, HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                             HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING,
+                                                                             -1, false);
   }
 
   private String getFileName() {
