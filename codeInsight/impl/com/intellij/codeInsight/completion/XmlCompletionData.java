@@ -279,12 +279,17 @@ public class XmlCompletionData extends CompletionData {
     private void insertIncompleteTag(char completionChar, Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
       TemplateManager templateManager = TemplateManager.getInstance(project);
       Template template = templateManager.createTemplate("", "");
-      template.setToReformat(true);
+
       template.setToIndent(true);
 
       // temp code
       FileType fileType = tag.getContainingFile().getFileType();
       boolean htmlCode = fileType==StdFileTypes.HTML || fileType==StdFileTypes.XHTML;
+      boolean jspCode = fileType==StdFileTypes.JSP || fileType==StdFileTypes.JSPX;
+
+      boolean toReformat = true;
+      if (htmlCode || jspCode) { toReformat = false; }
+      template.setToReformat(toReformat);
 
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
 
