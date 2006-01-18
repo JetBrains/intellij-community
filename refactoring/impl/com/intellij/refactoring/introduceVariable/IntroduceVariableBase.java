@@ -33,6 +33,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
@@ -345,6 +347,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   protected abstract void showErrorMessage(String message, Project project);
 
+  @Nullable
   private static PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
     if(container instanceof PsiWhileStatement) {
       return ((PsiWhileStatement) container).getBody();
