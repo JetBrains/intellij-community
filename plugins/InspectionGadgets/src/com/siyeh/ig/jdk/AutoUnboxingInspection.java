@@ -18,13 +18,14 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,14 +39,13 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             new HashMap<String, String>(8);
 
     static{
-        s_unboxingMethods.put("int", "intValue");
-        s_unboxingMethods.put("short", "shortValue");
-        s_unboxingMethods.put("boolean", "booleanValue");
-        s_unboxingMethods.put("long", "longValue");
         s_unboxingMethods.put("byte", "byteValue");
-        s_unboxingMethods.put("float", "floatValue");
+        s_unboxingMethods.put("short", "shortValue");
+        s_unboxingMethods.put("int", "intValue");
         s_unboxingMethods.put("long", "longValue");
+        s_unboxingMethods.put("float", "floatValue");
         s_unboxingMethods.put("double", "doubleValue");
+        s_unboxingMethods.put("boolean", "booleanValue");
         s_unboxingMethods.put("char", "charValue");
     }
 
@@ -103,6 +103,17 @@ public class AutoUnboxingInspection extends ExpressionInspection{
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
+        public void visitElement(PsiElement element) {
+            final PsiManager manager = element.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
         public void visitArrayAccessExpression(
                 PsiArrayAccessExpression expression){
             super.visitArrayAccessExpression(expression);
@@ -158,7 +169,10 @@ public class AutoUnboxingInspection extends ExpressionInspection{
                 // an array to a vararg expression
                 return;
             }
-            if(ClassUtils.isPrimitive(expressionType)){
+            if(TypeConversionUtil.isPrimitiveAndNotNull(expressionType)){
+                return;
+            }
+            if(PsiPrimitiveType.getUnboxedType(expressionType) == null){
                 return;
             }
             final PsiType expectedType =
@@ -166,7 +180,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             if(expectedType == null){
                 return;
             }
-            if(!ClassUtils.isPrimitive(expectedType)){
+            if(!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)){
                 return;
             }
             registerError(expression);
