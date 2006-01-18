@@ -136,6 +136,7 @@ public class CommonRefactoringUtil {
           message.append(RefactoringBundle.message("0.is.read.only", subj + presentableUrl));
         }
       }
+      showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project);
       return false;
     }
 
