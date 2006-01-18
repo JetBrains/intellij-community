@@ -318,6 +318,7 @@ public class XmlCompletionData extends CompletionData {
         template.addTextSegment("/>");
       } else if (completionChar == ' ') {
         template.addTextSegment(" ");
+        template.addEndVariable();
       }
 
       templateManager.startTemplate(editor, template);
