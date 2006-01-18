@@ -94,8 +94,9 @@ public class XmlUtil {
   public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
-  private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
-  public static final @NonNls String[] JSF_URIS = new String[] { JSF_URI };
+  private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_0.dtd";
+  private static final @NonNls String JSF_URI2 = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
+  public static final @NonNls String[] JSF_URIS = new String[] { JSF_URI, JSF_URI2 };
   public static final @NonNls String[] WEB_XML_URIS = new String[] {
     "http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
     "http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
