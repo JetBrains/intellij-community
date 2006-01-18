@@ -8,14 +8,14 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -23,11 +23,10 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.MockVirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment, PsiImportHolder {
   private PsiElement myContext;
@@ -56,16 +55,15 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   }
 
   protected PsiCodeFragmentImpl clone() {
-    final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl(getTreeElement());
+    final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((RepositoryTreeElement)calcTreeElement().clone());
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
-    final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(getManager(), new MockVirtualFile(getName(), FileTypeManager.getInstance().getFileTypeByFileName(getName()), getText()), false);
+    final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(
+      getManager(),
+      new MockVirtualFile(getName(), FileTypeManager.getInstance().getFileTypeByFileName(getName()), getText()), false);
     dummyHolderViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = dummyHolderViewProvider;
-    final FileElement treeClone = (FileElement)calcTreeElement().clone();
-    clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
-    treeClone.setPsiElement(clone);
     return clone;
   }
 
