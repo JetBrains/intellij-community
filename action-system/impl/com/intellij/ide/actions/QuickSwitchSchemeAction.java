@@ -37,7 +37,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
                               JBPopupFactory.ActionSelectionAid.NUMBERING,
                               true);
 
-    popup.showInBestPositionFor(e.getDataContext());
+    popup.showCenteredInCurrentWindow((Project)e.getDataContext().getData(DataConstants.PROJECT));
   }
 
   public void update(AnActionEvent e) {
