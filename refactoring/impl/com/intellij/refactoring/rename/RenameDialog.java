@@ -152,7 +152,7 @@ public class RenameDialog extends RefactoringDialog {
     String parameterName = null;
     if (myNameSuggestionContext != null) {
       final PsiElement nameSuggestionContextParent = myNameSuggestionContext.getParent();
-      if (nameSuggestionContextParent.getParent() instanceof PsiExpressionList) {
+      if (nameSuggestionContextParent != null && nameSuggestionContextParent.getParent() instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)nameSuggestionContextParent.getParent();
         final PsiElement parent = expressionList.getParent();
         if (parent instanceof PsiCallExpression) {
