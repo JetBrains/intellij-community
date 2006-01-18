@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -73,7 +70,12 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   }
 
   private void invoke(final PsiClass aClass) {
+    final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
+    if (typeParameterList == null) {
+      final String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("changeClassSignature.no.type.parameters"));
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_CLASS_SIGNATURE, project);
+    }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
     ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass);
