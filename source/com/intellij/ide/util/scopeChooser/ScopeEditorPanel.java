@@ -295,7 +295,7 @@ public class ScopeEditorPanel {
     return toolbar.getComponent();
   }
 
-  public void rebuild(final boolean updateText) {
+  public void rebuild(final boolean updateText, final Runnable runnable){
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
@@ -307,10 +307,17 @@ public class ScopeEditorPanel {
               myIsInUpdate = false;
             }
             updateTreeModel();
+            if (runnable != null){
+              runnable.run();
+            }
           }
         });
       }
     }, 300);
+  }
+
+  public void rebuild(final boolean updateText) {
+    rebuild(updateText, null);
   }
 
   private void initTree(Tree tree) {
@@ -343,6 +350,13 @@ public class ScopeEditorPanel {
     myTreeExpantionMonitor.restore();
   }
 
+  public int getMarkedFileCount(){
+    if (myErrorMessage == null) {
+      return ((TreeModelBuilder.TreeModel)myPackageTree.getModel()).getMarkedFileCount();
+    }
+    return -1;
+  }
+
   public boolean checkCurrentScopeValid(boolean showMessage) {
     if (myCurrentScope == null) {
       if (showMessage) {
@@ -371,11 +385,11 @@ public class ScopeEditorPanel {
     rebuild(false);
   }
 
-  public void reset(PackageSet packageSet){
+  public void reset(PackageSet packageSet, Runnable runnable){
     myDescriptor = null;
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
-    rebuild(false);
+    rebuild(false, runnable);
   }
 
   private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {

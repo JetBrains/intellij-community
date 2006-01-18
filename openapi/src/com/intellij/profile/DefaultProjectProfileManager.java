@@ -111,7 +111,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
         return myScopeToProfileMap.get(scope);
       }
     }
-    return null;
+    final Profile profile = myProfiles.get(PROJECT_PROFILE);
+    return profile != null ? profile.getName() : null;
   }
 
   public String getProfile(final NamedScope scope) {
@@ -239,8 +240,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public void deleteProfile(String name) {
+    myProfiles.remove(name);
     if (USE_PROJECT_LEVEL_SETTINGS) {
-      myProfiles.remove(name);
       for (Iterator<NamedScope> iterator = myScopeToProfileMap.keySet().iterator(); iterator.hasNext();) {
         NamedScope scope = iterator.next();
         if (Comparing.strEqual(myScopeToProfileMap.get(scope), name)) {
@@ -266,7 +267,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public Profile getProjectProfileImpl(){
-    if (PROJECT_PROFILE == null){
+    if (PROJECT_PROFILE == null || !myProfiles.containsKey(PROJECT_PROFILE)){
       @NonNls final String projectProfileName = "Project Default";
       setProjectProfile(projectProfileName);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
