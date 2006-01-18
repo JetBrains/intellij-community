@@ -33,7 +33,9 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return false;
     if (!field.hasInitializer()) return false;
-    return true;
+    PsiClass psiClass = field.getContainingClass();
+    
+    return psiClass != null && !psiClass.isInterface();
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
