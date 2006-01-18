@@ -25,6 +25,8 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.ant.impl.dom.impl.PsiAntTarget;
+import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 
 /**
  * created at Nov 13, 2001
@@ -70,7 +72,7 @@ public class PsiElementRenameHandler implements RenameHandler {
           RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
           RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
           message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",
-                                                        qualifiedName));
+                                                   qualifiedName));
           int ret = Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
           if (ret != 0) {
             return;
@@ -86,6 +88,10 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   private static boolean canRename(PsiElement element, Project project) {
+    if (element instanceof PsiAntTarget || element instanceof PsiAntProperty) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement())) return false;
+      return true;
+    }
     if (element instanceof XmlAttributeValue) {
       XmlAttribute value = (XmlAttribute)element.getParent();
       if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
