@@ -18,12 +18,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private Project myProject;
 
   protected WriteCommandAction(Project project) {
-    this(project,"Undefined");
+    this(project, "Undefined");
   }
 
   protected WriteCommandAction(Project project, String commandName) {
-    myName = commandName;
-    myProject = project;
+    this(project, commandName, null);
   }
 
   protected WriteCommandAction(final Project project, final String name, final String groupID) {

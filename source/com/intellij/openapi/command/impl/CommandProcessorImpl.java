@@ -10,6 +10,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -138,10 +139,12 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     myCurrentCommand.myGroupId = groupId;
   }
 
+  @Nullable
   public Runnable getCurrentCommand() {
     return myCurrentCommand != null ? myCurrentCommand.myCommand : null;
   }
 
+  @Nullable
   public String getCurrentCommandName() {
     if (myCurrentCommand != null) return myCurrentCommand.myName;
     if (myInterruptedCommands.size() > 0) {
@@ -151,6 +154,17 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     return null;
   }
 
+  @Nullable
+  public Object getCurrentCommandGroupId() {
+    if (myCurrentCommand != null) return myCurrentCommand.myGroupId;
+    if (myInterruptedCommands.size() > 0) {
+      final CommandDescriptor command = myInterruptedCommands.peek();
+      return command != null ? command.myGroupId : null;
+    }
+    return null;
+  }
+
+  @Nullable
   public Project getCurrentCommandProject() {
     return myCurrentCommand != null ? myCurrentCommand.myProject : null;
   }

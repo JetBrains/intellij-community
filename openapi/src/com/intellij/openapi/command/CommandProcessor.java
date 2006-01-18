@@ -17,7 +17,7 @@ package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance(){
@@ -34,8 +34,13 @@ public abstract class CommandProcessor {
   public abstract void setCurrentCommandName(String name);
   public abstract void setCurrentCommandGroupId(Object groupId);
 
+  @Nullable
   public abstract Runnable getCurrentCommand();
+  @Nullable
   public abstract String getCurrentCommandName();
+  @Nullable
+  public abstract Object getCurrentCommandGroupId();
+  @Nullable
   public abstract Project getCurrentCommandProject();
 
   public abstract void addCommandListener(CommandListener listener);
