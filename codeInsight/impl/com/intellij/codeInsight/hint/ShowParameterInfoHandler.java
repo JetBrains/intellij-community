@@ -66,10 +66,16 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     PsiAnnotation annotation = ParameterInfoController.findParentOfType(file, offset, PsiAnnotation.class);
     if (annotation != null) {
-      final PsiElement resolved = annotation.getNameReferenceElement().resolve();
-      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-        final PsiAnnotationMethod method = ParameterInfoController.findAnnotationMethod(file, offset);
-        showAnnotationMethodsInfo(project, editor, annotation, method);
+      final PsiJavaCodeReferenceElement nameReference = annotation.getNameReferenceElement();
+      if (nameReference != null) {
+        final PsiElement resolved = nameReference.resolve();
+        if (resolved instanceof PsiClass) {
+          final PsiClass aClass = (PsiClass)resolved;
+          if (aClass.isAnnotationType()) {
+            final PsiAnnotationMethod method = ParameterInfoController.findAnnotationMethod(file, offset);
+            showAnnotationMethodsInfo(project, editor, annotation, method, aClass);
+          }
+        }
       }
     }
     final XmlTag tag = ParameterInfoController.findXmlTag(file, offset);
@@ -95,11 +101,9 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   private void showAnnotationMethodsInfo(final Project project,
                                          final Editor editor,
                                          PsiAnnotation annotation,
-                                         PsiMethod highlightedMethod) {
-    final PsiElement resolved = annotation.getNameReferenceElement().resolve();
-    if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) return;
-
-    final PsiMethod[] methods = ((PsiClass)resolved).getMethods();
+                                         PsiMethod highlightedMethod,
+                                         final PsiClass annotationInterface) {
+    final PsiMethod[] methods = annotationInterface.getMethods();
     if (methods.length == 0) return;
 
     final ParameterInfoComponent component = new ParameterInfoComponent(methods, editor);
@@ -156,8 +160,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!editor.getComponent().isShowing()) return;
-        ;
-
         hintManager.showEditorHint(hint, editor, p,
                                    HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
                                    0, false);
@@ -273,8 +275,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
-    Point p = aboveSpace > underSpace ? new Point(p2.x, 0) : p1;
-    return p;
+    return aboveSpace > underSpace ? new Point(p2.x, 0) : p1;
   }
 
   private CandidateInfo[] getMethods(PsiExpressionList argList) {
