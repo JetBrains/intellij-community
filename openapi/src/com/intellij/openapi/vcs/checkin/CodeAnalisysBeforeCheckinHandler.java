@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -16,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class CodeAnalisysBeforeCheckinHandler extends BeforeCheckinHandler {
+public class CodeAnalisysBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
 
@@ -28,7 +28,7 @@ public class CodeAnalisysBeforeCheckinHandler extends BeforeCheckinHandler {
   }
 
   @Nullable
-  public RefreshableOnComponent getConfigurationPanel() {
+  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.standard.options.check.smells"));
     return new RefreshableOnComponent() {
       public JComponent getComponent() {
@@ -83,11 +83,11 @@ public class CodeAnalisysBeforeCheckinHandler extends BeforeCheckinHandler {
     return result;
   }
 
-  public ReturnResult perform(VirtualFile[] filesToBeCommited) {
+  public ReturnResult beforeCheckin(CheckinProjectPanel checkinPanel) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       try {
         final List<CodeSmellInfo> codeSmells =
-          AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(Arrays.asList(filesToBeCommited)));
+          AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(checkinPanel.getVirtualFiles()));
         if (!codeSmells.isEmpty()) {
           return processFoundCodeSmells(codeSmells);
         }

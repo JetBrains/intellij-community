@@ -275,7 +275,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public Refreshable createCheckinProjectPanel(Project project) {
     return new CheckinProjectPanelImpl(project,
-                                       Arrays.asList(LocalVcs.getInstance(myProject).getRootPaths()), new JPanel());
+                                       Arrays.asList(LocalVcs.getInstance(myProject).getRootPaths()), new JPanel(),
+                                       null);
   }
 
   public void prepareFileForCheckin(final VirtualFile file) {

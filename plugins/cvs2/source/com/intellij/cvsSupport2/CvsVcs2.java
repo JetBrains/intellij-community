@@ -1,10 +1,12 @@
 package com.intellij.cvsSupport2;
 
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
+import com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -30,17 +32,19 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -107,6 +111,22 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myRemoveConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
+
+    vcsManager.registerCheckinHandlerFactory(new CheckinHandlerFactory() {
+      public
+      @NotNull
+      CheckinHandler createHandler() {
+        return new CheckinHandler() {
+          @Nullable
+          public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
+            return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(myProject));
+          }
+
+          public void checkinSuccessful() {
+          }
+        };
+      }
+    });
 
     myProjectIsOpened = true;
   }

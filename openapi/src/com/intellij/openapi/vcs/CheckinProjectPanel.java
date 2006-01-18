@@ -20,12 +20,12 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 
 public interface CheckinProjectPanel extends Refreshable {
@@ -48,6 +48,8 @@ public interface CheckinProjectPanel extends Refreshable {
   void removeSelectionChangeListener(SelectionChangeListener listener);
 
   Collection<VirtualFile> getVirtualFiles();
+
+  Collection<File> getFiles();
 
   Project getProject();
 

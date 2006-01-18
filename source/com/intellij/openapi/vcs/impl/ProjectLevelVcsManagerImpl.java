@@ -60,7 +60,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.checkin.BeforeCheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CodeAnalisysBeforeCheckinHandler;
 import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
@@ -112,7 +113,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
-  private final List<BeforeCheckinHandler> myRegisteredBeforeCheckinHandlers = new ArrayList<BeforeCheckinHandler>();
+  private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
 
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
@@ -217,8 +218,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
     myLineStatusTrackers = new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
 
-    registerBeforeCheckinHandler(new StandardBeforeCheckinHandler(myProject));
-    registerBeforeCheckinHandler(new CodeAnalisysBeforeCheckinHandler(myProject));
+    registerCheckinHandlerFactory(new CheckinHandlerFactory() {
+      public
+      @NotNull
+      CheckinHandler createHandler() {
+        return new StandardBeforeCheckinHandler(myProject);
+      }
+    });
+    registerCheckinHandlerFactory(new CheckinHandlerFactory() {
+      public
+      @NotNull
+      CheckinHandler createHandler() {
+        return new CodeAnalisysBeforeCheckinHandler(myProject);
+      }
+    });
 
     initialize();
 
@@ -720,15 +733,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myConfirmations.get(option.getId());
   }
 
-  public List<BeforeCheckinHandler> getRegisteredBeforeCheckinHandlers() {
+  public List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
     return Collections.unmodifiableList(myRegisteredBeforeCheckinHandlers);
   }
 
-  public void registerBeforeCheckinHandler(BeforeCheckinHandler handler) {
-    myRegisteredBeforeCheckinHandlers.add(handler);
+  public void registerCheckinHandlerFactory(CheckinHandlerFactory factory) {
+    myRegisteredBeforeCheckinHandlers.add(factory);
   }
 
-  public void unregisterBeforeCheckinHandler(BeforeCheckinHandler handler) {
+  public void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler) {
     myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 }

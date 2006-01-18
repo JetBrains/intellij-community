@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.checkin.BeforeCheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,9 +125,9 @@ public abstract class ProjectLevelVcsManager {
                                                                @NotNull AbstractVcs vcs);
 
 
-  public abstract List<BeforeCheckinHandler> getRegisteredBeforeCheckinHandlers();
+  public abstract List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
 
-  public abstract void registerBeforeCheckinHandler(BeforeCheckinHandler handler);
+  public abstract void registerCheckinHandlerFactory(CheckinHandlerFactory factory);
 
-  public abstract void unregisterBeforeCheckinHandler(BeforeCheckinHandler handler);
+  public abstract void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler);
 }

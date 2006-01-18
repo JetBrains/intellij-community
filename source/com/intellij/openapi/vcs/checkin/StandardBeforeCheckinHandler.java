@@ -4,16 +4,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
-public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
+public class StandardBeforeCheckinHandler extends CheckinHandler {
 
   protected final Project myProject;
 
@@ -21,12 +17,6 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
   public StandardBeforeCheckinHandler(final Project project) {
     myProject = project;
   }
-
-
-  public ReturnResult perform(VirtualFile[] filesToBeCommited) {
-    return ReturnResult.COMMIT;
-  }
-
 
   @Nullable
   public RefreshableOnComponent getConfigurationPanel() {
@@ -58,19 +48,6 @@ public class StandardBeforeCheckinHandler extends BeforeCheckinHandler {
 
   protected VcsConfiguration getSettings() {
     return VcsConfiguration.getInstance(myProject);
-  }
-
-  protected PsiFile[] getPsiFiles(VirtualFile[] selectedFiles) {
-    ArrayList<PsiFile> result = new ArrayList<PsiFile>();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-
-    for (VirtualFile file : selectedFiles) {
-      if (file.isValid()) {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) result.add(psiFile);
-      }
-    }
-    return result.toArray(new PsiFile[result.size()]);
   }
 
 }

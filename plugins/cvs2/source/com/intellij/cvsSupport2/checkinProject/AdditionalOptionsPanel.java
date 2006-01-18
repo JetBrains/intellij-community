@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.MessageFormat;
 
 public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFieldOwner {
 
@@ -18,7 +17,6 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
   private JCheckBox myTag;
   private JLabel myErrorLabel;
 
-  private final boolean myCheckinProject;
   private final CvsConfiguration myConfiguration;
   private boolean myIsCorrect = true;
   private String myErrorMessage;
@@ -26,7 +24,6 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
 
   public AdditionalOptionsPanel(boolean checkinProject,
                                 CvsConfiguration configuration) {
-    myCheckinProject = checkinProject;
     myConfiguration = configuration;
     myTag.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -43,16 +40,9 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
   }
 
   public void refresh() {
-    if (myCheckinProject) {
-      myTag.setSelected(myConfiguration.TAG_AFTER_PROJECT_COMMIT);
-      myTagName.setText(myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
-      myOverrideExistings.setSelected(myConfiguration.OVERRIDE_EXISTING_TAG_FOR_PROJECT);
-    }
-    else {
-      myTag.setSelected(myConfiguration.TAG_AFTER_FILE_COMMIT);
-      myTagName.setText(myConfiguration.TAG_AFTER_FILE_COMMIT_NAME);
-      myOverrideExistings.setSelected(myConfiguration.OVERRIDE_EXISTING_TAG_FOR_FILE);
-    }
+    myTag.setSelected(myConfiguration.TAG_AFTER_PROJECT_COMMIT);
+    myTagName.setText(myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
+    myOverrideExistings.setSelected(myConfiguration.OVERRIDE_EXISTING_TAG_FOR_PROJECT);
     updateEnable();
   }
 
@@ -60,16 +50,9 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
     if (!myIsCorrect) {
       throw new InputException(com.intellij.CvsBundle.message("error.message.incorrect.tag.name", myErrorMessage), myTagName);
     }
-    if (myCheckinProject) {
-      myConfiguration.TAG_AFTER_PROJECT_COMMIT = myTag.isSelected();
-      myConfiguration.OVERRIDE_EXISTING_TAG_FOR_PROJECT = myOverrideExistings.isSelected();
-      myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME = myTagName.getText().trim();
-    }
-    else {
-      myConfiguration.TAG_AFTER_FILE_COMMIT = myTag.isSelected();
-      myConfiguration.OVERRIDE_EXISTING_TAG_FOR_FILE = myOverrideExistings.isSelected();
-      myConfiguration.TAG_AFTER_FILE_COMMIT_NAME = myTagName.getText().trim();
-    }
+    myConfiguration.TAG_AFTER_PROJECT_COMMIT = myTag.isSelected();
+    myConfiguration.OVERRIDE_EXISTING_TAG_FOR_PROJECT = myOverrideExistings.isSelected();
+    myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME = myTagName.getText().trim();
 
   }
 

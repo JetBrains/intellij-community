@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.checkinProject;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.IgnoreFileAction;
@@ -24,8 +25,8 @@ import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.ColumnInfo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, final boolean checkinProject) {
-    return new AdditionalOptionsPanel(checkinProject, CvsConfiguration.getInstance(myProject));
+    return null;
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel) {
@@ -171,11 +172,11 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
           roots,
           new File[]{},
           preparedComment,
-          com.intellij.CvsBundle.message("operation.name.commit.file", roots.length),
+          CvsBundle.message("operation.name.commit.file", roots.length),
           CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY,
           myProject,
-          cvsConfiguration.TAG_AFTER_FILE_COMMIT,
-          cvsConfiguration.TAG_AFTER_FILE_COMMIT_NAME);
+          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT,
+          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
 
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return executor.getResult().getErrorsAndWarnings();

@@ -68,6 +68,7 @@ public abstract class AbstractVcsHelper {
 
   public abstract void doCheckinFiles(VirtualFile[] files, Object checkinParameters);
 
+  
   public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
                                                       VcsConfiguration configuration,
                                                       Runnable finishAction,

@@ -1,17 +1,17 @@
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.Options;
-import org.netbeans.lib.cvsclient.command.Watch;
 import org.jdom.Element;
+import org.netbeans.lib.cvsclient.command.Watch;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,10 +53,6 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public boolean MAKE_NEW_FILES_READONLY = false;
   public int SHOW_CORRUPTED_PROJECT_FILES = Options.SHOW_DIALOG;
-
-  public boolean TAG_AFTER_FILE_COMMIT = false;
-  public boolean OVERRIDE_EXISTING_TAG_FOR_FILE = true;
-  public String TAG_AFTER_FILE_COMMIT_NAME = "";
 
   public boolean TAG_AFTER_PROJECT_COMMIT = false;
   public boolean OVERRIDE_EXISTING_TAG_FOR_PROJECT = true;
