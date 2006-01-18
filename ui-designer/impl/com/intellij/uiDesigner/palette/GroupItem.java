@@ -38,6 +38,10 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     return myName;
   }
 
+  public String getTabName() {
+    return "Swing";
+  }
+
   public void setName(@NotNull final String name){
     myName = name;
   }

@@ -17,51 +17,93 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author yole
  */
-public class PaletteWindow extends JPanel implements Scrollable {
+public class PaletteWindow extends JPanel {
   private Project myProject;
   private ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
   private PaletteItemProvider[] myProviders;
   private PaletteWindow.MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
   private Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
+  private JTabbedPane myTabbedPane = new JTabbedPane();
+  private JScrollPane myScrollPane = new JScrollPane();
+  private MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
 
   public PaletteWindow(Project project) {
     myProject = project;
-    setLayout(new PaletteLayoutManager());
     myProviders = (PaletteItemProvider[]) Extensions.getExtensions(ExtensionPoints.PALETTE_ITEM_PROVIDER, project);
     for(PaletteItemProvider provider: myProviders) {
       provider.addListener(myPropertyChangeListener);
     }
+
+    setLayout(new GridLayout(1, 1));
 
     refreshPalette();
   }
 
   public void refreshPalette() {
     for(PaletteGroupHeader groupHeader: myGroupHeaders) {
-      remove(groupHeader);
-      remove(groupHeader.getComponentList());
+      groupHeader.getComponentList().removeListSelectionListener(myListSelectionListener);
+    }
+    String[] oldTabNames = collectTabNames(myGroups);
+    if (oldTabNames.length == 1) {
+      remove(myScrollPane);
+    }
+    else {
+      myTabbedPane.removeAll();
+      remove(myTabbedPane);
     }
     myGroupHeaders.clear();
     myGroups.clear();
 
-    for(PaletteGroup group: collectCurrentGroups()) {
-      PaletteGroupHeader groupHeader = new PaletteGroupHeader(group);
-      myGroupHeaders.add(groupHeader);
-      myGroups.add(group);
-      add(groupHeader);
-      PaletteComponentList componentList = new PaletteComponentList(group);
-      add(componentList);
-      groupHeader.setComponentList(componentList);
-      componentList.addListSelectionListener(new MyListSelectionListener());
+    final ArrayList<PaletteGroup> currentGroups = collectCurrentGroups();
+    String[] tabNames = collectTabNames(currentGroups);
+    if (tabNames.length == 1) {
+      PaletteContentWindow contentWindow = new PaletteContentWindow();
+      myScrollPane.getViewport().setView(contentWindow);
+      add(myScrollPane);
+
+      for(PaletteGroup group: currentGroups) {
+        addGroupToControl(group, contentWindow);
+      }
+    }
+    else {
+      add(myTabbedPane);
+      for(String tabName: tabNames) {
+        PaletteContentWindow contentWindow = new PaletteContentWindow();
+        JScrollPane scrollPane = new JScrollPane(contentWindow);
+        myTabbedPane.add(tabName, scrollPane);
+        for(PaletteGroup group: currentGroups) {
+          if (group.getTabName().equals(tabName)) {
+            addGroupToControl(group, contentWindow);
+          }
+        }
+      }
     }
 
     revalidate();
+  }
+
+  private void addGroupToControl(PaletteGroup group, JComponent control) {
+    PaletteGroupHeader groupHeader = new PaletteGroupHeader(group);
+    myGroupHeaders.add(groupHeader);
+    myGroups.add(group);
+    control.add(groupHeader);
+    PaletteComponentList componentList = new PaletteComponentList(group);
+    control.add(componentList);
+    groupHeader.setComponentList(componentList);
+    componentList.addListSelectionListener(myListSelectionListener);
+  }
+
+  private static String[] collectTabNames(final Collection<PaletteGroup> groups) {
+    Set<String> result = new TreeSet<String>();
+    for(PaletteGroup group: groups) {
+      result.add(group.getTabName());
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private ArrayList<PaletteGroup> collectCurrentGroups() {
@@ -84,26 +126,6 @@ public class PaletteWindow extends JPanel implements Scrollable {
     }
   }
 
-  public Dimension getPreferredScrollableViewportSize() {
-    return getPreferredSize();
-  }
-
-  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    return 20;
-  }
-
-  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-    return 100;
-  }
-
-  public boolean getScrollableTracksViewportWidth() {
-    return true;
-  }
-
-  public boolean getScrollableTracksViewportHeight() {
-    return false;
-  }
-
   public int getActiveGroupCount() {
     return myGroups.size();
   }
@@ -121,48 +143,6 @@ public class PaletteWindow extends JPanel implements Scrollable {
       }
     }
     return null;
-  }
-
-  private class PaletteLayoutManager implements LayoutManager {
-
-    public void addLayoutComponent(String name, Component comp) {
-    }
-
-    public void layoutContainer(Container parent) {
-      int width = getWidth();
-
-      int height = 0;
-      for(PaletteGroupHeader group: myGroupHeaders) {
-        group.setLocation(0, height);
-        group.setSize(width, group.getPreferredSize().height);
-        height += group.getPreferredSize().height;
-        if (group.isSelected()) {
-          PaletteComponentList componentList = group.getComponentList();
-          componentList.setSize(width, componentList.getPreferredSize().height);
-          componentList.setLocation(0, height);
-          height += componentList.getHeight();
-        }
-      }
-    }
-
-    public Dimension minimumLayoutSize(Container parent) {
-      return new Dimension(0, 0);
-    }
-
-    public Dimension preferredLayoutSize(Container parent) {
-      int height = 0;
-      int width = getWidth();
-      for(PaletteGroupHeader group: myGroupHeaders) {
-        height += group.getHeight();
-        if (group.isSelected()) {
-          height += group.getComponentList().getPreferredHeight(width);
-        }
-      }
-      return new Dimension(10 /* not used - tracks viewports width*/, height);
-    }
-
-    public void removeLayoutComponent(Component comp) {
-    }
   }
 
   private class MyListSelectionListener implements ListSelectionListener {

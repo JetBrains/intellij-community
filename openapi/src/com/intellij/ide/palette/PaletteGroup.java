@@ -28,4 +28,6 @@ public interface PaletteGroup {
   PaletteItem getItemAt(int index);
 
   String getName();
+
+  String getTabName();
 }

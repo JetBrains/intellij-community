@@ -6,18 +6,16 @@ package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author yole
@@ -41,7 +39,7 @@ public class PaletteManager implements ProjectComponent {
       public void run() {
         myPaletteWindow = new PaletteWindow(myProject);
         myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette",
-                                                                                          new JScrollPane(myPaletteWindow),
+                                                                                          myPaletteWindow,
                                                                                           ToolWindowAnchor.RIGHT);
       }
     });
