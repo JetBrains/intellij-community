@@ -33,6 +33,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -310,8 +311,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
 
     final List<VcsException> errors = collectErrors(allExceptions);
-    int errorsSize = errors.size();
-    int warningsSize = allExceptions.size() - errorsSize;
+    final int errorsSize = errors.size();
+    final int warningsSize = allExceptions.size() - errorsSize;
 
     if (errorsSize == 0) {
       for (CheckinHandler handler : checkinHandlers) {
@@ -327,16 +328,23 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     config.ERROR_OCCURED = errorsSize > 0;
 
-    if (errorsSize > 0 && warningsSize > 0) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"),
-                               VcsBundle.message("message.title.commit"));
-    }
-    else if (errorsSize > 0) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
-    }
-    else if (warningsSize > 0) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
-    }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (errorsSize > 0 && warningsSize > 0) {
+          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"),
+                                   VcsBundle.message("message.title.commit"));
+        }
+        else if (errorsSize > 0) {
+          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
+        }
+        else if (warningsSize > 0) {
+          Messages
+            .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
+        }
+
+      }
+    }, ModalityState.NON_MMODAL);
 
   }
 
