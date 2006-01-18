@@ -42,9 +42,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
-    if (myListModel.getSize() < myList.getVisibleRowCount()) {
-      myList.setVisibleRowCount(myListModel.getSize());
-    }
+    myList.setVisibleRowCount(Math.max(20, myListModel.getSize()));
   }
 
   protected void afterShow() {
