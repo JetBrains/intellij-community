@@ -30,8 +30,14 @@ public final class PagedFileStorage {
 
   private void map() throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    myBuffer = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
-    raf.close();
+    final FileChannel channel = raf.getChannel();
+    try {
+      myBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
+    }
+    finally {
+      channel.close();
+      raf.close();
+    }
     mySize = myFile.length();
     ByteBufferUtil.TOTAL_MAPPED_BYTES += mySize;
   }
