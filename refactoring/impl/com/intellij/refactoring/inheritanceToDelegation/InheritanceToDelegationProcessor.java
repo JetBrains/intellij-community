@@ -651,7 +651,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             assignmentText, body
           );
         if (!myIsInnerClassNeeded) {
-          ((PsiNewExpression)assignmentStatement.getExpression()).getClassReference().replace(baseClassReference);
+          final PsiAssignmentExpression assignmentExpr = (PsiAssignmentExpression)assignmentStatement.getExpression();
+          final PsiNewExpression newExpression = (PsiNewExpression)assignmentExpr.getRExpression();
+          assert newExpression != null;
+          final PsiJavaCodeReferenceElement classRef = newExpression.getClassReference();
+          assert classRef != null;
+          classRef.replace(baseClassReference);
         }
 
         assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myProject).reformat(assignmentStatement);
