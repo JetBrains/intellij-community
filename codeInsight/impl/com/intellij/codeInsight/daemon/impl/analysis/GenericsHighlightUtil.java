@@ -308,7 +308,7 @@ public class GenericsHighlightUtil {
     MethodSignatureBackedByPsiMethod toCheck = toCheckSubsignature.get(signatureToCheck);
     final PsiMethod checkMethod = toCheck.getMethod();
     if (checkMethod.isConstructor()) {
-      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
+      if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
     }
 
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
