@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,15 +15,15 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public interface PsiReferenceProvider{
   PsiReferenceProvider[] EMPTY_ARRAY = new PsiReferenceProvider[0];
 
-  PsiReference[] getReferencesByElement(PsiElement element);
+  @NotNull PsiReference[] getReferencesByElement(PsiElement element);
   /**
    * @deprecated
    */
-  PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type);
+  @NotNull PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type);
   /**
-   * @deprecated 
+   * @deprecated
    */
-  PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition);
+  @NotNull PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition);
 
   void handleEmptyContext(PsiScopeProcessor processor, PsiElement position);
 }
