@@ -1,4 +1,4 @@
-package jetbrains.fabrique.ui.inspector.util;
+package com.intellij.util.ui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -6,13 +6,11 @@ import java.util.ArrayList;
 
 public class Layers extends JLayeredPane {
 
-  private ArrayList myComponents = new ArrayList();
+  private ArrayList<Component> myComponents = new ArrayList<Component>();
 
   public Layers() {
     setLayout(new Layout());
   }
-
-  
 
   private class Layout implements LayoutManager2 {
     public void addLayoutComponent(Component comp, Object constraints) {
@@ -33,8 +31,7 @@ public class Layers extends JLayeredPane {
     public Dimension maximumLayoutSize(Container target) {
       int maxWidth = 0;
       int maxHeight = 0;
-      for (int i = 0; i < myComponents.size(); i++) {
-        Component each = (Component) myComponents.get(i);
+      for (Component each : myComponents) {
         Dimension min = each.getMaximumSize();
         maxWidth = Math.min(maxWidth, min.width);
         maxHeight = Math.min(maxHeight, min.height);
@@ -47,8 +44,7 @@ public class Layers extends JLayeredPane {
     }
 
     public void layoutContainer(Container parent) {
-      for (int i = 0; i < myComponents.size(); i++) {
-        Component each = (Component) myComponents.get(i);
+      for (Component each : myComponents) {
         each.setBounds(0, 0, parent.getWidth() - 1, parent.getHeight() - 1);
       }
     }
@@ -56,8 +52,7 @@ public class Layers extends JLayeredPane {
     public Dimension minimumLayoutSize(Container parent) {
       int minWidth = 0;
       int minHeight = 0;
-      for (int i = 0; i < myComponents.size(); i++) {
-        Component each = (Component) myComponents.get(i);
+      for (Component each : myComponents) {
         Dimension min = each.getMinimumSize();
         minWidth = Math.min(minWidth, min.width);
         minHeight = Math.min(minHeight, min.height);
@@ -68,8 +63,7 @@ public class Layers extends JLayeredPane {
     public Dimension preferredLayoutSize(Container parent) {
       int prefWidth = 0;
       int prefHeight = 0;
-      for (int i = 0; i < myComponents.size(); i++) {
-        Component each = (Component) myComponents.get(i);
+      for (Component each : myComponents) {
         Dimension min = each.getPreferredSize();
         prefWidth = Math.max(prefWidth, min.width);
         prefHeight = Math.max(prefHeight, min.height);
