@@ -223,7 +223,7 @@ public class HighlightMethodUtil {
     }
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      int index = getExtraExceptionNum(superMethod, checkedExceptions, aClass);
+      int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions);
       if (index != -1) {
         PsiClassType exception = checkedExceptions.get(index);
         String message = JavaErrorMessages.message("overridden.method.does.not.throw",
@@ -247,20 +247,15 @@ public class HighlightMethodUtil {
   }
 
   // return number of exception  which was not declared in super method or -1
-  private static int getExtraExceptionNum(PsiMethod superMethod,
-                                          List<PsiClassType> checkedExceptions,
-                                          PsiClass aClass) {
-    PsiClass superClass = superMethod.getContainingClass();
-    if (superClass == null) return -1;
-    PsiSubstitutor superClassSubstitutor = aClass.isInheritor(superClass, true)
-                                           ?
-                                           TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass,
-                                                                                       PsiSubstitutor.EMPTY)
-                                           : PsiSubstitutor.EMPTY;
-    // due to "sibling" inheritance superClass maybe not real super class
+  private static int getExtraExceptionNum(final MethodSignature methodSignature,
+                                          final MethodSignatureBackedByPsiMethod superSignature,
+                                          List<PsiClassType> checkedExceptions) {
+    PsiMethod superMethod = superSignature.getMethod();
+    PsiSubstitutor superSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
+    if (superSubstitutor == null) return -1;
     for (int i = 0; i < checkedExceptions.size(); i++) {
       PsiType exception = checkedExceptions.get(i);
-      if (!isMethodThrows(superMethod, superClassSubstitutor, exception)) {
+      if (!isMethodThrows(superMethod, superSubstitutor, exception)) {
         return i;
       }
     }
