@@ -7,12 +7,12 @@ package com.intellij.openapi.ui.popup;
 import org.jetbrains.annotations.Nullable;
 
 public interface PopupStep<T> {
-
   PopupStep FINAL_CHOICE = null;
 
   @Nullable
   String getTitle();
 
+  @Nullable
   PopupStep onChosen(T selectedValue, final boolean finalChoice);
 
   boolean hasSubstep(T selectedValue);
@@ -21,11 +21,12 @@ public interface PopupStep<T> {
 
   boolean isMnemonicsNavigationEnabled();
 
+  @Nullable
   MnemonicNavigationFilter<T> getMnemonicNavigationFilter();
 
   boolean isSpeedSearchEnabled();
   boolean isAutoSelectionEnabled();
 
+  @Nullable
   SpeedSearchFilter<T> getSpeedSearchFilter();
-
 }

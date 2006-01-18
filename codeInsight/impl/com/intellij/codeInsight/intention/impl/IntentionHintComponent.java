@@ -27,6 +27,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -156,6 +157,7 @@ public class IntentionHintComponent extends JPanel {
       return myActions;
     }
 
+    @NotNull
     public String getTextFor(final IntentionActionWithTextCaching action) {
       return action.getText();
     }
