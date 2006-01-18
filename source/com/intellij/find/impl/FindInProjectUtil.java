@@ -552,13 +552,8 @@ public class FindInProjectUtil {
       myStringToFind = _stringToFind;
     }
 
-    public void findUsages() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void findUsagesInEditor(FileEditor editor) {
-      throw new UnsupportedOperationException();
-    }
+    public void findUsages() {}
+    public void findUsagesInEditor(FileEditor editor) {}
 
     public boolean isValid() {
       return true;
