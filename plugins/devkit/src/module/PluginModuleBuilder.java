@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 
 import java.io.File;
 
@@ -41,14 +42,14 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
-    final String defaultPluginXMLLocation = getModuleFileDirectory() + File.separator + META_INF + File.separator + PLUGIN_XML;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation.replace(File.separatorChar, '/'));
+    final String defaultPluginXMLLocation = getModuleFileDirectory() + '/' + META_INF + '/' + PLUGIN_XML;
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation);
     if (file == null) {
       CommandProcessor.getInstance().executeCommand(rootModel.getModule().getProject(), new Runnable() {
            public void run() {
              J2EEDeploymentItem pluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(rootModel.getModule(),
                                                                                                            new PluginDescriptorMetaData());
-             pluginXML.setUrl(defaultPluginXMLLocation);
+             pluginXML.setUrl(VfsUtil.pathToUrl(defaultPluginXMLLocation));
              pluginXML.createIfNotExists();
            }
          }, DevKitBundle.message("create.smth", META_INF), null);
