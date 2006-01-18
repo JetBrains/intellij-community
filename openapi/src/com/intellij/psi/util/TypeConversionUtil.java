@@ -728,22 +728,23 @@ public class TypeConversionUtil {
   private static boolean typesAgree(PsiType typeLeft, PsiType typeRight) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
-      if (leftWildcard.getBound() == null) return true;
+      final PsiType leftBound = leftWildcard.getBound();
+      if (leftBound == null || leftBound.equalsToText("java.lang.Object")) return true;
       if (typeRight instanceof PsiWildcardType) {
         final PsiWildcardType rightWildcard = ((PsiWildcardType)typeRight);
         if (leftWildcard.isExtends()) {
-          return rightWildcard.isExtends() && isAssignable(leftWildcard.getBound(), rightWildcard.getBound(), false);
+          return rightWildcard.isExtends() && isAssignable(leftBound, rightWildcard.getBound(), false);
         }
         else { //isSuper
-          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftWildcard.getBound(), false);
+          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftBound, false);
         }
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftWildcard.getBound(), typeRight, false);
+          return isAssignable(leftBound, typeRight, false);
         }
         else { // isSuper
-          return isAssignable(typeRight, leftWildcard.getBound(), false);
+          return isAssignable(typeRight, leftBound, false);
         }
       }
     }
