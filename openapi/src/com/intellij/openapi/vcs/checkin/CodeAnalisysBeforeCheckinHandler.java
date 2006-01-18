@@ -22,9 +22,11 @@ import java.util.List;
 public class CodeAnalisysBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
+  private final CheckinProjectPanel myCheckinPanel;
 
-  public CodeAnalisysBeforeCheckinHandler(final Project project) {
+  public CodeAnalisysBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;
+    myCheckinPanel = panel;
   }
 
   @Nullable
@@ -58,11 +60,8 @@ public class CodeAnalisysBeforeCheckinHandler extends CheckinHandler {
 
     final int answer = Messages.showDialog(
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
-      VcsBundle.message("code.smells.error.messages.tab.name"),
-      new String[]{VcsBundle.message("code.smells.review.button"),
-        VcsBundle.message("code.smells.commit.button"), CommonBundle.getCancelButtonText()},
-      0,
-      UIUtil.getWarningIcon());
+      VcsBundle.message("code.smells.error.messages.tab.name"), new String[]{VcsBundle.message("code.smells.review.button"),
+      VcsBundle.message("code.smells.commit.button"), CommonBundle.getCancelButtonText()}, 0, UIUtil.getWarningIcon());
     if (answer == 0) {
       AbstractVcsHelper.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
@@ -83,11 +82,11 @@ public class CodeAnalisysBeforeCheckinHandler extends CheckinHandler {
     return result;
   }
 
-  public ReturnResult beforeCheckin(CheckinProjectPanel checkinPanel) {
+  public ReturnResult beforeCheckin() {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       try {
         final List<CodeSmellInfo> codeSmells =
-          AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(checkinPanel.getVirtualFiles()));
+          AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
         if (!codeSmells.isEmpty()) {
           return processFoundCodeSmells(codeSmells);
         }

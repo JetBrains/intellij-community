@@ -53,9 +53,7 @@ import java.io.File;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
-                                                    TransactionProvider, EditFileProvider,
-                                                    CvsEntriesListener {
+public class CvsVcs2 extends AbstractVcs implements ProjectComponent, TransactionProvider, EditFileProvider, CvsEntriesListener {
 
   private Cvs2Configurable myConfigurable;
 
@@ -115,11 +113,16 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     vcsManager.registerCheckinHandlerFactory(new CheckinHandlerFactory() {
       public
       @NotNull
-      CheckinHandler createHandler() {
+      CheckinHandler createHandler(final CheckinProjectPanel panel) {
         return new CheckinHandler() {
           @Nullable
           public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
-            return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(myProject));
+            if (panel.getAffectedVcses().contains(CvsVcs2.this)) {
+              return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(myProject));
+            }
+            else {
+              return null;
+            }
           }
 
           public void checkinSuccessful() {
@@ -202,19 +205,17 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
   public static void executeOperation(String title, CvsOperation operation, final Project project) throws VcsException {
     CvsOperationExecutor executor = new CvsOperationExecutor(project);
-    executor.performActionSync(new CommandCvsHandler(title, operation),
-                               CvsOperationExecutorCallback.EMPTY);
+    executor.performActionSync(new CommandCvsHandler(title, operation), CvsOperationExecutorCallback.EMPTY);
     CvsResult result = executor.getResult();
-    if (!result.hasNoErrors()){
+    if (!result.hasNoErrors()) {
       throw result.composeError();
     }
   }
 
-  public static void executeQuietOperation(String title, CvsOperation operation, final Project project){
+  public static void executeQuietOperation(String title, CvsOperation operation, final Project project) {
     CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.setIsQuietOperation(true);
-    executor.performActionSync(new CommandCvsHandler(title, operation),
-                               CvsOperationExecutorCallback.EMPTY);
+    executor.performActionSync(new CommandCvsHandler(title, operation), CvsOperationExecutorCallback.EMPTY);
   }
 
   public VcsShowSettingOption getAddOptions() {
@@ -339,8 +340,8 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     return myCvsAnnotationProvider;
   }
 
-  public FileAnnotation createAnnotation(File cvsLightweightFile, VirtualFile cvsVirtualFile,
-                                         String revision, CvsEnvironment environment) throws VcsException {
+  public FileAnnotation createAnnotation(File cvsLightweightFile, VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment)
+    throws VcsException {
     final AnnotateOperation annotateOperation = new AnnotateOperation(cvsLightweightFile, revision, environment);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), annotateOperation),
@@ -348,7 +349,8 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
 
     if (executor.getResult().hasNoErrors()) {
       return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), cvsVirtualFile);
-    } else {
+    }
+    else {
       throw executor.getResult().composeError();
     }
 

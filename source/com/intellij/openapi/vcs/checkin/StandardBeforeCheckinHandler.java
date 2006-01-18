@@ -19,7 +19,7 @@ public class StandardBeforeCheckinHandler extends CheckinHandler {
   }
 
   @Nullable
-  public RefreshableOnComponent getConfigurationPanel() {
+  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox optimizeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.optimize.imports"));
     final JCheckBox reformatBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.reformat.code"));
 
@@ -44,6 +44,7 @@ public class StandardBeforeCheckinHandler extends CheckinHandler {
         reformatBox.setSelected(getSettings().REFORMAT_BEFORE_PROJECT_COMMIT);
       }
     };
+
   }
 
   protected VcsConfiguration getSettings() {

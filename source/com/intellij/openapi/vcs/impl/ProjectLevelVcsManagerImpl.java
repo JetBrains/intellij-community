@@ -136,22 +136,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     createSettingFor(VcsConfiguration.StandardOption.STATUS);
     createSettingFor(VcsConfiguration.StandardOption.EDIT);
 
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
-                        new VcsShowConfirmationOptionImpl(
-                          VcsConfiguration.StandardConfirmation.ADD.getId(),
-                          VcsBundle.message("label.text.when.files.created.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
-                          VcsBundle.message("radio.after.creation.do.not.add"),
-                          VcsBundle.message("radio.after.creation.show.options"),
-                          VcsBundle.message("radio.after.creation.add.silently")));
+    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(), new VcsShowConfirmationOptionImpl(
+      VcsConfiguration.StandardConfirmation.ADD.getId(),
+      VcsBundle.message("label.text.when.files.created.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
+      VcsBundle.message("radio.after.creation.do.not.add"), VcsBundle.message("radio.after.creation.show.options"),
+      VcsBundle.message("radio.after.creation.add.silently")));
 
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(),
-                        new VcsShowConfirmationOptionImpl(
-                          VcsConfiguration.StandardConfirmation.REMOVE.getId(),
-                          VcsBundle.message("label.text.when.files.are.deleted.with.idea",
-                                            ApplicationNamesInfo.getInstance().getProductName()),
-                          VcsBundle.message("radio.after.deletion.do.not.remove"),
-                          VcsBundle.message("radio.after.deletion.show.options"),
-                          VcsBundle.message("radio.after.deletion.remove.silently")));
+    myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(), new VcsShowConfirmationOptionImpl(
+      VcsConfiguration.StandardConfirmation.REMOVE.getId(),
+      VcsBundle.message("label.text.when.files.are.deleted.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
+      VcsBundle.message("radio.after.deletion.do.not.remove"), VcsBundle.message("radio.after.deletion.show.options"),
+      VcsBundle.message("radio.after.deletion.remove.silently")));
 
     restoreReadConfirm(VcsConfiguration.StandardConfirmation.ADD);
     restoreReadConfirm(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -221,15 +216,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     registerCheckinHandlerFactory(new CheckinHandlerFactory() {
       public
       @NotNull
-      CheckinHandler createHandler() {
+      CheckinHandler createHandler(final CheckinProjectPanel panel) {
         return new StandardBeforeCheckinHandler(myProject);
       }
     });
     registerCheckinHandlerFactory(new CheckinHandlerFactory() {
       public
       @NotNull
-      CheckinHandler createHandler() {
-        return new CodeAnalisysBeforeCheckinHandler(myProject);
+      CheckinHandler createHandler(final CheckinProjectPanel panel) {
+        return new CodeAnalisysBeforeCheckinHandler(myProject, panel);
       }
     });
 
@@ -242,13 +237,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myIsBeforeProjectStarted = false;
-        ToolWindowManager toolWindowManager =
-          ToolWindowManager.getInstance(myProject);
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) { // Can be null in tests
           ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.VCS,
-                                                 myContentManager.getComponent(),
-                                                 ToolWindowAnchor.BOTTOM);
+            toolWindowManager.registerToolWindow(ToolWindowId.VCS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
           toolWindow.setIcon(Icons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);
         }
@@ -546,8 +538,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         result.append(">");
         result.append(File.separatorChar);
         result.append(contentRoot.getName());
-        String relativePath =
-          VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
+        String relativePath = VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
         if (relativePath.length() > 0) {
           result.append(File.separatorChar);
           result.append(relativePath);
@@ -642,8 +633,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @NotNull
-  public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
-                                                      @NotNull AbstractVcs vcs) {
+  public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
     LOG.assertTrue(myIsBeforeProjectStarted, "getOrCreateCustomOption should be called from projectOpened only");
     final VcsShowOptionsSettingImpl option = getOrCreateOption(vcsActionName);
     option.addApplicableVcs(vcs);

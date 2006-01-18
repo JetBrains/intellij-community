@@ -58,10 +58,7 @@ import com.intellij.vcsUtil.VcsUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -134,16 +131,18 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       final List<CheckinHandler> handlers = new ArrayList<CheckinHandler>();
       final List<CheckinHandlerFactory> factories = ProjectLevelVcsManager.getInstance(project).getRegisteredCheckinHandlerFactories();
 
-      for (CheckinHandlerFactory factory : factories) {
-        handlers.add(factory.createHandler());
-      }
-
       final CheckinProjectPanel checkinPanel = createMockPanel(getVirtualFiles(roots), getFiles(roots), project,
                                                                checkinEnvironment.prepareCheckinMessage(
-                                                                 CheckinDialog.getInitialMessage(roots, project)));
+                                                                 CheckinDialog.getInitialMessage(roots, project)),
+                                                               getVcs(checkinEnvironment, project));
+
+      for (CheckinHandlerFactory factory : factories) {
+        handlers.add(factory.createHandler(checkinPanel));
+      }
+
 
       for (CheckinHandler handler : handlers) {
-        final CheckinHandler.ReturnResult returnResult = handler.beforeCheckin(checkinPanel);
+        final CheckinHandler.ReturnResult returnResult = handler.beforeCheckin();
         if (returnResult != CheckinHandler.ReturnResult.COMMIT) {
           return;
         }
@@ -152,6 +151,17 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       checkinFiles(checkinEnvironment, roots, project, checkinPanel.getMessage(), context, handlers);
     }
 
+  }
+
+  private AbstractVcs getVcs(final CheckinEnvironment checkinEnvironment, final Project project) {
+    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    for (AbstractVcs vcs : abstractVcses) {
+      if (vcs.getCheckinEnvironment() == checkinEnvironment) {
+        return vcs;
+      }
+    }
+
+    return null;
   }
 
   private Collection<File> getFiles(final FilePath[] roots) {
@@ -165,8 +175,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   private CheckinProjectPanel createMockPanel(final Collection<VirtualFile> virtualFiles,
                                               final Collection<File> files,
                                               final Project project,
-                                              final String message) {
-    return new MockCheckinProjectPanel(virtualFiles, files, project, message);
+                                              final String message,
+                                              final AbstractVcs abstractVcs) {
+    return new MockCheckinProjectPanel(virtualFiles, files, project, message, abstractVcs);
   }
 
   private void checkinFiles(final CheckinEnvironment checkinEnvironment,
@@ -460,16 +471,19 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     private final Project myProject;
     private final Collection<VirtualFile> myVirtualFiles;
     private final Collection<File> myFiles;
+    private final AbstractVcs myVcs;
 
 
     public MockCheckinProjectPanel(final Collection<VirtualFile> virtualFiles,
                                    final Collection<File> files,
                                    final Project project,
-                                   final String message) {
+                                   final String message,
+                                   AbstractVcs vcs) {
       myMessage = message;
       myProject = project;
       myVirtualFiles = virtualFiles;
       myFiles = files;
+      myVcs = vcs;
     }
 
     public JComponent getComponent() {
@@ -478,6 +492,10 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     public JComponent getPreferredFocusedComponent() {
       return null;
+    }
+
+    public List<AbstractVcs> getAffectedVcses() {
+      return Collections.singletonList(myVcs);
     }
 
     public boolean hasDiffs() {

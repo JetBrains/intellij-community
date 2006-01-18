@@ -113,9 +113,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
             removeContents(content, tabDisplayName);
             messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
           }
-        },
-                                        VcsBundle.message("command.name.open.error.message.view"),
-                                        null);
+        }, VcsBundle.message("command.name.open.error.message.view"), null);
 
         FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
@@ -167,9 +165,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
             removeContents(content, tabDisplayName);
             messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
           }
-        },
-                                        VcsBundle.message("command.name.open.error.message.view"),
-                                        null);
+        }, VcsBundle.message("command.name.open.error.message.view"), null);
 
         for (final VcsException abstractVcsException : abstractVcsExceptions) {
           VcsException exception = abstractVcsException;
@@ -274,9 +270,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public Refreshable createCheckinProjectPanel(Project project) {
-    return new CheckinProjectPanelImpl(project,
-                                       Arrays.asList(LocalVcs.getInstance(myProject).getRootPaths()), new JPanel(),
-                                       null);
+    return new CheckinProjectPanelImpl(project, Arrays.asList(LocalVcs.getInstance(myProject).getRootPaths()), new JPanel(), null);
   }
 
   public void prepareFileForCheckin(final VirtualFile file) {
@@ -326,9 +320,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                   }
                 });
               }
-            },
-                                                          VcsBundle.message("process.title.optimize.imports"),
-                                                          null);
+            }, VcsBundle.message("process.title.optimize.imports"), null);
           }
         };
 
@@ -359,7 +351,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public List<VcsException> doCheckinProject(final CheckinProjectPanel checkinProjectPanel,
-                                             final Object checkinParameters, final AbstractVcs abstractVcs) {
+                                             final Object checkinParameters,
+                                             final AbstractVcs abstractVcs) {
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
 
@@ -375,13 +368,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations =
       ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
 
-    final CheckinHandler checkinHandler = new CheckinHandler(myProject,
-                                                             abstractVcs);
+    final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
     Collection<VcsOperation> vcsOperations = checkinOperations.get(abstractVcs.getCheckinEnvironment());
     if (vcsOperations == null) vcsOperations = new ArrayList<VcsOperation>();
     final List<VcsException> abstractVcsExceptions =
-      checkinHandler.checkin(vcsOperations.toArray(new VcsOperation[vcsOperations.size()]),
-                             checkinParameters);
+      checkinHandler.checkin(vcsOperations.toArray(new VcsOperation[vcsOperations.size()]), checkinParameters);
     exceptions.addAll(abstractVcsExceptions);
   }
 
@@ -415,8 +406,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (objects.isEmpty()) return;
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
-    List<VcsException> exceptions = checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]),
-                                             checkinParameters);
+    List<VcsException> exceptions = checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]), checkinParameters);
     showErrors(exceptions, VcsBundle.message("message.title.check.in"));
 
 
@@ -454,19 +444,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
-  public CheckinProjectDialogImplementer createCheckinProjectDialog(String title,
-                                                                    boolean requestComments,
-                                                                    Collection<String> roots) {
-    return new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
+  public CheckinProjectDialogImplementer createCheckinProjectDialog(String title, boolean requestComments, Collection<String> roots) {
+    final CheckinProjectDialogImplementerImpl result = new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
+    return result;
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
     new Annotater(annotation, myProject, file).showAnnotation();
   }
 
-  public void showDifferences(final VcsFileRevision version1,
-                              final VcsFileRevision version2,
-                              final File file) {
+  public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {
     try {
       version1.loadContent();
       version2.loadContent();
@@ -475,8 +462,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         Messages.showInfoMessage(VcsBundle.message("message.text.versions.are.identical"), VcsBundle.message("message.title.diff"));
       }
 
-      final SimpleDiffRequest request =
-        new SimpleDiffRequest(myProject, file.getAbsolutePath());
+      final SimpleDiffRequest request = new SimpleDiffRequest(myProject, file.getAbsolutePath());
 
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
       if (fileType.isBinary()) {
@@ -513,7 +499,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     changesBrowser.show();
     if (changesBrowser.isOK()) {
       return changesBrowser.getSelectedRepositoryVersion();
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -570,9 +557,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e) {
     if (files.isEmpty()) return;
-    new AbstractMergeAction(myProject,
-                            files,
-                            provider).actionPerformed(e);
+    new AbstractMergeAction(myProject, files, provider).actionPerformed(e);
   }
 
   public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
@@ -638,8 +623,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
       if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING) {
-        result.add(new CodeSmellInfo(document, getDescription(highlightInfo), new TextRange(highlightInfo.startOffset, highlightInfo.endOffset),
-                                     severity));
+        result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
+                                     new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
       }
     }
   }
@@ -668,8 +653,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   private boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
-    return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT :
-           configuration.REFORMAT_BEFORE_FILE_COMMIT;
+    return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT : configuration.REFORMAT_BEFORE_FILE_COMMIT;
   }
 
   private PsiFile[] getPsiFiles(Collection<VirtualFile> selectedFiles) {
@@ -701,8 +685,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (objects.isEmpty()) return new ArrayList<VcsException>();
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, vcs);
-    return checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]),
-                                  preparedComment);
+    return checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]), preparedComment);
 
   }
 

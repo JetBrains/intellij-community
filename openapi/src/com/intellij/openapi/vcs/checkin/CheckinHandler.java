@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import org.jetbrains.annotations.Nullable;
@@ -14,24 +13,24 @@ public abstract class CheckinHandler {
   }
 
   @Nullable
-  public RefreshableOnComponent getBeforeCheckinConfigurationPanel(){
+  public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     return null;
   }
 
   @Nullable
-  public RefreshableOnComponent getAfterCheckinConfigurationPanel(){
+  public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
     return null;
   }
 
-  public ReturnResult beforeCheckin(CheckinProjectPanel checkinPanel){
+  public ReturnResult beforeCheckin() {
     return ReturnResult.COMMIT;
   }
 
-  public void checkinSuccessful(){
+  public void checkinSuccessful() {
 
   }
 
-  public void checkinFailed(List<VcsException> exception){
+  public void checkinFailed(List<VcsException> exception) {
 
   }
 
