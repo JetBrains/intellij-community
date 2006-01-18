@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -175,9 +176,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
           int i = 0;
 
-          PsiElement fieldAnchor = null;
-          boolean insertBefore = false;
-
+          Pair<PsiField, Boolean> fieldAnchor = null;
 
           for (; i < statements.length; i++) {
             PsiStatement psiStatement = statements[i];
@@ -212,23 +211,17 @@ public class CreateFieldFromParameterAction implements IntentionAction {
                 if (!(rElement instanceof PsiParameter)) break;
 
                 if (myParameter.getTextRange().getStartOffset() < rElement.getTextRange().getStartOffset()) {
-                  insertBefore = true;
-                  fieldAnchor = lElement;
+                  fieldAnchor = Pair.create((PsiField)lElement, Boolean.TRUE);
                   break;
                 }
 
-                fieldAnchor = lElement;
+                fieldAnchor = Pair.create((PsiField)lElement, Boolean.FALSE);
 
                 continue;
-              }
+              }                                       
             }
 
             break;
-          }
-
-          if (fieldAnchor != null) {
-            PsiVariable psiVariable = (PsiVariable)fieldAnchor;
-            psiVariable.normalizeDeclaration();
           }
 
           String stmtText = fieldName + " = " + parameterName + ";";
@@ -240,8 +233,19 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
           assignmentStmt = (PsiStatement)styleManager.reformat(assignmentStmt);
 
-          boolean found = false;
+          if (i == statements.length) {
+            methodBody.add(assignmentStmt);
+          }
+          else {
+            methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
+          }
 
+          if (fieldAnchor != null) {
+            PsiVariable psiVariable = fieldAnchor.getFirst();
+            psiVariable.normalizeDeclaration();
+          }
+
+          boolean found = false;
           final PsiField[] fields = targetClass.getFields();
           for (PsiField f : fields) {
             if (f.getName().equals(field.getName())) {
@@ -252,23 +256,18 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
           if (!found) {
             if (fieldAnchor != null) {
-              if (insertBefore) {
-                targetClass.addBefore(field, fieldAnchor);
+              Boolean insertBefore = fieldAnchor.getSecond();
+              PsiField inField = fieldAnchor.getFirst();
+              if (insertBefore.booleanValue()) {
+                targetClass.addBefore(field, inField);
               }
               else {
-                targetClass.addAfter(field, fieldAnchor);
+                targetClass.addAfter(field, inField);
               }
             }
             else {
               targetClass.add(field);
             }
-          }
-
-          if (i == statements.length) {
-            methodBody.add(assignmentStmt);
-          }
-          else {
-            methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
           }
         }
         catch (IncorrectOperationException e) {

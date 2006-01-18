@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -119,7 +120,7 @@ public class HighlightControlFlowUtil {
       for (PsiMethod constructor : constructors) {
         PsiCodeBlock ctrBody = constructor.getBody();
         if (ctrBody == null) return false;
-        final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+        final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
           final PsiCodeBlock body = redirectedConstructor.getBody();
@@ -153,7 +154,7 @@ public class HighlightControlFlowUtil {
    *  this (...) at the beginning of the constructor body
    * @return referring constructor
    */
-  public static List<PsiMethod> getRedirectedConstructors(PsiMethod constructor) {
+  @Nullable public static List<PsiMethod> getChainedConstructors(PsiMethod constructor) {
     final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
@@ -290,7 +291,7 @@ public class HighlightControlFlowUtil {
           // static variables already initalized in class initalizers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
           // as a last chance, field may be initalized in this() call
-          final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+          final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
           for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
             PsiMethod redirectedConstructor = redirectedConstructors.get(j);
             // variable must be initialized before its usage
@@ -330,7 +331,7 @@ public class HighlightControlFlowUtil {
               return null;
             }
             // as a last chance, field may be initalized in this() call
-            final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+            final List<PsiMethod> redirectedConstructors = getChainedConstructors(constructor);
             for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
@@ -396,8 +397,8 @@ public class HighlightControlFlowUtil {
   }
 
   public static boolean isReassigned(PsiVariable variable,
-                                  Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
-                                  Map<PsiParameter, Boolean> parameterIsReassigned) {
+                                     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
+                                     Map<PsiParameter, Boolean> parameterIsReassigned) {
     if (variable instanceof PsiLocalVariable) {
       final PsiElement parent = variable.getParent();
       if (parent == null) return false;
@@ -514,7 +515,7 @@ public class HighlightControlFlowUtil {
         final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
-        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? getRedirectedConstructors(ctr) : null;
+        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? getChainedConstructors(ctr) : null;
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
           if (redirectedConstructor.getBody() != null &&

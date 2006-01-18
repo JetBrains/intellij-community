@@ -30,19 +30,20 @@ public class IntentionManagerImpl extends IntentionManager {
     addAction(new QuickFixAction());
     addAction(new PostIntentionsQuickFixAction());
 
-    String[] CONTROL_FLOW_CAT = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
-    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CAT);
-    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CAT);
-    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CAT);
+    String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
+    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
+    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
+    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CATEGORY);
 
-    String[] DECLARATION_CAT = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
-    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CAT);
-    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CAT);
+    String[] DECLARATION_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
+    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new MoveInitializerToConstructorAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CATEGORY);
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
 

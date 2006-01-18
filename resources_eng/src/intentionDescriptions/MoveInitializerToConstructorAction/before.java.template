@@ -1,0 +1,5 @@
+public class X {
+  <spot>int field = 0;</spot>
+  public X() {
+  }
+}

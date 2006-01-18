@@ -42,7 +42,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     return false;
   }
 
-  private boolean isAvaliableOnField(PsiField field) {
+  private static boolean isAvaliableOnField(PsiField field) {
     final PsiTypeElement typeElement = field.getTypeElement();
     if (typeElement == null) return false;
     if (PsiTreeUtil.getParentOfType(typeElement, PsiField.class) != field) return true;
@@ -107,7 +107,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     }
   }
 
-  private void invokeOnDeclarationStatement(PsiDeclarationStatement decl, PsiManager psiManager,
+  private static void invokeOnDeclarationStatement(PsiDeclarationStatement decl, PsiManager psiManager,
                                                             Project project) throws IncorrectOperationException {
     if (decl.getDeclaredElements().length == 1) {
       PsiLocalVariable var = (PsiLocalVariable) decl.getDeclaredElements()[0];

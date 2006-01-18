@@ -134,7 +134,6 @@ class IntentionUsagePanel extends JPanel{
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     editor.setColorsScheme(scheme);
     EditorSettings settings = editor.getSettings();
-    settings.setLineNumbersShown(true);
     settings.setWhitespacesShown(true);
     settings.setLineMarkerAreaShown(false);
     settings.setFoldingOutlineShown(false);

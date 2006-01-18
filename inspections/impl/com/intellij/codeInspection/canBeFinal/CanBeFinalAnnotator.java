@@ -156,8 +156,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
                   instanceInitializerInitializedFields.remove(psiVariable);
                 }
               }
-              List<PsiMethod> redirectedConstructors = HighlightControlFlowUtil.getRedirectedConstructors(psiMethod);
-              if ((redirectedConstructors == null || redirectedConstructors.isEmpty())) {
+              List<PsiMethod> redirectedConstructors = HighlightControlFlowUtil.getChainedConstructors(psiMethod);
+              if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
                 PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
                 ArrayList<PsiVariable> good = new ArrayList<PsiVariable>(Arrays.asList(ssaVariables));
                 good.addAll(instanceInitializerInitializedFields);
