@@ -25,7 +25,7 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
       in.mark();
       try {
         char c = in.get();
-        if (c < 255) {
+        if (c < '\u0080') {
           ByteBuffer byteBuffer = myBaseCharset.encode(Character.toString(c));
           out.put(byteBuffer);
         }
