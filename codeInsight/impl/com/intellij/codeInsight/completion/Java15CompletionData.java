@@ -83,6 +83,7 @@ public class Java15CompletionData extends JavaCompletionData {
         new ParentElementFilter(
           new PositionElementFilter() {
             public boolean isAcceptable(Object element, PsiElement context) {
+              if (!(element instanceof PsiSwitchStatement)) return false;
               final PsiExpression expression = ((PsiSwitchStatement)element).getExpression();
               if(expression == null) return false;
               final PsiType type = expression.getType();
