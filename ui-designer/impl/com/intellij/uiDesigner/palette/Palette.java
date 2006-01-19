@@ -102,7 +102,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myListeners.remove(l);
   }
 
-  private void fireGroupsChanged(){
+  void fireGroupsChanged() {
     final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
     for(Listener listener : listeners) {
       listener.groupsChanged(this);
@@ -830,6 +830,16 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       }
     }
     return null;
+  }
+
+  public static boolean isRemovable(@NotNull final GroupItem group){
+    final ArrayList<ComponentItem> items = group.getItems();
+    for(int i = items.size() - 1; i >=0; i--){
+      if(!items.get(i).isRemovable()){
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

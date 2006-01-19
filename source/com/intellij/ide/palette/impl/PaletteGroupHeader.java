@@ -1,8 +1,12 @@
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -14,10 +18,14 @@ import java.awt.event.KeyEvent;
 /**
  * @author yole
  */
-public class PaletteGroupHeader extends JCheckBox {
+public class PaletteGroupHeader extends JCheckBox implements DataProvider {
+  private PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;
+  private PaletteGroup myGroup;
 
-  public PaletteGroupHeader(PaletteGroup group) {
+  public PaletteGroupHeader(PaletteWindow paletteWindow, PaletteGroup group) {
+    myPaletteWindow = paletteWindow;
+    myGroup = group;
     setText(group.getName());
     setSelected(true);
     addActionListener(new ActionListener() {
@@ -28,8 +36,14 @@ public class PaletteGroupHeader extends JCheckBox {
       }
     });
 
-    setIcon(UIManager.getIcon("Tree.collapsedIcon"));
-    setSelectedIcon(UIManager.getIcon("Tree.expandedIcon"));
+    addMouseListener(new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        showGroupPopupMenu(comp, x, y);
+      }
+    });
+
+    setIcon(UIUtil.getTreeCollapsedIcon());
+    setSelectedIcon(UIUtil.getTreeExpandedIcon());
     setFont(getFont().deriveFont(Font.BOLD));
     setFocusPainted(false);
     setMargin(new Insets(0, 3, 0, 3));
@@ -40,6 +54,14 @@ public class PaletteGroupHeader extends JCheckBox {
     }
 
     initActions();
+  }
+
+  public void showGroupPopupMenu(final Component comp, final int x, final int y) {
+    ActionGroup group = myGroup.getPopupActionGroup();
+    if (group != null) {
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      popupMenu.getComponent().show(comp, x, y);
+    }
   }
 
   private void initActions() {
@@ -76,6 +98,17 @@ public class PaletteGroupHeader extends JCheckBox {
 
   public PaletteComponentList getComponentList() {
     return myComponentList;
+  }
+
+  public PaletteGroup getGroup() {
+    return myGroup;
+  }
+
+  @Nullable public Object getData(String dataId) {
+    Object data = myPaletteWindow.getData(dataId);
+    if (data != null) return data;
+    Project project = (Project)myPaletteWindow.getData(DataConstants.PROJECT);
+    return myGroup.getData(project, dataId);
   }
 
   private class MoveFocusAction extends AbstractAction {

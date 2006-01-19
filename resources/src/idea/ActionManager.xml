@@ -1312,8 +1312,18 @@
       <action id="GuiDesigner.ResetValue" class="com.intellij.uiDesigner.actions.ResetValueAction"/>
     </group>
 
-    <group id="GuiDesigner.PalettePopupMenu">
-      <action id="GuiDesigner.CustomizePalette" class="com.intellij.uiDesigner.actions.CustomizePaletteAction"/>
+    <group id="GuiDesigner.PaletteComponentPopupMenu">
+      <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction"/>
+      <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction"/>
+      <action id="GuiDesigner.DeleteComponent" class="com.intellij.uiDesigner.palette.DeleteComponentAction"/>
+      <action id="GuiDesigner.AddGroup" class="com.intellij.uiDesigner.palette.AddGroupAction"/>
+    </group>
+
+    <group id="GuiDesigner.PaletteGroupPopupMenu">
+      <reference ref="GuiDesigner.AddComponent"/>
+      <reference ref="GuiDesigner.AddGroup"/>
+      <action id="GuiDesigner.EditGroup" class="com.intellij.uiDesigner.palette.EditGroupAction"/>
+      <action id="GuiDesigner.DeleteGroup" class="com.intellij.uiDesigner.palette.DeleteGroupAction"/>
     </group>
 
     <!-- ****************************************************************** -->

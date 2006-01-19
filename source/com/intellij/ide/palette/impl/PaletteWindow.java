@@ -4,12 +4,13 @@ import com.intellij.ExtensionPoints;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     }
 
     setLayout(new GridLayout(1, 1));
+    myScrollPane.addMouseListener(new MyScrollPanePopupHandler());
 
     refreshPalette();
   }
@@ -51,32 +53,42 @@ public class PaletteWindow extends JPanel implements DataProvider {
       groupHeader.getComponentList().removeListSelectionListener(myListSelectionListener);
     }
     String[] oldTabNames = collectTabNames(myGroups);
-    if (oldTabNames.length == 1) {
-      remove(myScrollPane);
-    }
-    else {
-      myTabbedPane.removeAll();
-      remove(myTabbedPane);
-    }
+    myTabbedPane.removeAll();
     myGroupHeaders.clear();
     myGroups.clear();
 
     final ArrayList<PaletteGroup> currentGroups = collectCurrentGroups();
     String[] tabNames = collectTabNames(currentGroups);
     if (tabNames.length == 1) {
+      if (oldTabNames.length != 1) {
+        remove(myTabbedPane);
+        add(myScrollPane);
+      }
+
       PaletteContentWindow contentWindow = new PaletteContentWindow();
       myScrollPane.getViewport().setView(contentWindow);
-      add(myScrollPane);
 
       for(PaletteGroup group: currentGroups) {
         addGroupToControl(group, contentWindow);
       }
+
+      final JComponent view = (JComponent)myScrollPane.getViewport().getView();
+      if (view != null) {
+        view.revalidate();
+        for(Component component: view.getComponents()) {
+          ((JComponent) component).revalidate();
+        }
+      }
     }
     else {
-      add(myTabbedPane);
+      if (oldTabNames.length == 1) {
+        remove(myScrollPane);
+        add(myTabbedPane);
+      }
       for(String tabName: tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
         JScrollPane scrollPane = new JScrollPane(contentWindow);
+        scrollPane.addMouseListener(new MyScrollPanePopupHandler());
         myTabbedPane.add(tabName, scrollPane);
         for(PaletteGroup group: currentGroups) {
           if (group.getTabName().equals(tabName)) {
@@ -84,13 +96,12 @@ public class PaletteWindow extends JPanel implements DataProvider {
           }
         }
       }
+      myTabbedPane.revalidate();
     }
-
-    revalidate();
   }
 
   private void addGroupToControl(PaletteGroup group, JComponent control) {
-    PaletteGroupHeader groupHeader = new PaletteGroupHeader(group);
+    PaletteGroupHeader groupHeader = new PaletteGroupHeader(this, group);
     myGroupHeaders.add(groupHeader);
     myGroups.add(group);
     control.add(groupHeader);
@@ -139,9 +150,9 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   @Nullable public PaletteItem getActiveItem() {
-    for(PaletteGroupHeader group: myGroupHeaders) {
-      if (group.isSelected() && group.getComponentList().getSelectedValue() != null) {
-        return (PaletteItem) group.getComponentList().getSelectedValue();
+    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+      if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
+        return (PaletteItem) groupHeader.getComponentList().getSelectedValue();
       }
     }
     return null;
@@ -153,7 +164,25 @@ public class PaletteWindow extends JPanel implements DataProvider {
     }
     PaletteItem item = getActiveItem();
     if (item != null) {
-      return item.getData(myProject, dataId);
+      Object data = item.getData(myProject, dataId);
+      if (data != null) return data;
+    }
+    for(PaletteGroupHeader groupHeader: myGroupHeaders) {
+      if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
+        return groupHeader.getGroup().getData(myProject, dataId);
+      }
+    }
+    JScrollPane activeScrollPane;
+    if (collectTabNames(myGroups).length == 1) {
+      activeScrollPane = myScrollPane;
+    }
+    else {
+      activeScrollPane = (JScrollPane) myTabbedPane.getSelectedComponent();
+    }
+    PaletteContentWindow activeContentWindow = (PaletteContentWindow) activeScrollPane.getViewport().getView();
+    PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
+    if (groupHeader != null) {
+      return groupHeader.getGroup().getData(myProject, dataId);
     }
     return null;
   }
@@ -178,6 +207,19 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private class MyPropertyChangeListener implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
       refreshPalette();
+    }
+  }
+
+  private static class MyScrollPanePopupHandler extends PopupHandler {
+    public void invokePopup(Component comp, int x, int y) {
+      JScrollPane scrollPane = (JScrollPane) comp;
+      PaletteContentWindow contentWindow = (PaletteContentWindow) scrollPane.getViewport().getView();
+      if (contentWindow != null) {
+        PaletteGroupHeader groupHeader = contentWindow.getLastGroupHeader();
+        if (groupHeader != null) {
+          groupHeader.showGroupPopupMenu(comp, x, y);
+        }
+      }
     }
   }
 }

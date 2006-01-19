@@ -1,9 +1,13 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -101,5 +105,16 @@ public final class GroupItem implements Cloneable, PaletteGroup {
 
   public PaletteItem getItemAt(int index) {
     return myItems.get(index);
+  }
+
+  @Nullable public ActionGroup getPopupActionGroup() {
+    return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PaletteGroupPopupMenu");
+  }
+
+  @Nullable public Object getData(Project project, String dataId) {
+    if (dataId.equals(getClass().getName())) {
+      return this;
+    }
+    return null;
   }
 }

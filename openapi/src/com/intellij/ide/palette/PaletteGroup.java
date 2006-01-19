@@ -17,6 +17,10 @@
 
 package com.intellij.ide.palette;
 
+import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.project.Project;
+
 /**
  * @author yole
  */
@@ -30,4 +34,21 @@ public interface PaletteGroup {
   String getName();
 
   String getTabName();
+
+  /**
+   * Returns the action group from which the context menu is built when the palette
+   * item is right-clicked.
+   *
+   * @return the action group, or null if no context menu should be shown.
+   */
+  @Nullable ActionGroup getPopupActionGroup();
+
+  /**
+   * Returns the data for the specified data constant.
+   *
+   * @param project the project in the context of which data is requested.
+   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.DataConstants}).
+   * @return the data item, or null if no data is available for this constant.
+   */
+  @Nullable Object getData(Project project, String dataId);
 }

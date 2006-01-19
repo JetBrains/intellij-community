@@ -440,7 +440,7 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static Icon getErrroIcon() {
+  public static Icon getErrorIcon() {
     return UIManager.getIcon("OptionPane.errorIcon");
   }
 
@@ -462,6 +462,16 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static Icon getRadioButtonIcon() {
     return UIManager.getIcon("RadioButton.icon");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static Icon getTreeCollapsedIcon() {
+    return UIManager.getIcon("Tree.collapsedIcon");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static Icon getTreeExpandedIcon() {
+    return UIManager.getIcon("Tree.expandedIcon");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

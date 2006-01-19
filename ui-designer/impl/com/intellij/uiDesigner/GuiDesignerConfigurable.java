@@ -36,6 +36,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -145,18 +147,6 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     }
 
     return false;
-  }
-
-  private static boolean isRemovable(final GroupItem group){
-    LOG.assertTrue(group != null);
-
-    final ArrayList<ComponentItem> items = group.getItems();
-    for(int i = items.size() - 1; i >=0; i--){
-      if(!items.get(i).isRemovable()){
-        return false;
-      }
-    }
-    return true;
   }
 
   public void apply() {
@@ -393,7 +383,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     LOG.assertTrue(groupNode != null);
     final GroupItem groupToBeRemoved = (GroupItem)groupNode.getUserObject();
 
-    if(!isRemovable(groupToBeRemoved)){
+    if(!Palette.isRemovable(groupToBeRemoved)){
       Messages.showInfoMessage(
         myPaletteUI.myPanel,
         UIDesignerBundle.message("error.cannot.remove.default.group"),
@@ -532,7 +522,24 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     final GroupItem group = (GroupItem)groupNode.getUserObject();
 
     group.removeItem(selectedItem);
-    TreeUtil.removeSelected(myPaletteUI.myTree);
+TreeUtil.removeSelected(myPaletteUI.myTree);
+  }
+
+  private void moveItemToGroup(ComponentItem item, GroupItem groupItem) {
+    final DefaultTreeModel model = (DefaultTreeModel)myPaletteUI.myTree.getModel();
+    for(int i=0; i<model.getChildCount(model.getRoot()); i++) {
+      Object groupNode = model.getChild(model.getRoot(), i);
+      for(int j=0; j<model.getChildCount(groupNode); j++) {
+        DefaultMutableTreeNode componentNode = (DefaultMutableTreeNode) model.getChild(groupNode, j);
+        if (componentNode.getUserObject().equals(item)) {
+          model.removeNodeFromParent(componentNode);
+        }
+      }
+    }
+    for(int i=0; i<model.getChildCount(model.getRoot()); i++) {
+      DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode) model.getChild(model.getRoot(), i);
+
+    }
   }
 
   /*UI for "General" tab*/
@@ -669,6 +676,24 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
         KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
         JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
       );
+
+      myTree.setDragEnabled(true);
+      myTree.setTransferHandler(new TransferHandler() {
+        public int getSourceActions(JComponent c) {
+          return DnDConstants.ACTION_MOVE;
+        }
+
+        protected Transferable createTransferable(JComponent c) {
+          final DefaultMutableTreeNode lastNode = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
+          if (lastNode != null && (lastNode.getUserObject() instanceof ComponentItem)) {
+            ComponentItem componentItem = (ComponentItem) lastNode.getUserObject();
+            return componentItem.createTransferable();
+          }
+          return null;
+        }
+      });
+
+      new DropTarget(myTree, new MyDropTargetAdapter());
     }
 
     /*Helper method*/
@@ -705,6 +730,33 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
       myBtnAddComponent.setEnabled(isAddComponentButtonEnabled());
       myBtnEditComponent.setEnabled(isEditComponentButtonEnabled());
       myBtnRemoveComponent.setEnabled(isRemoveComponentButtonEnabled());
+    }
+
+    private class MyDropTargetAdapter extends DropTargetAdapter {
+      public void dragOver(DropTargetDragEvent dtde) {
+        TreePath path = myTree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y);
+        ComponentItem item = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (item == null || path == null) {
+          dtde.rejectDrag();
+        }
+        else {
+          dtde.acceptDrag(DnDConstants.ACTION_MOVE);
+        }
+      }
+
+      public void drop(DropTargetDropEvent dtde) {
+        TreePath path = myTree.getPathForLocation(dtde.getLocation().x, dtde.getLocation().y);
+        ComponentItem item = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (item != null && path != null) {
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+          if (node.getUserObject() instanceof GroupItem) {
+            moveItemToGroup(item, (GroupItem) node.getUserObject());
+          }
+          else if (node.getUserObject() instanceof ComponentItem) {
+
+          }
+        }
+      }
     }
   }
 

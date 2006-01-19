@@ -30,8 +30,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-import org.jetbrains.annotations.NonNls;
-
 public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
 
@@ -52,7 +50,7 @@ public class Messages {
   }
 
   public static Icon getErrorIcon() {
-    return UIUtil.getErrroIcon();
+    return UIUtil.getErrorIcon();
   }
 
   public static Icon getInformationIcon() {

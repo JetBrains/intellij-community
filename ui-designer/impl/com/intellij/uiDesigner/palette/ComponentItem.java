@@ -271,7 +271,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Nullable public ActionGroup getPopupActionGroup() {
-    return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PalettePopupMenu");
+    return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PaletteComponentPopupMenu");
   }
 
   @Nullable public Object getData(Project project, String dataId) {
@@ -279,6 +279,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
       return PsiManager.getInstance(project).findClass(
         myClassName,
         GlobalSearchScope.allScope(project));
+    }
+    if (dataId.equals(getClass().getName())) {
+      return this;
     }
     return null;
   }

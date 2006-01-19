@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -69,16 +70,24 @@ public class PaletteComponentList extends JList {
     });
 
     addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        int index = locationToIndex(new Point(x, y));
-        if (index >= 0 && index < myGroup.getItemCount()) {
-          PaletteItem item = myGroup.getItemAt(index);
-          ActionGroup group = item.getPopupActionGroup();
-          if (group != null) {
-            ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-            popupMenu.getComponent().show(comp, x, y);            
+      public void invokePopup(final Component comp, final int x, final int y) {
+        requestFocusInWindow();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            int index = locationToIndex(new Point(x, y));
+            if (index >= 0 && index < myGroup.getItemCount()) {
+              if (getSelectedIndex() != index) {
+                addSelectionInterval(index, index);
+              }
+              PaletteItem item = myGroup.getItemAt(index);
+              ActionGroup group = item.getPopupActionGroup();
+              if (group != null) {
+                ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+                popupMenu.getComponent().show(comp, x, y);
+              }
+            }
           }
-        }
+        });
       }
     });
 
@@ -99,7 +108,7 @@ public class PaletteComponentList extends JList {
         return DnDConstants.ACTION_MOVE;
       }
 
-      protected Transferable createTransferable(JComponent c) {
+      @Nullable protected Transferable createTransferable(JComponent c) {
         final Object selectedValue = getSelectedValue();
         if (selectedValue != null) {
           PaletteItem paletteItem = (PaletteItem) selectedValue;

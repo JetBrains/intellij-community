@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.uiDesigner.palette;
+
+import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.uiDesigner.UIDesignerBundle;
+
+/**
+ * @author yole
+ */
+public class DeleteComponentAction extends AnAction {
+  public void actionPerformed(AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
+    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    if (project == null || selectedItem == null || groupItem == null) return;
+
+    if(!selectedItem.isRemovable()){
+      Messages.showInfoMessage(
+        project,
+        UIDesignerBundle.message("error.cannot.remove.default.palette"),
+        CommonBundle.getErrorTitle()
+      );
+      return;
+    }
+
+    groupItem.removeItem(selectedItem);
+    Palette.getInstance(project).fireGroupsChanged();
+  }
+}

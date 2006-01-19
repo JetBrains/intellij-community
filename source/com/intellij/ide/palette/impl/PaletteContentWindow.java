@@ -4,6 +4,8 @@
 
 package com.intellij.ide.palette.impl;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -33,6 +35,16 @@ public class PaletteContentWindow extends JPanel implements Scrollable {
 
   public boolean getScrollableTracksViewportHeight() {
     return false;
+  }
+
+  @Nullable PaletteGroupHeader getLastGroupHeader() {
+    PaletteGroupHeader result = null;
+    for(Component comp: getComponents()) {
+      if (comp instanceof PaletteGroupHeader) {
+        result = (PaletteGroupHeader) comp;
+      }
+    }
+    return result;
   }
 
   private static class PaletteLayoutManager implements LayoutManager {
