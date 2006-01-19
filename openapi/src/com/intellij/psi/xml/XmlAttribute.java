@@ -18,6 +18,7 @@ package com.intellij.psi.xml;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
@@ -25,6 +26,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 public interface XmlAttribute extends XmlElement, PsiNamedElement {
   XmlAttribute[] EMPTY_ARRAY = new XmlAttribute[0];
 
+  @NonNls
   String getName();
   String getLocalName();
   String getNamespace();

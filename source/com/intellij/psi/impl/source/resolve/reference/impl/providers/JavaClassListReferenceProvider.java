@@ -6,6 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -21,8 +22,8 @@ import java.util.regex.Pattern;
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
   private static final @NonNls Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*(\\.\\s*[A-Za-z]\\w*\\s*)+)");
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
-    final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
     final Set<String> knownTopLevelPackages = new HashSet<String>();
     final List<PsiElement> defaultPackages = getDefaultPackages(position);
     for (final PsiElement pack : defaultPackages) {
@@ -30,13 +31,14 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
         knownTopLevelPackages.add(((PsiPackage)pack).getName());
       }
     }
+    final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();
 
     final Matcher matcher = PATTERN.matcher(str);
 
     while(matcher.find()){
       final String identifier = matcher.group().trim();
       if(knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
-        results.addAll(Arrays.asList(new ReferenceSet(identifier, position, offsetInPosition + matcher.start(), type){
+        results.addAll(Arrays.asList(new ReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false){
           protected boolean isSoft(){
             return true;
           }

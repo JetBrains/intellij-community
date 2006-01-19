@@ -45,36 +45,39 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     PsiImportStaticStatement importStaticStatement = file.getManager().getElementFactory().createImportStaticStatement(aClass, "*");
-    ((PsiJavaFile)file).getImportList().addAfter(importStaticStatement, null);
+    ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
-    file.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (isParameterizedReference(expression)) return;
-        PsiExpression qualifierExpression = expression.getQualifierExpression();
-        if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
-          try {
-            PsiReferenceExpression copy = (PsiReferenceExpression)expression.copy();
-            PsiElement resolved = copy.resolve();
-            copy.getQualifierExpression().delete();
-            PsiManager manager = expression.getManager();
-            if (manager.areElementsEquivalent(copy.resolve(), resolved)) {
-              qualifierExpression.delete();
-              HighlightManager.getInstance(project).addRangeHighlight(editor, expression.getTextRange().getStartOffset(),
-                                                                      expression.getTextRange().getEndOffset(),
-                                                                      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                                                      false, null);
+    PsiFile[] roots = file.getPsiRoots();
+    for (PsiFile root : roots) {
+      root.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          if (isParameterizedReference(expression)) return;
+          PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
+            try {
+              PsiReferenceExpression copy = (PsiReferenceExpression)expression.copy();
+              PsiElement resolved = copy.resolve();
+              copy.getQualifierExpression().delete();
+              PsiManager manager = expression.getManager();
+              if (manager.areElementsEquivalent(copy.resolve(), resolved)) {
+                qualifierExpression.delete();
+                HighlightManager.getInstance(project).addRangeHighlight(editor, expression.getTextRange().getStartOffset(),
+                                                                        expression.getTextRange().getEndOffset(),
+                                                                        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                                                                        false, null);
+              }
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+          super.visitElement(expression);
         }
-        super.visitElement(expression);
-      }
-    });
+      });
+    }
   }
 
-  private boolean isParameterizedReference(final PsiReferenceExpression expression) {
+  private static boolean isParameterizedReference(final PsiReferenceExpression expression) {
     return expression.getParameterList() != null && expression.getParameterList().getFirstChild() != null;
   }
 }
