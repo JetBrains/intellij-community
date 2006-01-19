@@ -45,6 +45,9 @@ public class AccessStaticViaInstance extends LocalInspectionTool {
     return "AccessStaticViaInstance";
   }
 
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {

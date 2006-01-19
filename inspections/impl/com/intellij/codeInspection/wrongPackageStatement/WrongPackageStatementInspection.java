@@ -104,6 +104,10 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
     return "WrongPackageStatement";
   }
 
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class AdjustPackageNameFix implements LocalQuickFix {
     private final PsiJavaFile myFile;
     private PsiPackageStatement myStatement;

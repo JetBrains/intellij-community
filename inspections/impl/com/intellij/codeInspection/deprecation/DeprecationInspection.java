@@ -104,6 +104,10 @@ public class DeprecationInspection extends LocalInspectionTool {
     return SHORT_NAME;
   }
 
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   //@top
   static ProblemDescriptor checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
                                                           List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
