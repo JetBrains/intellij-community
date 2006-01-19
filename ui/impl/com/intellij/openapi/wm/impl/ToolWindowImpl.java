@@ -1,11 +1,11 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ide.impl.ContentManagerWatcher;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -140,7 +140,7 @@ public final class ToolWindowImpl implements ToolWindowEx{
    */
   public final boolean isAvailable(){
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myAvailable;
+    return myAvailable && myComponent != null;
   }
 
   public final JComponent getComponent(){
