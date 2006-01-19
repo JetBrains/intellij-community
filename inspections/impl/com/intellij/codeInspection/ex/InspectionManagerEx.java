@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -169,11 +170,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    InspectionProfile profile = (InspectionProfile)inspectionProfileManager.getProfile(myCurrentProfileName);
+    Profile profile = inspectionProfileManager.getProfile(myCurrentProfileName);
     if (profile == null) {
       if (inspectionProfileManager.useProjectLevelProfileSettings()) {
-        profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
-        if (profile != null) return profile;
+        profile = InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+        if (profile != null) return (InspectionProfileImpl)profile;
       }
       final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
       if (avaliableProfileNames == null || avaliableProfileNames.length == 0) {
@@ -181,9 +182,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         return null;
       }
       myCurrentProfileName = avaliableProfileNames[0];
-      profile = (InspectionProfile)inspectionProfileManager.getProfile(myCurrentProfileName);
+      profile = inspectionProfileManager.getProfile(myCurrentProfileName);
     }
-    return profile;
+    return (InspectionProfileImpl)profile;
   }
 
   @NotNull
@@ -847,9 +848,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           if (runWithEditorSettings){
             profile = profileManager.getProfile((PsiElement)file);
           } else {
-            profile = (InspectionProfile)profileManager.getProfile(myCurrentProfileName);
+            profile = (InspectionProfileImpl)profileManager.getProfile(myCurrentProfileName);
             if (profile == null){
-              profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+              profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
             }
           }
           incrementJobDoneAmount(LOCAL_ANALYSIS, file.getVirtualFile().getPresentableUrl());
@@ -888,20 +889,14 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
     if (runWithEditorSettings){
       final Set<String> profiles = scope.getActiveInspectionProfiles();
-      final Map<VirtualFile, String> hectorAssignments = profileManager.getHectorAssignments();
-      for (VirtualFile vFile : hectorAssignments.keySet()) {
-        if (scope.contains(vFile)){
-          profiles.add(hectorAssignments.get(vFile));
-        }
-      }
       for (String profile : profiles) {
-        final InspectionProfile inspectionProfile = ((InspectionProfile)profileManager.getProfile(profile));
+        final InspectionProfile inspectionProfile = ((InspectionProfileImpl)profileManager.getProfile(profile));
         processProfileTools(inspectionProfile, tools, localTools);
       }
     } else {
-      InspectionProfile profile = (InspectionProfile)profileManager.getProfile(myCurrentProfileName);
+      InspectionProfile profile = (InspectionProfileImpl)profileManager.getProfile(myCurrentProfileName);
       if (profile == null){
-        profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+        profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
       }
       processProfileTools(profile, tools, localTools);
     }

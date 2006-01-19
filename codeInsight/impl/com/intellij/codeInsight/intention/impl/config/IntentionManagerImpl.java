@@ -1,16 +1,17 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +31,19 @@ public class IntentionManagerImpl extends IntentionManager {
     addAction(new QuickFixAction());
     addAction(new PostIntentionsQuickFixAction());
 
-    String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
-    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CATEGORY);
+    String[] CONTROL_FLOW_CAT = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
+    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CAT);
+    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CAT);
+    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CAT);
 
-    String[] DECLARATION_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
-    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new MoveInitializerToConstructorAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CATEGORY);
+    String[] DECLARATION_CAT = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
+    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CAT);
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
 

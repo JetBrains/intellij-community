@@ -5,7 +5,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
@@ -219,15 +218,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myOccurenceNavigator = null;
   }
 
-  private void hectorCorrections(final Set<String> profiles){
-    final Map<VirtualFile, String> hectorAssignments = InspectionProjectProfileManager.getInstance(myProject).getHectorAssignments();
-    for (VirtualFile vFile : hectorAssignments.keySet()) {
-      if (myScope.contains(vFile)){
-        profiles.add(hectorAssignments.get(vFile));
-      }
-    }
-  }
-
   private static OpenFileDescriptor getOpenFileDescriptor(PsiElement psiElement) {
     return new OpenFileDescriptor(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
   }
@@ -433,7 +423,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     if (manager.RUN_WITH_EDITOR_PROFILE){
       final Set<String> profiles = myScope.getActiveInspectionProfiles();
-      hectorCorrections(profiles);
       for (String profileName : profiles) {
         processProfile((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName), tools);
       }
@@ -698,7 +687,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         myInspectionProfile.cleanup();
       } else {
         final Set<String> profiles = myScope.getActiveInspectionProfiles();
-        hectorCorrections(profiles);
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
           ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();
@@ -746,7 +734,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (myScope.isValid()) {
         if (myInspectionProfile == null) {
           final Set<String> profiles = myScope.getActiveInspectionProfiles();
-          hectorCorrections(profiles);
           InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
           for (String profileName : profiles) {
             ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();

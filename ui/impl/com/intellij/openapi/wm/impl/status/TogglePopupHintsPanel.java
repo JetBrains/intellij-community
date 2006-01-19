@@ -4,22 +4,25 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.HectorComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.ui.InspectionProfileConfigurable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,7 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class TogglePopupHintsPanel extends JLabel {
+public class TogglePopupHintsPanel extends JPanel {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/objectBrowser/showGlobalInspections.png");
   private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/general/inspectionsOff.png");
   private static final Icon EMPTY_ICON = new EmptyIcon(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
@@ -35,9 +38,12 @@ public class TogglePopupHintsPanel extends JLabel {
   private ProjectManagerListener myProjectManagerListener = new MyProjectManagerListener();
   private MyFileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
 
+  private JLabel myHectorLabel = new JLabel(EMPTY_ICON);
+  private JLabel myInspectionProfileLabel = new JLabel();
+
   public TogglePopupHintsPanel() {
-    super(EMPTY_ICON);
-    addMouseListener(new MouseAdapter() {
+    super(new GridBagLayout());
+    myHectorLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         Point point = new Point(0, 0);
         final Editor editor = getCurrentEditor();
@@ -52,36 +58,55 @@ public class TogglePopupHintsPanel extends JLabel {
         }
       }
     });
-    setIconTextGap(0);
+    myHectorLabel.setIconTextGap(0);
+    myInspectionProfileLabel.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        final Editor editor = getCurrentEditor();
+        final PsiFile file = getCurrentFile();
+        if (editor != null && file != null) {
+          if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
+          final Project project = getCurrentProject();
+          final InspectionProfileConfigurable profileConfigurable = new InspectionProfileConfigurable(project);
+          ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable, new Runnable() {
+            public void run() {
+              profileConfigurable.selectScopeFor(file);
+            }
+          });
+        }
+      }
+    });
     ProjectManager.getInstance().addProjectManagerListener(myProjectManagerListener);
     //not to miss already opened projects in first frame if any
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       FileEditorManager.getInstance(project).addFileEditorManagerListener(myFileEditorManagerListener);
     }
+    add(myHectorLabel,
+        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(myInspectionProfileLabel,
+        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
   }
 
-  void updateStatus(boolean isClear){
+  void updateStatus(boolean isClear) {
     updateStatus(isClear, getCurrentFile());
   }
 
   void updateStatus(boolean isClear, PsiFile file) {
-    if (isClear){
-      setIcon(EMPTY_ICON);
-      setToolTipText(null);
-      return;
-    }
-    if (isStateChangeable(file)) {
+    if (!isClear && isStateChangeable(file)) {
       if (HighlightUtil.isRootInspected(file)) {
-        setIcon(INSPECTIONS_ICON);
-      } else {
-        setIcon(INSPECTIONS_OFF_ICON);
+        myHectorLabel.setIcon(INSPECTIONS_ICON);
       }
-      setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
+      else {
+        myHectorLabel.setIcon(INSPECTIONS_OFF_ICON);
+      }
+      myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
+      myInspectionProfileLabel.setText(InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file));
     }
     else {
-      setIcon(EMPTY_ICON);
-      setToolTipText(null);
+      myHectorLabel.setIcon(EMPTY_ICON);
+      myHectorLabel.setToolTipText(null);
+      myInspectionProfileLabel.setText("");
+      myInspectionProfileLabel.setToolTipText(null);
     }
   }
 
@@ -101,7 +126,7 @@ public class TogglePopupHintsPanel extends JLabel {
     }
 
     final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (selectedTextEditor == null){
+    if (selectedTextEditor == null) {
       return null;
     }
     final Document document = selectedTextEditor.getDocument();
@@ -132,20 +157,21 @@ public class TogglePopupHintsPanel extends JLabel {
   }
 
   private final class MyFileEditorManagerListener extends FileEditorManagerAdapter {
-    public void selectionChanged(FileEditorManagerEvent e){
+    public void selectionChanged(FileEditorManagerEvent e) {
       final Project project = getCurrentProject();
-      if (project != null){
+      if (project != null) {
         final VirtualFile vFile = e.getNewFile();
         if (vFile != null) {
           updateStatus(false, PsiManager.getInstance(project).findFile(vFile));
-        } else {
+        }
+        else {
           updateStatus(true, null);
         }
       }
     }
   }
 
-  private final class MyProjectManagerListener implements ProjectManagerListener{
+  private final class MyProjectManagerListener implements ProjectManagerListener {
 
     public void projectOpened(Project project) {
       FileEditorManager.getInstance(project).addFileEditorManagerListener(myFileEditorManagerListener);

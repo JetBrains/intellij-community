@@ -119,6 +119,10 @@ public class ScopeEditorPanel {
     return myTreePanel;
   }
 
+  public JPanel getTreeToolbar() {
+    return myTreeToolbar;
+  }
+
   private void onTextChange() {
     if (!myIsInUpdate) {
       myCurrentScope = null;

@@ -1,11 +1,9 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
@@ -64,7 +62,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
   public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName, final ProfileManager manager) {
     final boolean isOK = ShowSettingsUtil.getInstance().editConfigurable(project,
-                                                                         "#com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction",
+                                                                         "#com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction",
                                                                          new Configurable(){
                                                                            private InspectionToolsPanel myPanel = new InspectionToolsPanel(inspectionProfile.getName(),
                                                                                                                                            project,
