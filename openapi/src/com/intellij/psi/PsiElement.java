@@ -107,7 +107,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the file instance.
    */
-  PsiFile getContainingFile();
+  @Nullable  PsiFile getContainingFile();
 
   /**
    * Returns the text range in the document occupied by the PSI element.
