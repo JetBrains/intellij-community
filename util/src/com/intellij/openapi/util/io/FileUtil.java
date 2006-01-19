@@ -477,26 +477,4 @@ public class FileUtil {
   public static boolean pathsEqual(String path1, String path2) {
     return SystemInfo.isFileSystemCaseSensitive? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
-
-  public static interface FileVisitor {
-    int PROCEED = 0;
-    int STOP = 1;
-    int DO_NOT_RECURSE = 2;
-    // visitor should return one of: PROCEED, STOP, DO_NOT_RECURSE
-    int accept(File file);
-  }
-
-  public static int visitFilesRecursively(File rootDir, FileVisitor fileVisitor) {
-    final File[] files = rootDir.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        int res = fileVisitor.accept(file);
-        if (res == FileVisitor.PROCEED && file.isDirectory()) {
-          res = visitFilesRecursively(file, fileVisitor);
-        }
-        if (res == FileVisitor.STOP) return res;
-      }
-    }
-    return FileVisitor.PROCEED;
-  }
 }
