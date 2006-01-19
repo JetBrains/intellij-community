@@ -284,7 +284,11 @@ public class JavaLexer extends LexerBase {
       }
 
       if (cur == '\\') {
-        pos += 2;
+        pos++;
+        if (pos >= myBufferEndOffset) return myBufferEndOffset;
+        cur = myBuffer[pos];
+        if (cur == '\n' || cur == '\r') continue;
+        pos ++;
         if (pos >= myBufferEndOffset) return myBufferEndOffset;
         cur = myBuffer[pos];
       } else if (cur == c) {
