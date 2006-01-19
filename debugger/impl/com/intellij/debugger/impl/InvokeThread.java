@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.VMDisconnectedException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -87,15 +88,17 @@ public abstract class InvokeThread<E> {
 
         processEvent(myEvents.get());
       }
+      catch (VMDisconnectedException e) {
+        break;
+      }
       catch (EventQueueClosedException e) {
         break;
       }
       catch (RuntimeException e) {
         if(e.getCause() instanceof InterruptedException) {
           break;
-        } else {
-          LOG.error(e);
         }
+        LOG.error(e);
       }
     }
 
