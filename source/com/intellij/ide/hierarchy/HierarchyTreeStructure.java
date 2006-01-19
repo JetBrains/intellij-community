@@ -74,7 +74,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
         for(int i = 0; i < cachedChildren.length; i++){
           Object child = cachedChildren[i];
           if (child instanceof HierarchyElement){
-            if (!((HierarchyElement)child).getPsiClass().isValid()){
+            if (!((HierarchyElement)child).getValue().isValid()){
               hierarchyElement.setCachedChildren(new Object[0]); //?
               break;
             }
