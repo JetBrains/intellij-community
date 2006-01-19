@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.ArrayUtil;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
@@ -22,6 +23,7 @@ import java.util.Set;
  */
 public class AdvancedProxy {
   private static final Map<ProxyDescription, Factory> ourFactories = new WeakValueHashMap<ProxyDescription, Factory>();
+  private static final Map<Class, Constructor> ourConstructors = new WeakValueHashMap<Class, Constructor>();
 
   public static InvocationHandler getInvocationHandler(Object proxy) {
     return (InvocationHandler)((Factory) proxy).getCallback(0);
@@ -77,7 +79,12 @@ public class AdvancedProxy {
   private static Constructor findConstructor(final Class aClass, final Object... constructorArgs) {
     if (constructorArgs.length == 0) {
       try {
-        return aClass.getConstructor();
+        Constructor constructor = ourConstructors.get(aClass);
+        if (constructor == null) {
+          constructor = aClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
+          ourConstructors.put(aClass, constructor);
+        }
+        return constructor;
       }
       catch (NoSuchMethodException e) {
         throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));

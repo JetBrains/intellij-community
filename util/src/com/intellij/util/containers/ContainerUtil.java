@@ -16,8 +16,10 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.Function;
 
 import java.util.*;
+import java.lang.reflect.Array;
 
 public class ContainerUtil {
   public static List mergeSortedLists(List list1, List list2, Comparator comparator, boolean mergeEqualItems){
@@ -123,7 +125,24 @@ public class ContainerUtil {
     return null;
   }
 
-  public static <T> List<T> find(Collection<? extends T> collection, Condition<T> condition) {
+  public static <T,V> List<V> map2List(Collection<? extends T> collection, Function<T,V> mapper) {
+    final ArrayList<V> list = new ArrayList<V>(collection.size());
+    for (final T t : collection) {
+      list.add(mapper.fun(t));
+    }
+    return list;
+  }
+
+  public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<V> aClass, Function<T,V> mapper) {
+    final List<V> list = map2List(collection, mapper);
+    return list.toArray((V[])Array.newInstance(aClass, list.size()));
+  }
+
+  public static <T,V> V[] map2Array(Collection<? extends T> collection, V[] to, Function<T,V> mapper) {
+    return map2List(collection, mapper).toArray(to);
+  }
+
+  public static <T> List<T> findAll(Collection<? extends T> collection, Condition<T> condition) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final T t : collection) {
       if (condition.value(t)) {
