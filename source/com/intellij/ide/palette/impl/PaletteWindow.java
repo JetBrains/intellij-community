@@ -151,6 +151,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
     if (dataId.equals(DataConstants.PROJECT)) {
       return myProject;
     }
+    PaletteItem item = getActiveItem();
+    if (item != null) {
+      return item.getData(myProject, dataId);
+    }
     return null;
   }
 

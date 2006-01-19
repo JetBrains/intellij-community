@@ -1,16 +1,20 @@
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.SimpleTransferable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.SimpleTransferable;
-import com.intellij.ide.palette.PaletteItem;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -268,6 +272,15 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   @Nullable public ActionGroup getPopupActionGroup() {
     return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PalettePopupMenu");
+  }
+
+  @Nullable public Object getData(Project project, String dataId) {
+    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+      return PsiManager.getInstance(project).findClass(
+        myClassName,
+        GlobalSearchScope.allScope(project));
+    }
+    return null;
   }
 
   private static final class MySmallIcon implements Icon{

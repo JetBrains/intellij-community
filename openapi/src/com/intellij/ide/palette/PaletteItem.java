@@ -18,6 +18,7 @@
 package com.intellij.ide.palette;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,27 @@ public interface PaletteItem {
                              boolean selected,
                              boolean hasFocus);
 
-  Transferable createTransferable();
+  /**
+   * Returns the Transferable used for dragging the item.
+   *
+   * @return the Transferable instance, or null if the item cannot be dragged.
+   */
+  @Nullable Transferable createTransferable();
 
+  /**
+   * Returns the action group from which the context menu is built when the palette
+   * item is right-clicked.
+   *
+   * @return the action group, or null if no context menu should be shown.
+   */
   @Nullable ActionGroup getPopupActionGroup();
+
+  /**
+   * Returns the data for the specified data constant.
+   *
+   * @param project the project in the context of which data is requested.
+   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.DataConstants}).
+   * @return the data item, or null if no data is available for this constant.
+   */
+  @Nullable Object getData(Project project, String dataId);
 }
