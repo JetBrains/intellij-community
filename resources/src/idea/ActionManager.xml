@@ -1336,8 +1336,107 @@
     </group>
 
     <group id="Vcs.MessageActionGroup">
-      <action id="Vcs.ShowMessageHistory" text="_History" class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"/> 
+      <action id="Vcs.ShowMessageHistory" text="_History" class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"/>
     </group>
 
+     <!-- ***** java server faces actions *************************************** -->
+    <action id="Faces.Navigation.Graph.OpenInEditorAction" class="com.intellij.jsf.graph.actions.OpenInEditorAction"
+            text="_Jump to source" use-shortcut-of="EditSource" keymap="$default">
+      <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
+    </action>
+    <action id="Faces.Navigation.Graph.ScaleIncreaseAction" class="com.intellij.jsf.graph.actions.ScaleIncreaseAction" text="Increase">
+      <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="EQUALS" keymap="$default"/>
+    </action>
+    <action id="Faces.Navigation.Graph.ScaleDecreaseAction" class="com.intellij.jsf.graph.actions.ScaleDecreaseAction" text="Decrease">
+      <keyboard-shortcut first-keystroke="SUBTRACT" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="MINUS" keymap="$default"/>
+    </action>
+    <action id="Faces.Navigation.Graph.HideSelectionAction" class="com.intellij.jsf.graph.actions.HideSelectionAction"
+            text="Hide Selection" use-shortcut-of="CollapseAll">
+    </action>
+    <action id="Faces.Navigation.Graph.ShowHiddenCellsAction" class="com.intellij.jsf.graph.actions.ShowHiddenCellsAction"
+            text="Show Hidden" use-shortcut-of="ExpandAll">
+    </action>
+    <action id="Faces.Navigation.Graph.ShowNeibours" class="com.intellij.jsf.graph.actions.ShowNeiboursAction"
+            text="Show Neibours">
+    </action>
+    <action id="Faces.Navigation.Graph.HideNeibours" class="com.intellij.jsf.graph.actions.HideAllNeiboursAction"
+            text="Hide Neibour's HighLighting">
+    </action>
+    <action id="Faces.Navigation.Graph.ShowOutEdges" class="com.intellij.jsf.graph.actions.ShowOutEdgesAction"
+            text="Show Outgoing Edges">
+    </action>
+    <action id="Faces.Navigation.Graph.ShowInEdges" class="com.intellij.jsf.graph.actions.ShowIncomingEdgesAction"
+            text="Show Incoming Edges">
+    </action>
+
+    <action id="Faces.Navigation.Graph.Layout.OrganicLayout" class="com.intellij.jsf.graph.layout.actions.OrganicLayoutAction"
+            text="Organic Layout">
+    </action>
+    <action id="Faces.Navigation.Graph.Layout.SugiyamaLayout" class="com.intellij.jsf.graph.layout.actions.SugiyamaLayoutAction"
+            text="Sugiyama Layout">
+    </action>
+    <action id="Faces.Navigation.Graph.Layout.RadialTreeLayout" class="com.intellij.jsf.graph.layout.actions.RadialTreeLayoutAction"
+            text="Radial Tree Layout">
+    </action>
+    <action id="Faces.Navigation.Graph.Layout.CircleLayout" class="com.intellij.jsf.graph.layout.actions.CircleLayout"
+            text="Circle Layout">
+    </action>
+
+    <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.graph.ui.renderers.actions.GotoSourceAction"
+            text="_Jump to source">
+    </action>
+    <action id="Faces.Navigation.Graph.PageTree.GotoDeclarationAction" class="com.intellij.jsf.graph.ui.renderers.actions.GotoDeclarationAction"
+            text="_Goto declaration" >
+    </action>
+
+    <group id="Faces.Navigation.Graph.LayoutGroup" text="Layout" popup="true">
+      <reference ref="Faces.Navigation.Graph.Layout.OrganicLayout"/>
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.Layout.SugiyamaLayout"/>
+      <reference ref="Faces.Navigation.Graph.Layout.RadialTreeLayout"/>
+      <reference ref="Faces.Navigation.Graph.Layout.CircleLayout"/>
+    </group>
+
+    <group id="Faces.MainGraphPopup">
+      <reference ref="Faces.Navigation.Graph.OpenInEditorAction"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.ScaleIncreaseAction"/>
+      <reference ref="Faces.Navigation.Graph.ScaleDecreaseAction"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.HideSelectionAction"/>
+      <reference ref="Faces.Navigation.Graph.ShowHiddenCellsAction"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.ShowNeibours"/>
+      <reference ref="Faces.Navigation.Graph.HideNeibours"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.LayoutGroup"/>
+    </group>
+    <group id="Faces.MainPageGraphPopup">
+      <reference ref="Faces.Navigation.Graph.OpenInEditorAction"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.ScaleIncreaseAction"/>
+      <reference ref="Faces.Navigation.Graph.ScaleDecreaseAction"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.HideSelectionAction"/>
+      <reference ref="Faces.Navigation.Graph.ShowHiddenCellsAction"/>
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.ShowOutEdges"/>
+      <reference ref="Faces.Navigation.Graph.ShowInEdges"/>
+
+      <separator/>
+      <reference ref="Faces.Navigation.Graph.LayoutGroup"/>
+    </group>
+     <group id="Faces.MainPageTreePopup">
+        <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
+        <reference ref="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"/>
+    </group>
   </actions>
 </component>

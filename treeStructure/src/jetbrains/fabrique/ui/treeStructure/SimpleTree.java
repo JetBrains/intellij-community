@@ -402,6 +402,19 @@ public class SimpleTree extends JTree implements CellEditorListener {
     return e != null && e.getClickCount() > 0 && e.getClickCount() % 2 == 0;
   }
 
+  protected ActionGroup getPopupGroup() {
+    return myPopupGroup;
+  }
+
+  protected void invokeContextMenu(final MouseEvent e) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
+        menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
+      }
+    });
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
       if (e.isPopupTrigger()) {
@@ -432,12 +445,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
         selectPathUnderCursorIfNeeded(e);
 
         if (myPopupGroup != null) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
-              menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
-            }
-          });
+          invokeContextMenu(e);
         }
       }
     }
