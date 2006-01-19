@@ -40,7 +40,8 @@ public class AnnotateMethodFix implements LocalQuickFix {
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false)) {
+      if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) &&
+          superMethod.getManager().isInProject(superMethod)) {
         superMethod = SuperMethodWarningUtil.checkSuperMethod(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
         if (superMethod != null && superMethod != method) {
           annotateMethod(superMethod);
