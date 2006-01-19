@@ -92,27 +92,23 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
       return;
     }
 
-    try {
-      for (File file : files) {
+    for (File file : files) {
+      try {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file);
         profile.load();
         addProfile(profile);
       }
-    }
-    catch (JDOMException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
-      LOG.error(e);
+      catch (Exception e) {
+        file.delete();
+      }
     }
   }
 
-  public InspectionProfileImpl createDefaultProfile() {
+  public void createDefaultProfile() {
     final InspectionProfileImpl defaultProfile;
     defaultProfile = (InspectionProfileImpl)createProfile();
     defaultProfile.setBaseProfile(InspectionProfileImpl.DEFAULT_PROFILE);
     addProfile(defaultProfile);
-    return defaultProfile;
   }
 
 

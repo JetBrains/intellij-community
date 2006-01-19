@@ -1,5 +1,6 @@
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -16,6 +17,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -54,8 +57,19 @@ public class ModuleTypeStep extends ModuleWizardStep {
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
     myModuleDescriptionPane = new JEditorPane();
-    //noinspection HardCodedStringLiteral
-    myModuleDescriptionPane.setContentType("text/html");
+    myModuleDescriptionPane.setContentType(UIUtil.HTML_MIME);
+    myModuleDescriptionPane.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          try {
+            BrowserUtil.launchBrowser(e.getURL().toString());
+          }
+          catch (IllegalThreadStateException ex) {
+            // it's nnot a problem
+          }
+        }
+      }
+    });
     myModuleDescriptionPane.setEditable(false);
 
     final ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
@@ -141,11 +155,10 @@ public class ModuleTypeStep extends ModuleWizardStep {
     int height = 0;
     final FontMetrics fontMetrics = myTypesList.getFontMetrics(myTypesList.getFont());
     final int fontHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
-    for (int idx = 0; idx < allModuleTypes.length; idx++) {
-      final ModuleType type = allModuleTypes[idx];
+    for (final ModuleType type : allModuleTypes) {
       final Icon icon = type.getBigIcon();
-      final int iconHeight = icon != null? icon.getIconHeight(): 0;
-      final int iconWidth = icon != null? icon.getIconWidth(): 0;
+      final int iconHeight = icon != null ? icon.getIconHeight() : 0;
+      final int iconWidth = icon != null ? icon.getIconWidth() : 0;
       height += Math.max(iconHeight, fontHeight) + 6;
       width = Math.max(width, iconWidth + fontMetrics.stringWidth(type.getName()) + 10);
     }
