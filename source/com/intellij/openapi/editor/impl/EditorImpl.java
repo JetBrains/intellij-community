@@ -39,9 +39,9 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -354,9 +354,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myDocument.removeDocumentListener(myFoldingModel);
     myDocument.removeDocumentListener(myCaretModel);
     myDocument.removeDocumentListener(mySelectionModel);
-    MarkupModelImpl markupModel = (MarkupModelImpl)myDocument.getMarkupModel(myProject, false);
-    if (markupModel != null) markupModel.removeMarkupModelListener(myMarkupModelListener);
+
+    MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);
+    if (markupModel instanceof MarkupModelImpl) {
+      ((MarkupModelImpl)markupModel).removeMarkupModelListener(myMarkupModelListener);
+    }
+    
     myMarkupModel.dispose();
+
     myLineHeight = -1;
     myCharHeight = -1;
     myDescent = -1;
