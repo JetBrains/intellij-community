@@ -69,7 +69,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
             LOG.error(e);
           }
         }
-        if (qualifierExpression != null) super.visitElement(qualifierExpression);
+        super.visitElement(expression);
       }
     });
   }
