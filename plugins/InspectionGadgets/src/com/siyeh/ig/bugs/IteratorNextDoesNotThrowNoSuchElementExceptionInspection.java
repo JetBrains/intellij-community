@@ -16,16 +16,14 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -72,88 +70,58 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null){
-                return;
-            }
-            if(!isIterator(aClass)){
+            if (aClass == null || !IteratorUtils.isIterator(aClass)) {
                 return;
             }
             final Set<PsiType> exceptions =
                     ExceptionUtils.calculateExceptionsThrown(method);
-            for(Object exception : exceptions){
-                final PsiClassType type =
-                        (PsiClassType) exception;
-                if(type.equalsToText("java.util.NoSuchElementException")){
+            for (final PsiType exception : exceptions) {
+                if (exception.equalsToText(
+                        "java.util.NoSuchElementException")) {
                     return;
                 }
             }
-            if(callsIteratorNext(method)){
+            if(IteratorUtils.callsIteratorNext(method)){
+                return;
+            }
+            final CalledMethodsVisitor visitor = new CalledMethodsVisitor();
+            method.accept(visitor);
+            if (visitor.isNoSuchElementExceptionThrown()) {
                 return;
             }
             registerMethodError(method);
         }
     }
 
-    public static boolean callsIteratorNext(PsiElement method){
-        final CallsIteratorNextVisitor visitor =
-                new CallsIteratorNextVisitor();
-        method.accept(visitor);
-        return visitor.callsIteratorNext();
-    }
+    private static class CalledMethodsVisitor
+            extends PsiRecursiveElementVisitor {
 
-    private static class CallsIteratorNextVisitor
-            extends PsiRecursiveElementVisitor{
-        private boolean doesCallIteratorNext = false;
-
-        public void visitElement(@NotNull PsiElement element){
-            if(!doesCallIteratorNext){
-                super.visitElement(element);
-            }
-        }
+        private boolean noSuchElementExceptionThrown = false;
 
         public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            if(doesCallIteratorNext){
+                PsiMethodCallExpression expression) {
+            if (noSuchElementExceptionThrown) {
                 return;
             }
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.NEXT.equals(methodName)){
+            final PsiElement method = methodExpression.resolve();
+            if (method == null) {
                 return;
             }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if(args.length != 0){
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(isIterator(containingClass)){
-                doesCallIteratorNext = true;
+            final Set<PsiType> exceptions =
+                    ExceptionUtils.calculateExceptionsThrown(method);
+            for (final PsiType exception : exceptions) {
+                if (exception.equalsToText(
+                        "java.util.NoSuchElementException")) {
+                    noSuchElementExceptionThrown = true;
+                }
             }
         }
 
-        public boolean callsIteratorNext(){
-            return doesCallIteratorNext;
+        public boolean isNoSuchElementExceptionThrown() {
+            return noSuchElementExceptionThrown;
         }
-    }
-
-    public static boolean isIterator(PsiClass aClass){
-        final String className = aClass.getQualifiedName();
-        if("java.util.Iterator".equals(className)){
-            return true;
-        }
-        final PsiManager psiManager = aClass.getManager();
-        final Project project = aClass.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass iterator =
-                psiManager.findClass("java.util.Iterator", scope);
-        return aClass.isInheritor(iterator, true);
     }
 }

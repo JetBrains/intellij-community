@@ -18,7 +18,9 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,14 +43,14 @@ public class AutoBoxingInspection extends ExpressionInspection {
     private final AutoBoxingFix fix = new AutoBoxingFix();
 
     static {
-        s_boxingClasses.put("int", "Integer");
-        s_boxingClasses.put("short", "Short");
-        s_boxingClasses.put("boolean", "Boolean");
-        s_boxingClasses.put("long", "Long");
-        s_boxingClasses.put("byte", "Byte");
-        s_boxingClasses.put("float", "Float");
-        s_boxingClasses.put("double", "Double");
-        s_boxingClasses.put("char", "Character");
+        s_boxingClasses.put("byte", "java.lang.Byte");
+        s_boxingClasses.put("short", "java.lang.Short");
+        s_boxingClasses.put("int", "java.lang.Integer");
+        s_boxingClasses.put("long", "java.lang.Long");
+        s_boxingClasses.put("float", "java.lang.Float");
+        s_boxingClasses.put("double", "java.lang.Double");
+        s_boxingClasses.put("boolean", "java.lang.Boolean");
+        s_boxingClasses.put("char", "java.lang.Character");
     }
 
     public String getDisplayName() {
@@ -88,7 +90,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 return;
             }
             final String expectedTypeText =
-                    expectedType.getPresentableText();
+                    expectedType.getCanonicalText();
             final String classToConstruct;
             if (s_boxingClasses.containsValue(expectedTypeText)) {
                 classToConstruct = expectedTypeText;
@@ -97,8 +99,8 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 if (type == null) {
                     return;
                 }
-                final String presentableText = type.getPresentableText();
-                classToConstruct = s_boxingClasses.get(presentableText);
+                final String expressionTypeText = type.getCanonicalText();
+                classToConstruct = s_boxingClasses.get(expressionTypeText);
             }
             @NonNls final String newExpression =
                     classToConstruct + ".valueOf(" + expression.getText() + ')';
@@ -107,6 +109,17 @@ public class AutoBoxingInspection extends ExpressionInspection {
     }
 
     private static class AutoBoxingVisitor extends BaseInspectionVisitor {
+
+        public void visitElement(PsiElement element) {
+            final PsiManager manager = element.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
+            super.visitElement(element);
+        }
 
         public void visitArrayAccessExpression(
                 PsiArrayAccessExpression expression) {
@@ -180,7 +193,16 @@ public class AutoBoxingInspection extends ExpressionInspection {
             if(expressionType.equals(PsiType.VOID)) {
                 return;
             }
-            if(!ClassUtils.isPrimitive(expressionType)) {
+            if(!TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
+                return;
+            }
+            final PsiPrimitiveType primitiveType =
+                    (PsiPrimitiveType)expressionType;
+            final PsiClassType boxedType =
+                    primitiveType.getBoxedType(
+                            expression.getManager(),
+                            expression.getResolveScope());
+            if(boxedType == null){
                 return;
             }
             final PsiType expectedType =
@@ -189,6 +211,9 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 return;
             }
             if(ClassUtils.isPrimitive(expectedType)) {
+                return;
+            }
+            if(!expectedType.isAssignableFrom(boxedType)){
                 return;
             }
             registerError(expression);

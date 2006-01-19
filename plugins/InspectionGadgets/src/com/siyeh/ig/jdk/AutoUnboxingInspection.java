@@ -172,7 +172,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             if(TypeConversionUtil.isPrimitiveAndNotNull(expressionType)){
                 return;
             }
-            if(PsiPrimitiveType.getUnboxedType(expressionType) == null){
+            final PsiPrimitiveType unboxedType =
+                    PsiPrimitiveType.getUnboxedType(expressionType);
+            if(unboxedType == null){
                 return;
             }
             final PsiType expectedType =
@@ -181,6 +183,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
                 return;
             }
             if(!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)){
+                return;
+            }
+            if(!expectedType.isAssignableFrom(unboxedType)){
                 return;
             }
             registerError(expression);
