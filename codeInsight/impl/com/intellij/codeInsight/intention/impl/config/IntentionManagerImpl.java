@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 
 import java.util.ArrayList;
 import java.util.List;
