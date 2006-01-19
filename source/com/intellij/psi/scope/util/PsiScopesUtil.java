@@ -292,6 +292,11 @@ public class PsiScopesUtil {
       JavaResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType()).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
+    else if (type instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        if (!processQualifierType(conjunct, processor, manager, call)) return false;
+      }
+    }
 
     return true;
   }

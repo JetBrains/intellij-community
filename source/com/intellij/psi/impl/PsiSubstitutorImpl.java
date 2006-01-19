@@ -18,11 +18,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
   private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
 
-  protected PsiSubstitutorImpl(Map<PsiTypeParameter, PsiType> map){
+  protected PsiSubstitutorImpl(Map<PsiTypeParameter, PsiType> map) {
     mySubstitutionMap = map;
   }
 
-  public PsiSubstitutorImpl(){
+  public PsiSubstitutorImpl() {
     mySubstitutionMap = new HashMap<PsiTypeParameter, PsiType>();
   }
 
@@ -33,13 +33,13 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return mySubstitutionMap.get(typeParameter);
   }
 
-  public PsiType substitute(PsiType type){
+  public PsiType substitute(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type, myInternalSubstitutionVisitor);
   }
 
-  public PsiType substituteAndCapture(PsiType type){
+  public PsiType substituteAndCapture(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalCapturingSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type, myInternalCapturingSubstitutionVisitor);
@@ -127,7 +127,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   private final InternalSubstitutionVisitor myInternalSubstitutionVisitor = new InternalSubstitutionVisitor();
   private final InternalCapturingSubstitutionVisitor myInternalCapturingSubstitutionVisitor = new InternalCapturingSubstitutionVisitor();
-  private final InternalFullCapturingSubstitutionVisitor myInternalFullCapturingSubstitutionVisitor = new InternalFullCapturingSubstitutionVisitor();
+  private final InternalFullCapturingSubstitutionVisitor myInternalFullCapturingSubstitutionVisitor =
+    new InternalFullCapturingSubstitutionVisitor();
 
   private class InternalSubstitutionVisitor extends SubstitutionVisitor {
     public PsiType visitClassType(PsiClassType classType) {
@@ -149,7 +150,42 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
 
     protected PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
-      return mySubstitutionMap.get(typeParameter);
+      PsiType substituted = mySubstitutionMap.get(typeParameter);
+      if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
+        PsiType originalBound = ((PsiWildcardType)substituted).getBound();
+        PsiManager manager = typeParameter.getManager();
+        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+        for (PsiType boundType : boundTypes) {
+          PsiType substitutedBoundType;
+          synchronized (mySubstitutionMap) {
+            //prevent infinite recursion
+            try {
+              mySubstitutionMap.put(typeParameter, null);
+              substitutedBoundType = boundType.accept(this);
+            }
+            finally {
+              mySubstitutionMap.put(typeParameter, substituted);
+            }
+          }
+          PsiWildcardType wildcardType = (PsiWildcardType)substituted;
+          if (!substitutedBoundType.equalsToText("java.lang.Object")) {
+            if (originalBound == null || !originalBound.isAssignableFrom(substitutedBoundType)) {
+              if (wildcardType.isExtends()) {
+                final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
+                if (glb != null) {
+                 substituted = PsiWildcardType.createExtends(manager, glb);
+                }
+              }
+              else {
+                //unbounded
+                substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
+              }
+            }
+          }
+        }
+      }
+
+      return substituted;
     }
 
     private PsiType substituteInternal(PsiType type) {
@@ -173,36 +209,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original, final InternalSubstitutionVisitor visitor) {
     if (original == null) return null;
-    boolean captured = false;
-    PsiType copy = substituted;
-    if (copy instanceof PsiCapturedWildcardType) {
-      captured = true;
-      copy = ((PsiCapturedWildcardType)substituted).getWildcard();
-    }
-    if (copy instanceof PsiWildcardType && !((PsiWildcardType)copy).isSuper()) {
-      PsiWildcardType wildcardType = (PsiWildcardType)copy;
-      if (original instanceof PsiClassType) {
-        PsiClass aClass = ((PsiClassType)original).resolve();
-        if (aClass instanceof PsiTypeParameter) {
-          final PsiType boundType = visitor.substituteInternal(aClass.getSuperTypes()[0]);
-          if (boundType != null && !boundType.equalsToText("java.lang.Object")) {
-            final PsiManager manager = aClass.getManager();
-            if (wildcardType.isExtends()) {
-              final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), boundType);
-              if (glb != null) {
-                PsiWildcardType corrected = PsiWildcardType.createExtends(manager, glb);
-                return captured ? PsiCapturedWildcardType.create(corrected) : ((PsiType)corrected);
-              }
-            }
-            else {
-              //unbounded
-              PsiWildcardType corrected = PsiWildcardType.createExtends(manager, boundType);
-              return captured ? PsiCapturedWildcardType.create(corrected) : ((PsiType)corrected);
-            }
-          }
-        }
-      }
-    }
 
     if (substituted == null) {
       return original.accept(new PsiTypeVisitor<PsiType>() {
@@ -254,10 +260,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return ret;
   }
 
-  public synchronized PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings){
+  public synchronized PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
-    for(int i = 0; i < params.length; i++){
+    for (int i = 0; i < params.length; i++) {
       if (mappings != null && mappings.length > i) {
         substitutor.mySubstitutionMap.put(params[i], mappings[i]);
       }
@@ -269,9 +275,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return substitutor;
   }
 
-  public PsiSubstitutor putAll(PsiSubstitutor another){
-    if(another instanceof EmptySubstitutorImpl) return this;
-    final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl) another;
+  public PsiSubstitutor putAll(PsiSubstitutor another) {
+    if (another instanceof EmptySubstitutorImpl) return this;
+    final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
     final PsiTypeParameter[] params = anotherImpl.mySubstitutionMap.keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
     for (final PsiTypeParameter param : params) {
@@ -282,8 +288,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
 
-  public PsiSubstitutor merge(PsiSubstitutor other){
-    if(other == PsiSubstitutor.EMPTY) return this;
+  public PsiSubstitutor merge(PsiSubstitutor other) {
+    if (other == PsiSubstitutor.EMPTY) return this;
 
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
     substitutor.mySubstitutionMap.putAll(((PsiSubstitutorImpl)other).mySubstitutionMap);
@@ -292,7 +298,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   public String toString() {
     @NonNls StringBuffer buffer = new StringBuffer();
-    final Set<Map.Entry<PsiTypeParameter,PsiType>> set = mySubstitutionMap.entrySet();
+    final Set<Map.Entry<PsiTypeParameter, PsiType>> set = mySubstitutionMap.entrySet();
     for (Map.Entry<PsiTypeParameter, PsiType> entry : set) {
       final PsiTypeParameter typeParameter = entry.getKey();
       buffer.append(typeParameter.getName());
@@ -315,8 +321,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return buffer.toString();
   }
 
-  public static PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map){
-    if(map == null || map.keySet().isEmpty()) return EMPTY;
+  public static PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map) {
+    if (map == null || map.keySet().isEmpty()) return EMPTY;
     return new PsiSubstitutorImpl(map);
   }
 
@@ -341,7 +347,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   public PsiSubstitutor inplacePutAll(PsiClass parentClass, PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
 
-    for(int i = 0; i < params.length; i++){
+    for (int i = 0; i < params.length; i++) {
       if (mappings != null && mappings.length > i) {
         mySubstitutionMap.put(params[i], mappings[i]);
       }
