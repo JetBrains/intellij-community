@@ -230,6 +230,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
 
     myOldFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
+    myScrollPane.getViewport().setPreferredSize(myContent.getPreferredSize());
     beforeShow();
 
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), myContainer.getPreferredSize());

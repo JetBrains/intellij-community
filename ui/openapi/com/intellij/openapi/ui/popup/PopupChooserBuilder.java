@@ -97,31 +97,11 @@ public class PopupChooserBuilder {
       }
     });
 
-    myChooserComponent.addKeyListener(new KeyAdapter() {
-      public void keyTyped(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyChar()) {
-          closePopup(true);
-          e.consume();
-        }
-      }
-
-      public void keyPressed(KeyEvent e) {
-        KeyStroke keyStroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers());
-        for (KeyStroke keyStroke2 : myAdditionalKeystrokes) {
-          if (keyStroke2.equals(keyStroke)) {
-            e.consume();
-            closePopup(true);
-            return;
-          }
-        }
-      }
-    });
-
-    myChooserComponent.registerKeyboardAction(new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        closePopup(false);
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    regsiterClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
+    regsiterClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
+    for (KeyStroke keystroke : myAdditionalKeystrokes) {
+      regsiterClosePopupKeyboardAction(keystroke, true);
+    }
 
     myChooserComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -147,6 +127,14 @@ public class PopupChooserBuilder {
 
     myPopup = JBPopupFactory.getInstance().createComponentPopup(contentPane, myChooserComponent, true);
     return myPopup;
+  }
+
+  private void regsiterClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
+    myChooserComponent.registerKeyboardAction(new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        closePopup(shouldPerformAction);
+      }
+    }, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   private void closePopup(boolean shouldPerformAction) {
