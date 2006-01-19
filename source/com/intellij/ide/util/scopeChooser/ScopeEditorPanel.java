@@ -42,6 +42,7 @@ public class ScopeEditorPanel {
   private JPanel myPanel;
   private JPanel myTreePanel;
   private JLabel myMatchingCountLabel;
+  private JPanel myLegendPanel;
 
   private final Project myProject;
   private TreeExpantionMonitor myTreeExpantionMonitor;
@@ -116,7 +117,10 @@ public class ScopeEditorPanel {
   }
 
   public JPanel getTreePanel(){
-    return myTreePanel;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(myTreePanel, BorderLayout.CENTER);
+    panel.add(myLegendPanel, BorderLayout.SOUTH);
+    return panel;
   }
 
   public JPanel getTreeToolbar() {

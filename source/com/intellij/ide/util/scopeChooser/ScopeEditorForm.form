@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.util.scopeChooser.ScopeEditorPanel">
-  <grid id="42bd2" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="42bd2" binding="myPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="118" y="81" width="450" height="255"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="118" y="81" width="450" height="271"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -12,8 +12,8 @@
       <xy id="339b4" binding="myTreePanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="78" width="388" height="177"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
+          <xy x="2" y="88" width="384" height="144"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -22,8 +22,8 @@
       <xy id="a3f42" binding="myButtonsPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="398" y="78" width="52" height="177"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3"/>
+          <xy x="396" y="88" width="52" height="144"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -32,8 +32,8 @@
       <grid id="cb003" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="450" height="73"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="0" fill="3"/>
+          <xy x="2" y="2" width="446" height="81"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -41,8 +41,8 @@
           <grid id="51e56" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="53" width="450" height="20"/>
-              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="1" anchor="0" fill="3"/>
+              <xy x="2" y="55" width="442" height="24"/>
+              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="1" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -50,8 +50,8 @@
               <xy id="13190" binding="myTreeToolbar" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="0" width="193" height="20"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="3"/>
+                  <xy x="2" y="2" width="193" height="20"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="3" indent="0"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -59,8 +59,8 @@
               </xy>
               <component id="3ceea" class="javax.swing.JLabel" binding="myMatchingCountLabel">
                 <constraints>
-                  <xy x="203" y="3" width="247" height="14"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                  <xy x="205" y="12" width="235" height="0"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                     <minimum-size width="10" height="-1"/>
                     <preferred-size width="10" height="-1"/>
                   </grid>
@@ -73,19 +73,10 @@
               </component>
             </children>
           </grid>
-          <component id="be9da" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="0" y="4" width="35" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/IdeBundle" key="label.scope.name"/>
-            </properties>
-          </component>
           <component id="c6596" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="31" width="44" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <xy x="2" y="33" width="44" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/IdeBundle" key="label.scope.pattern"/>
@@ -93,8 +84,8 @@
           </component>
           <component id="449b8" class="javax.swing.JTextField" binding="myNameField">
             <constraints>
-              <xy x="54" y="1" width="351" height="20"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <xy x="56" y="3" width="343" height="20"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -102,8 +93,8 @@
           </component>
           <component id="58461" class="javax.swing.JTextField" binding="myPatternField">
             <constraints>
-              <xy x="54" y="28" width="351" height="20"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+              <xy x="56" y="30" width="343" height="20"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -111,8 +102,8 @@
           </component>
           <component id="95337" class="javax.swing.JLabel" binding="myCaretPositionLabel">
             <constraints>
-              <xy x="415" y="31" width="28" height="14"/>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <xy x="409" y="33" width="28" height="14"/>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
             </constraints>
             <properties>
               <text value="        "/>
@@ -121,13 +112,103 @@
           <xy id="1908c" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="415" y="0" width="35" height="23"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="409" y="2" width="35" height="23"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </xy>
+          <component id="be9da" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="2" y="6" width="35" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/IdeBundle" key="label.scope.name"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="c1ad4" binding="myLegendPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="2" y="237" width="384" height="32"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="c0b5f" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="5" bottom="0" right="0"/>
+            <constraints>
+              <xy x="124" y="2" width="258" height="28"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0"/>
+            </constraints>
+            <properties>
+              <background color="-1"/>
+              <opaque value="true"/>
+            </properties>
+            <border type="etched"/>
+            <children>
+              <component id="61c42" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="39" y="7" width="101" height="14"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="scope.editor.legend.recursively.included.label"/>
+                </properties>
+              </component>
+              <component id="2b8b5" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="180" y="7" width="74" height="14"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/IdeBundle" key="scope.editor.legend.partly.included.label"/>
+                </properties>
+              </component>
+              <component id="e0401" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="19" y="9" width="10" height="10"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0">
+                    <minimum-size width="10" height="10"/>
+                    <preferred-size width="10" height="10"/>
+                    <maximum-size width="10" height="10"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <background color="-16724992"/>
+                  <iconTextGap value="0"/>
+                  <opaque value="true"/>
+                  <text value=""/>
+                </properties>
+              </component>
+              <component id="da7b1" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="160" y="9" width="10" height="10"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0">
+                    <minimum-size width="10" height="10"/>
+                    <preferred-size width="10" height="10"/>
+                    <maximum-size width="10" height="10"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <background color="-16750900"/>
+                  <iconTextGap value="0"/>
+                  <opaque value="true"/>
+                  <text value=""/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <hspacer id="a1dd4">
+            <constraints>
+              <xy x="2" y="10" width="122" height="11"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
     </children>

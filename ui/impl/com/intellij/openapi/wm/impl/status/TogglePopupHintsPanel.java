@@ -40,6 +40,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
   private JLabel myHectorLabel = new JLabel(EMPTY_ICON);
   private JLabel myInspectionProfileLabel = new JLabel();
+  private int myMinLength;
 
   public TogglePopupHintsPanel() {
     super(new GridBagLayout());
@@ -82,7 +83,7 @@ public class TogglePopupHintsPanel extends JPanel {
       FileEditorManager.getInstance(project).addFileEditorManagerListener(myFileEditorManagerListener);
     }
     add(myHectorLabel,
-        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(myInspectionProfileLabel,
         new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
   }
@@ -100,7 +101,25 @@ public class TogglePopupHintsPanel extends JPanel {
         myHectorLabel.setIcon(INSPECTIONS_OFF_ICON);
       }
       myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
-      myInspectionProfileLabel.setText(InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file));
+      String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
+      if (text != null){
+        final Font font = getFont();
+        if (font != null) {
+          final int width = getFontMetrics(font).stringWidth(text);
+          if (width > 60 && text.length() > 30){
+            text = text.substring(0, 27) + "...";
+          }
+          if (myMinLength < width){
+            myMinLength = width;
+            Dimension dim = getPreferredSize();
+            dim = new Dimension(myMinLength, dim.height);
+            myInspectionProfileLabel.setPreferredSize(dim);
+            myInspectionProfileLabel.setMinimumSize(dim);
+            myInspectionProfileLabel.setMaximumSize(dim);
+          }
+        }
+      }
+      myInspectionProfileLabel.setText(text);
     }
     else {
       myHectorLabel.setIcon(EMPTY_ICON);
