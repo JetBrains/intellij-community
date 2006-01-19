@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -166,8 +167,9 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
           valueLabel =  DebuggerUtilsEx.truncateString(valueLabel);
 
-          if(descriptor.getEvaluateException() != null) {
-            String errorMessage = descriptor.getEvaluateException().getMessage();
+          final EvaluateException exception = descriptor.getEvaluateException();
+          if(exception != null) {
+            final String errorMessage = exception.getMessage();
 
             if(valueLabel.endsWith(errorMessage)) {
               descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTR);
