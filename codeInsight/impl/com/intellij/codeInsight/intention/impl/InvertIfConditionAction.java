@@ -9,8 +9,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightServicesUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -211,7 +211,10 @@ public class InvertIfConditionAction extends BaseIntentionAction {
         return;
       }
     }
-    if (element instanceof PsiWhileStatement && flow.getStartOffset(element) == endOffset) {
+    if (element instanceof PsiWhileStatement && flow.getStartOffset(element) == endOffset ||
+        element instanceof PsiForeachStatement && flow.getStartOffset(element) + 1 == endOffset // Foreach doesn't loop on it's first instruction
+      // but rather on second. It only accesses collection initially.
+      ) {
       PsiStatement statement = factory.createStatementFromText("continue;", null);
       statement = (PsiStatement) CodeStyleManager.getInstance(project).reformat(statement);
       addAfter(ifStatement, thenBranch);
@@ -245,7 +248,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
       if (first != null) {
         PsiElement last = first;
         while (last.getNextSibling() != null) last = last.getNextSibling();
-        while (last instanceof PsiWhiteSpace || (last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE))
+        while (first != last && (last instanceof PsiWhiteSpace || (last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE)))
           last = last.getPrevSibling();
 
 
