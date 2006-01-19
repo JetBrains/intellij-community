@@ -127,13 +127,15 @@ public abstract class SourcePosition implements Navigatable{
 
       protected int calcOffset() {
         final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-        try {
-          return document.getLineStartOffset(line);
+        if (document != null) {
+          try {
+            return document.getLineStartOffset(line);
+          }
+          catch (IndexOutOfBoundsException e) {
+            // may happen if document has been changed since the this SourcePosition was created
+          }
         }
-        catch (IndexOutOfBoundsException e) {
-          // may happen if document has been changed since the this SourcePosition was created
-          return -1;
-        }
+        return -1;
       }
     };
   }
@@ -142,13 +144,15 @@ public abstract class SourcePosition implements Navigatable{
     return new SourcePositionCache(file) {
       protected int calcLine() {
         final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-        try {
-          return document.getLineNumber(offset);
+        if (document != null) {
+          try {
+            return document.getLineNumber(offset);
+          }
+          catch (IndexOutOfBoundsException e) {
+            // may happen if document has been changed since the this SourcePosition was created
+          }
         }
-        catch (IndexOutOfBoundsException e) {
-          // may happen if document has been changed since the this SourcePosition was created
-          return -1;
-        }
+        return -1;
       }
 
       protected int calcOffset() {
