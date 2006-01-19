@@ -197,26 +197,23 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public LocalVariableProxyImpl visibleVariableByName(String name) throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      LocalVariable variable = getStackFrame().visibleVariableByName(name);
-      return variable != null ? new LocalVariableProxyImpl(this, variable) : null;
-    }
-    catch (InvalidStackFrameException e) {
-      return visibleVariableByName(name);
-    }
-    catch (AbsentInformationException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
+    final LocalVariable variable = visibleVariableByNameInt(name);
+    return variable != null ? new LocalVariableProxyImpl(this, variable) : null;
   }
 
   protected LocalVariable visibleVariableByNameInt(String name) throws EvaluateException  {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      return getStackFrame().visibleVariableByName(name);
+      try {
+        return getStackFrame().visibleVariableByName(name);
+      }
+      catch (InvalidStackFrameException e) {
+        clearCaches();
+        return getStackFrame().visibleVariableByName(name);
+      }
     }
     catch (InvalidStackFrameException e) {
-      clearCaches();
-      return visibleVariableByNameInt(name);
+      throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     catch (AbsentInformationException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
