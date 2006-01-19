@@ -1,14 +1,16 @@
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.uiDesigner.SimpleTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 
 /**
@@ -116,5 +118,35 @@ public final class GroupItem implements Cloneable, PaletteGroup {
       return this;
     }
     return null;
+  }
+
+  public void handleDrop(Project project, Transferable transferable, int index) {
+    ComponentItem componentItem = SimpleTransferable.getData(transferable, ComponentItem.class);
+    if (componentItem != null) {
+      Palette palette = Palette.getInstance(project);
+      int oldIndex = myItems.indexOf(componentItem);
+      if (oldIndex >= 0) {
+        if (index == -1 || oldIndex == index) return;
+        if (oldIndex < index) {
+          index--;
+        }
+        myItems.remove(oldIndex);
+      }
+      else {
+        for(GroupItem groupItem: palette.getGroups()) {
+          if (groupItem.myItems.contains(componentItem)) {
+            groupItem.removeItem(componentItem);
+            break;
+          }
+        }
+      }
+      if (index == -1) {
+        myItems.add(componentItem);
+      }
+      else {
+        myItems.add(index, componentItem);
+      }
+      palette.fireGroupsChanged();
+    }
   }
 }

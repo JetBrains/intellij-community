@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -52,6 +53,21 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       pref.height -= 3;
       setPreferredSize(pref);
     }
+
+    new DropTarget(this, new DropTargetAdapter() {
+      public void dragEnter(DropTargetDragEvent dtde) {
+        setBorderPainted(true);
+      }
+
+      public void dragExit(DropTargetEvent dte) {
+        setBorderPainted(false);
+      }
+
+      public void drop(DropTargetDropEvent dtde) {
+        setBorderPainted(false);
+        myGroup.handleDrop(myPaletteWindow.getProject(), dtde.getTransferable(), -1);
+      }
+    });
 
     initActions();
   }

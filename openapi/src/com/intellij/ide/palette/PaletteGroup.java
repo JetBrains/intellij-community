@@ -17,9 +17,11 @@
 
 package com.intellij.ide.palette;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.datatransfer.Transferable;
 
 /**
  * @author yole
@@ -51,4 +53,6 @@ public interface PaletteGroup {
    * @return the data item, or null if no data is available for this constant.
    */
   @Nullable Object getData(Project project, String dataId);
+
+  void handleDrop(Project project, Transferable transferable, int index);
 }

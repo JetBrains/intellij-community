@@ -105,7 +105,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     myGroupHeaders.add(groupHeader);
     myGroups.add(group);
     control.add(groupHeader);
-    PaletteComponentList componentList = new PaletteComponentList(group);
+    PaletteComponentList componentList = new PaletteComponentList(myProject, group);
     control.add(componentList);
     groupHeader.setComponentList(componentList);
     componentList.addListSelectionListener(myListSelectionListener);
@@ -185,6 +185,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
       return groupHeader.getGroup().getData(myProject, dataId);
     }
     return null;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private class MyListSelectionListener implements ListSelectionListener {

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NonNls;
@@ -26,12 +27,15 @@ import java.awt.event.MouseMotionAdapter;
  * @author yole
  */
 public class PaletteComponentList extends JList {
+  private Project myProject;
   private PaletteGroup myGroup;
   private int myHoverIndex = -1;
   private int myBeforeClickSelectedRow = -1;
+  private int myDropTargetIndex = -1;
   private boolean myNeedClearSelection = false;
 
-  public PaletteComponentList(PaletteGroup group) {
+  public PaletteComponentList(Project project, PaletteGroup group) {
+    myProject = project;
     myGroup = group;
     setModel(new AbstractListModel() {
       public int getSize() {
@@ -131,6 +135,13 @@ public class PaletteComponentList extends JList {
     }
   }
 
+  private void setDropTargetIndex(final int index) {
+    if (index != myDropTargetIndex) {
+      myDropTargetIndex = index;
+      repaint();
+    }
+  }
+
   @Override public void updateUI() {
     setUI(new ComponentListUI());
     invalidate();
@@ -175,6 +186,28 @@ public class PaletteComponentList extends JList {
     }
   }
 
+  @Override protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    if (myDropTargetIndex >= 0) {
+      int dropLineY;
+      Rectangle rc;
+      if (myDropTargetIndex == myGroup.getItemCount()) {
+        rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
+        dropLineY = (int)rc.getMaxY()-1;
+      }
+      else {
+        rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
+        dropLineY = rc.y;
+      }
+      Graphics2D g2d = (Graphics2D) g;
+      g2d.setColor(Color.BLUE);
+      g2d.setStroke(new BasicStroke(2.0f));
+      g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
+      g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
+      g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
+    }
+  }
+
   class ComponentListUI extends BasicListUI {
     @Override protected void updateLayoutState() {
       super.updateLayoutState();
@@ -205,7 +238,7 @@ public class PaletteComponentList extends JList {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
-      setBorder(index == myHoverIndex ? myHoverBorder : null);
+      //setBorder(index == myHoverIndex ? myHoverBorder : null);
       paletteItem.customizeCellRenderer(this, selected, hasFocus);
     }
   }
@@ -274,11 +307,30 @@ public class PaletteComponentList extends JList {
   }
 
   private class MyDropTargetAdapter extends DropTargetAdapter {
-    @Override public void dragOver(DropTargetDragEvent dtde) {
+    public void dragOver(DropTargetDragEvent dtde) {
       setHoverIndex(-1);
+      setDropTargetIndex(locationToTargetIndex(dtde.getLocation()));
+    }
+
+    private int locationToTargetIndex(Point location) {
+      int row = locationToIndex(location);
+      if (row < 0) {
+        return -1;
+      }
+      Rectangle rc = getCellBounds(row, row);
+      return location.y < rc.getCenterY() ? row : row + 1;
+    }
+
+    public void dragExit(DropTargetEvent dte) {
+      setDropTargetIndex(-1);
     }
 
     public void drop(DropTargetDropEvent dtde) {
+      setDropTargetIndex(-1);
+      int index = locationToTargetIndex(dtde.getLocation());
+      if (index >= 0) {
+        myGroup.handleDrop(myProject, dtde.getTransferable(), index);
+      }
     }
   }
 }
