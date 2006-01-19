@@ -2,12 +2,12 @@ package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.PopupHandler;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -27,6 +27,8 @@ import java.awt.event.MouseMotionAdapter;
 public class PaletteComponentList extends JList {
   private PaletteGroup myGroup;
   private int myHoverIndex = -1;
+  private int myBeforeClickSelectedRow = -1;
+  private boolean myNeedClearSelection = false;
 
   public PaletteComponentList(PaletteGroup group) {
     myGroup = group;
@@ -47,6 +49,22 @@ public class PaletteComponentList extends JList {
 
       @Override public void mouseExited(MouseEvent e) {
         setHoverIndex(-1);
+      }
+
+      @Override public void mousePressed(MouseEvent e) {
+        myNeedClearSelection = (SwingUtilities.isLeftMouseButton(e) &&
+                                myBeforeClickSelectedRow >= 0 &&
+                                locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
+                                !e.isControlDown() && !e.isShiftDown());
+      }
+
+      @Override public void mouseReleased(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e) &&
+            myBeforeClickSelectedRow >= 0 &&
+            locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
+            !e.isControlDown() && !e.isShiftDown() && myNeedClearSelection) {
+          clearSelection();
+        }
       }
     });
 
@@ -148,7 +166,7 @@ public class PaletteComponentList extends JList {
     }
   }
 
-  static class ComponentListUI extends BasicListUI {
+  class ComponentListUI extends BasicListUI {
     @Override protected void updateLayoutState() {
       super.updateLayoutState();
 
@@ -160,6 +178,15 @@ public class PaletteComponentList extends JList {
           cellWidth = (columnCount == 0) ? 1 : listWidth / columnCount;
         }
       }
+    }
+
+    @Override protected void installListeners() {
+      addMouseListener(new MouseAdapter() {
+        @Override public void mousePressed(MouseEvent e) {
+          myBeforeClickSelectedRow = list.getSelectedIndex();
+        }
+      });
+      super.installListeners();
     }
   }
 
