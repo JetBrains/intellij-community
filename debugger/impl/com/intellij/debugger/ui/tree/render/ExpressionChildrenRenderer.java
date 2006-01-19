@@ -67,7 +67,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
         evaluationContext.createEvaluationContext(value), builder.getParentDescriptor()
       );
 
-      ChildrenRenderer defaultRenderer = ((DebugProcessImpl)evaluationContext.getDebugProcess()).getDefaultRenderer(childrenValue.type());
+      final ChildrenRenderer defaultRenderer = ((DebugProcessImpl)evaluationContext.getDebugProcess()).getDefaultRenderer(childrenValue != null? childrenValue.type() : null);
       defaultRenderer.buildChildren(childrenValue, builder, evaluationContext);
     }
     catch (final EvaluateException e) {
