@@ -139,7 +139,7 @@ public class MappedFile {
   }
 
   private void expand() throws IOException {
-    resize((int)(myRealSize + Math.max(myRealSize, 1024 * 32)));
+    resize((int)((myRealSize + 1) * 13) >> 3);
   }
 
   public void put(final byte[] src, final int offset, final int length) throws IOException {
