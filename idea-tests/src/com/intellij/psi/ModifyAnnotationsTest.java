@@ -48,6 +48,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     assertNotNull(aClass);
     final PsiAnnotation[] annotations = aClass.getModifierList().getAnnotations();
     assertEquals(1, annotations.length);
+    assertEquals("A", annotations[0].getNameReferenceElement().getReferenceName());
     final PsiAnnotation newAnnotation = myPsiManager.getElementFactory().createAnnotationFromText("@B", null);
     //here the tree is going to be loaded
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
