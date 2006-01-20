@@ -5,11 +5,11 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -101,7 +101,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     rightPanel.add(myMessagePanel, gbConstraints);
 
     //  myMemoryUsagePanel.setOpaque(false);
-    myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(4, 3, 2, 3));
+    myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(4, 3, 3, 3));
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
   }
 

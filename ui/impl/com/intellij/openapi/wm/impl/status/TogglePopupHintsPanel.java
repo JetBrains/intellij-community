@@ -96,30 +96,29 @@ public class TogglePopupHintsPanel extends JPanel {
     if (!isClear && isStateChangeable(file)) {
       if (HighlightUtil.isRootInspected(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
+        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
+        if (text != null){
+          final Font font = getFont();
+          if (font != null) {
+            final int width = getFontMetrics(font).stringWidth(text);
+            if (width > 60 && text.length() > 30){
+              text = text.substring(0, 27) + "...";
+            }
+            if (myMinLength < width){
+              myMinLength = width;
+              Dimension dim = getMinimumSize();
+              dim = new Dimension(myMinLength, dim.height);
+              myInspectionProfileLabel.setPreferredSize(dim);             
+            }
+          }
+        }
+        myInspectionProfileLabel.setText(text);
       }
       else {
         myHectorLabel.setIcon(INSPECTIONS_OFF_ICON);
+        myInspectionProfileLabel.setText("");
       }
       myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
-      String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
-      if (text != null){
-        final Font font = getFont();
-        if (font != null) {
-          final int width = getFontMetrics(font).stringWidth(text);
-          if (width > 60 && text.length() > 30){
-            text = text.substring(0, 27) + "...";
-          }
-          if (myMinLength < width){
-            myMinLength = width;
-            Dimension dim = getPreferredSize();
-            dim = new Dimension(myMinLength, dim.height);
-            myInspectionProfileLabel.setPreferredSize(dim);
-            myInspectionProfileLabel.setMinimumSize(dim);
-            myInspectionProfileLabel.setMaximumSize(dim);
-          }
-        }
-      }
-      myInspectionProfileLabel.setText(text);
     }
     else {
       myHectorLabel.setIcon(EMPTY_ICON);

@@ -32,8 +32,7 @@ public class MemoryUsagePanel extends JPanel {
     setLayout(new BorderLayout());
     setOpaque(false);
     myIndicatorPanel = new IndicatorPanel();
-    myIndicatorPanel.setBorder(BorderFactory.createEmptyBorder(0, 1, 1, 1));
-
+    
     myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     add(myIndicatorPanel, BorderLayout.CENTER);
@@ -116,8 +115,8 @@ public class MemoryUsagePanel extends JPanel {
     }
   }
 
-  private final class IndicatorPanel extends JPanel {
-    @NonNls protected static final String SAMPLE_STRING = "0000M of 0000M";
+  private static final class IndicatorPanel extends JPanel {
+    @NonNls static final String SAMPLE_STRING = "0000M of 0000M";
 
     public IndicatorPanel() {
       updateUI();
@@ -125,7 +124,7 @@ public class MemoryUsagePanel extends JPanel {
 
     public final void updateUI() {
       super.updateUI();
-      setPreferredSize(new Dimension(getPreferedWidth(), getLineHeight()));
+      setPreferredSize(new Dimension(getPreferedWidth(), -1));
     }
 
     public final void paint(final Graphics g) {
