@@ -1,0 +1,9 @@
+public class X {
+  int field;
+  public X() {
+    <spot>field = 0;</spot>
+  }
+  void reset() {
+    field = -1;
+  }
+}
