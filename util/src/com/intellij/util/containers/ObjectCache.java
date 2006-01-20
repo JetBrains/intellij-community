@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
-public class ObjectCache<K,V> implements Iterable {
+public class ObjectCache<K,V> implements Iterable<V> {
 
   public static final int DEFAULT_SIZE = 8192;
   public static final int MIN_SIZE = 4;
@@ -238,11 +238,11 @@ public class ObjectCache<K,V> implements Iterable {
 
   // start of Iterable implementation
 
-  public Iterator iterator() {
+  public Iterator<V> iterator() {
     return new ObjectCacheIterator<K, V>(this);
   }
 
-  protected class ObjectCacheIterator<K,V> implements Iterator {
+  protected class ObjectCacheIterator<K,V> implements Iterator<V> {
     private ObjectCache<K, V> myCache;
     private int myCurrentEntry;
 
@@ -256,7 +256,7 @@ public class ObjectCache<K,V> implements Iterable {
       return (myCurrentEntry = myCache.myCache[myCurrentEntry].next) != 0;
     }
 
-    public Object next() {
+    public V next() {
       return myCache.myCache[myCurrentEntry].value;
     }
 
