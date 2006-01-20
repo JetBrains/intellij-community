@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -54,7 +55,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   }
 
   private int myCachedModifiers = -1;
-  private PsiAnnotation[] myCachedAnnotations = null;
+  private PsiAnnotation[] myRepositoryAnnotations = null;
 
   public PsiModifierListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
@@ -67,7 +68,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   public void subtreeChanged() {
     super.subtreeChanged();
     myCachedModifiers = -1;
-    myCachedAnnotations = null;
+    myRepositoryAnnotations = null;
   }
 
   public boolean hasModifierProperty(String name){
@@ -241,28 +242,21 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    if (myCachedAnnotations == null) {
-      if (getTreeElement() != null) {
-        myCachedAnnotations = calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+    if (getRepositoryId() >= 0) {
+      if (myRepositoryAnnotations != null) return myRepositoryAnnotations;
+      long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
+      DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
+      String[] annotationStrings = view.getAnnotations(parentId);
+      PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
+      for (int i = 0; i < annotationStrings.length; i++) {
+        temp[i] = new PsiAnnotationImpl(myManager, this, i);
       }
-      else {
-        long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
-        DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
-        String[] annotationStrings = view.getAnnotations(parentId);
-        PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
-        for (int i = 0; i < annotationStrings.length; i++) {
-          try {
-            temp[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
-            return PsiAnnotation.EMPTY_ARRAY;
-          }
-        }
-        myCachedAnnotations = temp;
-      }
+      myRepositoryAnnotations = temp;
+      return myRepositoryAnnotations;
     }
-    return myCachedAnnotations;
+    else {
+      return calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+    }
   }
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
@@ -276,4 +270,20 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   public String toString(){
     return "PsiModifierList:" + getText();
   }
-}
+
+public void setOwner(SrcRepositoryPsiElement owner) {
+    super.setOwner(owner);
+
+    if (myOwner == null) {
+      if (myRepositoryAnnotations != null) {
+        for (int i = 0; i < myRepositoryAnnotations.length; i++) {
+          PsiAnnotationImpl ref = (PsiAnnotationImpl)myRepositoryAnnotations[i];
+          ref.setOwnerAndIndex(this, i);
+        }
+      }
+      myRepositoryAnnotations = null;
+    }
+    else {
+      myRepositoryAnnotations = (PsiAnnotation[])bindIndexedSlaves(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+    }
+  }}

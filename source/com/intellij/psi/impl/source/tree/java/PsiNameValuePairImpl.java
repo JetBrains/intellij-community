@@ -65,7 +65,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   }
 
   public int getChildRole(ASTNode child) {
-    if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(child.getElementType())) {
+    if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;
     } else if (child.getElementType() == IDENTIFIER) {
       return ChildRole.NAME;
@@ -96,7 +96,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     return new PsiReference() {
       private PsiClass getReferencedClass () {
         LOG.assertTrue(getTreeParent().getElementType() == ANNOTATION_PARAMETER_LIST && getTreeParent().getTreeParent().getElementType() == ANNOTATION);
-        PsiAnnotationImpl annotation = (PsiAnnotationImpl)getTreeParent().getTreeParent();
+        PsiAnnotationImpl annotation = (PsiAnnotationImpl)getTreeParent().getTreeParent().getPsi();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
         return nameRef == null ? null : (PsiClass)nameRef.resolve();
       }
@@ -139,7 +139,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         if (nameIdentifier != null) {
           SharedPsiElementImplUtil.setName(nameIdentifier, newElementName);
         }
-        else if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(getFirstChildNode().getElementType())) {
+        else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getFirstChildNode().getElementType())) {
           PsiElementFactory factory = getManager().getElementFactory();
           nameIdentifier = factory.createIdentifier(newElementName);
           addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode()));

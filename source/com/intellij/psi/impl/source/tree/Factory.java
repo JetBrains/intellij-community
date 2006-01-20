@@ -431,7 +431,7 @@ public class Factory implements Constants {
       element = new AnnotationMethodElement();
     }
     else if (type == ANNOTATION) {
-      element = new PsiAnnotationImpl();
+      element = new AnnotationElement();
     }
     else if (type == ANNOTATION_ARRAY_INITIALIZER) {
       element = new PsiArrayInitializerMemberValueImpl();

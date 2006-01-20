@@ -1,28 +1,69 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.DeclarationView;
+import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
+import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifier, PsiAnnotation {
+public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements PsiModifier, PsiAnnotation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl");
+  private CompositeElement myParsedFromRepository;
 
-  public PsiAnnotationImpl() {
-    super(ANNOTATION);
+  public PsiAnnotationImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+    super(manager, treeElement);
+  }
+
+  public PsiAnnotationImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+    super(manager, owner, index);
   }
 
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+    return (PsiJavaCodeReferenceElement)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+  }
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myParsedFromRepository = null;
+  }
+
+  protected Object clone() {
+    final PsiAnnotationImpl clone = (PsiAnnotationImpl)super.clone();
+    clone.myParsedFromRepository = null;
+    return clone;
+  }
+
+  private CompositeElement getMirrorTreeElement() {
+    CompositeElement actualTree = getTreeElement();
+    if (actualTree != null) {
+      myParsedFromRepository = null;
+      return actualTree;
+    }
+
+    if (myParsedFromRepository != null) return myParsedFromRepository;
+    PsiElement owner = myOwner.getParent();
+    long parentId = ((SrcRepositoryPsiElement)owner).getRepositoryId();
+    DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
+    final String text = view.getAnnotations(parentId)[getIndex()];
+    try {
+      myParsedFromRepository = (CompositeElement)myManager.getElementFactory().createAnnotationFromText(text, this).getNode();
+      return myParsedFromRepository;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error("Bad annotation in repository!");
+      return null;
+    }
   }
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
@@ -35,42 +76,13 @@ public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifie
 
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    return (PsiAnnotationParameterList)findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
+    return (PsiAnnotationParameterList)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
   }
 
   @Nullable public String getQualifiedName() {
     final PsiJavaCodeReferenceElement nameRef = getNameReferenceElement();
     if (nameRef == null) return null;
     return nameRef.getCanonicalText();
-  }
-
-  public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-
-    IElementType i = child.getElementType();
-    if (i == ANNOTATION_PARAMETER_LIST) {
-      return ChildRole.PARAMETER_LIST;
-    }
-    else if (i == JAVA_CODE_REFERENCE) {
-      return ChildRole.CLASS_REFERENCE;
-    }
-    else {
-      return ChildRole.NONE;
-    }
-  }
-
-  public ASTNode findChildByRole(int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
-    switch (role) {
-      default:
-        return null;
-
-      case ChildRole.PARAMETER_LIST:
-        return TreeUtil.findChild(this, ANNOTATION_PARAMETER_LIST);
-
-      case ChildRole.CLASS_REFERENCE:
-        return TreeUtil.findChild(this, JAVA_CODE_REFERENCE);
-    }
   }
 
   public final void accept(PsiElementVisitor visitor) {
