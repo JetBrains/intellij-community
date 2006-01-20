@@ -44,6 +44,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new MoveInitializerToConstructorAction(), DECLARATION_CATEGORY);
+    registerIntentionAndMetaData(new MoveFieldAssignmentToInitializerAction(), DECLARATION_CATEGORY);
     registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CATEGORY);
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));

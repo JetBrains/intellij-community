@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,12 +30,12 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;
     if (element instanceof PsiCompiledElement) return false;
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
+    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class);
     if (field == null) return false;
     if (!field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
     
-    return psiClass != null && !psiClass.isInterface();
+    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

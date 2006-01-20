@@ -46,7 +46,8 @@ public class PsiTreeUtil {
     }
   }
 
-  public static PsiElement findCommonParent (PsiElement... elements) {
+  @Nullable
+  public static PsiElement findCommonParent (@NotNull PsiElement... elements) {
     if (elements.length == 0)  return null;
     PsiElement toReturn = elements[0];
     for (int i = 1; i < elements.length; i++) {
@@ -147,7 +148,24 @@ public class PsiTreeUtil {
     return (T)element;
   }
 
-  @Nullable public static PsiElement skipSiblingsForward (@Nullable PsiElement element, @NotNull Class[] elementClasses) {
+  @Nullable
+  public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, @NotNull Class<? extends PsiElement>... stopAt) {
+    if (element == null) return null;
+    if (strict) {
+      element = element.getParent();
+    }
+
+    while (element != null && !aClass.isInstance(element)) {
+      for (Class<? extends PsiElement> stopClass : stopAt) {
+        if (stopClass.isInstance(element)) return null;
+      }
+      element = element.getParent();
+    }
+
+    return (T)element;
+  }
+
+  @Nullable public static PsiElement skipSiblingsForward (@Nullable PsiElement element, @NotNull Class... elementClasses) {
     if (element == null) return null;
     NextSibling:
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
@@ -160,7 +178,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement skipSiblingsBackward (@Nullable PsiElement element, @NotNull Class[] elementClasses) {
+  public static PsiElement skipSiblingsBackward (@Nullable PsiElement element, @NotNull Class... elementClasses) {
     if (element == null) return null;
     NextSibling:
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
@@ -172,7 +190,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  public static @Nullable <T extends PsiElement> T getParentOfType(PsiElement element, Class<? extends T>... classes) {
+  public static @Nullable <T extends PsiElement> T getParentOfType(PsiElement element, @NotNull Class<? extends T>... classes) {
     if (element == null) return null;
     PsiElement parent = element.getParent();
     if (parent == null) return null;
@@ -180,8 +198,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes
-  ) {
+  public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {

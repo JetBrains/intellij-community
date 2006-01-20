@@ -84,10 +84,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
           // do not forget to delete variable declaration
           references.add(variable);
           // check for side effects
-          for (int i = 0; i < references.size(); i++) {
-            PsiElement element = references.get(i);
-            canCopeWithSideEffects[0] &=
-            processUsage(element, variable, sideEffects, SideEffectWarningDialog.CANCEL);
+          for (PsiElement element : references) {
+            canCopeWithSideEffects[0] &= processUsage(element, variable, sideEffects, SideEffectWarningDialog.CANCEL);
           }
         }
         catch (IncorrectOperationException e) {
