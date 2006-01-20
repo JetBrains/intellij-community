@@ -469,6 +469,7 @@ public class AnalysisScope {
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
       result.addAll(profileManager.getProfilesUsedInProject().values());
+      result.add(profileManager.getProjectProfile());
     } else if (myType == MODULE){
       processModule(result, myModule);
     } else if (myType == MODULES){
