@@ -267,7 +267,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       boolean deprecated;
       if (getTreeElement() != null){
         PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
         if (!deprecated) {
           deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
         }
