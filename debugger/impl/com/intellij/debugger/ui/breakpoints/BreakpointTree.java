@@ -213,15 +213,15 @@ public class BreakpointTree extends CheckboxTree {
   private static final class MethodDescriptor extends TreeDescriptor {
     private final String myClassName;
     private final String myMethodName;
-    private final String myPackageName;
+    private final @NotNull String myPackageName;
 
-    public MethodDescriptor(String methodName, String className, String packageName) {
+    public MethodDescriptor(String methodName, String className, @NotNull String packageName) {
       myClassName = className;
       myMethodName = methodName;
       myPackageName = packageName;
     }
 
-    public String getPackageName() {
+    public @NotNull String getPackageName() {
       return myPackageName;
     }
 
@@ -264,20 +264,16 @@ public class BreakpointTree extends CheckboxTree {
   }
 
   private static final class ClassDescriptor extends TreeDescriptor {
-    private final String myClassName;
-    private final String myPackageName;
+    private final @NotNull String myClassName;
+    private final @NotNull String myPackageName;
 
-    public ClassDescriptor(String className, String packageName) {
+    public ClassDescriptor(@NotNull String className, @NotNull String packageName) {
       myClassName = className;
-      myPackageName = "".equals(packageName)? DEFAULT_PACKAGE_NAME : packageName;
+      myPackageName = packageName.length() == 0? DEFAULT_PACKAGE_NAME : packageName;
     }
 
     public String getPackageName() {
-      if (myPackageName != null) {
-        return myPackageName;
-      }
-      final int dotIndex = myClassName.lastIndexOf('.');
-      return dotIndex >= 0 ? myClassName.substring(0, dotIndex) : DEFAULT_PACKAGE_NAME;
+      return myPackageName;
     }
 
     public String getClassName() {
@@ -285,8 +281,7 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     protected String getDisplayString() {
-      final int dotIndex = myClassName.lastIndexOf('.');
-      return dotIndex >= 0 && dotIndex + 1 < myClassName.length()? myClassName.substring(dotIndex + 1) : myClassName;
+      return getClassName();
     }
 
     protected Icon getDisplayIcon() {
@@ -658,7 +653,7 @@ public class BreakpointTree extends CheckboxTree {
       }
       final LineBreakpoint lineBreakpoint = (LineBreakpoint)breakpoint;
       final String methodName = lineBreakpoint.getMethodName();
-      final String className = lineBreakpoint.getClassName();
+      final String className = lineBreakpoint.getShortClassName();
       final String packageName = lineBreakpoint.getPackageName();
       if (methodName == null || className == null || packageName == null) {
         return node;
@@ -678,7 +673,7 @@ public class BreakpointTree extends CheckboxTree {
       }
       
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
-      final String className = breakpoint.getClassName();
+      final String className = breakpoint.getShortClassName();
       if (className == null) {
         return node;
       }

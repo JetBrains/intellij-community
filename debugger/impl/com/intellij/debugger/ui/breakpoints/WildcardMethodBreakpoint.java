@@ -40,6 +40,7 @@ import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -74,6 +75,10 @@ public class WildcardMethodBreakpoint extends Breakpoint {
 
   public String getClassName() {
     return myClassPattern;
+  }
+
+  public @Nullable String getShortClassName() {
+    return getClassName();
   }
 
   public String getMethodName() {

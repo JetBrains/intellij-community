@@ -5,33 +5,34 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
@@ -199,21 +200,19 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return DebuggerBundle.message("status.breakpoint.invalid");
   }
 
-  private static String findMethodName(final PsiFile file, final int offset) {
-    if (!(file instanceof PsiJavaFile)) {
+  private static @Nullable String findMethodName(final PsiFile file, final int offset) {
+    if (file instanceof JspFile) {
       return null;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
-    final String[] rv = new String[]{""};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiMethod method = DebuggerUtilsEx.findPsiMethod(javaFile, offset);
-        if (method != null) {
-          rv[0] = method.getName() + "()";
+    if (file instanceof PsiJavaFile) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
+          return method != null? method.getName() + "()" : null;
         }
-      }
-    });
-    return rv[0];
+      });
+    }
+    return null;
   }
 
   public String getEventMessage(LocatableEvent event) {

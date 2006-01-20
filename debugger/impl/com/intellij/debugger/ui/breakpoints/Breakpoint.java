@@ -39,6 +39,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -75,11 +76,20 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public abstract String getDisplayName ();
 
-  public String getClassName() {
+  public @Nullable String getClassName() {
     return null;
   }
 
-  public String getPackageName() {
+  public @Nullable String getShortClassName() {
+    final String className = getClassName();
+    if (className != null) {
+      final int dotIndex = className.lastIndexOf('.');
+      return dotIndex >= 0 && dotIndex + 1 < className.length()? className.substring(dotIndex + 1) : className;
+    }
+    return className;
+  }
+
+  public @Nullable String getPackageName() {
     return null;
   }
 

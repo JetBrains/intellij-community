@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.CommonBundle;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcess;
@@ -30,12 +31,16 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
-import com.intellij.CommonBundle;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.xml.util.XmlUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,9 +60,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private boolean myVisible = true;
   private Icon myIcon = getSetIcon();
-  private String myClassName = "";
-  private String myPackageName = "";
-  private String myInvalidMessage = "";
+  private @Nullable String myClassName;
+  private @Nullable String myPackageName;
+  private @Nullable String myInvalidMessage;
 
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess,
                                                         final ReferenceType classType);
@@ -76,6 +81,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   public String getClassName() {
     return myClassName;
+  }
+
+  public @Nullable String getShortClassName() {
+    final SourcePosition pos = getSourcePosition();
+    if (pos != null) {
+      if (pos.getFile() instanceof JspFile) {
+        return getClassName();
+      }
+    }
+    return super.getShortClassName();
   }
 
   public String getPackageName() {
@@ -98,8 +113,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private void updateCaches(DebugProcessImpl debugProcess) {
     myIcon = calcIcon(debugProcess);
-    myClassName = JVMNameUtil.getClassDisplayName(debugProcess, getSourcePosition());
-    myPackageName = JVMNameUtil.getPackageDisplayName(debugProcess, getSourcePosition());
+    myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
+    myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
@@ -540,15 +555,20 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     PsiFile psiFile = getSourcePosition().getFile();
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     final String url = virtualFile != null? virtualFile.getUrl() : "";
     parentNode.setAttribute("url", url);
     parentNode.setAttribute("line", Integer.toString(getSourcePosition().getLine()));
-    parentNode.setAttribute("class", myClassName);
-    parentNode.setAttribute("package", myPackageName);
+    if (myClassName != null) {
+      parentNode.setAttribute("class", myClassName);
+    }
+    if (myPackageName != null) {
+      parentNode.setAttribute("package", myPackageName);
+    }
   }
 
   private ActionGroup createMenuActions() {

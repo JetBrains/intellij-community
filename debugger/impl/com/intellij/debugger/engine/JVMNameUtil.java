@@ -1,17 +1,17 @@
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.sun.jdi.ReferenceType;
-import com.sun.jdi.PrimitiveType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -194,7 +194,7 @@ public class JVMNameUtil {
     }
 
     public String getDisplayName(DebugProcessImpl debugProcess) {
-      return getClassDisplayName(debugProcess, mySourcePosition);
+      return getSourcePositionClassDisplayName(debugProcess, mySourcePosition);
     }
   }
 
@@ -260,30 +260,40 @@ public class JVMNameUtil {
     return signature.toName();
   }
 
-  public static PsiClass getClassAt(SourcePosition sourceOffset) {
-    PsiElement element = sourceOffset.getFile().findElementAt(sourceOffset.getOffset());
-    PsiClass parentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
-    return parentClass;
+  public static @Nullable PsiClass getClassAt(SourcePosition position) {
+    PsiElement element = position.getFile().findElementAt(position.getOffset());
+    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
   }
 
-  public static String getClassDisplayName(DebugProcessImpl debugProcess, SourcePosition classAt) {
-    PsiClass psiClass = getClassAt(classAt);
+  public static @Nullable String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+    final PsiFile positionFile = position.getFile();
+    if (positionFile instanceof JspFile) {
+      return positionFile.getName() + ":" + position.getLine();
+    }
+
+    final PsiClass psiClass = getClassAt(position);
 
     if(psiClass != null && psiClass.getQualifiedName() != null) {
       return psiClass.getQualifiedName();
     }
 
     if(debugProcess != null && debugProcess.isAttached()) {
-      List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(classAt);
+      List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if(allClasses.size() > 0) {
         return allClasses.get(0).name();
       }
     }
-    return DebuggerBundle.message("string.file.line.position", classAt.getFile().getName(), classAt.getLine());
+    return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
   }
 
-  public static String getPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition classAt) {
-    PsiClass psiClass = getClassAt(classAt);
+  public static @Nullable String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+    final PsiFile positionFile = position.getFile();
+    if (positionFile instanceof JspFile) {
+      final PsiDirectory dir = positionFile.getContainingDirectory();
+      return dir != null? dir.getVirtualFile().getPresentableUrl() : null;
+    }
+
+    final PsiClass psiClass = getClassAt(position);
 
     if(psiClass != null) {
       final PsiFile containingFile = psiClass.getContainingFile();
@@ -293,7 +303,7 @@ public class JVMNameUtil {
     }
 
     if(debugProcess != null && debugProcess.isAttached()) {
-      List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(classAt);
+      List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if(allClasses.size() > 0) {
         final String className = allClasses.get(0).name();
         int dotIndex = className.lastIndexOf('.');
