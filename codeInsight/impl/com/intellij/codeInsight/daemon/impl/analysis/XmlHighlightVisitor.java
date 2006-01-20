@@ -184,7 +184,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if (namespaceByPrefix.length() == 0) {
         final PsiFile containingFile = tag.getContainingFile();
         if (!HighlightUtil.isRootInspected(containingFile)) return;
-        
+
         if (!"xml".equals(namespacePrefix) ) {
           boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
 
@@ -1152,7 +1152,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         !(file instanceof JspFile) || file.getFileType() == StdFileTypes.JSPX
       );
 
-      if (namespaces.length > 1) {
+      if (namespaces.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
         final JList list = new JList(namespaces);
         list.setCellRenderer(new FQNameCellRenderer());
         Runnable runnable = new Runnable() {
