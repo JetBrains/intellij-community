@@ -7,9 +7,11 @@ package com.intellij.uiDesigner.quickFixes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -33,6 +35,11 @@ public class ChangeFieldTypeFix extends QuickFix {
   }
 
   public void run() {
+    final ReadonlyStatusHandler roHandler = ReadonlyStatusHandler.getInstance(myField.getProject());
+    final PsiFile psiFile = myField.getContainingFile();
+    if (psiFile == null) return;
+    final ReadonlyStatusHandler.OperationStatus status = roHandler.ensureFilesWritable(psiFile.getVirtualFile());
+    if (status.hasReadonlyFiles()) return;    
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {
