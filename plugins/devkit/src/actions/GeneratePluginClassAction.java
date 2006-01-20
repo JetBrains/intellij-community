@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
@@ -57,7 +58,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     super(text, description, icon);
   }
 
-  protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  @NotNull protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     try {
       final PsiElement[] psiElements = invokeDialogImpl(project, directory);
       return psiElements == CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
@@ -140,7 +141,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
   }
 
   @Nullable
-  protected Module getModule(PsiDirectory dir) {
+  protected static Module getModule(PsiDirectory dir) {
     Project project = dir.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
@@ -161,7 +162,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     return fileIndex.getModuleForFile(vFile);
   }
 
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  @NotNull protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     if (myFilesToPatch.size() == 0) {
       // user canceled module selection
       return CANCELED;
