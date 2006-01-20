@@ -254,7 +254,7 @@ public class HighlightMethodUtil {
     PsiSubstitutor superSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
     if (superSubstitutor == null) return -1;
     for (int i = 0; i < checkedExceptions.size(); i++) {
-      PsiType exception = checkedExceptions.get(i);
+      PsiType exception = superSubstitutor.substitute(checkedExceptions.get(i));
       if (!isMethodThrows(superMethod, superSubstitutor, exception)) {
         return i;
       }
