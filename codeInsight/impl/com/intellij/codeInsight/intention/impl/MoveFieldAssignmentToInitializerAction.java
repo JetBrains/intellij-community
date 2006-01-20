@@ -35,8 +35,22 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (psiClass == null || psiClass.isInterface()) return false;
     if (psiClass.getContainingFile() != file) return false;
     if (!insideConstructorOrClassInitializer(assignment, field)) return false;
+    if (!isValidAsFieldInitializer(assignment.getRExpression())) return false;
     if (!isInitializedWithSameExpression(field, assignment, null)) return false;
     return true;
+  }
+
+  private static boolean isValidAsFieldInitializer(final PsiExpression expression) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    expression.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+          result.set(Boolean.FALSE);
+        }
+      }
+    });
+    return result.get().booleanValue();
   }
 
   private static boolean insideConstructorOrClassInitializer(final PsiAssignmentExpression assignment, final PsiField field) {
