@@ -5,7 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocatorEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -301,7 +301,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
       */
       ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
-      LaterInvocatorEx.enterModal(myDialog);
+      LaterInvocator.enterModal(myDialog);
     }
 
     try {
@@ -310,7 +310,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     finally {
       if (myDialog.isModal() && !isProgressDialog()) {
         ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
-        LaterInvocatorEx.leaveModal(myDialog);
+        LaterInvocator.leaveModal(myDialog);
       }
     }
   }

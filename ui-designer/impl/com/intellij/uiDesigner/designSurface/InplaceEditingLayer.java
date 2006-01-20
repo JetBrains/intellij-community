@@ -318,7 +318,7 @@ public final class InplaceEditingLayer extends JComponent{
         // Do nothing if focus moves inside top component hierarchy
         return;
       }
-      // [vova] we need LaterInvocatorEx here to prevent write-access assertions
+      // [vova] we need LaterInvocator here to prevent write-access assertions
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               finishInplaceEditing();

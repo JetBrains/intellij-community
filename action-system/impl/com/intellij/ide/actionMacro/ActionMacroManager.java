@@ -18,7 +18,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -170,27 +169,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       for (int i = 0; i < actions.length; i++) {
         // Right thing here. If some macro changes the context (like transferes focus) we should use changed one.
         actions[i].playBack(DataManager.getInstance().getDataContext());
-        pumpEvents();
+        IdeEventQueue.getInstance().flushQueue();
       }
       myLastMacro = macro;
     }
     finally{
       myIsPlaying = false;
-    }
-  }
-
-  private void pumpEvents() {
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) return;
-      try {
-        AWTEvent event1 = eventQueue.getNextEvent();
-        eventQueue.dispatchEvent(event1);
-      }
-      catch (Exception e) {
-        LOG.error(e); //?
-      }
     }
   }
 

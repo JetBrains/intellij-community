@@ -14,8 +14,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
 
-public class LaterInvocatorEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocatorEx");
+public class LaterInvocator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
 
   private static final Object LOCK = new Object();
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();

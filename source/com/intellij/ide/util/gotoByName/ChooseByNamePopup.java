@@ -17,7 +17,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
-    //LaterInvocatorEx.enterModal(myTextFieldPanel);
+    //LaterInvocator.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
       rebuildList(0, 0, null, ModalityState.current());
     }
@@ -115,7 +115,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myAlarm.cancelAllRequests();
     myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
 
-    //LaterInvocatorEx.leaveModal(myTextFieldPanel);
+    //LaterInvocator.leaveModal(myTextFieldPanel);
 
     cleanupUI();
     myActionListener.onClose ();

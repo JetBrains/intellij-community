@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ModalityStateListener;
-import com.intellij.openapi.application.impl.LaterInvocatorEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,13 +17,12 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
@@ -36,7 +35,7 @@ public class EditorFactoryImpl extends EditorFactory {
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
 
   public EditorFactoryImpl(ProjectManager projectManager) {
-    LaterInvocatorEx.addModalityStateListener(
+    LaterInvocator.addModalityStateListener(
       new ModalityStateListener() {
         public void beforeModalityStateChanged() {
           for (int i = 0; i < myEditors.size(); i++) {

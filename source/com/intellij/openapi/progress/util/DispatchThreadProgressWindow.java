@@ -5,8 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 
-import java.awt.*;
-
 public class DispatchThreadProgressWindow extends ProgressWindow{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.DispatchThreadProgressWindow");
 
@@ -37,17 +35,6 @@ public class DispatchThreadProgressWindow extends ProgressWindow{
     if (time - myLastPumpEventsTime < PUMP_INTERVAL) return;
     myLastPumpEventsTime = time;
 
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    while(true){
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) return;
-      try{
-        AWTEvent event1 = eventQueue.getNextEvent();
-        eventQueue.dispatchEvent(event1);
-      }
-      catch(Exception e){
-        LOG.error(e); //?
-      }
-    }
+    IdeEventQueue.getInstance().flushQueue();
   }
 }

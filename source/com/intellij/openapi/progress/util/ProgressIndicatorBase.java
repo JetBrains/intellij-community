@@ -2,7 +2,7 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocatorEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -48,13 +48,13 @@ public class ProgressIndicatorBase implements ProgressIndicator {
         SwingUtilities.invokeLater(
           new Runnable() {
             public void run() {
-              LaterInvocatorEx.enterModal(ProgressIndicatorBase.this);
+              LaterInvocator.enterModal(ProgressIndicatorBase.this);
             }
           }
         );
       }
       else{
-        LaterInvocatorEx.enterModal(this);
+        LaterInvocator.enterModal(this);
       }
     }
   }
@@ -68,13 +68,13 @@ public class ProgressIndicatorBase implements ProgressIndicator {
         SwingUtilities.invokeLater(
           new Runnable() {
             public void run() {
-              LaterInvocatorEx.leaveModal(ProgressIndicatorBase.this);
+              LaterInvocator.leaveModal(ProgressIndicatorBase.this);
             }
           }
         );
       }
       else{
-        LaterInvocatorEx.leaveModal(this);
+        LaterInvocator.leaveModal(this);
       }
     }
   }

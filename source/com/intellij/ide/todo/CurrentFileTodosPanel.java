@@ -41,7 +41,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel{
   }
 
   private void setFile(PsiFile file){
-    // setFile method is invoked in LaterInvocatorEx so PsiManager
+    // setFile method is invoked in LaterInvocator so PsiManager
     // can be already dispoded, so we need to check this before using it.
     if(isDisposed()){
       return;

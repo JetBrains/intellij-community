@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
@@ -374,6 +375,45 @@ public class IdeEventQueue extends EventQueue {
     catch (Throwable exc) {
       LOG.error("Error during dispatching of " + e, exc);
     }
+  }
+
+  public void flushQueue() {
+    while (true) {
+      AWTEvent event = peekEvent();
+      if (event == null) return;
+      try {
+        AWTEvent event1 = getNextEvent();
+        dispatchEvent(event1);
+      }
+      catch (Exception e) {
+        LOG.error(e); //?
+      }
+    }
+  }
+
+  public void pumpEventsForHierarchy(Component modalComponent, Condition<AWTEvent> exitCondition) {
+    AWTEvent event;
+    do {
+      try {
+        boolean eventOk = true;
+        event = getNextEvent();
+        final Object s = event.getSource();
+        if (s instanceof Component) {
+          Component c = (Component)s;
+          while (c != null && c != modalComponent) c = c.getParent();
+          if (c == null) eventOk = false;
+        }
+
+        if (eventOk) {
+          dispatchEvent(event);
+        }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        event = null;
+      }
+    }
+    while (!exitCondition.value(event));
   }
 
   public interface EventDispatcher {

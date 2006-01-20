@@ -473,11 +473,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void invokeLater(Runnable runnable) {
-    LaterInvocatorEx.invokeLater(runnable);
+    LaterInvocator.invokeLater(runnable);
   }
 
   public void invokeLater(Runnable runnable, ModalityState state) {
-    LaterInvocatorEx.invokeLater(runnable, state);
+    LaterInvocator.invokeLater(runnable, state);
   }
 
   public void invokeAndWait(Runnable runnable, ModalityState modalityState) {
@@ -489,7 +489,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     Thread currentThread = Thread.currentThread();
     if (myExceptionalThreadWithReadAccess == currentThread) { //OK if we're in exceptional thread.
-      LaterInvocatorEx.invokeAndWait(runnable, modalityState);
+      LaterInvocator.invokeAndWait(runnable, modalityState);
       return;
     }
 
@@ -503,18 +503,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (myIsWaitingForWriteAction) return; // The deadlock indeed. Do not perform request or we'll stall here immediately.
     }
 
-    LaterInvocatorEx.invokeAndWait(runnable, modalityState);
+    LaterInvocator.invokeAndWait(runnable, modalityState);
   }
 
   public ModalityState getCurrentModalityState() {
-    Object[] entities = LaterInvocatorEx.getCurrentModalEntities();
+    Object[] entities = LaterInvocator.getCurrentModalEntities();
     return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
   }
 
   public ModalityState getModalityStateForComponent(Component c) {
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
-    return LaterInvocatorEx.modalityStateForWindow(window);
+    return LaterInvocator.modalityStateForWindow(window);
   }
 
   public ModalityState getDefaultModalityState() {
@@ -752,8 +752,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       //TODO!
       /*
       IdeEventQueue eventQueue = IdeEventQueue.getInstance(); //TODO: cache?
-      if (!eventQueue.isInInputEvent() && !LaterInvocatorEx.isInMyRunnable() && !myInEditorPaint) {
-        LOG.error("Read access from event dispatch thread is allowed only inside input event processing or LaterInvocatorEx.invokeLater");
+      if (!eventQueue.isInInputEvent() && !LaterInvocator.isInMyRunnable() && !myInEditorPaint) {
+        LOG.error("Read access from event dispatch thread is allowed only inside input event processing or LaterInvocator.invokeLater");
       }
       */
 
@@ -791,8 +791,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       LOG.error();
     }
     else{
-      if (!IdeEventQueue.getInstance().isInInputEvent() && !LaterInvocatorEx.isInMyRunnable()) {
-        LOG.error("Write actions are allowed only inside input event processing or LaterInvocatorEx.invokeLater");
+      if (!IdeEventQueue.getInstance().isInInputEvent() && !LaterInvocator.isInMyRunnable()) {
+        LOG.error("Write actions are allowed only inside input event processing or LaterInvocator.invokeLater");
       }
     }
     */

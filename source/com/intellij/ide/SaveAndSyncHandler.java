@@ -1,9 +1,7 @@
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocatorEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,15 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Alarm;
 
-import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -91,7 +83,7 @@ class SaveAndSyncHandler implements ApplicationComponent {
   }
 
   private boolean canSyncOrSave() {
-    if (LaterInvocatorEx.isInModalContext()) return false;
+    if (LaterInvocator.isInModalContext()) return false;
     if (ProgressManager.getInstance().hasModalProgressIndicator()) return false;
     return true;
   }

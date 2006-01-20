@@ -424,7 +424,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       };
       // now can show dialogs in write actions...
       //if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()){
-      //  LaterInvocatorEx.invokeLater(askReloadRunnable);
+      //  LaterInvocator.invokeLater(askReloadRunnable);
       //}
       //else{
         askReloadRunnable.run();
