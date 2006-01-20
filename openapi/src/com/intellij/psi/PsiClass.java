@@ -327,5 +327,12 @@ public interface PsiClass
   @Nullable
   PsiClass getContainingClass();
 
-  Collection<HierarchicalMethodSignature> getVisibleSignatures();
+  /**
+   * Returns the hierarchical signatures for all methods in the specified class and
+   * its superclasses and superinterfaces.
+   *
+   * @return the collection of signatures.
+   * @since 5.1 
+   */
+  @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures();
 }

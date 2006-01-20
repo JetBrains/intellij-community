@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package com.intellij.openapi.vcs.actions;
 
@@ -27,6 +28,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Action showing the history of recently used commit messages. Source code of this class is provided 
+ * as a sample of using the {@link CheckinProjectPanel} API. Actions to be shown in the commit dialog
+ * should be added to the <code>Vcs.MessageActionGroup</code> action group.
+ *
+ * @author lesya
+ * @since 5.1
+ */
 public class ShowMessageHistoryAction extends AnAction {
 
   public void update(AnActionEvent e) {

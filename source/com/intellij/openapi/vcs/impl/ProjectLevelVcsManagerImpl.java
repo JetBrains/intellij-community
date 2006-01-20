@@ -62,7 +62,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.CodeAnalisysBeforeCheckinHandler;
+import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
 import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -224,7 +224,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       public
       @NotNull
       CheckinHandler createHandler(final CheckinProjectPanel panel) {
-        return new CodeAnalisysBeforeCheckinHandler(myProject, panel);
+        return new CodeAnalysisBeforeCheckinHandler(myProject, panel);
       }
     });
 

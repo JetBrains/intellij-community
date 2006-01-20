@@ -133,6 +133,14 @@ public abstract class ActionManager {
    */
   public abstract boolean isGroup(@NotNull String actionId);
 
+  /**
+   * Creates a panel with buttons which invoke actions from the specified action group.
+   *
+   * @param actionPlace        the place where the panel will be used (see {@link ActionPlaces}).
+   * @param messageActionGroup the action group from which the toolbar is created.
+   * @return the created panel.
+   * @since 5.1
+   */
   public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
 
 }

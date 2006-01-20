@@ -100,6 +100,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * Returns the list of package-level annotations for the package.
    *
    * @return the list of annotations, or null if the package does not have any package-level annotations.
+   * @since 5.1
    */
   @Nullable PsiModifierList getAnnotationList();
 

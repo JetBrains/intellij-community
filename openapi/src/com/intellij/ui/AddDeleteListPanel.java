@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * User: anna
- * Date: 22-Sep-2005
+ * Panel with "Add" and "Delete" buttons on the right side.
+ *
+ * @author anna
+ * @since 5.1
  */
 public abstract class AddDeleteListPanel extends PanelWithButtons {
   private String myTitle;

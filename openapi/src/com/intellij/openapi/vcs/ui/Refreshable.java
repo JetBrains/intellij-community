@@ -18,9 +18,18 @@ package com.intellij.openapi.vcs.ui;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * author: lesya
+ * Base interface for user interface objects which can be refreshed and can save/restore
+ * their state.
+ *
+ * @author lesya
  */
 public interface Refreshable {
+  /**
+   * The data ID which can be used to retrieve the active <code>Refreshable</code>
+   * instance from {@link com.intellij.openapi.actionSystem.DataContext}.
+   *
+   * @see com.intellij.openapi.actionSystem.DataContext#getData(String)
+   */
   @NonNls String PANEL = "Panel";
 
   void refresh();

@@ -27,39 +27,115 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-
+/**
+ * Interface for working with the checkin dialog user interface (retrieving the files
+ * included in the checkin operation, getting/setting the commit message and so on).
+ * The active check-in dialog can be retrieved from the
+ * {@link com.intellij.openapi.actionSystem.DataContext} using the {@link Refreshable#PANEL} data ID.
+ *
+ * @see com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#createHandler(CheckinProjectPanel)
+ * @see CheckinProjectDialogImplementer#getCheckinProjectPanel()
+ */
 public interface CheckinProjectPanel extends Refreshable {
-
+  /**
+   * The data ID that can be used to retrieve the list of revisions in the check-in as an
+   * array of {@link com.intellij.openapi.vcs.versions.AbstractRevisions} objects. The data provider
+   * to which the ID can be passed is the component returned from {@link #getComponent()}.
+   */
   @NonNls String REVISIONS = "Revisions";
 
   JComponent getComponent();
 
   JComponent getPreferredFocusedComponent();
 
+  /**
+   * Checks if the checkin operation has anything to check in.
+   *
+   * @return true if any files need to be updated, added or deleted; false otherwise.
+   */
   boolean hasDiffs();
 
   /**
-   * Adds selection change listener to the panel. To obtain selected object/objects use passed context with
-   * {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE} or
-   * {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE_ARRAY} constants
+   * Adds a listener which is notified when the selection in the check-in panel is moved.
+   * To obtain selected object/objects use the data context
+   * passed to {@link SelectionChangeListener#selectionChanged(com.intellij.openapi.actionSystem.DataContext)}
+   * with {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE} or
+   * {@link com.intellij.openapi.actionSystem.DataConstants#VIRTUAL_FILE_ARRAY} constants.
+   *
+   * @param listener the listener to add.
    */
   void addSelectionChangeListener(SelectionChangeListener listener);
 
+  /**
+   * Removes a listener which is notified when the selection in the check-in panel is moved.
+   *
+   * @param listener the listener to remove.
+   */
   void removeSelectionChangeListener(SelectionChangeListener listener);
 
+  /**
+   * Returns the list of files selected for checkin, as {@link VirtualFile} objects. The returned list
+   * does not include files which will be deleted from the VCS during the check-in operation.
+   *
+   * @return the files selected for checkin.
+   */
   Collection<VirtualFile> getVirtualFiles();
 
+  /**
+   * Returns the list of files selected for checkin, as {@link java.io.File} objects. The returned list
+   * includes files which will be deleted from the VCS during the check-in operation.
+   *
+   * @return the files selected for checkin.
+   * @since 5.1
+   */
   Collection<File> getFiles();
 
+  /**
+   * Returns the project in which the checkin is performed.
+   *
+   * @return the project instance.
+   */
   Project getProject();
 
+  /**
+   * Returns the list of operations (change, add, delete) that will need to be performed
+   * on individual files under a single VCS during the checkin operation.
+   *
+   * @param checkinEnvironment the environment for the checkin.
+   * @return the list of operations.
+   */
   List<VcsOperation> getCheckinOperations(CheckinEnvironment checkinEnvironment);
 
+  /**
+   * Returns the list of version control systems files from which are included in the
+   * commit operation.
+   *
+   * @return the list of affected VCSes.
+   * @since 5.1
+   */
   List<AbstractVcs> getAffectedVcses();
 
+  /**
+   * Returns the list of roots for the check-in (roots of all modules under version control
+   * in a "checkin project" operation, the files/directories selected for check-in in a
+   * "checkin directory" or "checkin file" operation).
+   *
+   * @return the list of roots for check-in.
+   */
   Collection<VirtualFile> getRoots();
 
+  /**
+   * Sets the description for the check-in.
+   *
+   * @param currentDescription the description text.
+   */
   void setCommitMessage(final String currentDescription);
 
-  String getMessage();
+  /**
+   * Gets the description for the check-in.
+   *
+   * @return the description text.
+   * @since 5.1
+   */
+  String getCommitMessage();
 }

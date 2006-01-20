@@ -154,7 +154,12 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public CheckinEnvironment getCheckinEnvironment() {
+  /**
+   * Returns the interface for performing checkin / commit / submit operations.
+   *
+   * @return the checkin interface, or null if checkins are not supported by the VCS.
+   */
+  @Nullable public CheckinEnvironment getCheckinEnvironment() {
     return null;
   }
 
@@ -233,7 +238,6 @@ public abstract class AbstractVcs {
    * @return the revision selector implementation, or null if none is provided.
    * @since 5.0.2
    */
-
   @Nullable public RevisionSelector getRevisionSelector() {
     return null;
   }

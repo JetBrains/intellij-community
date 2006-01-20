@@ -3,12 +3,18 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The information about a single problem found during pre-checkin code analysis.
+ *
+ * @since 5.1
+ * @see com.intellij.openapi.vcs.AbstractVcsHelper#findCodeSmells(java.util.List<com.intellij.openapi.vfs.VirtualFile>)
+ * @see com.intellij.openapi.vcs.AbstractVcsHelper#showCodeSmellErrors(java.util.List<com.intellij.codeInsight.CodeSmellInfo>)
+ */
 public final class CodeSmellInfo {
   @NotNull private final Document myDocument;
   private final String myDescription;
@@ -25,12 +31,15 @@ public final class CodeSmellInfo {
   @NotNull public Document getDocument() {
     return myDocument;
   }
+
   public String getDescription() {
     return myDescription;
   }
+
   public TextRange getTextRange(){
     return myTextRange;
   }
+
   public HighlightSeverity getSeverity(){
     return mySeverity;
   }

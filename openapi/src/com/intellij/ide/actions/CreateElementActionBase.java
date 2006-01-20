@@ -15,9 +15,15 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * The base class for actions which create new file elements.
+ *
+ * @since 5.1
+ */
 public abstract class CreateElementActionBase extends AnAction {
   protected CreateElementActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
@@ -26,14 +32,14 @@ public abstract class CreateElementActionBase extends AnAction {
   /**
    * @return created elements. Never null.
    */
-  protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
+  @NotNull protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
 
   protected abstract void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException;
 
   /**
    * @return created elements. Never null.
    */
-  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  @NotNull protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 

@@ -88,6 +88,7 @@ public interface ExtensionPoints {
    * text of comments.
    *
    * @see com.intellij.psi.search.IndexPatternProvider
+   * @since 5.1
    */
   @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
 

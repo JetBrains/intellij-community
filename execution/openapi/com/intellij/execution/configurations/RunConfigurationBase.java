@@ -132,6 +132,12 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     }
   }
 
+  /**
+   * The information about a single log file displayed in the console when the configuration
+   * is run.
+   *
+   * @since 5.1
+   */
   public static class LogFileOptions {
     private String myName;
     private String myPath;

@@ -18,11 +18,11 @@ package com.intellij.util.ui;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 25.06.2005
- * Time: 21:08:46
- * To change this template use File | Settings | File Templates.
+ * Helper functions for setting button and label mnemonics based on &amp; characters found
+ * in the control text.
+ *
+ * @author alex
+ * @since 5.1
  */
 public class DialogUtil {
   public static void registerMnemonic(AbstractButton button) {

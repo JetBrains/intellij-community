@@ -25,13 +25,15 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
- * author: lesya
+ * Interface for performing VCS checkin / commit / submit operations.
+ *
+ * @author lesya
+ * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment() 
  */
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();

@@ -16,7 +16,11 @@
 package com.intellij.openapi.vcs.annotate;
 
 /**
- * Can implement EditorGutterListener
+ * Represents one part of a line annotation which is shown in the editor when the "Annotate"
+ * action is invoked. Classes implementing this interface can also implement
+ * {@link com.intellij.openapi.editor.EditorGutterAction} to handle clicks on the annotation. 
+ *
+ * @see FileAnnotation#getAspects()
  */
 public interface LineAnnotationAspect {
   String getValue(int lineNumber);

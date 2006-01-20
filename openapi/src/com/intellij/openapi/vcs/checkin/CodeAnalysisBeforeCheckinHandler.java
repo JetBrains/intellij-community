@@ -19,12 +19,19 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeAnalisysBeforeCheckinHandler extends CheckinHandler {
+/**
+ * The check-in handler which performs code analysis before check-in. Source code for this class
+ * is provided as a sample of using the {@link CheckinHandler} API.
+ *
+ * @author lesya
+ * @since 5.1
+ */
+public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
   private final CheckinProjectPanel myCheckinPanel;
 
-  public CodeAnalisysBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
+  public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;
     myCheckinPanel = panel;
   }

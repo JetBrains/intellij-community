@@ -125,9 +125,28 @@ public abstract class ProjectLevelVcsManager {
                                                                @NotNull AbstractVcs vcs);
 
 
+  /**
+   * Returns the list of all registered factories which provide callbacks to run before and after
+   * VCS checkin operations.
+   *
+   * @return the list of registered factories.
+   * @since 5.1
+   */
   public abstract List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
 
+  /**
+   * Registers a factory which provides callbacks to run before and after VCS checkin operations.
+   *
+   * @param factory the factory to register.
+   * @since 5.1
+   */
   public abstract void registerCheckinHandlerFactory(CheckinHandlerFactory factory);
 
-  public abstract void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler);
+  /**
+   * Unregisters a factory which provides callbacks to run before and after VCS checkin operations.
+   *
+   * @param factory the factory to unregister.
+   * @since 5.1
+   */
+  public abstract void unregisterCheckinHandlerFactory(CheckinHandlerFactory factory);
 }

@@ -60,6 +60,12 @@ public interface ContentManager {
 
   void removeContentManagerListener(ContentManagerListener l);
 
+  /**
+   * Returns the localized name of the "Close All but This" action.
+   *
+   * @return the action name.
+   * @since 5.1
+   */
   String getCloseAllButThisActionName();
 
   List<AnAction> getAdditionalPopupActions(final Content content);

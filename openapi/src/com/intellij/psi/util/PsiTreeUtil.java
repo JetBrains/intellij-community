@@ -94,6 +94,14 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * Returns a direct child of the specified element which has any of the specified classes.
+   *
+   * @param element the element to get the child for.
+   * @param classes the array of classes.
+   * @return the element, or null if none was found.
+   * @since 5.1
+   */
   @Nullable public static PsiElement getChildOfAnyType(@NotNull PsiElement element, @NotNull Class... classes) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
       for(Class aClass:classes) {

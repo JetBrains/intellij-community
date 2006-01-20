@@ -14,11 +14,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Aug 29, 2005
- * Time: 6:03:03 PM
- * To change this template use File | Settings | File Templates.
+ * Automatically locates &amp; characters in texts of buttons and labels on a component or dialog,
+ * registers the mnemonics for those characters and removes them from the control text.
+ *
+ * @author lesya
+ * @since 5.1
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
   public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {

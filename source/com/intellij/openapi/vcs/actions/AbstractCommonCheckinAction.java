@@ -149,7 +149,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
         }
       }
 
-      checkinFiles(checkinEnvironment, roots, project, checkinPanel.getMessage(), context, handlers);
+      checkinFiles(checkinEnvironment, roots, project, checkinPanel.getCommitMessage(), context, handlers);
     }
 
   }
@@ -540,7 +540,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       myMessage = currentDescription;
     }
 
-    public String getMessage() {
+    public String getCommitMessage() {
       return myMessage;
     }
 

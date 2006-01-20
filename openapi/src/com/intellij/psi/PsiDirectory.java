@@ -117,6 +117,7 @@ public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationI
    * @param templateName custom file template to create class text based on.
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
+   * @since 5.1
    */
   @NotNull PsiClass createClass(String name, String templateName) throws IncorrectOperationException;
 

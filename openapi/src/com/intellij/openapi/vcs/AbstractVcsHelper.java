@@ -35,6 +35,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Component which provides means to invoke different VCS-related services.
+ */
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
     return project.getComponent(AbstractVcsHelper.class);
@@ -94,8 +97,25 @@ public abstract class AbstractVcsHelper {
 
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
+  /**
+   * Shows a dialog with the list of files changed in the specified changeset, displayed as two
+   * side-by-side folder trees.
+   *
+   * @param revisions the list of changed files to show.
+   * @param title     the title of the dialog.
+   */
   public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
 
+  /**
+   * Shows the list of files changed in the specified changeset, as two side-by-side
+   * folder trees, with an additional text message at the bottom.
+   *
+   * @param revisions          the list of changed files to show.
+   * @param title              the title of the dialog.
+   * @param commitMessage      the message to show at the bottom of the dialog.
+   * @param commitMessageTitle the title of the frame around the message shown at the bottom of the dialog.
+   * @since 5.1
+   */
   public abstract void showRevisions(List<AbstractRevisions> revisions,
                                      final String title,
                                      String commitMessage,
@@ -103,7 +123,21 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 
+  /**
+   * Performs pre-checkin code analysis on the specified files.
+   *
+   * @param files the files to analyze.
+   * @return the list of problems found during the analysis.
+   * @throws ProcessCanceledException if the analysis was cancelled by the user.
+   * @since 5.1
+   */
   public abstract List<CodeSmellInfo> findCodeSmells(List<VirtualFile> files) throws ProcessCanceledException;
 
+  /**
+   * Shows the specified list of problems found during pre-checkin code analysis in a Messages pane.
+   *
+   * @param smells the problems to show.
+   * @since 5.1
+   */
   public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
 }

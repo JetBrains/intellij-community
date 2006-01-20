@@ -524,6 +524,7 @@ public class FindModel implements Cloneable {
    * operation.
    *
    * @return true if the operation is a "Find All", false otherwise.
+   * @since 5.1
    */
   public boolean isFindAll() {
     return isFindAll;
@@ -534,6 +535,7 @@ public class FindModel implements Cloneable {
    * operation.
    *
    * @param findAll true if the operation is a "Find All", false otherwise.
+   * @since 5.1
    */
   public void setFindAll(final boolean findAll) {
     isFindAll = findAll;
@@ -543,6 +545,7 @@ public class FindModel implements Cloneable {
    * Gets the flag indicating whether "Find All" button is allowed for the operation.
    *
    * @return true if "Find All" is enabled, false otherwise.
+   * @since 5.1
    */
   public boolean isFindAllEnabled() {
     return isFindAllEnabled;
@@ -552,6 +555,7 @@ public class FindModel implements Cloneable {
    * Sets the flag indicating whether "Find All" button is allowed for the operation.
    *
    * @param findAllEnabled true if "Find All" is enabled, false otherwise.
+   * @since 5.1
    */
   public void setFindAllEnabled(final boolean findAllEnabled) {
     isFindAllEnabled = findAllEnabled;

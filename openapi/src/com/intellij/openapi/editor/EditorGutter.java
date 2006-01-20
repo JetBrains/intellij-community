@@ -32,6 +32,15 @@ public interface EditorGutter {
    * @param provider the provider instance.
    */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider);
+
+  /**
+   * Adds a provider for drawing custom text annotations in the editor gutter, with the
+   * possibility to execute an action when the annotation is clicked.
+   *
+   * @param provider the provider instance.
+   * @param action the action to execute when the annotation is clicked.
+   * @since 5.1
+   */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 
   /**

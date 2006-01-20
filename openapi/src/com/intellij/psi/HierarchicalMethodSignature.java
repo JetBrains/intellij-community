@@ -21,7 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Data structure which allows efficient retrieval of super methods for a Java method.
+ *
  * @author ven
+ * @since 5.1
  */
 public abstract class HierarchicalMethodSignature extends MethodSignatureBackedByPsiMethod {
 
@@ -30,5 +33,10 @@ public abstract class HierarchicalMethodSignature extends MethodSignatureBackedB
           signature.getParameterTypes(), signature.getTypeParameters());
   }
 
+  /**
+   * Returns the list of super method signatures for the specified signature.
+   *
+   * @return the super method signature list.
+   */
   @NotNull public abstract List<HierarchicalMethodSignature> getSuperSignatures();
 }

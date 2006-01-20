@@ -14,13 +14,20 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * The standard "New Class" action.
+ *
+ * @since 5.1
+ */
 public class CreateClassAction extends CreateElementActionBase {
   public CreateClassAction() {
     super(IdeBundle.message("action.create.new.class"),
           IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON);
   }
 
+  @NotNull
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     CreateElementActionBase.MyInputValidator validator = new CreateElementActionBase.MyInputValidator(project, directory);
     Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.class.name"),
@@ -65,6 +72,7 @@ public class CreateClassAction extends CreateElementActionBase {
     return IdeBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
   }
 
+  @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws IncorrectOperationException {
     return new PsiElement[]{directory.createClass(newName)};
   }
