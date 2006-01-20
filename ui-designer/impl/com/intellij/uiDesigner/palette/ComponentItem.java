@@ -5,22 +5,25 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.SimpleTransferable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
+import java.io.IOException;
 import java.util.HashMap;
 
 /**
@@ -52,26 +55,24 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private final HashMap<String, StringDescriptor> myPropertyName2intitialValue;
   /** Whether item is removable or not */
   private final boolean myRemovable;
+  @NotNull private Project myProject;
 
-  /**
-   * @param iconPath can be <code>null</code>.
-   * @param toolTipText if null, will be automatically calculated
-   * @param propertyName2intitialValue cannot be <code>null</code>
-   */
   public ComponentItem(
+    @NotNull Project project,
     final String className,
-    final String iconPath,
-    final String toolTipText,
+    @Nullable final String iconPath,
+    @Nullable final String toolTipText,
     @NotNull final GridConstraints defaultConstraints,
-    @NotNull final HashMap<String, StringDescriptor> propertyName2intitialValue,
+    @NotNull final HashMap<String, StringDescriptor> propertyName2initialValue,
     final boolean removable
   ){
+    myProject = project;
     setClassName(className);
     setIconPath(iconPath);
 
     myToolTipText = toolTipText;
     myDefaultConstraints = defaultConstraints;
-    myPropertyName2intitialValue = propertyName2intitialValue;
+    myPropertyName2intitialValue = propertyName2initialValue;
 
     myRemovable = removable;
   }
@@ -96,6 +97,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   /** Creates deep copy of the object. You can edit any properties of the returned object. */
   public ComponentItem clone(){
     final ComponentItem result = new ComponentItem(
+      myProject,
       myClassName,
       myIconPath,
       myToolTipText,
@@ -111,7 +113,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * icon returned by {@link #getIcon()} method. This method can returns <code>null</code>.
    * It means that palette item has some "unknown" item.
    */
-  String getIconPath(){
+  @Nullable String getIconPath() {
     return myIconPath;
   }
 
@@ -120,7 +122,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * <code>iconPath</code> is not specified and some "unknown" icon should be used
    * to represent the {@link ComponentItem} in UI.
    */
-  void setIconPath(final String iconPath){
+  void setIconPath(@Nullable final String iconPath){
     myIcon = null; // reset cached icon
     mySmallIcon = null; // reset cached icon
 
@@ -132,15 +134,26 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * Note, that the method never returns <code>null</code>. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
-  public Icon getIcon(){
+  @NotNull public Icon getIcon() {
     // Check cached value first
     if(myIcon != null){
       return myIcon;
     }
 
     // Create new icon
-    if(myIconPath != null){
-      myIcon = IconLoader.findIcon(myIconPath);
+    if(myIconPath != null) {
+      final VirtualFile iconFile = ModuleUtil.findResourceFileInProject(myProject, myIconPath);
+      if (iconFile != null) {
+        try {
+          myIcon = new ImageIcon(iconFile.contentsToByteArray());
+        }
+        catch (IOException e) {
+          myIcon = null;
+        }
+      }
+      else {
+        myIcon = IconLoader.findIcon(myIconPath);
+      }
     }
     if(myIcon == null){
       myIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
@@ -154,7 +167,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * component tree. The method never returns <code>null</code>. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
-  public Icon getSmallIcon(){
+  @NotNull public Icon getSmallIcon() {
     // Check cached value first
     if(mySmallIcon != null){
       return myIcon;

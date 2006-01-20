@@ -117,7 +117,12 @@ public class PropertiesUtil {
    */
   @Nullable public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
     @NonNls final String fileName = bundleName + ".properties";
-    return ModuleUtil.findResourceFileInDependents(searchFromModule, fileName, PropertiesFile.class);
+    VirtualFile vFile = ModuleUtil.findResourceFileInDependents(searchFromModule, fileName);
+    if (vFile != null) {
+      PsiFile psiFile = PsiManager.getInstance(searchFromModule.getProject()).findFile(vFile);
+      if (psiFile instanceof PropertiesFile) return (PropertiesFile) psiFile;
+    }
+    return null;    
   }
 
   @Nullable

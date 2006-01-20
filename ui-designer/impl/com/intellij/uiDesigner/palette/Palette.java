@@ -191,7 +191,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * @exception java.lang.IllegalArgumentException  if an item for the same class
    * is already exists in the palette
    */
-  private void addItem(@NotNull final GroupItem group, @NotNull final ComponentItem item) {
+  public void addItem(@NotNull final GroupItem group, @NotNull final ComponentItem item) {
     // class -> item
     final String componentClassName = item.getClassName();
     if (getItem(componentClassName) != null) {
@@ -211,6 +211,16 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     if("javax.swing.JPanel".equals(item.getClassName())){
       myPanelItem = item;
     }
+  }
+
+  public void replaceItem(GroupItem group, ComponentItem oldItem, ComponentItem newItem) {
+    group.replaceItem(oldItem, newItem);
+    myClassName2Item.put(oldItem.getClassName(), newItem);
+  }
+
+  public void removeItem(final GroupItem group, final ComponentItem selectedItem) {
+    group.removeItem(selectedItem);
+    myClassName2Item.remove(selectedItem.getClassName());
   }
 
   /**
@@ -286,6 +296,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     final boolean removable = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_REMOVABLE, true);
 
     final ComponentItem item = new ComponentItem(
+      myProject,
       className,
       iconPath,
       toolTipText,

@@ -4,15 +4,15 @@
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="61" y="92" width="407" height="226"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="dcb98" class="javax.swing.JLabel" binding="myLblClass">
         <constraints>
-          <xy x="0" y="3" width="33" height="14"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="2" y="5" width="33" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="editbox.class"/>
@@ -20,38 +20,31 @@
       </component>
       <component id="4afa" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfClassName">
         <constraints>
-          <xy x="43" y="0" width="364" height="20"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
+          <xy x="45" y="2" width="360" height="20"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0"/>
         </constraints>
         <properties/>
       </component>
       <vspacer id="28e07">
         <constraints>
-          <xy x="219" y="152" width="11" height="74"/>
-          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="219" y="162" width="11" height="62"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
         </constraints>
       </vspacer>
       <component id="f6ea7" class="javax.swing.JLabel" binding="myLblIcon">
         <constraints>
-          <xy x="0" y="28" width="29" height="14"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="2" y="30" width="29" height="14"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="editbox.icon"/>
         </properties>
       </component>
-      <component id="d5a2b" class="javax.swing.JTextField" binding="myTfIconPath">
-        <constraints>
-          <xy x="43" y="25" width="364" height="20"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
-        </constraints>
-        <properties/>
-      </component>
       <grid id="5754c" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="50" width="407" height="102"/>
-          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <xy x="2" y="52" width="403" height="110"/>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -59,16 +52,16 @@
           <grid id="cb58" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="209" y="0" width="198" height="102"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="207" y="2" width="194" height="106"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.vertical.size.policy"/>
             <children>
               <component id="f84fa" class="javax.swing.JCheckBox" binding="myChkVerCanShrink">
                 <constraints>
-                  <xy x="6" y="20" width="76" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="22" width="76" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.can.shrink.vert"/>
@@ -76,8 +69,8 @@
               </component>
               <component id="878fc" class="javax.swing.JCheckBox" binding="myChkVerCanGrow">
                 <constraints>
-                  <xy x="6" y="47" width="72" height="22"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="49" width="72" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.can.grow.vert"/>
@@ -85,8 +78,8 @@
               </component>
               <component id="f2b79" class="javax.swing.JCheckBox" binding="myChkVerWantGrow">
                 <constraints>
-                  <xy x="6" y="74" width="79" height="22"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="76" width="79" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.want.grow.vert"/>
@@ -97,16 +90,16 @@
           <grid id="b7a3f" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="199" height="102"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="2" y="2" width="195" height="106"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
             </constraints>
             <properties/>
             <border type="etched" title-resource-bundle="messages/UIDesignerBundle" title-key="group.horizontal.size.policy"/>
             <children>
               <component id="c7e68" class="javax.swing.JCheckBox" binding="myChkHorCanShrink">
                 <constraints>
-                  <xy x="6" y="20" width="76" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="22" width="76" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.can.shrink.horz"/>
@@ -114,8 +107,8 @@
               </component>
               <component id="965ac" class="javax.swing.JCheckBox" binding="myChkHorCanGrow">
                 <constraints>
-                  <xy x="6" y="47" width="72" height="22"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="49" width="72" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.can.grow.horz"/>
@@ -123,8 +116,8 @@
               </component>
               <component id="30a7" class="javax.swing.JCheckBox" binding="myChkHorWantGrow">
                 <constraints>
-                  <xy x="6" y="74" width="79" height="22"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <xy x="8" y="76" width="79" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/UIDesignerBundle" key="checkbox.want.grow.horz"/>
@@ -134,6 +127,13 @@
           </grid>
         </children>
       </grid>
+      <component id="6d2df" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfIconPath">
+        <constraints>
+          <xy x="45" y="27" width="360" height="20"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0"/>
+        </constraints>
+        <properties/>
+      </component>
     </children>
   </grid>
 </form>

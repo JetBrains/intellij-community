@@ -1,18 +1,16 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.lw.IconDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IconEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.module.impl.ModuleUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,9 +63,8 @@ public class IntroIconProperty extends IntrospectedProperty {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), descriptor);
     if (descriptor != null) {
       if (descriptor.getIcon() == null) {
-        PsiFile iconFile = ModuleUtil.findResourceFileInDependents(component.getModule(),
-                                                                   descriptor.getIconPath(),
-                                                                   PsiFile.class);
+        VirtualFile iconFile = ModuleUtil.findResourceFileInDependents(component.getModule(),
+                                                                       descriptor.getIconPath());
         if (iconFile != null) {
           loadIconFromFile(iconFile, descriptor);          
         }
@@ -76,8 +73,7 @@ public class IntroIconProperty extends IntrospectedProperty {
     }
   }
 
-  public static void loadIconFromFile(final PsiFile file, final IconDescriptor descriptor) {
-    final VirtualFile virtualFile = file.getVirtualFile();
+  public static void loadIconFromFile(final VirtualFile virtualFile, final IconDescriptor descriptor) {
     if (virtualFile != null) {
       try {
         descriptor.setIcon(new ImageIcon(virtualFile.contentsToByteArray()));

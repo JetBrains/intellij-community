@@ -27,6 +27,7 @@ public class AddComponentAction extends AnAction {
 
     // Show dialog
     final ComponentItem itemToBeAdded = new ComponentItem(
+      project,
       "",
       null,
       null,
@@ -48,7 +49,9 @@ public class AddComponentAction extends AnAction {
     }
 
     // add to the group
-    groupItem.addItem(itemToBeAdded);
-    Palette.getInstance(project).fireGroupsChanged();
+
+    final Palette palette = Palette.getInstance(project);
+    palette.addItem(groupItem, itemToBeAdded);
+    palette.fireGroupsChanged();
   }
 }

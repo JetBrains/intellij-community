@@ -157,7 +157,7 @@ public class ModuleUtil {
   }
 
   @Nullable
-  public static <T extends PsiFile> T findResourceFile(final String name, final Module inModule, final Class<T> aClass) {
+  public static VirtualFile findResourceFile(final String name, final Module inModule) {
     final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(inModule).getSourceRoots();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(inModule.getProject()).getFileIndex();
     for (final VirtualFile sourceRoot : sourceRoots) {
@@ -167,24 +167,35 @@ public class ModuleUtil {
       final String fullPath = sourceRoot.getPath() + "/" + relPath;
       final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
       if (fileByPath != null) {
-        final PsiFile psiFile = PsiManager.getInstance(inModule.getProject()).findFile(fileByPath);
-        if (aClass.isInstance(psiFile)) {
-          //noinspection unchecked
-          return (T)psiFile;
-        }
+        //final PsiFile psiFile = PsiManager.getInstance(inModule.getProject()).findFile(fileByPath);
+        //if (aClass.isInstance(psiFile)) {
+        //  //noinspection unchecked
+        //  return (T)psiFile;
+        //}
+        return fileByPath;
       }
     }
     return null;
   }
 
   @Nullable
-  public static <T extends PsiFile> T findResourceFileInDependents(final Module searchFromModule,
-                                                                    final String fileName,
-                                                                    final Class<T> aClass) {
+  public static VirtualFile findResourceFileInDependents(final Module searchFromModule, final String fileName) {
     final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
     getDependencies(searchFromModule, dependentModules);
     for(Module m: dependentModules) {
-      final T file = findResourceFile(fileName, m, aClass);
+      final VirtualFile file = findResourceFile(fileName, m);
+      if (file != null) {
+        return file;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile findResourceFileInProject(final Project project,final String fileName) {
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for(Module module: modules) {
+      final VirtualFile file = findResourceFile(fileName, module);
       if (file != null) {
         return file;
       }

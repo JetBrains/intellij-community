@@ -2,15 +2,22 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.ImageFileFilter;
+import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +35,7 @@ public final class ComponentItemDialog extends DialogWrapper{
   private final ComponentItem myItemToBeEdited;
   private JLabel myLblClass;
   private JLabel myLblIcon;
-  private JTextField myTfIconPath;
+  private TextFieldWithBrowseButton myTfIconPath;
   private JCheckBox myChkHorCanShrink;
   private JCheckBox myChkHorCanGrow;
   private JCheckBox myChkHorWantGrow;
@@ -39,9 +46,8 @@ public final class ComponentItemDialog extends DialogWrapper{
   /**
    * @param itemToBeEdited item to be edited. If user closes dialog by "OK" button then
    */
-  public ComponentItemDialog(final Project project, final Component parent, final ComponentItem itemToBeEdited) {
+  public ComponentItemDialog(final Project project, final Component parent, @NotNull ComponentItem itemToBeEdited) {
     super(parent, false);
-    LOG.assertTrue(itemToBeEdited != null);
 
     myItemToBeEdited = itemToBeEdited;
 
@@ -66,6 +72,25 @@ public final class ComponentItemDialog extends DialogWrapper{
     );
 
     myTfIconPath.setText(myItemToBeEdited.getIconPath());
+    myTfIconPath.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(project);
+        PsiFile iconFile = null;
+        if (myItemToBeEdited.getIconPath() != null) {
+          VirtualFile iconVFile = ModuleUtil.findResourceFileInProject(project, myItemToBeEdited.getIconPath());
+          if (iconVFile != null) {
+            iconFile = PsiManager.getInstance(project).findFile(iconVFile); 
+          }
+        }
+        TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("title.choose.icon.file"), iconFile,
+                                                                null, new ImageFileFilter(null));
+        fileChooser.showDialog();
+        PsiFile file = fileChooser.getSelectedFile();
+        if (file != null) {
+          myTfIconPath.setText("/" + GuiEditorUtil.buildResourceName(file));
+        }
+      }
+    });
 
     final GridConstraints defaultConstraints = myItemToBeEdited.getDefaultConstraints();
 

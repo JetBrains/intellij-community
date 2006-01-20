@@ -40,7 +40,7 @@ public class EditComponentAction extends AnAction {
       }
     }
 
-    groupItem.replaceItem(selectedItem, itemToBeEdited);
+    palette.replaceItem(groupItem, selectedItem, itemToBeEdited);
     palette.fireGroupsChanged();
   }
 }

@@ -31,7 +31,8 @@ public class DeleteComponentAction extends AnAction {
       return;
     }
 
-    groupItem.removeItem(selectedItem);
-    Palette.getInstance(project).fireGroupsChanged();
+    final Palette palette = Palette.getInstance(project);
+    palette.removeItem(groupItem, selectedItem);
+    palette.fireGroupsChanged();
   }
 }
