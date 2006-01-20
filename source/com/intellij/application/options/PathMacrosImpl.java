@@ -112,8 +112,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   public void writeExternal(Element element) throws WriteExternalException {
     final Set<Map.Entry<String,String>> entries = myMacros.entrySet();
-    for (Iterator<Map.Entry<String, String>> iterator = entries.iterator(); iterator.hasNext();) {
-      Map.Entry<String, String> entry = iterator.next();
+    for (Map.Entry<String, String> entry : entries) {
       final Element macro = new Element(MACRO_ELEMENT);
       macro.setAttribute(NAME_ATTR, entry.getKey());
       macro.setAttribute(VALUE_ATTR, entry.getValue());
@@ -123,8 +122,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
     final Set<String> macroNames = getUserMacroNames();
-    for (Iterator<String> iterator = macroNames.iterator(); iterator.hasNext();) {
-      final String name = iterator.next();
+    for (final String name : macroNames) {
       result.addMacroReplacement(getValue(name), name);
     }
   }
@@ -132,8 +130,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   public void addMacroExpands(ExpandMacroToPathMap result) {
     final Set<String> macroNames = getUserMacroNames();
-    for (Iterator<String> iterator = macroNames.iterator(); iterator.hasNext();) {
-      final String name = iterator.next();
+    for (final String name : macroNames) {
       result.addMacroExpand(name, getValue(name));
     }
   }
