@@ -172,17 +172,20 @@ public class PaletteWindow extends JPanel implements DataProvider {
         return groupHeader.getGroup().getData(myProject, dataId);
       }
     }
-    JScrollPane activeScrollPane;
-    if (collectTabNames(myGroups).length == 1) {
-      activeScrollPane = myScrollPane;
-    }
-    else {
-      activeScrollPane = (JScrollPane) myTabbedPane.getSelectedComponent();
-    }
-    PaletteContentWindow activeContentWindow = (PaletteContentWindow) activeScrollPane.getViewport().getView();
-    PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
-    if (groupHeader != null) {
-      return groupHeader.getGroup().getData(myProject, dataId);
+    final int tabCount = collectTabNames(myGroups).length;
+    if (tabCount > 0) {
+      JScrollPane activeScrollPane;
+      if (tabCount == 1) {
+        activeScrollPane = myScrollPane;
+      }
+      else {
+        activeScrollPane = (JScrollPane) myTabbedPane.getSelectedComponent();
+      }
+      PaletteContentWindow activeContentWindow = (PaletteContentWindow) activeScrollPane.getViewport().getView();
+      PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
+      if (groupHeader != null) {
+        return groupHeader.getGroup().getData(myProject, dataId);
+      }
     }
     return null;
   }
