@@ -252,9 +252,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         PsiAnnotation[] temp = new PsiAnnotation[annotationStrings.length];
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
-            final PsiAnnotation annotation = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
-            LOG.assertTrue(annotation != null);
-            temp[i] = annotation;
+            temp[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
           }
           catch (IncorrectOperationException e) {
             LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
