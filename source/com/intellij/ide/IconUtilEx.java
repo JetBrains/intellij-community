@@ -17,6 +17,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.javaee.model.common.EnterpriseBean;
 
 import javax.swing.*;
 
@@ -49,7 +50,16 @@ public class IconUtilEx {
     else if (object instanceof Ejb) {
       return Icons.EJB_ICON;
     }
+    else if (object instanceof EnterpriseBean) {
+      return Icons.EJB_ICON;
+    }
     else if (object instanceof CmpField) {
+      return Icons.EJB_CMP_FIELD_ICON;
+    }
+    else if (object instanceof com.intellij.javaee.model.common.CmpField) {
+      return Icons.EJB_CMP_FIELD_ICON;
+    }
+    else if (object instanceof com.intellij.javaee.model.common.CmrField) {
       return Icons.EJB_CMP_FIELD_ICON;
     }
     else if (object instanceof CmrField) {
