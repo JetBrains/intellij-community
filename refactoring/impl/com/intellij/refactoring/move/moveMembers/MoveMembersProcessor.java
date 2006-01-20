@@ -66,7 +66,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setCommandName(members);
 
     final PsiManager manager = PsiManager.getInstance(myProject);
-    myTargetClass = manager.findClass(dialog.getTargetClassName(), GlobalSearchScope.allScope(myProject));
+    myTargetClass = manager.findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
   }
 
