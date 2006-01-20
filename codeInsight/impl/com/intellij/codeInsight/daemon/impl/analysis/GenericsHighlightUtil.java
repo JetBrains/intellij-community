@@ -309,7 +309,8 @@ public class GenericsHighlightUtil {
     final PsiMethod checkMethod = toCheck.getMethod();
     if (checkMethod.isConstructor()) {
       if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
-    }
+    } else if (superMethod.isConstructor()) return null;
+
 
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
       if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
