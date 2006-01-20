@@ -221,7 +221,7 @@ public class IdTableBuilding {
       super.build(chars, length, wordsTable, todoPatterns, todoCounts, manager);
 
       try {
-        LwRootContainer container = Utils.getRootContainer(new String(chars),
+        LwRootContainer container = Utils.getRootContainer(new String(chars, 0, length),
                                                            null/*no need component classes*/);
         String className = container.getClassToBind();
         if (className != null) {
@@ -238,6 +238,7 @@ public class IdTableBuilding {
                                 });
       }
       catch (Exception e) {
+        LOG.error("Error indexing form file", e);
       }
     }
   }
