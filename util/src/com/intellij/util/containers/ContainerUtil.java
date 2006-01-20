@@ -207,4 +207,13 @@ public class ContainerUtil {
     //return (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
     return (T)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
   }
+
+  public static <T,V> List<T> concat(Iterable<V> list, Function<V,List<T>> fun) {
+    final ArrayList<T> result = new ArrayList<T>();
+    for (final V v : list) {
+      result.addAll(fun.fun(v));
+    }
+    return result;
+  }
+
 }
