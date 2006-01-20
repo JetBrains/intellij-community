@@ -1352,7 +1352,6 @@
      <!-- ***** java server faces actions *************************************** -->
     <action id="Faces.Navigation.Graph.OpenInEditorAction" class="com.intellij.jsf.graph.actions.OpenInEditorAction"
             text="_Jump to source" use-shortcut-of="EditSource" keymap="$default">
-      <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
     </action>
     <action id="Faces.Navigation.Graph.ScaleIncreaseAction" class="com.intellij.jsf.graph.actions.ScaleIncreaseAction" text="Increase">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
