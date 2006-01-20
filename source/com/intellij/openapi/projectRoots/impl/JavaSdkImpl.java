@@ -338,24 +338,22 @@ public class JavaSdkImpl extends JavaSdk {
       jarDirs = new File[]{jreLibFile, jreLibExtFile};
     }
 
-    ArrayList childrenList = new ArrayList();
-    for (int i = 0; i < jarDirs.length; i++){
-      File jarDir = jarDirs[i];
-      if ((jarDir != null) && jarDir.isDirectory()){
+    ArrayList<File> childrenList = new ArrayList<File>();
+    for (File jarDir : jarDirs) {
+      if ((jarDir != null) && jarDir.isDirectory()) {
         File[] files = jarDir.listFiles(jarFileFilter);
-        for (int j = 0; j < files.length; j++){
-          childrenList.add(files[j]);
+        for (File file1 : files) {
+          childrenList.add(file1);
         }
       }
     }
 
-    ArrayList result = new ArrayList();
-    for (int i = 0; i < childrenList.size(); i++){
-      File child = (File)childrenList.get(i);
+    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (File child : childrenList) {
       String path = child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      if (vFile != null){
+      if (vFile != null) {
         result.add(vFile);
       }
     }
@@ -370,7 +368,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
 
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   private static void addSources(File file, SdkModificator sdkModificator) {
