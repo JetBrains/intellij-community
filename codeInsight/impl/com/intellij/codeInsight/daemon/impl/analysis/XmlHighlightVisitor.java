@@ -18,13 +18,17 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -53,6 +57,7 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -178,7 +183,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       if (namespaceByPrefix.length() == 0) {
         final PsiFile containingFile = tag.getContainingFile();
-
+        if (!HighlightUtil.isRootInspected(containingFile)) return;
+        
         if (!"xml".equals(namespacePrefix) ) {
           boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
 
@@ -361,7 +367,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               final ASTNode endOfTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
               final ASTNode startOfTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tag.getNode());
               TextRange rangeForActionInStartTagName;
-              if (endOfTagStart != null && endOfTagStart != null) {
+              if (endOfTagStart != null && startOfTagStart != null) {
                 rangeForActionInStartTagName = new TextRange(
                   startOfTagStart.getStartOffset() + startOfTagStart.getTextLength(),
                   endOfTagStart.getStartOffset()
@@ -1086,7 +1092,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return true;
     }
 
-    private String guessNamespace(PsiFile file, Project project, boolean acceptTaglib, boolean acceptXmlNs) {
+    private String[] guessNamespace(PsiFile file, Project project, boolean acceptTaglib, boolean acceptXmlNs) {
+      List<String> possibleUris = new LinkedList<String>();
+
       if (acceptTaglib) {
         final JspManager instance = JspManager.getInstance(project);
         final JspFile jspFile = (JspFile)file;
@@ -1101,7 +1109,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           if (metaData instanceof TldDescriptor) {
             if ( ((TldDescriptor)metaData).getElementDescriptor(myTag) != null) {
-              return uri;
+              possibleUris.add(uri);
             }
           }
         }
@@ -1121,7 +1129,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(myTag.getLocalName(),url);
 
               if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-                return url;
+                possibleUris.add(url);
               }
             }
 
@@ -1129,19 +1137,69 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
       }
 
-      if (acceptTaglib) return XmlUtil.JSTL_CORE_URIS[0];
-      else return "someuri";
+     if (possibleUris.size() == 0) {
+        if (acceptTaglib) possibleUris.add(XmlUtil.JSTL_CORE_URIS[0]);
+        else possibleUris.add("someuri");
+      }
+      return possibleUris.toArray( new String[possibleUris.size()] );
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
-      final PsiElementFactory elementFactory = rootTag.getManager().getElementFactory();
-      final String namespace = guessNamespace(
+    public void invoke(final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+      final String[] namespaces = guessNamespace(
         file,
         project,
         myTaglibDeclaration || file instanceof JspFile,
         !(file instanceof JspFile) || file.getFileType() == StdFileTypes.JSPX
       );
+
+      if (namespaces.length > 1) {
+        final JList list = new JList(namespaces);
+        list.setCellRenderer(new FQNameCellRenderer());
+        Runnable runnable = new Runnable() {
+          public void run() {
+            final int index = list.getSelectedIndex();
+            if (index < 0) return;
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+            CommandProcessor.getInstance().executeCommand(
+              project,
+              new Runnable() {
+                public void run() {
+                  ApplicationManager.getApplication().runWriteAction(
+                    new Runnable() {
+                      public void run() {
+                        try {
+                          insertNsDeclaration(file, namespaces[index], project);
+                        }
+                        catch (IncorrectOperationException e) {}
+                      }
+                    }
+                  );
+                }
+              },
+              getText(),
+              getFamilyName()
+            );
+          }
+        };
+
+        new PopupChooserBuilder(list).
+          setTitle(
+            XmlErrorMessages.message(
+                myTaglibDeclaration ? "select.taglib.title":"select.namespace.title"
+           )).
+          setItemChoosenCallback(runnable).
+          createPopup().
+          showInBestPositionFor(editor);
+      } else {
+        insertNsDeclaration(file, namespaces[0], project);
+      }
+    }
+
+    private void insertNsDeclaration(final PsiFile file, final String namespace, final Project project)
+      throws IncorrectOperationException {
+      final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
+      final PsiElementFactory elementFactory = rootTag.getManager().getElementFactory();
 
       if (myTaglibDeclaration) {
         final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);
