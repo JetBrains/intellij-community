@@ -267,7 +267,18 @@ public class GenericsUtil {
             if (typeArgument instanceof PsiCapturedWildcardType) toExtend = true;
             if (typeArgument instanceof PsiWildcardType &&
                 ((PsiWildcardType) typeArgument).getBound() instanceof PsiIntersectionType) toExtend = true;
-            substitutor = substitutor.put(typeParameter, typeArgument == null ? null : typeArgument.accept(this));
+            PsiType toPut;
+            if (typeArgument == null) {
+              toPut = null;
+            } else {
+              final PsiType accepted = typeArgument.accept(this);
+              if (typeArgument instanceof PsiIntersectionType) {
+                toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
+              } else {
+                toPut = accepted;
+              }
+            }
+            substitutor = substitutor.put(typeParameter, toPut);
           }
 
           PsiManager manager = aClass.getManager();
