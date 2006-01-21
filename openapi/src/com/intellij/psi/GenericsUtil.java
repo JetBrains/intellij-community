@@ -138,7 +138,7 @@ public class GenericsUtil {
       if (type1 instanceof PsiWildcardType) {
         PsiWildcardType wild1 = (PsiWildcardType)type1;
         final PsiType bound1 = wild1.getBound();
-        if (bound1 == null) return type2;
+        if (bound1 == null) return type1;
         if (type2 instanceof PsiWildcardType) {
           PsiWildcardType wild2 = (PsiWildcardType)type2;
           final PsiType bound2 = wild2.getBound();
