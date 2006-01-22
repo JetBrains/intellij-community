@@ -69,21 +69,23 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     final JPanel jPanel = new JPanel();
     jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 
-    final JCheckBox checkJavaActions = new JCheckBox(
-            DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
-            CHECK_ACTIONS);
-    checkJavaActions.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        CHECK_ACTIONS = checkJavaActions.isSelected();
-      }
-    });
-
     final JCheckBox ignoreNonPublic = new JCheckBox(
             DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
             IGNORE_NON_PUBLIC);
     ignoreNonPublic.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         IGNORE_NON_PUBLIC = ignoreNonPublic.isSelected();
+      }
+    });
+
+    final JCheckBox checkJavaActions = new JCheckBox(
+            DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
+            CHECK_ACTIONS);
+    checkJavaActions.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        final boolean selected = checkJavaActions.isSelected();
+        CHECK_ACTIONS = selected;
+        ignoreNonPublic.setEnabled(selected);
       }
     });
 
@@ -97,18 +99,15 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     if (checkedClass.getQualifiedName() != null &&
             checkedClass.getNameIdentifier() != null &&
             checkedClass.getContainingFile().getVirtualFile() != null &&
-            !isAbstract(checkedClass)) {
-      if (IGNORE_NON_PUBLIC && !isPublic(checkedClass)) {
+            !isAbstract(checkedClass))
+    {
+      if (PsiUtil.isInnerClass(checkedClass)) {
+        // don't check inner classes (make this an option?)
         return null;
       }
 
       final PsiManager psiManager = checkedClass.getManager();
       final GlobalSearchScope scope = checkedClass.getResolveScope();
-
-      if (PsiUtil.isInnerClass(checkedClass)) {
-        // don't check inner classes (make this an option?)
-        return null;
-      }
 
       if (CHECK_ACTIONS) {
         final PsiClass actionClass = psiManager.findClass(AnAction.class.getName(), scope);
@@ -117,6 +116,9 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           return null;
         }
         if (checkedClass.isInheritor(actionClass, true)) {
+          if (IGNORE_NON_PUBLIC && !isPublic(checkedClass)) {
+            return null;
+          }
           if (!isActionRegistered(checkedClass)) {
             final LocalQuickFix fix = canFix(checkedClass) ? new RegisterActionFix(checkedClass) : null;
             final ProblemDescriptor problem = manager.createProblemDescriptor(

@@ -118,7 +118,6 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <focusTraversalPolicyProvider value="true"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.groups"/>
             </properties>
           </component>
