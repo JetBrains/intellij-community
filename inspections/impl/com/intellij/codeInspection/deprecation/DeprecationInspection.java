@@ -63,7 +63,7 @@ public class DeprecationInspection extends LocalInspectionTool {
         }
         final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
         final PsiMethod[] constructors = aClass.getConstructors();
-        if (constructors.length > 0) {
+        if (constructors.length > 0 && list != null) {
           JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
           MethodCandidateInfo result = null;
           if (results.length == 1) result = (MethodCandidateInfo)results[0];
