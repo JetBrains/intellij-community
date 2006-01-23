@@ -172,6 +172,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           }
 
           PsiCodeBlock methodBody = method.getBody();
+          if (methodBody == null) return;
           PsiStatement[] statements = methodBody.getStatements();
 
           int i = 0;
