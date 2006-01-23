@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -40,6 +42,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
@@ -50,6 +53,7 @@ import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -174,9 +178,18 @@ public class BreakpointManager implements JDOMExternalizable {
     myEditorMouseListener = new EditorMouseAdapter() {
       private EditorMouseEvent myMousePressedEvent;
 
-      private Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, int line) {
-        Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-        Document document = editor.getDocument();
+      private @Nullable Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, int line) {
+        final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        if (editor == null) {
+          return null;
+        }
+        final Document document = editor.getDocument();
+        final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        final FileType fileType = psiFile.getFileType();
+        final boolean isAcceptableFile = StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType || StdFileTypes.JSPX == fileType;
+        if (!isAcceptableFile) {
+          return null;
+        }
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         int offset = editor.getCaretModel().getOffset();
