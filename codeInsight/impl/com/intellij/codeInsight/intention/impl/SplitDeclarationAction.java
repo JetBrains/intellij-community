@@ -25,13 +25,9 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     if (element instanceof PsiCompiledElement) return false;
     if (!file.getManager().isInProject(file)) return false;
 
-    PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(
-        element,
-        PsiDeclarationStatement.class
-    );
-
-    if (decl != null) {
-      return isAvaliableOnDeclarationStatement(decl, element);
+    final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
+    if (context instanceof PsiDeclarationStatement) {
+      return isAvaliableOnDeclarationStatement((PsiDeclarationStatement)context, element);
     }
 
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
