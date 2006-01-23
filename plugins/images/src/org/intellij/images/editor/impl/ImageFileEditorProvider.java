@@ -53,6 +53,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
         return typeManager.isImage(file);
     }
 
+    @NotNull
     public FileEditor createEditor(Project project, VirtualFile file) {
         return new ImageFileEditorImpl(project, file);
     }
@@ -74,10 +75,12 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
     public void writeState(FileEditorState state, Project project, Element targetElement) {
     }
 
+    @NotNull
     public String getEditorTypeId() {
         return EDITOR_TYPE_ID;
     }
 
+    @NotNull
     public FileEditorPolicy getPolicy() {
         return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
