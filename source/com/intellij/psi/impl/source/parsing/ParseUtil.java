@@ -101,7 +101,7 @@ public class ParseUtil implements Constants {
       while (isTokenValid(lexer.getTokenType())) {
         TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
         IElementType type = lexer.getTokenType();
-        if (!WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(type)) {
+        if (!WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type)) {
           LOG.error("Missed token should be white space or comment:" + tokenElement);
           throw new RuntimeException();
         }
@@ -119,7 +119,7 @@ public class ParseUtil implements Constants {
     }
 
     public boolean isTokenValid(IElementType tokenType) {
-      return tokenType != null && WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType);
+      return tokenType != null && WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
     }
   }
 
@@ -165,7 +165,7 @@ public class ParseUtil implements Constants {
       if (tokenType != leaf.getElementType() && processor.isTokenValid(tokenType)) {
         final TreeElement firstMissing = processor.process(lexer, context);
         if (firstMissing != null) {
-          TreeUtil.insertBefore((TreeElement)root.getFirstChildNode(), firstMissing);
+          TreeUtil.insertBefore(root.getFirstChildNode(), firstMissing);
         }
       }
       passTokenOrChameleon(leaf, lexer, gt);
@@ -185,7 +185,7 @@ public class ParseUtil implements Constants {
           TreeUtil.addChildren((CompositeElement)current, firstMissing);
         }
         else{
-          TreeUtil.insertAfter((TreeElement)root.getLastChildNode(), firstMissing);
+          TreeUtil.insertAfter(root.getLastChildNode(), firstMissing);
         }
       }
     }
@@ -219,7 +219,7 @@ public class ParseUtil implements Constants {
             TreeUtil.addChildren(unclosedElement, firstMissing);
           }
           else {
-            TreeUtil.insertBefore((TreeElement)unclosedElement.getFirstChildNode(), firstMissing);
+            TreeUtil.insertBefore(unclosedElement.getFirstChildNode(), firstMissing);
           }
         }
         else {
@@ -309,7 +309,7 @@ public class ParseUtil implements Constants {
       return element;
     }
     else{
-      for(TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()){
+      for(TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()){
         TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
         if (leaf != null) return leaf;
       }
@@ -378,9 +378,8 @@ public class ParseUtil implements Constants {
     TreeElement element = docComment.getTreeNext();
     if (element == null) return false;
     TreeElement startSpaces = null;
-    TreeElement lastSpace = null;
 
-    TreeElement importList = null;
+      TreeElement importList = null;
     // Bypass meaningless tokens and hold'em in hands
     while (element.getElementType() == WHITE_SPACE ||
            element.getElementType() == C_STYLE_COMMENT ||
@@ -389,14 +388,13 @@ public class ParseUtil implements Constants {
       ) {
       if (element.getElementType() == IMPORT_LIST) importList = element;
       if (startSpaces == null) startSpaces = element;
-      lastSpace = element;
-      element = element.getTreeNext();
+        element = element.getTreeNext();
       if (element == null) return false;
     }
 
     if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
         element.getElementType() == ENUM_CONSTANT) {
-      TreeElement first = (TreeElement)element.getFirstChildNode();
+      TreeElement first = element.getFirstChildNode();
       if (startSpaces != null) {
         TreeUtil.removeRange(docComment, element);
       } else {
@@ -427,7 +425,7 @@ public class ParseUtil implements Constants {
       space = element;
       element = element.getTreePrev();
     }
-    if (element != null && BIND_TRAILING_COMMENT_BIT_SET.isInSet(element.getElementType())) {
+    if (element != null && BIND_TRAILING_COMMENT_BIT_SET.contains(element.getElementType())) {
       if (space == null || (!space.textContains('\n') && !space.textContains('\r'))) {
         if (!comment.textContains('\n') && !comment.textContains('\r')) {
           if (space != null) {
@@ -443,16 +441,12 @@ public class ParseUtil implements Constants {
     return false;
   }
 
-  private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
-    FIELD,
-    METHOD,
-    CLASS,
-    CLASS_INITIALIZER,
-  });
+  private static final TokenSet BIND_PRECEDING_COMMENT_BIT_SET = TokenSet.create(FIELD,
+          METHOD,
+          CLASS,
+          CLASS_INITIALIZER);
 
-  private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(new IElementType[]{
-    C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE
-  });
+  private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE);
 
   private static boolean bindPrecedingComment(TreeElement comment) {
     ASTNode element = TreeUtil.skipElements(comment, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
@@ -462,7 +456,7 @@ public class ParseUtil implements Constants {
       element = element.getTreeNext();
     }
 
-    if (element != null && BIND_PRECEDING_COMMENT_BIT_SET.isInSet(element.getElementType())) {
+    if (element != null && BIND_PRECEDING_COMMENT_BIT_SET.contains(element.getElementType())) {
       for (ASTNode child = comment; child != element; child = child.getTreeNext()) {
         if (child.getElementType() == WHITE_SPACE) {
           int count = StringUtil.getLineBreakCount(child.getText());
