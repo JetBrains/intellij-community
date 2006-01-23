@@ -13,8 +13,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -22,7 +22,6 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -144,7 +143,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       String canonicalText = getCanonicalText();
       XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag,canonicalText);
 
-      if (nsDescriptor != null) {
+      if (myType != null && nsDescriptor != null) {
         
         switch(myType) {
           case GroupReference: return nsDescriptor.findGroup(canonicalText);
