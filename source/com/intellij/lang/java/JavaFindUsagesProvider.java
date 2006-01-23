@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -312,7 +311,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
   public static boolean mayHaveReferencesImpl(final IElementType token, final short searchContext) {
     if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
-    if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.isInSet(token)) return true;
+    if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.contains(token)) return true;
     if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) {
       return true;
     }

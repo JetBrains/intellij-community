@@ -1,9 +1,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
 
 
@@ -28,7 +26,7 @@ public class AnnotationMethodElement extends MethodElement {
   public int getChildRole(ASTNode child) {
     if (child.getElementType() == DEFAULT_KEYWORD) {
       return ChildRole.DEFAULT_KEYWORD;
-    } else if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(child.getElementType())) {
+    } else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_DEFAULT_VALUE;
     }
 

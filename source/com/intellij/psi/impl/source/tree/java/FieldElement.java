@@ -89,7 +89,7 @@ public class FieldElement extends RepositoryTreeElement{
       return getChildRole(child, ChildRole.CLOSING_SEMICOLON);
     }
     else {
-      if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.INITIALIZER;
       }
       return ChildRole.NONE;

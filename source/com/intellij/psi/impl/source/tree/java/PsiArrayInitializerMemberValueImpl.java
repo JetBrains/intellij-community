@@ -50,7 +50,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
       return ChildRole.RBRACE;
     }
     else {
-      if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(child.getElementType())) {
+      if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
         return ChildRole.ANNOTATION_VALUE;
       }
       return ChildRole.NONE;

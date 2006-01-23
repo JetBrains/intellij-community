@@ -54,7 +54,7 @@ public class PsiInstanceOfExpressionImpl extends CompositePsiElement implements 
       return ChildRole.INSTANCEOF_KEYWORD;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.OPERAND;
       }
       return ChildRole.NONE;

@@ -23,7 +23,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         LOG.assertTrue(type == null);
         type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child));
       }
-      else if (PRIMITIVE_TYPE_BIT_SET.isInSet(child.getElementType())){
+      else if (PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())){
         LOG.assertTrue(type == null);
         type = getManager().getElementFactory().createPrimitiveType(child.getText());
       }
@@ -33,7 +33,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       }
       else if (child.getElementType() == ANONYMOUS_CLASS){
         PsiElementFactory factory = getManager().getElementFactory();
-        type = factory.createType((PsiClass)SourceTreeToPsiMap.treeElementToPsi(child));
+        type = factory.createType((PsiClass) SourceTreeToPsiMap.treeElementToPsi(child));
       }
     }
     return type;
@@ -227,10 +227,10 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       return ChildRole.ANONYMOUS_CLASS;
     }
     else {
-      if (PRIMITIVE_TYPE_BIT_SET.isInSet(child.getElementType())) {
+      if (PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())) {
         return ChildRole.TYPE_KEYWORD;
       }
-      else if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      else if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return child == getFirstChildNode() ? ChildRole.QUALIFIER : ChildRole.ARRAY_DIMENSION;
       }
       else {

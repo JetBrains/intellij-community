@@ -140,7 +140,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
       return getChildRole(child, ChildRole.RBRACE);
     }
     else {
-      if (ElementType.STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.STATEMENT_IN_BLOCK;
       }
       return ChildRole.NONE;

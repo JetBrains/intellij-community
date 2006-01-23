@@ -39,7 +39,7 @@ public class FilterLexer extends LexerBase {
     }
 
     public boolean reject(IElementType type) {
-      return mySet.isInSet(type);
+      return mySet.contains(type);
     }
   }
 

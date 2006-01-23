@@ -27,7 +27,7 @@ public class SourceUtil implements Constants {
 
   private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
     synchronized (PsiLock.LOCK) {
-      if (skipTypes != null && skipTypes.isInSet(element.getElementType())) return offset;
+      if (skipTypes != null && skipTypes.contains(element.getElementType())) return offset;
       if (element instanceof LeafElement) {
         return ((LeafElement)element).copyTo(buffer, offset);
       }

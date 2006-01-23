@@ -46,7 +46,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
           if (colon == null) return null;
           ASTNode child;
           for(child = colon.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
+            if (EXPRESSION_BIT_SET.contains(child.getElementType())) break;
           }
           return child;
         }
@@ -69,7 +69,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         int role = getChildRole(child, ChildRole.CONDITION);
         if (role != ChildRole.NONE) return role;
         return ChildRole.ASSERT_DESCRIPTION;

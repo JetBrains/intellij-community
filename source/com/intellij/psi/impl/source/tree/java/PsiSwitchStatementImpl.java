@@ -8,7 +8,6 @@ import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
 
@@ -63,7 +62,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
       return ChildRole.RPARENTH;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.SWITCH_EXPRESSION;
       }
       else if (child.getElementType() == CODE_BLOCK) {

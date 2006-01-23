@@ -63,7 +63,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
       return ChildRole.BLOCK;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.LOCK;
       }
       return ChildRole.NONE;

@@ -73,7 +73,7 @@ public class Factory implements Constants {
       element = new OuterLanguageElement(buffer, startOffset, endOffset, table);
     }
     else {
-      if (KEYWORD_BIT_SET.isInSet(type)) {
+      if (KEYWORD_BIT_SET.contains(type)) {
         element = new PsiKeywordImpl(type, buffer, startOffset, endOffset, lexerState, table);
       }
       else if (type instanceof IJavaElementType) {

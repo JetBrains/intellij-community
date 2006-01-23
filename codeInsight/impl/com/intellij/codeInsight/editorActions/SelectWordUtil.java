@@ -476,7 +476,7 @@ public class SelectWordUtil {
       lexer.start(chars, range.getStartOffset(), range.getEndOffset());
       while (lexer.getTokenType() != null) {
         if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {
-          if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet(lexer.getTokenType())) {
+          if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
             result.add(new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()));
           }
           else {

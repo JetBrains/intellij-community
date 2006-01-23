@@ -55,13 +55,13 @@ public class DefaultWordsScanner implements WordsScanner {
     myLexer.start(chars, 0, fileText.length());
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
-      if (myIdentifierTokenSet.isInSet(type)) {
+      if (myIdentifierTokenSet.contains(type)) {
         if (!processor.process(new WordOccurrence(currentTokenText(chars), WordOccurrence.Kind.CODE))) return;
       }
-      else if (myCommentTokenSet.isInSet(type)) {
+      else if (myCommentTokenSet.contains(type)) {
         if (!stripWords(processor, currentTokenText(chars), WordOccurrence.Kind.COMMENTS)) return;
       }
-      else if (myLiteralTokenSet.isInSet(type)) {
+      else if (myLiteralTokenSet.contains(type)) {
         if (!stripWords(processor, currentTokenText(chars), WordOccurrence.Kind.LITERALS)) return;
       }
       myLexer.advance();

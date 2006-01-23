@@ -6,7 +6,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -57,7 +56,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
       return ChildRole.COLON;
     }
     else {
-      if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+      if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.STATEMENT;
       }
       return ChildRole.NONE;

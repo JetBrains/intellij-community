@@ -7,8 +7,6 @@ import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,14 +63,14 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
         return getFirstChildNode();
 
       case ChildRole.OPERAND:
-        return EXPRESSION_BIT_SET.isInSet(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+        return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
-    if (child == getLastChildNode() && EXPRESSION_BIT_SET.isInSet(child.getElementType())) return ChildRole.OPERAND;
+    if (child == getLastChildNode() && EXPRESSION_BIT_SET.contains(child.getElementType())) return ChildRole.OPERAND;
     return ChildRole.NONE;
   }
 

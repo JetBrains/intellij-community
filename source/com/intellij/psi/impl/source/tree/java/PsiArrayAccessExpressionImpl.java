@@ -45,7 +45,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
           ASTNode lbracket = findChildByRole(ChildRole.LBRACKET);
           if (lbracket == null) return null;
           for(ASTNode child = lbracket.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (EXPRESSION_BIT_SET.isInSet(child.getElementType())){
+            if (EXPRESSION_BIT_SET.contains(child.getElementType())){
               return child;
             }
           }
@@ -70,7 +70,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
       return ChildRole.RBRACKET;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return child == getFirstChildNode() ? ChildRole.ARRAY : ChildRole.INDEX;
       }
       else {

@@ -46,7 +46,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.RETURN_VALUE;
       }
       else {

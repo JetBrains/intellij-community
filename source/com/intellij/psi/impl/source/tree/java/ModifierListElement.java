@@ -17,7 +17,7 @@ public class ModifierListElement extends RepositoryTreeElement{
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (before == null){
-      if (first == last && ElementType.KEYWORD_BIT_SET.isInSet(first.getElementType())){
+      if (first == last && ElementType.KEYWORD_BIT_SET.contains(first.getElementType())){
         anchor = CodeEditUtil.getDefaultAnchor((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(this),
                                                             (PsiKeyword)SourceTreeToPsiMap.treeElementToPsi(first));
         before = Boolean.TRUE;

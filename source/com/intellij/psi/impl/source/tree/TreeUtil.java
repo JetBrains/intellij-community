@@ -31,7 +31,7 @@ public class TreeUtil {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
     for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (types.isInSet(element.getElementType())) return element;
+      if (types.contains(element.getElementType())) return element;
     }
     return null;
   }
@@ -42,7 +42,7 @@ public class TreeUtil {
     }
     List<ASTNode> result = new ArrayList<ASTNode>();
     for(ASTNode element = parent.getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (types.isInSet(element.getElementType())) {
+      if (types.contains(element.getElementType())) {
         result.add(element);
       }
     }
@@ -64,7 +64,7 @@ public class TreeUtil {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
     for(ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()){
-      if (types.isInSet(element.getElementType())) return element;
+      if (types.contains(element.getElementType())) return element;
     }
     return null;
   }
@@ -72,26 +72,26 @@ public class TreeUtil {
   public static ASTNode skipElements(ASTNode element, TokenSet types) {
     while(true){
       if (element == null) return null;
-      if (!types.isInSet(element.getElementType())) break;
+      if (!types.contains(element.getElementType())) break;
       element = element.getTreeNext();
     }
     return element;
   }
 
   public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
-    if (!types.isInSet(element.getElementType())) return element;
+    if (!types.contains(element.getElementType())) return element;
 
     ASTNode parent = element.getTreeParent();
     ASTNode prev = element;
     while (element instanceof CompositeElement) {
-      if (!types.isInSet(prev.getElementType())) return prev;
+      if (!types.contains(prev.getElementType())) return prev;
       prev = prev.getTreePrev();
     }
     if (prev == null) return null;
     ASTNode firstChildNode = parent.getFirstChildNode();
     ASTNode lastRelevant = null;
     while(firstChildNode != prev){
-      if (!types.isInSet(firstChildNode.getElementType())) lastRelevant = firstChildNode;
+      if (!types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
       firstChildNode = firstChildNode.getTreeNext();
     }
     return lastRelevant;
@@ -106,7 +106,7 @@ public class TreeUtil {
 
   public static ASTNode findParent(ASTNode element, TokenSet types) {
     for(ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()){
-      if (types.isInSet(parent.getElementType())) return parent;
+      if (types.contains(parent.getElementType())) return parent;
     }
     return null;
   }
@@ -311,7 +311,7 @@ public class TreeUtil {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
-      if (types.isInSet(child.getElementType())) return child;
+      if (types.contains(child.getElementType())) return child;
       child = child.getTreeNext();
     }
   }

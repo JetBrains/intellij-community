@@ -200,7 +200,7 @@ abstract class BaseHtmlLexer extends LexerBase {
           baseLexer.advance();
         }
 
-        while(XmlTokenType.WHITESPACES.isInSet(baseLexer.getTokenType())) {
+        while(XmlTokenType.WHITESPACES.contains(baseLexer.getTokenType())) {
           baseLexer.advance();
         }
 

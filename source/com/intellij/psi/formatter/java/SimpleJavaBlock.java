@@ -29,7 +29,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
     Indent indent = null;
     while (child != null) {
-      if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      if (ElementType.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, null));
         indent = Indent.getNoneIndent();
       }

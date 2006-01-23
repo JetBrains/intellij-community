@@ -186,7 +186,7 @@ public class JavaUtil {
   }
 
   private static void skipWhiteSpaceAndComments(Lexer lexer){
-    while(JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(lexer.getTokenType())) {
+    while(JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
       lexer.advance();
     }
   }

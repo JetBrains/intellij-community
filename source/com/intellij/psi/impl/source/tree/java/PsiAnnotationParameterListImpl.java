@@ -47,7 +47,7 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
       return ChildRole.RPARENTH;
     }
     else {
-      if (ANNOTATION_MEMBER_VALUE_BIT_SET.isInSet(child.getElementType())) {
+      if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
         return ChildRole.ANNOTATION_VALUE;
       }
       else {

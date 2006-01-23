@@ -38,7 +38,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public PsiType getType() {
     if (myCachedType != null) return myCachedType;
 
-    if (getFirstChildNode().getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.isInSet(getFirstChildNode().getElementType())) {
+    if (getFirstChildNode().getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.contains(getFirstChildNode().getElementType())) {
       myCachedType = getManager().getElementFactory().createPrimitiveType(getFirstChildNode().getText());
     }
     else if (getFirstChildNode().getElementType() == ElementType.TYPE) {

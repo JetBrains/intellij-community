@@ -151,13 +151,13 @@ public class CompletionUtil {
     }
   }
 
-  public static final CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context){
+  public static CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context){
     CompletionData wordCompletionData = null;
     ASTNode textContainer = element != null ? element.getNode() : null;
     while(textContainer != null){
       final IElementType elementType = textContainer.getElementType();
       final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
-      if(readableTextContainerElements.isInSet(elementType) || elementType == ElementType.PLAIN_TEXT) wordCompletionData = ourWordCompletionData;
+      if(readableTextContainerElements.contains(elementType) || elementType == ElementType.PLAIN_TEXT) wordCompletionData = ourWordCompletionData;
       textContainer = textContainer.getTreeParent();
     }
     final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context);
@@ -165,7 +165,7 @@ public class CompletionUtil {
     return completionDataByElementInner;
   }
 
-  public static final CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context){
+  public static CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context){
     final PsiFile file = context.file;
     if(context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY) != null) {
       return context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY);
@@ -192,12 +192,12 @@ public class CompletionUtil {
     return ourGenericCompletionData;
   }
 
-  public static final void registerCompletionData(FileType fileType,CompletionData completionData) {
+  public static void registerCompletionData(FileType fileType,CompletionData completionData) {
     if (completionDatas==null) initBuiltInCompletionDatas();
     completionDatas.put(fileType, completionData);
   }
 
-  public static final CompletionData getCompletionDataByFileType(FileType fileType) {
+  public static CompletionData getCompletionDataByFileType(FileType fileType) {
     if (completionDatas==null) initBuiltInCompletionDatas();
     return completionDatas.get(fileType);
   }
@@ -300,7 +300,7 @@ public class CompletionUtil {
   }
 
   public static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
-    final List newSuggestions = new ArrayList();
+    final List<String> newSuggestions = new ArrayList<String>();
     int longestOverlap = 0;
 
     for (String suggestedName : suggestedNames) {
@@ -330,7 +330,7 @@ public class CompletionUtil {
         newSuggestions.add(suggestion);
       }
     }
-    return (String[]) newSuggestions.toArray(new String[newSuggestions.size()]);
+    return newSuggestions.toArray(new String[newSuggestions.size()]);
   }
 
   private static int getOverlap(final String propertyName, final String prefix) {

@@ -14,7 +14,7 @@ public class ReplaceExpressionUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil");
 
   public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
-    if (!ElementType.EXPRESSION_BIT_SET.isInSet(oldExpr.getTreeParent().getElementType())) return false;
+    if (!ElementType.EXPRESSION_BIT_SET.contains(oldExpr.getTreeParent().getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldExpr.getTreeParent());
     if (priority > parentPriority) return false;

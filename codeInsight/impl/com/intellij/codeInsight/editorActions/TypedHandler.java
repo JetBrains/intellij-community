@@ -88,7 +88,7 @@ public class TypedHandler implements TypedActionHandler {
     public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
       final IElementType tokenType = iterator.getTokenType();
 
-      if (myLiteralTokenSet.isInSet(tokenType)){
+      if (myLiteralTokenSet.contains(tokenType)){
         int start = iterator.getStart();
         int end = iterator.getEnd();
         return end - start >= 1 && offset == end - 1;
@@ -98,7 +98,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
-      if (myLiteralTokenSet.isInSet(iterator.getTokenType())){
+      if (myLiteralTokenSet.contains(iterator.getTokenType())){
         int start = iterator.getStart();
         return offset == start;
       }
@@ -115,7 +115,7 @@ public class TypedHandler implements TypedActionHandler {
         while (!iterator.atEnd() && iterator.getStart() < lineEnd) {
           IElementType tokenType = iterator.getTokenType();
 
-          if (myLiteralTokenSet.isInSet(tokenType)) {
+          if (myLiteralTokenSet.contains(tokenType)) {
             if (iterator.getStart() >= iterator.getEnd() - 1 ||
                 chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') {
               return true;
@@ -132,7 +132,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     public boolean isInsideLiteral(HighlighterIterator iterator) {
-      return myLiteralTokenSet.isInSet(iterator.getTokenType());
+      return myLiteralTokenSet.contains(iterator.getTokenType());
     }
   }
 
@@ -279,7 +279,7 @@ public class TypedHandler implements TypedActionHandler {
         if (!iterator.atEnd()) {
           iterator.retreat();
 
-          if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
+          if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(iterator.getTokenType())) {
             openingQuote = false;
           }
           iterator.advance();
@@ -296,7 +296,7 @@ public class TypedHandler implements TypedActionHandler {
         if (!iterator.atEnd()) {
           iterator.advance();
 
-          if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
+          if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(iterator.getTokenType())) {
             closingQuote = false;
           }
           iterator.retreat();
@@ -551,7 +551,7 @@ public class TypedHandler implements TypedActionHandler {
     PsiElement parent = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
 
     // TODO: handle it with insertAfterRParen(...)
-    if (parent != null) { 
+    if (parent != null) {
       if (elementAt != null && elementAt.getText().equals("}")) {
         editor.getCaretModel().moveToOffset(offset + 1);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -607,10 +607,10 @@ public class TypedHandler implements TypedActionHandler {
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    
+
     if (element instanceof XmlToken) {
       final IElementType tokenType = ((XmlToken)element).getTokenType();
-      
+
       if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END &&
           offset == element.getTextOffset()
          ) {
@@ -619,10 +619,10 @@ public class TypedHandler implements TypedActionHandler {
         return true;
       }
     }
-    
+
     return false;
   }
-  
+
   private void handleXmlSlash(Project project, Editor editor){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -630,7 +630,7 @@ public class TypedHandler implements TypedActionHandler {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset - 1);
     if (element == null) return;
-    
+
     ASTNode prevLeaf = element.getNode();
     if (!"/".equals(prevLeaf.getText())) return;
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
@@ -647,7 +647,7 @@ public class TypedHandler implements TypedActionHandler {
       tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
       if (tag == null) return;
     }
-    
+
     if (tag instanceof JspXmlTagBase) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
@@ -669,7 +669,7 @@ public class TypedHandler implements TypedActionHandler {
       if (!(element instanceof PsiWhiteSpace)) {
         if (element instanceof XmlToken) {
           final IElementType tokenType = ((XmlToken)element).getTokenType();
-          
+
           if (tokenType == XmlTokenType.XML_TAG_END ||
               tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
              ) {
@@ -680,7 +680,7 @@ public class TypedHandler implements TypedActionHandler {
         }
         return false;
       }
-      
+
       PsiElement parent = element.getParent();
       if (parent instanceof XmlText) {
         final String text = parent.getText();
@@ -747,7 +747,7 @@ public class TypedHandler implements TypedActionHandler {
 
     IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
     if (tokenType instanceof IJavaElementType) {
-      if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
+      if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
           && tokenType != JavaTokenType.SEMICOLON
           && tokenType != JavaTokenType.COMMA
           && tokenType != JavaTokenType.RPARENTH
@@ -842,7 +842,7 @@ public class TypedHandler implements TypedActionHandler {
       IElementType tokenType = iterator.getTokenType();
       if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP){
         if (tokenType instanceof IJavaElementType){
-          if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)
+          if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
               && tokenType != JavaTokenType.SEMICOLON
               && tokenType != JavaTokenType.COMMA
               && tokenType != JavaTokenType.RPARENTH

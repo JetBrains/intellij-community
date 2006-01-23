@@ -68,7 +68,7 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
       return ChildRole.RBRACE;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION_IN_LIST;
       }
       return ChildRole.NONE;

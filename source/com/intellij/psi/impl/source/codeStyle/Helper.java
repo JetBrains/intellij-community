@@ -688,7 +688,7 @@ public class Helper {
     if (parserDefinition == null) return false;
     final TokenSet commentTokens = parserDefinition.getCommentTokens();
     if (commentTokens == null) return false;
-    return commentTokens.isInSet(node.getElementType());
+    return commentTokens.contains(node.getElementType());
   }
 
   public boolean isSpaceAtStartOfLine(ASTNode parent, ASTNode child1, ASTNode child2) {

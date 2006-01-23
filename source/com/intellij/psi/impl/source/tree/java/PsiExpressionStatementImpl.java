@@ -43,7 +43,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION;
       }
       return ChildRole.NONE;

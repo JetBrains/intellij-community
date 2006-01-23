@@ -3,14 +3,10 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 
@@ -69,7 +65,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
       return ChildRole.COLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CASE_EXPRESSION;
       }
       else {

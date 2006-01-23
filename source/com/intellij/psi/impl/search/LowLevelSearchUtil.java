@@ -175,7 +175,7 @@ public class LowLevelSearchUtil {
     ProgressIndicator progress) {
     ProgressManager.getInstance().checkCanceled();
 
-    if (elementTypes.isInSet(scope.getElementType())) {
+    if (elementTypes.contains(scope.getElementType())) {
       String text = scope.getText(); //TODO: optimization to not fetch text?
       if (namesSet.contains(text)) {
         if (!processor.execute(SourceTreeToPsiMap.treeElementToPsi(scope))) return false;

@@ -656,7 +656,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
       final IElementType tokenType = iterator.getTokenType();
 
-      if (tokenType instanceof IJavaElementType && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType) ||
+      if (tokenType instanceof IJavaElementType && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType) ||
           tokenType == TokenType.WHITE_SPACE) {
         continue;
       }

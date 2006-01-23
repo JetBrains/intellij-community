@@ -28,7 +28,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
   }
 
   public void deleteChildInternal(ASTNode child) {
-    if (DECLARED_ELEMENT_BIT_SET.isInSet(child.getElementType())) {
+    if (DECLARED_ELEMENT_BIT_SET.contains(child.getElementType())) {
       PsiElement[] declaredElements = getDeclaredElements();
       int length = declaredElements.length;
       if (length > 0) {
@@ -62,7 +62,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     ASTNode prev = child;
     do {
       prev = prev.getTreePrev();
-    } while (prev != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(prev.getElementType()));
+    } while (prev != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(prev.getElementType()));
     if (prev != null && prev.getElementType() == COMMA) deleteChildInternal(prev);
   }
 

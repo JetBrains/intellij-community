@@ -32,7 +32,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
 
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
+        if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
           if (!elementsExceptKeyword.isEmpty()) {
             result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, Indent.getNoneIndent(), null));
             elementsExceptKeyword = new ArrayList<Block>();

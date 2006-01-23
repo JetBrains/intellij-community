@@ -76,7 +76,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       {
         ASTNode semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
         for(ASTNode child = semicolon; child != null; child = child.getTreeNext()){
-          if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+          if (STATEMENT_BIT_SET.contains(child.getElementType())) {
             return child;
           }
           if (child.getElementType() == RPARENTH) break;
@@ -91,7 +91,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       {
         ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
         for(ASTNode child = rparenth; child != null; child = child.getTreeNext()){
-          if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+          if (STATEMENT_BIT_SET.contains(child.getElementType())) {
             return child;
           }
         }
@@ -116,10 +116,10 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       return ChildRole.FOR_SEMICOLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         int role = getChildRole(child, ChildRole.FOR_INITIALIZATION);
         if (role != ChildRole.NONE) return role;
         role = getChildRole(child, ChildRole.FOR_UPDATE);

@@ -857,7 +857,7 @@ public class CodeEditUtil {
     for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode();
          child != null;
          child = child.getTreeNext()) {
-      if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
         Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;
         if (order1.intValue() > order.intValue()) {

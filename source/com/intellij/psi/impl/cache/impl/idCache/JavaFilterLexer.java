@@ -32,7 +32,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
       IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS);
       advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
     }
-    else if (JavaTokenType.KEYWORD_BIT_SET.isInSet(tokenType)) {
+    else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
       int start = getTokenStart();
       int end = getTokenEnd();
       IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_PLAIN_TEXT);

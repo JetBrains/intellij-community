@@ -65,10 +65,10 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
       return ChildRole.RPARENTH;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.LOOP_BODY;
       }
       else {

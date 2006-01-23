@@ -91,7 +91,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
           ASTNode child = quest.getTreeNext();
           while(true){
             if (child == null) return null;
-            if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) break;
+            if (EXPRESSION_BIT_SET.contains(child.getElementType())) break;
             child = child.getTreeNext();
           }
           return child;
@@ -104,14 +104,14 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
         {
           ASTNode colon = findChildByRole(ChildRole.COLON);
           if (colon == null) return null;
-          return EXPRESSION_BIT_SET.isInSet(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+          return EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
         }
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (EXPRESSION_BIT_SET.isInSet(child.getElementType())){
+    if (EXPRESSION_BIT_SET.contains(child.getElementType())){
       int role = getChildRole(child, ChildRole.CONDITION);
       if (role != ChildRole.NONE) return role;
       role = getChildRole(child, ChildRole.THEN_EXPRESSION);

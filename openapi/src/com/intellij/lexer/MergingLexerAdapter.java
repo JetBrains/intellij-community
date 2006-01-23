@@ -84,7 +84,7 @@ public class MergingLexerAdapter extends LexerBase {
       myState = myOriginal.getState();
       if (myTokenType == null) return;
       myOriginal.advance();
-      if (myTokensToMerge.isInSet(myTokenType)){
+      if (myTokensToMerge.contains(myTokenType)){
         while(true){
           IElementType tokenType = myOriginal.getTokenType();
           if (tokenType != myTokenType) break;

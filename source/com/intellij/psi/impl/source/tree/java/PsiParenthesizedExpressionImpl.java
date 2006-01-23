@@ -54,7 +54,7 @@ public class PsiParenthesizedExpressionImpl extends CompositePsiElement implemen
       return ChildRole.RPARENTH;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION;
       }
       return ChildRole.NONE;

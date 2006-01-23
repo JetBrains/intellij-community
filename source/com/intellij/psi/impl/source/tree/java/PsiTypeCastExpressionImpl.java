@@ -58,7 +58,7 @@ public class PsiTypeCastExpressionImpl extends CompositePsiElement implements Ps
       return ChildRole.TYPE;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.OPERAND;
       }
       return ChildRole.NONE;

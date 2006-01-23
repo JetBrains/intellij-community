@@ -19,7 +19,7 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
     if (tokenType == PropertiesTokenTypes.KEY_CHARACTERS) {
       IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
     }
-    else if (PropertiesTokenTypes.COMMENTS.isInSet(tokenType)) {
+    else if (PropertiesTokenTypes.COMMENTS.contains(tokenType)) {
       IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT);
       advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
     }

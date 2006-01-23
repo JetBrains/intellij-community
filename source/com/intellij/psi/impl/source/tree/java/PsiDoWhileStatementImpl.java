@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.lang.ASTNode;
 
@@ -84,10 +83,10 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (STATEMENT_BIT_SET.isInSet(child.getElementType())) {
+      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.LOOP_BODY;
       }
       else {
