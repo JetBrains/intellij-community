@@ -463,11 +463,11 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   public static MethodSignature getHashCodeSignature() {
-    return MethodSignatureUtil.createMethodSignature("hashCode",(PsiType[])null,null,PsiSubstitutor.EMPTY);
+    return MethodSignatureUtil.createMethodSignature("hashCode",PsiType.EMPTY_ARRAY,PsiTypeParameter.EMPTY_ARRAY,PsiSubstitutor.EMPTY);
   }
 
   public static MethodSignature getEqualsSignature(Project project, GlobalSearchScope scope) {
     final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), scope);
-    return MethodSignatureUtil.createMethodSignature("equals",new PsiType[]{javaLangObject},null,PsiSubstitutor.EMPTY);
+    return MethodSignatureUtil.createMethodSignature("equals",new PsiType[]{javaLangObject},PsiTypeParameter.EMPTY_ARRAY,PsiSubstitutor.EMPTY);
   }
 }
