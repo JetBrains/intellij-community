@@ -145,13 +145,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
 
-    ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
-    ArrayList<Pair<IntentionAction, List<IntentionAction>>> fixesToShow = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
+    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
         if (action instanceof QuickFixAction ||
             action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
-          List<Pair<IntentionAction,List<IntentionAction>>> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
+          List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
 
           int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
@@ -166,21 +166,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       else if (action.isAvailable(myProject, myEditor, myFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, enableDisableIntentionAction));
+        intentionsToShow.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(action, (String)null), enableDisableIntentionAction));
       }
     }
 
     if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
       boolean showBulb = false;
-      for (Pair<IntentionAction,List<IntentionAction>> action : fixesToShow) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first)) {
+      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> action : fixesToShow) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first.first)) {
           showBulb = true;
           break;
         }
       }
       if (!showBulb) {
-        for (Pair<IntentionAction,List<IntentionAction>> action : intentionsToShow) {
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first)) {
+        for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> action : intentionsToShow) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first.first)) {
             showBulb = true;
             break;
           }

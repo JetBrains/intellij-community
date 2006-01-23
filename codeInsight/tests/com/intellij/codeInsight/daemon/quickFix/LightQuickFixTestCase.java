@@ -138,8 +138,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         if (startOffset <= offset && offset <= endOffset
             && info.quickFixActionRanges != null
         ) {
-          for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
-            IntentionAction action = pair.first.first;
+          for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
+            IntentionAction action = pair.first.first.first;
             TextRange range = pair.second;
             if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
                 action.isAvailable(getProject(), editor, file)) {

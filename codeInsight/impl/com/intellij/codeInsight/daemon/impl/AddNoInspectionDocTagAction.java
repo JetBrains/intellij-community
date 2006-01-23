@@ -21,31 +21,27 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class AddNoInspectionDocTagAction implements IntentionAction {
-  private String myDisplayName;
   private String myID;
   protected PsiElement myContext;
 
   public AddNoInspectionDocTagAction(LocalInspectionTool tool, PsiElement context) {
-    myDisplayName = tool.getDisplayName();
     myID = tool.getID();
     myContext = context;
   }
 
   public AddNoInspectionDocTagAction(HighlightDisplayKey key, PsiElement context) {
-    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     myID = key.getID();
     myContext = context;
   }
 
-  public AddNoInspectionDocTagAction(String displayName, String ID, PsiElement context) {
-    myDisplayName = displayName;
+  public AddNoInspectionDocTagAction(String ID, PsiElement context) {
     myID = ID;
     myContext = context;
   }
@@ -58,7 +54,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
                          : container instanceof PsiMethod
                            ? "suppress.inspection.method"
                            : "suppress.inspection.field";
-    return InspectionsBundle.message(key, myDisplayName);
+    return InspectionsBundle.message(key);
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {

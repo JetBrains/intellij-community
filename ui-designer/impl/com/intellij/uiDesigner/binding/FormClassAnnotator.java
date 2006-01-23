@@ -1,25 +1,25 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.ui.UIBundle;
 import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -77,8 +77,8 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
     }
   }
 
-  private void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
-    final List<IntentionAction> options = new ArrayList<IntentionAction>();
+  private static void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
+
 
     Annotation boundFieldAnnotation = holder.createInfoAnnotation(field, null);
     boundFieldAnnotation.setGutterIconRenderer(new BoundIconRenderer(field));
@@ -90,15 +90,37 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
       if (!fieldType.isAssignableFrom(guiComponentType)) {
         String message = MessageFormat.format(BOUND_FIELD_TYPE_MISMATCH, guiComponentType.getCanonicalText(), fieldType.getCanonicalText());
         Annotation annotation = holder.createErrorAnnotation(field.getTypeElement(), message);
-        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, options);
-        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, options);
+        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null, null);
+        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null, null);
       }
     }
 
     if (field.hasInitializer()) {
-      String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, field.getName());
+      final String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, field.getName());
       Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
-      annotation.registerFix(new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), null, options);
+      annotation.registerFix(new IntentionAction() {
+        public String getText() {
+          return message;
+        }
+
+        public String getFamilyName() {
+          return UIBundle.message("remove.field.initializer.quick.fix");
+        }
+
+        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+          return field.getInitializer() != null;
+        }
+
+        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          final PsiExpression initializer = field.getInitializer();
+          LOG.assertTrue(initializer != null);
+          initializer.delete();
+        }
+
+        public boolean startInWriteAction() {
+          return true;
+        }
+      });
     }
   }
 }

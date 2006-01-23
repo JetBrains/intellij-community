@@ -20,23 +20,20 @@ public class AddNoInspectionCommentAction implements IntentionAction {
   PsiElement myContext;
   private static final @NonNls String COMMENT_START_TEXT = "//noinspection ";
 
-  private String myDisplayName;
   private String myID;
 
   public AddNoInspectionCommentAction(LocalInspectionTool tool, PsiElement context) {
-    myDisplayName = tool.getDisplayName();
     myID = tool.getID();
     myContext = context;
   }
 
   public AddNoInspectionCommentAction(HighlightDisplayKey key, PsiElement context) {
     myID = key.getID();
-    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     myContext = context;
   }
 
   public String getText() {
-    return InspectionsBundle.message("suppress.inspection.statement", myDisplayName);
+    return InspectionsBundle.message("suppress.inspection.statement");
   }
 
   private PsiStatement getContainer() {

@@ -16,21 +16,26 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction extends IntentionActionComposite {
-  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, List<Pair<IntentionAction, List<IntentionAction>>> list) {
+  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> list) {
     addAvailableActionsForGroups(info, editor, file, list, UpdateHighlightersUtil.NORMAL_HIGHLIGHT_GROUPS );
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, final List<IntentionAction> options) {
-    registerQuickFixAction(info, null, action, options);
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
+    registerQuickFixAction(info, null, action, options, displayName);
   }
 
-  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final List<IntentionAction> options) {
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
+    registerQuickFixAction(info, null, action, null, null);
+  }
+
+
+  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final List<IntentionAction> options, final String displayName) {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>>();
+      info.quickFixActionRanges = new ArrayList<Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange>>();
     }
-    info.quickFixActionRanges.add(Pair.create(Pair.create(action, options), fixRange));
+    info.quickFixActionRanges.add(Pair.create(Pair.create(Pair.create(action,displayName), options), fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }

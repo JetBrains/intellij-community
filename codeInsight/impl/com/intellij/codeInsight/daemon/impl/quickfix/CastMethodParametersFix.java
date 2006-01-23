@@ -7,11 +7,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -126,7 +126,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
-            QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType), null);
+            QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType));
           }
         }
       }

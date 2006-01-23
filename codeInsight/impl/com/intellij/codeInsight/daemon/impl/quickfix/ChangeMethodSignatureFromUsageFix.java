@@ -264,7 +264,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method.getManager().isInProject(method)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null, null);
     }
   }
 

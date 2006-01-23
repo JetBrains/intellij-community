@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ProjectComponent;
@@ -625,7 +625,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
       myHolder.add(info);
-      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace(), null);
+      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
     }
     else {
       PsiManager manager = ref.getManager();

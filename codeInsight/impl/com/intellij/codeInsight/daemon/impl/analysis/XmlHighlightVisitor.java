@@ -155,7 +155,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
           final String name = tag.getName();
 
-          InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+          InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
           HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME)).getTool();
           reportOneTagProblem(
             tag,
@@ -252,7 +252,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null, null);
       }
       addToResults(highlightInfo);
     }
@@ -283,7 +283,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         public boolean startInWriteAction() {
           return true;
         }
-      }, null);
+      });
     }
   }
 
@@ -356,13 +356,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             addToResults(highlightInfo);
 
             if (isExtraHtmlTagEnd) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveExtraClosingTagIntentionAction(xmlToken), null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveExtraClosingTagIntentionAction(xmlToken));
             } else {
               IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
               IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
 
-              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
-              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction2, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
+              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction2);
 
               final ASTNode endOfTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
               final ASTNode startOfTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tag.getNode());
@@ -376,8 +376,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                 rangeForActionInStartTagName = startTagNameToken.getTextRange();
               }
 
-              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction, null);
-              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction2, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction, null, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction2, null, null);
             }
 
             return false;
@@ -549,14 +549,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               tag,
               URI_ATT,
               JspManager.getInstance(jspFile.getProject()).getPossibleTldUris(jspFile)
-            ),
-            null
+            )
           );
 
           QuickFixAction.registerQuickFixAction(
             highlightInfo,
-            new InsertRequiredAttributeIntention(tag, TAGDIR_ATT,null),
-            null
+            new InsertRequiredAttributeIntention(tag, TAGDIR_ATT,null)
           );
         }
       }
@@ -651,7 +649,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     IntentionAction[] quickFixes;
 
     if (tag instanceof HtmlTag) {
-      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+      final InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
       HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return;
@@ -677,7 +675,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (quickFixes != null) {
       for (IntentionAction quickFix : quickFixes) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
       }
     }
   }
@@ -699,7 +697,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         IntentionAction intentionAction = new RemoveDuplicatedAttributeIntentionAction(localName, attribute);
 
-        QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
       }
     }
   }
@@ -951,9 +949,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       start,
       end,
       XmlErrorMessages.message("uri.is.not.registered"));
-    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction(), null);
-    QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction(), null);
-    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction(), null);
+    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
+    QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
+    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
     addToResults(info);
   }
 

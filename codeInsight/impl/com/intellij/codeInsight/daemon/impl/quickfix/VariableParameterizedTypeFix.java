@@ -30,7 +30,7 @@ public class VariableParameterizedTypeFix {
         }
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         PsiType suggestedType = factory.createType(aClass, substitutor);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(variable, suggestedType), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(variable, suggestedType));
       }
     }
   }

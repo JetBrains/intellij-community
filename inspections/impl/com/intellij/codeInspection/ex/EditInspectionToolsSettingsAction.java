@@ -25,21 +25,18 @@ import javax.swing.*;
  * Date: Feb 7, 2005
  */
 public class EditInspectionToolsSettingsAction implements IntentionAction {
-  private final String myDisplayName;
   private final String myShortName;
 
   public EditInspectionToolsSettingsAction(LocalInspectionTool tool) {
-    myDisplayName = tool.getDisplayName();
     myShortName = tool.getShortName();
   }
 
   public EditInspectionToolsSettingsAction(HighlightDisplayKey key) {
-    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
     myShortName = key.toString();
   }
 
   public String getText() {
-    return InspectionsBundle.message("edit.options.of.reporter.inspection.text", myDisplayName);
+    return InspectionsBundle.message("edit.options.of.reporter.inspection.text");
   }
 
   public String getFamilyName() {

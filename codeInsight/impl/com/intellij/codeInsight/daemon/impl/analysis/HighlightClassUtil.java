@@ -77,7 +77,7 @@ public class HighlightClassUtil {
 
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
       if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
       }
       return highlightInfo;
     }
@@ -94,7 +94,7 @@ public class HighlightClassUtil {
       if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass, aClass.getVisibleSignatures()) == null) {
         // suggest to make not abstract only if possible
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.ABSTRACT, false, false);
-        QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+        QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
     }
     return errorResult;
@@ -121,12 +121,12 @@ public class HighlightClassUtil {
                                                       textRange,
                                                       message);
       if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass), null);
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
       }
       if (!(aClass instanceof PsiAnonymousClass)
           && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.ABSTRACT, true, false);
-        QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+        QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
     }
     return errorResult;
@@ -239,10 +239,10 @@ public class HighlightClassUtil {
 
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), message);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false);
-      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+      QuickFixAction.registerQuickFixAction(errorResult, fix);
       PsiClass[] classes = file.getClasses();
       if (classes.length > 1) {
-        QuickFixAction.registerQuickFixAction(errorResult, new MoveClassToSeparateFileFix(aClass), null);
+        QuickFixAction.registerQuickFixAction(errorResult, new MoveClassToSeparateFileFix(aClass));
       }
       for (PsiClass otherClass : classes) {
         if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) && otherClass.hasModifierProperty(PsiModifier.PUBLIC)
@@ -250,8 +250,8 @@ public class HighlightClassUtil {
           return errorResult;
         }
       }
-      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName()), null);
-      QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass), null);
+      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName()));
+      QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass));
     }
     return errorResult;
   }
@@ -278,10 +278,10 @@ public class HighlightClassUtil {
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.STATIC, false, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix1, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix1);
     PsiModifierList classModifiers = ((PsiClass)field.getParent()).getModifierList();
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(classModifiers, PsiModifier.STATIC, true, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;
   }
 
@@ -303,10 +303,10 @@ public class HighlightClassUtil {
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix1, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix1);
     PsiModifierList classModifiers = ((PsiClass)keyword.getParent().getParent().getParent()).getModifierList();
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(classModifiers, PsiModifier.STATIC, true, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;
   }
 
@@ -328,10 +328,10 @@ public class HighlightClassUtil {
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(initializer.getModifierList(), PsiModifier.STATIC, false, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix1, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix1);
     PsiModifierList classModifiers = ((PsiClass)keyword.getParent().getParent().getParent()).getModifierList();
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(classModifiers, PsiModifier.STATIC, true, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;
   }
 
@@ -366,10 +366,10 @@ public class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, STATIC_DECLARATION_IN_INNER_CLASS);
     if (context != keyword) {
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.STATIC, false, false);
-      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+      QuickFixAction.registerQuickFixAction(errorResult, fix);
     }
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getContainingClass().getModifierList(), PsiModifier.STATIC, true, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;
   }
 
@@ -416,7 +416,7 @@ public class HighlightClassUtil {
                                                       context,
                                                       mustBeInterface ? INTERFACE_EXPECTED : CLASS_EXPECTED);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
-      QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type), null);
+      QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));
     }
     return errorResult;
   }
@@ -428,7 +428,7 @@ public class HighlightClassUtil {
       String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName());
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, message);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superClass.getModifierList(), PsiModifier.FINAL, false, false);
-      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+      QuickFixAction.registerQuickFixAction(errorResult, fix);
     }
     return errorResult;
   }
@@ -502,7 +502,7 @@ public class HighlightClassUtil {
     String description = JavaErrorMessages.message("no.default.constructor.available", HighlightUtil.formatClass(baseClass));
 
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperAction(aClass), null);
+    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperAction(aClass));
 
     return info;
   }
@@ -634,8 +634,8 @@ public class HighlightClassUtil {
                                                                       JavaErrorMessages.message("qualified.new.of.static.class"));
       if (!aClass.isEnum()) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.STATIC, false, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveNewQualifierFix(expression, aClass), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveNewQualifierFix(expression, aClass));
       }
       return highlightInfo;
     }
@@ -717,7 +717,7 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
                                                                       context,
                                                                       JavaErrorMessages.message("externalizable.class.should.have.public.constructor"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass));
       return highlightInfo;
     }
     return null;
@@ -802,10 +802,10 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
       // make context not static or referenced class static
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(staticParent.getModifierList(), PsiModifier.STATIC, false, false);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       if (aClass != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, aClass.getModifierList()) == null) {
         IntentionAction fix2 = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.STATIC, true, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix2, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix2);
       }
       return highlightInfo;
     }

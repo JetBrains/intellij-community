@@ -167,8 +167,8 @@ public class HighlightInfo {
   public RangeHighlighter highlighter;
   public String text;
 
-  public List<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>> quickFixActionRanges;
-  public List<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>> quickFixActionMarkers;
+  public List<Pair<Pair<Pair<IntentionAction,String>,  List<IntentionAction>>, TextRange>> quickFixActionRanges;
+  public List<Pair<Pair<Pair<IntentionAction,String>, List<IntentionAction>>, RangeMarker>> quickFixActionMarkers;
 
   private GutterIconRenderer gutterIconRenderer;
 

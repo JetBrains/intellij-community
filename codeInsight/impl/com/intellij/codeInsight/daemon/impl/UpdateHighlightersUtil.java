@@ -115,8 +115,8 @@ public class UpdateHighlightersUtil {
       HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
       ranges2markers.put(new TextRange(info.startOffset, info.endOffset), info.highlighter);
       if (info.quickFixActionRanges != null) {
-        info.quickFixActionMarkers = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>>();
-        for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
+        info.quickFixActionMarkers = new ArrayList<Pair<Pair<Pair<IntentionAction,String>, List<IntentionAction>>, RangeMarker>>();
+        for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
           TextRange range = pair.second;
           RangeMarker marker = ranges2markers.get(range);
           if (marker == null) {

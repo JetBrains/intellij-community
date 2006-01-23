@@ -236,28 +236,29 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(myProject).getProfile(identifier);
+    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
     List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_SYMBOL, identifier);
+    String displayName  = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL);
     HighlightInfo info;
     InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
     if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {
-      info = processLocalVariable((PsiLocalVariable)parent, options);
+      info = processLocalVariable((PsiLocalVariable)parent, options, displayName);
     }
     else if (parent instanceof PsiField && unusedSymbolSettings.FIELD) {
-      info = processField((PsiField)parent, options);
+      info = processField((PsiField)parent, options, displayName);
     }
     else if (parent instanceof PsiParameter && unusedSymbolSettings.PARAMETER) {
-      info = processParameter((PsiParameter)parent, options);
+      info = processParameter((PsiParameter)parent, options, displayName);
     }
     else if (parent instanceof PsiMethod && unusedSymbolSettings.METHOD) {
-      info = processMethod((PsiMethod)parent, options);
+      info = processMethod((PsiMethod)parent, options, displayName);
     }
     else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolSettings.CLASS) {
-      info = processClass((PsiClass)parent, options);
+      info = processClass((PsiClass)parent, options, displayName);
     }
     else {
       return null;
@@ -265,13 +266,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return info;
   }
 
-  private HighlightInfo processLocalVariable(PsiLocalVariable variable, final List<IntentionAction> options) {
+  private HighlightInfo processLocalVariable(PsiLocalVariable variable, final List<IntentionAction> options, final String displayName) {
     PsiIdentifier identifier = variable.getNameIdentifier();
 
     if (!myRefCountHolder.isReferenced(variable)) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED, identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options, displayName);
       return highlightInfo;
     }
 
@@ -279,7 +280,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!referenced) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED_FOR_READING, identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options, displayName);
       return highlightInfo;
     }
 
@@ -288,7 +289,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (!referenced) {
         String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_ASSIGNED, identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
+        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options, displayName);
         return unusedSymbolInfo;
       }
     }
@@ -301,7 +302,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element.getTextRange(), message, attributes);
   }
 
-  private HighlightInfo processField(PsiField field, final List<IntentionAction> options) {
+  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {
     final PsiIdentifier identifier = field.getNameIdentifier();
     final PsiFile boundForm = CodeInsightUtil.getFormFile(field);
     final boolean isBoundToForm = boundForm != null;
@@ -313,10 +314,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field), options);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field), options);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field), options, displayName);
         return highlightInfo;
       }
 
@@ -324,8 +325,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (!readReferenced) {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options, displayName);
         return highlightInfo;
       }
 
@@ -334,7 +335,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (!writeReferenced && !isBoundToForm) {
           String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, identifier.getText());
           HighlightInfo info = createUnusedSymbolInfo(identifier, message);
-          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options);
+          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
           return info;
         }
       }
@@ -343,7 +344,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-  private HighlightInfo processParameter(PsiParameter parameter, final List<IntentionAction> options) {
+  private HighlightInfo processParameter(PsiParameter parameter, final List<IntentionAction> options, final String displayName) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
@@ -357,7 +358,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           PsiIdentifier identifier = parameter.getNameIdentifier();
           String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
           HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), options);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), options, displayName);
           return highlightInfo;
         }
       }
@@ -367,7 +368,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         PsiIdentifier identifier = parameter.getNameIdentifier();
         String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
+        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options, displayName);
         return unusedSymbolInfo;
       }
     }
@@ -375,7 +376,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-  private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options) {
+  private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options, final String displayName) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(method)) {
         if (HighlightMethodUtil.isSerializationRelatedMethod(method) ||
@@ -388,41 +389,44 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(pattern, symbolName);
         PsiIdentifier identifier = method.getNameIdentifier();
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), options);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), options, displayName);
         return highlightInfo;
       }
     }
     return null;
   }
 
-  private HighlightInfo processClass(PsiClass aClass, final List<IntentionAction> options) {
+  private HighlightInfo processClass(PsiClass aClass, final List<IntentionAction> options, final String displayName) {
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(aClass)) {
         String pattern = aClass.isInterface()
                          ? PRIVATE_INNER_INTERFACE_IS_NOT_USED
                          : PRIVATE_INNER_CLASS_IS_NOT_USED;
-        return formatUnusedSymbolHighlightInfo(aClass, pattern, options);
+        return formatUnusedSymbolHighlightInfo(aClass, pattern, options, displayName);
       }
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
       if (!myRefCountHolder.isReferenced(aClass)) {
-        return formatUnusedSymbolHighlightInfo(aClass, LOCAL_CLASS_IS_NOT_USED, options);
+        return formatUnusedSymbolHighlightInfo(aClass, LOCAL_CLASS_IS_NOT_USED, options, displayName);
       }
     }
     else if (aClass instanceof PsiTypeParameter) {
       if (!myRefCountHolder.isReferenced(aClass)) {
-        return formatUnusedSymbolHighlightInfo(aClass, TYPE_PARAMETER_IS_NOT_USED, options);
+        return formatUnusedSymbolHighlightInfo(aClass, TYPE_PARAMETER_IS_NOT_USED, options, displayName);
       }
     }
     return null;
   }
 
-  private static HighlightInfo formatUnusedSymbolHighlightInfo(PsiClass aClass, String pattern, final List<IntentionAction> options) {
+  private static HighlightInfo formatUnusedSymbolHighlightInfo(PsiClass aClass,
+                                                               String pattern,
+                                                               final List<IntentionAction> options,
+                                                               final String displayName) {
     String symbolName = aClass.getName();
     String message = MessageFormat.format(pattern, symbolName);
     PsiIdentifier identifier = aClass.getNameIdentifier();
     HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), options);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), options, displayName);
     return highlightInfo;
   }
 
@@ -470,8 +474,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                            InspectionsBundle.message("unused.import.statement"));
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNUSED_IMPORT));
-    QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), options);
-    QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), options);
+    String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_IMPORT);
+    QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), options, displayName);
+    QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), options, displayName);
     myHasRedundantImports = true;
     return info;
   }

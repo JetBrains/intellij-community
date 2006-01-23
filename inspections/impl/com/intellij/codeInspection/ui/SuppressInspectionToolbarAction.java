@@ -85,7 +85,7 @@ class SuppressInspectionToolbarAction extends AnAction {
                   final List<RefElement> elementsToSuppress = myView.getTree().getElementsToSuppressInSubTree(node);
                   for (final RefElement refElement : elementsToSuppress) {
                     final PsiElement element = refElement.getElement();
-                    final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
+                    final IntentionAction action = getCorrectIntentionAction(id, element);
                     ApplicationManager.getApplication().runWriteAction(new Runnable() {
                       public void run() {
                         try {
@@ -120,7 +120,7 @@ class SuppressInspectionToolbarAction extends AnAction {
             if (element instanceof PsiFile) continue;
             if (element == null || !element.isValid()) continue;
             final PsiFile file = element.getContainingFile();
-            final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
+            final IntentionAction action = getCorrectIntentionAction(id, element);
             if (action.isAvailable(myView.getProject(), null, file)) {
               e.getPresentation().setEnabled(true);
               return;
@@ -135,8 +135,8 @@ class SuppressInspectionToolbarAction extends AnAction {
 
 
   private static class SuppressWarningAction extends AddSuppressWarningsAnnotationAction {
-    public SuppressWarningAction(final String displayName, final String ID, final PsiElement context) {
-      super(displayName, ID, context);
+    public SuppressWarningAction(final String ID, final PsiElement context) {
+      super(ID, context);
     }
 
     @Nullable
@@ -154,8 +154,8 @@ class SuppressInspectionToolbarAction extends AnAction {
 
   private static class SuppressDocCommentAction extends AddNoInspectionDocTagAction {
 
-    public SuppressDocCommentAction(final String displayName, final String ID, final PsiElement context) {
-      super(displayName, ID, context);
+    public SuppressDocCommentAction(final String ID, final PsiElement context) {
+      super(ID, context);
     }
 
     @Nullable
@@ -171,7 +171,7 @@ class SuppressInspectionToolbarAction extends AnAction {
     }
   }
 
-  static IntentionAction getCorrectIntentionAction(String displayName, String id, PsiElement context) {
+  static IntentionAction getCorrectIntentionAction(String id, PsiElement context) {
     boolean isSuppressWarnings = false;
     final Module module = ModuleUtil.findModuleForPsiElement(context);
     if (module != null) {
@@ -182,9 +182,9 @@ class SuppressInspectionToolbarAction extends AnAction {
       }
     }
     if (isSuppressWarnings) {
-      return new SuppressWarningAction(displayName, id, context);
+      return new SuppressWarningAction(id, context);
     }
-    return new SuppressDocCommentAction(displayName, id, context);
+    return new SuppressDocCommentAction(id, context);
   }
 
   @Nullable
@@ -193,7 +193,7 @@ class SuppressInspectionToolbarAction extends AnAction {
                                             final InspectionResultsView view){
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null) {
-        final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(tool.getDisplayName(), key.getID(), refElement.getElement());
+        final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(key.getID(), refElement.getElement());
         final PsiFile file = refElement.getElement().getContainingFile();
         if (action.isAvailable(view.getProject(), null, file)) {
           return new AnAction(action.getText()) {

@@ -18,9 +18,9 @@ package com.intellij.lang.annotation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +43,19 @@ public final class Annotation {
 
   private ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   private TextAttributesKey myEnforcedAttributes = null;
+
+
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
     public final TextRange textRange;
     public final List<IntentionAction> options;
+    public final String displayName;
 
-    public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options) {
+    public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options, String displayName) {
       this.quickFix = quickFix;
       this.textRange = textRange;
       this.options = options;
+      this.displayName = displayName;
     }
   }
   private List<QuickFixInfo> myQuickFixes = null;
@@ -90,7 +94,7 @@ public final class Annotation {
   }
 
   public void registerFix(IntentionAction fix, TextRange range) {
-    registerFix(fix,range,null);
+    registerFix(fix,range,null, null);
   }
 
   /**
@@ -100,14 +104,14 @@ public final class Annotation {
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
    */
-  public void registerFix(IntentionAction fix, TextRange range, List<IntentionAction> options) {
+  public void registerFix(IntentionAction fix, TextRange range, List<IntentionAction> options, String displayName) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<QuickFixInfo>();
     }
-    myQuickFixes.add(new QuickFixInfo(fix, range, options));
+    myQuickFixes.add(new QuickFixInfo(fix, range, options, displayName));
   }
 
   /**

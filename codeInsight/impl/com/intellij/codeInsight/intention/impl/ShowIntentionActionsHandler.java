@@ -34,8 +34,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     final IntentionAction[] intentionActions = IntentionManager.getInstance(project).getIntentionActions();
 
-    ArrayList<Pair<IntentionAction,List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
-    ArrayList<Pair<IntentionAction,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
+    ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>>();
+    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>>();
     for (IntentionAction action : intentionActions) {
       if (action instanceof IntentionActionComposite) {
 
@@ -49,7 +49,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       else if (action.isAvailable(project, editor, file)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, enableDisableIntentionAction));
+        intentionsToShow.add(new Pair<Pair<IntentionAction,String>,  List<IntentionAction>>(Pair.create(action,(String)null), enableDisableIntentionAction));
       }
     }
 

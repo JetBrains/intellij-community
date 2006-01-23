@@ -200,9 +200,7 @@ public class TreeModelBuilder {
         myFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              if (myFileIndex.isContentJavaSourceFile(fileOrDir)) {
-                buildFileNode(psiManager.findFile(fileOrDir));
-              }
+              buildFileNode(psiManager.findFile(fileOrDir));
             }
             return true;
           }

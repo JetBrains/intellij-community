@@ -80,14 +80,14 @@ public class IntentionHintComponent extends JPanel {
     private IntentionManagerSettings mySettings;
     private List<IntentionAction> myQuickFixes;
 
-    public IntentionListStep(ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
-                             ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions) {
+    public IntentionListStep(ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
+                             ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
       mySettings = IntentionManagerSettings.getInstance();
-      List<Pair<IntentionAction, List<IntentionAction>>> allActions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(quickFixes);
+      ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> allActions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>(quickFixes);
       allActions.addAll(intentions);
       List<IntentionAction> actions = new ArrayList<IntentionAction>();
-      for (Pair<IntentionAction, List<IntentionAction>> pair : quickFixes) {
-        actions.add(pair.first);
+      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> pair : quickFixes) {
+        actions.add(pair.first.first);
         if (pair.second != null) {
           actions.addAll(pair.second);
         }
@@ -96,12 +96,12 @@ public class IntentionHintComponent extends JPanel {
       myActions = Arrays.asList(wrapActions(allActions));
     }
 
-    private IntentionActionWithTextCaching[] wrapActions(List<Pair<IntentionAction, List<IntentionAction>>> actions) {
+    private IntentionActionWithTextCaching[] wrapActions(ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> actions) {
       IntentionActionWithTextCaching [] compositeActions = new IntentionActionWithTextCaching[actions.size()];
       int index = 0;
-      for (Pair<IntentionAction, List<IntentionAction>> pair : actions) {
+      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> pair : actions) {
         if (pair.first != null) {
-          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.first);
+          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.first.first, pair.first.second);
           if (pair.second != null) {
             for (IntentionAction intentionAction : pair.second) {
               action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
@@ -135,18 +135,22 @@ public class IntentionHintComponent extends JPanel {
     }
 
     private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
-      final ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+      final ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> intentions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
       final List<IntentionAction> optionIntentions = action.getOptionIntentions();
       for (final IntentionAction optionIntention : optionIntentions) {
-        intentions.add(new Pair<IntentionAction, List<IntentionAction>>(optionIntention, null));
+        intentions.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(optionIntention, action.getToolName()), null));
       }
-      final ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+      final ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> quickFixes = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
       final List<IntentionAction> optionFixes = action.getOptionFixes();
       for (final IntentionAction optionFix : optionFixes) {
-        quickFixes.add(new Pair<IntentionAction, List<IntentionAction>>(optionFix, null));
+        quickFixes.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(optionFix, action.getToolName()), null));
       }
 
-      return new IntentionListStep(quickFixes, intentions);
+      return new IntentionListStep(quickFixes, intentions){
+        public String getTitle() {
+          return action.getToolName();
+        }
+      };
     }
 
     public boolean hasSubstep(final IntentionActionWithTextCaching action) {
@@ -204,12 +208,14 @@ public class IntentionHintComponent extends JPanel {
     private ArrayList<IntentionAction> myOptionFixes;
     private String myText = null;
     private IntentionAction myAction;
+    private String myDisplayName;
 
-    public IntentionActionWithTextCaching(IntentionAction action) {
+    public IntentionActionWithTextCaching(IntentionAction action, String displayName) {
       myOptionIntentions = new ArrayList<IntentionAction>();
       myOptionFixes = new ArrayList<IntentionAction>();
       myText = action.getText();
       myAction = action;
+      myDisplayName = displayName;
     }
 
     String getText() {
@@ -236,12 +242,16 @@ public class IntentionHintComponent extends JPanel {
     public List<IntentionAction> getOptionFixes() {
       return myOptionFixes;
     }
+
+    public String getToolName() {
+      return myDisplayName;
+    }
   }
 
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
-                                                         ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
-                                                         ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
+                                                         ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions,
+                                                         ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
                                                          boolean showExpanded) {
     final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
@@ -260,8 +270,8 @@ public class IntentionHintComponent extends JPanel {
     return component;
   }
 
-  public void updateIfNotShowingPopup(ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickfixes,
-                                      ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions) {
+  public void updateIfNotShowingPopup(ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickfixes,
+                                      ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
     if (!myPopupShown) {
       myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickfixes, intentions));
     }
@@ -306,8 +316,8 @@ public class IntentionHintComponent extends JPanel {
 
   public IntentionHintComponent(Project project,
                                 Editor editor,
-                                ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
-                                ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes) {
+                                ArrayList<Pair<Pair<IntentionAction, String>,  List<IntentionAction>>> intentions,
+                                ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myEditor = editor;
@@ -316,8 +326,8 @@ public class IntentionHintComponent extends JPanel {
     setOpaque(false);
 
     boolean showFix = false;
-    for (final Pair<IntentionAction, List<IntentionAction>> pairs : quickFixes) {
-      IntentionAction fix = pairs.first;
+    for (final Pair<Pair<IntentionAction,String>,List<IntentionAction>> pairs : quickFixes) {
+      IntentionAction fix = pairs.first.first;
       if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
         showFix = true;
         break;

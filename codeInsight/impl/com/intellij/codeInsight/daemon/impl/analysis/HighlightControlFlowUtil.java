@@ -51,9 +51,9 @@ public class HighlightControlFlowUtil {
             HighlightInfoType.ERROR,
             context,
             JavaErrorMessages.message("missing.return.statement"));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
         IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
         return highlightInfo;
       }
     }
@@ -244,9 +244,9 @@ public class HighlightControlFlowUtil {
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && !containingClass.isInterface()) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field),null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field));
       return highlightInfo;
     }
     return null;
@@ -381,7 +381,7 @@ public class HighlightControlFlowUtil {
         HighlightInfoType.ERROR,
         expression,
         description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(variable),null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(variable));
       return highlightInfo;
     }
 
@@ -534,8 +534,8 @@ public class HighlightControlFlowUtil {
           expression,
           description);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
     }
 
@@ -566,7 +566,7 @@ public class HighlightControlFlowUtil {
           expression,
           description);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(((PsiVariable)resolved).getModifierList(), PsiModifier.FINAL, false, false);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       return highlightInfo;
     }
     return null;
@@ -608,10 +608,10 @@ public class HighlightControlFlowUtil {
       final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
       }
       else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
       }
       return highlightInfo;
     }
@@ -659,7 +659,7 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
 
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
     }
     return null;

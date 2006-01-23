@@ -162,10 +162,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final QuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options, tool.getDisplayName());
         }
       } else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
       }
     }
     return highlights;
@@ -249,10 +249,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
         }
       } else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
       }
     }
 

@@ -153,7 +153,7 @@ public class GenericsHighlightUtil {
                                                                                   typeElement,
                                                                                   description);
             if (bound instanceof PsiClassType) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true), null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true), null, null);
             }
             return highlightInfo;
           }
@@ -199,7 +199,7 @@ public class GenericsHighlightUtil {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
-      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null);
+      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null, null);
     }
     return errorResult;
   }
@@ -425,7 +425,8 @@ public class GenericsHighlightUtil {
                                                                     elementToHighlight,
                                                                     description);
     List<IntentionAction> options = IntentionManager.getInstance(elementToHighlight.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,elementToHighlight);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options);
+    String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options, displayName);
     return highlightInfo;
   }
 
@@ -459,7 +460,8 @@ public class GenericsHighlightUtil {
                                                                       typeCast,
                                                                       description);
       List<IntentionAction> options = IntentionManager.getInstance(expression.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,expression);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options);
+      String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options, displayName);
       return highlightInfo;
     }
     return null;
@@ -591,7 +593,8 @@ public class GenericsHighlightUtil {
         if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.getID())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
         List<IntentionAction> options = IntentionManager.getInstance(call.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,call);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options);
+        String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options, displayName);
         return highlightInfo;
       }
     }
@@ -613,7 +616,8 @@ public class GenericsHighlightUtil {
     final PsiType parameterType = parameter.getType();
     final HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null);
+      String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null, displayName);
     }
     return highlightInfo;
   }
@@ -860,7 +864,8 @@ public class GenericsHighlightUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                parameter,
                                                                JavaErrorMessages.message("vararg.not.last.parameter"));
-        QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null);
+        String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
+        QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null, displayName);
         return info;
       }
     }
@@ -955,9 +960,11 @@ public class GenericsHighlightUtil {
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                               overrider.getReturnTypeElement(), message);
         List<IntentionAction> options = IntentionManager.getInstance(overrider.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,overrider.getReturnTypeElement());
+        String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNCHECKED_WARNING);
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding"), options),
-                                              options);
+                                              options,
+                                              displayName);
 
         return highlightInfo;
       }

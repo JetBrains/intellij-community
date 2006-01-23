@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.UnknownFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -88,14 +88,12 @@ public class FileReferenceQuickFixProvider {
           differentCase = true;
           QuickFixAction.registerQuickFixAction(
             info,
-            new RenameFileReferenceIntentionAction(existingElementName, fileReference),
-            null
+            new RenameFileReferenceIntentionAction(existingElementName, fileReference)
           );
 
           QuickFixAction.registerQuickFixAction(
             info,
-            new RenameFileFix(newFileName),
-            null
+            new RenameFileFix(newFileName)
           );
         }
       } finally {
@@ -159,8 +157,7 @@ public class FileReferenceQuickFixProvider {
         public boolean startInWriteAction() {
           return true;
         }
-      },
-      null
+      }
     );
   }
 

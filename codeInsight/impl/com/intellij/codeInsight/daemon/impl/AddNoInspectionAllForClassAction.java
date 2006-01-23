@@ -25,7 +25,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
   @NonNls private static final String ID = "ALL";
 
   public AddNoInspectionAllForClassAction(final PsiElement context) {
-    super(null, ID, context);
+    super(ID, context);
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {

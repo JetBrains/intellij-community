@@ -89,7 +89,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
       if (parameterClass == null || expressionClass == null) continue;
       if (parameterClass.isInheritor(expressionClass, true)) continue;
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeParameterClassFix(expressionClass, (PsiClassType)parameterType), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeParameterClassFix(expressionClass, (PsiClassType)parameterType));
     }
   }
 

@@ -1,22 +1,22 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -136,8 +136,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     for (HighlightInfo info :infos) {
       if (info.quickFixActionRanges != null) {
-        for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
-          IntentionAction action = pair.first.first;
+        for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
+          IntentionAction action = pair.first.first.first;
           availableActions.add(action);
         }
       }
