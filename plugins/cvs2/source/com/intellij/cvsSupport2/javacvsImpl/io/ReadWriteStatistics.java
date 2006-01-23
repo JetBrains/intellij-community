@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
-import java.text.MessageFormat;
+import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -17,6 +18,10 @@ public class ReadWriteStatistics {
   private long myShownSentKBytes = 0;
 
   public static final int KB = 1024;
+  @NonNls private static final String READ_PROGRESS_MESSAGE = CvsBundle.message("progress.text.kb.read");
+  @NonNls private static final String SENT_PROGRESS_MESSAGE = CvsBundle.message("progress.text.kb.sent");
+  @NonNls private static final String PROGRESS_SENDING = CvsBundle.message("progress.text.sending.data.to.server");
+  @NonNls private static final String PROGRESS_READING = CvsBundle.message("progress.text.reading.data.from.server");
 
   public ReadWriteStatistics() {
     myProgress = Progress.create();
@@ -26,7 +31,7 @@ public class ReadWriteStatistics {
     myProgress = progress;
   }
 
-  public void read(long bytes){
+  public void read(long bytes) {
     myReadBytes += bytes;
     myReadFromLastUpdateBytes += bytes;
     if (myReadFromLastUpdateBytes > KB) {
@@ -34,32 +39,35 @@ public class ReadWriteStatistics {
       myShownReadKBytes = myReadBytes / KB;
     }
 
-    showProgress(com.intellij.CvsBundle.message("progress.text.reading.data.from.server"));
+    showProgress(PROGRESS_READING);
   }
 
-  public void send(long bytes){
+  public void send(long bytes) {
     mySentBytes += bytes;
     mySentFromLastUpdateBytes += bytes;
     if (mySentFromLastUpdateBytes > KB) {
       mySentFromLastUpdateBytes = 0;
       myShownSentKBytes = mySentBytes / KB;
     }
-    showProgress(com.intellij.CvsBundle.message("progress.text.sending.data.to.server"));
+    showProgress(PROGRESS_SENDING);
   }
 
   private void showProgress(String mesasge) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(mesasge);
-    if ((myShownReadKBytes > 0) || (myShownSentKBytes > 0)){
+    if ((myShownReadKBytes > 0) || (myShownSentKBytes > 0)) {
       buffer.append(": ");
     }
-    if (myShownReadKBytes > 0){
-      buffer.append(com.intellij.CvsBundle.message("progress.text.kb.read", myShownReadKBytes));
+    if (myShownReadKBytes > 0) {
+      buffer.append(String.valueOf(myShownReadKBytes));
+      buffer.append(READ_PROGRESS_MESSAGE);
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
-    if (myShownSentKBytes > 0)
-      buffer.append(com.intellij.CvsBundle.message("progress.text.kb.sent", myShownSentKBytes));
+    if (myShownSentKBytes > 0) {
+      buffer.append(String.valueOf(myShownSentKBytes));
+    }
+    buffer.append(SENT_PROGRESS_MESSAGE);
 
     myProgress.setText(buffer.toString());
   }

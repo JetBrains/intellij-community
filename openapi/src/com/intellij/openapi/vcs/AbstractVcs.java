@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * The base class for a version control system integrated with IDEA.
  *
  * @see ProjectLevelVcsManager
- * @see ModuleLevelVcsManager 
+ * @see ModuleLevelVcsManager
  */
 public abstract class AbstractVcs {
   
@@ -55,7 +57,8 @@ public abstract class AbstractVcs {
   @NonNls
   public abstract String getName();
 
-  @NonNls public abstract String getDisplayName();
+  @NonNls
+  public abstract String getDisplayName();
 
   public abstract Configurable getConfigurable();
 
@@ -91,12 +94,17 @@ public abstract class AbstractVcs {
     return VcsConfiguration.getInstance(myProject);
   }
 
+  public VersionsProvider getVersionsProvider(VirtualFile root) {
+    return null;
+  }
+
   /**
    * Returns the interface for performing check out / edit file operations.
    *
    * @return the interface implementation, or null if none is provided.
    */
-  @Nullable public EditFileProvider getEditFileProvider() {
+  @Nullable
+  public EditFileProvider getEditFileProvider() {
     return null;
   }
 
@@ -191,7 +199,7 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public AnnotationProvider getAnnotationProvider(){
+  public AnnotationProvider getAnnotationProvider() {
     return null;
   }
 
@@ -208,7 +216,7 @@ public abstract class AbstractVcs {
   }
 
 
-  public VcsShowSettingOption getStatusOptions(){
+  public VcsShowSettingOption getStatusOptions() {
     return myStatusOption;
   }
 
@@ -228,7 +236,7 @@ public abstract class AbstractVcs {
     }
   }
 
-  public FileStatus[] getProvidedStatuses(){
+  public FileStatus[] getProvidedStatuses() {
     return null;
   }
 
@@ -238,7 +246,8 @@ public abstract class AbstractVcs {
    * @return the revision selector implementation, or null if none is provided.
    * @since 5.0.2
    */
-  @Nullable public RevisionSelector getRevisionSelector() {
+  @Nullable
+  public RevisionSelector getRevisionSelector() {
     return null;
   }
 

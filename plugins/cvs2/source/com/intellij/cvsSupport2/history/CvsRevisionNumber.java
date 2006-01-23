@@ -1,20 +1,21 @@
 package com.intellij.cvsSupport2.history;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.CvsBundle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
+@SuppressWarnings({"CovariantCompareTo"})
 public class CvsRevisionNumber implements VcsRevisionNumber {
 
   private final String myStringRepresentation;
@@ -22,15 +23,16 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
   private final int[] mySubRevisions;
   private final DateOrRevisionSettings myDateOrRevision;
 
-  public static CvsRevisionNumber CURRENT = new CvsRevisionNumber(CvsBundle.message("current.file.revision.name"), ArrayUtil.EMPTY_INT_ARRAY) {
-    protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
-      return 1;
-    }
+  public static CvsRevisionNumber CURRENT =
+    new CvsRevisionNumber(CvsBundle.message("current.file.revision.name"), ArrayUtil.EMPTY_INT_ARRAY) {
+      protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
+        return 1;
+      }
 
-    public int compareTo(VcsRevisionNumber o) {
-      return 1;
-    }
-  };
+      public int compareTo(VcsRevisionNumber o) {
+        return 1;
+      }
+    };
 
   public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtil.EMPTY_INT_ARRAY) {
     protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
@@ -147,6 +149,17 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     return new CvsRevisionNumber(createStringRepresentation(resultSubVersions), resultSubVersions);
   }
 
+  public CvsRevisionNumber getPrevNumber() {
+    if (mySubRevisions == null || mySubRevisions.length == 0) return this;
+
+    final int length = mySubRevisions.length;
+
+    final int[] resultSubVersions = new int[length];
+    System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, length);
+    resultSubVersions[length - 1] -= 1;
+    return new CvsRevisionNumber(createStringRepresentation(resultSubVersions), resultSubVersions);
+  }
+
   private static String createStringRepresentation(final int[] versions) {
     return StringUtil.join(versions, ".");
   }
@@ -180,5 +193,10 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     else {
       return new SimpleRevision(asString());
     }
+  }
+
+  @Nullable
+  public int[] getSubRevisions() {
+    return mySubRevisions;
   }
 }

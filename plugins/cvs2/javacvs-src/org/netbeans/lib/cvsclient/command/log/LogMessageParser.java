@@ -12,25 +12,25 @@
  */
 package org.netbeans.lib.cvsclient.command.log;
 
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.Date;
 
 /**
  * @author Thomas Singer
  */
-final class LogMessageParser extends AbstractMessageParser {
+final public class LogMessageParser extends AbstractMessageParser {
 
   // Constants ==============================================================
 
@@ -147,7 +147,6 @@ final class LogMessageParser extends AbstractMessageParser {
         return;
       }
 
-
       // first check for the branches tag
       if (line.startsWith(BRANCHES)) {
         processBranches(line.substring(BRANCHES.length()));
@@ -237,7 +236,6 @@ final class LogMessageParser extends AbstractMessageParser {
     if (line.startsWith(DESCRIPTION)) {
       tempBuffer = new StringBuffer(line.substring(DESCRIPTION.length()));
       addingDescription = true;
-      return;
     }
   }
 
@@ -320,13 +318,12 @@ final class LogMessageParser extends AbstractMessageParser {
       final String date = token.nextToken();
       final String dateString = date.substring(DATE.length());
       Date parsedDate = null;
-      for (int i = 0; i < EXPECTED_DATE_FORMATS.length; i++) {
-        SimpleDateFormat expectedDateFormat = EXPECTED_DATE_FORMATS[i];
+      for (SimpleDateFormat expectedDateFormat : EXPECTED_DATE_FORMATS) {
         try {
           parsedDate = expectedDateFormat.parse(dateString);
         }
         catch (ParseException e) {
-
+          //ignore
         }
         if (parsedDate != null) break;
       }

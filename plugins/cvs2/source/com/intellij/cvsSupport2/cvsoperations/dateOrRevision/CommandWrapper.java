@@ -1,9 +1,9 @@
 package com.intellij.cvsSupport2.cvsoperations.dateOrRevision;
 
 import org.netbeans.lib.cvsclient.command.Command;
-import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.command.checkout.ExportCommand;
+import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
 
 /**
  * author: lesya
@@ -15,14 +15,17 @@ public class CommandWrapper {
     myCommand = command;
   }
 
-  public void setUpdateByRevisionOrDate(String revision, final String date){
-    if (isCheckoutCommand()){
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void setUpdateByRevisionOrDate(String revision, final String date) {
+    if (isCheckoutCommand()) {
       asCheckoutCommand().setUpdateByRevisionOrTag(revision);
       asCheckoutCommand().setUpdateByDate(date);
-    } else if (isUpdateCommand()){
+    }
+    else if (isUpdateCommand()) {
       asUpdateCommand().setUpdateByRevisionOrTag(revision);
       asUpdateCommand().setUpdateByDate(date);
-    } else if (isExportCommand()) {
+    }
+    else if (isExportCommand()) {
       asExportCommand().setUpdateByRevisionOrTag(revision == null && date == null ? "HEAD" : revision);
       asExportCommand().setUpdateByDate(date);
     }

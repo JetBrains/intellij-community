@@ -141,10 +141,13 @@
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
 
-      <action id="Cvs.CheckinProjectPanel.Delete" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction"
-        >
+      <action id="Cvs.CheckinProjectPanel.Delete" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction">
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
+
+      <separator/>
+
+      <action id="Cvs.BrowseChanges" class="com.intellij.cvsSupport2.actions.BrowseChangesAction"/>
 
       <add-to-group group-id="CvsFilePopupGroup" anchor="last"/>
       <add-to-group group-id="CvsGlobalGroup" anchor="last"/>

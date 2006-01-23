@@ -17,7 +17,7 @@ class DirectoryContentListener {
   private String myModuleName;
 
   public void messageSent(String message) {
-    if (directoryMessage(message)){
+    if (directoryMessage(message)) {
       String directoryName = directoryNameFromMessage(message);
       if (myModulePath != null) directoryName = myModulePath + "/" + new File(directoryName).getName();
       myDirectoryContent.addSubDirectory(directoryName);
@@ -26,10 +26,12 @@ class DirectoryContentListener {
       String fileName = fileNameFromMessage(message);
       if (myModulePath != null) fileName = myModulePath + "/" + new File(fileName).getName();
       myDirectoryContent.addFile(fileName);
-    } else if (moduleMessage_ver1(message)){
+    }
+    else if (moduleMessage_ver1(message)) {
       String moduleName = moduleNameFromMessage_ver1(message);
       myDirectoryContent.addModule(moduleName);
-    } else if (moduleMessage_ver2(message)){
+    }
+    else if (moduleMessage_ver2(message)) {
       String moduleName = moduleNameFromMessage_ver2(message);
       myDirectoryContent.addModule(moduleName);
     }
@@ -83,7 +85,10 @@ class DirectoryContentListener {
     return message.substring(beginIndex, endIndex);
   }
 
-  public DirectoryContent getDirectoryContent() { return myDirectoryContent; }
+
+  public DirectoryContent getDirectoryContent() {
+    return myDirectoryContent;
+  }
 
   //public void addModule(String name) {
   //  myDirectoryContent.addModule(name);
