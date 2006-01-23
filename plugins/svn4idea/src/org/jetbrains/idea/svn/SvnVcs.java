@@ -36,24 +36,26 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.history.SvnVersionsProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
-import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.jetbrains.idea.svn.update.AbstractSvnUpdateIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -64,13 +66,14 @@ import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
 
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
@@ -96,9 +99,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
 
-
   static {
-    SVNDebugLog.setLogger(new JavaSVNDebugLogger(booleanProperty(LOG_PARAMETER_NAME).booleanValue(), LOG));
+    //noinspection UseOfArchaicSystemPropertyAccessors
+    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
@@ -295,8 +298,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
-      value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() && value.getFileTimestamp() == vFile.getTimeStamp() &&
+        value.isLocked() == lockFile.exists()) {
       return value;
     }
     return null;
@@ -318,8 +321,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     SVNInfoHolder value = vFile.getUserData(INFO_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
-      value.getFileTimestamp() == vFile.getTimeStamp()) {
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() && value.getFileTimestamp() == vFile.getTimeStamp()) {
       return value;
     }
     return null;
@@ -341,7 +343,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
       if (statusValue != null) {
         status = statusValue.getStatus();
-      } else {
+      }
+      else {
         status = createStatusClient().doStatus(file, false);
         cacheStatus(path.getVirtualFile(), status);
       }
@@ -363,7 +366,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       SVNStatusHolder statusValue = getCachedStatus(path.getVirtualFile());
       if (statusValue != null) {
         status = statusValue.getStatus();
-      } else {
+      }
+      else {
         status = createStatusClient().doStatus(file, false);
         cacheStatus(path.getVirtualFile(), status);
       }
@@ -378,8 +382,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   private static File getEntriesFile(File file) {
-    return file.isDirectory() ? new File(file, pathToEntries)
-           : new File(file.getParentFile(), pathToEntries);
+    return file.isDirectory() ? new File(file, pathToEntries) : new File(file.getParentFile(), pathToEntries);
   }
 
   public static class SVNStatusHolder {
@@ -447,6 +450,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myLoggingEnabled = loggingEnabled;
       myLog = log;
     }
+
     public void logInfo(String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
@@ -496,12 +500,27 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public FileStatus[] getProvidedStatuses() {
-    return new FileStatus[]{
-      SvnFileStatus.EXTERNAL,
+    return new FileStatus[]{SvnFileStatus.EXTERNAL,
       SvnFileStatus.OBSTRUCTED,
       SvnFileStatus.REPLACED,
-      SvnFileStatus.SWITCHED      
-    };
+      SvnFileStatus.SWITCHED};
+  }
+
+  public VersionsProvider getVersionsProvider(VirtualFile root) {
+    try {
+      SVNWCClient wcClient = createWCClient();
+      SVNInfo info = wcClient.doInfo(new File(root.getPath()), SVNRevision.WORKING);
+      if (info != null) {
+        final SVNURL url = info.getURL();
+        if (url != null) {
+          return new SvnVersionsProvider(myProject, url.toString());
+        }
+      }
+
+      return null;
+    }
+    catch (Throwable e) {
+      return null;
+    }
   }
 }
- 

@@ -77,4 +77,8 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
       return null;
     }
   }
+
+  public JComponent getComponent() {
+    return getPanel();
+  }
 }
