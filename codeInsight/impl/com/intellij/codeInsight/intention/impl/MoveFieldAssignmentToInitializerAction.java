@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -10,8 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author cdr
@@ -34,18 +35,21 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
 
     if (psiClass == null || psiClass.isInterface()) return false;
     if (psiClass.getContainingFile() != file) return false;
-    if (!insideConstructorOrClassInitializer(assignment, field)) return false;
-    if (!isValidAsFieldInitializer(assignment.getRExpression())) return false;
+    PsiModifierListOwner ctrOrInitializer = insideConstructorOrClassInitializer(assignment, field);
+    if (ctrOrInitializer==null) return false;
+    if (!isValidAsFieldInitializer(assignment.getRExpression(), ctrOrInitializer)) return false;
     if (!isInitializedWithSameExpression(field, assignment, null)) return false;
     return true;
   }
 
-  private static boolean isValidAsFieldInitializer(final PsiExpression expression) {
+  private static boolean isValidAsFieldInitializer(final PsiExpression initializer, final PsiModifierListOwner ctrOrInitializer) {
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
-    expression.accept(new PsiRecursiveElementVisitor() {
+    initializer.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+        if (resolved == null) return;
+        if (PsiTreeUtil.isAncestor(ctrOrInitializer, resolved, false) && !PsiTreeUtil.isAncestor(initializer, resolved, false)) {
+          // resolved somewhere inside construcor but outside initializer
           result.set(Boolean.FALSE);
         }
       }
@@ -53,15 +57,17 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     return result.get().booleanValue();
   }
 
-  private static boolean insideConstructorOrClassInitializer(final PsiAssignmentExpression assignment, final PsiField field) {
+  private static PsiModifierListOwner insideConstructorOrClassInitializer(final PsiAssignmentExpression assignment, final PsiField field) {
     PsiElement parentCodeBlock = assignment;
     while (true) {
       parentCodeBlock = PsiTreeUtil.getParentOfType(parentCodeBlock, PsiCodeBlock.class, true, PsiMember.class);
-      if (parentCodeBlock == null) return false;
+      if (parentCodeBlock == null) return null;
       PsiElement parent = parentCodeBlock.getParent();
-      if (!(parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor() || parent instanceof PsiClassInitializer)) continue;
-      if (((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC) != field.hasModifierProperty(PsiModifier.STATIC)) return false;
-      return true;
+      if (!(parent instanceof PsiModifierListOwner)) continue;
+      if (((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC) != field.hasModifierProperty(PsiModifier.STATIC)) return null;
+      if (parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor() || parent instanceof PsiClassInitializer) {
+        return (PsiModifierListOwner)parent;
+      }
     }
   }
 
@@ -101,26 +107,10 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
       }
     });
     return result.get().booleanValue();
-    //Query<PsiReference> query = ReferencesSearch.search(field, new LocalSearchScope(field.getContainingFile()));
-    //final Collection<PsiExpression> rValues = new ArrayList<PsiExpression>();
-    //boolean result = query.forEach(new Processor<PsiReference>() {
-    //  public boolean process(final PsiReference reference) {
-    //    PsiExpression expression = (PsiExpression)reference.getElement();
-    //    if (PsiUtil.isOnAssignmentLeftHand(expression)) {
-    //      rValues.add(expression);
-    //    }
-    //
-    //    return true;
-    //  }
-    //});
-    //if (rValues.size() != 1) {
-    //  result = false;
-    //}
-    //return result;
   }
 
   private static boolean expressionsEquivalent(final PsiExpression rValue, final PsiExpression expression) {
-    return expression.getText().equals(rValue.getText());
+    return PsiEquivalenceUtil.areElementsEquivalent(rValue, expression);
   }
 
   private static PsiField getAssignedField(final PsiAssignmentExpression assignment) {
