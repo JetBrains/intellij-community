@@ -265,7 +265,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public boolean canNavigate() {
-    return true;
+    return EditSourceUtil.canNavigate(this);
   }
 
   public boolean canNavigateToSource() {
