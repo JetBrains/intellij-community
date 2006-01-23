@@ -36,7 +36,7 @@ public class DescendantClassesEnumMacro implements Macro{
     return results[0];
   }
 
-  private Result[] calculateResults(final List<PsiClass> classes) {
+  private static Result[] calculateResults(final List<PsiClass> classes) {
     Result[] results = new Result[classes.size()];
     int i = 0;
 
@@ -46,12 +46,14 @@ public class DescendantClassesEnumMacro implements Macro{
     return results;
   }
 
-  private List<PsiClass> findDescendants(ExpressionContext context, Expression[] params) {
+  private static List<PsiClass> findDescendants(ExpressionContext context, Expression[] params) {
     if (params == null || params.length == 0) return null;
     PsiManager instance = PsiManager.getInstance(context.getProject());
 
+    final String paramResult = params[0].calculateResult(context).toString();
+    if (paramResult == null) return null;
     final PsiClass myBaseClass = instance.findClass(
-      params[0].calculateResult(context).toString(),
+      paramResult,
       GlobalSearchScope.allScope(context.getProject())
     );
 
