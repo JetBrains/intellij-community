@@ -20,6 +20,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -169,6 +170,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     XmlElement nameElement = null;
 
@@ -203,10 +205,12 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }

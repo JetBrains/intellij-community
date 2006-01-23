@@ -32,6 +32,7 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
     return file instanceof ResourceBundleAsVirtualFile;
   }
 
+  @NotNull
   public FileEditor createEditor(Project project, final VirtualFile file){
     if (file == null){
       throw new IllegalArgumentException("file cannot be null");
@@ -52,10 +53,12 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
   public void writeState(FileEditorState state, Project project, Element element){
   }
 
+  @NotNull
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
 
+  @NotNull
   public String getEditorTypeId(){
     return "ResourceBundle";
   }

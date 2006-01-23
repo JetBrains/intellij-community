@@ -33,6 +33,7 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
     myOptions.put(key,value);
   }
   
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     myProvider.setOptions(myOptions);
     final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element);
@@ -40,6 +41,7 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
     return referencesByElement;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     myProvider.setOptions(myOptions);
     final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element, type);
@@ -47,6 +49,7 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
     return referencesByElement;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     myProvider.setOptions(myOptions);
     final PsiReference[] referencesByElement = myProvider.getReferencesByString(str,position, type, offsetInPosition);

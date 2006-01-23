@@ -23,6 +23,7 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -323,6 +324,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
 
+  @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final PsiElement parent = element.getParent();
@@ -352,10 +354,12 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }

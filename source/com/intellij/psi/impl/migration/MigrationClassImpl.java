@@ -107,6 +107,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return Collections.emptySet();
   }

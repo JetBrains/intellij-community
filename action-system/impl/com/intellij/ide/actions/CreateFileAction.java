@@ -13,11 +13,14 @@ import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
+import org.jetbrains.annotations.NotNull;
+
 public class CreateFileAction extends CreateElementActionBase {
   public CreateFileAction() {
     super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file"), IconLoader.getIcon("/fileTypes/text.png"));
   }
 
+  @NotNull
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
     CreateElementActionBase.MyInputValidator validator = new MyValidator(project, directory);
     Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
@@ -29,6 +32,7 @@ public class CreateFileAction extends CreateElementActionBase {
     directory.checkCreateFile(newName);
   }
 
+  @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws IncorrectOperationException {
     return new PsiElement[]{directory.createFile(newName)};
   }

@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class FileElement extends RepositoryTreeElement{
   private CharTable myCharTable = new CharTableImpl();
@@ -45,6 +46,7 @@ public class FileElement extends RepositoryTreeElement{
     return clone;
   }
 
+  @NotNull
   public char[] textToCharArray() {
     synchronized (PsiLock.LOCK) {
       final int textLength = getTextLength();

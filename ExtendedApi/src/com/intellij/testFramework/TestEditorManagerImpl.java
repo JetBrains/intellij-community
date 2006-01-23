@@ -123,6 +123,7 @@ import java.util.Map;
 
       }
 
+      @NotNull
       public String getEditorTypeId() {
         return "";
       }

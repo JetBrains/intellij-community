@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -115,14 +116,15 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       return true;
     }
   }
-  
+
+  @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final String text = element.getText();
     String s = StringUtil.stripQuotesAroundValue(text);
     final PsiElement parent = element.getParent();
 
-    if (s.startsWith("http://") || 
+    if (s.startsWith("http://") ||
         s.startsWith("urn:") ||
         ( parent instanceof XmlAttribute &&
           ((XmlAttribute)parent).isNamespaceDeclaration()
@@ -151,10 +153,12 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     return new PsiReference[] { new URLReference(element)};
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }

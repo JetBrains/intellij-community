@@ -22,6 +22,8 @@ import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -36,6 +38,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
           UIDesignerBundle.message("action.description.create.dialog"), Icons.UI_FORM_ICON);
   }
 
+  @NotNull
   protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
     final MyInputValidator validator = new MyInputValidator(project, directory);
 
@@ -224,6 +227,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
   }
 
 
+  @NotNull
   protected PsiElement[] create(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
     PsiFile sourceFile = directory.getManager().getElementFactory().createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);

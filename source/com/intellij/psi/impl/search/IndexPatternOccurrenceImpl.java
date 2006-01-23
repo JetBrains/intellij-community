@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -21,14 +22,17 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
     myPattern = pattern;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
+  @NotNull
   public IndexPattern getPattern() {
     return myPattern;
   }

@@ -53,6 +53,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -260,6 +261,7 @@ public class ClasspathPanel extends JPanel {
             }, ModalityState.stateForComponent(ClasspathPanel.this));
             return PopupStep.FINAL_CHOICE;
           }
+          @NotNull
           public String getTextFor(PopupAction value) {
             return "&" + value.getIndex() + "  " + value.getTitle();
           }

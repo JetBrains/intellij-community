@@ -115,6 +115,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }

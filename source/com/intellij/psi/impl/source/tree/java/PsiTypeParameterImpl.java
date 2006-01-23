@@ -328,6 +328,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }

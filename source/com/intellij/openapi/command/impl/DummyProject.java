@@ -8,6 +8,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.picocontainer.PicoContainer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -52,6 +53,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
+  @NotNull
   public Class[] getComponentInterfaces() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
@@ -60,6 +62,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
+  @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
     return ArrayUtil.<T>emptyArray();
   }

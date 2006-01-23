@@ -20,6 +20,7 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -400,6 +401,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
       return aValue.getIcon();
     }
 
+    @NotNull
     public String getTextFor(final ActionItem value) {
       return value.getText();
     }

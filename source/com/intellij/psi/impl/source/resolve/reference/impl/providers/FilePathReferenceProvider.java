@@ -19,6 +19,7 @@ import java.util.*;
  * @author cdr
  */
 public class FilePathReferenceProvider implements PsiReferenceProvider {
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
     final Object value = literalExpression.getValue();
@@ -54,10 +55,12 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return getReferencesByElement(element);
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }

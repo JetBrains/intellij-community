@@ -252,6 +252,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }

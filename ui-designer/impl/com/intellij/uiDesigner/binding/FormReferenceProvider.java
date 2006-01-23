@@ -10,6 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.openapi.components.ProjectComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,6 +24,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     registry.registerReferenceProvider(PsiPlainTextFile.class, this);
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     if (element instanceof PsiPlainTextFile) {
       PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
@@ -31,10 +33,12 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return PsiReference.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }

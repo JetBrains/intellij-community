@@ -6,11 +6,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class ResourceBundleReferenceProvider implements PsiReferenceProvider {
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression expr = (PsiLiteralExpression) element;
@@ -23,10 +25,12 @@ public class ResourceBundleReferenceProvider implements PsiReferenceProvider {
     return null;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return getReferencesByElement(element);
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }

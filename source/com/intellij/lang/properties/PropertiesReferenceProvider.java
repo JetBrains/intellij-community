@@ -21,10 +21,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
 public class PropertiesReferenceProvider implements PsiReferenceProvider {
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final Object value;
     String bundleName = null;
@@ -77,10 +80,12 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
     return PsiTreeUtil.getChildOfAnyType(element, ELExpressionHolder.class,JspXmlTagBase.class) == null;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return getReferencesByElement(element);
   }
 
+  @NotNull
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }

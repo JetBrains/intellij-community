@@ -323,6 +323,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return parent instanceof PsiClass ? ((PsiClass)parent) : null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }

@@ -3,6 +3,8 @@
  */
 package com.intellij.codeInspection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: anna
  * Date: 04-Jan-2006
@@ -21,6 +23,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     myDescriptionTemplate = descriptionTemplate;
   }
 
+  @NotNull
   public String getDescriptionTemplate() {
     return myDescriptionTemplate;
   }

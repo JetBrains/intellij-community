@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     }
   }
 
+  @NotNull
   public String getTextFor(T value) {
     return value.toString();
   }

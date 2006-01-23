@@ -199,6 +199,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     }
   }
 
+  @NotNull
   public char[] textToCharArray() {
     synchronized (PsiLock.LOCK) {
       char[] buffer = new char[getTextLength()];

@@ -436,6 +436,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return parent instanceof PsiClass ? ((PsiClass)parent) : null;
   }
 
+  @NotNull
   public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
