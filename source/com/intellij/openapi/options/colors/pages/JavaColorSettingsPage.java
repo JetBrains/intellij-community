@@ -79,6 +79,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.class"), CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.interface"), CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.local.variable"), CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
@@ -124,6 +125,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("static_method", CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
     ourTags.put("param", CodeInsightColors.PARAMETER_ATTRIBUTES);
     ourTags.put("class", CodeInsightColors.CLASS_NAME_ATTRIBUTES);
+    ourTags.put("typeParameter", CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
     ourTags.put("abstractClass", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
     ourTags.put("interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
@@ -162,12 +164,11 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "                               Bad characters: \\n #\n" +
       "/**\n" +
       " * Doc comment here for <code>SomeClass</code>\n" +
-      " * @version 1.0\n" +
       " * @see <class>Math</class>#<methodCall>sin</methodCall>(double)\n" +
       " */\n" +
       "<annotationName>@Annotation</annotationName> (<annotationAttributeName>name</annotationAttributeName>=value)\n" +
-      "public class <class>SomeClass</class> { // some comment\n" +
-      "  private <class>String</class> <field>field</field> = \"Hello World\";\n" +
+      "public class <class>SomeClass</class><<typeParameter>T</typeParameter> extends <interface>Runnable</interface>> { // some comment\n" +
+      "  private <typeParameter>T</typeParameter> <field>field</field> = null;\n" +
       "  private double <unusedField>unusedField</unusedField> = 12345.67890;\n" +
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
       "  public static int <static>staticField</static> = 0;\n" +
@@ -182,12 +183,10 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "    <reassignedParameter>reassignedParam</reassignedParameter> = new int[2];\n" +
       "  }\n" +
       "}\n" +
-      "\n" +
       "interface <interface>AnInterface</interface> {\n" +
       "  int <static>CONSTANT</static> = 2;\n" +
       "  void <methodDeclaration>method</methodDeclaration>();\n" +
       "}\n" +
-      "\n" +
       "abstract class <abstractClass>SomeAbstractClass</abstractClass> {\n" +
       "}";
   }

@@ -34,7 +34,6 @@ public class HighlightsExtractor {
       String tagName = findTagName(text);
       if (tagName == null) break;
       if (myTags.containsKey(tagName)) {
-
         if (myIsOpeningTag) {
           mySkippedLen += tagName.length() + 2;
           HighlightData highlightData = new HighlightData(myStartOffset - mySkippedLen, myTags.get(tagName));
@@ -56,6 +55,9 @@ public class HighlightsExtractor {
     int openTag = text.indexOf('<', myIndex);
     if (openTag == -1) {
       return null;
+    }
+    if (text.charAt(openTag + 1) == '<') {
+      openTag++;
     }
     if (text.charAt(openTag + 1) == '/') {
       myIsOpeningTag = false;
@@ -85,6 +87,9 @@ public class HighlightsExtractor {
       if (from == -1) {
         sb.append(text.substring(index, text.length()));
         break;
+      }
+      if (text.charAt(from+1) == '<') {
+        from++;
       }
       int to = text.indexOf('>', from+1);
       if (to == -1) {

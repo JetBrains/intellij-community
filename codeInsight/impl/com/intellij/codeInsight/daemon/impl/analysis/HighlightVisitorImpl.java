@@ -395,7 +395,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     else if (parent instanceof PsiClass) {
       myHolder.add(HighlightClassUtil.checkClassAlreadyImported((PsiClass)parent, identifier));
       myHolder.add(HighlightClassUtil.checkExternalizableHasPublicNoArgsConstructor((PsiClass)parent, identifier));
-      if (!(parent instanceof PsiAnonymousClass) && !(parent instanceof PsiTypeParameter)) {
+      if (!(parent instanceof PsiAnonymousClass)) {
         myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)parent, ((PsiClass)parent).getNameIdentifier()));
       }
     }

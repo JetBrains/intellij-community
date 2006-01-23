@@ -336,6 +336,14 @@
           <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
+      <option name="TYPE_PARAMETER_NAME_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="0"/>
+        </value>
+      </option>
       <option name="INTERFACE_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
