@@ -59,7 +59,7 @@ public class Parsing implements Constants{
     }
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete, final boolean parseParameterList) {
@@ -278,7 +278,7 @@ public class Parsing implements Constants{
       startOffset,
       endOffset, state,
       ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
  }
 }
 
