@@ -19,6 +19,7 @@ import com.intellij.util.Alarm;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 public class ProgressWindow extends BlockingProgressIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
@@ -179,12 +180,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
   public void setFraction(double fraction) {
     if (fraction != getFraction()) {
       super.setFraction(fraction);
-      if (fraction == 0 && !isIndeterminate()) {
-        setIndeterminate(true);
-      }
-      else if (fraction > 0 && isIndeterminate()) {
-        setIndeterminate(false);
-      }
       update();
     }
   }
@@ -235,14 +230,19 @@ public class ProgressWindow extends BlockingProgressIndicator {
         final int perc = (int)(fraction * 100);
         if (perc != myProgressBar.getValue()) {
           if (perc != 0) {
+            if (myProgressBar.isIndeterminate()) {
+              myProgressBar.setIndeterminate(false);
+            }
             myProgressBar.setValue(perc);
           }
           else {
-            myProgressBar.setIndeterminate(true);
+            if (myProgressBar.isIndeterminate()) {
+              myProgressBar.setIndeterminate(true);
+            }
           }
         }
 
-        myText2Label.setText(text2 != null && text2.length() > 0 ? text2 : " ");
+        myText2Label.setText(getTitle2Text(text2, myText2Label.getWidth()));
 
         myTitlePanel.setText(myTitle != null && myTitle.length() > 0 ? myTitle : " ");
 
@@ -250,6 +250,17 @@ public class ProgressWindow extends BlockingProgressIndicator {
         myRepaintedFlag = true;
       }
     };
+
+    private String getTitle2Text(String fullText, int labelWidth) {
+      if (fullText == null || fullText.length() == 0) return " ";
+      while (myText2Label.getFontMetrics(myText2Label.getFont()).stringWidth(fullText) > labelWidth) {
+        int sep = fullText.indexOf(File.separatorChar, 4);
+        if (sep < 0) return fullText;
+        fullText = "..." + fullText.substring(sep);
+      }
+
+      return fullText;
+    }
 
     private final Runnable myUpdateRequest = new Runnable() {
       public void run() {
