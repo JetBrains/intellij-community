@@ -182,7 +182,8 @@ class DeclarationMover extends LineMover {
     }
     TextRange lineTextRange = new TextRange(editor.getDocument().getLineStartOffset(lineRange.startLine), editor.getDocument().getLineEndOffset(lineRange.endLine));
     for (PsiElement suspect : memberSuspects) {
-      if (suspect.getTextRange().intersects(lineTextRange)) return true;
+      TextRange textRange = suspect.getTextRange();
+      if (textRange != null && lineTextRange.intersects(textRange)) return true;
     }
     return false;
   }
