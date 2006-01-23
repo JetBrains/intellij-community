@@ -65,7 +65,7 @@ public class StatementParsing extends Parsing {
                                   endOffset,
                                   state,
                                   ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
+    return dummyRoot.getFirstChildNode();
   }
 
   public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
