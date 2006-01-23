@@ -17,7 +17,6 @@ import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -35,23 +34,22 @@ import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CastMethodParametersFix");
-
   private final PsiMethod myTargetMethod;
   private final PsiExpression[] myExpressions;
   private final PsiSubstitutor mySubstitutor;
   private final PsiElement myContext;
   private ParameterInfo[] myNewParametersInfo;
 
-  private ChangeMethodSignatureFromUsageFix(PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
+  private ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
-    myContext = context; LOG.assertTrue(targetMethod != null);
+    myContext = context;
   }
 
   public String getText() {
@@ -128,7 +126,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       else {
         processor.run();
       }
-      
+
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
@@ -230,9 +228,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   private static String suggestUniqueParameterName(CodeStyleManager codeStyleManager,
-                                                              PsiExpression expression,
-                                                              PsiType exprType,
-                                                              Set<String> existingNames) {
+                                                   PsiExpression expression,
+                                                   PsiType exprType,
+                                                   Set<String> existingNames) {
     int suffix =0;
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
     String[] names = nameInfo.names;
@@ -259,13 +257,14 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
 
   private static void registerIntention(PsiExpression[] expressions,
                                         HighlightInfo highlightInfo,
-                                        TextRange fixRange, JavaResolveResult candidate, PsiElement context) {
-    if (candidate.isStaticsScopeCorrect()) {
-      PsiMethod method = (PsiMethod)candidate.getElement();
-      PsiSubstitutor substitutor = candidate.getSubstitutor();
-      if (method.getManager().isInProject(method)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
-      }
+                                        TextRange fixRange,
+                                        JavaResolveResult candidate,
+                                        PsiElement context) {
+    if (!candidate.isStaticsScopeCorrect()) return;
+    PsiMethod method = (PsiMethod)candidate.getElement();
+    PsiSubstitutor substitutor = candidate.getSubstitutor();
+    if (method.getManager().isInProject(method)) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
     }
   }
 

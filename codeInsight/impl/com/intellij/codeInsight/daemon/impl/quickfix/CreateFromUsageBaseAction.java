@@ -64,8 +64,8 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     if (namedElement == null) return false;
     TextRange range = namedElement.getTextRange();
     if (range.getLength() == 0) return false;
-    boolean isInNamedElement = offset >= range.getStartOffset() && offset <= range.getEndOffset();
-    return isInNamedElement || offset >= element.getTextRange().getEndOffset();
+    boolean isInNamedElement = range.contains(offset);
+    return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
