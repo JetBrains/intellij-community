@@ -718,7 +718,7 @@ public class GenericsHighlightUtil {
   public static boolean isEnumSyntheticMethod(MethodSignature methodSignature, Project project) {
     if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
     final PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-    final MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString}, null,
+    final MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString}, PsiTypeParameter.EMPTY_ARRAY,
                                                                                     PsiSubstitutor.EMPTY);
     return valueOfMethod.equals(methodSignature);
   }
