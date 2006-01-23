@@ -1,18 +1,24 @@
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.Alarm;
-import com.intellij.ide.GeneralSettings;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 public class ProgressWindow extends BlockingProgressIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
@@ -29,9 +35,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
   private String myCancelText;
   private JComponent myParentComponent;
 
-  private String myDeferredTitle = null;
+  private String myTitle = null;
 
   private boolean myStoppedAlready = false;
+  private FocusTrackback myFocusTrackback;
+  private boolean myStared = false;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -47,6 +55,12 @@ public class ProgressWindow extends BlockingProgressIndicator {
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(myShouldShowBackground ? null : this);
+    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
+    if(myParentComponent != null) {
+      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myParentComponent, myCancelText);
+    } else {
+      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myProject, myCancelText);
+    }
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project, JComponent parentComponent, String cancelText) {
@@ -56,6 +70,12 @@ public class ProgressWindow extends BlockingProgressIndicator {
     myCancelText = cancelText;
     myParentComponent = parentComponent;
     setModalityProgress(myShouldShowBackground ? null : this);
+    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
+    if(myParentComponent != null) {
+      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myParentComponent, myCancelText);
+    } else {
+      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myProject, myCancelText);
+    }
   }
 
   public synchronized void start() {
@@ -63,16 +83,21 @@ public class ProgressWindow extends BlockingProgressIndicator {
     LOG.assertTrue(!myStoppedAlready);
 
     super.start();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myDialog == null && isRunning()) {
-            if (!myShouldShowBackground || 
-                !GeneralSettings.getInstance().isSearchInBackground()) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        final Timer timer = new Timer(300, new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (isRunning()) {
               showDialog();
             }
           }
-        }
-      }, getModalityState());
+        });
+        timer.setRepeats(false);
+        timer.start();
+      }
+    });
+
+    myStared = true;
   }
 
   public void startBlocking() {
@@ -80,23 +105,17 @@ public class ProgressWindow extends BlockingProgressIndicator {
     LOG.assertTrue(!isRunning());
     LOG.assertTrue(!myStoppedAlready);
 
-    synchronized(this){
-      super.start();
-    }
-
-    showDialog();
+    IdeEventQueue.getInstance().flushQueue();
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
+      public boolean value(final AWTEvent object) {
+        return myStared && !isRunning();
+      }
+    });
   }
 
   private void showDialog() {
-    //System.out.println("ProgressWindow.showDialog");
-    LOG.assertTrue(myDialog == null);
-    if(myParentComponent != null) {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myParentComponent, myCancelText);
-    } else {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myProject, myCancelText);
-    }
-    if (myDeferredTitle != null) {
-      setTitle(myDeferredTitle);
+    if (myShouldShowBackground && GeneralSettings.getInstance().isSearchInBackground()) {
+      return;
     }
 
     final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, "<unknown>");
@@ -111,8 +130,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myInstallFunAlarm.addRequest(installer, 3000, getModalityState());
     }
 
-    myDialog.setIndeterminate(isIndeterminate());
+    myDialog.setIndeterminate(getFraction() == 0 || isIndeterminate());
     myDialog.show();
+    myDialog.myRepaintRunnable.run();
   }
 
   public void setIndeterminate(boolean indeterminate) {
@@ -125,61 +145,52 @@ public class ProgressWindow extends BlockingProgressIndicator {
   public synchronized void stop() {
     LOG.assertTrue(!myStoppedAlready);
     myInstallFunAlarm.cancelAllRequests();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myDialog != null) {
-            myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-          }
-        }
-      }, getModalityState());
 
+    if (myDialog != null) {
+      myDialog.hide();
+      myFocusTrackback.restoreFocus();
+    }
     super.stop();
     myStoppedAlready = true;
   }
 
   public void cancel() {
     super.cancel();
-    SwingUtilities.invokeLater(
-      new Runnable() {
-        public void run() {
-          if (myDialog != null) {
-            myDialog.cancel();
-          }
-        }
-      }
-    );
+    if (myDialog != null) {
+      myDialog.cancel();
+    }
   }
 
   public void background() {
-    SwingUtilities.invokeLater(
-      new Runnable() {
-        public void run() {
-          if (myDialog != null) {
-            GeneralSettings.getInstance().setSearchInBackground(true);
-            myDialog.background();
-            myDialog = null;
-          }
-        }
-      }
-    );
+    if (myDialog != null) {
+      GeneralSettings.getInstance().setSearchInBackground(true);
+      myDialog.background();
+      myDialog = null;
+    }
   }
 
   public void setText(String text) {
-    if (isIndeterminate() || !text.equals(getText())) {
+    if (!text.equals(getText())) {
       super.setText(text);
       update();
     }
   }
 
   public void setFraction(double fraction) {
-    if (isIndeterminate() || fraction != getFraction()) {
+    if (fraction != getFraction()) {
       super.setFraction(fraction);
+      if (fraction == 0 && !isIndeterminate()) {
+        setIndeterminate(true);
+      }
+      else if (fraction > 0 && isIndeterminate()) {
+        setIndeterminate(false);
+      }
       update();
     }
   }
 
   public void setText2(String text) {
-    if (isIndeterminate() || !text.equals(getText2())) {
+    if (!text.equals(getText2())) {
       super.setText2(text);
       update();
     }
@@ -192,19 +203,17 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public void setTitle(String title) {
-    if (myDialog == null) {
-      myDeferredTitle = title;
-    }
-    else {
-      myDialog.setTitle(title);
+    if (!Comparing.equal(title, myTitle)) {
+      myTitle = title;
+      update();
     }
   }
 
-  protected static final int getPercentage(double fraction) {
+  protected static int getPercentage(double fraction) {
     return (int)(fraction * 99 + 0.5);
   }
 
-  private class MyDialog extends DialogWrapper {
+  private class MyDialog {
     private long myLastTimeDrawn = -1;
     private boolean myShouldShowCancel;
     private boolean myShouldShowBackground;
@@ -222,13 +231,26 @@ public class ProgressWindow extends BlockingProgressIndicator {
         else {
           myPercentLabel.setText(" ");
         }
-        myProgressBar.setFraction(fraction);
+
+        final int perc = (int)(fraction * 100);
+        if (perc != myProgressBar.getValue()) {
+          if (perc != 0) {
+            myProgressBar.setValue(perc);
+          }
+          else {
+            myProgressBar.setIndeterminate(true);
+          }
+        }
+
         myText2Label.setText(text2 != null && text2.length() > 0 ? text2 : " ");
+
+        myTitlePanel.setText(myTitle != null && myTitle.length() > 0 ? myTitle : " ");
 
         myLastTimeDrawn = System.currentTimeMillis();
         myRepaintedFlag = true;
       }
     };
+
     private final Runnable myUpdateRequest = new Runnable() {
       public void run() {
         update();
@@ -244,36 +266,74 @@ public class ProgressWindow extends BlockingProgressIndicator {
     private JButton myCancelButton;
     private JButton myBackgroundButton;
 
-    private ColorProgressBar myProgressBar;
-    private boolean myRepaintedFlag = false;
+    private JProgressBar myProgressBar;
+    private boolean myRepaintedFlag = true;
     private JPanel myFunPanel;
+    private TitlePanel myTitlePanel;
+    private JBPopup myPopup;
+    private Window myParentWindow;
+    private Point myLastClicked;
 
     public void setIndeterminate (boolean indeterminate) {
       myProgressBar.setIndeterminate(indeterminate);
     }
 
     public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
-      super(project, false);
-
+      myParentWindow = WindowManager.getInstance().suggestParentWindow(project);
       initDialog(shouldShowCancel, shouldShowBackground, cancelText);
-
     }
 
     public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Component parent, String cancelText) {
-      super(parent, false);
+      myParentWindow = parent instanceof Window
+                       ? (Window)parent
+                       : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
       initDialog(shouldShowCancel, shouldShowBackground, cancelText);
     }
 
     private void initDialog(boolean shouldShowCancel, boolean shouldShowBackground, String cancelText) {
       myFunPanel.setLayout(new BorderLayout());
-      myCancelButton.setAction(getCancelAction());
+      myCancelButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          doCancelAction();
+        }
+      });
+
+      myCancelButton.registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (myCancelButton.isEnabled()) {
+            doCancelAction();
+          }
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
       myShouldShowCancel = shouldShowCancel;
       myShouldShowBackground = shouldShowBackground;
       if (cancelText != null) {
         setCancelButtonText(cancelText);
       }
-      init();
+      myProgressBar.setMaximum(100);
+      myProgressBar.setIndeterminate(true);
+      createCenterPanel();
+
+      myTitlePanel.addMouseListener(new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
+          myLastClicked = new RelativePoint(e).getScreenPoint();
+          myLastClicked.x -= titleOffset.x;
+          myLastClicked.y -= titleOffset.y;
+        }
+      });
+
+      myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
+        public void mouseDragged(MouseEvent e) {
+          final Point draggedTo = new RelativePoint(e).getScreenPoint();
+          draggedTo.x -= myLastClicked.x;
+          draggedTo.y -= myLastClicked.y;
+
+          final Window wnd = SwingUtilities.getWindowAncestor(myPanel);
+          wnd.setLocation(draggedTo);
+        }
+      });
     }
 
     public void changeCancelButtonText(String text){
@@ -282,14 +342,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     protected boolean isProgressDialog() {
       return true;
-    }
-
-    protected void init() {
-      setCrossClosesWindow(myShouldShowCancel);
-
-      super.init();
-
-      myRepaintRunnable.run();
     }
 
     public void doCancelAction() {
@@ -302,14 +354,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       if (myShouldShowCancel) {
         myCancelButton.setEnabled(false);
       }
-    }
-
-    protected Border createContentPaneBorder() {
-      return null;//new LineBorder(Color.BLACK);
-    }
-
-    protected JComponent createSouthPanel() {
-      return null;
     }
 
     protected JComponent createCenterPanel() {
@@ -359,8 +403,39 @@ public class ProgressWindow extends BlockingProgressIndicator {
           myBackgroundButton.setEnabled(false);
         }
 
-        close(DialogWrapper.CANCEL_EXIT_CODE);
+        hide();
       }
+    }
+
+    public void hide() {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myPopup != null) {
+            myPopup.cancel();
+            myPopup = null;
+          }
+        }
+      });
+    }
+
+    public void show() {
+      if (myPopup != null) {
+        myPopup.cancel();
+      }
+
+      myPopup = JBPopupFactory.getInstance().createHeavyweightComponentPopup(myPanel, myCancelButton, true);
+      myPopup.showInCenterOf(myParentWindow);
+      StackingPopupDispatcher.onPopupHidden(myPopup); // Mouse click hiding is not necessary.
+
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myCancelButton.requestFocus();
+        }
+      });
+    }
+
+    public void setTitle(final String title) {
+
     }
   }
 
@@ -377,8 +452,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myDialog.myFunPanel.add(new JSeparator(), BorderLayout.NORTH);
       myDialog.myFunPanel.add(c, BorderLayout.CENTER);
     }
-    myDialog.pack();
-    myDialog.centerRelativeToParent();
+
+    final Window wnd = SwingUtilities.windowForComponent(myDialog.myPanel);
+    wnd.pack();
   }
 
   public Project getProject() {

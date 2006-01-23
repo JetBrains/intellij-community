@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BlockingProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -407,11 +406,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       smoothProgress = false;
     }
 
-    final ProgressWindow progressWindow = new ProgressWindow(canBeCanceled, project);
-    progressWindow.setTitle(progressTitle);
-    final BlockingProgressIndicator progress = smoothProgress
-                                               ? new SmoothProgressAdapter(progressWindow, project)
-                                               : progressWindow;
+    final ProgressWindow window = new ProgressWindow(canBeCanceled, project);
+    window.setTitle(progressTitle);
+    final BlockingProgressIndicator progress = window;
+    //new ProgressPopup(canBeCanceled, project);
 
     class MyThread extends Thread {
       private final Runnable myProcess;

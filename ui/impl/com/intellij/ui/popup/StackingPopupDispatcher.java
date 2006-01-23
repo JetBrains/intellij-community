@@ -82,11 +82,6 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
       if (ourInstance.myStack.isEmpty()) {
         return false;
       }
-
-      ourInstance.myStack.pop();
-      if (ourInstance.myStack.isEmpty()) {
-        return false;
-      }
       popup = ourInstance.myStack.peek();
     }
   }
@@ -110,7 +105,7 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
 
   @Nullable
   public Component getComponent() {
-    return myStack.isEmpty() ? null : myStack.peek().getContent();
+    return myStack.peek().getContent();
   }
 
   public boolean dispatch(AWTEvent event) {

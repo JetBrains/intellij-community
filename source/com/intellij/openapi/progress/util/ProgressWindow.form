@@ -1,141 +1,161 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.progress.util.ProgressWindow.MyDialog">
-  <grid id="c20f5" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="10" left="10" bottom="10" right="10"/>
+  <grid id="ee919" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="63" y="83" width="381" height="181"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="90" y="111" width="389" height="242"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="2694" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
+      <grid id="c20f5" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="10" left="10" bottom="10" right="10"/>
         <constraints>
-          <xy x="10" y="10" width="258" height="110"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="7" anchor="0" fill="3">
-            <preferred-size width="450" height="-1"/>
-          </grid>
+          <xy x="2" y="27" width="385" height="213"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
-        <properties/>
+        <properties>
+          <opaque value="false"/>
+        </properties>
         <border type="none"/>
         <children>
-          <component id="c7d21" class="javax.swing.JLabel" binding="myTextLabel">
-            <constraints>
-              <xy x="0" y="23" width="7" height="14"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
-                <minimum-size width="0" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <text value=" "/>
-            </properties>
-          </component>
-          <component id="fcbb7" class="javax.swing.JLabel" binding="myText2Label">
-            <constraints>
-              <xy x="0" y="80" width="0" height="0"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
-                <minimum-size width="0" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <text value=""/>
-            </properties>
-          </component>
-          <vspacer id="f82c5">
-            <constraints>
-              <xy x="123" y="0" width="11" height="20"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
-          <grid id="50bb4" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="2694" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="45" width="258" height="20"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="12" y="12" width="245" height="138"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="7" anchor="0" fill="3" indent="0">
+                <preferred-size width="450" height="-1"/>
+              </grid>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <component id="27795" class="com.intellij.openapi.progress.util.ColorProgressBar" binding="myProgressBar">
+              <component id="c7d21" class="javax.swing.JLabel" binding="myTextLabel">
                 <constraints>
-                  <xy x="0" y="1" width="228" height="17"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="fc463" class="javax.swing.JLabel" binding="myPercentLabel">
-                <constraints>
-                  <xy x="238" y="3" width="7" height="14"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <xy x="2" y="44" width="4" height="16"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0">
+                    <minimum-size width="0" height="-1"/>
+                  </grid>
                 </constraints>
                 <properties>
                   <text value=" "/>
                 </properties>
               </component>
+              <component id="fcbb7" class="javax.swing.JLabel" binding="myText2Label">
+                <constraints>
+                  <xy x="2" y="106" width="0" height="0"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0">
+                    <minimum-size width="0" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value=""/>
+                </properties>
+              </component>
+              <vspacer id="f82c5">
+                <constraints>
+                  <xy x="117" y="22" width="11" height="20"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                </constraints>
+              </vspacer>
+              <grid id="50bb4" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="2" y="67" width="241" height="24"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="fc463" class="javax.swing.JLabel" binding="myPercentLabel">
+                    <constraints>
+                      <xy x="219" y="4" width="4" height="16"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                    </constraints>
+                    <properties>
+                      <text value=" "/>
+                    </properties>
+                  </component>
+                  <component id="2f8ad" class="javax.swing.JProgressBar" binding="myProgressBar">
+                    <constraints>
+                      <xy x="2" y="2" width="207" height="20"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
+                    </constraints>
+                    <properties/>
+                  </component>
+                </children>
+              </grid>
+              <vspacer id="c90d4">
+                <constraints>
+                  <xy x="117" y="116" width="11" height="20"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                </constraints>
+              </vspacer>
             </children>
           </grid>
-          <vspacer id="c90d4">
+          <grid id="ed8a4" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="123" y="90" width="11" height="20"/>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+              <xy x="267" y="12" width="106" height="138"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="3" indent="0"/>
             </constraints>
-          </vspacer>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="d36c1" class="javax.swing.JButton" binding="myCancelButton">
+                <constraints>
+                  <xy x="2" y="38" width="102" height="29"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+                </constraints>
+                <properties>
+                  <focusPainted value="false"/>
+                  <text resource-bundle="messages/CommonBundle" key="button.cancel"/>
+                </properties>
+              </component>
+              <component id="da7ab" class="javax.swing.JButton" binding="myBackgroundButton">
+                <constraints>
+                  <xy x="2" y="72" width="102" height="29"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+                </constraints>
+                <properties>
+                  <focusPainted value="false"/>
+                  <text resource-bundle="messages/CommonBundle" key="button.background"/>
+                </properties>
+              </component>
+              <vspacer id="97d3">
+                <constraints>
+                  <xy x="47" y="2" width="11" height="36"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="96bf6">
+                <constraints>
+                  <xy x="47" y="101" width="11" height="35"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                </constraints>
+              </vspacer>
+            </children>
+          </grid>
+          <xy id="490da" binding="myFunPanel" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="12" y="155" width="361" height="46"/>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </xy>
         </children>
       </grid>
-      <grid id="ed8a4" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
+      <component id="34ce6" class="com.intellij.openapi.progress.util.TitlePanel" binding="myTitlePanel">
         <constraints>
-          <xy x="278" y="10" width="93" height="110"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="3"/>
+          <xy x="2" y="12" width="385" height="0"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
         </constraints>
         <properties/>
-        <border type="none"/>
-        <children>
-          <component id="d36c1" class="javax.swing.JButton" binding="myCancelButton">
-            <constraints>
-              <xy x="0" y="28" width="93" height="25"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-            </constraints>
-            <properties>
-              <focusPainted value="false"/>
-              <text resource-bundle="messages/CommonBundle" key="button.cancel"/>
-            </properties>
-          </component>
-          <component id="da7ab" class="javax.swing.JButton" binding="myBackgroundButton">
-            <constraints>
-              <xy x="0" y="58" width="93" height="25"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-            </constraints>
-            <properties>
-              <focusPainted value="false"/>
-              <text resource-bundle="messages/CommonBundle" key="button.background"/>
-            </properties>
-          </component>
-          <vspacer id="97d3">
-            <constraints>
-              <xy x="41" y="0" width="11" height="28"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
-          <vspacer id="96bf6">
-            <constraints>
-              <xy x="41" y="83" width="11" height="27"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
-        </children>
-      </grid>
-      <xy id="490da" binding="myFunPanel" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="10" y="125" width="361" height="46"/>
-          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children/>
-      </xy>
+      </component>
     </children>
   </grid>
 </form>

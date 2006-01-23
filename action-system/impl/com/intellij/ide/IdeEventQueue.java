@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -397,11 +398,17 @@ public class IdeEventQueue extends EventQueue {
       try {
         boolean eventOk = true;
         event = getNextEvent();
-        final Object s = event.getSource();
-        if (s instanceof Component) {
-          Component c = (Component)s;
-          while (c != null && c != modalComponent) c = c.getParent();
-          if (c == null) eventOk = false;
+        if (event instanceof InputEvent) {
+          final Object s = event.getSource();
+          if (s instanceof Component && !(s instanceof JFrame)) {
+            Component c = (Component)s;
+            Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
+            while (c != null && c != modalWindow) c = c.getParent();
+            if (c == null) {
+              eventOk = false;
+              ((InputEvent)event).consume();
+            }
+          }
         }
 
         if (eventOk) {
