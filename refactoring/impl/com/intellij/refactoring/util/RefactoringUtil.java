@@ -1471,11 +1471,18 @@ public class RefactoringUtil {
 
           final GlobalSearchScope resolveScope1 = element.getResolveScope();
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
-            final PsiMember container = ConflictsUtil.getContainer(element);
-            LOG.assertTrue(container != null);
-            final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(container,
-                                                                                                     true));
-            Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(element.getContainingFile().getVirtualFile());
+            final PsiFile file = element.getContainingFile();
+            final PsiElement container;
+            if (file instanceof PsiJavaFile) {
+              container = ConflictsUtil.getContainer(element);
+              LOG.assertTrue(container != null);
+            }
+            else {
+              container = file;
+            }
+            final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(container, true));
+            Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file.getVirtualFile());
+
             final String message =
               RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
                 CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))),
