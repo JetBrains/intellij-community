@@ -711,7 +711,8 @@ public class GenericsHighlightUtil {
   }
 
   private static final MethodSignature ourValuesEnumSyntheticMethod = MethodSignatureUtil.createMethodSignature("values",
-                                                                                                                PsiType.EMPTY_ARRAY, null,
+                                                                                                                PsiType.EMPTY_ARRAY,
+                                                                                                                PsiTypeParameter.EMPTY_ARRAY,
                                                                                                                 PsiSubstitutor.EMPTY);
 
   public static boolean isEnumSyntheticMethod(MethodSignature methodSignature, Project project) {
