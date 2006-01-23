@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max, dsl
@@ -13,7 +14,7 @@ public class PsiTypeResult implements Result {
   private PsiManager myPsiManager;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.PsiTypeResult");
 
-  public PsiTypeResult(PsiType type, PsiManager manager) {
+  public PsiTypeResult(@NotNull PsiType type, PsiManager manager) {
     final PsiType actualType = PsiUtil.convertAnonymousToBaseType(type);
     myTypePointer = SmartPointerManager.getInstance(manager.getProject()).createSmartTypePointer(actualType);
     myPsiManager = manager;
@@ -29,7 +30,9 @@ public class PsiTypeResult implements Result {
     if (text.equals(type.getCanonicalText())) return true;
     try {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)myPsiManager.getElementFactory().createExpressionFromText("(" + text + ")a", context);
-      return cast.getCastType().getType().equals(type);
+      final PsiTypeElement castType = cast.getCastType();
+      if (castType == null) return false;
+      return castType.getType().equals(type);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
