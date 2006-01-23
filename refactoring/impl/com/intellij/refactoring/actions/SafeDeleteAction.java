@@ -1,8 +1,6 @@
 
 package com.intellij.refactoring.actions;
 
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
-import com.intellij.j2ee.j2eeDom.ejb.CmrField;
 import com.intellij.j2ee.module.view.J2EEProjectViewPane;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
@@ -10,6 +8,8 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.lang.Language;
+import com.intellij.javaee.model.common.CmrField;
+import com.intellij.javaee.model.common.CmpField;
 
 public class SafeDeleteAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
@@ -21,9 +21,8 @@ public class SafeDeleteAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      if(!SafeDeleteProcessor.validElement(element)) return false;
+    for (PsiElement element : elements) {
+      if (!SafeDeleteProcessor.validElement(element)) return false;
     }
     return true;
   }
