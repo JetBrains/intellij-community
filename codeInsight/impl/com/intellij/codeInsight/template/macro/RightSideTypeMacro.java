@@ -36,7 +36,9 @@ public class RightSideTypeMacro implements Macro {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression) element;
       PsiExpression rhs = assignment.getRExpression();
       if (rhs == null) return null;
-      return new PsiTypeResult(rhs.getType(), rhs.getManager());
+      final PsiType rhsType = rhs.getType();
+      if (rhsType == null) return null;
+      return new PsiTypeResult(rhsType, rhs.getManager());
     } else if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable) element;
       PsiExpression initializer = var.getInitializer();
