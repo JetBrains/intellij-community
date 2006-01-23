@@ -755,19 +755,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
            ) {
           refCountHolder.registerAttributeWithId(unquotedValue,attribute);
         } else {
-          if (getUnquotedValue(attributeById.getValueElement(), tag).equals(unquotedValue)) {
+          final XmlAttributeValue valueElement = attributeById.getValueElement();
+
+          if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
             addToResults(HighlightInfo.createHighlightInfo(
               HighlightInfoType.WRONG_REF,
               value,
               XmlErrorMessages.message("duplicate.id.reference")));
             addToResults(HighlightInfo.createHighlightInfo(
               HighlightInfoType.WRONG_REF,
-              attributeById.getValueElement(),
+              valueElement,
               XmlErrorMessages.message("duplicate.id.reference")));
             return;
           } else {
-            // attribute previously has that id
-            refCountHolder.registerAttributeWithId(unquotedValue,attributeById);
+            // attributeById previously has that id so reregister new one
+            refCountHolder.registerAttributeWithId(unquotedValue,attribute);
           }
         }
       }
