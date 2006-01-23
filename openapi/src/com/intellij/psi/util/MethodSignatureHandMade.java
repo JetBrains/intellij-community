@@ -31,6 +31,7 @@ public class MethodSignatureHandMade extends MethodSignatureBase {
   }
 
 
+  @NotNull
   public String getName() {
     return myName;
   }

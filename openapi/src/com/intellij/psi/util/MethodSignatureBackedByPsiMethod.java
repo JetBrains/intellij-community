@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
 
@@ -28,10 +30,10 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private boolean myIsInGenericContext;
 
   protected MethodSignatureBackedByPsiMethod(PsiMethod method,
-                                           PsiSubstitutor substitutor,
-                                           boolean isRaw,
-                                           final boolean isInGenericContext, PsiType[] parameterTypes,
-                                           PsiTypeParameter[] methodTypeParameters) {
+                                             PsiSubstitutor substitutor,
+                                             boolean isRaw,
+                                             final boolean isInGenericContext, PsiType[] parameterTypes,
+                                             PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     myIsInGenericContext = isInGenericContext;
@@ -39,6 +41,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     myMethod = method;
   }
 
+  @NotNull
   public String getName() {
     return myMethod.getName();
   }

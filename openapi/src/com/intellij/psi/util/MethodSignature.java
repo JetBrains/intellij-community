@@ -18,20 +18,21 @@ package com.intellij.psi.util;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import org.jetbrains.annotations.NotNull;
 
-/** 
+/**
  * @author cdr
  */
 
 public interface MethodSignature {
   MethodSignature[] EMPTY_ARRAY = new MethodSignature[0];
-  PsiSubstitutor getSubstitutor();
-  String getName();
+  @NotNull PsiSubstitutor getSubstitutor();
+  @NotNull String getName();
   /**
    * already substituted
    */
-  PsiType[] getParameterTypes();
-  PsiTypeParameter[] getTypeParameters();
+  @NotNull PsiType[] getParameterTypes();
+  @NotNull PsiTypeParameter[] getTypeParameters();
   boolean isRaw();
 
   /**

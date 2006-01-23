@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class MethodSignatureBase implements MethodSignature {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBase");
 
@@ -61,10 +63,12 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameterList == null ? PsiTypeParameter.EMPTY_ARRAY : typeParameterList.getTypeParameters();
   }
 
+  @NotNull
   public PsiType[] getParameterTypes() {
     return myParameterTypes;
   }
 
+  @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return myTypeParameters;
   }
@@ -97,6 +101,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return s;
   }
 
+  @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
