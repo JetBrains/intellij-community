@@ -7,23 +7,19 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.DummyHolder");
@@ -33,8 +29,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
   private Boolean myExplicitlyValid = null;
   private Language myLanguage = StdLanguages.JAVA;
-  
-  @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
+
   private FileElement myFileElement = null;
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
