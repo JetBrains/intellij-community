@@ -203,7 +203,6 @@ public class GenericsHighlightUtil {
     }
     return errorResult;
   }
-
   public static HighlightInfo checkInterfaceMultipleInheritance(PsiClass aClass) {
     if (aClass instanceof PsiTypeParameter) return null;
     final PsiClassType[] types = aClass.getSuperTypes();
@@ -224,8 +223,7 @@ public class GenericsHighlightUtil {
     for (PsiClassType superType : superTypes) {
       final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
       final PsiClass superClass = result.getElement();
-      if (superClass == null) continue;
-      if (visited.contains(superClass)) continue;
+      if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
       superTypeSubstitutor = MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, parentSubstitutor);
 
@@ -247,8 +245,7 @@ public class GenericsHighlightUtil {
       }
       inheritedClasses.put(superClass, superTypeSubstitutor);
       visited.add(superClass);
-      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, superTypeSubstitutor, inheritedClasses,
-          visited, textRange);
+      final HighlightInfo highlightInfo = checkInterfaceMultipleInheritance(superClass, superTypeSubstitutor, inheritedClasses, visited, textRange);
       visited.remove(superClass);
 
       if (highlightInfo != null) return highlightInfo;
@@ -486,7 +483,7 @@ public class GenericsHighlightUtil {
 
     boolean isValidType = exprType instanceof PsiClassType && castType instanceof PsiClassType;
     if (!isValidType) {
-      LOG.assertTrue(false, "Invalid types: castType =" + castType + ", exprType=" + exprType);
+      LOG.error("Invalid types: castType =" + castType + ", exprType=" + exprType);
     }
     PsiClassType.ClassResolveResult resolveResult1 = ((PsiClassType)exprType).resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = ((PsiClassType)castType).resolveGenerics();
