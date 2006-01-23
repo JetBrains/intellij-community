@@ -15,29 +15,17 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiModifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class MakePublicFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.inspections.quickfix.MakePublicFix");
+public class MakePublicFix extends BaseFix {
 
-  private final PsiModifierListOwner myElement;
-  private final boolean myMakeReadable;
-
-  public MakePublicFix(PsiModifierListOwner checkedElement, boolean makeReadable) {
-    myElement = checkedElement;
-    myMakeReadable = makeReadable;
+  public MakePublicFix(PsiModifierListOwner checkedElement, boolean onTheFly) {
+    super(checkedElement, onTheFly);
   }
 
   public String getName() {
@@ -45,37 +33,8 @@ public class MakePublicFix implements LocalQuickFix {
             myElement.getLanguage().getFindUsagesProvider().getType(myElement));
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
-    if (myMakeReadable) {
-      final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-      final VirtualFile[] files = new VirtualFile[]{myElement.getContainingFile().getVirtualFile()};
-      final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(files);
-
-      if (status.hasReadonlyFiles()) {
-        final String className = myElement instanceof PsiClass ?
-                ((PsiClass)myElement).getQualifiedName() :
-                myElement instanceof PsiMember ?
-                        ((PsiMember)myElement).getContainingClass().getQualifiedName() :
-                        null;
-        assert className != null;
-
-        Messages.showMessageDialog(project,
-                DevKitBundle.message("inspections.registration.problems.quickfix.make.public.read-only",
-                        className),
-                getName(),
-                Messages.getErrorIcon());
-        return;
-      }
-    }
-
-    try {
-      myElement.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-    }
-    catch (IncorrectOperationException e) {
-      // Display an error message instead of causing an "internal error"?
-      // Setting a modifier should never fail, should it?
-      LOG.error(e);
-    }
+  protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
+    ((PsiModifierListOwner)myElement).getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
   }
 
   public String getFamilyName() {
