@@ -30,10 +30,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -231,7 +228,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       if (file.isValid()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
-          psiFileList.add(psiFile);          
+          psiFileList.add(psiFile);
         }
       }
     }
@@ -247,7 +244,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
     GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) :
-                                                                   GlobalSearchScope.projectScope(myProject);
+                              GlobalSearchScope.projectScope(myProject);
     final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);
     for (PsiDirectory directory : directories) {
       final VirtualFile directoryFile = directory.getVirtualFile();
@@ -270,15 +267,14 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
+    if (module.isDisposed()) return Collections.EMPTY_LIST.iterator();
+    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    ArrayList<PsiFile> psiFileList = null;
     for (VirtualFile virtualFile : contentRoots) {
       ArrayList<VirtualFile> files = myFileTree.getFiles(virtualFile);
-      psiFileList = new ArrayList<PsiFile>(files.size());
       PsiManager psiManager = PsiManager.getInstance(myProject);
-      for (int i = 0; i < files.size(); i++) {
-        VirtualFile file = files.get(i);
+      for (VirtualFile file : files) {
         if (fileIndex.getModuleForFile(file) != module) continue;
         if (file.isValid()) {
           PsiFile psiFile = psiManager.findFile(file);
