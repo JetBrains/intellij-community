@@ -198,10 +198,9 @@ public class HighlightMethodUtil {
                                                             boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
     PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
-    PsiJavaCodeReferenceElement[] referenceElements;
-    List<PsiClassType> checkedExceptions = new ArrayList<PsiClassType>();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
+    PsiJavaCodeReferenceElement[] referenceElements;
     List<PsiElement> exceptionContexts;
     if (includeRealPositionInfo) {
       exceptionContexts = new ArrayList<PsiElement>();
@@ -211,11 +210,12 @@ public class HighlightMethodUtil {
       exceptionContexts = null;
       referenceElements = null;
     }
+    List<PsiClassType> checkedExceptions = new ArrayList<PsiClassType>();
     for (int i = 0; i < exceptions.length; i++) {
       PsiClassType exception = exceptions[i];
       if (!ExceptionUtil.isUncheckedException(exception)) {
         checkedExceptions.add(exception);
-        if (includeRealPositionInfo && referenceElements != null && i < referenceElements.length) {
+        if (includeRealPositionInfo && i < referenceElements.length) {
           PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
           exceptionContexts.add(exceptionRef);
         }
@@ -290,11 +290,8 @@ public class HighlightMethodUtil {
         }
       }
     }
-
-
-    HighlightInfo highlightInfo;
     if (isDummy) return null;
-
+    HighlightInfo highlightInfo;
 
     if (element instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
@@ -373,7 +370,6 @@ public class HighlightMethodUtil {
     JavaResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
-    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
     for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
@@ -387,6 +383,7 @@ public class HighlightMethodUtil {
         }
       }
     }
+    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
 
     for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;

@@ -16,40 +16,44 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Processor;
 
 import java.util.*;
 
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CastMethodParametersFix");
+
   private final PsiMethod myTargetMethod;
   private final PsiExpression[] myExpressions;
   private final PsiSubstitutor mySubstitutor;
   private final PsiElement myContext;
   private ParameterInfo[] myNewParametersInfo;
 
-  private ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
+  private ChangeMethodSignatureFromUsageFix(PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
-    myContext = context;
+    myContext = context; LOG.assertTrue(targetMethod != null);
   }
 
   public String getText() {
@@ -103,16 +107,22 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     options.isOverridingMethods = true;
     options.isUsages = true;
     options.isSearchForTextOccurences = false;
-    final UsageInfo[][] usages = new UsageInfo[1][1];
+    final Ref<Integer> usagesFound = new Ref<Integer>(Integer.valueOf(0));
     Runnable runnable = new Runnable() {
-          public void run() {
-            usages[0] = FindUsagesUtil.findUsages(method, options);
+      public void run() {
+        Processor<UsageInfo> processor = new Processor<UsageInfo>() {
+          public boolean process(final UsageInfo t) {
+            usagesFound.set(Integer.valueOf(usagesFound.get().intValue() + 1));
+            return false;
           }
         };
+        FindUsagesUtil.processUsages(method, processor, options);
+      }
+    };
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
-    if (usages[0].length <= 1) {
+    if (usagesFound.get().intValue() <= 1) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,
                             method,
@@ -120,13 +130,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             method.getName(),
                             method.getReturnType(),
                             myNewParametersInfo);
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        processor.run();
-      }
-      else {
-        processor.run();
-      }
-
+      processor.run();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
@@ -168,12 +172,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
     else if (expressions.length > parameters.length) {
       // find which parameters to introduce and where
-      int ei = 0;
-      int pi = 0;
       Set<String> existingNames = new HashSet<String>();
       for (PsiParameter parameter : parameters) {
         existingNames.add(parameter.getName());
       }
+      int ei = 0;
+      int pi = 0;
       while (ei < expressions.length || pi < parameters.length) {
         PsiExpression expression = ei < expressions.length ? expressions[ei] : null;
         PsiParameter parameter = pi < parameters.length ? parameters[pi] : null;
@@ -228,17 +232,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   private static String suggestUniqueParameterName(CodeStyleManager codeStyleManager,
-                                                   PsiExpression expression,
-                                                   PsiType exprType,
-                                                   Set<String> existingNames) {
+                                                              PsiExpression expression,
+                                                              PsiType exprType,
+                                                              Set<String> existingNames) {
     int suffix =0;
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
     String[] names = nameInfo.names;
     while (true) {
       for (String name : names) {
-        name += suffix == 0 ? "" : "" + suffix;
-        if (existingNames.add(name)) {
-          return name;
+        String suggested = name + (suffix == 0 ? "" : String.valueOf(suffix));
+        if (existingNames.add(suggested)) {
+          return suggested;
         }
       }
       suffix++;
