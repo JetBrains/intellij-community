@@ -16,15 +16,16 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodSignatureHandMade extends MethodSignatureBase {
   private final String myName;
-  MethodSignatureHandMade(String name, PsiParameterList parameterList, PsiTypeParameterList typeParameterList, PsiSubstitutor substitutor) {
+  MethodSignatureHandMade(@NotNull String name, @NotNull PsiParameterList parameterList, @NotNull PsiTypeParameterList typeParameterList, @NotNull PsiSubstitutor substitutor) {
     super(substitutor, parameterList, typeParameterList);
     myName = name;
   }
 
-  MethodSignatureHandMade(String name, PsiType[] parameterTypes, PsiTypeParameter[] typeParameters, PsiSubstitutor substitutor) {
+  MethodSignatureHandMade(@NotNull String name, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters, @NotNull PsiSubstitutor substitutor) {
     super(substitutor, parameterTypes, typeParameters);
     myName = name;
   }
