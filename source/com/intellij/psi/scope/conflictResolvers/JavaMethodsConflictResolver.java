@@ -220,7 +220,8 @@ outer:
 
     for(int i = 0; i < args.length; i++){
       if (i >= params1.length || i >= params2.length) break;
-
+      final PsiType argType = args[i].getType();
+      if (TypeConversionUtil.isNullType(argType)) return Specifics.CONFLICT;
       boolean varArgs1 = params1[i].isVarArgs();
       boolean varArgs2 = params2[i].isVarArgs();
       if (!varArgs1 && varArgs2) return Specifics.TRUE;
@@ -229,7 +230,6 @@ outer:
       final PsiType type1 = info1.getSubstitutor().substitute(params1[i].getType());
       final PsiType type2 = info2.getSubstitutor().substitute(params2[i].getType());
 
-      final PsiType argType = args[i].getType();
       Boolean lessBoxing = isLessBoxing(argType, type1, type2);
       if (lessBoxing != null) {
         if (isMoreSpecific != null && !lessBoxing.equals(isMoreSpecific)) return Specifics.CONFLICT;
