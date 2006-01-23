@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -48,6 +48,23 @@ public class DebuggerPanelsManager implements ProjectComponent{
       }
     };
     colorsManager.addEditorColorsListener(myColorsListener);
+    
+    myEditorManager = new PositionHighlighter(myProject, getContextManager());
+    getContextManager().addListener(new DebuggerContextListener() {
+      public void changeEvent(final DebuggerContextImpl newContext, int event) {
+        if(event == DebuggerSession.EVENT_PAUSE) {
+          DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+            public void run() {
+              toFront(newContext.getDebuggerSession());
+            }
+          });
+        }
+      }
+    });
+
+    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    LOG.assertTrue(contentManager != null, "Content manager is null");
+    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.getRunnerInfo());
   }
 
   private DebuggerStateManager getContextManager() {
@@ -116,22 +133,6 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
 
   public void projectOpened() {
-    myEditorManager = new PositionHighlighter(myProject, getContextManager());
-    getContextManager().addListener(new DebuggerContextListener() {
-      public void changeEvent(final DebuggerContextImpl newContext, int event) {
-        if(event == DebuggerSession.EVENT_PAUSE) {
-          DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-            public void run() {
-              toFront(newContext.getDebuggerSession());
-            }
-          });
-        }
-      }
-    });
-
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
-    LOG.assertTrue(contentManager != null, "Content manager is null");
-    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.getRunnerInfo());
   }
 
   public void projectClosed() {
