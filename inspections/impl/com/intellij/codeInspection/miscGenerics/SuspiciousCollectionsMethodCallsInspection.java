@@ -27,21 +27,21 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
                                    IntArrayList indices) throws IncorrectOperationException {
     final PsiClass collectionClass = manager.findClass("java.util.Collection", searchScope);
     PsiType[] javaLangObject = {PsiType.getJavaLangObject(manager, searchScope)};
-    MethodSignature removeSignature = MethodSignatureUtil.createMethodSignature("remove", javaLangObject, null, PsiSubstitutor.EMPTY);
+    MethodSignature removeSignature = MethodSignatureUtil.createMethodSignature("remove", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
     if (collectionClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(collectionClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
-      MethodSignature containsSignature = MethodSignatureUtil.createMethodSignature("contains", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature containsSignature = MethodSignatureUtil.createMethodSignature("contains", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod contains = MethodSignatureUtil.findMethodBySignature(collectionClass, containsSignature, false);
       addMethod(contains, 0, patternMethods, indices);
     }
 
     final PsiClass listClass = manager.findClass("java.util.List", searchScope);
     if (listClass != null) {
-      MethodSignature indexofSignature = MethodSignatureUtil.createMethodSignature("indexOf", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature indexofSignature = MethodSignatureUtil.createMethodSignature("indexOf", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod indexof = MethodSignatureUtil.findMethodBySignature(listClass, indexofSignature, false);
       addMethod(indexof, 0, patternMethods, indices);
-      MethodSignature lastindexofSignature = MethodSignatureUtil.createMethodSignature("lastIndexOf", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature lastindexofSignature = MethodSignatureUtil.createMethodSignature("lastIndexOf", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod lastindexof = MethodSignatureUtil.findMethodBySignature(listClass, lastindexofSignature, false);
       addMethod(lastindexof, 0, patternMethods, indices);
     }
@@ -50,13 +50,13 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
     if (mapClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(mapClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
-      MethodSignature getSignature = MethodSignatureUtil.createMethodSignature("get", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature getSignature = MethodSignatureUtil.createMethodSignature("get", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod get = MethodSignatureUtil.findMethodBySignature(mapClass, getSignature, false);
       addMethod(get, 0, patternMethods, indices);
-      MethodSignature containsKeySignature = MethodSignatureUtil.createMethodSignature("containsKey", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature containsKeySignature = MethodSignatureUtil.createMethodSignature("containsKey", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsKey = MethodSignatureUtil.findMethodBySignature(mapClass, containsKeySignature, false);
       addMethod(containsKey, 0, patternMethods, indices);
-      MethodSignature containsValueSignature = MethodSignatureUtil.createMethodSignature("containsValue", javaLangObject, null, PsiSubstitutor.EMPTY);
+      MethodSignature containsValueSignature = MethodSignatureUtil.createMethodSignature("containsValue", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsValue = MethodSignatureUtil.findMethodBySignature(mapClass, containsValueSignature, false);
       addMethod(containsValue, 1, patternMethods, indices);
     }
