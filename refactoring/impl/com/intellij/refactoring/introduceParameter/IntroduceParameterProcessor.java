@@ -272,7 +272,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
-      if (variable.getName().equals(myParameterName)) {
+      if (myParameterName.equals(variable.getName())) {
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  ConflictsUtil.getDescription(variable, true));
 
@@ -538,7 +538,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         myInstanceRef = methodExpression.getQualifierExpression();
         if (myInstanceRef == null) {
           final PsiClass thisResolveClass = RefactoringUtil.getThisResolveClass(methodExpression);
-          if (thisResolveClass != null && !thisResolveClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
+          if (thisResolveClass != null &&
+              !(thisResolveClass instanceof PsiAnonymousClass) &&
+              !thisResolveClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
             //Qualified this needed
             try {
               myInstanceRef = factory.createExpressionFromText(thisResolveClass.getName() + ".this", null);
@@ -653,7 +655,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       PsiElement[] oldChildren = oldExpr.getChildren();
       PsiElement[] newChildren = newExpr.getChildren();
 
-      if (oldChildren != null && newChildren != null & oldChildren.length == newChildren.length) {
+      if (oldChildren.length == newChildren.length) {
         for (int i = 0; i < oldChildren.length; i++) {
           resolveOldReferences(newChildren[i], oldChildren[i]);
         }
