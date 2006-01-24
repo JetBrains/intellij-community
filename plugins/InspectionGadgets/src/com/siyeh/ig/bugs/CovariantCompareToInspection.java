@@ -55,9 +55,6 @@ public class CovariantCompareToInspection extends MethodInspection {
                 return;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length != 1) {
                 return;
@@ -94,9 +91,6 @@ public class CovariantCompareToInspection extends MethodInspection {
                 return false;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return false;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length != 1) {
                 return false;
