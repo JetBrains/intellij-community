@@ -24,18 +24,16 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class HibernateResourceInspection extends ExpressionInspection{
-  @NonNls
-  private static final String SESSION_FACTORY_CLASS = "org.hibernate.SessionFactory";
 
-  public String getID(){
-      return "HibernateResourceOpenedButNotSafelyClosed";
-  }
+    public String getID(){
+        return "HibernateResourceOpenedButNotSafelyClosed";
+    }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "hibernate.resource.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -45,8 +43,15 @@ public class HibernateResourceInspection extends ExpressionInspection{
     public String buildErrorString(PsiElement location){
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
-        final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.problem.descriptor", text);
+        final String text;
+        if (type == null) {
+            text = "";
+        } else {
+            text = type.getPresentableText();
+        }
+        return InspectionGadgetsBundle.message(
+                "hibernate.resource.opened.not.closed.problem.descriptor",
+                text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -55,52 +60,56 @@ public class HibernateResourceInspection extends ExpressionInspection{
 
     private static class HibernateResourceVisitor extends BaseInspectionVisitor{
 
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isHibernateFactoryMethod(expression)) {
+            if(!isHibernateFactoryMethod(expression)){
                 return;
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)) {
-                registerError(expression);
+                final PsiType type = expression.getType();
+                if(type != null){
+                    registerError(expression);
+                }
                 return;
             }
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) parent;
             final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)) {
+            if(!(lhs instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement referent = referenceExpression.resolve();
+            if(referent == null || !(referent instanceof PsiVariable)){
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable) referent;
-
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
-                if(tryStatement == null) {
-                    registerError(expression);
+                                PsiTryStatement.class);
+                if(tryStatement == null){
+                    final PsiType type = expression.getType();
+                    if(type != null){
+                        registerError(expression);
+                    }
                     return;
                 }
-                if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)) {
+                if(resourceIsOpenedInTryAndClosedInFinally(
+                        tryStatement, expression, boundVariable)){
                     return;
                 }
                 currentContext = tryStatement;
             }
         }
 
-
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -122,9 +131,27 @@ public class HibernateResourceInspection extends ExpressionInspection{
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
+
+        private static boolean isHibernateFactoryMethod(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if(!HardcodedMethodConstants.OPEN_SESSION.equals(methodName)){
+                return false;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(qualifier == null){
+                return false;
+            }
+            return TypeUtils.expressionHasTypeOrSubtype(
+                    "org.hibernate.SessionFactory", qualifier);
+        }
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable elementToClose;
 
@@ -139,29 +166,27 @@ public class HibernateResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-              return;
+            if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
+                return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)qualifier;
+            final PsiElement referent = referenceExpression.resolve();
+            if(referent == null){
                 return;
             }
             if(referent.equals(elementToClose)){
@@ -172,25 +197,5 @@ public class HibernateResourceInspection extends ExpressionInspection{
         public boolean containsStreamClose(){
             return containsClose;
         }
-    }
-
-    private static boolean isHibernateFactoryMethod(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null)
-        {
-            return false;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.OPEN_SESSION.equals(methodName))
-        {
-            return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null)
-        {
-            return false;
-        }
-        return TypeUtils.expressionHasTypeOrSubtype(SESSION_FACTORY_CLASS,
-                                                    qualifier);
     }
 }

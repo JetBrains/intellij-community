@@ -21,13 +21,17 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class TypeUtils {
+
     private TypeUtils() {
         super();
     }
 
-    public static boolean expressionHasType(@NotNull String typeName,@Nullable PsiExpression expression) {
+    public static boolean expressionHasType(
+            @NonNls @NotNull String typeName,
+            @Nullable PsiExpression expression) {
         if (expression == null) {
             return false;
         }
@@ -35,7 +39,8 @@ public class TypeUtils {
         return typeEquals(typeName, type);
     }
 
-    public static boolean typeEquals(@NotNull String typeName, @Nullable PsiType targetType) {
+    public static boolean typeEquals(@NonNls @NotNull String typeName,
+                                     @Nullable PsiType targetType) {
         if (targetType == null) {
             return false;
         }
@@ -50,8 +55,9 @@ public class TypeUtils {
         return typeEquals("java.lang.String", targetType);
     }
 
-    public static boolean expressionHasTypeOrSubtype(@NotNull String typeName,
-                                                     @Nullable PsiExpression expression) {
+    public static boolean expressionHasTypeOrSubtype(
+            @NonNls @NotNull String typeName,
+            @Nullable PsiExpression expression) {
         if (expression == null) {
             return false;
         }
@@ -64,11 +70,9 @@ public class TypeUtils {
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass aClass = classType.resolve();
-        if(aClass == null)
-        {
+        if (aClass == null) {
             return false;
         }
         return ClassUtils.isSubclass(aClass, typeName);
     }
-
 }
