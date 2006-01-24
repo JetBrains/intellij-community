@@ -300,7 +300,7 @@ public class GenericInfoImpl implements DomGenericInfo {
                                     myCollectionChildrenClasses.get(qname));
     }
 
-    throw new UnsupportedOperationException("No implementation for method " + method.toString());
+    throw new UnsupportedOperationException("No implementation for method " + method.toString() + " in class " + myClass);
   }
 
   private Invocation createPropertyAccessorInvocation(final PropertyAccessor accessor) {
