@@ -10,7 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.javaee.web.WebRoot;
-import com.intellij.j2ee.web.WebUtil;
+import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
