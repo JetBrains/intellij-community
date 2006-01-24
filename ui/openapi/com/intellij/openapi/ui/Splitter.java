@@ -19,13 +19,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Vladimir Kondratyev
@@ -36,17 +35,17 @@ public class Splitter extends JPanel {
 
   private int myDividerWidth;
   /**
-   *                        /------/
-   *                        |  1   |
+   * /------/
+   * |  1   |
    * This is vertical split |------|
-   *                        |  2   |
-   *                        /------/
-   *
-   *                          /-------/
-   *                          |   |   |
+   * |  2   |
+   * /------/
+   * <p/>
+   * /-------/
+   * |   |   |
    * This is horihontal split | 1 | 2 |
-   *                          |   |   |
-   *                          /-------/
+   * |   |   |
+   * /-------/
    */
   private boolean myVerticalSplit;
   private boolean myHonorMinimumSize = false;
@@ -81,15 +80,15 @@ public class Splitter extends JPanel {
    * Creates split with specified orientation and proportion.
    */
   public Splitter(boolean vertical, float proportion) {
-    this (vertical, proportion, 0.0f, 1.0f);
+    this(vertical, proportion, 0.0f, 1.0f);
   }
 
   public Splitter(boolean vertical, float proportion, float minProp, float maxProp) {
     myMinProp = minProp;
     myMaxProp = maxProp;
-    LOG.assertTrue (minProp >= 0.0f);
-    LOG.assertTrue (maxProp <= 1.0f);
-    LOG.assertTrue (minProp <= maxProp);
+    LOG.assertTrue(minProp >= 0.0f);
+    LOG.assertTrue(maxProp <= 1.0f);
+    LOG.assertTrue(minProp <= maxProp);
     myVerticalSplit = vertical;
     myShowDividerControls = false;
     myDivider = createDivider();
@@ -151,23 +150,23 @@ public class Splitter extends JPanel {
   }
 
   public Dimension getMinimumSize() {
-    if (isHonorMinimumSize()) {
-      final int dividerWidth = getDividerWidth();
-      if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
-        final Dimension firstMinSize = myFirstComponent.getMinimumSize();
-        final Dimension secondMinSize = mySecondComponent.getMinimumSize();
-        return getOrientation() ? new Dimension(Math.max(firstMinSize.width, secondMinSize.width), firstMinSize.height + dividerWidth + secondMinSize.height) :
-               new Dimension(firstMinSize.width + dividerWidth + secondMinSize.width, Math.max(firstMinSize.height, secondMinSize.height));
-      }
-
-      if (myFirstComponent != null && myFirstComponent.isVisible()) { // only first component is visible
-        return myFirstComponent.getMinimumSize();
-      }
-
-      if (mySecondComponent != null && mySecondComponent.isVisible()) { // only second component is visible
-        return mySecondComponent.getMinimumSize();
-      }
+    final int dividerWidth = getDividerWidth();
+    if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
+      final Dimension firstMinSize = myFirstComponent.getMinimumSize();
+      final Dimension secondMinSize = mySecondComponent.getMinimumSize();
+      return getOrientation()
+             ? new Dimension(Math.max(firstMinSize.width, secondMinSize.width), firstMinSize.height + dividerWidth + secondMinSize.height)
+             : new Dimension(firstMinSize.width + dividerWidth + secondMinSize.width, Math.max(firstMinSize.height, secondMinSize.height));
     }
+
+    if (myFirstComponent != null && myFirstComponent.isVisible()) { // only first component is visible
+      return myFirstComponent.getMinimumSize();
+    }
+
+    if (mySecondComponent != null && mySecondComponent.isVisible()) { // only second component is visible
+      return mySecondComponent.getMinimumSize();
+    }
+
     return super.getMinimumSize();
   }
 
@@ -185,31 +184,32 @@ public class Splitter extends JPanel {
       int firstCompontSize;
       int secondComponentSize;
 
-      if(componentSize <= dividerWidth) {
+      if (componentSize <= dividerWidth) {
         firstCompontSize = 0;
         secondComponentSize = 0;
         dividerWidth = componentSize;
       }
       else {
-        firstCompontSize = (int)(myProportion *(float)(componentSize - dividerWidth));
-        secondComponentSize = getOrientation()? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
+        firstCompontSize = (int)(myProportion * (float)(componentSize - dividerWidth));
+        secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
 
         if (isHonorMinimumSize()) {
-          final int firstMinSize = getOrientation()? myFirstComponent.getMinimumSize().height : myFirstComponent.getMinimumSize().width;
-          final int secondMinSize = getOrientation()? mySecondComponent.getMinimumSize().height : mySecondComponent.getMinimumSize().width;
+          final int firstMinSize = getOrientation() ? myFirstComponent.getMinimumSize().height : myFirstComponent.getMinimumSize().width;
+          final int secondMinSize = getOrientation() ? mySecondComponent.getMinimumSize().height : mySecondComponent.getMinimumSize().width;
 
-          if(firstCompontSize + secondComponentSize <= firstMinSize + secondMinSize) {
+          if (firstCompontSize + secondComponentSize <= firstMinSize + secondMinSize) {
             float propotion = firstMinSize / (firstMinSize + (float)secondMinSize);
-            firstCompontSize = (int)(propotion *(float)(componentSize - dividerWidth));
-            secondComponentSize = getOrientation()? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
+            firstCompontSize = (int)(propotion * (float)(componentSize - dividerWidth));
+            secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
           }
           else {
-            if(firstCompontSize < firstMinSize) {
-              if(secondComponentSize - (firstMinSize - firstCompontSize) > secondMinSize)
-              secondComponentSize = secondComponentSize - (firstMinSize - firstCompontSize);
-              firstCompontSize    = firstMinSize;
+            if (firstCompontSize < firstMinSize) {
+              if (secondComponentSize - (firstMinSize - firstCompontSize) > secondMinSize) {
+                secondComponentSize = secondComponentSize - (firstMinSize - firstCompontSize);
+              }
+              firstCompontSize = firstMinSize;
             }
-            else if(secondComponentSize < secondMinSize) {
+            else if (secondComponentSize < secondMinSize) {
               firstCompontSize = firstCompontSize - (secondMinSize - secondComponentSize);
               secondComponentSize = secondMinSize;
             }
@@ -348,12 +348,10 @@ public class Splitter extends JPanel {
     return mySecondComponent;
   }
 
-  public JComponent getOtherComponent (final Component comp) {
-    if (comp.equals (getFirstComponent ()))
-      return getSecondComponent ();
-    if (comp.equals (getSecondComponent ()))
-      return getFirstComponent ();
-    LOG.error ("invalid component");
+  public JComponent getOtherComponent(final Component comp) {
+    if (comp.equals(getFirstComponent())) return getSecondComponent();
+    if (comp.equals(getSecondComponent())) return getFirstComponent();
+    LOG.error("invalid component");
     return getFirstComponent();
   }
 
@@ -405,8 +403,9 @@ public class Splitter extends JPanel {
 
       Icon glueIcon = IconLoader.getIcon(isVerticalSplit ? "/general/splitGlueV.png" : "/general/splitGlueH.png");
       int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+      add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0,
+                                                       isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill,
+                                                       new Insets(0, 0, 0, 0), 0, 0));
       JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
       splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
@@ -416,10 +415,8 @@ public class Splitter extends JPanel {
           setProportion(1.0f - getMinProportion(mySecondComponent));
         }
       });
-      add(splitDownlabel,
-          new GridBagConstraints(isVerticalSplit ? 1 : 0,
-                                 isVerticalSplit ? 0 : 5,
-                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(splitDownlabel, new GridBagConstraints(isVerticalSplit ? 1 : 0, isVerticalSplit ? 0 : 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
+                                                 GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       //
       add(new JLabel(glueIcon),
           new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
@@ -431,8 +428,8 @@ public class Splitter extends JPanel {
           setProportion(.5f);
         }
       });
-      add(splitCenterlabel,
-          new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(splitCenterlabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                   new Insets(0, 0, 0, 0), 0, 0));
       add(new JLabel(glueIcon),
           new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       //
@@ -445,20 +442,19 @@ public class Splitter extends JPanel {
           setProportion(getMinProportion(myFirstComponent));
         }
       });
-      add(splitUpLabel,
-          new GridBagConstraints(isVerticalSplit ? 5 : 0,
-                                 isVerticalSplit ? 0 : 1,
-                                 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-      add(new JLabel(glueIcon),
-          new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
-                                 isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
+      add(splitUpLabel, new GridBagConstraints(isVerticalSplit ? 5 : 0, isVerticalSplit ? 0 : 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
+                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      add(new JLabel(glueIcon), new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
+                                                       isVerticalSplit ? GridBagConstraints.WEST : GridBagConstraints.SOUTH, glueFill,
+                                                       new Insets(0, 0, 0, 0), 0, 0));
     }
 
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
       if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
         myDragging = true;
-        setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        setCursor(
+          getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), Splitter.this);
         float proportion;
         if (getOrientation()) {
@@ -478,7 +474,8 @@ public class Splitter extends JPanel {
 
     private float getMinProportion(JComponent component) {
       if (isHonorMinimumSize()) {
-        if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
+        if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null &&
+            mySecondComponent.isVisible()) {
           if (getOrientation()) {
             return (float)component.getMinimumSize().height / (float)(Splitter.this.getHeight() - getDividerWidth());
           }
@@ -493,36 +490,31 @@ public class Splitter extends JPanel {
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
       switch (e.getID()) {
-        case MouseEvent.MOUSE_ENTERED:
-          {
-            setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
-            break;
+        case MouseEvent.MOUSE_ENTERED: {
+          setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+          break;
+        }
+        case MouseEvent.MOUSE_EXITED: {
+          if (!myDragging) {
+            setCursor(Cursor.getPredefinedCursor(0));
           }
-        case MouseEvent.MOUSE_EXITED:
-          {
-            if (!myDragging) {
-              setCursor(Cursor.getPredefinedCursor(0));
-            }
-            break;
+          break;
+        }
+        case MouseEvent.MOUSE_PRESSED: {
+          setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
+          break;
+        }
+        case MouseEvent.MOUSE_RELEASED: {
+          myDragging = false;
+          myPoint = null;
+          break;
+        }
+        case MouseEvent.MOUSE_CLICKED: {
+          if (e.getClickCount() == 2) {
+            Splitter.this.setProportion(.5f);
           }
-        case MouseEvent.MOUSE_PRESSED:
-          {
-            setCursor(getOrientation() ? Cursor.getPredefinedCursor(9) : Cursor.getPredefinedCursor(11));
-            break;
-          }
-        case MouseEvent.MOUSE_RELEASED:
-          {
-            myDragging = false;
-            myPoint = null;
-            break;
-          }
-        case MouseEvent.MOUSE_CLICKED:
-          {
-            if (e.getClickCount() == 2) {
-              Splitter.this.setProportion(.5f);
-            }
-            break;
-          }
+          break;
+        }
       }
     }
   }
