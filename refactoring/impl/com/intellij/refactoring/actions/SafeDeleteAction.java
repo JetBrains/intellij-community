@@ -33,7 +33,7 @@ public class SafeDeleteAction extends BaseRefactoringAction {
 
   protected boolean isEnabledOnDataContext(DataContext dataContext) {
     final Object ejbElement = dataContext.getData(J2EEProjectViewPane.SELECTED_ELEMENT);
-    // CMP/CMR fields should be deleted from EjbImpl View
+    // CMP/CMR fields should be deleted from Ejb View
     if (ejbElement instanceof CmpField || ejbElement instanceof CmrField) return false;
     return super.isEnabledOnDataContext(dataContext);
   }

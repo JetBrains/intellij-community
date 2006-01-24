@@ -26,6 +26,9 @@ public interface DomGenericInfo {
   List<DomAttributeChildDescription> getAttributeChildrenDescriptions();
 
   @Nullable
+  DomChildrenDescription getChildDescription(String tagName);
+
+  @Nullable
   DomFixedChildDescription getFixedChildDescription(String tagName);
 
   @Nullable

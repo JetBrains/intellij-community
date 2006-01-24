@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiLock;
@@ -18,6 +18,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import net.sf.cglib.core.CodeGenerationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -252,5 +253,40 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     assert domElementClass.isAssignableFrom(implementationClass);
     myImplementationClasses.put(domElementClass, implementationClass);
+  }
+
+  public DomElement getDomElement(final XmlTag tag) {
+    final DomInvocationHandler handler = _getDomElement(tag);
+    return handler != null ? handler.getProxy() : null;
+  }
+
+  @Nullable
+  private DomInvocationHandler _getDomElement(final XmlTag tag) {
+    DomInvocationHandler invocationHandler = getCachedElement(tag);
+    if (invocationHandler != null && invocationHandler.isValid()) {
+      return invocationHandler;
+    }
+
+    DomInvocationHandler parent;
+    final XmlTag parentTag = tag.getParentTag();
+    if (parentTag == null) {
+      return getCachedElement((XmlFile)tag.getContainingFile()).getRootHandler();
+    } else {
+      parent = _getDomElement(parentTag);
+    }
+    if (parent == null) return null;
+
+    final GenericInfoImpl info = parent.getGenericInfo();
+    final String tagName = tag.getName();
+    final DomChildrenDescription childDescription;
+    if (info.isCollectionChild(tagName)) {
+      childDescription = info.getCollectionChildDescription(tagName);
+    } else {
+      childDescription = info.getFixedChildDescription(tagName);
+    }
+    if (childDescription == null) return null;
+
+    childDescription.getValues(parent.getProxy());
+    return getCachedElement(tag);
   }
 }

@@ -113,11 +113,11 @@ public class ContainerUtil {
     return null;
   }
 
-  public static <T> T find(Iterable<T> iterable, Condition<T> condition) {
+  public static <T> T find(Iterable<? extends T> iterable, Condition<T> condition) {
     return find(iterable.iterator(), condition);
   }
 
-  public static <T> T find(Iterator<T> iterator, Condition<T> condition) {
+  public static <T> T find(Iterator<? extends T> iterator, Condition<T> condition) {
     while (iterator.hasNext()) {
       T value = iterator.next();
       if (condition.value(value)) return value;

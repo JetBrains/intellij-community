@@ -472,7 +472,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   public DomFixedChildDescription getFixedChildDescription(String tagName) {
     buildMethodMaps();
     final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
-    assert getterMethods.length > 0;
+    assert getterMethods.length > 0 : tagName + " " + myClass;
     return new FixedChildDescriptionImpl(tagName,
                                          getterMethods[0].getGenericReturnType(),
                                          getFixedChildrenCount(tagName),
@@ -510,6 +510,14 @@ public class GenericInfoImpl implements DomGenericInfo {
       result.add(new AttributeChildDescriptionImpl(entry.getValue(), entry.getKey().findMethod(myClass)));
     }
     return result;
+  }
+
+  @Nullable
+  public DomChildrenDescription getChildDescription(String tagName) {
+    if (isCollectionChild(tagName)) {
+      return getCollectionChildDescription(tagName);
+    }
+    return getFixedChildDescription(tagName);
   }
 
   final boolean isFixedChild(final String qname) {

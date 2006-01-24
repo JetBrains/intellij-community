@@ -5,8 +5,10 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
@@ -31,4 +33,7 @@ public abstract class DomManager {
   public abstract DomGenericInfo getGenericInfo(Type type);
 
   public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
+
+  @Nullable
+  public abstract DomElement getDomElement(final XmlTag tag);
 }

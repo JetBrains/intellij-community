@@ -1,8 +1,5 @@
 package com.intellij.ide;
 
-import com.intellij.j2ee.j2eeDom.ejb.CmpField;
-import com.intellij.j2ee.j2eeDom.ejb.CmrField;
-import com.intellij.j2ee.j2eeDom.ejb.Ejb;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -18,6 +15,8 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.javaee.model.common.EnterpriseBean;
+import com.intellij.javaee.model.common.CmpField;
+import com.intellij.javaee.model.common.CmrField;
 
 import javax.swing.*;
 
@@ -47,23 +46,14 @@ public class IconUtilEx {
     else if (object instanceof Module) {
       return getIcon((Module)object, flags);
     }
-    else if (object instanceof Ejb) {
-      return Icons.EJB_ICON;
-    }
     else if (object instanceof EnterpriseBean) {
       return Icons.EJB_ICON;
     }
     else if (object instanceof CmpField) {
       return Icons.EJB_CMP_FIELD_ICON;
     }
-    else if (object instanceof com.intellij.javaee.model.common.CmpField) {
-      return Icons.EJB_CMP_FIELD_ICON;
-    }
-    else if (object instanceof com.intellij.javaee.model.common.CmrField) {
-      return Icons.EJB_CMP_FIELD_ICON;
-    }
     else if (object instanceof CmrField) {
-      return Icons.EJB_CMR_FIELD_ICON;
+      return Icons.EJB_CMP_FIELD_ICON;
     }
     else {
       //noinspection HardCodedStringLiteral
