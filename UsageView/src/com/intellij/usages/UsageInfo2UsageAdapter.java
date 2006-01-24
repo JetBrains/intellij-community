@@ -51,6 +51,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   private final UsageInfo myUsageInfo;
   private int myLineNumber;
   protected Icon myIcon;
+  private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
   private UsageInfo2UsageAdapter.MyUsagePresentation myUsagePresentation;
@@ -81,6 +82,8 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     else {
       myIcon = element.getIcon(0);
     }
+
+    myTooltipText = myUsageInfo.getTooltipText();
 
     initChunks();
     myUsagePresentation = new MyUsagePresentation();
@@ -281,6 +284,10 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
     public Icon getIcon() {
       return myIcon;
+    }
+
+    public String getTooltipText() {
+      return myTooltipText;
     }
   }
 

@@ -54,10 +54,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 /**
@@ -70,7 +67,21 @@ import java.util.List;
 public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
   private UsageNodeTreeBuilder myBuilder;
   private MyPanel myRootPanel;
-  private JTree myTree = new Tree();
+  private JTree myTree = new Tree() {
+    {
+      ToolTipManager.sharedInstance().registerComponent(this);
+    }
+    public String getToolTipText(MouseEvent e) {
+      TreePath path = getPathForLocation(e.getX(), e.getY());
+      if (path != null) {
+        if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+          final UsageViewTreeCellRenderer usageViewTreeCellRenderer = (UsageViewTreeCellRenderer)getCellRenderer();
+          return usageViewTreeCellRenderer.getTooltipText(path.getLastPathComponent());
+        }
+      }
+      return null;
+    }
+  };
   private Content myContent;
 
   private UsageViewPresentation myPresentation;
