@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.StackingPopupDispatcher;
@@ -296,6 +297,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
       myParentWindow = WindowManager.getInstance().suggestParentWindow(project);
+      if (myParentWindow == null) {
+        myParentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+      }
+      
       initDialog(shouldShowCancel, shouldShowBackground, cancelText);
     }
 
