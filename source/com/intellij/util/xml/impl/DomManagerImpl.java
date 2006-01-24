@@ -262,6 +262,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   @Nullable
   private DomInvocationHandler _getDomElement(final XmlTag tag) {
+    if (tag == null) return null;
+
     DomInvocationHandler invocationHandler = getCachedElement(tag);
     if (invocationHandler != null && invocationHandler.isValid()) {
       return invocationHandler;
@@ -270,7 +272,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     DomInvocationHandler parent;
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
-      return getCachedElement((XmlFile)tag.getContainingFile()).getRootHandler();
+      final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
+      return xmlFile != null ? getCachedElement(xmlFile).getRootHandler() : null;
     } else {
       parent = _getDomElement(parentTag);
     }
