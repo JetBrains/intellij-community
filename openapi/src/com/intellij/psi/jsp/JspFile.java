@@ -21,10 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.javaee.web.WebModuleProperties;
 
 public interface JspFile extends XmlFile {
-  WebModuleProperties getWebModuleProperties();
   WebDirectoryElement getParentWebDirectory();
   String getWebPath();
 

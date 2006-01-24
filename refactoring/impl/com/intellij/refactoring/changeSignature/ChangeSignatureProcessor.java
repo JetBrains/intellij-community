@@ -6,7 +6,6 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.j2ee.ejb.EjbRolesUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
@@ -283,12 +282,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void findEjbUsages(ArrayList<UsageInfo> result) {
-    if (myChangeInfo.ejbRole == null) return;
     if (!(myChangeInfo.ejbRole instanceof EjbDeclMethodRole)) return;
 
-    final PsiMethod[] implementations = EjbUtil.findEjbImplementations(myChangeInfo.getMethod());
-    for (PsiMethod implementation : implementations) {
-      result.add(new EjbUsageInfo(implementation));
+    for (PsiMethod implementation : ((EjbDeclMethodRole) myChangeInfo.ejbRole).findAllImplementations()) {
+      result.add(new UsageInfo(implementation));
       findSimpleUsages(implementation, result);
     }
   }

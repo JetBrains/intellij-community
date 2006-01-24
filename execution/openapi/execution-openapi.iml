@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="action-system-openapi" />
-    <orderEntry type="module" module-name="ejb-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
