@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.j2ee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;

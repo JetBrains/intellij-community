@@ -2,7 +2,7 @@ package com.intellij.openapi.project.impl.convertors;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.j2ee.J2EEFileTemplateNames;
-import com.intellij.j2ee.j2eeDom.web.WebRoot;
+import com.intellij.javaee.web.WebRoot;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
