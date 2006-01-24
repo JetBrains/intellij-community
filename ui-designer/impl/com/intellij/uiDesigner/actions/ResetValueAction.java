@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -36,7 +37,7 @@ public class ResetValueAction extends AnAction {
       property.resetValue(component);
       component.getDelegee().invalidate();
       editor.refreshAndSave(false);
-      editor.getPropertyInspector().repaint();
+      UIDesignerToolWindowManager.getInstance(editor.getProject()).getPropertyInspector().repaint();
     }
     catch (Exception e1) {
       LOG.error(e1);

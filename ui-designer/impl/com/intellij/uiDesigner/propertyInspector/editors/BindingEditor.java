@@ -3,11 +3,13 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -21,14 +23,8 @@ import java.util.Arrays;
  * @author Vladimir Kondratyev
  */
 public final class BindingEditor extends ComboBoxPropertyEditor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.propertyInspector.editors.BindingEditor");
 
-  private final GuiEditor myEditor;
-
-  public BindingEditor(final GuiEditor editor){
-    LOG.assertTrue(editor != null);
-
-    myEditor = editor;
+  public BindingEditor(final Project project) {
     myCbx.setEditable(true);
     final JComponent editorComponent = (JComponent)myCbx.getEditor().getEditorComponent();
     editorComponent.setBorder(null);
@@ -48,7 +44,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor{
           SwingUtilities.invokeLater(
             new Runnable(){
               public void run(){
-                myEditor.getPropertyInspector().requestFocus();
+                UIDesignerToolWindowManager.getInstance(project).getPropertyInspector().requestFocus();
               }
             }
           );
@@ -57,38 +53,37 @@ public final class BindingEditor extends ComboBoxPropertyEditor{
     }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myCbx);
   }
 
-  private String[] getFieldNames(final RadComponent component, final String currentName) {
+  private static String[] getFieldNames(final RadComponent component, final String currentName) {
     final ArrayList<String> result = new ArrayList<String>();
     if (currentName != null){
       result.add(currentName);
     }
 
-    final String className = myEditor.getRootContainer().getClassToBind();
+    final IRootContainer root = FormEditingUtil.getRoot(component);
+    final String className = root.getClassToBind();
     if (className == null) {
       return result.toArray(new String[result.size()]);
     }
 
-    final PsiClass aClass = FormEditingUtil.findClassToBind(myEditor.getModule(), className);
+    final PsiClass aClass = FormEditingUtil.findClassToBind(component.getModule(), className);
     if (aClass == null) {
       return result.toArray(new String[result.size()]);
     }
 
     final PsiField[] fields = aClass.getFields();
 
-    for (int i = 0; i < fields.length; i++) {
-      final PsiField field = fields[i];
-
+    for (final PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
 
       final String fieldName = field.getName();
 
-      if (fieldName.equals(currentName)) {
+      if (Comparing.equal(currentName, fieldName)) {
         continue;
       }
 
-      if (!GuiEditorUtil.isBindingUnique(component, fieldName, myEditor.getRootContainer())) {
+      if (!GuiEditorUtil.isBindingUnique(component, fieldName, root)) {
         continue;
       }
 
@@ -105,12 +100,10 @@ public final class BindingEditor extends ComboBoxPropertyEditor{
 
       final PsiType componentType;
       try {
-        componentType = PsiManager.getInstance(myEditor.getProject()).getElementFactory().createTypeFromText(componentClassName, null);
+        componentType =
+          PsiManager.getInstance(component.getModule().getProject()).getElementFactory().createTypeFromText(componentClassName, null);
       }
       catch (IncorrectOperationException e) {
-        continue;
-      }
-      if (componentType == null) {
         continue;
       }
 

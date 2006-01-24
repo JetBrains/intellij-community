@@ -8,36 +8,34 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.GuiEditorUtil;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.editors.BindingEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BindingRenderer;
+import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class BindingProperty extends Property {
-  private final GuiEditor myGuiEditor;
+  private final Project myProject;
 
   private final BindingRenderer myRenderer;
   private final BindingEditor myEditor;
 
-  public BindingProperty(final GuiEditor editor){
+  public BindingProperty(final Project project){
     super(null, "binding");
-    myGuiEditor = editor;
+    myProject = project;
     myRenderer = new BindingRenderer();
-    myEditor = new BindingEditor(editor);
+    myEditor = new BindingEditor(project);
   }
 
   public PropertyEditor getEditor(){
@@ -65,8 +63,9 @@ public final class BindingProperty extends Property {
 
     // Check that binding remains unique
 
+    final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     if (
-      !GuiEditorUtil.isBindingUnique(component, newBinding, myGuiEditor.getRootContainer())
+      !GuiEditorUtil.isBindingUnique(component, newBinding, root)
     ) {
       //noinspection HardCodedStringLiteral
       throw new Exception("binding is not unique");
@@ -80,20 +79,19 @@ public final class BindingProperty extends Property {
 
     component.setBinding(newBinding);
 
-    final String classToBind = myGuiEditor.getRootContainer().getClassToBind();
+    final String classToBind = root.getClassToBind();
     if(classToBind == null){
       return;
     }
 
-    final Project project = myGuiEditor.getProject();
-    final PsiClass aClass = PsiManager.getInstance(project).findClass(classToBind, GlobalSearchScope.allScope(project));
+    final PsiClass aClass = PsiManager.getInstance(myProject).findClass(classToBind, GlobalSearchScope.allScope(myProject));
     if(aClass == null){
       return;
     }
 
     if(oldBinding == null) {
       if (aClass.findFieldByName(newBinding, true) == null) {
-        CreateFieldFix.runImpl(myGuiEditor, aClass, component.getComponentClassName(), newBinding, false);
+        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), newBinding, false);
       }
       return;
     }
@@ -110,7 +108,7 @@ public final class BindingProperty extends Property {
     // Show question to the user
 
     final int option = Messages.showYesNoDialog(
-      myGuiEditor,
+      myProject,
       MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, newBinding),
       UIDesignerBundle.message("title.rename"),
       Messages.getQuestionIcon()
@@ -121,10 +119,13 @@ public final class BindingProperty extends Property {
     }
 
     // Commit document before refactoring starts
-    myGuiEditor.refreshAndSave(false);
-    PsiDocumentManager.getInstance(myGuiEditor.getProject()).commitAllDocuments();
+    GuiEditor editor = UIDesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+    if (editor != null) {
+      editor.refreshAndSave(false);
+    }
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    final RenameProcessor processor = new RenameProcessor(project, oldField, newBinding, true, true);
+    final RenameProcessor processor = new RenameProcessor(myProject, oldField, newBinding, true, true);
     processor.run();
   }
 }

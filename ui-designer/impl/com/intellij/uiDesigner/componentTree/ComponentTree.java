@@ -60,11 +60,12 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2errAttr; // exists only for performance reason
 
-  private final GuiEditor myEditor;
+  private GuiEditor myEditor;
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
+  private StartInplaceEditingAction myStartInplaceEditingAction;
 
-  public ComponentTree(@NotNull final GuiEditor editor) {
+  public ComponentTree(/*@NotNull*/ final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myEditor = editor;
 
@@ -91,8 +92,8 @@ public final class ComponentTree extends Tree implements DataProvider {
       ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
 
     // F2 should start inplace editing
-    final StartInplaceEditingAction startInplaceEditingAction = new StartInplaceEditingAction(editor);
-    startInplaceEditingAction.registerCustomShortcutSet(
+    myStartInplaceEditingAction = new StartInplaceEditingAction(editor);
+    myStartInplaceEditingAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)),
       this
     );
@@ -108,6 +109,12 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
     });
     setDropTarget(new DropTarget(this, new MyDropTargetListener()));
+  }
+
+  public void setEditor(final GuiEditor editor) {
+    myEditor = editor;
+    myQuickFixManager.setEditor(editor);
+    myStartInplaceEditingAction.setEditor(editor);
   }
 
   public void updateIntentionHintVisibility() {
@@ -135,7 +142,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   @Nullable
-  private RadComponent getComponentFromPath(TreePath path) {
+  private static RadComponent getComponentFromPath(TreePath path) {
     if (path != null) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
@@ -168,9 +175,9 @@ public final class ComponentTree extends Tree implements DataProvider {
   /**
    * TODO[vova] should return pair <RadComponent, TreePath>
    *
-   * @return currently selected components. This method never returns <code>null</code>.
+   * @return currently selected components.
    */
-  public RadComponent[] getSelectedComponents() {
+  @NotNull public RadComponent[] getSelectedComponents() {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       return RadComponent.EMPTY_ARRAY;
@@ -234,10 +241,6 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs, final boolean error) {
-    //noinspection ConstantConditions
-    if (attrs == null) {
-      throw new IllegalArgumentException("attrs cannot be null");
-    }
     if (!error) {
       return attrs;
     }

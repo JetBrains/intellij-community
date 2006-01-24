@@ -11,8 +11,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -54,19 +57,15 @@ public final class CreateFieldFix extends QuickFix{
    * user. Otherwise method works silently.
    */
   public static void runImpl(
-    final GuiEditor editor,
-    final PsiClass boundClass,
-    final String fieldClassName,
-    final String fieldName,
+    @NotNull final Project project,
+    @NotNull final RadContainer rootContainer,
+    @NotNull final PsiClass boundClass,
+    @NotNull final String fieldClassName,
+    @NotNull final String fieldName,
     final boolean showErrors
   ){
-    LOG.assertTrue(editor != null);
-    LOG.assertTrue(boundClass != null);
-    LOG.assertTrue(fieldClassName != null);
-    LOG.assertTrue(fieldName != null);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final Project project = editor.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     // Do nothing if file becomes invalid
@@ -77,7 +76,7 @@ public final class CreateFieldFix extends QuickFix{
     if(!boundClass.isWritable()){
       if(showErrors) {
         if (!CommonRefactoringUtil.checkReadOnlyStatus(boundClass, project,
-                                                        UIDesignerBundle.message("error.cannot.create.field", fieldClassName))) {
+                                                       UIDesignerBundle.message("error.cannot.create.field", fieldClassName))) {
           return;
         }
       } else return;
@@ -85,12 +84,12 @@ public final class CreateFieldFix extends QuickFix{
 
     final PsiClass fieldClass = PsiManager.getInstance(project).findClass(
       fieldClassName,
-      GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(editor.getModule())
+      GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(rootContainer.getModule())
     );
     if(fieldClass == null){
       if(showErrors){
         Messages.showErrorDialog(
-          editor,
+          project,
           UIDesignerBundle.message("error.cannot.create.field.no.class", fieldName, fieldClassName),
           CommonBundle.getErrorTitle()
         );
@@ -102,10 +101,10 @@ public final class CreateFieldFix extends QuickFix{
       new Runnable() {
         public void run() {
           CommandProcessor.getInstance().executeCommand(
-            editor.getProject(),
+            project,
             new Runnable() {
               public void run() {
-                createField(project, fieldClass, fieldName, boundClass, showErrors, editor);
+                createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer);
               }
             },
             UIDesignerBundle.message("command.create.field"),
@@ -120,15 +119,16 @@ public final class CreateFieldFix extends QuickFix{
                                   final PsiClass fieldClass,
                                   final String fieldName,
                                   final PsiClass boundClass,
-                                  final boolean showErrors, final GuiEditor editor) {// 1. Create field
+                                  final boolean showErrors,
+                                  final IContainer rootContainer) {
+    // 1. Create field
     final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     final PsiType type = factory.createType(fieldClass);
-    LOG.assertTrue(type != null);
     try {
       final PsiField field = factory.createField(fieldName, type);
       PsiField lastUiField = null;
       for(PsiField uiField: boundClass.getFields()) {
-        if (FormEditingUtil.bindingExists(editor.getRootContainer(), uiField.getName())) {
+        if (FormEditingUtil.bindingExists(rootContainer, uiField.getName())) {
           lastUiField = uiField;
         }
       }
@@ -145,7 +145,7 @@ public final class CreateFieldFix extends QuickFix{
           new Runnable() {
             public void run() {
               Messages.showErrorDialog(
-                editor,
+                project,
                 UIDesignerBundle.message("error.cannot.create.field.reason", fieldName, exc.getMessage()),
                 CommonBundle.getErrorTitle()
               );
@@ -157,6 +157,6 @@ public final class CreateFieldFix extends QuickFix{
   }
 
   public void run() {
-    runImpl(myEditor, myClass, myFieldClassName, myFieldName, true);
+    runImpl(myEditor.getProject(), myEditor.getRootContainer(), myClass, myFieldClassName, myFieldName, true);
   }
 }

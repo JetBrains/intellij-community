@@ -1,5 +1,7 @@
 package com.intellij.uiDesigner;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -14,11 +16,7 @@ public abstract class SelectionWatcher {
     myChangeListener = new MyPropertyChangeListener();
   }
 
-  public final void install(final RadComponent component){
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public final void install(@NotNull final RadComponent component){
     component.addPropertyChangeListener(myChangeListener);
     if(component instanceof RadContainer){
       final RadContainer container = (RadContainer)component;
@@ -28,11 +26,7 @@ public abstract class SelectionWatcher {
     }
   }
 
-  public final void deinstall(final RadComponent component){
-    if (component == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public final void deinstall(@NotNull final RadComponent component){
     component.removePropertyChangeListener(myChangeListener);
     if(component instanceof RadContainer){
       final RadContainer container = (RadContainer)component;

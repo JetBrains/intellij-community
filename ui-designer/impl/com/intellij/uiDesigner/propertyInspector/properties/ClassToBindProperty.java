@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -19,7 +20,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadRootContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -37,13 +37,11 @@ import java.awt.event.ActionListener;
 public final class ClassToBindProperty extends Property {
   private final ClassToBindRenderer myRenderer;
   private final MyEditor myEditor;
-  private final GuiEditor myUiEditor;
 
-  public ClassToBindProperty(final GuiEditor editor){
+  public ClassToBindProperty(final Project project) {
     super(null, "bind to class");
-    myUiEditor = editor;
     myRenderer = new ClassToBindRenderer();
-    myEditor = new MyEditor(editor.getProject());
+    myEditor = new MyEditor(project);
   }
 
   public PropertyEditor getEditor(){
@@ -75,6 +73,7 @@ public final class ClassToBindProperty extends Property {
     private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
     private String myInitialValue;
     private final Project myProject;
+    private ClassToBindProperty.MyEditor.MyActionListener myActionListener;
 
     public MyEditor(final Project project) {
       myProject = project;
@@ -83,7 +82,8 @@ public final class ClassToBindProperty extends Property {
           return false;
         }
       };
-      myTfWithButton = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, new MyActionListener());
+      myActionListener = new MyActionListener();
+      myTfWithButton = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, myActionListener);
       myEditorTextField.setBorder(null);
       new MyCancelEditingAction().registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
       /*
@@ -109,6 +109,7 @@ public final class ClassToBindProperty extends Property {
       final String s = (String)value;
       myInitialValue = s;
       setEditorText(s != null ? s : "");
+      myActionListener.setModule(component.getModule());
       return myTfWithButton;
     }
 
@@ -126,11 +127,17 @@ public final class ClassToBindProperty extends Property {
     }
 
     private final class MyActionListener implements ActionListener{
+      private Module myModule;
+
+      public void setModule(final Module module) {
+        myModule = module;
+      }
+
       public void actionPerformed(final ActionEvent e){
         final String className = myEditorTextField.getText();
-        final PsiClass aClass = FormEditingUtil.findClassToBind(myUiEditor.getModule(), className);
+        final PsiClass aClass = FormEditingUtil.findClassToBind(myModule, className);
 
-        final Project project = myUiEditor.getProject();
+        final Project project = myModule.getProject();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createNoInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),

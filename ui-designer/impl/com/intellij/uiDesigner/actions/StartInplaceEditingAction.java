@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -18,10 +19,13 @@ import java.util.ArrayList;
 public final class StartInplaceEditingAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.StartInplaceEditingAction");
 
-  private final GuiEditor myEditor;
+  private GuiEditor myEditor;
 
-  public StartInplaceEditingAction(final GuiEditor editor) {
-    LOG.assertTrue(editor != null);
+  public StartInplaceEditingAction(@Nullable final GuiEditor editor) {
+    myEditor = editor;
+  }
+
+  public void setEditor(final GuiEditor editor) {
     myEditor = editor;
   }
 

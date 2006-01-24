@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.uiDesigner.actions.*;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,8 +78,8 @@ final class GlassLayer extends JComponent implements DataProvider{
    * binding of currently selected component (if any)
    */
   public Object getData(final String dataId) {
-    if(DataConstants.NAVIGATABLE.equals(dataId)){
-      return myEditor.getComponentTree().getData(dataId);
+    if(DataConstants.NAVIGATABLE.equals(dataId)) {
+      return UIDesignerToolWindowManager.getInstance(myEditor.getProject()).getComponentTree().getData(dataId);
     }
     else{
       return null;

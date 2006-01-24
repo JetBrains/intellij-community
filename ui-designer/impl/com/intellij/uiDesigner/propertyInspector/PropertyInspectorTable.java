@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -62,7 +63,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final MyModel myModel;
   private final MyCompositeTableCellRenderer myCellRenderer;
   private final MyCellEditor myCellEditor;
-  private final GuiEditor myEditor;
+  private GuiEditor myEditor;
   /**
    * This listener gets notifications from current property editor
    */
@@ -116,9 +117,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private SimpleTextAttributes myModifiedErrorPropertyNameAttrs;
   private boolean myInsideSynch;
 
-  PropertyInspectorTable(@NotNull final GuiEditor editor, @NotNull final ComponentTree componentTree){
-    myClassToBindProperty = new ClassToBindProperty(editor);
-    myBindingProperty = new BindingProperty(editor);
+  PropertyInspectorTable(Project project, /*@NotNull*/ final GuiEditor editor, @NotNull final ComponentTree componentTree){
+    myClassToBindProperty = new ClassToBindProperty(project);
+    myBindingProperty = new BindingProperty(project);
     myBorderProperty = new BorderProperty();
     myMarginProperty = new MarginProperty();
     myHGapProperty = new HGapProperty();
@@ -161,6 +162,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       this,
       (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP),
       ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, ActionManager.getInstance());
+  }
+
+  public void setEditor(final GuiEditor editor) {
+    myEditor = editor;
   }
 
   /**

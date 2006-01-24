@@ -1,13 +1,15 @@
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,20 +24,15 @@ public final class PropertyInspector extends JPanel{
   private final PropertyInspectorTable myInspectorTable;
   private final ComponentTree myComponentTree;
   private final QuickFixManager myQuickFixManager;
+  private GuiEditor myEditor;
+  private PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
 
-  public PropertyInspector(final GuiEditor editor, final ComponentTree componentTree) {
+  public PropertyInspector(Project project, final GuiEditor editor, @NotNull final ComponentTree componentTree) {
     super(new CardLayout());
-    if (editor == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-    if (componentTree == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("componentTree cannot be null");
-    }
 
-    myInspectorTable = new PropertyInspectorTable(editor, componentTree);
+    myInspectorTable = new PropertyInspectorTable(project, editor, componentTree);
     myComponentTree = componentTree;
+    myEditor = editor;
 
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
@@ -70,11 +67,27 @@ public final class PropertyInspector extends JPanel{
     //noinspection HardCodedStringLiteral
     add(label, "empty");
 
-    editor.addComponentSelectionListener(new MyComponentSelectionListener());
+    myComponentSelectionListener = new MyComponentSelectionListener();
+    if (editor != null) {
+      editor.addComponentSelectionListener(myComponentSelectionListener);
+    }
     synchWithTree(false);
 
     // Install light bulb
     myQuickFixManager = new QuickFixManagerImpl(editor, myInspectorTable);
+  }
+
+  public void setEditor(final GuiEditor editor) {
+    if (myEditor != editor) {
+      if (myEditor != null) {
+        myEditor.removeComponentSelectionLsistener(myComponentSelectionListener);
+      }
+      myEditor = editor;
+      myInspectorTable.setEditor(myEditor);
+      if (myEditor != null) {
+        myEditor.addComponentSelectionListener(myComponentSelectionListener);
+      }
+    }
   }
 
   public void updateIntentionHintVisibility(){

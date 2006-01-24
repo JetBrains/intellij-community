@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage;
  * @author Vladimir Kondratyev
  */
 public abstract class QuickFixManager <T extends JComponent>{
-  private final GuiEditor myEditor;
+  private GuiEditor myEditor;
   /** Component on which hint will be shown */
   protected final T myComponent;
   /**
@@ -39,7 +39,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    */
   private HeavyweightHint myHint;
 
-  public QuickFixManager(@NotNull final GuiEditor editor, @NotNull final T component) {
+  public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component) {
     myEditor = editor;
     myComponent = component;
     myAlarm = new Alarm();
@@ -56,10 +56,11 @@ public abstract class QuickFixManager <T extends JComponent>{
     return myEditor;
   }
 
-  final void setHint(final HeavyweightHint hint){
-    if(hint == null){
-      throw new IllegalArgumentException();
-    }
+  public void setEditor(final GuiEditor editor) {
+    myEditor = editor;
+  }
+
+  final void setHint(@NotNull HeavyweightHint hint){
     myHint = hint;
   }
 

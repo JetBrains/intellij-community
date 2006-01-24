@@ -133,7 +133,8 @@ public final class InsertComponentProcessor extends EventProcessor {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              CreateFieldFix.runImpl(editor,
+              CreateFieldFix.runImpl(editor.getProject(),
+                                     editor.getRootContainer(),
                                      aClass,
                                      insertedComponent.getComponentClassName(),
                                      binding,

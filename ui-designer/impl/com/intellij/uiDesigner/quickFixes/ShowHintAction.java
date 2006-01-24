@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 
 import javax.swing.*;
 
@@ -31,7 +32,8 @@ final class ShowHintAction extends AnAction{
     myManager.showIntentionHint();
 
     // 2. Commit possible non committed value and show popup
-    final PropertyInspector propertyInspector = myManager.getEditor().getPropertyInspector();
+    final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(myManager.getEditor().getProject());
+    final PropertyInspector propertyInspector = manager.getPropertyInspector();
     if(propertyInspector.isEditing()){
       propertyInspector.stopEditing();
     }

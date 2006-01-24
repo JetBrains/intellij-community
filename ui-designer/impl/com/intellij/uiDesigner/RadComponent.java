@@ -5,8 +5,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -22,8 +22,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Constructor;
-import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * @author Anton Katilin
@@ -250,6 +250,10 @@ public abstract class RadComponent implements IComponent {
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l){
+    final PropertyChangeListener[] propertyChangeListeners = myChangeSupport.getPropertyChangeListeners();
+    for(PropertyChangeListener listener: propertyChangeListeners) {
+      assert listener != l;
+    }
     myChangeSupport.addPropertyChangeListener(l);
   }
 

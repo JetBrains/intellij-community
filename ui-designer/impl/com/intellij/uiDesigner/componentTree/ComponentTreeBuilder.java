@@ -29,6 +29,8 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
    * react on our own events.
    */
   private int myInsideChange;
+  private ComponentTreeBuilder.MyHierarchyChangeListener myHierarchyChangeListener;
+  private ComponentTreeBuilder.MyTreeSelectionListener myTreeSelectionListener;
 
   public ComponentTreeBuilder(final ComponentTree tree, final GuiEditor editor){
     super(tree,(DefaultTreeModel)tree.getModel(),null,MyComparator.ourComparator);
@@ -46,8 +48,17 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     initRootNode();
     syncSelection();
 
-    myTree.getSelectionModel().addTreeSelectionListener(new MyTreeSelectionListener());
-    editor.addHierarchyChangeListener(new MyHierarchyChangeListener());
+    myTreeSelectionListener = new MyTreeSelectionListener();
+    myHierarchyChangeListener = new MyHierarchyChangeListener();
+    myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
+    editor.addHierarchyChangeListener(myHierarchyChangeListener);
+  }
+
+  public void dispose() {
+    myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
+    myTree.getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+    mySelectionWatcher.deinstall(myEditor.getRootContainer());
+    super.dispose();
   }
 
   private ComponentTreeStructure getComponentTreeStructure(){

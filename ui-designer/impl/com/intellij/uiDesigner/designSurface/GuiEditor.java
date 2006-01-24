@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -24,15 +23,13 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
-import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -140,8 +137,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * is <code>true</code> then we do not react on incoming DocumentEvent.
    */
   private boolean myInsideChange;
-  @NotNull private final PropertyInspector myPropertyInspector;
-  @NotNull private final ComponentTree myComponentTree;
+  //@NotNull private final PropertyInspector myPropertyInspector;
+  //@NotNull private final ComponentTree myComponentTree;
   private final DocumentAdapter myDocumentListener;
   private final CardLayout myCardLayout;
 
@@ -237,38 +234,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
     // Read form from file
     readFromFile(false);
 
-    // Tree with component hierarchy and property editor at the left
-    // It's important that ComponentTree is initializing after the
-    // RadRootContainer is set.
-    myComponentTree = new ComponentTree(this);
-    new ComponentTreeBuilder(myComponentTree, this);
-    final JScrollPane scrollPane = new JScrollPane(myComponentTree);
-    scrollPane.setPreferredSize(new Dimension(250, -1));
-
-    // Splitter with hierarchy and inspector
-    final Splitter splitter1 = new Splitter(true, 0.33f);
-    splitter1.setFirstComponent(scrollPane);
-    myPropertyInspector = new PropertyInspector(this, myComponentTree);
-    splitter1.setSecondComponent(myPropertyInspector);
-
-    final Splitter splitter2 = new Splitter(false, 0.33f);
-    splitter2.setFirstComponent(splitter1);
-
-    final JPanel mainPaneAndToolbar = new JPanel(new BorderLayout());
-    mainPaneAndToolbar.add(new JScrollPane(myLayeredPane), BorderLayout.CENTER);
-
-    splitter2.setSecondComponent(mainPaneAndToolbar);
-    myValidCard.add(splitter2, BorderLayout.CENTER);
+    myValidCard.add(new JScrollPane(myLayeredPane), BorderLayout.CENTER);
 
     final CancelCurrentOperationAction cancelCurrentOperationAction = new CancelCurrentOperationAction();
     cancelCurrentOperationAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
 
-    // Palette at the top
-    // It is important to create palette toolbar after root container has been loaded
-    /*
-    myPalettePanel = new PalettePanel(this);
-    mainPaneAndToolbar.add(myPalettePanel, BorderLayout.NORTH);
-    */
     myProcessor = new MainProcessor(this);
     new MergeCellsToolbar(this);
 
@@ -342,9 +312,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public void refreshAndSave(final boolean forceSync) {
     // Update property inspector
-    if (myPropertyInspector != null) { // null when we invoke refresh from constructor
-      myPropertyInspector.synchWithTree(forceSync);
-    }
+    final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
+    manager.getPropertyInspector().synchWithTree(forceSync);
 
     refresh();
     saveToFile();
@@ -358,18 +327,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
     ErrorAnalyzer.analyzeErrors(this, myRootContainer);
     if (isShowing()) {
       //  ComponentTree
-      myComponentTree.hideIntentionHint();
-      myComponentTree.updateIntentionHintVisibility();
-      myComponentTree.repaint(myComponentTree.getVisibleRect());
-
-      // PropertyInspector
-      myPropertyInspector.hideIntentionHint();
-      myPropertyInspector.updateIntentionHintVisibility();
-      myPropertyInspector.repaint(myPropertyInspector.getVisibleRect());
+      UIDesignerToolWindowManager.getInstance(getProject()).refreshErrors();
     }
   }
 
-  private void refreshImpl(final RadComponent component) {
+  private static void refreshImpl(final RadComponent component) {
     if (component.getParent() != null) {
       final Dimension size = component.getSize();
       final int oldWidth = size.width;
@@ -394,7 +356,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public Object getData(final String dataId) {
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
-    if (myPropertyInspector.isEditing()) {
+    final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
+    if (manager.getPropertyInspector().isEditing()) {
       return null;
     }
 
@@ -413,7 +376,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return null;
   }
 
-  private JPanel createInvalidCard() {
+  private static JPanel createInvalidCard() {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(UIDesignerBundle.message("error.form.file.is.invalid")),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -494,16 +457,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Adds specified hierarchy change listener
    */
-  public void addHierarchyChangeListener(final HierarchyChangeListener l) {
-    LOG.assertTrue(l != null);
+  public void addHierarchyChangeListener(@NotNull final HierarchyChangeListener l) {
     myListenerList.add(HierarchyChangeListener.class, l);
   }
 
   /**
    * Removes specified hierarchy change listener
    */
-  public void removeHierarchyChangeListener(final HierarchyChangeListener l) {
-    LOG.assertTrue(l != null);
+  public void removeHierarchyChangeListener(@NotNull final HierarchyChangeListener l) {
     myListenerList.remove(HierarchyChangeListener.class, l);
   }
 
@@ -665,7 +626,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
   }
 
-  private void revalidateRecursive(final JComponent component) {
+  private static void revalidateRecursive(final JComponent component) {
     for(Component child: component.getComponents()) {
       if (child instanceof JComponent) {
         revalidateRecursive((JComponent)child);
@@ -715,16 +676,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     else {
       return myInvalidCard;
     }
-  }
-
-  @NotNull
-  public ComponentTree getComponentTree() {
-    return myComponentTree;
-  }
-
-  @NotNull
-  public PropertyInspector getPropertyInspector() {
-    return myPropertyInspector;
   }
 
   /**
@@ -817,7 +768,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(!myPropertyInspector.isEditing());
+      final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
+      e.getPresentation().setEnabled(!manager.getPropertyInspector().isEditing());
     }
   }
 
@@ -833,8 +785,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     public boolean canDeleteElement(final DataContext dataContext) {
+      final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
       return
-        !myPropertyInspector.isEditing() &&
+        !manager.getPropertyInspector().isEditing() &&
         !myInplaceEditingLayer.isEditing() &&
         FormEditingUtil.canDeleteSelection(GuiEditor.this);
     }

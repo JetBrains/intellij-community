@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 /**
@@ -37,7 +35,6 @@ public class RadContainer extends RadComponent implements IContainer {
    * Children components
    */
   private final ArrayList<RadComponent> myComponents;
-  private final MyPropertyChangeListener myChangeListener;
   /**
    * Describes border's type.
    */
@@ -56,7 +53,6 @@ public class RadContainer extends RadComponent implements IContainer {
     super(module, aClass, id);
 
     myComponents = new ArrayList<RadComponent>();
-    myChangeListener = new MyPropertyChangeListener();
 
     // By default container doesn't have any special border
     setBorderType(BorderType.NONE);
@@ -147,7 +143,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * @exception java.lang.IllegalArgumentException if <code>component</code> already exist in the
    * container
    */
-  public final void addComponent(@NotNull final RadComponent component){
+  public final void addComponent(@NotNull final RadComponent component) {
     if (myComponents.contains(component)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is already added: " + component);
@@ -157,7 +153,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
     // Remove from old parent
     final RadContainer oldParent=component.getParent();
-    if(oldParent!=null){
+    if(oldParent!=null) {
       oldParent.removeComponent(component);
     }
 
@@ -165,8 +161,6 @@ public class RadContainer extends RadComponent implements IContainer {
     myComponents.add(component);
     component.setParent(this);
     addToDelegee(component);
-
-    component.addPropertyChangeListener(myChangeListener);
 
     final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
@@ -195,11 +189,15 @@ public class RadContainer extends RadComponent implements IContainer {
       throw new IllegalArgumentException("component is not added: " + component);
     }
 
+    final RadComponent[] oldChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+
     // Remove child
-    component.removePropertyChangeListener(myChangeListener);
     component.setParent(null);
     myComponents.remove(component);
     removeFromDelegee(component);
+
+    final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+    firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
   protected void removeFromDelegee(final RadComponent component){
@@ -260,6 +258,7 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
 
+  @Nullable
   public RadComponent getComponentAtGrid(boolean rowFirst, int coord1, int coord2) {
     return rowFirst ? getComponentAtGrid(coord1, coord2) : getComponentAtGrid(coord2, coord1);
   }
@@ -569,35 +568,6 @@ public class RadContainer extends RadComponent implements IContainer {
       writer.writeDimension(constraints.myMaximumSize,"maximum-size");
     } finally {
       writer.endElement(); // grid
-    }
-  }
-
-  private final class MyPropertyChangeListener implements PropertyChangeListener{
-    public void propertyChange(final PropertyChangeEvent e){
-      if (RadComponent.PROP_SELECTED.equals(e.getPropertyName())) {
-        if (!((Boolean)e.getNewValue()).booleanValue()) {
-          return;
-        }
-
-        if (getComponentCount() > 1 && isXY()) {
-          final RadComponent component = (RadComponent)e.getSource();
-          final Rectangle bounds = component.getBounds();
-          // We have to change Z order of the selected component only
-          // if this component intersects one of its siblings.
-          for(int i = getComponentCount() - 1; i >= 0; i--){
-            final RadComponent _component = getComponent(i);
-            if(_component == component){
-              continue;
-            }
-            if(bounds.intersects(_component.getBounds())){
-              removeComponent(component);
-              addComponent(component);
-              // TODO[anton,vova] the change should be saved to document!!!
-              break;
-            }
-          }
-        }
-      }
     }
   }
 
