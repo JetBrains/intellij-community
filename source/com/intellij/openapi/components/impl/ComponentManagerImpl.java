@@ -23,6 +23,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
@@ -212,7 +213,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     component.initComponent();
   }
 
-
   protected synchronized Object getLock(Class componentClass) {
     Object lock = myInterfaceToLockMap.get(componentClass);
     if (lock == null) {
@@ -357,6 +357,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected abstract Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException;
 
+  @Nullable
   protected abstract ComponentManagerImpl getParentComponentManager();
 
   public MutablePicoContainer getPicoContainer() {

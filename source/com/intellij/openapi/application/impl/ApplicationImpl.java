@@ -1,7 +1,6 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -21,7 +20,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BlockingProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,6 +38,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
@@ -52,6 +51,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private ModalityState MODALITY_STATE_NONE;
@@ -390,10 +390,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public boolean runProcessWithProgressSynchronously(final Runnable process,
-                                                     String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project) {
+  public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccess != null || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -401,15 +398,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    boolean smoothProgress = true;
-    if (Patches.MAC_HIDE_QUIT_HACK) {
-      smoothProgress = false;
-    }
-
-    final ProgressWindow window = new ProgressWindow(canBeCanceled, project);
-    window.setTitle(progressTitle);
-    final BlockingProgressIndicator progress = window;
-    //new ProgressPopup(canBeCanceled, project);
+    final ProgressWindow progress = new ProgressWindow(canBeCanceled, project);
+    progress.setTitle(progressTitle);
 
     class MyThread extends Thread {
       private final Runnable myProcess;
@@ -434,6 +424,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           ProgressManager.getInstance().runProcess(myProcess, progress);
         }
         catch (ProcessCanceledException e) {
+          // ok to ignore.
         }
       }
     }
@@ -461,7 +452,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       progress.startBlocking();
       LOG.assertTrue(threadStarted[0]);
-      LOG.assertTrue(!smoothProgress || !progress.isRunning());
+      LOG.assertTrue(!progress.isRunning());
     }
     finally {
       myExceptionalThreadWithReadAccess = null;
@@ -565,7 +556,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       Runnable runnable = new Runnable() {
         public void run() {
           if (!force) {
-            if (!showConfirmation()){
+            if (!showConfirmation()) {
               saveAll();
               return;
             }
@@ -587,11 +578,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private boolean showConfirmation(){
+  private static boolean showConfirmation() {
     if (GeneralSettings.getInstance().isConfirmExit()) {
       final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
       confirmExitDialog.show();
-      if (!confirmExitDialog.isOK()){
+      if (!confirmExitDialog.isOK()) {
         return false;
       }
     }
@@ -644,8 +635,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isExceptionalThreadWithReadAccess(final Thread thread) {
-    return myExceptionalThreadWithReadAccess != null &&
-           thread == myExceptionalThreadWithReadAccess;
+    return myExceptionalThreadWithReadAccess != null && thread == myExceptionalThreadWithReadAccess;
   }
 
   public <T> T runReadAction(final Computable<T> computation) {
@@ -719,27 +709,29 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      LOG.error("Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
-                "Current thread: " + describe(Thread.currentThread()),
-                "Our dispatch thread:" + describe(ourDispatchThread),
-                "SystemEventQueueThread: " + describe(getEventQueueThread())
-                );
+      LOG.error(
+        "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
+        "Current thread: " + describe(Thread.currentThread()), "Our dispatch thread:" + describe(ourDispatchThread),
+        "SystemEventQueueThread: " + describe(getEventQueueThread()));
     }
   }
 
-  private String describe(Thread o) {
+  private static String describe(Thread o) {
     if (o == null) return NULL_STR;
     return o.toString() + " " + System.identityHashCode(o);
   }
 
-  private Thread getEventQueueThread() {
+  @Nullable
+  private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
       //noinspection HardCodedStringLiteral
       Method method = EventQueue.class.getDeclaredMethod("getDispatchThread");
       method.setAccessible(true);
-      return (Thread) method.invoke(eventQueue);
-    } catch (Exception e1) {
+      return (Thread)method.invoke(eventQueue);
+    }
+    catch (Exception e1) {
+      // ok
     }
     return null;
   }
@@ -800,7 +792,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private void assertIsDispatchThread(String message) {
+  private static void assertIsDispatchThread(String message) {
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 
@@ -812,8 +804,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LOG.error(message,
               "Current thread: " + describe(Thread.currentThread()),
               "Our dispatch thread:" + describe(ourDispatchThread),
-              "SystemEventQueueThread: " + describe(getEventQueueThread())
-              );
+              "SystemEventQueueThread: " + describe(getEventQueueThread()));
   }
 
   public void assertWriteAccessAllowed() {
@@ -914,6 +905,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return null;
   }
 
+  @Nullable
   protected ComponentManagerImpl getParentComponentManager() {
     return null;
   }
