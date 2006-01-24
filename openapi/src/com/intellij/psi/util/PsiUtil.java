@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -469,7 +470,7 @@ public final class PsiUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void updatePackageStatement(PsiFile file) throws IncorrectOperationException {
-    if (!(file instanceof PsiJavaFile) || file instanceof JspFile) return;
+    if (!(file instanceof PsiJavaFile) || isInJspFile(file)) return;
 
     PsiManager manager = file.getManager();
     PsiElementFactory factory = manager.getElementFactory();
@@ -523,13 +524,21 @@ public final class PsiUtil {
       if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
         break;
       }
-      if (element instanceof JspFile) {
+      if (PsiUtil.isInJspFile(element) && element instanceof PsiFile) {
         return element;
       }
       if (element == scope) break;
       element = parent;
     }
     return blockSoFar;
+  }
+
+  public static boolean isInJspFile(final PsiElement element) {
+    if(element == null) return false;
+    final PsiFile psiFile = element.getContainingFile();
+    if(psiFile == null) return false;
+    final Language language = psiFile.getViewProvider().getBaseLanguage();
+    return language == StdLanguages.JSP || language == StdLanguages.JSPX;
   }
 
   public static boolean isLocalOrAnonymousClass(PsiClass psiClass) {
@@ -966,6 +975,16 @@ public final class PsiUtil {
     return 1;
   }
 
+  public static boolean isJspLanguage(final Language baseLanguage) {
+    return baseLanguage == StdLanguages.JSP || baseLanguage == StdLanguages.JSPX;
+  }
+
+  public static JspFile getJspFile(final PsiElement element) {
+    final FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    final PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
+    return psiFile instanceof JspFile ? (JspFile)psiFile : null;
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;
@@ -1104,7 +1123,7 @@ public final class PsiUtil {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
     final Language language = elt.getLanguage();
-    if (file instanceof JspFile && language == StdLanguages.XML) {
+    if (isInJspFile(file) && language == StdLanguages.XML) {
       ASTNode root = getRoot(elt.getNode());
       return root.getPsi().getLanguage();
     }
