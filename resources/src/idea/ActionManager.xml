@@ -119,7 +119,7 @@
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
     <group id="JavaeeMigrationGroup">
-      <action id="MigrateToEjb30" class="com.intellij.j2ee15.module.view.actions.MigrateToEjb30Action"/>
+      <action id="ApplyJavaeeStyle" class="com.intellij.j2ee15.module.view.actions.ApplyJavaeeStyleAction"/>
       <action id="GeneratePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.GeneratePersistenceUnitAction"/>
     </group>
 
