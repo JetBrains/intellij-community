@@ -1317,7 +1317,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final String[] names = baseNameInfo.names;
     Set<String> uniqueNames = new HashSet<String>(names.length);
     for (String name : names) {
-      uniqueNames.add(suggestUniqueVariableName(name, place, false));
+      uniqueNames.add(suggestUniqueVariableName(name, place, true));
     }
 
     return new SuggestedNameInfo(uniqueNames.toArray(new String[uniqueNames.size()])) {
