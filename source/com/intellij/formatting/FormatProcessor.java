@@ -666,7 +666,7 @@ class FormatProcessor {
     AbstractBlockWrapper current = block;
     while (current != null) {
       final TextRange textRange = current.getTextRange();
-      if (textRange.getStartOffset() < offset && textRange.getEndOffset() > offset) {
+      if (textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset) {
         return current;
       }
       current = current.getParent();
@@ -729,6 +729,10 @@ class FormatProcessor {
       myCurrentBlock = myFirstTokenBlock;
       while (myCurrentBlock != null && myCurrentBlock.getStartOffset() < offset) {
         processToken();
+        if (myCurrentBlock == null) {
+          myCurrentBlock = myLastTokenBlock;
+          break;
+        }
       }
       if (myAlignAgain.isEmpty()) return;
       reset();

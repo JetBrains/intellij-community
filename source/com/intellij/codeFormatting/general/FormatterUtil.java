@@ -346,7 +346,7 @@ public class FormatterUtil {
     if (lastWS.getElementType() != ElementType.WHITE_SPACE) {
       lastWS = null;
     }
-    if (!astNode.getTextRange().equals(textRange)) {
+    if (lastWS != null && !lastWS.getTextRange().equals(textRange)) {
       return;
     }
     if (whiteSpace.length() == 0 && lastWS == null) {

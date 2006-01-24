@@ -234,7 +234,7 @@ public class FormatterImpl extends FormatterEx
     processor.setAllWhiteSpacesAreReadOnly();
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
-    if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+    if (hasContentAfterLineBreak(documentModel, offset, whiteSpace) ) {
       whiteSpace.setReadOnly(false);
       processor.formatWithoutRealModifications();
       indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
@@ -260,6 +260,11 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  private boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
+    return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset()) &&
+      documentModel.getTextLength() != offset;
+  }
+
   public String getLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CodeStyleSettings.IndentOptions indentOptions,
@@ -276,7 +281,7 @@ public class FormatterImpl extends FormatterEx
         processor.setAllWhiteSpacesAreReadOnly();
         whiteSpace.setLineFeedsAreReadOnly(true);
         final IndentInfo indent;
-        if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+        if (hasContentAfterLineBreak(documentModel, offset, whiteSpace)) {
           whiteSpace.setReadOnly(false);
           processor.formatWithoutRealModifications();
           indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
