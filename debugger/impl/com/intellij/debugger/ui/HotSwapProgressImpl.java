@@ -1,7 +1,8 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.Patches;
-import com.intellij.util.ui.MessageCategory;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,15 +11,14 @@ import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.util.ui.MessageCategory;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -37,9 +37,6 @@ public class HotSwapProgressImpl extends HotSwapProgress{
       public void cancel() {
         HotSwapProgressImpl.this.cancel();
         super.cancel();
-        if (isRunning()) {
-          stop();
-        }
       }
     };
     myProgressIndicator = Patches.MAC_HIDE_QUIT_HACK ? myProgressWindow : (ProgressIndicator)new SmoothProgressAdapter(myProgressWindow, project);
