@@ -94,74 +94,74 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     );
   }
 
-  public LvcsConfiguration getConfiguration() {
+  public synchronized LvcsConfiguration getConfiguration() {
     return myConfiguration;
   }
 
-  public void commitFile(final LvcsFileRevision lvcsFileRevision, final byte[] bytes) {
+  public synchronized void commitFile(final LvcsFileRevision lvcsFileRevision, final byte[] bytes) {
     myImplementation.commitFile(lvcsFileRevision, bytes);
   }
 
-  public void addLvcsLabelListener(final LvcsLabelListener listener) {
+  public synchronized void addLvcsLabelListener(final LvcsLabelListener listener) {
     myImplementation.addLvcsLabelListener(listener);
   }
 
-  public void removeLvcsLabelListener(final LvcsLabelListener listener) {
+  public synchronized void removeLvcsLabelListener(final LvcsLabelListener listener) {
     myImplementation.removeLvcsLabelListener(listener);
   }
 
-  public LocalVcsPurgingProvider getLocalVcsPurgingProvider() {
+  public synchronized LocalVcsPurgingProvider getLocalVcsPurgingProvider() {
     return myLocalVcsPurgingProvider;
   }
 
-  public UpToDateLineNumberProvider getUpToDateLineNumberProvider(final Document document, final String upToDateContent) {
+  public synchronized UpToDateLineNumberProvider getUpToDateLineNumberProvider(final Document document, final String upToDateContent) {
     return myImplementation.getUpToDateLineNumberProvider(document, upToDateContent);
   }
 
-  public boolean rollbackToLabel(final LvcsLabel label,
+  public synchronized boolean rollbackToLabel(final LvcsLabel label,
                                  final boolean requestConfirmation,
                                  final String confirmationMessage,
                                  final String confirmationTitle) {
     return myImplementation.rollbackToLabel(label, requestConfirmation, confirmationMessage, confirmationTitle);
   }
 
-  public boolean rollbackToLabel(final LvcsLabel label, final boolean requestConfirmation) {
+  public synchronized boolean rollbackToLabel(final LvcsLabel label, final boolean requestConfirmation) {
     return myImplementation.rollbackToLabel(label, requestConfirmation);
   }
 
-  public LvcsLabel[] getAllLabels() {
+  public synchronized LvcsLabel[] getAllLabels() {
     return myImplementation.getAllLabels();
   }
 
-  public LvcsRevision[] getChanges(final String path, final LvcsLabel label) {
+  public synchronized LvcsRevision[] getChanges(final String path, final LvcsLabel label) {
     return myImplementation.getChanges(path, label);
   }
 
-  public LvcsRevision[] getChanges(final LvcsLabel label1, final LvcsLabel label2) {
+  public synchronized LvcsRevision[] getChanges(final LvcsLabel label1, final LvcsLabel label2) {
     return myImplementation.getChanges(label1, label2);
   }
 
-  public LvcsDirectory findDirectory(final String dirPath, final boolean ignoreDeleted) {
+  public synchronized LvcsDirectory findDirectory(final String dirPath, final boolean ignoreDeleted) {
     return myImplementation.findDirectory(dirPath, ignoreDeleted);
   }
 
-  public LvcsDirectory findDirectory(final String dirPath, final LvcsLabel label) {
+  public synchronized LvcsDirectory findDirectory(final String dirPath, final LvcsLabel label) {
     return myImplementation.findDirectory(dirPath, label);
   }
 
-  public LvcsFile findFile(final String filePath, final LvcsLabel label) {
+  public synchronized LvcsFile findFile(final String filePath, final LvcsLabel label) {
     return myImplementation.findFile(filePath, label);
   }
 
-  public LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
+  public synchronized LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
     return myImplementation.findFile(filePath, ignoreDeleted);
   }
 
-  public LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {
+  public synchronized LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {
     return myImplementation.findFileRevision(filePath, label);
   }
 
-  public LvcsFileRevision findFileRevision(final String filePath, final boolean ignoreDeleted) {
+  public synchronized LvcsFileRevision findFileRevision(final String filePath, final boolean ignoreDeleted) {
     return myImplementation.findFileRevision(filePath, ignoreDeleted);
   }
 
@@ -182,89 +182,89 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   };
 
-  public void resynchronizeRoots() {
+  public synchronized void resynchronizeRoots() {
     refreshRoots();
     runSynchronizationUsing(new ImmediateSyncOperation(myProject, this));
   }
 
-  private void refreshRoots() {
+  private synchronized void refreshRoots() {
     myRoots = calculateRoots();
   }
 
-  private void runSynchronizationUsing(StructureSyncOperation realOperation) {
+  private synchronized void runSynchronizationUsing(StructureSyncOperation realOperation) {
     runSyncOperation(realOperation);
   }
 
-  public long getPurgingPeriod() {
+  public synchronized long getPurgingPeriod() {
     if (!myConfiguration.LOCAL_VCS_ENABLED) return 0;
     return myConfiguration.LOCAL_VCS_PURGING_PERIOD;
   }
 
-  public LvcsLabel addLabel(final String name, final String path) {
+  public synchronized LvcsLabel addLabel(final String name, final String path) {
     return myImplementation.addLabel(name, path);
   }
 
-  public LvcsLabel addLabel(final byte type, final String name, final String path) {
+  public synchronized LvcsLabel addLabel(final byte type, final String name, final String path) {
     return myImplementation.addLabel(type, name, path);
   }
 
-  public LvcsLabel addLabelImpl(final byte type, final String name, final String path, final String action) {
+  public synchronized LvcsLabel addLabelImpl(final byte type, final String name, final String path, final String action) {
     return myImplementation.addLabelImpl(type, name, path, action);
   }
 
-  public void markModuleSourcesAsCurrent(final Module module, final String label) {
+  public synchronized void markModuleSourcesAsCurrent(final Module module, final String label) {
     myImplementation.markModuleSourcesAsCurrent(module, label);
   }
 
-  public void markSourcesAsCurrent(final String label) {
+  public synchronized void markSourcesAsCurrent(final String label) {
     myImplementation.markSourcesAsCurrent(label);
   }
 
-  public boolean isEnabled() {
+  public synchronized boolean isEnabled() {
     return myConfiguration.LOCAL_VCS_ENABLED;
   }
 
-  private void runSyncOperation(StructureSyncOperation operation) {
+  private synchronized void runSyncOperation(StructureSyncOperation operation) {
     LvcsRootSynchronizer sync = new LvcsRootSynchronizer(this,
                                                          myTracker,
                                                          operation);
     sync.syncProjectRoots();
   }
 
-  private VirtualFile[] calculateRoots() {
+  private synchronized VirtualFile[] calculateRoots() {
     return getProjectRoots();
   }
 
-  private VirtualFile[] getProjectRoots() {
+  private synchronized VirtualFile[] getProjectRoots() {
     return ProjectRootManager.getInstance(myProject).getContentRoots();
   }
 
-  public LvcsDirectory findDirectory(final String path) {
+  public synchronized LvcsDirectory findDirectory(final String path) {
     if (!myIsLocked) return null;
     return myImplementation.findDirectory(path);
   }
 
-  public LvcsDirectory addDirectory(final String path, final VirtualFile onDisk) {
+  public synchronized LvcsDirectory addDirectory(final String path, final VirtualFile onDisk) {
     LOG.assertTrue(myIsLocked);
     return myImplementation.addDirectory(path, onDisk);
   }
 
-  public LvcsFile findFile(final String path) {
+  public synchronized LvcsFile findFile(final String path) {
     if (!myIsLocked) return null;
     return myImplementation.findFile(path);
   }
 
-  public String[] getRootPaths() {
+  public synchronized String[] getRootPaths() {
     return myImplementation.getRootPaths();
   }
 
-  public VirtualFile[] getCoveredDirectories() {
+  public synchronized VirtualFile[] getCoveredDirectories() {
     //TODO: filter out roots from JarFilesystem.
     if (myRoots == null) refreshRoots();
     return myRoots;
   }
 
-  public boolean isUnderVcs(VirtualFile file) {
+  public synchronized boolean isUnderVcs(VirtualFile file) {
     if (!(file.getFileSystem() instanceof LocalFileSystem)) {
       return false;
     }
@@ -282,11 +282,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  public Project getProject() {
+  public synchronized Project getProject() {
     return myProject;
   }
 
-  public int purge() {
+  public synchronized int purge() {
 
     final LvcsConfiguration configuration = LvcsConfiguration.getInstance();
     if (configuration.LOCAL_VCS_PURGING_PERIOD == DO_NOT_PERFORM_PURGING) return 0;
@@ -297,7 +297,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.purge(timeToPurgeBefore);
   }
 
-  public void shutdown() {
+  public synchronized void shutdown() {
     if (myAction != null) {
       myAction.finish();
     }
@@ -310,7 +310,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  public void close() {
+  public synchronized void close() {
     myIsLocked = false;
     try {
       myImplementation.close();
@@ -322,7 +322,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     LOG.info("TOTAL MAPPED BYTES = " + ByteBufferUtil.TOTAL_MAPPED_BYTES);
   }
 
-  public VirtualFileListener getVirtualFileListener() {
+  public synchronized VirtualFileListener getVirtualFileListener() {
     return myTracker;
   }
 
@@ -348,7 +348,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return ProvidedContentOnLvcsFile.createOn(lvcsFile, file);
   }
 
-  private void contentRequestedFor(VirtualFile file) {
+  private synchronized void contentRequestedFor(VirtualFile file) {
     if (myRefreshRootsOperation != null) {
       myRefreshRootsOperation.contentRequestedFor(file);
     }
@@ -357,7 +357,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  public LocalVcsUserActivitiesRegistry getLocalVcsUserActivitiesRegistry() {
+  public synchronized LocalVcsUserActivitiesRegistry getLocalVcsUserActivitiesRegistry() {
     return myUserActivitiesRegistry;
   }
 
@@ -368,7 +368,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  public File getTransactionFile() {
+  public synchronized File getTransactionFile() {
     return new File(myVcsLocation, TRANSACTION_LOC_FILE_NAME);
   }
 
@@ -376,7 +376,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return startAction(EXTERNAL_CHANGES_ACTION, "", true);
   }
 
-  public LvcsAction startAction(String action, String path, boolean isExternalChanges) {
+  public synchronized LvcsAction startAction(String action, String path, boolean isExternalChanges) {
     if (action == null) return LvcsAction.EMPTY;
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: started(action='" + action + "')");
@@ -387,7 +387,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myAction;
   }
 
-  public void endAction(LvcsActionImpl action) {
+  public synchronized void endAction(LvcsActionImpl action) {
     commitAllUnsavedDocuments();
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: finished()");
@@ -405,7 +405,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  private void commitUnsavedDocument(Document unsavedDocument) {
+  private synchronized void commitUnsavedDocument(Document unsavedDocument) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(unsavedDocument);
     if (file == null || !file.isValid() || file instanceof MockVirtualFile) return;
     if (isUnderVcs(file)) {
@@ -436,7 +436,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     saveInternal(true);
   }
 
-  private void saveInternal(final boolean purge) {
+  private synchronized void saveInternal(final boolean purge) {
     if (!myIsLocked) return;
     if (purge) {
       purge();
@@ -475,7 +475,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     f.createNewFile();
   }
 
-  private void load() throws CouldNotLoadLvcsException, IOException {
+  private synchronized void load() throws CouldNotLoadLvcsException, IOException {
     LOG.info("enter: load()");
     checkLocalVCSWasSavedCorrectly();
     myImplementation.load(myVcsLocation);
@@ -505,24 +505,24 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myVcsWasRebuilt = true;
   }
 
-  private File getActivitiesRegistryFile() {
+  private synchronized File getActivitiesRegistryFile() {
     return new File(myVcsLocation, ACTIVITIES_FILE_NAME);
   }
 
-  public void setCanProvideContents(boolean canProvide) {
+  public synchronized void setCanProvideContents(boolean canProvide) {
     myCanProvideContents = canProvide;
   }
 
-  public LvcsFileTracker getTracker() {
+  public synchronized LvcsFileTracker getTracker() {
     return myTracker;
   }
 
-  public boolean fileIsDeleted(VirtualFile file) {
+  public synchronized boolean fileIsDeleted(VirtualFile file) {
     if (myTracker == null) return false;
     return myTracker.fileIsDeleted(file);
   }
 
-  private boolean fileOrParentIsDeleted(VirtualFile file) {
+  private synchronized boolean fileOrParentIsDeleted(VirtualFile file) {
     if (myTracker == null) return false;
     VirtualFile current = file;
     while (current != null) {
@@ -544,11 +544,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return true;
   }
 
-  public void onUserAction() {
+  public synchronized void onUserAction() {
     myUserActivitiesRegistry.onUserAction(System.currentTimeMillis());
   }
 
-  private void registerAll() {
+  private synchronized void registerAll() {
     getVirtualFileManager().registerFileContentProvider(this);
     myFileTypeManager.addFileTypeListener(myFileTypeListener);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
@@ -556,7 +556,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(myTracker.getRefreshUpdater());
   }
 
-  public void unregisterAll() {
+  public synchronized void unregisterAll() {
     if (myTracker == null) return;
     getVirtualFileManager().unregisterFileContentProvider(this);
     myFileTypeManager.removeFileTypeListener(myFileTypeListener);
@@ -568,7 +568,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myTracker.getRefreshUpdater());
   }
 
-  private void synchronizeRoots() {
+  private synchronized void synchronizeRoots() {
     myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refresh.files.on.startup")) {
       public void updatingDone() {
         super.updatingDone();
@@ -602,7 +602,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     initialize(false);
   }
 
-  public void initialize(boolean sync) {
+  public synchronized void initialize(boolean sync) {
     if (myIsLocked) return;
     _init();
     if (!myIsLocked) return;
@@ -647,7 +647,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myImplementation.markSourcesAsCurrentInInitialization();
   }
 
-  public void rootsChanged(ModuleRootEvent event) {
+  public synchronized void rootsChanged(ModuleRootEvent event) {
     refreshRoots();
     if (myTracker.isRefreshInProgress()) return;
     if (myRefreshRootsOperation != null) {
@@ -682,11 +682,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public void projectClosed() {
   }
 
-  public boolean isAvailable() {
+  public synchronized boolean isAvailable() {
     return myIsLocked;
   }
 
-  public LvcsAction getAction() {
+  public synchronized LvcsAction getAction() {
     return myAction;
   }
 
@@ -727,28 +727,28 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
-  public void clear() {
+  public synchronized void clear() {
     myImplementation.clear(myVcsLocation);
     FileUtil.delete(myVcsLocation);
   }
 
-  public File getVcsLocation() {
+  public synchronized File getVcsLocation() {
     return myVcsLocation;
   }
 
-  public OldLvcsImplemetation getImplementation() {
+  public synchronized OldLvcsImplemetation getImplementation() {
     return myImplementation;
   }
 
-  public LvcsFileRevision addFile(final LvcsDirectoryRevision dir1, final VirtualFileInfo virtualFileInfoOnVirtualFile) {
+  public synchronized LvcsFileRevision addFile(final LvcsDirectoryRevision dir1, final VirtualFileInfo virtualFileInfoOnVirtualFile) {
     return myImplementation.addFile(dir1, virtualFileInfoOnVirtualFile);
   }
 
-  public LvcsFileRevision commitFile(final LvcsFileRevision file, final VirtualFileInfo virtualFileInfo) {
+  public synchronized LvcsFileRevision commitFile(final LvcsFileRevision file, final VirtualFileInfo virtualFileInfo) {
     return myImplementation.commitFile(file, virtualFileInfo);
   }
 
-  public void checkConsistency(final boolean shouldntContainScheduledForRemoval) {
+  public synchronized void checkConsistency(final boolean shouldntContainScheduledForRemoval) {
     myImplementation.checkConsistency(shouldntContainScheduledForRemoval);
   }
 
