@@ -396,7 +396,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                                      Project project) {
     assertIsDispatchThread();
 
-    if (myExceptionalThreadWithReadAccess != null) {
+    if (myExceptionalThreadWithReadAccess != null || ApplicationManager.getApplication().isUnitTestMode()) {
       process.run();
       return true;
     }

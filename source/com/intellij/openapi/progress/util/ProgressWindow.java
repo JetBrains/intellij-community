@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.awt.RelativePoint;
@@ -84,19 +85,21 @@ public class ProgressWindow extends BlockingProgressIndicator {
     LOG.assertTrue(!myStoppedAlready);
 
     super.start();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final Timer timer = new Timer(300, new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            if (isRunning()) {
-              showDialog();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          final Timer timer = new Timer(300, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+              if (isRunning()) {
+                showDialog();
+              }
             }
-          }
-        });
-        timer.setRepeats(false);
-        timer.start();
-      }
-    });
+          });
+          timer.setRepeats(false);
+          timer.start();
+        }
+      });
+    }
 
     myStared = true;
   }
@@ -153,6 +156,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
     super.stop();
     myStoppedAlready = true;
+
+    SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }
 
   public void cancel() {
