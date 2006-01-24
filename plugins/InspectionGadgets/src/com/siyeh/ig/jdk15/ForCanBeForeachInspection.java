@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -32,22 +31,20 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ForCanBeForeachInspection extends StatementInspection{
 
-    private final ForCanBeForeachFix fix = new ForCanBeForeachFix();
-
     public String getID(){
         return "ForLoopReplaceableByForEach";
     }
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "for.can.be.foreach.display.name");
     }
@@ -71,7 +68,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new ForCanBeForeachFix();
     }
 
     private static class ForCanBeForeachFix extends InspectionGadgetsFix{
@@ -1195,17 +1192,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiClass aClass = method.getContainingClass();
-        if(aClass == null){
-            return false;
-        }
-        final Project project = expression.getProject();
-        final PsiManager manager = PsiManager.getInstance(project);
-        final PsiClass javaUtilList = manager.findClass("java.util.List",
-                GlobalSearchScope.allScope(project));
-        if(javaUtilList == null){
-            return false;
-        }
-        return InheritanceUtil.isInheritorOrSelf(aClass, javaUtilList, true);
+        return ClassUtils.isSubclass(aClass, "java.util.List");
     }
 
     private static boolean expressionIsArrayLengthLookup(

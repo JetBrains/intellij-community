@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -27,6 +28,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,31 +37,22 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         extends ExpressionInspection {
 
     /** @noinspection StaticCollection*/
-    @NonNls private static final Map<String,String> s_basicTypeMap =
-            new HashMap<String, String>(6);
-
-    /** @noinspection StaticCollection*/
     @NonNls private static final Map<String,String> s_conversionMap =
-            new HashMap<String, String>(6);
+            new HashMap<String, String>(7);
 
     static {
-        s_basicTypeMap.put("java.lang.Short", "shortValue");
-        s_basicTypeMap.put("java.lang.Integer", "intValue");
-        s_basicTypeMap.put("java.lang.Long", "longValue");
-        s_basicTypeMap.put("java.lang.Float", "floatValue");
-        s_basicTypeMap.put("java.lang.Double", "doubleValue");
-        s_basicTypeMap.put("java.lang.Boolean", "booleanValue");
-
-        s_conversionMap.put("java.lang.Short", "parseShort");
+        s_conversionMap.put("java.lang.Boolean", "valueOf");
+        s_conversionMap.put("java.lang.Byte", "parseByte");
+        s_conversionMap.put("java.lang.Double", "parseDouble");
+        s_conversionMap.put("java.lang.Float", "parseFloat");
         s_conversionMap.put("java.lang.Integer", "parseInt");
         s_conversionMap.put("java.lang.Long", "parseLong");
-        s_conversionMap.put("java.lang.Float", "parseFloat");
-        s_conversionMap.put("java.lang.Double", "parseDouble");
-        s_conversionMap.put("java.lang.Boolean", "valueOf");
+        s_conversionMap.put("java.lang.Short", "parseShort");
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.display.name");
+        return InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.from.string.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -69,41 +62,70 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     public boolean isEnabledByDefault(){
         return true;
     }
+
     public String buildErrorString(PsiElement location) {
         final String replacementString =
                 calculateReplacementExpression(location);
-        return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.problem.descriptor", replacementString);
+        return InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
+                replacementString);
     }
 
-    @NonNls private static String calculateReplacementExpression(PsiElement location) {
+    @Nullable
+    @NonNls static String calculateReplacementExpression(
+            PsiElement location) {
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) location;
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
+        final PsiExpression qualifierExpression =
+                methodExpression.getQualifierExpression();
+        if (!(qualifierExpression instanceof PsiNewExpression)) {
+            return null;
+        }
         final PsiNewExpression qualifier =
-                (PsiNewExpression) methodExpression.getQualifierExpression();
+                (PsiNewExpression) qualifierExpression;
         final PsiExpressionList argumentList =
                 qualifier.getArgumentList();
-        assert argumentList != null;
+        if (argumentList == null) {
+            return null;
+        }
         final PsiExpression arg = argumentList.getExpressions()[0];
         final PsiType type = qualifier.getType();
+        if (type == null) {
+            return null;
+        }
         final String qualifierType = type.getPresentableText();
         final String canonicalType = type.getCanonicalText();
-
         final String conversionName = s_conversionMap.get(canonicalType);
         if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
-            return qualifierType + '.' + conversionName + '(' +
-                    arg.getText() + ").booleanValue()";
+            final PsiManager manager = location.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return qualifierType + '.' + conversionName + '(' +
+                        arg.getText() + ").booleanValue()";
+            } else {
+                return qualifierType + ".parseBoolean(" +
+                        arg.getText() + ')';
+            }
         } else {
             return qualifierType + '.' + conversionName + '(' +
                     arg.getText() + ')';
         }
     }
 
+    @Nullable
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression) location;
-        return new UnnecessaryTemporaryObjectFix(methodCallExpression);
+        final String replacementExpression =
+                calculateReplacementExpression(location);
+        if (replacementExpression == null) {
+            return null;
+        }
+        final String name = InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.from.string.fix.name",
+                replacementExpression);
+        return new UnnecessaryTemporaryObjectFix(name);
     }
 
     private static class UnnecessaryTemporaryObjectFix
@@ -112,10 +134,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         private final String m_name;
 
         private UnnecessaryTemporaryObjectFix(
-                PsiMethodCallExpression location) {
-            super();
-            m_name = InspectionGadgetsBundle
-              .message("unnecessary.temporary.on.conversion.from.string.fix.name", calculateReplacementExpression(location));
+                String name) {
+            m_name = name;
         }
 
         public String getName() {
@@ -139,47 +159,58 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     private static class UnnecessaryTemporaryObjectVisitor
             extends BaseInspectionVisitor {
 
+        /** @noinspection StaticCollection*/
+        @NonNls private static final Map<String,String> s_basicTypeMap =
+                new HashMap<String, String>(7);
+
+        static {
+            s_basicTypeMap.put("java.lang.Boolean", "booleanValue");
+            s_basicTypeMap.put("java.lang.Byte", "byteValue");
+            s_basicTypeMap.put("java.lang.Double", "doubleValue");
+            s_basicTypeMap.put("java.lang.Float", "floatValue");
+            s_basicTypeMap.put("java.lang.Integer", "intValue");
+            s_basicTypeMap.put("java.lang.Long", "longValue");
+            s_basicTypeMap.put("java.lang.Short", "shortValue");
+        }
+
         public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null) {
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             final Map<String,String> basicTypeMap = s_basicTypeMap;
-            if(!basicTypeMap.containsValue(methodName)) {
+            if (!basicTypeMap.containsValue(methodName)) {
                 return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(!(qualifier instanceof PsiNewExpression)) {
+            if (!(qualifier instanceof PsiNewExpression)) {
                 return;
             }
             final PsiNewExpression newExp = (PsiNewExpression) qualifier;
             final PsiExpressionList argList = newExp.getArgumentList();
-            if(argList== null) {
+            if (argList== null) {
                 return;
             }
             final PsiExpression[] args = argList.getExpressions();
-            if(args.length != 1) {
+            if (args.length != 1) {
                 return;
             }
             final PsiType argType = args[0].getType();
-            if(!TypeUtils.isJavaLangString(argType)) {
+            if (!TypeUtils.isJavaLangString(argType)) {
                 return;
             }
             final PsiType type = qualifier.getType();
-            if(type == null) {
+            if (type == null) {
                 return;
             }
             final String typeText = type.getCanonicalText();
-            if(!basicTypeMap.containsKey(typeText)) {
+            if (!basicTypeMap.containsKey(typeText)) {
                 return;
             }
             final String mappingMethod = basicTypeMap.get(typeText);
-            if(!mappingMethod.equals(methodName)) {
+            if (!mappingMethod.equals(methodName)) {
                 return;
             }
             registerError(expression);

@@ -24,8 +24,10 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,20 +35,9 @@ import java.util.Set;
 public class UnnecessaryTemporaryOnConversionToStringInspection
         extends ExpressionInspection {
 
-    /** @noinspection StaticCollection*/
-    private static final Set<String> s_basicTypes = new HashSet<String>(6);
-
-    static {
-        s_basicTypes.add("java.lang.Short");
-        s_basicTypes.add("java.lang.Integer");
-        s_basicTypes.add("java.lang.Long");
-        s_basicTypes.add("java.lang.Float");
-        s_basicTypes.add("java.lang.Double");
-        s_basicTypes.add("java.lang.Boolean");
-    }
-
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.to.string.display.name");
+        return InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.to.string.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -60,27 +51,46 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     public String buildErrorString(PsiElement location) {
         final String replacementString =
                 calculateReplacementExpression(location);
-        return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.problem.descriptor", replacementString);
+        return InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
+                replacementString);
     }
 
-    @NonNls private static String calculateReplacementExpression(PsiElement location) {
+    @Nullable @NonNls
+    static String calculateReplacementExpression(
+            PsiElement location) {
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) location;
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiNewExpression qualifier =
                 (PsiNewExpression) methodExpression.getQualifierExpression();
+        if(qualifier == null) {
+            return null;
+        }
         final PsiExpressionList argumentList = qualifier.getArgumentList();
-        assert argumentList != null;
-        final PsiExpression arg = argumentList.getExpressions()[0];
+        if(argumentList == null) {
+            return null;
+        }
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        if(expressions.length < 1) {
+            return null;
+        }
+        final PsiExpression arg = expressions[0];
         final PsiType type = qualifier.getType();
+        if(type == null) {
+            return null;
+        }
         final String qualifierType = type.getPresentableText();
         return qualifierType + ".toString(" + arg.getText() + ')';
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new UnnecessaryTemporaryObjectFix(
-                (PsiMethodCallExpression) location);
+        final String replacement = calculateReplacementExpression(location);
+        final String name = InspectionGadgetsBundle.message(
+                "unnecessary.temporary.on.conversion.from.string.fix.name",
+                replacement);
+        return new UnnecessaryTemporaryObjectFix(name);
     }
 
     private static class UnnecessaryTemporaryObjectFix
@@ -89,10 +99,9 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         private final String m_name;
 
         private UnnecessaryTemporaryObjectFix(
-                PsiMethodCallExpression expression) {
+                String name) {
             super();
-          m_name = InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.fix.name",
-                                                   calculateReplacementExpression(expression));
+            m_name = name;
         }
 
         public String getName() {
@@ -100,7 +109,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
+                throws IncorrectOperationException {
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression =
@@ -116,21 +125,43 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     private static class UnnecessaryTemporaryObjectVisitor
             extends BaseInspectionVisitor {
 
+        /** @noinspection StaticCollection*/
+        private static final Set<String> s_basicTypes = new HashSet<String>(8);
+
+        static {
+            s_basicTypes.add("java.lang.Boolean");
+            s_basicTypes.add("java.lang.Byte");
+            s_basicTypes.add("java.lang.Character");
+            s_basicTypes.add("java.lang.Double");
+            s_basicTypes.add("java.lang.Float");
+            s_basicTypes.add("java.lang.Integer");
+            s_basicTypes.add("java.lang.Long");
+            s_basicTypes.add("java.lang.Short");
+        }
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null) {
-                return;
-            }
-            @NonNls final String methodName = methodExpression.getReferenceName();
-            if(!"toString".equals(methodName)) {
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if(!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
                 return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if(!(qualifier instanceof PsiNewExpression)) {
+                return;
+            }
+            final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if (argumentList == null) {
+                return;
+            }
+            final PsiExpression[] expressions = argumentList.getExpressions();
+            if (expressions.length < 1) {
                 return;
             }
             final PsiType type = qualifier.getType();
