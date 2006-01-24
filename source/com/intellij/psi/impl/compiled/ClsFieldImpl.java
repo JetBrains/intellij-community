@@ -143,6 +143,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return this;
   }
 
+  @NotNull
   public PsiType getType() {
     return getTypeElement().getType();
   }

@@ -62,6 +62,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return this;
   }
 
+  @NotNull
   public final PsiType getType() {
     return SharedImplUtil.getType(this);
   }

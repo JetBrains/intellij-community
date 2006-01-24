@@ -60,18 +60,18 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return myType;
   }
 
+  @NotNull
   public PsiType getType() {
     return myType.getType();
   }
 
   public PsiModifierList getModifierList() {
-  synchronized (PsiLock.LOCK) {
-    if (myModifierList == null) {
-      myModifierList = new ClsModifierListImpl(this, 0);
+    synchronized (PsiLock.LOCK) {
+      if (myModifierList == null) {
+        myModifierList = new ClsModifierListImpl(this, 0);
+      }
     }
-  ;
-  }
-               return myModifierList;
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {

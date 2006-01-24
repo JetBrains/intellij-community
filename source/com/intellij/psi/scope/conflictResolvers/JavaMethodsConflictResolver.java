@@ -221,14 +221,17 @@ outer:
     for(int i = 0; i < args.length; i++){
       if (i >= params1.length || i >= params2.length) break;
       final PsiType argType = args[i].getType();
-      if (TypeConversionUtil.isNullType(argType)) return Specifics.CONFLICT;
-      boolean varArgs1 = params1[i].isVarArgs();
-      boolean varArgs2 = params2[i].isVarArgs();
-      if (!varArgs1 && varArgs2) return Specifics.TRUE;
-      if (varArgs1 && !varArgs2) return Specifics.FALSE;
-
       final PsiType type1 = info1.getSubstitutor().substitute(params1[i].getType());
       final PsiType type2 = info2.getSubstitutor().substitute(params2[i].getType());
+      assert type1 != null && type2 != null; //because substitute returns null for nulls only
+      boolean varArgs1 = params1[i].isVarArgs();
+      boolean varArgs2 = params2[i].isVarArgs();
+      if (!varArgs1 && varArgs2) {
+        return ((PsiEllipsisType) type2).getComponentType().isAssignableFrom(type1) ? Specifics.TRUE : Specifics.CONFLICT;
+      }
+      if (varArgs1 && !varArgs2) {
+        return ((PsiEllipsisType) type1).getComponentType().isAssignableFrom(type2) ? Specifics.FALSE : Specifics.CONFLICT;
+      }
 
       Boolean lessBoxing = isLessBoxing(argType, type1, type2);
       if (lessBoxing != null) {
@@ -237,8 +240,8 @@ outer:
         continue;
       }
 
-      final boolean assignable2From1 = type1 != null && type2 != null && type2.isAssignableFrom(type1);
-      final boolean assignable1From2 = type1 != null && type2 != null && type1.isAssignableFrom(type2);
+      final boolean assignable2From1 = type2.isAssignableFrom(type1);
+      final boolean assignable1From2 = type1.isAssignableFrom(type2);
       if (assignable1From2 && assignable2From1) {
         //prefer less generic candidate
         PsiType erased1 = TypeConversionUtil.erasure(params1[i].getType());

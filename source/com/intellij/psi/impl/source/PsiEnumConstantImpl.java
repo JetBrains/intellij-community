@@ -116,6 +116,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     dropCached();
   }
 
+  @NotNull
   public PsiType getType() {
     return getManager().getElementFactory().createType(getContainingClass());
   }

@@ -21,6 +21,8 @@ import com.intellij.util.PatchedSoftReference;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiField, PsiVariableEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
 
@@ -104,6 +106,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return this;
   }
 
+  @NotNull
   public PsiType getType(){
     if (getTreeElement() != null) {
       myCachedType = null;
@@ -347,7 +350,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);
 
       PsiElement typeClone = type.copy();
-      CodeEditUtil.addChild((CompositeElement)nextField, (TreeElement)SourceTreeToPsiMap.psiElementToTree(typeClone), 
+      CodeEditUtil.addChild((CompositeElement)nextField, (TreeElement)SourceTreeToPsiMap.psiElementToTree(typeClone),
                             nextField.getFirstChildNode());
 
       PsiElement modifierListClone = modifierList.copy();

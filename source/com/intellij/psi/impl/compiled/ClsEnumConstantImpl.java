@@ -69,6 +69,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
 
+  @NotNull
   public PsiType getType() {
     return getManager().getElementFactory().createType(getContainingClass());
   }

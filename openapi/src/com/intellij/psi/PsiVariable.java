@@ -29,7 +29,7 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedE
    *
    * @return the variable type.
    */
-  PsiType getType();
+  @NotNull PsiType getType();
 
   /**
    * Returns the type element declaring the type of the variable.

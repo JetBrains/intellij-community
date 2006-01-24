@@ -67,6 +67,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @NotNull
   public PsiType getType() {
     final CompositeElement treeElement = getTreeElement();
     if (treeElement != null) {

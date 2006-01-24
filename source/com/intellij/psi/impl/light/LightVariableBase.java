@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -14,7 +15,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected PsiModifierList myModifierList;
   protected boolean myWritable;
 
-  public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
+  public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager);
     myModifierList = new LightModifierList(myManager);
     myNameIdentifier = nameIdentifier;
@@ -44,6 +45,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return this;
   }
 
+  @NotNull
   public PsiType getType() {
     return myType;
   }
