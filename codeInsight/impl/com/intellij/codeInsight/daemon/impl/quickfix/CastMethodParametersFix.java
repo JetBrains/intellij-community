@@ -38,7 +38,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
     super(null, null);
     myArgList = list;
     myIndex = i;
-    myToType = toType;
+    myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
   }
 
   public String getText() {
