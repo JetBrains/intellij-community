@@ -8,6 +8,7 @@ import com.intellij.util.xml.impl.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -19,25 +20,88 @@ import java.util.*;
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
 
-  public interface MergedObject {
-    public <T> T findImplementation(Class<T> clazz);
+  public interface MergedObject<V> {
+    public <T extends V> T findImplementation(Class<T> clazz);
+    public List<V> getImplementations();
   }
 
-
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
-    return AdvancedProxy.createProxy(new MergingInvocationHandler<T>(implementations), aClass, MergedObject.class);
+    final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(implementations);
+    return mergeModels(handler, aClass, implementations);
+  }
+
+  public static <T>T mergeModels(final MergingInvocationHandler<T> handler,
+                                  final Class<? extends T> aClass,
+                                  final T... implementations) {
+    final Set<Class> commonClasses = getCommonClasses(implementations);
+    commonClasses.add(MergedObject.class);
+    commonClasses.remove(aClass);
+    return AdvancedProxy.createProxy(handler, aClass,
+                                     commonClasses.toArray(new Class[commonClasses.size()]));
   }
 
   @Nullable
   public static <T> T getImplementation(Object element, Class<T> clazz) {
-    return element instanceof ModelMerger.MergedObject ?
-           ((ModelMerger.MergedObject)element).findImplementation(clazz) :
-           element != null && clazz.isAssignableFrom(element.getClass())? (T)element: null;
+    if (element instanceof MergedObject) {
+      return ((MergedObject<T>)element).findImplementation(clazz);
+    }
+    else {
+      return element != null && clazz.isAssignableFrom(element.getClass()) ? (T)element : null;
+    }
   }
 
+  @NotNull
+  public static <T> List<T> getImplementations(T element) {
+    if (element instanceof MergedObject) {
+      final MergedObject<T> mergedObject = (MergedObject<T>)element;
+      return mergedObject.getImplementations();
+    }
+    else if (element != null) {
+      return Collections.singletonList(element);
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
+
+  public static <T> List<T> filterMergedImplementations(List<T> result, List<T> implementations) {
+    for (T t : implementations) {
+      if (t instanceof MergedObject) {
+        final MergedObject<T> mergedObject = (MergedObject<T>)t;
+        final List<T> impl = mergedObject.getImplementations();
+        filterMergedImplementations(result, impl);
+      }
+      else result.add(t);
+    }
+    return result;
+  }
+
+  private static void addAllInterfaces(Class aClass, List<Class> list) {
+    final Class[] interfaces = aClass.getInterfaces();
+    list.addAll(Arrays.asList(interfaces));
+    for (Class anInterface : interfaces) {
+      addAllInterfaces(anInterface, list);
+    }
+  }
+
+  public static Set<Class> getCommonClasses(final Object... implementations) {
+    final HashSet<Class> set = new HashSet<Class>();
+    final ArrayList<Class> list = new ArrayList<Class>();
+    addAllInterfaces(implementations[0].getClass(), list);
+    set.addAll(list);
+    for (int i = 1; i < implementations.length; i++) {
+      final ArrayList<Class> list1 = new ArrayList<Class>();
+      addAllInterfaces(implementations[i].getClass(), list1);
+      set.retainAll(list1);
+    }
+    return set;
+  }
+
+
   public static class MergingInvocationHandler<T> implements InvocationHandler {
-    private static final Map<Class,Method> ourPrimaryKeyMethods = new HashMap<Class, Method>();
+    private static final Map<Class<? extends Object>,Method> ourPrimaryKeyMethods = new HashMap<Class<? extends Object>, Method>();
     private T[] myImplementations;
+    private Set<JavaMethodSignature> signaturesNotToMerge = Collections.emptySet();
 
     public MergingInvocationHandler(final T... implementations) {
       setImplementations(implementations);
@@ -60,7 +124,7 @@ public class ModelMerger {
     }
 
     @Nullable
-    private Method getPrimaryKeyMethod(final Class aClass) {
+    private Method getPrimaryKeyMethod(final Class<? extends Object> aClass) {
       Method method = ourPrimaryKeyMethods.get(aClass);
       if (method == null) {
         if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
@@ -99,9 +163,26 @@ public class ModelMerger {
 
       try {
         if (MergedObject.class.equals(method.getDeclaringClass())) {
-          return findImplementation((Class<Object>)args[0]);
+          @NonNls String methodName = method.getName();
+          if ("findImplementation".equals(methodName)) {
+            return findImplementation((Class<Object>)args[0]);
+          }
+          else if ("getImplementations".equals(methodName)) {
+            return Arrays.asList(myImplementations);
+          }
+          else assert false;
         }
         final Class returnType = method.getReturnType();
+        if (signaturesNotToMerge.size() > 0) {
+          final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+          if (signaturesNotToMerge.contains(signature)) {
+            for (final T t : myImplementations) {
+              final Object o = method.invoke(t, args);
+              if (o != null) return o;
+            }
+            return null;
+          }
+        }
         if (Collection.class.isAssignableFrom(returnType)) {
           return getMergedImplementations(method, args,
                                           DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
@@ -201,15 +282,15 @@ public class ModelMerger {
     }
 
     public <V> V findImplementation(final Class<V> clazz) {
-      for (final T t : myImplementations) {
+      for (T t : ModelMerger.filterMergedImplementations(new ArrayList<T>(), Arrays.asList(myImplementations))) {
         if (clazz.isAssignableFrom(t.getClass())) {
-          return (V) t;
+          return (V)t;
         }
       }
       return null;
     }
 
-    public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject {
+    public class MergedGenericValue extends ReadOnlyGenericValue implements MergedObject<GenericValue> {
       private final Method myMethod;
       private final Object[] myArgs;
 
@@ -218,12 +299,12 @@ public class ModelMerger {
         myArgs = args;
       }
 
-      public <V> V findImplementation(Class<V> clazz) {
+      public <V extends GenericValue> V findImplementation(Class<V> clazz) {
         for (final T t : myImplementations) {
           try {
             GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
             if (genericValue!=null && clazz.isAssignableFrom(genericValue.getClass())) {
-              return (V) genericValue;
+              return (V)genericValue;
             }
           }
           catch (IllegalAccessException e) {
@@ -234,6 +315,23 @@ public class ModelMerger {
           }
         }
         return null;
+      }
+
+      public List<GenericValue> getImplementations() {
+        ArrayList<GenericValue> result = new ArrayList<GenericValue>(myImplementations.length);
+        for (final T t : myImplementations) {
+          try {
+            GenericValue genericValue = (GenericValue)myMethod.invoke(t, myArgs);
+            result.add(genericValue);
+          }
+          catch (IllegalAccessException e) {
+            LOG.error(e);
+          }
+          catch (InvocationTargetException e) {
+            LOG.error(e);
+          }
+        }
+        return result;
       }
 
       private GenericValue findGenericValue() {
@@ -247,11 +345,18 @@ public class ModelMerger {
               }
             }
           }
-            catch (IllegalAccessException e) {
+          catch (IllegalAccessException e) {
             LOG.error(e);
           }
           catch (InvocationTargetException e) {
-            LOG.error(e);
+            final Throwable throwable = e.getTargetException();
+            if (throwable instanceof RuntimeException) {
+              throw (RuntimeException)throwable;
+            }
+            else if (throwable instanceof Error) {
+              throw (Error)throwable;
+            }
+            LOG.error(throwable);
           }
         }
         return null;
