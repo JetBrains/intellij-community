@@ -1,11 +1,5 @@
 package com.intellij.testFramework;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -14,8 +8,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -52,9 +46,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 /**
  * @author mike
@@ -80,8 +72,7 @@ import java.util.Map;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
-  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
-  protected long getTimeRequired() {
+  protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
   }
 
@@ -120,38 +111,6 @@ import java.util.Map;
     myFilesToDelete = new HashSet<File>();
 
     setUpProject();
-
-    final LocalInspectionTool[] tools = configureLocalInspectionTools();
-    for (LocalInspectionTool tool : tools) {
-      enableInspectionTool(tool);
-    }
-
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
-      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
-        return tools.toArray(new LocalInspectionTool[tools.size()]);
-      }
-
-      public boolean isToolEnabled(HighlightDisplayKey key) {
-        if (key == null) return false;
-        return myAvailableTools.containsKey(key.toString()) || isNonInspectionHighlighting(key);
-      }
-
-      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
-        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
-        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
-      }
-
-      public InspectionTool getInspectionTool(String shortName) {
-        if (myAvailableTools.containsKey(shortName)) {
-          return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
-        }
-        return null;
-      }
-    };
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    inspectionProfileManager.addProfile(profile);
-    inspectionProfileManager.setRootProfile(profile.getName());
   }
 
   public Project getProject() {
@@ -164,23 +123,6 @@ import java.util.Map;
 
   public Module getModule() {
     return myModule;
-  }
-
-  protected void enableInspectionTool(LocalInspectionTool tool){
-    final String shortName = tool.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null){
-      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
-    }
-    myAvailableTools.put(shortName, tool);
-  }
-
-  protected void disableInspectionTool(String shortName){
-    myAvailableTools.remove(shortName);
-  }
-
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[0];
   }
 
   protected void setUpProject() throws IOException {

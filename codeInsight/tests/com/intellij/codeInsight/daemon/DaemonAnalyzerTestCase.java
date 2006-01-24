@@ -18,12 +18,68 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
+  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
+  protected void setUp() throws Exception {
+    super.setUp();
+    final LocalInspectionTool[] tools = configureLocalInspectionTools();
+    for (LocalInspectionTool tool : tools) {
+      enableInspectionTool(tool);
+    }
+
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
+      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
+        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
+        return tools.toArray(new LocalInspectionTool[tools.size()]);
+      }
+
+      public boolean isToolEnabled(HighlightDisplayKey key) {
+        if (key == null) return false;
+        return myAvailableTools.containsKey(key.toString()) || isNonInspectionHighlighting(key);
+      }
+
+      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
+        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
+        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
+      }
+
+      public InspectionTool getInspectionTool(String shortName) {
+        if (myAvailableTools.containsKey(shortName)) {
+          return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
+        }
+        return null;
+      }
+    };
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    inspectionProfileManager.addProfile(profile);
+    inspectionProfileManager.setRootProfile(profile.getName());
+  }
+  protected void enableInspectionTool(LocalInspectionTool tool){
+    final String shortName = tool.getShortName();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null){
+      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
+    }
+    myAvailableTools.put(shortName, tool);
+  }
+
+  protected void disableInspectionTool(String shortName){
+    myAvailableTools.remove(shortName);
+  }
+
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[0];
+  }
+
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath);
     doDoTest(checkWarnings, checkInfos);
@@ -80,7 +136,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     Collection<HighlightInfo> highlights3 = null;
 
-    if (doInspections()) {
+    if (myAvailableTools.size() > 0) {
       LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
@@ -121,10 +177,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
 
     return list;
-  }
-
-  protected boolean doInspections() {
-    return false;
   }
 
   protected boolean doExternalValidation() {

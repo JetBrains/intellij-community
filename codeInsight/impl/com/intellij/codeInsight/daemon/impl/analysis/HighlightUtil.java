@@ -565,7 +565,7 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  public static String getUnhandledExceptionsDescriptor(PsiClassType[] unhandledExceptions) {
+  public static String getUnhandledExceptionsDescriptor(PsiClassType... unhandledExceptions) {
     StringBuffer exceptionsText = new StringBuffer();
     for (int i = 0; i < unhandledExceptions.length; i++) {
       PsiClassType unhandledException = unhandledExceptions[i];
@@ -674,15 +674,8 @@ public class HighlightUtil {
     }
     PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     if (!(targetMethod instanceof JspHolderMethod)) return HighlightInfoType.UNHANDLED_EXCEPTION;
-    JspFile jspFile = (JspFile)containingFile;
-    PsiFile errorPage = jspFile.getErrorPage();
-    // highlight unhandled exception as warning if there is no errorPage directive
-    if (errorPage == null) {
-      return HighlightInfoType.WARNING;
-    }
-    else {
-      return null;
-    }
+    // ignore JSP top level errors - it handled by UnhandledExceptionInJSP inspection
+    return null;
   }
 
 

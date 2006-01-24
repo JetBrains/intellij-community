@@ -1006,7 +1006,8 @@ public class HighlightMethodUtil {
 
   public static TextRange getFixRange(PsiElement element) {
     TextRange range = element.getTextRange();
-    int start = range.getStartOffset(), end = range.getEndOffset();
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
 
     PsiElement nextSibling = element.getNextSibling();
     if (nextSibling instanceof PsiJavaToken && ((PsiJavaToken)nextSibling).getTokenType() == JavaTokenType.SEMICOLON) {

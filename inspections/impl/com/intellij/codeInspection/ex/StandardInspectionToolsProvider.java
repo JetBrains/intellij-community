@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
@@ -107,7 +108,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
       BooleanMethodIsAlwaysInvertedInspection.class,
-      UnnessecaryModuleDependencyInspection.class
+      UnnessecaryModuleDependencyInspection.class,
+      UnhandledExceptionInJSP.class,
       };
   }
 }
