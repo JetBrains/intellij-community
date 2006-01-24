@@ -62,8 +62,7 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
                         break;
                     } else{
                         final PsiType type = field.getType();
-                        if(type != null
-                           && !type.equalsToText("java.io.ObjectStreamField" + "[]"))
+                        if(!type.equalsToText("java.io.ObjectStreamField" + "[]"))
                         {
                             badSerialPersistentFields = field;
                             break;

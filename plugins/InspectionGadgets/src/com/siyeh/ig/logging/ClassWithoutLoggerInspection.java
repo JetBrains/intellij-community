@@ -126,10 +126,6 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
 
         private boolean isLogger(PsiField field) {
             final PsiType type = field.getType();
-            if(type == null)
-            {
-                return false;
-            }
             final String text = type.getCanonicalText();
             return text.equals(loggerClassName);
         }

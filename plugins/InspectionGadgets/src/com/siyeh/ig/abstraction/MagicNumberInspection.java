@@ -91,7 +91,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (!ClassUtils.isPrimitiveNumericType(type)) {
                 return;
             }
-            if (type.equals(PsiType.CHAR)) {
+            if (PsiType.CHAR.equals(type)) {
                 return;
             }
             final String text = expression.getText();

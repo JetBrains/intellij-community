@@ -51,9 +51,6 @@ public class VolatileArrayFieldInspection extends FieldInspection {
         return;
       }
       final PsiType type = field.getType();
-      if (type == null) {
-        return;
-      }
       if (type.getArrayDimensions() != 0) {
         registerFieldError(field);
       }

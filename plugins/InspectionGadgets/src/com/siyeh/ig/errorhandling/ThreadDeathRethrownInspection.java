@@ -82,7 +82,7 @@ public class ThreadDeathRethrownInspection extends StatementInspection {
         registerError(typeElement);
         return;
       }
-      final PsiElement element = ((PsiReference)exception).resolve();
+      final PsiElement element = ((PsiReferenceExpression)exception).resolve();
       if (parameter.equals(element)) {
         return;
       }

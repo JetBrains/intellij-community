@@ -34,7 +34,7 @@ public class ReturnOfDateFieldInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        final PsiField field = (PsiField) ((PsiReference) location).resolve();
+        final PsiField field = (PsiField) ((PsiReferenceExpression) location).resolve();
         assert field != null;
         final PsiType type = field.getType();
         return InspectionGadgetsBundle.message("return.date.calendar.field.problem.descriptor", type.getPresentableText());

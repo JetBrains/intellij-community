@@ -179,7 +179,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
             } else {
                 if (collection instanceof PsiReferenceExpression) {
                     final PsiJavaCodeReferenceElement referenceElement
-                            = (PsiJavaCodeReferenceElement) collection;
+                            = (PsiReferenceExpression) collection;
                     final String collectionName =
                             referenceElement.getReferenceName();
                     contentVariableName = createNewVarName(
@@ -525,7 +525,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
             PsiWhileStatement statement) {
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(statement,
-                        new Class[]{PsiWhiteSpace.class, PsiComment.class});
+                    PsiWhiteSpace.class, PsiComment.class);
         if (prevStatement == null || !(prevStatement instanceof PsiStatement)) {
             return null;
         }

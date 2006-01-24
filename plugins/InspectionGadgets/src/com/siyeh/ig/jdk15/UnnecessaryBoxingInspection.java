@@ -152,9 +152,6 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             }
             final PsiParameter arg = args[0];
             final PsiType argumentType = arg.getType();
-            if (argumentType == null) {
-                return;
-            }
             final String argumentTypeText = argumentType.getCanonicalText();
             final String boxableConstructorType =
                     s_boxingArgs.get(constructorTypeText);

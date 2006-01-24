@@ -41,9 +41,6 @@ public class PublicStaticArrayFieldInspection extends FieldInspection {
         return;
       }
       final PsiType type = field.getType();
-      if (type == null) {
-        return;
-      }
       if (!(type instanceof PsiArrayType)) {
         return;
       }

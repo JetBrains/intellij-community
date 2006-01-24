@@ -51,10 +51,6 @@ public class StringBufferFieldInspection extends FieldInspection {
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             final PsiType type = field.getType();
-            if(type == null)
-            {
-                return;
-            }
             if (!type.equalsToText("java.lang.StringBuffer") &&
                         !type.equalsToText("java.lang.StringBuilder")) {
                 return;

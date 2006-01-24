@@ -53,9 +53,6 @@ public class CatchGenericClassInspection extends StatementInspection {
 
     private void checkParameter(PsiParameter parameter, Set<PsiType> exceptionsThrown) {
       final PsiType type = parameter.getType();
-      if (type == null) {
-        return;
-      }
       if (!ExceptionUtils.isGenericExceptionClass(type)) {
         return;
       }

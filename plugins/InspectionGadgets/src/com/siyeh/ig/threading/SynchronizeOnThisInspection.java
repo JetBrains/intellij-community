@@ -47,9 +47,6 @@ public class SynchronizeOnThisInspection extends MethodInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
         return;
@@ -74,9 +71,6 @@ public class SynchronizeOnThisInspection extends MethodInspection {
         return false;
       }
       final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return false;
-      }
       final PsiParameter[] parameters = paramList.getParameters();
       final int numParams = parameters.length;
       if (numParams > 2) {
@@ -112,9 +106,6 @@ public class SynchronizeOnThisInspection extends MethodInspection {
         return false;
       }
       final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return false;
-      }
       final PsiParameter[] parameters = paramList.getParameters();
       final int numParams = parameters.length;
       return numParams == 0;

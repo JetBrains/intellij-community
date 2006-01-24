@@ -49,9 +49,6 @@ public class StringEqualsInspection extends ExpressionInspection {
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
               return;
@@ -61,9 +58,6 @@ public class StringEqualsInspection extends ExpressionInspection {
                 return;
             }
             final PsiParameterList paramList = method.getParameterList();
-            if (paramList == null) {
-                return;
-            }
             final PsiParameter[] parameters = paramList.getParameters();
             if (parameters.length != 1) {
                 return;

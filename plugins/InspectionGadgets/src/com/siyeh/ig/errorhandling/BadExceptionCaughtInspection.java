@@ -120,9 +120,6 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
                     continue;
                 }
                 final PsiType type = parameter.getType();
-                if(type == null){
-                    continue;
-                }
                 final String text = type.getCanonicalText();
                 if(text == null){
                     continue;

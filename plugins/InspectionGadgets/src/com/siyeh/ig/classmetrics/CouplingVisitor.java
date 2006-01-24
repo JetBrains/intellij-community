@@ -63,9 +63,6 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
 
     private void addDependenciesForThrowsList(PsiMethod method) {
         final PsiReferenceList throwsList = method.getThrowsList();
-        if (throwsList == null) {
-            return;
-        }
         final PsiClassType[] throwsTypes = throwsList.getReferencedTypes();
         for(PsiClassType throwsType : throwsTypes){
             addDependency(throwsType);

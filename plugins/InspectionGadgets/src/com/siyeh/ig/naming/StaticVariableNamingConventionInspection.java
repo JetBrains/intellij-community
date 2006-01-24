@@ -101,9 +101,6 @@ public class StaticVariableNamingConventionInspection extends ConventionInspecti
       }
 
       final PsiType type = field.getType();
-      if (type == null) {
-        return;
-      }
       if (!ClassUtils.isImmutable(type)) {
         return;
       }

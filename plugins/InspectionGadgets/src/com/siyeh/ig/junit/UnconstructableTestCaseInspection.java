@@ -55,9 +55,6 @@ public class UnconstructableTestCaseInspection extends ClassInspection {
       }
 
       final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors == null) {
-        return;
-      }
       boolean hasStringConstructor = false;
       boolean hasNoArgConstructor = false;
       boolean hasConstructor = false;

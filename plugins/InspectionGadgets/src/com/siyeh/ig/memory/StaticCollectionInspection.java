@@ -62,9 +62,6 @@ public class StaticCollectionInspection extends VariableInspection {
                 return;
             }
             final PsiType type = field.getType();
-            if (type == null) {
-                return;
-            }
             if (!CollectionUtils.isCollectionClassOrInterface(type)) {
                 return;
             }

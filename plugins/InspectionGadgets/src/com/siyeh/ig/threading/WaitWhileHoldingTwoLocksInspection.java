@@ -41,9 +41,6 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"wait".equals(methodName)) {
         return;
@@ -53,9 +50,6 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
         return;
       }
       final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return;
-      }
       final PsiParameter[] parameters = paramList.getParameters();
       final int numParams = parameters.length;
       if (numParams > 2) {

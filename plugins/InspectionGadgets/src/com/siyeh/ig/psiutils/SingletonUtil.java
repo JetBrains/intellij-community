@@ -47,11 +47,9 @@ public class SingletonUtil {
             final String className = aClass.getQualifiedName();
             if(field.hasModifierProperty(PsiModifier.STATIC)){
                 final PsiType type = field.getType();
-                if(type != null){
-                    final String fieldTypeName = type.getCanonicalText();
-                    if(fieldTypeName.equals(className)){
-                        numSelfInstances++;
-                    }
+                final String fieldTypeName = type.getCanonicalText();
+                if(fieldTypeName.equals(className)){
+                    numSelfInstances++;
                 }
             }
         }
