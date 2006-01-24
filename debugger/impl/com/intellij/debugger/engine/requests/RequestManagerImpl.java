@@ -1,18 +1,18 @@
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -327,13 +327,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
-
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
-
-    for (Iterator<Breakpoint> iterator = breakpointManager.getBreakpoints().iterator(); iterator.hasNext();) {
-      Breakpoint breakpoint = iterator.next();
-      breakpoint.createRequest(myDebugProcess);
-    }
+    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeneres are executed
+    process.getManagerThread().invokeLater(new DebuggerCommandImpl() {
+      protected void action() throws Exception {
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
+        for (Iterator<Breakpoint> iterator = breakpointManager.getBreakpoints().iterator(); iterator.hasNext();) {
+          final Breakpoint breakpoint = iterator.next();
+          breakpoint.createRequest(myDebugProcess);
+        }
+      }
+    });
   }
 
   public void processClassPrepared(final ClassPrepareEvent event) {
