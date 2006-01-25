@@ -1502,7 +1502,7 @@ public class HighlightUtil {
     return null;
   }
 
-  static boolean isSuperOrThisMethodCall(PsiElement element) {
+  public static boolean isSuperOrThisMethodCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
     String name = methodExpression.getReferenceName();

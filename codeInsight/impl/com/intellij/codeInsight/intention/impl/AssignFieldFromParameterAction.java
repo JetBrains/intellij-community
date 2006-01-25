@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -91,20 +92,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     int i;
     for (i = 0; i < statements.length; i++) {
       PsiStatement psiStatement = statements[i];
-
-      if (psiStatement instanceof PsiExpressionStatement) {
-        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
-        PsiExpression expression = expressionStatement.getExpression();
-
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-          @NonNls String text = methodCallExpression.getMethodExpression().getText();
-
-          if (text.equals("super") || text.equals("this")) {
-            continue;
-          }
-        }
-      }
+      if (isSuperOrThis(psiStatement)) continue;
       break;
     }
     PsiElement inserted;
@@ -116,6 +104,14 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     }
     editor.getCaretModel().moveToOffset(inserted.getTextRange().getEndOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static boolean isSuperOrThis(final PsiStatement psiStatement) {
+    if (psiStatement instanceof PsiExpressionStatement) {
+      PsiExpression expression = ((PsiExpressionStatement)psiStatement).getExpression();
+      return HighlightUtil.isSuperOrThisMethodCall(expression);
+    }
+    return false;
   }
 
   private PsiField findFieldToAssign() {

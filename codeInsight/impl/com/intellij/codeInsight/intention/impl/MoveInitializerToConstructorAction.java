@@ -3,10 +3,13 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -65,20 +68,50 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
       }
     }
 
+    PsiElement toMove = null;
     for (PsiMethod constructor : constructorsToAddInitialization) {
       PsiCodeBlock codeBlock = constructor.getBody();
-      addAssignment(codeBlock, field);
+      PsiElement added = addAssignment(codeBlock, field);
+      if (toMove == null) toMove = added;
     }
     field.getInitializer().delete();
+    if (toMove != null) {
+      editor.getCaretModel().moveToOffset(toMove.getTextOffset());
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
   }
 
-  private static void addAssignment(final PsiCodeBlock codeBlock, final PsiField field) throws IncorrectOperationException {
+  private static PsiElement addAssignment(final PsiCodeBlock codeBlock, final PsiField field) throws IncorrectOperationException {
     PsiElementFactory factory = codeBlock.getManager().getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
     PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
     expression.getRExpression().replace(field.getInitializer());
-    PsiElement newStatement = codeBlock.add(statement);
+    PsiStatement[] statements = codeBlock.getStatements();
+    PsiElement anchor = null;
+    for (PsiStatement blockStatement : statements) {
+       if (blockStatement instanceof PsiExpressionStatement && HighlightUtil.isSuperOrThisMethodCall(
+         ((PsiExpressionStatement)blockStatement).getExpression())) continue;
+      if (containsReference(blockStatement, field)) {
+        anchor = blockStatement;
+        break;
+      }
+    }
+    PsiElement newStatement = codeBlock.addBefore(statement,anchor);
     replaceWithQualifiedReferences(newStatement);
+    return newStatement;
+  }
+
+  private static boolean containsReference(final PsiElement element, final PsiField field) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.resolve() == field) {
+           result.set(Boolean.TRUE);
+        }
+        super.visitReferenceExpression(expression);
+      }
+    });
+    return result.get();
   }
 
   private static void replaceWithQualifiedReferences(final PsiElement expression) throws IncorrectOperationException {

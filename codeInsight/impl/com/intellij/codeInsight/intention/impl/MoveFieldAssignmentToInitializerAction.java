@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -13,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
@@ -35,10 +37,12 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
 
     if (psiClass == null || psiClass.isInterface()) return false;
     if (psiClass.getContainingFile() != file) return false;
-    PsiModifierListOwner ctrOrInitializer = insideConstructorOrClassInitializer(assignment, field);
-    if (ctrOrInitializer==null) return false;
+    PsiModifierListOwner ctrOrInitializer = enclosingMethodOrClassInitializer(assignment, field);
+    if (ctrOrInitializer == null) return false;
+    if (ctrOrInitializer.hasModifierProperty(PsiModifier.STATIC) != field.hasModifierProperty(PsiModifier.STATIC)) return false;
+
     if (!isValidAsFieldInitializer(assignment.getRExpression(), ctrOrInitializer)) return false;
-    if (!isInitializedWithSameExpression(field, assignment, null)) return false;
+    if (!isInitializedWithSameExpression(field, assignment, new ArrayList<PsiAssignmentExpression>())) return false;
     return true;
   }
 
@@ -57,23 +61,21 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     return result.get().booleanValue();
   }
 
-  private static PsiModifierListOwner insideConstructorOrClassInitializer(final PsiAssignmentExpression assignment, final PsiField field) {
-    PsiElement parentCodeBlock = assignment;
+  private static PsiModifierListOwner enclosingMethodOrClassInitializer(final PsiAssignmentExpression assignment, final PsiField field) {
+    PsiElement parentOwner = assignment;
     while (true) {
-      parentCodeBlock = PsiTreeUtil.getParentOfType(parentCodeBlock, PsiCodeBlock.class, true, PsiMember.class);
-      if (parentCodeBlock == null) return null;
-      PsiElement parent = parentCodeBlock.getParent();
-      if (!(parent instanceof PsiModifierListOwner)) continue;
-      if (((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC) != field.hasModifierProperty(PsiModifier.STATIC)) return null;
-      if (parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor() || parent instanceof PsiClassInitializer) {
-        return (PsiModifierListOwner)parent;
-      }
+      parentOwner = PsiTreeUtil.getParentOfType(parentOwner, PsiModifierListOwner.class, true, PsiMember.class);
+      if (parentOwner == null) return null;
+      PsiElement parent = parentOwner.getParent();
+
+      if (parent == field.getContainingClass()) return (PsiModifierListOwner)parentOwner;
     }
   }
 
   private static boolean isInitializedWithSameExpression(final PsiField field, final PsiAssignmentExpression assignment, final Collection<PsiAssignmentExpression> initializingAssignments) {
     final PsiExpression expression = assignment.getRExpression();
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final List<PsiAssignmentExpression> totalUsages = new ArrayList<PsiAssignmentExpression>();
     PsiClass containingClass = field.getContainingClass();
     containingClass.accept(new PsiRecursiveElementVisitor(){
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
@@ -93,24 +95,26 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
       public void visitReferenceExpression(PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
         super.visitReferenceExpression(reference);
-        if (currentInitializingBlock == null) return; // ignore usages other than intializing
         if (!PsiUtil.isOnAssignmentLeftHand(reference)) return;
         PsiElement resolved = reference.resolve();
         if (resolved != field) return;
         PsiExpression rValue = ((PsiAssignmentExpression)reference.getParent()).getRExpression();
-        if (rValue == null || !expressionsEquivalent(rValue, expression)) {
-          result.set(Boolean.FALSE);
-        }
-        if (initializingAssignments != null) {
+        if (currentInitializingBlock != null) {
+          // ignore usages other than intializing
+          if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
+            result.set(Boolean.FALSE);
+          }
           initializingAssignments.add((PsiAssignmentExpression)reference.getParent());
         }
+        totalUsages.add(assignment);
       }
     });
+    // the only assignment is OK
+    if (totalUsages.size() == 1 && initializingAssignments.size()==0) {
+      initializingAssignments.addAll(totalUsages);
+      return true;
+    }
     return result.get().booleanValue();
-  }
-
-  private static boolean expressionsEquivalent(final PsiExpression rValue, final PsiExpression expression) {
-    return PsiEquivalenceUtil.areElementsEquivalent(rValue, expression);
   }
 
   private static PsiField getAssignedField(final PsiAssignmentExpression assignment) {
@@ -145,7 +149,10 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     for (PsiAssignmentExpression assignmentExpression : assignments) {
       PsiElement statement = assignmentExpression.getParent();
       PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement || parent instanceof PsiForStatement || parent instanceof PsiForeachStatement) {
+      if (parent instanceof PsiIfStatement
+          || parent instanceof PsiWhileStatement
+          || parent instanceof PsiForStatement
+          || parent instanceof PsiForeachStatement) {
         PsiStatement emptyStatement = file.getManager().getElementFactory().createStatementFromText(";", statement);
         statement.replace(emptyStatement);
       }
@@ -153,5 +160,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         statement.delete();
       }
     }
+    editor.getCaretModel().moveToOffset(field.getTextOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 }
