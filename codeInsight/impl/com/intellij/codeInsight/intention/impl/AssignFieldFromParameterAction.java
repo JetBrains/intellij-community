@@ -58,58 +58,66 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
-      PsiManager psiManager = PsiManager.getInstance(project);
-      PsiElementFactory factory = psiManager.getElementFactory();
       PsiField field = findFieldToAssign();
-      String fieldName = field.getName();
-      String parameterName = myParameter.getName();
-      final PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
-      final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
-      PsiClass targetClass = method.getContainingClass();
-
-      String stmtText = fieldName + " = " + parameterName + ";";
-      if (fieldName.equals(parameterName)) {
-        @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
-        stmtText = prefix + stmtText;
-      }
-
-      PsiCodeBlock methodBody = method.getBody();
-      PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
-      assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(assignmentStmt);
-      PsiStatement[] statements = methodBody.getStatements();
-      int i;
-      for (i = 0; i < statements.length; i++) {
-        PsiStatement psiStatement = statements[i];
-
-        if (psiStatement instanceof PsiExpressionStatement) {
-          PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
-          PsiExpression expression = expressionStatement.getExpression();
-
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-            @NonNls String text = methodCallExpression.getMethodExpression().getText();
-
-            if (text.equals("super") || text.equals("this")) {
-              continue;
-            }
-          }
-        }
-        break;
-      }
-      PsiElement inserted;
-      if (i == statements.length) {
-        inserted = methodBody.add(assignmentStmt);
-      }
-      else {
-        inserted = methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
-      }
-      editor.getCaretModel().moveToOffset(inserted.getTextRange().getEndOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      addFieldAssignmentStatement(project, field, myParameter, editor);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
+
+  public static void addFieldAssignmentStatement(final Project project,
+                                                 final PsiField field,
+                                                 final PsiParameter parameter,
+                                                 final Editor editor) throws IncorrectOperationException {
+    final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    PsiElementFactory factory = psiManager.getElementFactory();
+    String fieldName = field.getName();
+    String parameterName = parameter.getName();
+    final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    PsiClass targetClass = method.getContainingClass();
+
+    String stmtText = fieldName + " = " + parameterName + ";";
+    if (fieldName.equals(parameterName)) {
+      @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
+      stmtText = prefix + stmtText;
+    }
+
+    PsiCodeBlock methodBody = method.getBody();
+    PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
+    assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(assignmentStmt);
+    PsiStatement[] statements = methodBody.getStatements();
+    int i;
+    for (i = 0; i < statements.length; i++) {
+      PsiStatement psiStatement = statements[i];
+
+      if (psiStatement instanceof PsiExpressionStatement) {
+        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)psiStatement;
+        PsiExpression expression = expressionStatement.getExpression();
+
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          @NonNls String text = methodCallExpression.getMethodExpression().getText();
+
+          if (text.equals("super") || text.equals("this")) {
+            continue;
+          }
+        }
+      }
+      break;
+    }
+    PsiElement inserted;
+    if (i == statements.length) {
+      inserted = methodBody.add(assignmentStmt);
+    }
+    else {
+      inserted = methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
+    }
+    editor.getCaretModel().moveToOffset(inserted.getTextRange().getEndOffset());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
   private PsiField findFieldToAssign() {
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(myParameter.getProject());
     final String parameterName = myParameter.getName();

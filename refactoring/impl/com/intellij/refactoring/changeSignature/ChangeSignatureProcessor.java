@@ -60,7 +60,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   String newVisibility,
                                   String newName,
                                   PsiType newType,
-                                  ParameterInfo[] parameterInfo) {
+                                  @NotNull ParameterInfo[] parameterInfo) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
          parameterInfo, null, null, null);
@@ -85,7 +85,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   String newVisibility,
                                   String newName,
                                   CanonicalTypes.Type newType,
-                                  ParameterInfo[] parameterInfo,
+                                  @NotNull ParameterInfo[] parameterInfo,
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
@@ -299,8 +299,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private void addMethodConflicts(Collection<String> conflicts) {
     String newMethodName = myChangeInfo.newName;
 
-    PsiMethod prototype;
     try {
+      PsiMethod prototype;
       PsiManager manager = PsiManager.getInstance(myProject);
       PsiElementFactory factory = manager.getElementFactory();
       final PsiMethod method = myChangeInfo.getMethod();
@@ -370,8 +370,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       UsageInfo usageInfo = iterator.next();
       PsiElement element = usageInfo.getElement();
       if (element != null) {
-        PsiClass accessObjectClass = null;
         if (element instanceof PsiReferenceExpression) {
+          PsiClass accessObjectClass = null;
           PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
           if (qualifier != null) {
             accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
@@ -431,7 +431,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     PsiElementFactory factory = myManager.getElementFactory();
-    List<UsageInfo> postponedUsages = new ArrayList<UsageInfo>();
 
     try {
       if (myChangeInfo.isNameChanged) {
@@ -467,6 +466,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
       LOG.assertTrue(myChangeInfo.getMethod().isValid());
       processPrimaryMethod(myChangeInfo.getMethod(), null, true);
+      List<UsageInfo> postponedUsages = new ArrayList<UsageInfo>();
 
       for (UsageInfo usage : usages) {
         if (usage.getElement() == null) continue;
@@ -480,7 +480,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
         else if (usage.getElement() instanceof PsiJavaCodeReferenceElement) {
           if (usage instanceof MethodCallUsageInfo) {
-            final MethodCallUsageInfo methodCallInfo = ((MethodCallUsageInfo)usage);
+            final MethodCallUsageInfo methodCallInfo = (MethodCallUsageInfo)usage;
             processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(),
                                methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod());
           }
@@ -665,7 +665,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiClassType[] getCalleeChangedExceptionInfo(final PsiMethod callee) {
+  private static PsiClassType[] getCalleeChangedExceptionInfo(final PsiMethod callee) {
     return callee.getThrowsList().getReferencedTypes(); //Callee method's throws list is already modified!
   }
 
@@ -722,7 +722,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiClassType[] filterCheckedExceptions(PsiClassType[] exceptions) {
+  private static PsiClassType[] filterCheckedExceptions(PsiClassType[] exceptions) {
     List<PsiClassType> result = new ArrayList<PsiClassType>();
     for (PsiClassType exceptionType : exceptions) {
       if (!ExceptionUtil.isUncheckedException(exceptionType)) result.add(exceptionType);
@@ -730,7 +730,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return result.toArray(new PsiClassType[result.size()]);
   }
 
-  private void adjustPossibleEmptyTryStatement(PsiTryStatement tryStatement) throws IncorrectOperationException {
+  private static void adjustPossibleEmptyTryStatement(PsiTryStatement tryStatement) throws IncorrectOperationException {
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock != null) {
       if (tryStatement.getCatchSections().length == 0 &&
@@ -744,7 +744,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addExceptions(PsiClassType[] exceptionsToAdd, PsiTryStatement tryStatement) throws IncorrectOperationException {
+  private static void addExceptions(PsiClassType[] exceptionsToAdd, PsiTryStatement tryStatement) throws IncorrectOperationException {
     for (PsiClassType type : exceptionsToAdd) {
       final CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
       String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type).names[0];
@@ -773,7 +773,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                                   methodThrowsList.getTextRange().getEndOffset());
   }
 
-  private PsiClassType[] filterUnhandledExceptions(PsiClassType[] exceptions, PsiElement place) {
+  private static PsiClassType[] filterUnhandledExceptions(PsiClassType[] exceptions, PsiElement place) {
     List<PsiClassType> result = new ArrayList<PsiClassType>();
     for (PsiClassType exception : exceptions) {
       if (!ExceptionUtil.isHandled(exception, place)) result.add(exception);
@@ -781,14 +781,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return result.toArray(new PsiClassType[result.size()]);
   }
 
-  private boolean isCatchParameterRedundant (PsiClassType catchParamType, PsiType[] thrownTypes) {
+  private static boolean isCatchParameterRedundant (PsiClassType catchParamType, PsiType[] thrownTypes) {
     for (PsiType exceptionType : thrownTypes) {
       if (exceptionType.isConvertibleFrom(catchParamType)) return false;
     }
     return true;
   }
 
-  private int getNonVarargCount(ChangeInfo changeInfo, PsiExpression[] args) {
+  private static int getNonVarargCount(ChangeInfo changeInfo, PsiExpression[] args) {
     if (!changeInfo.wasVararg) return args.length;
     return changeInfo.oldParameterTypes.length - 1;
   }
@@ -881,7 +881,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return factory.createExpressionFromText(info.defaultValue, list);
   }
 
-  private void addParameterUsages(PsiParameter parameter,
+  private static void addParameterUsages(PsiParameter parameter,
                                   ArrayList<UsageInfo> results,
                                   ParameterInfo info) {
     PsiManager manager = parameter.getManager();
@@ -940,10 +940,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     if (myChangeInfo.isVisibilityChanged) {
       PsiModifierList modifierList = method.getModifierList();
-      final String highestVisibility =
-              (isOriginal ? myNewVisibility :
-               VisibilityUtil.getHighestVisibility(myNewVisibility,
-                                                   VisibilityUtil.getVisibilityModifier(modifierList)));
+      final String highestVisibility = isOriginal ?
+                                       myNewVisibility :
+                                       VisibilityUtil.getHighestVisibility(myNewVisibility, VisibilityUtil.getVisibilityModifier(modifierList));
       RefactoringUtil.setVisibility(modifierList, highestVisibility);
     }
 

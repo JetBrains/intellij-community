@@ -28,12 +28,13 @@ import java.util.List;
  * @author ven
  */
 public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
+  private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperAction");
+
+  private PsiClass myClass;
+
   public CreateConstructorMatchingSuperAction(PsiClass aClass) {
     myClass = aClass;
   }
-
-  private PsiClass myClass;
-  private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperAction");
 
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.matching.super");
@@ -84,9 +85,8 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
             PsiElementFactory factory = myClass.getManager().getElementFactory();
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
-            for (int i = 0; i < constructors1.length; i++) {
-              CandidateInfo candidate = constructors1[i];
-              PsiMethod base = (PsiMethod) candidate.getElement();
+            for (CandidateInfo candidate : constructors1) {
+              PsiMethod base = (PsiMethod)candidate.getElement();
               derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
 
               if (!isCopyJavadoc1) {
@@ -110,8 +110,8 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
               PsiMethod stub = factory.createMethodFromText(buffer.toString(), myClass);
 
               derived.getBody().replace(stub.getBody());
-              derived = (PsiMethod) reformatter.reformat(derived);
-              derived = (PsiMethod) myClass.add(derived);
+              derived = (PsiMethod)reformatter.reformat(derived);
+              derived = (PsiMethod)myClass.add(derived);
             }
             if (derived != null) {
               editor.getCaretModel().moveToOffset(derived.getTextRange().getStartOffset());

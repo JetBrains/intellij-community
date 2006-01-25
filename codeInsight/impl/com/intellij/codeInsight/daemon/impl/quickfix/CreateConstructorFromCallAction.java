@@ -19,11 +19,11 @@ import com.intellij.util.IncorrectOperationException;
 public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromCallAction");
 
+  private final PsiConstructorCall myConstructorCall;
+
   public CreateConstructorFromCallAction(PsiConstructorCall constructorCall) {
     myConstructorCall = constructorCall;
   }
-
-  private final PsiConstructorCall myConstructorCall;
 
   protected void invokeImpl(final PsiClass targetClass) {
     PsiManager psiManager = myConstructorCall.getManager();
@@ -70,7 +70,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   }
 
 
-  private PsiFile getTargetFile(PsiElement element) {
+  private static PsiFile getTargetFile(PsiElement element) {
     final PsiConstructorCall constructorCall = (PsiConstructorCall)element;
 
     //Enum constants constructors are file local
@@ -129,7 +129,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     return false;
   }
 
-  private PsiJavaCodeReferenceElement getReferenceElement(PsiConstructorCall constructorCall) {
+  private static PsiJavaCodeReferenceElement getReferenceElement(PsiConstructorCall constructorCall) {
     if (constructorCall instanceof PsiNewExpression) {
       return ((PsiNewExpression)constructorCall).getClassReference();
     }
@@ -137,7 +137,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     return null;
   }
 
-  private PsiElement getElement(PsiElement targetElement) {
+  private static PsiElement getElement(PsiElement targetElement) {
     if (targetElement instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)targetElement);
       if (referenceElement == null) return null;

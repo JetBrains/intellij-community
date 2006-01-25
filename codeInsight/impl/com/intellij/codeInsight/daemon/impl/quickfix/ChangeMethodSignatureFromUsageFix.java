@@ -49,7 +49,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private final PsiElement myContext;
   private ParameterInfo[] myNewParametersInfo;
 
-  private ChangeMethodSignatureFromUsageFix(PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
+  ChangeMethodSignatureFromUsageFix(PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
@@ -122,6 +122,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
+    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
     if (usagesFound.get().intValue() <= 1) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,

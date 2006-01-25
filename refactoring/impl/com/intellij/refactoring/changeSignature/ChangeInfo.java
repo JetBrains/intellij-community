@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,64 +54,64 @@ class ChangeInfo {
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,
-                    ParameterInfo[] newParms,
+                    @NotNull ParameterInfo[] newParms,
                     ThrownExceptionInfo[] newExceptions) {
     this.newVisibility = newVisibility;
     this.method = method;
     this.newName = newName;
-    this.newReturnType = newType;
+    newReturnType = newType;
     this.newParms = newParms;
     wasVararg = method.isVarArgs();
 
-    this.oldName = method.getName();
+    oldName = method.getName();
     final PsiManager manager = method.getManager();
     if (!method.isConstructor()){
-      this.oldType = manager.getElementFactory().createTypeElement(method.getReturnType()).getText();
+      oldType = manager.getElementFactory().createTypeElement(method.getReturnType()).getText();
     }
     else{
-      this.oldType = null;
+      oldType = null;
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    this.oldParameterNames = new String[parameters.length];
-    this.oldParameterTypes = new String[parameters.length];
+    oldParameterNames = new String[parameters.length];
+    oldParameterTypes = new String[parameters.length];
     for(int i = 0; i < parameters.length; i++){
       PsiParameter parameter = parameters[i];
-      this.oldParameterNames[i] = parameter.getName();
-      this.oldParameterTypes[i] = parameter.getManager().getElementFactory().createTypeElement(parameter.getType()).getText();
+      oldParameterNames[i] = parameter.getName();
+      oldParameterTypes[i] = parameter.getManager().getElementFactory().createTypeElement(parameter.getType()).getText();
     }
 
-    this.isVisibilityChanged = !method.hasModifierProperty(newVisibility);
+    isVisibilityChanged = !method.hasModifierProperty(newVisibility);
 
-    this.isNameChanged = !newName.equals(oldName);
+    isNameChanged = !newName.equals(oldName);
     if (!method.isConstructor()){
       try {
-        this.isReturnTypeChanged = !newReturnType.getType(this.method, manager).equals(this.method.getReturnType());
+        isReturnTypeChanged = !newReturnType.getType(this.method, manager).equals(this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
-        this.isReturnTypeChanged = true;
+        isReturnTypeChanged = true;
       }
     }
     if (parameters.length != newParms.length){
-      this.isParameterSetOrOrderChanged = true;
+      isParameterSetOrOrderChanged = true;
     }
     else {
       for(int i = 0; i < newParms.length; i++){
         ParameterInfo parmInfo = newParms[i];
         PsiParameter parameter = parameters[i];
         if (i != parmInfo.oldParameterIndex){
-          this.isParameterSetOrOrderChanged = true;
+          isParameterSetOrOrderChanged = true;
           break;
         }
         if (!parmInfo.getName().equals(parameter.getName())){
-          this.isParameterNamesChanged = true;
+          isParameterNamesChanged = true;
         }
         try {
           if (!parmInfo.createType(method, manager).equals(parameter.getType())){
-            this.isParameterTypesChanged = true;
+            isParameterTypesChanged = true;
           }
         }
         catch (IncorrectOperationException e) {
-          this.isParameterTypesChanged = true;
+          isParameterTypesChanged = true;
         }
       }
     }
@@ -119,20 +120,20 @@ class ChangeInfo {
 
     setupExceptions(newExceptions, method);
 
-    this.toRemoveParm = new boolean[parameters.length];
-    Arrays.fill(this.toRemoveParm, true);
+    toRemoveParm = new boolean[parameters.length];
+    Arrays.fill(toRemoveParm, true);
     for (ParameterInfo info : newParms) {
       if (info.oldParameterIndex < 0) continue;
-      this.toRemoveParm[info.oldParameterIndex] = false;
+      toRemoveParm[info.oldParameterIndex] = false;
     }
 
     PsiElementFactory factory = manager.getElementFactory();
-    this.defaultValues = new PsiExpression[newParms.length];
+    defaultValues = new PsiExpression[newParms.length];
     for(int i = 0; i < newParms.length; i++){
       ParameterInfo info = newParms[i];
       if (info.oldParameterIndex < 0 && !info.isVarargType()){
         try{
-          this.defaultValues[i] = factory.createExpressionFromText(info.defaultValue, method);
+          defaultValues[i] = factory.createExpressionFromText(info.defaultValue, method);
         }
         catch(IncorrectOperationException e){
           LOG.error(e);
