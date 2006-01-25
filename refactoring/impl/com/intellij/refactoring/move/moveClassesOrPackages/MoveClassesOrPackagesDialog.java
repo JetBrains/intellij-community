@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,7 +42,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private final ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
-  private JCheckBox myCbPreserveSourceFolders;
+  private JCheckBox myCbMoveToAnotherSourceFolder;
   private String myHelpID;
   private Project myProject;
   private boolean mySearchTextOccurencesEnabled;
@@ -138,13 +139,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     //gbConstraints.gridy = 1;
     gbConstraints.gridwidth = 2;
-    myCbPreserveSourceFolders = new NonFocusableCheckBox();
-    myCbPreserveSourceFolders.setText(RefactoringBundle.message("move.classes.preserve.source.folders"));
-    panel.add(myCbPreserveSourceFolders, gbConstraints);
-
+    myCbMoveToAnotherSourceFolder = new NonFocusableCheckBox();
+    myCbMoveToAnotherSourceFolder.setText(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
+    panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
 
     myWithBrowseButtonReference.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
@@ -185,12 +185,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
     if (getSourceRoots().length == 1) {
-      myCbPreserveSourceFolders.setSelected(true);
-      myCbPreserveSourceFolders.setEnabled(false);
+      myCbMoveToAnotherSourceFolder.setSelected(false);
+      myCbMoveToAnotherSourceFolder.setEnabled(false);
     }
     else {
-      myCbPreserveSourceFolders.setSelected(!isTargetDirectoryFixed);
-      //myCbPreserveSourceFolders.setEnabled(!myTargetDirectoryFixed);
+      myCbMoveToAnotherSourceFolder.setSelected(isTargetDirectoryFixed);
+      //myCbMoveToAnotherSourceFolder.setEnabled(myTargetDirectoryFixed);
     }
 
     validateOKButton();
@@ -279,7 +279,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     catch (IncorrectOperationException e) {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, getProject());
-      return;
     }
   }
 
@@ -305,7 +304,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       if (ret != 0) return null;
     }
 
-    if (myCbPreserveSourceFolders.isSelected()) {
+    if (!myCbMoveToAnotherSourceFolder.isSelected()) {
       return new MultipleRootsMoveDestination(targetPackage);
     }
 
