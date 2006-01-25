@@ -103,10 +103,12 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
+      PsiCodeBlock body = method.getBody();
+      assert body != null;
       if (!targetClass.isInterface()) {
-        builder.setEndVariableAfter(method.getBody().getLBrace());
+        builder.setEndVariableAfter(body.getLBrace());
       } else {
-        method.getBody().delete();
+        body.delete();
         builder.setEndVariableAfter(method);
       }
 
@@ -132,6 +134,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
                   try {
                     CreateFromUsageUtils.setupMethodBody(method);
                   } catch (IncorrectOperationException e) {
+                    LOG.error(e);
                   }
 
                   CreateFromUsageUtils.setupEditor(method, newEditor);

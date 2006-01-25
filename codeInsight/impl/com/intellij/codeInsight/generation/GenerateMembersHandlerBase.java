@@ -76,10 +76,10 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
-    final ArrayList templates = new ArrayList();
+    final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();
     for (Object member : newMembers) {
       if (member instanceof TemplateGenerationInfo) {
-        templates.add(member);
+        templates.add((TemplateGenerationInfo) member);
       }
     }
 
