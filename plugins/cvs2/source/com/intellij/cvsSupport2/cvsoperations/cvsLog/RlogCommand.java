@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -27,6 +28,7 @@ public class RlogCommand extends AbstractCommand {
   private boolean myNoTags = false;
   private Date myDateTo;
   private Date myDateFrom;
+  private boolean mySuppressEmptyHeaders = true;
   @NonNls private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
   // Implemented ============================================================
@@ -39,7 +41,7 @@ public class RlogCommand extends AbstractCommand {
     final Requests requests = new Requests(CommandRequest.RLOG, clientEnvironment);
     requests.addArgumentRequest(myHeadersOnly, "-h");
     requests.addArgumentRequest(myNoTags, "-N");
-    requests.addArgumentRequest(true, "-S");
+    requests.addArgumentRequest(mySuppressEmptyHeaders, "-S");
 
     requests.addArgumentRequest(getDateFilter(), "-d");
 
@@ -56,6 +58,7 @@ public class RlogCommand extends AbstractCommand {
 
   }
 
+  @Nullable
   private String getDateFilter() {
     if (myDateFrom == null && myDateTo == null) {
       return null;
@@ -123,10 +126,7 @@ public class RlogCommand extends AbstractCommand {
 
   // Utils ==================================================================
 
-  protected final void addModifiedRequest(FileObject fileObject,
-                                          Entry entry,
-                                          Requests requests,
-                                          IClientEnvironment clientEnvironment) {
+  protected final void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
     requests.addIsModifiedRequest(fileObject);
   }
 
@@ -138,4 +138,7 @@ public class RlogCommand extends AbstractCommand {
     myDateTo = dateTo;
   }
 
+  public void setSuppressEmptyHeaders(final boolean suppressEmptyHeaders) {
+    mySuppressEmptyHeaders = suppressEmptyHeaders;
+  }
 }

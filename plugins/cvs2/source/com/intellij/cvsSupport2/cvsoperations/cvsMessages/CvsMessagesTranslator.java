@@ -5,6 +5,8 @@ import com.intellij.cvsSupport2.cvshandlers.CvsMessagePattern;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.update.UpdateFileInfo;
 import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
@@ -14,34 +16,28 @@ import org.netbeans.lib.cvsclient.event.IFileInfoListener;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
  * author: lesya
  */
-public class CvsMessagesTranslator implements
-                                   IFileInfoListener,
-                                   IMessageListener,
-                                   IEntryListener {
+public class CvsMessagesTranslator implements IFileInfoListener, IMessageListener, IEntryListener {
 
-  @NonNls private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{
-    new CvsMessagePattern("cvs [* aborted]*"),
-    new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
+  private static final CvsMessagePattern ABORTED_PATTERD = new CvsMessagePattern("cvs [* aborted]*");
+  @NonNls private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{ABORTED_PATTERD,
+    new CvsMessagePattern("cvs server: invalid option*"), new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
     new CvsMessagePattern("cvs update: could not merge revision * of *: No such file or directory"),
     new CvsMessagePattern(new String[]{"cvs update: could not patch ", "*", "; will refetch"}, 2),
     new CvsMessagePattern("dying gasps from * unexpected"),
     new CvsMessagePattern("end of file from server (consult above messages if any)"),
     new CvsMessagePattern("\\*PANIC\\* administration files missing"),
     new CvsMessagePattern(new String[]{"cvs *: Up-to-date check failed for `", "*", "'"}, 2),
-    new CvsMessagePattern("cvs server: cannot add file on non-branch tag *"),
-    new CvsMessagePattern("Cannot access *"),
+    new CvsMessagePattern("cvs server: cannot add file on non-branch tag *"), new CvsMessagePattern("Cannot access *"),
     new CvsMessagePattern("error  Permission denied"),
     new CvsMessagePattern(new String[]{"cvs server: ", "*", " already exists, with version number *"}, 2),
     new CvsMessagePattern(new String[]{"cvs server: cannot commitAssertingNoCircularDependency with sticky date for file `", "*", "'"}, 2),
@@ -49,10 +45,8 @@ public class CvsMessagesTranslator implements
     new CvsMessagePattern("cvs server: sticky tag `" + "*" + "' for file `" + "*" + "' is not a branch"),
     new CvsMessagePattern("cvs server: ERROR: cannot mkdir * -- not added: No such file or directory"),
     new CvsMessagePattern(new String[]{"cvs server: nothing known about ", "*"}, 2),
-    new CvsMessagePattern("Root * must be an absolute pathname"),
-    new CvsMessagePattern("protocol error: *"),
-    new CvsMessagePattern("cvs tag: nothing known about *")
-  };
+    new CvsMessagePattern("Root * must be an absolute pathname"), new CvsMessagePattern("protocol error: *"),
+    new CvsMessagePattern("cvs tag: nothing known about *")};
 
   private static CvsMessagePattern[] WARNINGS_PATTERNS = new CvsMessagePattern[]{
     new CvsMessagePattern("cvs server: cannot open *: mismission denied"),
@@ -61,22 +55,14 @@ public class CvsMessagesTranslator implements
     new CvsMessagePattern("W * : * already exists on version * : NOT MOVING tag to version *"),
     new CvsMessagePattern(new String[]{"cvs server: ", "*", " added independently by second party"}, 2),
     new CvsMessagePattern("cvs server: failed to create lock directory for `*' (*#cvs.lock): No such file or directory"),
-    new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'")
-  };
+    new CvsMessagePattern("cvs server: failed to obtain dir lock in repository `*'")};
 
-  private static Pattern[] FILE_MESSAGE_PATTERNS = new Pattern[]{
-    PatternUtil.fromMask("cvs server: Updating*"),
-    PatternUtil.fromMask("Directory * added to the repository"),
-    PatternUtil.fromMask("cvs server: scheduling file `*' for addition"),
-    PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *"),
-    PatternUtil.fromMask("RCS file: *,v"),
-    PatternUtil.fromMask("cvs server: Tagging*"),
-    PatternUtil.fromMask("cvs add: scheduling file `*' for addition")
-  };
+  private static Pattern[] FILE_MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs server: Updating*"),
+    PatternUtil.fromMask("Directory * added to the repository"), PatternUtil.fromMask("cvs server: scheduling file `*' for addition"),
+    PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *"), PatternUtil.fromMask("RCS file: *,v"),
+    PatternUtil.fromMask("cvs server: Tagging*"), PatternUtil.fromMask("cvs add: scheduling file `*' for addition")};
 
-  private static Pattern[] MESSAGE_PATTERNS = new Pattern[]{
-    PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")
-  };
+  private static Pattern[] MESSAGE_PATTERNS = new Pattern[]{PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")};
 
   private final CvsMessagesListener myListener;
   private final ICvsFileSystem myCvsFileSystem;
@@ -170,6 +156,7 @@ public class CvsMessagesTranslator implements
   }
 
 
+  @Nullable
   private CvsMessagePattern getErrorMessagePattern(String message, CvsMessagePattern[] patterns) {
     for (CvsMessagePattern pattern : patterns) {
       if (pattern.matches(message)) return pattern;
@@ -200,17 +187,14 @@ public class CvsMessagesTranslator implements
 
   private void addUpdatedFileInfo(File file, UpdatedFileInfo updatedFileInfo) {
     if (!myUpdatedFilesManager.fileIsNotUpdated(file)) {
-      myListener.addFileMessage(new FileMessage(updatedFileInfo,
-                                                myUpdatedFilesManager));
+      myListener.addFileMessage(new FileMessage(updatedFileInfo, myUpdatedFilesManager));
 
     }
   }
 
   private void addUpdateFileInfo(File file, UpdateFileInfo updateFileInfo) {
     if (!myUpdatedFilesManager.fileIsNotUpdated(file)) {
-      myListener.addFileMessage(new FileMessage(updateFileInfo,
-                                                myUpdatedFilesManager,
-                                                myUpdatedFilesManager));
+      myListener.addFileMessage(new FileMessage(updateFileInfo, myUpdatedFilesManager, myUpdatedFilesManager));
     }
   }
 

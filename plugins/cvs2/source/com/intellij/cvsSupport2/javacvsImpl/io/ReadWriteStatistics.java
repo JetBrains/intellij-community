@@ -66,8 +66,9 @@ public class ReadWriteStatistics {
 
     if (myShownSentKBytes > 0) {
       buffer.append(String.valueOf(myShownSentKBytes));
+      buffer.append(SENT_PROGRESS_MESSAGE);
     }
-    buffer.append(SENT_PROGRESS_MESSAGE);
+
 
     myProgress.setText(buffer.toString());
   }
