@@ -1,5 +1,7 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -7,17 +9,41 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 class DeclarationMover extends LineMover {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
+  private PsiEnumConstant myEnumToInsertSemicolonAfter;
+
   public DeclarationMover(final boolean isDown) {
     super(isDown);
+  }
+
+  protected void beforeMove(final Editor editor) {
+    super.beforeMove(editor);
+    if (myEnumToInsertSemicolonAfter != null) {
+      TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, null, myEnumToInsertSemicolonAfter.getManager());
+
+      try {
+        PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
+        insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      finally {
+        myEnumToInsertSemicolonAfter = null;
+      }
+    }
   }
 
   protected void afterMove(final Editor editor, final PsiFile file) {
@@ -190,10 +216,8 @@ class DeclarationMover extends LineMover {
 
   private static final int ILLEGAL_MOVE = -1;
   private static final int NOT_CROSSING_CLASS_BORDER = -2;
-  private static int moveInsideOutsideClassOffset(Editor editor,
-                                                  PsiElement sibling,
-                                                  final boolean isDown,
-                                                  boolean areWeMovingClass) {
+
+  private int moveInsideOutsideClassOffset(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) {
     if (sibling == null) return ILLEGAL_MOVE;
     if (sibling instanceof PsiJavaToken &&
         ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
@@ -204,13 +228,38 @@ class DeclarationMover extends LineMover {
       if (!areWeMovingClass && !(parent instanceof PsiClass)) return ILLEGAL_MOVE;
       return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
     }
+    // trying to move up inside enum constant list, move outside of enum class instead
+    if (!isDown && sibling.getParent() instanceof PsiClass
+        && (sibling instanceof PsiJavaToken && ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.SEMICOLON || sibling instanceof PsiErrorElement)
+        && firstNonWhiteElement(sibling.getPrevSibling(), false) instanceof PsiEnumConstant) {
+      final PsiClass aClass = (PsiClass)sibling.getParent();
+      return aClass.getTextRange().getStartOffset();
+    }
     if (sibling instanceof PsiClass) {
       // moving inside class
+      PsiClass aClass = (PsiClass)sibling;
       return isDown
-             ? nextLineOffset(editor, ((PsiClass)sibling).getLBrace().getTextOffset())
-             : ((PsiClass)sibling).getRBrace().getTextOffset();
+             ? nextLineOffset(editor, aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace().getTextOffset())
+             : aClass.getRBrace().getTextOffset();
     }
     return NOT_CROSSING_CLASS_BORDER;
+  }
+
+  private int afterEnumConstantsPosition(final PsiClass aClass) {
+    PsiField[] fields = aClass.getFields();
+    for (int i = fields.length-1;i>=0; i--) {
+      PsiField field = fields[i];
+      if (field instanceof PsiEnumConstant) {
+        PsiElement anchor = firstNonWhiteElement(field.getNextSibling(), true);
+        if (!(anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType() == JavaTokenType.SEMICOLON)) {
+          anchor = field;
+          myEnumToInsertSemicolonAfter = (PsiEnumConstant)field;
+        }
+        return anchor.getTextRange().getEndOffset();
+      }
+    }
+    // no enum constants at all ?
+    return aClass.getLBrace().getTextOffset();
   }
 
   private static int nextLineOffset(Editor editor, final int offset) {

@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.*;
@@ -120,7 +119,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       String text = "\n";
       LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
       ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     }
     final TreeElement copy = ChangeUtil.copyToElement(property);
     getPropertiesList().addChild(copy);
