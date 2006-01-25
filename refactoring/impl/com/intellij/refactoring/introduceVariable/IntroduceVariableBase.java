@@ -114,7 +114,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     PsiElement tempContainer = anchorStatement.getParent();
 
-    if (invalidContainer(tempContainer)) {
+    if (!(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer)) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
       showErrorMessage(message, project);
       return false;
@@ -195,7 +195,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           tempDeleteSelf = true;
         }
       }
-      tempDeleteSelf = tempDeleteSelf && replaceSelf;
+      tempDeleteSelf &= replaceSelf;
     }
     final boolean deleteSelf = tempDeleteSelf;
 
@@ -307,21 +307,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return true;
   }
 
-    protected boolean parentStatementNotFound(final Project project, PsiExpression expr, Editor editor, PsiFile file) {
-        String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
-        showErrorMessage(message, project);
-        return false;
-    }
+  protected boolean parentStatementNotFound(final Project project, PsiExpression expr, Editor editor, PsiFile file) {
+    String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
+    showErrorMessage(message, project);
+    return false;
+  }
 
-    /**
-     * @fabrique
-     * @param tempContainer
-     */
-    protected boolean invalidContainer(PsiElement tempContainer) {
-        return !(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer);
-    }
-
-    protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
+  protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
     throw new UnsupportedOperationException();
   }
 

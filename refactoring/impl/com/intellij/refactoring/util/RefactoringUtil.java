@@ -413,17 +413,10 @@ public class RefactoringUtil {
   public static PsiElement getParentExpressionAnchorElement(PsiElement place) {
     PsiElement parent = place;
     while (true) {
-      if (isExpressionAnchorElement(parent)) break;
+      if (isExpressionAnchorElement(parent)) return parent;
       parent = parent.getParent();
       if (parent == null) return null;
     }
-    PsiElement parentStatement = parent;
-    parent = parentStatement.getParent();
-    while (parent instanceof PsiStatement) {
-      parentStatement = parent;
-      parent = parent.getParent();
-    }
-    return parentStatement;
   }
 
 
@@ -722,9 +715,8 @@ public class RefactoringUtil {
         continue;
       }
       PsiElement anchor1 = getParentExpressionAnchorElement(occurrence);
-      if (anchor1 == null) {
-        return null;
-      }
+      if (anchor1 == null) return null;
+
       if (anchor == null) {
         anchor = anchor1;
       }

@@ -63,7 +63,7 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
   }
 
   public static boolean needToDeclareFinal(PsiExpression[] occurrences) {
-    PsiElement scopeToDeclare = null;;
+    PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
       if (scopeToDeclare == null) {
         scopeToDeclare = occurrence;
