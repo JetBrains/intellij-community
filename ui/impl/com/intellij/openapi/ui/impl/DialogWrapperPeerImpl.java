@@ -26,6 +26,8 @@ import java.awt.event.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
@@ -36,7 +38,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    * Default dialog's actions.
    */
   private WindowManagerEx myWindowManager;
-  private Project myProject;
   private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
 
   /**
@@ -63,8 +64,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
       }
 
-      myProject = project;
-      window = myWindowManager.suggestParentWindow(myProject);
+      window = myWindowManager.suggestParentWindow(project);
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrame) {
@@ -92,11 +92,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    * @param parent parent component whicg is used to canculate heavy weight window ancestor.
    *               <code>parent</code> cannot be <code>null</code> and must be showing.
    */
-  protected DialogWrapperPeerImpl(DialogWrapper wrapper, Component parent, boolean canBeParent) {
+  protected DialogWrapperPeerImpl(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (parent == null) {
-      throw new IllegalArgumentException("parent cannot be null");
-    }
     if (!parent.isShowing()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
