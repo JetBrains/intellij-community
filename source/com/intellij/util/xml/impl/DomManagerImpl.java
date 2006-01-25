@@ -269,14 +269,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       return invocationHandler;
     }
 
-    DomInvocationHandler parent;
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
       final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
-      return xmlFile != null ? getCachedElement(xmlFile).getRootHandler() : null;
-    } else {
-      parent = _getDomElement(parentTag);
+      if (xmlFile != null) {
+        final DomFileElementImpl element = getCachedElement(xmlFile);
+        if (element != null) {
+          return element.getRootHandler();
+        }
+      }
+
+      return null;
     }
+
+    DomInvocationHandler parent = _getDomElement(parentTag);
     if (parent == null) return null;
 
     final GenericInfoImpl info = parent.getGenericInfo();
