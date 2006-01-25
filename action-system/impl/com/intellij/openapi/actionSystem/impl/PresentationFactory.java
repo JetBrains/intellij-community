@@ -5,19 +5,18 @@ import com.intellij.openapi.actionSystem.Presentation;
 
 import java.util.WeakHashMap;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PresentationFactory {
-  private WeakHashMap myAction2Presentation;
+  private WeakHashMap<AnAction,Presentation> myAction2Presentation;
 
   public PresentationFactory() {
-    myAction2Presentation = new WeakHashMap();
+    myAction2Presentation = new WeakHashMap<AnAction, Presentation>();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public final Presentation getPresentation(AnAction action){
-    if (action == null) {
-      throw new IllegalArgumentException("action cannot be null");
-    }
-    Presentation presentation = (Presentation)myAction2Presentation.get(action);
+  public final Presentation getPresentation(@NotNull AnAction action){
+    Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null){
       presentation = (Presentation)action.getTemplatePresentation().clone();
       myAction2Presentation.put(action, presentation);
