@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NonNls;
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
 public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
-  /**
-   * @deprecated use #setVisibilityChecker(VisibilityChecker.EVERYTHING_VISIBLE) instead.
-   */
-  void setEverythingAcessible(boolean value);
 
   /**
    * Returns the type corresponding to the <code>this</code> keyword in the code fragment.
@@ -104,11 +100,6 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   ExceptionHandler getExceptionHandler();
 
   /**
-   * @fabrique override it as appropriate to you
-   */
-  boolean isPhysicalChangesProvider();
-
-  /**
    * Interface used to determine the visibility of declarations from the code fragment.
    */
   interface VisibilityChecker {
@@ -121,7 +112,7 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
      */
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
-    public class Visibility {
+    class Visibility {
       /**
        * The declaration is visible from the location.
        */

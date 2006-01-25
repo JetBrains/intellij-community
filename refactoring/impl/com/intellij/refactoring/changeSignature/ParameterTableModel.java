@@ -170,7 +170,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
 
   private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
     PsiExpressionCodeFragment codeFragment = myContext.getManager().getElementFactory().createExpressionCodeFragment(expressionText, null, expectedType, true);
-    codeFragment.setEverythingAcessible(true);
+    codeFragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return codeFragment;
   }
 

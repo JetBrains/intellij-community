@@ -32,7 +32,7 @@ public class UsageModelTracker {
   private PsiTreeChangeListener myPsiListener;
 
   public interface UsageModelTrackerListener {
-    public void modelChanged(boolean isPropertyChange);
+    void modelChanged(boolean isPropertyChange);
   }
 
   private Project myProject;
@@ -60,47 +60,42 @@ public class UsageModelTracker {
       }
 
       public void childAdded(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(false);
         }
       }
 
       public void childRemoved(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(false);
         }
       }
 
       public void childReplaced(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(false);
         }
       }
 
       public void childrenChanged(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(false);
         }
       }
 
       public void childMoved(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(false);
         }
       }
 
       public void propertyChanged(PsiTreeChangeEvent event) {
-        if (needToWatchFile(event.getFile())) {
+        if (!(event.getFile() instanceof PsiCodeFragment)) {
           fireModelChanged(true);
         }
       }
     };
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
-  }
-
-  private boolean needToWatchFile(final PsiFile file) {
-    return !(file instanceof PsiCodeFragment) ||
-           ((PsiCodeFragment)file).isPhysicalChangesProvider();
   }
 
   public void dispose() {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
  * @author ven
  */
 public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
-  public static final Key KEY = Key.create("DebuggerComboBoxEditor.KEY");
+  public static final Key<String> KEY = Key.create("DebuggerComboBoxEditor.KEY");
   public static final int MAX_ROWS = 20;
 
   private MyEditorComboBoxEditor myEditor;

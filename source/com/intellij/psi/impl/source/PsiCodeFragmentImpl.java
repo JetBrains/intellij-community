@@ -36,8 +36,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
-  @NonNls
-  private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
@@ -88,15 +86,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   }
 
   public void setContext(PsiElement context) {
-    this.myContext = context;
-  }
-
-  public void setEverythingAcessible(boolean value) {
-    myVisibilityChecker = new VisibilityChecker() {
-      public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
-        return Visibility.VISIBLE;
-      }
-    };
+    myContext = context;
   }
 
   public PsiType getThisType() {
@@ -113,10 +103,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
 
   public void setSuperType(final PsiType superType) {
     mySuperType = superType;
-  }
-
-  public boolean isPhysicalChangesProvider() {
-    return false;
   }
 
   public String importsToString() {

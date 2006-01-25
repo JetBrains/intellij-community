@@ -6,7 +6,6 @@ package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeFragment;
@@ -49,7 +48,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
       if(item.getImports().length() > 0) {
         fragment.addImportsFromString(item.getImports());
       }
-      fragment.setEverythingAcessible(true);
+      fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
       //noinspection HardCodedStringLiteral
       fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     }

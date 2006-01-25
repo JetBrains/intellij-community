@@ -33,7 +33,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
     PsiPackage defaultPackage = manager.findPackage("");
     final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setEverythingAcessible(true);
+    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 
