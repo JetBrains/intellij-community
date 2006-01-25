@@ -48,7 +48,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(aClass.getContainingFile() == file);
 
     final Object[] members = chooseOriginalMembers(aClass, project);
-    if (members == null) return;
+    if (members == null || members.length == 0) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
