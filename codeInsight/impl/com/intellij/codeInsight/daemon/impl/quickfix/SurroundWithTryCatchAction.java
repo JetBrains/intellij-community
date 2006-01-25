@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -39,12 +40,11 @@ public class SurroundWithTryCatchAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if(myStatement instanceof PsiExpressionStatement && ((PsiExpressionStatement) myStatement).getExpression() instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression callExpr = (PsiMethodCallExpression) ((PsiExpressionStatement) myStatement).getExpression();
-      PsiElement referenceName = callExpr.getMethodExpression().getReferenceNameElement();
-      if (referenceName != null && referenceName.getText().equals(PsiKeyword.SUPER)) return false;
+    if (myStatement == null || !myStatement.isValid()) {
+      return false;
     }
-    return myStatement != null && myStatement.isValid();
+    return !(myStatement instanceof PsiExpressionStatement) ||
+           !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression());
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -52,9 +52,7 @@ public class SurroundWithTryCatchAction implements IntentionAction {
 
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos = new LogicalPosition(0, 0);
-    editor.getCaretModel().moveToLogicalPosition(pos);
-    TextRange range = null;
+    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
     if (myStatement.getParent() instanceof PsiForStatement) {
       PsiForStatement forStatement = (PsiForStatement)myStatement.getParent();
@@ -62,6 +60,7 @@ public class SurroundWithTryCatchAction implements IntentionAction {
         myStatement = forStatement;
       }
     }
+    TextRange range = null;
 
     try{
       JavaWithTryCatchSurrounder handler = new JavaWithTryCatchSurrounder();
@@ -70,8 +69,8 @@ public class SurroundWithTryCatchAction implements IntentionAction {
     catch(IncorrectOperationException e){
       LOG.error(e);
     }
-    LogicalPosition pos1 = new LogicalPosition(line, col);
-    editor.getCaretModel().moveToLogicalPosition(pos1);
+    LogicalPosition pos = new LogicalPosition(line, col);
+    editor.getCaretModel().moveToLogicalPosition(pos);
     if (range != null) {
       int offset = range.getStartOffset();
       editor.getCaretModel().moveToOffset(offset);
