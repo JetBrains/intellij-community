@@ -20,6 +20,8 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * This class represents non resizable, nonfocusable button with the
  * same height and length.
@@ -54,11 +56,8 @@ public class FixedSizeButton extends JButton {
    * <code>component.getPreferredSize().height</code>. It is very convenient
    * way to create "browse" like button near the text fields.
    */
-  public FixedSizeButton(JComponent component) {
-    this(-1,component);
-    if(component==null){
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public FixedSizeButton(@NotNull JComponent component) {
+    this(-1, component);
   }
 
   public Dimension getMinimumSize(){
