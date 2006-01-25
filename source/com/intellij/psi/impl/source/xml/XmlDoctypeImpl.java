@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -43,7 +44,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     }
   }
 
-
+  @Nullable
   public String getDtdUri() {
     final XmlElement dtdUrlElement = getDtdUrlElement();
     if (dtdUrlElement == null || dtdUrlElement.getTextLength() == 0) return null;
@@ -54,6 +55,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     return StringUtil.stripQuotesAroundValue(element.getText());
   }
 
+  @Nullable
   public XmlElement getDtdUrlElement() {
     PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
 
@@ -100,6 +102,27 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     return (XmlElement)findChildByRoleAsPsiElement(ChildRole.XML_NAME);
   }
 
+  @Nullable
+  public String getPublicId() {
+    PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
+
+    if (docTypePublic != null) {
+      PsiElement element = docTypePublic.getNextSibling();
+
+      while (element instanceof PsiWhiteSpace || element instanceof XmlComment) {
+        element = element.getNextSibling();
+      }
+
+      //element = element.getNextSibling(); // pass qoutes
+      if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+        if (element.getTextLength() != 0) {
+          return extractValue(element);
+        }
+      }
+    }
+    return null;
+  }
+
   public void accept(PsiElementVisitor visitor) {
     visitor.visitXmlDoctype(this);
   }
@@ -119,13 +142,13 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     final XmlElement dtdUrlElement = getDtdUrlElement();
     final PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
     PsiReference uriRefs[] = null;
-      
+
     if (dtdUrlElement != null) {
       uriRefs = new PsiReference[1];
       uriRefs[0] = new URIReferenceProvider.URLReference(XmlDoctypeImpl.this) {
         public Object[] getVariants() {
           return (docTypePublic != null)?
-            super.getVariants(): PsiReference.EMPTY_ARRAY;
+                 super.getVariants(): PsiReference.EMPTY_ARRAY;
         }
         public String getCanonicalText() {
           return extractValue(dtdUrlElement);
@@ -140,7 +163,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     }
 
     final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this,XmlDoctype.class);
-    
+
     return ArrayUtil.mergeArrays(
       uriRefs != null? uriRefs: PsiReference.EMPTY_ARRAY,
       referencesFromProviders,

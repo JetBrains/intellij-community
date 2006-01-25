@@ -23,4 +23,5 @@ public interface XmlDoctype extends XmlElement {
   String getDtdUri();
   XmlElement getDtdUrlElement();
   XmlMarkupDecl getMarkupDecl();
+  String getPublicId();
 }
