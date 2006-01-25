@@ -136,8 +136,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     myScreenBounds = new Rectangle();
     final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     final GraphicsDevice[] devices = env.getScreenDevices();
-    for (int i = 0; i < devices.length; i++) {
-      final GraphicsDevice device = devices[i];
+    for (final GraphicsDevice device : devices) {
       myScreenBounds = myScreenBounds.union(device.getDefaultConfiguration().getBounds());
     }
 
@@ -220,10 +219,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
     }
-    if (!isAlphaModeSupported()) {
-      return;
-    }
-    else {
+    if (isAlphaModeSupported()) {
       setAlphaModeEnabledWin32Impl(window, state);
     }
   }
@@ -309,8 +305,8 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
   private void proceedDialogDisposalQueue(Project project) {
     Set<JDialog> dialogs = myDialogsToDispose.get(project);
     if (dialogs == null) return;
-    for (Iterator<JDialog> iterator = dialogs.iterator(); iterator.hasNext();) {
-      iterator.next().dispose();
+    for (JDialog dialog : dialogs) {
+      dialog.dispose();
     }
     myDialogsToDispose.put(project, null);
   }
@@ -417,7 +413,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
   }
 
 // Non final for Fabrique
-  public void writeExternal(final org.jdom.Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) throws WriteExternalException {
     // Save frame bounds
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
@@ -492,15 +488,13 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
           return;
         }
         Component firstComponent = null;
-        for (int i = 0; i < selectedPath.length; i++) {
-          final MenuElement menuElement = selectedPath[i];
+        for (final MenuElement menuElement : selectedPath) {
           final Component component = menuElement.getComponent();
           if (component instanceof JMenuBar) {
             firstComponent = component;
             break;
-          }
-          else if (component instanceof JPopupMenu) {
-            firstComponent = ((JPopupMenu)component).getInvoker();
+          } else if (component instanceof JPopupMenu) {
+            firstComponent = ((JPopupMenu) component).getInvoker();
             break;
           }
         }
