@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 
 public class SimpleColoredText {
@@ -11,13 +13,7 @@ public class SimpleColoredText {
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
   }
 
-  public void append(String fragment,SimpleTextAttributes attributes){
-    if(fragment==null){
-      throw new IllegalArgumentException("fragment cannot be null");
-    }
-    if(attributes==null){
-      throw new IllegalArgumentException("attributes cannot be null");
-    }
+  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes){
     myTexts.add(fragment);
     myAttributes.add(attributes);
   }
