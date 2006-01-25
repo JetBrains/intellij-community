@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
+import org.jetbrains.annotations.NotNull;
+
 abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
 
@@ -23,10 +25,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
   private KeyType myKey;
   protected BufferedImage myImage;
 
-  protected AbstractToolTipHandler(final ComponentType component) {
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  protected AbstractToolTipHandler(@NotNull final ComponentType component) {
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();
@@ -192,11 +191,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
    * by <code>key</code>. The method can return <code>null</code> in case if
    * <code>key</code> does not define any valid cell.
    */
-  protected Point createToolTipImage(KeyType key) {
-    if (key == null) {
-      throw new IllegalArgumentException("key cannot be null");
-    }
-
+  protected Point createToolTipImage(@NotNull KeyType key) {
     Component rComponent;
     rComponent = getRendererComponent(key);
 
