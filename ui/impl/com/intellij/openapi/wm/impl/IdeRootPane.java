@@ -144,7 +144,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   private void createStatusBar() {
-    myStatusBar = new StatusBarImpl(myActionManager, myUISettings);
+    myStatusBar = new StatusBarImpl(myUISettings);
   }
 
   @Nullable

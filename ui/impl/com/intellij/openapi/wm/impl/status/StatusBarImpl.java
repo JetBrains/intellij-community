@@ -16,6 +16,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NotNull;
+
 // Made non-final for Fabrique
 public class StatusBarImpl extends JPanel implements StatusBarEx {
 
@@ -40,7 +42,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected JButton cancelButton;
   private UISettings myUISettings;
 
-  public StatusBarImpl(ActionManager actionManager, UISettings uiSettings) {
+  public StatusBarImpl(UISettings uiSettings) {
     super(new GridBagLayout());
     myEditorHighlightingPanel = new TogglePopupHintsPanel();
     myUISettings = uiSettings;
@@ -187,14 +189,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myStatusPanel.setEnabled(enabled);
   }
 
-  public final void showCancelButton(final Icon icon, final ActionListener listener, final String tooltopText) {
-    if (icon == null) {
-      throw new IllegalArgumentException();
-    }
-    if (listener == null) {
-      throw new IllegalArgumentException();
-    }
-
+  public final void showCancelButton(@NotNull final Icon icon, @NotNull final ActionListener listener, final String tooltopText) {
     cancelButton = new JButton(icon);
     cancelButton.addActionListener(listener);
     cancelButton.setFocusable(false);
