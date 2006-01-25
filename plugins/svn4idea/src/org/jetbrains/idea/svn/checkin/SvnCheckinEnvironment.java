@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -42,7 +43,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -52,8 +52,6 @@ import java.util.List;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
   private final SvnVcs mySvnVcs;
-  //TODO lesya
-  private KeepLocksComponent myKeepLocksComponent;
 
   public boolean showCheckinDialogInAnyCase() {
     return false;
@@ -87,10 +85,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return new KeepLocksComponent(panel, false);
   }
 
+  @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, boolean checkinProject) {
     return null;
   }
 
+  @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
   }
@@ -102,12 +102,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public AnAction[] getAdditionalActions(int index) {
-    return new AnAction[] {new MarkResolvedAction()};
+    return new AnAction[]{new MarkResolvedAction()};
   }
 
   private class MarkResolvedAction extends AnAction {
     public MarkResolvedAction() {
-      super(SvnBundle.message("action.name.mark.resolved"), SvnBundle.message("mark.resolved.action.description"), IconLoader.getIcon("/actions/submit2.png"));
+      super(SvnBundle.message("action.name.mark.resolved"), SvnBundle.message("mark.resolved.action.description"),
+            IconLoader.getIcon("/actions/submit2.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -142,12 +143,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     public void update(AnActionEvent e) {
-      DiffTreeNode[] presentableElements = (DiffTreeNode[])e.getDataContext().getData(
-            DiffTreeNode.TREE_NODES);
+      DiffTreeNode[] presentableElements = (DiffTreeNode[])e.getDataContext().getData(DiffTreeNode.TREE_NODES);
 
       Presentation presentation = e.getPresentation();
 
-      if ((presentableElements == null) || (presentableElements.length == 0)){
+      if ((presentableElements == null) || (presentableElements.length == 0)) {
         presentation.setEnabled(false);
         presentation.setVisible(false);
         return;
@@ -171,13 +171,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return text;
   }
 
+  @Nullable
   public String getHelpId() {
     return null;
   }
 
   public List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project) {
-    return commitInt(collectFilePaths(dialog.getCheckinProjectPanel().getCheckinOperations(this)),
-                     dialog.getPreparedComment(this), true, false);
+    return commitInt(collectFilePaths(dialog.getCheckinProjectPanel().getCheckinOperations(this)), dialog.getPreparedComment(this), true,
+                     false);
   }
 
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
@@ -262,7 +263,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
 
       File[] filesArray = files.toArray(new File[files.size()]);
-      boolean keepLocks = myKeepLocksComponent != null && myKeepLocksComponent.isKeepLocks();
+      boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
       try {
         SVNCommitInfo result = committer.doCommit(filesArray, keepLocks, comment, force, recursive);
         if (result != SVNCommitInfo.NULL && result.getNewRevision() >= 0) {
@@ -287,8 +288,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
           SvnConfiguration.getInstance(mySvnVcs.getProject()).LAST_MERGED_REVISION = null;
 
-          WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo(
-            SvnBundle.message("status.text.committed.revision", result.getNewRevision()));
+          WindowManager.getInstance().getStatusBar(mySvnVcs.getProject())
+            .setInfo(SvnBundle.message("status.text.committed.revision", result.getNewRevision()));
         }
       }
       catch (SVNException e) {
@@ -349,7 +350,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       myKeepLocksBox.setSelected(myIsKeepLocks);
 
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-      myPanel.setBorder(new TitledBorder(SvnBundle.message("border.show.changes.dialog.subversion.group")));
 
       if (showShowUnresolvedCheckBox) {
         myShowUnresolvedFileCheckBox = new JCheckBox(SvnBundle.message("commit.dialog.setings.show.unresolved.checkbox"));
@@ -368,7 +368,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           }
         });
 
-      } else {
+      }
+      else {
         myShowUnresolvedFileCheckBox = null;
       }
 
