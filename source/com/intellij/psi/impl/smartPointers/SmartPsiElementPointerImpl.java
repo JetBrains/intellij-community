@@ -313,8 +313,8 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
     }
 
     public PsiElement restoreElement() {
-      if (myVar.getNameIdentifier() == null) return myVar;
-      if (myVar.getNameIdentifier().isValid()) return myVar;
+      PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
+      if (psiIdentifier == null || psiIdentifier.isValid()) return myVar;
       return null;
     }
 
