@@ -1,7 +1,8 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -104,10 +105,14 @@ public class DebuggerPanelsManager implements ProjectComponent{
       return null;
     }
 
+    final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+    if (debugProcess.isDetached() || debugProcess.isDetaching()) {
+      return null;
+    }
     if (state instanceof RemoteState) {
       // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
       // which is an expensive oparation when executed first time
-      debuggerSession.getProcess().putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
+      debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
     final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject);
