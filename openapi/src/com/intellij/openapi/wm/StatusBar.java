@@ -16,8 +16,20 @@
 package com.intellij.openapi.wm;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface StatusBar {
+  /**
+   * Set status bar text
+   * @param s text to be shown in the status bar
+   */
   void setInfo(String s);
-  void fireNotificationPopup(JComponent content);
+
+  /**
+   * Shows animated notification popup.
+   * @param content Content of the notification
+   * @param backgroundColor background color for the notification. Be sure use light colors since bright onces
+   * look noisy. See {@link com.intellij.ui.LightColors} for convinient colors
+   */
+  void fireNotificationPopup(JComponent content, final Color backgroundColor);
 }
