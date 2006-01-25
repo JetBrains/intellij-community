@@ -10,6 +10,9 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -22,6 +25,8 @@ import com.intellij.usageView.UsageInfo;
 import java.util.*;
 
 public class PullUpConflictsUtil {
+  private PullUpConflictsUtil() {}
+
   public static String[] checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
                                         PsiClass superClass,
@@ -109,17 +114,18 @@ public class PullUpConflictsUtil {
                                              MemberInfo[] infos,
                                              LinkedHashSet<String> conflictsList) {
     for (MemberInfo info : infos) {
-      PsiElement member = info.getMember();
+      PsiMember member = info.getMember();
       boolean isConflict = false;
       if (member instanceof PsiField) {
-        String name = ((PsiField)member).getName();
+        String name = member.getName();
 
         isConflict = superClass.findFieldByName(name, false) != null;
       }
       else if (member instanceof PsiMethod) {
-        final PsiMethod superClassMethod = superClass.findMethodBySignature((PsiMethod)member, false);
-        isConflict = superClassMethod != null
-                     && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, member.getContainingClass(), PsiSubstitutor.EMPTY);
+        MethodSignature signature = ((PsiMethod) member).getSignature(superSubstitutor);
+        final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(superClass, signature, false);
+        isConflict = superClassMethod != null;
       }
 
       if (isConflict) {
