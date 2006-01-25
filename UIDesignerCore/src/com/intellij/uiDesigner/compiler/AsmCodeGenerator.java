@@ -30,6 +30,7 @@ import java.util.Map;
 
 /**
  * @author yole
+ * @noinspection unchecked
  */
 public class AsmCodeGenerator {
   private LwRootContainer myRootContainer;
@@ -108,7 +109,6 @@ public class AsmCodeGenerator {
     }
     catch (IOException e) {
       myErrors.add("Cannot read or write class file " + classFile.getPath() + ": " + e.toString());
-      return;
     }
   }
 
@@ -136,7 +136,7 @@ public class AsmCodeGenerator {
       myLayoutCodeGenerator = new GridLayoutCodeGenerator();
     }
 
-    ClassReader reader = null;
+    ClassReader reader;
     try {
       reader = new ClassReader(classStream);
     }
