@@ -19,10 +19,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
@@ -56,7 +55,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return false;
   }
 
-  public boolean equals(Object o) {
+  public final boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleType)) return false;
 
@@ -67,7 +66,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return true;
   }
 
-  public int hashCode() {
+  public final int hashCode() {
     return myId != null ? myId.hashCode() : 0;
   }
 
