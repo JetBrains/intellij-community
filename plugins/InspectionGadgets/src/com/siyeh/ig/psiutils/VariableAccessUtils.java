@@ -19,63 +19,69 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableAccessUtils{
+
     private VariableAccessUtils(){
         super();
     }
 
     public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
                                                  PsiElement context){
-        final VariableAssignedFromVisitor visitor = new VariableAssignedFromVisitor(variable);
+        final VariableAssignedFromVisitor visitor =
+                new VariableAssignedFromVisitor(variable);
         context.accept(visitor);
         return visitor.isAssignedFrom();
     }
 
-    public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable,
-                                                           @NotNull PsiElement context){
-        final VariablePassedAsArgumentVisitor visitor = new VariablePassedAsArgumentVisitor(variable);
+    public static boolean variableIsPassedAsMethodArgument(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final VariablePassedAsArgumentVisitor visitor =
+                new VariablePassedAsArgumentVisitor(variable);
         context.accept(visitor);
         return visitor.isPassed();
     }
 
-    public static boolean variableIsUsedInArrayInitializer(@NotNull PsiVariable variable,
-                                                           @NotNull PsiElement context){
-        final VariableUsedInArrayInitializerVisitor visitor = new VariableUsedInArrayInitializerVisitor(variable);
+    public static boolean variableIsUsedInArrayInitializer(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final VariableUsedInArrayInitializerVisitor visitor =
+                new VariableUsedInArrayInitializerVisitor(variable);
         context.accept(visitor);
         return visitor.isPassed();
     }
 
-    public static boolean variableIsAssigned(@NotNull PsiVariable variable,
-                                             @NotNull PsiElement context){
-        final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable);
+    public static boolean variableIsAssigned(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final VariableAssignedVisitor visitor =
+                new VariableAssignedVisitor(variable);
         context.accept(visitor);
         return visitor.isAssigned();
     }
 
-    public static boolean variableIsReturned(@NotNull PsiVariable variable,
-                                             @NotNull PsiElement context){
-        final VariableReturnedVisitor visitor = new VariableReturnedVisitor(variable);
+    public static boolean variableIsReturned(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final VariableReturnedVisitor visitor =
+                new VariableReturnedVisitor(variable);
         context.accept(visitor);
         return visitor.isReturned();
     }
 
-    public static boolean arrayContentsAreAccessed(@NotNull PsiVariable variable,
-                                                   @NotNull PsiElement context){
+    public static boolean arrayContentsAreAccessed(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final ArrayContentsAccessedVisitor visitor =
                 new ArrayContentsAccessedVisitor(variable);
         context.accept(visitor);
         return visitor.isAccessed();
     }
 
-    public static boolean arrayContentsAreAssigned(@NotNull PsiVariable variable,
-                                                   @NotNull PsiElement context){
+    public static boolean arrayContentsAreAssigned(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final ArrayContentsAssignedVisitor visitor =
                 new ArrayContentsAssignedVisitor(variable);
         context.accept(visitor);
         return visitor.isAssigned();
     }
 
-    public static boolean variableIsUsedInInnerClass(@NotNull PsiVariable variable,
-                                                     @NotNull PsiElement context){
+    public static boolean variableIsUsedInInnerClass(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final VariableUsedInInnerClassVisitor visitor =
                 new VariableUsedInInnerClassVisitor(variable);
         context.accept(visitor);
@@ -98,14 +104,15 @@ public class VariableAccessUtils{
             return mayEvaluateToVariable(containedExpression, variable);
         }
         if(expression instanceof PsiConditionalExpression){
-            final PsiConditionalExpression conditional = (PsiConditionalExpression) expression;
+            final PsiConditionalExpression conditional =
+                    (PsiConditionalExpression) expression;
             final PsiExpression thenExpression = conditional.getThenExpression();
             final PsiExpression elseExpression = conditional.getElseExpression();
-            return mayEvaluateToVariable(thenExpression, variable) || mayEvaluateToVariable(elseExpression, variable);
+            return mayEvaluateToVariable(thenExpression, variable) ||
+                    mayEvaluateToVariable(elseExpression, variable);
         }
-        if(expression instanceof PsiArrayAccessExpression)
-        {
-            final PsiExpression arrayAccessExpression = 
+        if(expression instanceof PsiArrayAccessExpression){
+            final PsiExpression arrayAccessExpression =
                     ((PsiArrayAccessExpression)expression).getArrayExpression();
             return mayEvaluateToVariable(arrayAccessExpression, variable);
         }
@@ -119,12 +126,11 @@ public class VariableAccessUtils{
         return referent.equals(variable);
     }
 
-    public static boolean variableIsUsed(PsiElement statement,
-                                         PsiVariable variable) {
-
+    public static boolean variableIsUsed(PsiVariable variable,
+                                         PsiElement context){
         final VariableUsedVisitor visitor
                 = new VariableUsedVisitor(variable);
-        statement.accept(visitor);
+        context.accept(visitor);
         return visitor.isUsed();
     }
 }

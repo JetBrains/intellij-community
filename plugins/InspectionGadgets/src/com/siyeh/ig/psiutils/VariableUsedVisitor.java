@@ -22,6 +22,7 @@ import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
+
     private boolean used = false;
     @NotNull private final PsiVariable variable;
 
@@ -41,7 +42,6 @@ public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         super.visitReferenceExpression(ref);
-
         final PsiElement referent = ref.resolve();
         if(referent == null){
             return;

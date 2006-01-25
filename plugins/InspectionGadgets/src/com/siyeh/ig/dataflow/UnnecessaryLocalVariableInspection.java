@@ -34,10 +34,10 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreImmediatelyReturnedVariables = false;
-    private final InlineVariableFix fix = new InlineVariableFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("redundant.local.variable.display.name");
+        return InspectionGadgetsBundle.message(
+                "redundant.local.variable.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -46,7 +46,8 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
 
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
+          InspectionGadgetsBundle.message(
+                  "redundant.local.variable.ignore.option"),
                 this, "m_ignoreImmediatelyReturnedVariables");
     }
 
@@ -55,7 +56,8 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("unnecessary.local.variable.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "unnecessary.local.variable.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -63,7 +65,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new InlineVariableFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -85,7 +87,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
                 registerVariableError(variable);
             } else if (isImmediatelyAssigned(variable)) {
                 registerVariableError(variable);
-            }else if (isImmediatelyAssignedAsDeclaration(variable)) {
+            } else if (isImmediatelyAssignedAsDeclaration(variable)) {
                 registerVariableError(variable);
             }
         }
@@ -117,7 +119,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             if (visitor.isAssigned()) {
                 return false;
             }
-
             final PsiVariable initialization = (PsiVariable) referent;
             final VariableAssignedVisitor visitor2 =
                     new VariableAssignedVisitor(initialization);
@@ -135,7 +136,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         }
 
         private boolean isImmediatelyReturned(PsiVariable variable) {
-
             final PsiCodeBlock containingScope =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (containingScope == null) {
@@ -174,7 +174,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         }
 
         private boolean isImmediatelyThrown(PsiVariable variable) {
-
             final PsiCodeBlock containingScope =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (containingScope == null) {
@@ -213,7 +212,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         }
 
         private boolean isImmediatelyAssigned(PsiVariable variable) {
-
             final PsiCodeBlock containingScope =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (containingScope == null) {
@@ -225,7 +223,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             if (declarationStatement == null) {
                 return false;
             }
-
             PsiStatement nextStatement = null;
             int followingStatementNumber = 0;
             final PsiStatement[] statements = containingScope.getStatements();
@@ -243,38 +240,41 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             }
             final PsiExpressionStatement expressionStatement =
                     (PsiExpressionStatement) nextStatement;
-            final PsiExpression expression = expressionStatement.getExpression();
-            if (expression == null) {
-                return false;
-            }
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
             if (!(expression instanceof PsiAssignmentExpression)) {
                 return false;
             }
-            final PsiExpression rhs =
-                    ((PsiAssignmentExpression) expression).getRExpression();
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)expression;
+            final PsiExpression rhs = assignmentExpression.getRExpression();
             if (rhs == null) {
                 return false;
             }
             if (!(rhs instanceof PsiReferenceExpression)) {
                 return false;
             }
-            final PsiElement referent = ((PsiReference) rhs).resolve();
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression)rhs;
+            final PsiElement referent = reference.resolve();
             if (referent == null || !referent.equals(variable)) {
                 return false;
             }
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (VariableAccessUtils.variableIsUsed(variable, lhs)) {
+                return false;
+            }
             for (int i = followingStatementNumber; i < statements.length; i++) {
-                if (VariableAccessUtils.variableIsUsed(statements[i], variable)) {
+                if (VariableAccessUtils.variableIsUsed(variable,
+                        statements[i])) {
                     return false;
                 }
-
             }
             return true;
         }
 
-
         private boolean isImmediatelyAssignedAsDeclaration(
                 PsiVariable variable) {
-
             final PsiCodeBlock containingScope =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (containingScope == null) {
@@ -286,7 +286,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             if (declarationStatement == null) {
                 return false;
             }
-
             PsiStatement nextStatement = null;
             int followingStatementNumber = 0;
             final PsiStatement[] statements = containingScope.getStatements();
@@ -311,7 +310,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             if (!(declarations[0] instanceof PsiVariable)) {
                 return false;
             }
-
             final PsiExpression rhs =
                     ((PsiVariable) declarations[0]).getInitializer();
             if (rhs == null) {
@@ -325,19 +323,18 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
                 return false;
             }
             for (int i = followingStatementNumber; i < statements.length; i++) {
-                if (VariableAccessUtils.variableIsUsed(statements[i], variable)) {
+                if (VariableAccessUtils.variableIsUsed(variable,
+                        statements[i])) {
                     return false;
                 }
-
             }
             return true;
         }
 
         private boolean variableIsUsedInInnerClass(PsiCodeBlock block,
                                                    PsiVariable variable) {
-
-            final VariableUsedInInnerClassVisitor visitor
-                    = new VariableUsedInInnerClassVisitor(variable);
+            final VariableUsedInInnerClassVisitor visitor =
+                    new VariableUsedInInnerClassVisitor(variable);
             block.accept(visitor);
             return visitor.isUsedInInnerClass();
         }

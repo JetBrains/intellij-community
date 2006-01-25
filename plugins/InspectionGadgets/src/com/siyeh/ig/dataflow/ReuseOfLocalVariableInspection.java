@@ -44,7 +44,8 @@ public class ReuseOfLocalVariableInspection
             new AssignmentToCatchBlockParameterFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("reuse.of.local.variable.display.name");
+        return InspectionGadgetsBundle.message(
+                "reuse.of.local.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -52,7 +53,8 @@ public class ReuseOfLocalVariableInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("reuse.of.local.variable.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "reuse.of.local.variable.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -63,7 +65,8 @@ public class ReuseOfLocalVariableInspection
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "reuse.of.local.variable.split.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -169,7 +172,7 @@ public class ReuseOfLocalVariableInspection
                 return;
             }
             final PsiExpression rhs = assignment.getRExpression();
-            if(VariableAccessUtils.variableIsUsed(rhs, variable)){
+            if(VariableAccessUtils.variableIsUsed(variable, rhs)){
                 return;
             }
             final PsiCodeBlock variableBlock =
@@ -208,7 +211,7 @@ public class ReuseOfLocalVariableInspection
                 return;
             }
             for(int i = statementPosition + 1; i < statements.length; i++){
-                if(VariableAccessUtils.variableIsUsed(statements[i], variable)){
+                if(VariableAccessUtils.variableIsUsed(variable, statements[i])){
                     return;
                 }
             }
