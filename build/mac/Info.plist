@@ -52,13 +52,13 @@
         <key>com.apple.mrj.application.live-resize</key>
         <string>false</string>
         <key>idea.config.path</key>
-        <string>~/Library/Preferences/IntelliJIDEA50</string>
+        <string>~/Library/Preferences/IntelliJIDEA60</string>
         <key>idea.popup.weight</key>
         <string>medium</string>
         <key>idea.system.path</key>
-        <string>~/Library/Caches/IntelliJIDEA50/</string>
+        <string>~/Library/Caches/IntelliJIDEA60/</string>
         <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/IntelliJIDEA50/</string>
+        <string>~/Library/Application Support/IntelliJIDEA60/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>
