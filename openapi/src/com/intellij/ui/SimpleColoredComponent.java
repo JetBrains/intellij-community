@@ -82,20 +82,8 @@ public class SimpleColoredComponent extends JComponent {
   /**
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
-   *
-   * @exception java.lang.IllegalArgumentException if <code>fragment</code>
-   * is <code>null</code>
-   * @exception java.lang.IllegalArgumentException if <code>attributes</code>
-   * is <code>null</code>
    */
-  public void append(@NotNull final String fragment,@NotNull final SimpleTextAttributes attributes){
-    if(fragment==null){
-      throw new IllegalArgumentException("fragment cannot be null");
-    }
-    if(attributes==null){
-      throw new IllegalArgumentException("attributes cannot be null");
-    }
-
+  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes){
     myFragments.add(fragment);
     getAttributes().add(attributes);
   }
