@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ import java.util.List;
  * Interface for performing VCS checkin / commit / submit operations.
  *
  * @author lesya
- * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment() 
+ * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();
@@ -48,8 +49,10 @@ public interface CheckinEnvironment {
 
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel);
 
+  @Nullable
   RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, boolean checkinProject);
 
+  @Nullable
   String getDefaultMessageFor(FilePath[] filesToCheckin);
 
   void onRefreshFinished();
@@ -60,7 +63,9 @@ public interface CheckinEnvironment {
 
   String prepareCheckinMessage(String text);
 
-  @NonNls String getHelpId();
+  @Nullable
+  @NonNls
+  String getHelpId();
 
   List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project);
 
