@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.usages.UsageView;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,10 +100,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return new MyDataContext(component);
   }
 
-  public DataContext getDataContext(Component component, int x, int y) {
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (
       x < 0 || x >= component.getWidth() ||
       y < 0 || y >= component.getHeight()
