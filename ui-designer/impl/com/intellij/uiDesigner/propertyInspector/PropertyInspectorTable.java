@@ -166,6 +166,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   public void setEditor(final GuiEditor editor) {
     myEditor = editor;
+    if (myEditor == null) {
+      myComponent = null;
+      myProperties.clear();
+      myModel.fireTableDataChanged();
+    }
   }
 
   /**
@@ -236,7 +241,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final PsiMethod setter = PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
       return setter;
     }
-    else if (DataConstants.PSI_FILE.equals(dataId)) {
+    else if (DataConstants.PSI_FILE.equals(dataId) && myEditor != null) {
       return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
     }
     else{
@@ -266,7 +271,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return;
     }
     myShowExpertProperties = showExpertProperties;
-    synchWithTree(true);
+    if (myEditor != null) {
+      synchWithTree(true);
+    }
   }
 
   public void addNotify() {
