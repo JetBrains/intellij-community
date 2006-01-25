@@ -1017,6 +1017,17 @@ public class RefactoringUtil {
     else if (element instanceof XmlAttribute) {
       return ((XmlAttribute)element).getValue();
     }
+    else if (element instanceof PsiMember) {
+      PsiMember member = (PsiMember) element;
+      String name = member.getName();
+      if (name == null) return null;
+      if (!nonJava) {
+        return name;
+      }
+      PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null || containingClass.getQualifiedName() == null) return null;
+      return containingClass.getQualifiedName() + "." + name;
+    }
     else if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
     }
