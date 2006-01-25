@@ -32,6 +32,9 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 
+    public void fireNotificationPopup(JComponent content) {
+    }
+
     public final String getInfo() {
       return null;
     }

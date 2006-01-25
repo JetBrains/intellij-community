@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
 
-import javax.swing.*;
+package com.intellij.ui;
 
-public interface StatusBar {
-  void setInfo(String s);
-  void fireNotificationPopup(JComponent content);
+import java.awt.*;
+
+/**
+ * @author max
+ */
+public interface LightColors {
+  Color YELLOW = new Color(0xffffcc);
+  Color GREEN = new Color(0xccffcc);
+  Color BLUE = new Color(0xccccff);
+  Color RED = new Color(0xffcccc);
+  Color CYAN = new Color(0xccffff);
+  
 }

@@ -149,7 +149,7 @@
           </xy>
         </children>
       </grid>
-      <component id="34ce6" class="com.intellij.openapi.progress.util.TitlePanel" binding="myTitlePanel">
+      <component id="34ce6" class="com.intellij.ui.TitlePanel" binding="myTitlePanel">
         <constraints>
           <xy x="2" y="10" width="385" height="3"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>

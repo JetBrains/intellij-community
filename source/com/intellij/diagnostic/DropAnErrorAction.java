@@ -18,6 +18,12 @@ public class DropAnErrorAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    /*
+    Project p = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final StatusBar bar = WindowManager.getInstance().getStatusBar(p);
+    bar.fireNotificationPopup(new JLabel("<html><body><br><b>       Notifier      </b><br><br></body></html>"));
+    */
+    
     Logger.getInstance("test").error("Test");
   }
 }

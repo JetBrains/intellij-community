@@ -7,6 +7,10 @@ package com.intellij.diagnostic;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.popup.NotificationPopup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +32,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
   private final MessagePool myMessagePool;
+  private boolean myNotificationPopupAlreadyShown = false;
 
   public IdeMessagePanel(MessagePool messagePool) {
     super(new BorderLayout());
@@ -151,9 +156,22 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
   private void updateFatalErrorsIcon() {
     if (myMessagePool.getFatalErrors(true, true).size() == 0) {
+      myNotificationPopupAlreadyShown = false;
       myIdeFatal.deactivate();
     } else {
       myIdeFatal.activate(INTERNAL_ERROR_NOTICE, true);
+      if (!myNotificationPopupAlreadyShown) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            new NotificationPopup(IdeMessagePanel.this, new LinkLabel(INTERNAL_ERROR_NOTICE, IconLoader.getIcon("/general/ideFatalError.png"), new LinkListener() {
+              public void linkSelected(LinkLabel aSource, Object aLinkData) {
+                _openFatals();
+              }
+            }), LightColors.RED);
+          }
+        });
+        myNotificationPopupAlreadyShown = true;
+      }
     }
   }
 

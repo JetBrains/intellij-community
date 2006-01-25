@@ -7,7 +7,9 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,6 +165,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
       s = " ";
     }
     myInfoPanel.setText(s);
+  }
+
+  public void fireNotificationPopup(JComponent content) {
+    new NotificationPopup(this, content, LightColors.YELLOW);
   }
 
   public final String getInfo() {
