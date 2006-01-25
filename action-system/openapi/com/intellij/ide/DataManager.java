@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class DataManager {
   public static DataManager getInstance() {
     return ApplicationManager.getApplication().getComponent(DataManager.class);
@@ -40,9 +42,8 @@ public abstract class DataManager {
    * and the point specified by <code>x</code> and <code>y</code> coordinate inside the
    * component.
    *
-   * @exception java.lang.IllegalArgumentException if <code>component</code> is <code>null</code>
    * @exception java.lang.IllegalArgumentException if point <code>(x, y)</code> is not inside
    * component's bounds
    */
-  public abstract DataContext getDataContext(Component component, int x, int y);
+  public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
 }
