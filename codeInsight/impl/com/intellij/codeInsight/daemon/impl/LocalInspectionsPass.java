@@ -73,17 +73,30 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   private void inspectRoot(final PsiElement psiRoot, final InspectionManagerEx iManager) {
-    PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+    final TextRange targetRange = new TextRange(myStartOffset, myEndOffset);
     final Set<PsiElement> workSet = new THashSet<PsiElement>();
-    for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
-
-      element = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class);
-      while (element != null) {
-        if (!workSet.add(element)) break;
-        element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class);
+    myFile.accept(new PsiRecursiveElementVisitor() {
+      public void visitMethod(PsiMethod method) {
+        processTarget(method);
       }
-    }
+
+      public void visitClass(PsiClass aClass) {
+        processTarget(aClass);
+      }
+
+      public void visitField(PsiField field) {
+        processTarget(field);
+      }
+
+      private void processTarget(PsiMember member) {
+        final TextRange range = member.getTextRange();
+        if (targetRange.intersects(range)) {
+          workSet.add(member);
+          member.acceptChildren(this);
+        }
+      }
+    });
+
     workSet.add(myFile);
 
     myDescriptors = new ArrayList<ProblemDescriptor>();
