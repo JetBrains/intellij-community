@@ -8,6 +8,8 @@ import java.awt.*;
 import java.util.EventListener;
 import java.util.EventObject;
 
+import org.jetbrains.annotations.NotNull;
+
 public class HeavyweightHint implements Hint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
 
@@ -21,10 +23,7 @@ public class HeavyweightHint implements Hint {
     this(component, true);
   }
 
-  public HeavyweightHint(final JComponent component, final boolean focusableWindowState) {
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public HeavyweightHint(@NotNull final JComponent component, final boolean focusableWindowState) {
     myComponent = component;
     myFocusableWindowState = focusableWindowState;
     myListenerList = new EventListenerList();
@@ -55,8 +54,8 @@ public class HeavyweightHint implements Hint {
 
   protected void fireHintHidden() {
     final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      HintListener listener = (HintListener)listeners[i];
+    for (EventListener listener1 : listeners) {
+      HintListener listener = (HintListener) listener1;
       listener.hintHidden(new EventObject(this));
     }
   }
