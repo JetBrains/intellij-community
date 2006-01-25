@@ -17,8 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,9 +88,23 @@ public class PsiTreeUtil {
 
   @Nullable public static <T extends PsiElement> T getChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
-      if (aClass.isInstance(child)) return (T)child;
+      if (instanceOf(aClass, child)) return (T)child;
     }
     return null;
+  }
+
+
+  private static <T extends PsiElement>boolean instanceOf(final Class<T> aClass, final PsiElement child) {
+    if (aClass == PsiClass.class) return child instanceof PsiClass;
+    else if (aClass == PsiMethod.class) return child instanceof PsiMethod;
+    else if (aClass == PsiField.class) return child instanceof PsiField;
+    else if (aClass == PsiMember.class) return child instanceof PsiMember;
+    else if (aClass == PsiDocCommentOwner.class) return child instanceof PsiDocCommentOwner;
+    else if (aClass == PsiStatement.class) return child instanceof PsiStatement;
+    else if (aClass == PsiCodeBlock.class) return child instanceof PsiCodeBlock;
+    else if (aClass == PsiClassInitializer.class) return child instanceof PsiClassInitializer;
+
+    return aClass.isInstance(child);
   }
 
   /**
@@ -105,7 +118,7 @@ public class PsiTreeUtil {
   @Nullable public static PsiElement getChildOfAnyType(@NotNull PsiElement element, @NotNull Class... classes) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
       for(Class aClass:classes) {
-        if (aClass.isInstance(child)) return child;
+        if (instanceOf(aClass, child)) return child;
       }
     }
     return null;
@@ -113,14 +126,14 @@ public class PsiTreeUtil {
 
   @Nullable public static <T extends PsiElement> T getNextSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
     for(PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()){
-      if (aClass.isInstance(child)) return (T)child;
+      if (instanceOf(aClass, child)) return (T)child;
     }
     return null;
   }
 
   @Nullable public static <T extends PsiElement> T getPrevSiblingOfType(@NotNull PsiElement sibling, @NotNull Class<T> aClass) {
     for(PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()){
-      if (aClass.isInstance(child)) return (T)child;
+      if (instanceOf(aClass,  child)) return (T)child;
     }
     return null;
   }
@@ -135,7 +148,7 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    while (element != null && !aClass.isInstance(element)) {
+    while (element != null && !instanceOf(aClass, element)) {
       element = element.getContext();
     }
 
@@ -149,7 +162,7 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    while (element != null && !aClass.isInstance(element)) {
+    while (element != null && !instanceOf(aClass, element)) {
       element = element.getParent();
     }
 
@@ -163,9 +176,9 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    while (element != null && !aClass.isInstance(element)) {
+    while (element != null && !instanceOf(aClass, element)) {
       for (Class<? extends PsiElement> stopClass : stopAt) {
-        if (stopClass.isInstance(element)) return null;
+        if (instanceOf(stopClass, element)) return null;
       }
       element = element.getParent();
     }
@@ -178,7 +191,7 @@ public class PsiTreeUtil {
     NextSibling:
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
       for (Class aClass : elementClasses) {
-        if (aClass.isInstance(e)) continue NextSibling;
+        if (instanceOf(aClass, e)) continue NextSibling;
       }
       return e;
     }
@@ -191,7 +204,7 @@ public class PsiTreeUtil {
     NextSibling:
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
       for (Class aClass : elementClasses) {
-        if (aClass.isInstance(e)) continue NextSibling;
+        if (instanceOf(aClass, e)) continue NextSibling;
       }
       return e;
     }
@@ -210,7 +223,7 @@ public class PsiTreeUtil {
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {
-        if (aClass.isInstance(run)) return (T)run;
+        if (instanceOf(aClass, run)) return (T)run;
       }
       run = run.getParent();
     }
