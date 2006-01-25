@@ -14,6 +14,7 @@ import java.io.IOException;
  */
 public class FileContent implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContent");
+  private static final byte[] EMPTY_CONTENT = new byte[0];
 
   private VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
@@ -43,6 +44,10 @@ public class FileContent implements UserDataHolder {
     }
 
     return myCachedBytes;
+  }
+
+  public void setEmptyContent() {
+    myCachedBytes = EMPTY_CONTENT;
   }
 
   public VirtualFile getVirtualFile() {

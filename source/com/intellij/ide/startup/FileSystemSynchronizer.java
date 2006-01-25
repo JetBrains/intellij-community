@@ -1,13 +1,16 @@
 package com.intellij.ide.startup;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ide.IdeBundle;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @author max
@@ -36,7 +39,7 @@ public class FileSystemSynchronizer {
 
     if (!myIsCancelable) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null){
+      if (indicator != null) {
         indicator.startNonCancelableSection();
       }
     }
@@ -48,7 +51,7 @@ public class FileSystemSynchronizer {
 
       updateFiles();
     }
-    catch(ProcessCanceledException e){
+    catch (ProcessCanceledException e) {
       for (Iterator<CacheUpdater> iterator = myUpdaters.iterator(); iterator.hasNext();) {
         CacheUpdater updater = iterator.next();
         if (updater != null) {
@@ -60,7 +63,7 @@ public class FileSystemSynchronizer {
     finally {
       if (!myIsCancelable) {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null){
+        if (indicator != null) {
           indicator.finishNonCancelableSection();
         }
       }
@@ -88,7 +91,7 @@ public class FileSystemSynchronizer {
         myFilesToUpdate.addAll(localSet);
         myUpdateSets[i] = localSet;
       }
-      catch(ProcessCanceledException e){
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {
@@ -117,40 +120,68 @@ public class FileSystemSynchronizer {
 
     int totalFiles = myFilesToUpdate.size();
     int count = 0;
+    final BlockingQueue<FileContent> contentQueue = new ArrayBlockingQueue<FileContent>(16);
 
-    for (Iterator<VirtualFile> iterator = myFilesToUpdate.iterator(); iterator.hasNext();) {
-      VirtualFile file = iterator.next();
+    final Thread contentLoadingThread = new Thread(new Runnable() {
+      public void run() {
+        try {
+          for (VirtualFile file : myFilesToUpdate) {
+            FileContent content = new FileContent(file);
+            try {
+              content.getPhysicalBytes();
+            }
+            catch (IOException e) {
+              content.setEmptyContent();
+            }
+            contentQueue.put(content);
+          }
+          contentQueue.put(new FileContent(null));
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+      }
+    }, "File Content Loading Thread");
+    contentLoadingThread.setPriority(Thread.currentThread().getPriority());
+    contentLoadingThread.start();
 
+    while (true) {
+      FileContent content = null;
+      try {
+        content = contentQueue.take();
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+      if (content == null) break;
+      final VirtualFile file = content.getVirtualFile();
+      if (file == null) break;
       if (indicator != null) {
         indicator.setFraction(((double)++count) / totalFiles);
         indicator.setText2(file.getPresentableUrl());
       }
-
-      FileContent content = new FileContent(file);
       for (int i = 0; i < myUpdaters.size(); i++) {
         CacheUpdater updater = myUpdaters.get(i);
         if (myUpdateSets[i].remove(file)) {
           try {
             updater.processFile(content);
           }
-          catch(ProcessCanceledException e){
+          catch (ProcessCanceledException e) {
             throw e;
           }
           catch (Exception e) {
             LOG.error(e);
           }
-
           if (myUpdateSets[i].isEmpty()) {
             try {
               updater.updatingDone();
             }
-            catch(ProcessCanceledException e){
+            catch (ProcessCanceledException e) {
               throw e;
             }
             catch (Exception e) {
               LOG.error(e);
             }
-
             myUpdaters.set(i, null);
           }
         }
@@ -170,7 +201,7 @@ public class FileSystemSynchronizer {
       try {
         if (updater != null) updater.updatingDone();
       }
-      catch(ProcessCanceledException e){
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {
