@@ -9,13 +9,12 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private CommanderPanel myCommanderPanel;
 
-  public ColoredCommanderRenderer(final CommanderPanel commanderPanel) {
-    if (commanderPanel == null){
-      throw new IllegalArgumentException("commanderPanel cannot be null");
-    } 
+  public ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;
   }
 
@@ -26,7 +25,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     if (commander != null && !commander.isPanelActive(myCommanderPanel)) {
       selected = false;
     }
-    
+
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
   }
 
