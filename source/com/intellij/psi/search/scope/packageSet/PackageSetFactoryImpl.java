@@ -1,23 +1,19 @@
-package com.intellij.packageDependencies.packageSet;
+package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.TokenTypeEx;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
+import org.jetbrains.annotations.Nullable;
 
 public class PackageSetFactoryImpl extends PackageSetFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl");
 
   public PackageSetFactoryImpl() {}
 
   public PackageSet compile(String text) throws ParsingException {
-    Lexer lexer = new FilterLexer(new JavaLexer(LanguageLevel.JDK_1_3),
-                                  new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    Lexer lexer = new ScopesLexer();
     lexer.start(text.toCharArray());
     return new Parser(lexer).parse();
   }
@@ -81,9 +77,46 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         myLexer.advance();
       }
 
-      String pattern = parseAspectJPattern();
+      String pattern = scope != PatternPackageSet.SCOPE_FILE ? parseAspectJPattern() : null;
 
-      return new PatternPackageSet(pattern, scope, modulePattern);
+      String filePattern = scope == PatternPackageSet.SCOPE_FILE ? parseFilePattern() : null;
+      return new PatternPackageSet(pattern, scope, modulePattern, filePattern);
+    }
+
+    private String parseFilePattern() throws ParsingException {
+      StringBuffer pattern = new StringBuffer();
+      boolean wasIdentifier = false;
+      while (true) {
+        if (myLexer.getTokenType() == TokenTypeEx.DIV) {
+          wasIdentifier = false;
+          pattern.append("/");
+        }
+        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
+          if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
+          wasIdentifier = true;
+          pattern.append(getTokenText());
+        }
+        else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
+          wasIdentifier = false;
+          pattern.append("*");
+        } else if (myLexer.getTokenType() == TokenTypeEx.DOT){
+          wasIdentifier = false;
+          pattern.append("\\.");
+        } else if (myLexer.getTokenType() == TokenTypeEx.WHITE_SPACE){
+          wasIdentifier = false;
+          pattern.append(" ");
+        }
+        else {
+          break;
+        }
+        myLexer.advance();
+      }
+
+      if (pattern.length() == 0) {
+        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
+      }
+
+      return pattern.toString();
     }
 
     private String parseScope() {
@@ -99,7 +132,9 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
         scope = PatternPackageSet.SCOPE_LIBRARY;
       }
-
+      if (PatternPackageSet.SCOPE_FILE.equals(id)){
+        scope = PatternPackageSet.SCOPE_FILE;
+      }
       char[] buf = myLexer.getBuffer();
       int end = myLexer.getTokenEnd();
       int bufferEnd = myLexer.getBufferEnd();
@@ -149,23 +184,26 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       return new String(myLexer.getBuffer(), start, end - start);
     }
 
+    @Nullable
     private String parseModulePattern() throws ParsingException {
       if (myLexer.getTokenType() != TokenTypeEx.LBRACKET) return null;
       myLexer.advance();
       StringBuffer pattern = new StringBuffer();
       while (true) {
-        if (myLexer.getTokenType() == TokenTypeEx.RBRACKET) {
+        if (myLexer.getTokenType() == TokenTypeEx.RBRACKET ||
+            myLexer.getTokenType() == null) {
           myLexer.advance();
           break;
         }
-
-        if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER || myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
+        if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
+          pattern.append("*");
+        } else {
           pattern.append(getTokenText());
-          myLexer.advance();
         }
-        else {
-          error(AnalysisScopeBundle.message("error.packageset.module.pattern.expectations"));
-        }
+        myLexer.advance();
+      }
+      if (pattern.length() == 0) {
+        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
       }
       return pattern.toString();
     }

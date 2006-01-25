@@ -55,8 +55,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
     Map<String, List<Module>> groups = new THashMap<String, List<Module>>();
     List<Module> nonGroupedModules = new ArrayList<Module>(Arrays.asList(modules));
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (final Module module : modules) {
       final String[] path = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
       if (path != null) {
         final String topLevelGroupName = path[0];
@@ -74,14 +73,13 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     if (getModuleNodeClass() == PackageViewModuleNode.class){
       isPackageView = true;
     }
-    for (Iterator<String> iterator = groups.keySet().iterator(); iterator.hasNext();) {
-      String groupPath = iterator.next();
-      if (isPackageView){
+    for (String groupPath : groups.keySet()) {
+      if (isPackageView) {
         result.add(new PackageViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
-      } else {
+      }
+      else {
         result.add(new ProjectViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
       }
-
     }
     result.addAll(ProjectViewNode.wrap(nonGroupedModules, getProject(), getModuleNodeClass(), getSettings()));
     return result;

@@ -40,11 +40,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 @NonNls public abstract class TestSourceBasedTestCase extends IdeaTestCase {
   private File myTempDirectory;
@@ -97,14 +95,14 @@ import org.jetbrains.annotations.NonNls;
 
 
   protected PsiDirectory getPackageDirectory(final String packageRelativePath) {
-    return PsiManager.getInstance(myProject).findDirectory(getContentRoot().findFileByRelativePath("src/" + packageRelativePath));
+    return getPsiManager().findDirectory(getContentRoot().findFileByRelativePath("src/" + packageRelativePath));
   }
 
   protected PsiDirectory getSrcDirectory() {
-    return PsiManager.getInstance(myProject).findDirectory(getContentRoot().findFileByRelativePath("src"));
+    return getPsiManager().findDirectory(getContentRoot().findFileByRelativePath("src"));
   }
 
   protected PsiDirectory getContentDirectory() {
-    return PsiManager.getInstance(myProject).findDirectory(getContentRoot());
+    return getPsiManager().findDirectory(getContentRoot());
   }
 }

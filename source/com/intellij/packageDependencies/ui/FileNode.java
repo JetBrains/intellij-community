@@ -1,5 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,6 +12,7 @@ import java.util.Set;
 public class FileNode extends PackageDependenciesNode {
   private PsiFile myFile;
   private boolean myMarked;
+  private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.FileNode");
 
   public FileNode(PsiFile file, boolean marked) {
     myFile = file;
@@ -31,7 +33,9 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myFile.getVirtualFile().getName();
+    final VirtualFile virtualFile = myFile.getVirtualFile();
+    LOG.assertTrue(virtualFile != null);
+    return virtualFile.getName();
   }
 
   public Icon getOpenIcon() {
@@ -44,6 +48,7 @@ public class FileNode extends PackageDependenciesNode {
 
   private Icon getIcon() {
     VirtualFile vFile = myFile.getVirtualFile();
+    LOG.assertTrue(vFile != null);
     return vFile.getIcon();
   }
 
@@ -81,13 +86,13 @@ public class FileNode extends PackageDependenciesNode {
     if (myFile instanceof PsiJavaFile) {
       StringBuffer buf = new StringBuffer(20);
       String packageName = ((PsiJavaFile)myFile).getPackageName();
-      if (packageName != null) {
-        buf.append(packageName);
-      }
+      buf.append(packageName);
       if (buf.length() > 0) {
         buf.append('.');
       }
-      buf.append(myFile.getVirtualFile().getNameWithoutExtension());
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      buf.append(virtualFile.getNameWithoutExtension());
       return buf.toString();
     }
 

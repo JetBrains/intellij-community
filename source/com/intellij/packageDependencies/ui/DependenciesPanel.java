@@ -1,5 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -24,7 +25,6 @@ import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -608,6 +608,7 @@ public class DependenciesPanel extends JPanel {
     public boolean UI_SHOW_MODULES = true;
     public boolean UI_FILTER_LEGALS = false;
     public boolean UI_GROUP_BY_SCOPE_TYPE = true;
+    public boolean UI_GROUP_BY_FILES = false;
 
     public DependencyPanelSettings() {
       final DependencyUISettings settings = DependencyUISettings.getInstance();
@@ -616,6 +617,7 @@ public class DependenciesPanel extends JPanel {
       UI_SHOW_MODULES = settings.UI_SHOW_MODULES;
       UI_FILTER_LEGALS = settings.UI_FILTER_LEGALS;
       UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
+      UI_GROUP_BY_FILES = settings.UI_GROUP_BY_FILES;
     }
 
     public void copyToApplicationDependencySettings(){
@@ -625,6 +627,7 @@ public class DependenciesPanel extends JPanel {
       settings.UI_SHOW_MODULES = UI_SHOW_MODULES;
       settings.UI_FILTER_LEGALS = UI_FILTER_LEGALS;
       settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
+      settings.UI_GROUP_BY_FILES = UI_GROUP_BY_FILES;
     }
   }
 }

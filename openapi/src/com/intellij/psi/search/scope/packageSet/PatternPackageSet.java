@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -32,28 +36,39 @@ public class PatternPackageSet implements PackageSet {
   public static final @NonNls String SCOPE_TEST = "test";
   public static final @NonNls String SCOPE_SOURCE = "src";
   public static final @NonNls String SCOPE_LIBRARY = "lib";
+  public static final @NonNls String SCOPE_FILE = "file";
   public static final String SCOPE_ANY = "";
 
   private Pattern myPattern;
   private Pattern myModulePattern;
   private String myAspectJSyntaxPattern;
+  private String myPathPattern;
+  private Pattern myFilePattern;
   private String myScope;
   private String myModulePatternText;
+  private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.PatternPackageSet");
 
-  public PatternPackageSet(String aspectPattern, String scope, String modulePattern) {
+  public PatternPackageSet(String aspectPattern,
+                           String scope,
+                           String modulePattern,
+                           String filePattern) {
     myAspectJSyntaxPattern = aspectPattern;
+    myPathPattern = filePattern;
     myScope = scope;
     myModulePatternText = modulePattern;
     myModulePattern = modulePattern == null || modulePattern.length() == 0
                       ? null
-                      : Pattern.compile(StringUtil.replace(modulePattern, "*", "[^\\.]*"));
-    myPattern = Pattern.compile(convertToRegexp(aspectPattern));
+                      : Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
+    myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern)) : null;
+    if (filePattern != null){
+      myFilePattern = Pattern.compile(StringUtil.replace(filePattern, "*", ".*"));
+    }
   }
 
   public boolean contains(PsiFile file, NamedScopesHolder holder) {
     Project project = file.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return matchesScope(file, fileIndex) && myPattern.matcher(getPackageName(file, fileIndex)).matches();
+    return matchesScope(file, fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
   }
 
   private boolean matchesScope(PsiFile file, ProjectFileIndex fileIndex) {
@@ -68,12 +83,30 @@ public class PatternPackageSet implements PackageSet {
       return fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile);
     }
 
+    if (myScope == SCOPE_FILE){
+      return fileIndex.isInContent(vFile) && fileMatcher(vFile, fileIndex) && matchesModule(vFile, fileIndex);
+    }
+
     return isSource && fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
+  }
+
+  private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
+    final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
+    return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
   }
 
   private boolean matchesModule(VirtualFile file, ProjectFileIndex fileIndex) {
     if (myModulePattern == null) return true;
-    return myModulePattern.matcher(fileIndex.getModuleForFile(file).getName()).matches();
+    final Module module = fileIndex.getModuleForFile(file);
+    LOG.assertTrue(module != null);
+    if (myModulePattern.matcher(module.getName()).matches()) return true;
+    final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
+    if (groupPath != null){
+      for (String node : groupPath) {
+        if (myModulePattern.matcher(node).matches()) return true;
+      }
+    }
+    return false;
   }
 
   private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
@@ -121,7 +154,7 @@ public class PatternPackageSet implements PackageSet {
   }
 
   public PackageSet createCopy() {
-    return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText);
+    return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText, myPathPattern);
   }
 
   public int getNodePriority() {
@@ -142,7 +175,7 @@ public class PatternPackageSet implements PackageSet {
       buf.append(':');
     }
 
-    buf.append(myAspectJSyntaxPattern);
+    buf.append(myAspectJSyntaxPattern != null ? myAspectJSyntaxPattern : myPathPattern);
     return buf.toString();
   }
 }

@@ -217,9 +217,16 @@ public class ScopeEditorPanel {
     int[] rows = myPackageTree.getSelectionRows();
     if (rows == null || rows.length != 1) return null;
     PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(rows[0]).getLastPathComponent();
-    if (node instanceof ModuleNode) {
+    if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
-      return new PatternPackageSet("*..*", getSelectedScopeType(node), ((ModuleNode)node).getModuleName());
+      final String scope = getSelectedScopeType(node);
+      final String modulePattern = node.toString();
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+    } else if (node instanceof ModuleNode) {
+      if (!recursively) return null;
+      final String scope = getSelectedScopeType(node);
+      final String modulePattern = ((ModuleNode)node).getModuleName();
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     }
     else if (node instanceof PackageNode) {
       String pattern = ((PackageNode)node).getPackageQName();
@@ -232,6 +239,13 @@ public class ScopeEditorPanel {
 
       return getPatternSet(node, pattern);
     }
+    else if (node instanceof DirectoryNode){
+      String pattern = ((DirectoryNode)node).getDirName();
+      if (pattern != null) {
+        pattern += recursively ? "/*" : "/[^/]*";
+      }
+      return getPatternSet(node, pattern);
+    }
     else if (node instanceof FileNode) {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
@@ -239,7 +253,7 @@ public class ScopeEditorPanel {
       if (fqName != null) return getPatternSet(node, fqName);
     }
     else if (node instanceof GeneralGroupNode) {
-      return new PatternPackageSet("*..*", getSelectedScopeType(node), null);
+      return new PatternPackageSet("*..*", getSelectedScopeType(node), null, null);
     }
 
     return null;
@@ -249,7 +263,7 @@ public class ScopeEditorPanel {
     String scope = getSelectedScopeType(node);
     String modulePattern = getSelectedModulePattern(node);
 
-    return new PatternPackageSet(pattern, scope, modulePattern);
+    return new PatternPackageSet(scope != PatternPackageSet.SCOPE_FILE ? pattern : null, scope, modulePattern, scope == PatternPackageSet.SCOPE_FILE ? pattern : null);
   }
 
   private String getSelectedModulePattern(PackageDependenciesNode node) {
@@ -262,6 +276,7 @@ public class ScopeEditorPanel {
   }
 
   private String getSelectedScopeType(PackageDependenciesNode node) {
+    if (DependencyUISettings.getInstance().UI_GROUP_BY_FILES) return PatternPackageSet.SCOPE_FILE;
     GeneralGroupNode groupParent = getGroupParent(node);
     String scope = PatternPackageSet.SCOPE_ANY;
     if (groupParent != null) {
@@ -297,6 +312,7 @@ public class ScopeEditorPanel {
     group.add(new ShowFilesAction());
     group.add(new ShowModulesAction());
     group.add(new GroupByScopeTypeAction());
+    group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -442,6 +458,11 @@ public class ScopeEditorPanel {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
       rebuild(true);
     }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
+    }
   }
 
   private final class ShowFilesAction extends ToggleAction {
@@ -472,6 +493,32 @@ public class ScopeEditorPanel {
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
+      rebuild(true);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
+    }
+  }
+
+  private final class GroupByFilesAction extends ToggleAction{
+    GroupByFilesAction() {
+      super(IdeBundle.message("action.show.file.structure"),
+            IdeBundle.message("action.description.show.file.structure"), IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return DependencyUISettings.getInstance().UI_GROUP_BY_FILES;
+    }
+
+    public void setSelected(AnActionEvent e, boolean flag) {
+      final DependencyUISettings settings = DependencyUISettings.getInstance();
+      settings.UI_GROUP_BY_FILES = flag;
+      if (flag){
+        settings.UI_GROUP_BY_SCOPE_TYPE = false;
+        settings.UI_FLATTEN_PACKAGES = false;
+      }
       rebuild(true);
     }
   }

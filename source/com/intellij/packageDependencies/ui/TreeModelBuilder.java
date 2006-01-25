@@ -1,6 +1,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -12,10 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.containers.HashSet;
@@ -31,6 +30,8 @@ public class TreeModelBuilder {
   private ProjectFileIndex myFileIndex;
   private PsiManager myPsiManager;
   private Project myProject;
+  private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
+
 
   private static final class ScopeType {
     private ScopeType() {}
@@ -48,9 +49,11 @@ public class TreeModelBuilder {
   private Marker myMarker;
   private boolean myAddUnmarkedFiles;
   private PackageDependenciesNode myRoot;
+  private Map<ScopeType, Map<Pair<Module, PsiDirectory>, DirectoryNode>> myModuleDirNodes = new HashMap<ScopeType, Map<Pair<Module, PsiDirectory>, DirectoryNode>>();
   private Map<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>> myModulePackageNodes = new HashMap<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>> myLibraryPackageNodes = new HashMap<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<ScopeType, Map<Module, ModuleNode>>();
+  private Map<ScopeType, Map<String, ModuleGroupNode>> myModuleGroupNodes = new HashMap<ScopeType, Map<String, ModuleGroupNode>>();
   private Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<ScopeType, Map<OrderEntry, LibraryNode>>();
   private int myScannedFileCount = 0;
   private int myTotalFileCount = 0;
@@ -61,6 +64,8 @@ public class TreeModelBuilder {
   private GeneralGroupNode myTestRoot = null;
   private GeneralGroupNode myLibsRoot = null;
 
+
+  private boolean myGroupByFiles;
 
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
   private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
@@ -75,6 +80,7 @@ public class TreeModelBuilder {
     myGroupByScopeType = settings.UI_GROUP_BY_SCOPE_TYPE;
     myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
     myShowFiles = settings.UI_SHOW_FILES;
+    myGroupByFiles = settings.UI_GROUP_BY_FILES;
     myShowIndividualLibs = showIndividualLibs;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
@@ -97,6 +103,7 @@ public class TreeModelBuilder {
   }
 
   private void createMaps(ScopeType scopeType) {
+    myModuleDirNodes.put(scopeType, new HashMap<Pair<Module, PsiDirectory>, DirectoryNode>());
     myModulePackageNodes.put(scopeType, new HashMap<Pair<Module, PsiPackage>, PackageNode>());
     myLibraryPackageNodes.put(scopeType, new GenericHashMap<Pair<OrderEntry, PsiPackage>, PackageNode>(new TObjectHashingStrategy<Pair<OrderEntry, PsiPackage>>() {
       public int computeHashCode(final Pair<OrderEntry, PsiPackage> key) {
@@ -107,6 +114,7 @@ public class TreeModelBuilder {
         return Comparing.equal(o1.getSecond(), o2.getSecond());
       }
     }));
+    myModuleGroupNodes.put(scopeType, new HashMap<String, ModuleGroupNode>());
     myModuleNodes.put(scopeType, new HashMap<Module, ModuleNode>());
     myLibraryNodes.put(scopeType, new HashMap<OrderEntry, LibraryNode>());
   }
@@ -192,7 +200,7 @@ public class TreeModelBuilder {
   }
 
   private TreeModel build(final Project project, boolean showProgress) {
-    
+
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
@@ -200,15 +208,20 @@ public class TreeModelBuilder {
         myFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              buildFileNode(psiManager.findFile(fileOrDir));
+              final PsiFile psiFile = psiManager.findFile(fileOrDir);
+              if (psiFile != null) {
+                buildFileNode(psiFile);
+              }
             }
             return true;
           }
         });
 
-        VirtualFile[] roots = getLibraryRoots(project);
-        for (int i = 0; i < roots.length; i++) {
-          processFilesRecursively(roots[i], psiManager);
+        if (!myGroupByFiles) {
+          VirtualFile[] roots = getLibraryRoots(project);
+          for (VirtualFile root : roots) {
+            processFilesRecursively(root, psiManager);
+          }
         }
       }
     };
@@ -312,16 +325,24 @@ public class TreeModelBuilder {
 
   private PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    if (file instanceof PsiJavaFile) {
-      PsiPackage aPackage = getFilePackage((PsiJavaFile)file);
-      if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
-        return getLibraryDirNode(aPackage, getLibraryForFile(file));
+    LOG.assertTrue(vFile != null);
+    if (!myGroupByFiles) {
+      if (file instanceof PsiJavaFile) {
+        PsiPackage aPackage = getFilePackage((PsiJavaFile)file);
+        if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
+          return getLibraryDirNode(aPackage, getLibraryForFile(file));
+        }
+        else {
+          return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+        }
       }
-      else {
-        return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
-      }
+      return getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+    } else {
+      final VirtualFile parent = vFile.getParent();
+      LOG.assertTrue(parent != null);
+      final PsiDirectory directory = myPsiManager.findDirectory(parent);
+      return getModuleDirNode(directory, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
     }
-    return getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
   }
 
   private PsiPackage getFilePackage(PsiJavaFile file) {
@@ -399,18 +420,64 @@ public class TreeModelBuilder {
     return node;
   }
 
+  private PackageDependenciesNode getModuleDirNode(PsiDirectory psiDirectory, Module module, ScopeType scopeType) {
+    if (psiDirectory == null) {
+      return getModuleNode(module, scopeType);
+    }
+
+    Pair<Module, PsiDirectory> descriptor = new Pair<Module, PsiDirectory>(myShowModules ? module : null, psiDirectory);
+    DirectoryNode node = getMap(myModuleDirNodes, scopeType).get(descriptor);
+
+    if (node != null) return node;
+
+    node = new DirectoryNode(psiDirectory);
+    getMap(myModuleDirNodes, scopeType).put(descriptor, node);
+
+    final PsiDirectory directory = psiDirectory.getParentDirectory();
+    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(directory.getParentDirectory().getVirtualFile());
+    if (contentRoot != null) {
+      getModuleDirNode(directory, module, scopeType).add(node);
+    } else {
+      getModuleNode(module, scopeType).add(node);
+    }
+
+    return node;
+  }
+
+
   private PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
     if (module == null || !myShowModules) {
       return getScopeNode(scopeType);
     }
-
     ModuleNode node = getMap(myModuleNodes, scopeType).get(module);
     if (node != null) return node;
     node = new ModuleNode(module);
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    final String[] groupPath = moduleManager.getModuleGroupPath(module);
+    if (groupPath == null) {
+      getMap(myModuleNodes, scopeType).put(module, node);
+      getScopeNode(scopeType).add(node);
+      return node;
+    }
     getMap(myModuleNodes, scopeType).put(module, node);
-    getScopeNode(scopeType).add(node);
-
+    getParentModuleGroup(groupPath, scopeType).add(node);
     return node;
+  }
+
+  private PackageDependenciesNode getParentModuleGroup(String [] groupPath, ScopeType scopeType){
+    ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(groupPath[groupPath.length - 1]);
+    if (groupNode == null) {
+      groupNode = new ModuleGroupNode(new ModuleGroup(groupPath));
+      getMap(myModuleGroupNodes, scopeType).put(groupPath[groupPath.length - 1], groupNode);
+      getScopeNode(scopeType).add(groupNode);
+    }
+    if (groupPath.length > 1) {
+      String [] path = new String[groupPath.length - 1];
+      System.arraycopy(groupPath, 0, path, 0, groupPath.length - 1);
+      final PackageDependenciesNode node = getParentModuleGroup(path, scopeType);
+      node.add(groupNode);
+    }
+    return groupNode;
   }
 
   private PackageDependenciesNode getLibraryOrJDKNode(OrderEntry libraryOrJdk) {
