@@ -75,7 +75,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private void inspectRoot(final PsiElement psiRoot, final InspectionManagerEx iManager) {
     final TextRange targetRange = new TextRange(myStartOffset, myEndOffset);
     final Set<PsiElement> workSet = new THashSet<PsiElement>();
-    myFile.accept(new PsiRecursiveElementVisitor() {
+    psiRoot.accept(new PsiRecursiveElementVisitor() {
       public void visitMethod(PsiMethod method) {
         processTarget(method);
       }
