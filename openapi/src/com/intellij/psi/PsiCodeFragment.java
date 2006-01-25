@@ -15,8 +15,6 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Represents a fragment of Java code which exists outside of a project structure (for example,
  * in a foreign language code or in a user interface element other than the main source code editor).
@@ -112,31 +110,21 @@ public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
      */
     Visibility isDeclarationVisible(PsiElement declaration, PsiElement place);
 
-    class Visibility {
+    enum Visibility {
       /**
        * The declaration is visible from the location.
        */
-      public static final Visibility VISIBLE = new Visibility("VISIBLE");
+      VISIBLE,
 
       /**
        * The declaration is not visible from the location.
        */
-      public static final Visibility NOT_VISIBLE = new Visibility("NOT_VISIBLE");
+      NOT_VISIBLE,
 
       /**
        * The visibility of the declaration from the location is defined by Java scoping rules.
        */
-      public static final Visibility DEFAULT_VISIBILITY = new Visibility("DEFAULT_VISIBILITY");
-
-      private final String myName; // for debug only
-
-      private Visibility(@NonNls String name) {
-        myName = name;
-      }
-
-      public String toString() {
-        return myName;
-      }
+      DEFAULT_VISIBILITY
     }
 
     /**
