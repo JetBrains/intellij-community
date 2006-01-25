@@ -227,10 +227,14 @@ outer:
       boolean varArgs1 = params1[i].isVarArgs();
       boolean varArgs2 = params2[i].isVarArgs();
       if (!varArgs1 && varArgs2) {
-        return ((PsiEllipsisType) type2).getComponentType().isAssignableFrom(type1) ? Specifics.TRUE : Specifics.CONFLICT;
+        return argType != null &&
+            !TypeConversionUtil.isNullType(argType) &&
+            type1.isAssignableFrom(argType) ? Specifics.TRUE : Specifics.CONFLICT;
       }
       if (varArgs1 && !varArgs2) {
-        return ((PsiEllipsisType) type1).getComponentType().isAssignableFrom(type2) ? Specifics.FALSE : Specifics.CONFLICT;
+        return argType != null &&
+            !TypeConversionUtil.isNullType(argType) &&
+            type2.isAssignableFrom(argType) ? Specifics.FALSE : Specifics.CONFLICT;
       }
 
       Boolean lessBoxing = isLessBoxing(argType, type1, type2);
