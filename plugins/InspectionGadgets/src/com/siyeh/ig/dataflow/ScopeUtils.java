@@ -21,20 +21,22 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScopeUtils
+class ScopeUtils
 {
-    public static final Class[] TYPES = new Class[]{PsiCodeBlock.class, PsiForStatement.class};
+    public static final Class[] TYPES =
+            new Class[]{PsiCodeBlock.class, PsiForStatement.class};
 
     private ScopeUtils()
     {
     }
 
     @Nullable
-    public static PsiElement findInsertionPoint(@NotNull PsiElement sibling,
-                                                @NotNull PsiVariable variable)
+    public static PsiElement findTighterDeclarationLocation(
+            @NotNull PsiElement sibling, @NotNull PsiVariable variable)
     {
         PsiElement prevSibling = sibling.getPrevSibling();
-        while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment)
+        while (prevSibling instanceof PsiWhiteSpace ||
+               prevSibling instanceof PsiComment)
         {
             prevSibling = prevSibling.getPrevSibling();
         }
@@ -44,14 +46,14 @@ public class ScopeUtils
             {
                 return null;
             }
-            return findInsertionPoint(prevSibling, variable);
+            return findTighterDeclarationLocation(prevSibling, variable);
         }
         return prevSibling;
     }
 
     @Nullable
-    public static PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor,
-                                                          @NotNull PsiElement descendant)
+    public static PsiElement getChildWhichContainsElement(
+            @NotNull PsiElement ancestor, @NotNull PsiElement descendant)
     {
         PsiElement element = descendant;
         while (!element.equals(ancestor))
@@ -74,7 +76,8 @@ public class ScopeUtils
         {
             final PsiElement referenceElement = reference.getElement();
             final PsiElement parent = getParentOfTypes(referenceElement, TYPES);
-            if (parent != null && commonParent != null && !commonParent.equals(parent))
+            if (parent != null && commonParent != null &&
+                !commonParent.equals(parent))
             {
                 commonParent =
                 PsiTreeUtil.findCommonParent(commonParent, parent);
@@ -87,37 +90,44 @@ public class ScopeUtils
         }
 
         // make common parent may only be for-statement if first reference is
-        // the initialization of the for statement or the initialization is empty.
+        // the initialization of the for statement or the initialization is
+        // empty.
         if (commonParent instanceof PsiForStatement)
         {
             final PsiForStatement forStatement = (PsiForStatement)commonParent;
             final PsiElement referenceElement = references[0].getElement();
-            final PsiStatement initialization = forStatement.getInitialization();
+            final PsiStatement initialization =
+                    forStatement.getInitialization();
             if (!(initialization instanceof PsiEmptyStatement))
             {
                 if (initialization instanceof PsiExpressionStatement)
                 {
-                    final PsiExpressionStatement statement = (PsiExpressionStatement)initialization;
+                    final PsiExpressionStatement statement =
+                            (PsiExpressionStatement)initialization;
                     final PsiExpression expression = statement.getExpression();
                     if (expression instanceof PsiAssignmentExpression)
                     {
                         final PsiAssignmentExpression assignmentExpression =
                                 (PsiAssignmentExpression)expression;
-                        final PsiExpression lExpression = assignmentExpression.getLExpression();
+                        final PsiExpression lExpression =
+                                assignmentExpression.getLExpression();
                         if (!lExpression.equals(referenceElement))
                         {
-                            commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class);
+                            commonParent = PsiTreeUtil.getParentOfType(
+                                    commonParent, PsiCodeBlock.class);
                         }
 
                     }
                     else
                     {
-                        commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class);
+                        commonParent = PsiTreeUtil.getParentOfType(
+                                commonParent, PsiCodeBlock.class);
                     }
                 }
                  else
                 {
-                    commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class);
+                    commonParent = PsiTreeUtil.getParentOfType(commonParent,
+                            PsiCodeBlock.class);
                 }
             }
         }
@@ -129,7 +139,8 @@ public class ScopeUtils
             final PsiElement parent = commonParent.getParent();
             if (parent instanceof PsiSwitchStatement && references.length > 1)
             {
-                commonParent = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+                commonParent = PsiTreeUtil.getParentOfType(parent,
+                        PsiCodeBlock.class, false);
             }
         }
         return commonParent;
@@ -159,7 +170,8 @@ public class ScopeUtils
     }
 
     @Nullable
-    public static PsiElement moveOutOfLoops(@NotNull PsiElement scope, @NotNull PsiElement maxScope)
+    public static PsiElement moveOutOfLoops(@NotNull PsiElement scope,
+                                            @NotNull PsiElement maxScope)
     {
         PsiElement result = maxScope;
         if (PsiUtil.isLoopStatement(result))
@@ -168,7 +180,8 @@ public class ScopeUtils
         }
         while (!result.equals(scope))
         {
-            final PsiElement element = getChildWhichContainsElement(result, scope);
+            final PsiElement element =
+                    getChildWhichContainsElement(result, scope);
             if (element == null || PsiUtil.isLoopStatement(element))
             {
                 while (result != null && !(result instanceof PsiCodeBlock))
