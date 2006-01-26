@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   private MyDialog myDialog;
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private Alarm myInstallFunAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final Project myProject;
   private final boolean myShouldShowBackground;
@@ -90,15 +92,13 @@ public class ProgressWindow extends BlockingProgressIndicator {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          final Timer timer = new Timer(300, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+          myShowWindowAlarm.addRequest(new Runnable() {
+            public void run() {
               if (isRunning()) {
                 showDialog();
               }
             }
-          });
-          timer.setRepeats(false);
-          timer.start();
+          }, 300, ModalityState.current());
         }
       });
     }
@@ -473,10 +473,12 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public void setCancelButtonText(String text){
-    if (myDialog != null)
+    if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
-    else
+    }
+    else {
       myCancelText = text;
+    }
   }
 
   private void setFunComponent(JComponent c) {
