@@ -1,11 +1,13 @@
 package com.intellij.codeInsight.generation;
 
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.javaee.ejb.role.EjbClassRole;
 import com.intellij.javaee.ejb.role.EjbClassRoleEnum;
 import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.javaee.model.common.CmpField;
 import com.intellij.javaee.model.common.EntityBean;
+import com.intellij.javaee.model.common.EnterpriseBean;
+import com.intellij.javaee.model.enums.CmpVersion;
+import com.intellij.javaee.model.enums.PersistenceType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -43,7 +45,13 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
   private void getCmpFields(ArrayList<Object> list, PsiClass psiClass) throws IncorrectOperationException {
     final EjbClassRole classRole = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
     if (classRole == null || classRole.getType() != EjbClassRoleEnum.EJB_CLASS_ROLE_EJB_CLASS) return;
-    if (!EjbUtil.isCMP2x(classRole.getEnterpriseBean())) return;
+
+    final EnterpriseBean ejb = classRole.getEnterpriseBean();
+    if (!(ejb instanceof EntityBean)) return;
+
+    final EntityBean entityBean = (EntityBean)ejb;
+    if (entityBean.getCmpVersion().getValue() != CmpVersion.CmpVersion_2_X ||
+             entityBean.getPersistenceType().getValue() != PersistenceType.CONTAINER) return;
 
 
     for (final CmpField field : ((EntityBean)classRole.getEnterpriseBean()).getCmpFields()) {

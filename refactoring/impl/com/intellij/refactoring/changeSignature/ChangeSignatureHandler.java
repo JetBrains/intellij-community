@@ -1,7 +1,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +12,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.j2ee.ejb.EjbUtil;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");

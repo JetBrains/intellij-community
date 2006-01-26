@@ -4,7 +4,6 @@ import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +24,7 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.j2ee.ejb.EjbUtil;
 
 /**
  * created at Nov 13, 2001

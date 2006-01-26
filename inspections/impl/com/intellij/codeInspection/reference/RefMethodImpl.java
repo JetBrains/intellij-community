@@ -9,7 +9,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.javaee.ejb.role.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
@@ -19,9 +18,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.ejb.role.EjbMethodRoleEnum;
-import com.intellij.javaee.ejb.role.EjbClassRole;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -260,7 +256,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
         EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
         if (role != null) {
           EjbMethodRoleEnum roleType = role.getType();
-          if (role instanceof EjbDeclMethodRoleImpl) {
+          if (role instanceof EjbDeclMethodRole) {
             setEjbDeclaration(true);
 
             if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_DECL ||
@@ -273,8 +269,8 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
                 refParameter.parameterReferenced(true);
               }
             }
-          } else if (role instanceof EjbImplMethodRoleImpl) {
-            PsiMethod[] declarations = EjbUtil.findEjbDeclarations(method);
+          } else if (role instanceof EjbImplMethodRole) {
+            PsiMethod[] declarations = ((EjbImplMethodRole) role).findAllDeclarations();
             if (declarations.length != 0) {
               for (PsiMethod psiDeclaration : declarations) {
                 if (refUtil.belongsToScope(psiDeclaration, getRefManager())) {

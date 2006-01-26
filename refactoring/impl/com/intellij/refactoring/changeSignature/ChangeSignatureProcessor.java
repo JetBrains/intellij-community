@@ -5,9 +5,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
-import com.intellij.javaee.ejb.role.EjbDeclMethodRoleImpl;
-import com.intellij.javaee.ejb.role.EjbImplMethodRoleImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -38,8 +35,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
-import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
+import com.intellij.javaee.ejb.role.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -283,7 +279,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void findEjbUsages(ArrayList<UsageInfo> result) {
-    if (!(myChangeInfo.ejbRole instanceof EjbDeclMethodRoleImpl)) return;
+    if (!(myChangeInfo.ejbRole instanceof EjbDeclMethodRole)) return;
 
     for (PsiMethod implementation : ((EjbDeclMethodRole) myChangeInfo.ejbRole).findAllImplementations()) {
       result.add(new UsageInfo(implementation));
@@ -949,7 +945,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     if (myChangeInfo.isNameChanged) {
       final EjbMethodRole role = com.intellij.javaee.ejb.role.EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
-      if (role instanceof EjbImplMethodRoleImpl && myChangeInfo.ejbRole instanceof EjbDeclMethodRoleImpl) {
+      if (role instanceof EjbImplMethodRole && myChangeInfo.ejbRole instanceof EjbDeclMethodRole) {
         EjbDeclMethodRole declRole = (EjbDeclMethodRole) myChangeInfo.ejbRole;
 
         String newName = myChangeInfo.newName;

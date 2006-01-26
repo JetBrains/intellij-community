@@ -187,7 +187,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
               refMethod.setFlag(false, CAN_BE_FINAL_MASK);
             }
             EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
-            if (role instanceof EjbDeclMethodRoleImpl || role instanceof EjbImplMethodRoleImpl) {
+            if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
               refMethod.setFlag(false, CAN_BE_FINAL_MASK);
             }
           }

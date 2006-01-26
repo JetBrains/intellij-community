@@ -14,12 +14,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.javaee.model.common.EjbRootElement;
 import com.intellij.javaee.model.common.EntityBean;
+import com.intellij.javaee.ejb.EjbModuleUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -130,7 +130,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       }
     }
 
-    final EjbRootElement[] newEjbModels = EjbUtil.getNewEjbModels(getManager().getProject());
+    final EjbRootElement[] newEjbModels = EjbModuleUtil.getEjbModels(getManager().getProject());
     for (final EjbRootElement ejbRootElement : newEjbModels) {
       for (final EntityBean entityBean : ejbRootElement.getEnterpriseBeans().getEntities()) {
         PsiClass primaryKeyClass = entityBean.getPrimKeyClass().getValue();
