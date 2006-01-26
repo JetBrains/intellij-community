@@ -5,6 +5,7 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -40,7 +41,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   public void run() {
     try {
-      while(true){
+      while (true) {
         if (!myIsUnitTestMode && myProcess == null) {
           break;
         }
@@ -91,7 +92,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
       }
     }
-    catch(IOException e) {
+    catch (IOException e) {
       if (LOG.isDebugEnabled()) {
         LOG.error(e);
       }
@@ -127,30 +128,35 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   private String readLine(final Reader reader) throws IOException {
     boolean first = true;
-    final StringBuffer buffer = new StringBuffer();
-    while(true){
-      int c = reader.read();
-      if (c == -1) break;
-      first = false;
-      if (c == '\n'){
-        if (mySkipLF){
-          mySkipLF = false;
-          continue;
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      while (true) {
+        int c = reader.read();
+        if (c == -1) break;
+        first = false;
+        if (c == '\n') {
+          if (mySkipLF) {
+            mySkipLF = false;
+            continue;
+          }
+          break;
         }
-        break;
+        else if (c == '\r') {
+          mySkipLF = true;
+          break;
+        }
+        else {
+          mySkipLF = false;
+          buffer.append((char)c);
+        }
       }
-      else if (c == '\r'){
-        mySkipLF = true;
-        break;
+      if (first) {
+        return null;
       }
-      else{
-        mySkipLF = false;
-        buffer.append((char)c);
-      }
+      return buffer.toString();
     }
-    if (first) {
-      return null;
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
     }
-    return buffer.toString();
   }
 }

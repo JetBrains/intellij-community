@@ -36,6 +36,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 
 public class BackendCompilerWrapper {
@@ -781,9 +783,9 @@ public class BackendCompilerWrapper {
   }
 
   private class ClassParsingThread extends Thread {
-    private final List<String> myPaths = new LinkedList<String>();
+    private final BlockingQueue<String> myPaths = new ArrayBlockingQueue<String>(50000);
     private CacheCorruptedException myError = null;
-    private boolean myStopped = false;
+    private final String myStopThreadToken = new String();
 
     public ClassParsingThread() {
       //noinspection HardCodedStringLiteral
@@ -791,50 +793,33 @@ public class BackendCompilerWrapper {
     }
 
     public void run() {
+      String path;
       try {
-        while (shouldProceed()) {
-          for (String path = getNextPath(); path != null; path = getNextPath()) {
-            processPath(path.replace('/', File.separatorChar));
-          }
+        while ((path = getNextPath()) != myStopThreadToken) {
+          processPath(path.replace('/', File.separatorChar));
         }
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
       }
       catch (CacheCorruptedException e) {
         myError = e;
       }
     }
 
-    public synchronized void addPath(String path) throws CacheCorruptedException {
-      notifyAll();
+    public void addPath(String path) throws CacheCorruptedException {
       if (myError != null) {
         throw myError;
       }
-      myPaths.add(path);
+      myPaths.offer(path);
     }
 
-    private synchronized String getNextPath() {
-      if (myPaths.size() == 0) {
-        return null;
-      }
-      return myPaths.remove(0);
+    private String getNextPath() throws InterruptedException {
+      return myPaths.take();
     }
 
-    public synchronized void stopParsing() {
-      myStopped = true;
-      notifyAll();
-    }
-
-    public synchronized boolean shouldProceed() {
-      if (myError != null) {
-        return false;
-      }
-      while(myPaths.size() == 0 && !myStopped) {
-        try {
-          wait();
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-      return myPaths.size() > 0 || !myStopped;
+    public void stopParsing() {
+      myPaths.offer(myStopThreadToken);
     }
 
     private void processPath(final String path) throws CacheCorruptedException {
