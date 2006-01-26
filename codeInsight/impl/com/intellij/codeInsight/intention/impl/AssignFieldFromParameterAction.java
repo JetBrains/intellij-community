@@ -33,8 +33,9 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     if (myParameter == null
         || !myParameter.isValid()
-        || !(myParameter.getDeclarationScope() instanceof PsiMethod)
         || !myParameter.getManager().isInProject(myParameter)
+        || !(myParameter.getDeclarationScope() instanceof PsiMethod)
+        || ((PsiMethod)myParameter.getDeclarationScope()).getBody() == null
         || type == null
         || !type.isValid()
         || targetClass == null
@@ -72,6 +73,8 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
                                                  final PsiParameter parameter,
                                                  final Editor editor) throws IncorrectOperationException {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    PsiCodeBlock methodBody = method.getBody();
+    if (methodBody == null) return;
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiElementFactory factory = psiManager.getElementFactory();
     String fieldName = field.getName();
@@ -85,7 +88,6 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
       stmtText = prefix + stmtText;
     }
 
-    PsiCodeBlock methodBody = method.getBody();
     PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
     assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(assignmentStmt);
     PsiStatement[] statements = methodBody.getStatements();
