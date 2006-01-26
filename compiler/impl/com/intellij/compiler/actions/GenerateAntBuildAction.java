@@ -3,22 +3,26 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Arrays;
-
-import org.jetbrains.annotations.NonNls;
 
 public class GenerateAntBuildAction extends CompileActionBase {
   @NonNls private static final String XML_EXTENSION = ".xml";
@@ -61,11 +65,13 @@ public class GenerateAntBuildAction extends CompileActionBase {
           }
           filesString.append(file.getPath());
         }
-        Messages.showInfoMessage(project, CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
+        Messages.showInfoMessage(project, CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()),
+                                 CompilerBundle.message("generate.ant.build.title"));
       }
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.generate.failed", e.getMessage()), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
+      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.generate.failed", e.getMessage()),
+                               CompilerBundle.message("generate.ant.build.title"));
     }
     finally {
       if (filesToRefresh.size() > 0) {
@@ -90,7 +96,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
       ok = true;
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.backup.failed", path), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
+      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.backup.failed", path),
+                               CompilerBundle.message("generate.ant.build.title"));
       ok = false;
     }
     filesToRefresh.add(backupFile);
