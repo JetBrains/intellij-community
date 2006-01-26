@@ -114,6 +114,17 @@ public class ProgressWindow extends BlockingProgressIndicator {
     IdeEventQueue.getInstance().flushQueue();
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
       public boolean value(final AWTEvent object) {
+        if (myShouldShowCancel &&
+            object instanceof KeyEvent &&
+            object.getID() == KeyEvent.KEY_PRESSED &&
+            ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
+            ((KeyEvent)object).getModifiers() == 0) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              ProgressWindow.this.cancel();
+            }
+          });
+        }
         return myStared && !isRunning();
       }
     });

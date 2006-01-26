@@ -400,7 +400,7 @@ public class IdeEventQueue extends EventQueue {
         event = getNextEvent();
         if (event instanceof InputEvent) {
           final Object s = event.getSource();
-          if (s instanceof Component && !(s instanceof JFrame)) {
+          if (s instanceof Component) {
             Component c = (Component)s;
             Window modalWindow = SwingUtilities.windowForComponent(modalComponent);
             while (c != null && c != modalWindow) c = c.getParent();
