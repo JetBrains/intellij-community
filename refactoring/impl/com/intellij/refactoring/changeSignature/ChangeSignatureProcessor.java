@@ -36,6 +36,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.javaee.ejb.role.*;
+import com.intellij.javaee.model.common.EjbPsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -953,7 +954,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           if (oldMethod.getName().equals(method.getName())) {
             PsiMethod newDeclMethod = (PsiMethod)method.copy();
             newDeclMethod.getNameIdentifier().replace(myChangeInfo.newNameIdentifier);
-            newName = EjbDeclMethodRoleImpl.suggestImplNames(newDeclMethod.getName(), declRole.getType(), declRole.getEnterpriseBean())[0];
+            newName = EjbPsiMethodUtil.suggestImplNames(newDeclMethod.getName(), declRole.getType(), declRole.getEnterpriseBean())[0];
             break;
           }
         }

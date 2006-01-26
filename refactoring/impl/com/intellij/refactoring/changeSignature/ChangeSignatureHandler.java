@@ -12,7 +12,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.javaee.model.common.EjbPsiMethodUtil;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
@@ -54,7 +54,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, actionString);
     if (newMethod == null) return;
 
-    newMethod = (PsiMethod) EjbUtil.checkDeclMethod(newMethod, actionString);
+    newMethod = (PsiMethod) EjbPsiMethodUtil.checkDeclMethod(newMethod, actionString);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {

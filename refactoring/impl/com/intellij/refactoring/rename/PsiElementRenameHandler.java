@@ -24,7 +24,7 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
+import com.intellij.javaee.model.common.EjbPsiMethodUtil;
 
 /**
  * created at Nov 13, 2001
@@ -137,7 +137,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod) elementToRename, RefactoringBundle.message("to.rename"));
       if (elementToRename == null) return;
 
-      elementToRename = EjbUtil.checkDeclMethod((PsiMethod) elementToRename, RefactoringBundle.message("to.rename"));
+      elementToRename = EjbPsiMethodUtil.checkDeclMethod((PsiMethod) elementToRename, RefactoringBundle.message("to.rename"));
       if (elementToRename == null) return;
 
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
