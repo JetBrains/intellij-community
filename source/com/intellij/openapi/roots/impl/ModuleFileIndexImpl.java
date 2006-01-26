@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
@@ -81,11 +82,11 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   }
 
   @NotNull
-  public OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir) {
+  public List<OrderEntry> getOrderEntriesForFile(VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
-    if (dir == null) return OrderEntry.EMPTY_ARRAY;
+    if (dir == null) return Collections.emptyList();
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
-    if (info == null) return OrderEntry.EMPTY_ARRAY;
+    if (info == null) return Collections.emptyList();
     final Collection<OrderEntry> orderEntries = info.getOrderEntries();
     List<OrderEntry> result = new ArrayList<OrderEntry>();
     for (OrderEntry orderEntry : orderEntries) {
@@ -93,7 +94,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         result.add(orderEntry);
       }
     }
-    return result.size() > 0 ? result.toArray(new OrderEntry[result.size()]) : OrderEntry.EMPTY_ARRAY;
+    return Collections.unmodifiableList(result);
   }
 
   public OrderEntry getOrderEntryForFile(VirtualFile fileOrDir) {

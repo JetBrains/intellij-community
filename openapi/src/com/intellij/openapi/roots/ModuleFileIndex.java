@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Provides information about files contained in a module.
  *
@@ -43,5 +45,5 @@ public interface ModuleFileIndex extends FileIndex {
    * @param fileOrDir the file or drirectory to check.
    * @return the list of order entries to which the file or directory belongs.
    */
-  @NotNull OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir);
+  @NotNull List<OrderEntry> getOrderEntriesForFile(VirtualFile fileOrDir);
 }

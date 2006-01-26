@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,7 +20,7 @@ import java.util.Set;
  */
 public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope");
-  
+
   private final Module myModule;
   private final boolean myIncludeLibraries;
   private final boolean myIncludeOtherModules;
@@ -69,7 +70,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean contains(VirtualFile file) {
     if (!myIncludeTests && myFileIndex.isInTestSourceContent(file)) return false;
 
-    final OrderEntry[] entries = myFileIndex.getOrderEntriesForFile(file);
+    final List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);
     for (OrderEntry orderEntry : entries) {
       if (myIncludeLibraries) {
         if (myIncludeOtherModules) {
