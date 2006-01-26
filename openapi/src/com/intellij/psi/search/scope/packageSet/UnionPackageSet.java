@@ -39,6 +39,6 @@ public class UnionPackageSet implements PackageSet {
   }
 
   public String getText() {
-    return myFirstSet.getText() + " || " + mySecondSet.getText();
+    return myFirstSet.getText() + "||" + mySecondSet.getText();
   }
 }

@@ -44,7 +44,7 @@ public class IntersectionPackageSet implements PackageSet {
     if (needParen) buf.append('(');
     buf.append(myFirstSet.getText());
     if (needParen) buf.append(')');
-    buf.append(" && ");
+    buf.append("&&");
     needParen = mySecondSet.getNodePriority() > getNodePriority();
     if (needParen) buf.append('(');
     buf.append(mySecondSet.getText());
