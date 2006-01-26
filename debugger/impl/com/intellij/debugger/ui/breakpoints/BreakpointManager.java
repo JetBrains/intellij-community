@@ -715,7 +715,9 @@ public class BreakpointManager implements JDOMExternalizable {
 
   public synchronized List<Breakpoint> getBreakpoints() {
     if (myBreakpointsListForIteration == null) {
-      myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints);
+      myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size() + 1);
+      myBreakpointsListForIteration.addAll(myBreakpoints);
+      myBreakpointsListForIteration.add(myAnyExceptionBreakpoint);
     }
     return myBreakpointsListForIteration;
   }
