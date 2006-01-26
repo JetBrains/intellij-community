@@ -1,8 +1,8 @@
 package com.intellij.formatting;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
@@ -31,7 +31,8 @@ class FormatProcessor {
   private final LeafBlockWrapper myFirstTokenBlock;
   private final LeafBlockWrapper myLastTokenBlock;
 
-  private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
+  private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies =
+    new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
   private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private final WhiteSpace myLastWhiteSpace;
 
@@ -57,7 +58,7 @@ class FormatProcessor {
   private LeafBlockWrapper getLastBlock() {
     LeafBlockWrapper result = myFirstTokenBlock;
     while (result.getNextBlock() != null) {
-      result =  result.getNextBlock();
+      result = result.getNextBlock();
     }
     return result;
   }
@@ -141,7 +142,7 @@ class FormatProcessor {
     return result;
   }
 
-  public void format(FormattingModel model){
+  public void format(FormattingModel model) {
     formatWithoutRealModifications();
     performModifications(model);
   }
@@ -167,7 +168,7 @@ class FormatProcessor {
     }
   }
 
-  public void performModifications(FormattingModel model){
+  public void performModifications(FormattingModel model) {
 
     List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
 
@@ -183,7 +184,10 @@ class FormatProcessor {
     }
   }
 
-  protected int replaceWhiteSpace(final FormattingModel model, @NotNull final LeafBlockWrapper block, int shift, final String newWhiteSpace) {
+  protected int replaceWhiteSpace(final FormattingModel model,
+                                  @NotNull final LeafBlockWrapper block,
+                                  int shift,
+                                  final String newWhiteSpace) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
@@ -199,7 +203,7 @@ class FormatProcessor {
       final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent);
 
       final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
-      shift +=  newBlockRange.getLength() - block.getTextRange().getLength();
+      shift += newBlockRange.getLength() - block.getTextRange().getLength();
     }
     return shift;
   }
@@ -269,7 +273,8 @@ class FormatProcessor {
 
     if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
       myAlignAgain.add(whiteSpace);
-    } else {
+    }
+    else {
       myAlignAgain.remove(whiteSpace);
     }
 
@@ -296,7 +301,8 @@ class FormatProcessor {
     if (dependantSpaceProperty.wasLFUsed()) {
       myPreviousDependancies.put(dependancy,
                                  new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
-    } else {
+    }
+    else {
       final boolean value = containsLineFeeds(dependancy);
       if (value) {
         dependantSpaceProperty.setLFWasUsed(true);
@@ -361,7 +367,8 @@ class FormatProcessor {
             wrap.ignoreParentWrap(myFirstWrappedBlockOnLine.getWrap());
             myCurrentBlock = myFirstWrappedBlockOnLine;
             return true;
-          } else {
+          }
+          else {
             myFirstWrappedBlockOnLine = myCurrentBlock;
           }
         }
@@ -538,16 +545,19 @@ class FormatProcessor {
         final WhiteSpace whiteSpace = block.getWhiteSpace();
         if (whiteSpace.containsLineFeeds()) {
           return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
-        } else {
+        }
+        else {
           final int offsetBeforeBlock = getOffsetBefore(block.getBlock());
           final AbstractBlockWrapper prevIndentedBlock = getPreviousIndentedBlock();
           if (prevIndentedBlock == null) {
             return new IndentData(0, offsetBeforeBlock);
-          } else {
+          }
+          else {
             final int parentIndent = prevIndentedBlock.getWhiteSpace().getIndentOffset();
             if (parentIndent > offsetBeforeBlock) {
               return new IndentData(0, offsetBeforeBlock);
-            } else {
+            }
+            else {
               return new IndentData(parentIndent, offsetBeforeBlock - parentIndent);
             }
           }
@@ -591,7 +601,8 @@ class FormatProcessor {
 
     if (prevBlock != null && prevBlock.contains(startOffset)) {
       return prevBlock;
-    } else {
+    }
+    else {
       return result;
     }
   }
@@ -599,7 +610,8 @@ class FormatProcessor {
   private LeafBlockWrapper getPrevBlock(final LeafBlockWrapper result) {
     if (result != null) {
       return result.getPreviousBlock();
-    } else {
+    }
+    else {
       return myLastTokenBlock;
     }
   }
@@ -612,13 +624,48 @@ class FormatProcessor {
     }
   }
 
+  class ChildAttributesInfo {
+    public Block parent;
+    ChildAttributes attributes;
+    int index;
+
+    public ChildAttributesInfo(final Block parent, final ChildAttributes attributes, final int index) {
+      this.parent = parent;
+      this.attributes = attributes;
+      this.index = index;
+    }
+  }
+
   public IndentInfo getIndentAt(final int offset) {
     processBlocksBefore(offset);
     AbstractBlockWrapper parent = getParentFor(offset, myCurrentBlock);
     if (parent == null) return new IndentInfo(0, 0, 0);
-    final int index = getNewChildPosition(parent, offset);
-    ChildAttributes childAttributes = parent.getBlock().getChildAttributes(index);
-    return adjustLineIndent(parent, childAttributes, index);
+    int index = getNewChildPosition(parent, offset);
+    final Block block = parent.getBlock();
+
+    ChildAttributesInfo info = getChildAttributesInfo(block, index);
+
+
+    return adjustLineIndent(myInfos.get(info.parent), info.attributes, info.index);
+  }
+
+  private ChildAttributesInfo getChildAttributesInfo(final Block block, final int index) {
+    ChildAttributes childAttributes = block.getChildAttributes(index);
+
+    if (childAttributes == ChildAttributes.DELEGATE_TO_PREV_CHILD) {
+      final Block newBlock = block.getSubBlocks().get(index - 1);
+      return getChildAttributesInfo(newBlock, newBlock.getSubBlocks().size());
+
+    }
+
+    else if (childAttributes == ChildAttributes.DELEGATE_TO_NEXT_CHILD) {
+      return getChildAttributesInfo(block.getSubBlocks().get(index), 0);
+    }
+
+    else {
+      return new ChildAttributesInfo(block, childAttributes, index);
+    }
+
   }
 
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
@@ -648,7 +695,8 @@ class FormatProcessor {
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {
       return getOffsetBefore(alignRespBlock.getBlock());
-    } else {
+    }
+    else {
       return -1;
     }
   }
@@ -657,7 +705,7 @@ class FormatProcessor {
     final List<Block> subBlocks = parent.getBlock().getSubBlocks();
     for (int i = 0; i < subBlocks.size(); i++) {
       Block block = subBlocks.get(i);
-      if (block.getTextRange().getStartOffset() >= offset) return i;
+      if (myInfos.get(block).getTextRange().getStartOffset() >= offset) return i;
     }
     return subBlocks.size();
   }
@@ -688,7 +736,8 @@ class FormatProcessor {
     if (block == null) {
       if (myLastTokenBlock.getBlock().isIncomplete()) {
         return myLastTokenBlock.getBlock();
-      } else {
+      }
+      else {
         return null;
       }
     }

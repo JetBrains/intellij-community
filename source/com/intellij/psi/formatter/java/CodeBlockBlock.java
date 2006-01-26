@@ -29,7 +29,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     super(node, wrap, alignment, indent, settings);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
       myChildrenIndent = 0;
-    }else {
+    }
+    else {
       myChildrenIndent = 1;
     }
   }
@@ -126,7 +127,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
         if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
           childIndent = Indent.getNoneIndent();
-        } 
+        }
         processChild(localResult, child, null, null, childIndent);
       }
       child = child.getTreeNext();
@@ -136,8 +137,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   }
 
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
-                                                   final Wrap childWrap) {
-    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap){
+                                                    final Wrap childWrap) {
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap) {
       @NotNull
       public ChildAttributes getChildAttributes(final int newChildIndex) {
         IElementType prevElementType = null;
@@ -149,10 +150,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         }
 
         if (prevElementType == ElementType.BLOCK_STATEMENT
-            || prevElementType == ElementType.BREAK_STATEMENT 
+            || prevElementType == ElementType.BREAK_STATEMENT
             || prevElementType == ElementType.RETURN_STATEMENT) {
           return new ChildAttributes(Indent.getNoneIndent(), null);
-        } else {
+        }
+        else {
           return super.getChildAttributes(newChildIndex);
         }
       }
@@ -165,8 +167,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private int calcNewState(final ASTNode child, int state) {
     switch (state) {
-      case BEFORE_FIRST:
-      {
+      case BEFORE_FIRST: {
         if (ElementType.COMMENT_BIT_SET.contains(child.getElementType())) {
           return BEFORE_FIRST;
         }
@@ -177,8 +178,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           return BEFORE_LBRACE;
         }
       }
-      case BEFORE_LBRACE:
-      {
+      case BEFORE_LBRACE: {
         if (isLBrace(child)) {
           return INSIDE_BODY;
         }
@@ -231,8 +231,14 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterJavaDoc(newChildIndex)) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
-    } else {
-      return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
+    }
+    else {
+      if (getSubBlocks().size() == newChildIndex) {
+        return new ChildAttributes(Indent.getNoneIndent(), null);
+      }
+      else {
+        return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
+      }
     }
   }
 

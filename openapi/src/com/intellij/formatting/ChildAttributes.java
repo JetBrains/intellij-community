@@ -26,6 +26,9 @@ public class ChildAttributes {
   private final Indent myChildIndent;
   private final Alignment myAlignment;
 
+  public static final ChildAttributes DELEGATE_TO_PREV_CHILD = new ChildAttributes(null, null);
+  public static final ChildAttributes DELEGATE_TO_NEXT_CHILD = new ChildAttributes(null, null);
+
   /**
    * Creates a child attributes setting with the specified indent and alignment.
    *

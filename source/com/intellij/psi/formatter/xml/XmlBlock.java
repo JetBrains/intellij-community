@@ -240,6 +240,17 @@ public class XmlBlock extends AbstractXmlBlock {
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
+      final List<Block> subBlocks = getSubBlocks();
+      if (subBlocks.size() == 3 && subBlocks.get(1) instanceof JspTextBlock) {
+        final JspTextBlock jspTextBlock = ((JspTextBlock)subBlocks.get(1));
+        if (newChildIndex == 2 && jspTextBlock.isTailIncomplete()) {
+          return ChildAttributes.DELEGATE_TO_PREV_CHILD;
+        }
+        if (newChildIndex == 1 && jspTextBlock.isHeadIncomplete()) {
+          return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
+        }
+      }
+
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     else if (myNode.getPsi() instanceof PsiFile) {
