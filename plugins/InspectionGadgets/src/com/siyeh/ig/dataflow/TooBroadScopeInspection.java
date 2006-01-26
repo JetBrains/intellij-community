@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +42,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class TooBroadScopeInspection extends StatementInspection
 {
@@ -384,8 +383,7 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiElement blockChild =
                     ScopeUtils.getChildWhichContainsElement(variableScope,
                                                             referenceElement);
-            if (blockChild == null ||
-                blockChild instanceof JspExpressionStatement)
+            if (blockChild == null /* || blockChild instanceof JspExpressionStatement*/)  // TODO[Bas] - commented because uncompilable code
             {
                 return;
             }
