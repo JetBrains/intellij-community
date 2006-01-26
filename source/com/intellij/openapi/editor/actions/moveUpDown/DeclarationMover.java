@@ -1,6 +1,5 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +12,9 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +78,7 @@ class DeclarationMover extends LineMover {
     if (element2 == null || element1 == null) return;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(whitespace.getProject());
     final Document document = documentManager.getDocument(whitespace.getContainingFile());
-    String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), StdLanguages.JAVA);
+    String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), element1.getContainingFile().getLanguage());
     LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws.toCharArray(), 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
     whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
     documentManager.commitDocument(document);
@@ -96,6 +97,8 @@ class DeclarationMover extends LineMover {
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
     if (firstMember == null || lastMember == null) return false;
+    file = (PsiFile)PsiUtil.getRoot(firstMember.getNode()).getPsi();
+
     LineRange range;
     if (firstMember == lastMember) {
       range = memberRange(firstMember, editor, oldRange);
@@ -241,6 +244,10 @@ class DeclarationMover extends LineMover {
       return isDown
              ? nextLineOffset(editor, aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace().getTextOffset())
              : aClass.getRBrace().getTextOffset();
+    }
+    if (sibling instanceof JspTemplateDeclaration) {
+      // there should be another scriptlet/decl to move
+      if (firstNonWhiteElement(myIsDown ? sibling.getNextSibling() : sibling.getPrevSibling(), myIsDown) == null) return ILLEGAL_MOVE;
     }
     return NOT_CROSSING_CLASS_BORDER;
   }

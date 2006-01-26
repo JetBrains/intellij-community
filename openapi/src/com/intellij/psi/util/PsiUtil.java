@@ -18,21 +18,20 @@ package com.intellij.psi.util;
 import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -1132,7 +1131,7 @@ public final class PsiUtil {
   }
 
   @NotNull
-  private static ASTNode getRoot(@NotNull ASTNode node) {
+  public static ASTNode getRoot(@NotNull ASTNode node) {
     ASTNode child = node;
     do {
       final ASTNode parent = child.getTreeParent();

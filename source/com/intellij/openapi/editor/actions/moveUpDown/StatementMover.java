@@ -1,15 +1,17 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 class StatementMover extends LineMover {
@@ -62,26 +64,29 @@ class StatementMover extends LineMover {
     if (statements.length == 0) return false;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
-    if (!checkMovingInsideOutside(file, editor, range, myIsDown)) {
+
+    file = (PsiFile)PsiUtil.getRoot(range.firstElement.getNode()).getPsi();
+
+    if (!checkMovingInsideOutside(file, editor, range)) {
       insertOffset = -1;
       return true;
     }
-    calcInsertOffset(editor, file, range);
+    //calcInsertOffset(file, editor, range);
     return true;
   }
 
-  private void calcInsertOffset(final Editor editor, PsiFile file, LineRange range) {
+  private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range) {
     int nearLine = myIsDown ? range.endLine + 2 : range.startLine - 1;
     int line = nearLine;
-
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
-      while (element != null && element != file) {
+      while (element != null && !(element instanceof PsiFile)) {
         if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
-          if ((element instanceof PsiStatement || element instanceof PsiComment) && statementCanBePlacedAlong(element)) {
+          if ((element instanceof PsiStatement || element instanceof PsiComment || element instanceof OuterLanguageElement)
+              && statementCanBePlacedAlong(element)) {
             if (!(element.getParent() instanceof PsiCodeBlock)) {
               elementToSurround = element;
             }
@@ -100,17 +105,17 @@ class StatementMover extends LineMover {
             statementToSurroundWithCodeBlock = elementToSurround;
             whatToMove = range;
             insertOffset = offset;
-            return;
+            return true;
           }
         }
         element = element.getParent();
       }
       line += myIsDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
-        statementToSurroundWithCodeBlock = null;
-        whatToMove = range;
-        insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
-        return;
+        //statementToSurroundWithCodeBlock = null;
+        //whatToMove = range;
+        //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+        return false;
       }
     }
   }
@@ -132,22 +137,22 @@ class StatementMover extends LineMover {
     return false;
   }
 
-  private boolean checkMovingInsideOutside(final PsiFile file, final Editor editor, final LineRange result, final boolean isDown) {
+  private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, final LineRange result) {
     final int offset = editor.getCaretModel().getOffset();
 
-    final Class[] classes = {PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class,};
     PsiElement guard = file.findElementAt(offset);
     if (guard == null) return false;
+
     do {
-      guard = PsiTreeUtil.<PsiElement>getParentOfType(guard, classes);
+      guard = PsiTreeUtil.getParentOfType(guard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
     }
     while (guard instanceof PsiAnonymousClass);
 
     // cannot move in/outside method/class/initializer/comment
-    calcInsertOffset(editor, file, result);
+    if (!calcInsertOffset(file, editor, result)) return false;
     PsiElement newGuard = file.findElementAt(insertOffset);
     do {
-      newGuard = PsiTreeUtil.<PsiElement>getParentOfType(newGuard, classes);
+      newGuard = PsiTreeUtil.getParentOfType(newGuard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
     }
     while (newGuard instanceof PsiAnonymousClass);
 

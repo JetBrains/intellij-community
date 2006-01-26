@@ -13,4 +13,8 @@ class LineRange {
     this.startLine = startLine;
     this.endLine = endLine;
   }
+
+  public String toString() {
+    return "line range: ["+startLine+"-"+endLine+"]";
+  }
 }
