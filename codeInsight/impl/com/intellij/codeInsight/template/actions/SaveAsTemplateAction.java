@@ -57,6 +57,7 @@ public class SaveAsTemplateAction extends AnAction {
     int startOffset = selection.getStartOffset();
     while (current instanceof PsiWhiteSpace) {
       current = current.getNextSibling();
+      if (current == null) break;
       startOffset = current.getTextRange().getStartOffset();
     }
 
