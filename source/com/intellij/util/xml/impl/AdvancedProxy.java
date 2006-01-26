@@ -3,9 +3,9 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
-import com.intellij.util.ArrayUtil;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
@@ -34,9 +34,9 @@ public class AdvancedProxy {
       Class[] interfaces = new Class[otherInterfaces.length+1];
       interfaces [0] = superClassOrInterface;
       System.arraycopy(otherInterfaces, 0, interfaces, 1, otherInterfaces.length);
-      return (T) createProxy(null, interfaces, handler, Collections.EMPTY_SET);
+      return (T) createProxy(null, interfaces, handler, Collections.<JavaMethodSignature>emptySet());
     }
-    return (T) createProxy(superClassOrInterface, otherInterfaces, handler, Collections.EMPTY_SET);
+    return (T) createProxy(superClassOrInterface, otherInterfaces, handler, Collections.<JavaMethodSignature>emptySet());
   }
 
   public static <T> T createProxy(final Class<T> superClass,

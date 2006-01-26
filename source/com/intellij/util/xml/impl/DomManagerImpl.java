@@ -150,7 +150,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private DomElement doCreateDomElement(final Class<? extends DomElement> concreteInterface, final DomInvocationHandler handler) {
     final Class<? extends DomElement> aClass = getImplementation(concreteInterface);
     if (aClass != null) {
-      return AdvancedProxy.createProxy(aClass, new Class[]{concreteInterface}, handler, Collections.EMPTY_SET);
+      return AdvancedProxy.createProxy(aClass, new Class[]{concreteInterface}, handler, Collections.<JavaMethodSignature>emptySet());
     }
     return AdvancedProxy.createProxy(handler, concreteInterface);
   }
