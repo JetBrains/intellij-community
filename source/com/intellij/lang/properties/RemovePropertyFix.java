@@ -7,15 +7,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 class RemovePropertyFix implements IntentionAction {
-  private final Property myOrigProperty;
+  private final Property myProperty;
 
-  public RemovePropertyFix(final Property origProperty) {
-    myOrigProperty = origProperty;
+  public RemovePropertyFix(@NotNull final Property origProperty) {
+    myProperty = origProperty;
   }
 
   public String getText() {
@@ -28,14 +29,15 @@ class RemovePropertyFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return file.isValid()
-           && myOrigProperty != null
-           && myOrigProperty.isValid()
+           && myProperty != null
+           && myProperty.isValid()
+           && myProperty.getManager().isInProject(myProperty)
       ;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    myOrigProperty.delete();
+    myProperty.delete();
   }
 
   public boolean startInWriteAction() {

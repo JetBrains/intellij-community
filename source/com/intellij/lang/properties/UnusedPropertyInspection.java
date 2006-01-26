@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -42,11 +43,11 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
 
   public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
-    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
     final List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return null;
+    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
 
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
@@ -55,16 +56,16 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         for (Property property : properties) {
-          PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
           if (original != null) {
             original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getKey()));
           }
+          PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
           searchHelper.processReferences(processor, property, searchScope, false);
           if (!processor.isFound()) {
             ASTNode[] nodes = property.getNode().getChildren(null);
             PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, PropertiesBundle.message(
-              "unused.property.problem.descriptor.name"), QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             descriptors.add(descriptor);
           }
         }
@@ -91,7 +92,9 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-      Property property = (Property)descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
+      Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
+      if (property == null) return;
       try {
         new RemovePropertyFix(property).invoke(project, null, property.getContainingFile());
       }
