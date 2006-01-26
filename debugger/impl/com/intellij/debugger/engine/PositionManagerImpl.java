@@ -92,6 +92,9 @@ public class PositionManagerImpl implements PositionManager {
       waitPrepareFor = JVMNameUtil.getNonAnonymousClassName(psiClass);
       waitRequestor = requestor;
     }
+    if (waitPrepareFor == null) {
+      return null;  // no suitable class found for this name
+    }
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, waitPrepareFor);
   }
 
@@ -215,6 +218,9 @@ public class PositionManagerImpl implements PositionManager {
         }
         else {
           final String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          if (className == null) {
+            return Collections.emptyList();
+          }
           return myDebugProcess.getVirtualMachineProxy().classesByName(className);
         }
       }

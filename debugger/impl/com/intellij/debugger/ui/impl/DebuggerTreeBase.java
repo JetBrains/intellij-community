@@ -12,12 +12,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
 import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -49,16 +50,17 @@ public class DebuggerTreeBase extends Tree {
     TreeUtil.installActions(this);
   }
 
-  private int getMaximumChars(String s, FontMetrics metrics, int maxWidth) {
+  private int getMaximumChars(final String s, final FontMetrics metrics, final int maxWidth) {
     int minChar = 0;
     int maxChar = s.length();
     int chars;
     while(minChar < maxChar) {
       chars = (minChar + maxChar + 1) / 2;
-      int width = metrics.stringWidth(s.substring(0,  chars));
+      final int width = metrics.stringWidth(s.substring(0,  chars));
       if(width <= maxWidth) {
         minChar = chars;
-      } else {
+      }
+      else {
         maxChar = chars - 1;
       }
     }
@@ -66,49 +68,48 @@ public class DebuggerTreeBase extends Tree {
   }
 
   private JComponent createTipContent(String tipText) {
-    JToolTip tooltip = new JToolTip();
+    final JToolTip tooltip = new JToolTip();
 
     if(tipText == null) {
       tooltip.setTipText(tipText);
-    } else {
+    }
+    else {
       Dimension rootSize = getVisibleRect().getSize();
       Insets borderInsets = tooltip.getBorder().getBorderInsets(tooltip);
       rootSize.width -= (borderInsets.left + borderInsets.right) * 2;
       rootSize.height -= (borderInsets.top + borderInsets.bottom) * 2;
 
-      StringBuffer tipBuffer = new StringBuffer(tipText.length());
-      StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
-      while(tokenizer.hasMoreElements()) {
-        String line = tokenizer.nextToken();
-        for (;;) {
-          int maximumChars = getMaximumChars(line, tooltip.getFontMetrics(tooltip.getFont()), rootSize.width);
-          if(maximumChars == line.length()) {
-            tipBuffer.append(line.substring(0, maximumChars));
-            tipBuffer.append('\n');
-            break;
-          } else {
+      //noinspection HardCodedStringLiteral
+      final Element html = new Element("html");
 
-            int chars;
-            for(chars = maximumChars - 2; chars > 1; chars --) {
-              if(getMaximumChars(line.substring(0, chars), tooltip.getFontMetrics(tooltip.getFont()), rootSize.width) < maximumChars) break;
+      final StringBuilder tipBuilder = StringBuilderSpinAllocator.alloc();
+      try {
+        final StringTokenizer tokenizer = new StringTokenizer(tipText, "\n");
+        final FontMetrics metrics = tooltip.getFontMetrics(tooltip.getFont());
+        while(tokenizer.hasMoreElements()) {
+          String line = tokenizer.nextToken();
+          while (line.length() > 0) {
+            if(getMaximumChars(line, metrics, rootSize.width) == line.length()) {
+              tipBuilder.append(line).append('\n');
+              break;
             }
-            tipBuffer.append(line.substring(0, chars));
-            tipBuffer.append('\\');
-            tipBuffer.append('\n');
-            line = line.substring(maximumChars - 2);
+            else { // maxChars < line.length()
+              final String delimiterString = "\\\n";
+              final int chars = getMaximumChars(line, metrics, rootSize.width - metrics.stringWidth(delimiterString));
+              tipBuilder.append(line.substring(0, chars));
+              tipBuilder.append(delimiterString);
+              line = line.substring(chars);
+            }
           }
         }
+        //noinspection HardCodedStringLiteral
+        Element p = new Element("pre");
+        html.addContent(p);
+        p.setText(tipBuilder.toString());
       }
-
-      //noinspection HardCodedStringLiteral
-      Element html = new Element("html");
-
-      String text = tipBuffer.toString();
-
-      //noinspection HardCodedStringLiteral
-      Element p = new Element("pre");
-      html.addContent(p);
-      p.setText(text);
+      finally {
+        StringBuilderSpinAllocator.dispose(tipBuilder);
+      }
 
       XMLOutputter outputter = JDOMUtil.createOutputter("\n");
       Format format = outputter.getFormat().setTextMode(Format.TextMode.PRESERVE);

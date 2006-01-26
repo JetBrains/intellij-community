@@ -224,7 +224,8 @@ public class JVMNameUtil {
       return new JVMClassAt(SourcePosition.createFromElement(psiClass));
     }
     else {
-      return getJVMRawText(getNonAnonymousClassName(psiClass));
+      final String name = getNonAnonymousClassName(psiClass);
+      return getJVMRawText(name != null? name : "");
     }
   }
 
