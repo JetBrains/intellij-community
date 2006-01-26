@@ -178,7 +178,7 @@ public class BreakpointManager implements JDOMExternalizable {
     myEditorMouseListener = new EditorMouseAdapter() {
       private EditorMouseEvent myMousePressedEvent;
 
-      private @Nullable Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, int line) {
+      private @Nullable Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line) {
         final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
         if (editor == null) {
           return null;
@@ -195,6 +195,9 @@ public class BreakpointManager implements JDOMExternalizable {
         int offset = editor.getCaretModel().getOffset();
         int editorLine = editor.getDocument().getLineNumber(offset);
         if(editorLine != line) {
+          if (line < 0 || line >= document.getLineCount()) {
+            return null;
+          }
           offset = editor.getDocument().getLineStartOffset(line);
         }
 
