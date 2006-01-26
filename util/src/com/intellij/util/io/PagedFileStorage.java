@@ -39,7 +39,6 @@ public final class PagedFileStorage {
       raf.close();
     }
     mySize = myFile.length();
-    ByteBufferUtil.TOTAL_MAPPED_BYTES += mySize;
   }
 
 

@@ -319,7 +319,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       LOG.error(e);
     }
     LOG.info( "Closed local history at " + myVcsLocation.getAbsolutePath() );
-    LOG.info("TOTAL MAPPED BYTES = " + ByteBufferUtil.TOTAL_MAPPED_BYTES);
   }
 
   public synchronized VirtualFileListener getVirtualFileListener() {

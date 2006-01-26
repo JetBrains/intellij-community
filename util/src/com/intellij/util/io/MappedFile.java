@@ -56,7 +56,6 @@ public class MappedFile {
     myHolder = new ByteBufferUtil.ByteBufferHolder(buf, myFile);
     myRealSize = myFile.length();
     buf.position((int)myPosition);
-    ByteBufferUtil.TOTAL_MAPPED_BYTES += myRealSize;
   }
 
 
