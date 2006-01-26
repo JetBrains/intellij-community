@@ -10,13 +10,7 @@ import java.io.IOException;
  * @author max
  */
 public class PersistentStringEnumerator {
-  private static final CachingStrategy ourCachingStrategy;
-  static {
-    final long mx = Runtime.getRuntime().maxMemory();
-    final int cacheSize = (mx == Long.MAX_VALUE) ? (1 << 20) : (int)(mx >> 5);
-    ourCachingStrategy = new SharedCachingStrategy(1 << 14, cacheSize);
-  }
-  private CachedFile myStorage;
+  private MappedFile myStorage;
   private static final int FIRST_VECTOR_OFFSET = 4;
   private static final int DIRTY_MAGIC = 0xbabe0589;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac;
@@ -38,7 +32,11 @@ public class PersistentStringEnumerator {
   }
 
   public PersistentStringEnumerator(File file) throws IOException {
-    myStorage = new CachedRandomAccessFile(file, ourCachingStrategy);
+    this(file, 1024 * 4);
+  }
+
+  public PersistentStringEnumerator(File file, int initialSize) throws IOException {
+    myStorage = new MappedFile(file, initialSize);
     if (myStorage.length() == 0) {
       markDirty(true);
       allocVector();
@@ -46,7 +44,7 @@ public class PersistentStringEnumerator {
     else {
       int sign;
       try {
-        sign = myStorage.readInt();
+        sign = myStorage.getInt(0);
       }
       catch(Exception e) {
         sign = DIRTY_MAGIC;
@@ -70,8 +68,7 @@ public class PersistentStringEnumerator {
       lastVector = vector;
       pos = vector + (hc & LEVEL_MASK) * 4;
       hc >>>= BITS_PER_LEVEL;
-      myStorage.seek(pos);
-      vector = myStorage.readInt();
+      vector = myStorage.getInt(pos);
       depth++;
     }
     while (vector > 0);
@@ -79,8 +76,7 @@ public class PersistentStringEnumerator {
     if (vector == 0) {
       // Empty slot
       final int newId = writeNewString(value, valueHC);
-      myStorage.seek(pos);
-      myStorage.writeInt(-newId);
+      myStorage.putInt(pos, -newId);
       return newId;
     }
     else {
@@ -111,15 +107,12 @@ public class PersistentStringEnumerator {
           final int oldHCByte = hcByte(candidateHC, depth);
           if (valueHCByte == oldHCByte) {
             int newVector = allocVector();
-            myStorage.seek(lastVector + oldHCByte * 4 );
-            myStorage.writeInt(newVector);
+            myStorage.putInt(lastVector + oldHCByte * 4, newVector);
             lastVector = newVector;
           }
           else {
-            myStorage.seek(lastVector + oldHCByte * 4 );
-            myStorage.writeInt(vector);
-            myStorage.seek(lastVector + valueHCByte * 4);
-            myStorage.writeInt(-newId);
+            myStorage.putInt(lastVector + valueHCByte * 4, -newId);
+            myStorage.putInt(lastVector + oldHCByte * 4, vector);
             break;
           }
           depth++;
@@ -128,10 +121,8 @@ public class PersistentStringEnumerator {
       }
       else {
         // Hashcode collision detected. Insert new string into the list of colliding.
-        myStorage.seek(newId);
-        myStorage.writeInt(vector);
-        myStorage.seek(pos);
-        myStorage.writeInt(-newId);
+        myStorage.putInt(newId, vector);
+        myStorage.putInt(pos, -newId);
       }
       return newId;
     }
@@ -144,13 +135,12 @@ public class PersistentStringEnumerator {
   private int allocVector() throws IOException {
     final int pos = (int)myStorage.length();
     myStorage.seek(pos);
-    myStorage.write(EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
+    myStorage.put(EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
     return pos;
   }
 
   private int nextCanditate(final int idx) throws IOException {
-    myStorage.seek(idx);
-    return -myStorage.readInt();
+    return -myStorage.getInt(idx);
   }
 
   private static boolean isAscii(final String str) {
@@ -167,7 +157,7 @@ public class PersistentStringEnumerator {
     try {
       markDirty(true);
 
-      final CachedFile storage = myStorage;
+      final MappedFile storage = myStorage;
       final int pos = (int)storage.length();
       storage.seek(pos);
 
@@ -186,7 +176,7 @@ public class PersistentStringEnumerator {
         for (int i = 0; i < len; i++) {
           buf[i + STRING_HEADER_SIZE] = (byte)value.charAt(i);
         }
-        storage.write(buf, 0, len + STRING_HEADER_SIZE);
+        storage.put(buf, 0, len + STRING_HEADER_SIZE);
       }
       else {
         storage.writeInt(0);
@@ -203,13 +193,12 @@ public class PersistentStringEnumerator {
   }
 
   public int hashCodeOf(int idx) throws IOException {
-    myStorage.seek(idx + 4);
-    return myStorage.readInt();
+    return myStorage.getInt(idx + 4);
   }
 
   public String valueOf(int idx) throws IOException {
     final String result;
-    final CachedFile storage = myStorage;
+    final MappedFile storage = myStorage;
     storage.seek(idx + 8);
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
@@ -217,7 +206,7 @@ public class PersistentStringEnumerator {
     }
     else {
       final byte[] buf = buffer;
-      storage.read(buf, 0, len);
+      storage.get(buf, 0, len);
       char[] chars = new char[len];
       for (int i = 0; i < len; i++) {
         chars[i] = (char)buf[i];
@@ -256,15 +245,13 @@ public class PersistentStringEnumerator {
   private void markDirty(boolean dirty) throws IOException {
     if (myDirty) {
       if (!dirty) {
-        myStorage.seek(0);
-        myStorage.writeInt(CORRECTLY_CLOSED_MAGIC);
+        myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
         myDirty = false;
       }
     }
     else {
       if (dirty) {
-        myStorage.seek(0);
-        myStorage.writeInt(DIRTY_MAGIC);
+        myStorage.putInt(0, DIRTY_MAGIC);
         myDirty = true;
       }
     }
