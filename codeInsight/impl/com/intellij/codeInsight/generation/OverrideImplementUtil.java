@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +28,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -215,7 +215,7 @@ public class OverrideImplementUtil {
     List<PsiMethod> list = new ArrayList<PsiMethod>();
 
     for (PsiMethod result : results) {
-      EjbUtil.tuneMethodForEjb(EjbRolesUtil.getEjbRole(aClass), method, result);
+      EjbUtil.tuneMethodForEjb(EjbRolesUtil.getEjbRolesUtil().getEjbRole(aClass), method, result);
 
       setupMethodBody(result, method, aClass);
 

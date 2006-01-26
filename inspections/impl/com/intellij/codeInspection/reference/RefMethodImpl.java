@@ -9,9 +9,8 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.role.*;
+import com.intellij.javaee.ejb.role.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -20,6 +19,9 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.ejb.role.EjbMethodRoleEnum;
+import com.intellij.javaee.ejb.role.EjbClassRole;
+import com.intellij.javaee.ejb.role.EjbMethodRole;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -252,12 +254,13 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
       setBodyEmpty(isOnlyCallsSuper() || !isLibraryOverride() && (body == null || body.getStatements().length == 0));
 
-      EjbClassRole classRole = EjbRolesUtil.getEjbRole(method.getContainingClass());
+      final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
+      EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
       if (classRole != null) {
-        EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
+        EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
         if (role != null) {
           EjbMethodRoleEnum roleType = role.getType();
-          if (role instanceof EjbDeclMethodRole) {
+          if (role instanceof EjbDeclMethodRoleImpl) {
             setEjbDeclaration(true);
 
             if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_DECL ||
@@ -270,7 +273,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
                 refParameter.parameterReferenced(true);
               }
             }
-          } else if (role instanceof EjbImplMethodRole) {
+          } else if (role instanceof EjbImplMethodRoleImpl) {
             PsiMethod[] declarations = EjbUtil.findEjbDeclarations(method);
             if (declarations.length != 0) {
               for (PsiMethod psiDeclaration : declarations) {
@@ -359,7 +362,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     if (getSuperMethods().size() == 0) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        EjbClassRole role = EjbRolesUtil.getEjbRole(method.getContainingClass());
+        EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method.getContainingClass());
         myUnThrownExceptions = new ArrayList<PsiClassType>(throwsList.length);
         for (final PsiClassType type : throwsList) {
           String qualifiedName = type.getCanonicalText();

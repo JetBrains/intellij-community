@@ -2,13 +2,9 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.j2ee.ejb.EjbRolesUtil;
-import com.intellij.j2ee.ejb.role.EjbClassRole;
-import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
-import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.javaee.ejb.role.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +28,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     if (refElement instanceof RefClass) {
       final RefClass refClass = ((RefClass)refElement);
       final PsiClass psiClass = (PsiClass)refClass.getElement();
-      EjbClassRole role = EjbRolesUtil.getEjbRole(psiClass);
+      EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
       if (role != null) {
         refClass.setFlag(false, CAN_BE_FINAL_MASK);
         return;
@@ -89,7 +85,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final PsiClass psiClass = (PsiClass)refElement.getElement();
       if (psiClass != null) {
 
-        EjbClassRole role = EjbRolesUtil.getEjbRole(psiClass);
+        EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
         if (role != null) {
           refElement.setFlag(false, CAN_BE_FINAL_MASK);
         }
@@ -184,13 +180,14 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
         if (method != null) {
-          EjbClassRole classRole = EjbRolesUtil.getEjbRole(method.getContainingClass());
+          final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
+          EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
           if (classRole != null) {
             if (!refMethod.getSuperMethods().isEmpty() || refMethod.isLibraryOverride()) {
               refMethod.setFlag(false, CAN_BE_FINAL_MASK);
             }
-            EjbMethodRole role = EjbRolesUtil.getEjbRole(method);
-            if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
+            EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
+            if (role instanceof EjbDeclMethodRoleImpl || role instanceof EjbImplMethodRoleImpl) {
               refMethod.setFlag(false, CAN_BE_FINAL_MASK);
             }
           }
