@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -1069,6 +1071,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     boolean myTaglibDeclaration;
     private final XmlTag myTag;
     private final String myNamespacePrefix;
+    private static final String MY_DEFAULT_XML_NS = "someuri";
+    private static final String URI_ATTR_NAME = "uri";
 
     public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix, boolean taglibDeclaration) {
       myTag = tag;
@@ -1092,17 +1096,51 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return true;
     }
 
-    private String[] guessNamespace(PsiFile file, Project project, boolean acceptTaglib, boolean acceptXmlNs) {
-      List<String> possibleUris = new LinkedList<String>();
+    private String[] guessNamespace(final PsiFile file, final Project project, final boolean acceptTaglib, final boolean acceptXmlNs) {
+      final List<String> possibleUris = new LinkedList<String>();
+
+      boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+
+      if (unitTestMode) doFindUris(acceptTaglib, project, file, possibleUris, acceptXmlNs);
+      else {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          new Runnable() {
+            public void run() {
+              doFindUris(acceptTaglib, project, file, possibleUris, acceptXmlNs);
+            }
+          },
+          XmlErrorMessages.message("finding.acceptable.uri"),
+          false,
+          project
+        );
+      }
+
+      return possibleUris.toArray( new String[possibleUris.size()] );
+    }
+
+    private void doFindUris(final boolean acceptTaglib,
+                            final Project project,
+                            final PsiFile file,
+                            final List<String> possibleUris,
+                            final boolean acceptXmlNs) {
+      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
       if (acceptTaglib) {
+        if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
         final JspManager instance = JspManager.getInstance(project);
         final JspFile jspFile = (JspFile)file;
         final String[] possibleTldUris = instance.getPossibleTldUris(jspFile);
 
         Arrays.sort(possibleTldUris);
+        int i = 0;
 
         for(String uri:possibleTldUris) {
+          if (pi != null) {
+            pi.setFraction((double)i/possibleTldUris.length);
+            pi.setText2(uri);
+            ++i;
+          }
+
           final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
           if (tldFileByUri == null) continue;
           final PsiMetaData metaData = tldFileByUri.getDocument().getMetaData();
@@ -1116,10 +1154,17 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
 
       if (acceptXmlNs) {
+        if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.schemas"));
         final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
         final String[] availableUrls = instanceEx.getResourceUrls(null,true);
-
+        int i = 0;
+        
         for(String url:availableUrls) {
+          if (pi != null) {
+            pi.setFraction(((double)i)/availableUrls.length);
+            pi.setText2(url);
+            ++i;
+          }
           final XmlFile xmlFile = XmlUtil.findXmlFile(file, url);
 
           if (xmlFile != null) {
@@ -1132,23 +1177,17 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                 possibleUris.add(url);
               }
             }
-
           }
         }
       }
-
-     if (possibleUris.size() == 0) {
-        if (acceptTaglib) possibleUris.add(XmlUtil.JSTL_CORE_URIS[0]);
-        else possibleUris.add("someuri");
-      }
-      return possibleUris.toArray( new String[possibleUris.size()] );
     }
 
     public void invoke(final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+      final boolean taglib = myTaglibDeclaration || file instanceof JspFile;
       final String[] namespaces = guessNamespace(
         file,
         project,
-        myTaglibDeclaration || file instanceof JspFile,
+        taglib,
         !(file instanceof JspFile) || file.getFileType() == StdFileTypes.JSPX
       );
 
@@ -1192,11 +1231,19 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           createPopup().
           showInBestPositionFor(editor);
       } else {
-        insertNsDeclaration(file, namespaces[0], project);
+        String defaultNs = taglib ? XmlUtil.JSTL_CORE_URIS[0]:MY_DEFAULT_XML_NS;
+        final XmlAttribute xmlAttribute = insertNsDeclaration(file, namespaces.length > 0 ? namespaces[0] : defaultNs, project);
+
+        if (namespaces.length == 0) {
+          final PsiElement valueToken = xmlAttribute.getValueElement().getChildren()[1];
+          final TextRange textRange = valueToken.getTextRange();
+          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+          editor.getCaretModel().moveToOffset(textRange.getStartOffset());
+        }
       }
     }
 
-    private void insertNsDeclaration(final PsiFile file, final String namespace, final Project project)
+    private XmlAttribute insertNsDeclaration(final PsiFile file, final String namespace, final Project project)
       throws IncorrectOperationException {
       final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
       final PsiElementFactory elementFactory = rootTag.getManager().getElementFactory();
@@ -1206,7 +1253,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         PsiElement element = childTag.add(elementFactory.createXmlAttribute("prefix", myNamespacePrefix));
 
         childTag.addAfter(
-          elementFactory.createXmlAttribute("uri",namespace),
+          elementFactory.createXmlAttribute(URI_ATTR_NAME,namespace),
           element
         );
 
@@ -1215,11 +1262,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         );
 
         CodeStyleManager.getInstance(project).reformat(element);
+        return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
       }
       else {
+        final String name = "xmlns:" + myNamespacePrefix;
         rootTag.add(
-          elementFactory.createXmlAttribute("xmlns:"+myNamespacePrefix,namespace)
+          elementFactory.createXmlAttribute(name,namespace)
         );
+        return rootTag.getAttribute(name, null);
       }
     }
 
