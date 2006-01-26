@@ -64,7 +64,7 @@ public class BuildProperties extends CompositeGenerator {
       add(new Comment(
         CompilerBundle.message("generated.ant.build.form.compiler.comment", ApplicationNamesInfo.getInstance().getFullProductName())), 1);
       //noinspection HardCodedStringLiteral
-      add(new Comment("  javac2.jar; jdom.jar; bcel.jar; asm.jar"));
+      add(new Comment("  javac2.jar; jdom.jar; asm.jar; asm-commons.jar"));
       //noinspection HardCodedStringLiteral
       add(new Tag("taskdef", new Pair[] {
         new Pair<String, String>("name", "javac2"),
