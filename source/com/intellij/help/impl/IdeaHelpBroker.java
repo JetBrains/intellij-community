@@ -183,11 +183,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   public void setDisplayed(boolean visible){
     createHelpWindow();
     if(myModallyActivated){
+      myDialog.setVisible(visible);
       if(visible){
         myDialog.setLocationRelativeTo(myDialog.getOwner());
-        myDialog.show();
-      } else{
-        myDialog.hide();
       }
     } else{
       //myFrame.setLocationRelativeTo(null);
@@ -370,10 +368,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
     jhelp.getModel().setCurrentURL(url);
     if(myModallyActivated){
       myDialog.setVisible(true);
-      myDialog.show();
+      myDialog.setVisible(true);
     } else{
       myFrame.setVisible(true);
-      myFrame.show();
     }
   }
 

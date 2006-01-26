@@ -112,9 +112,6 @@ public class BlockBorder implements Border {
     jFrame.setBounds(100, 100, 200, 200);
 
 
-    jFrame.show();
-
-
+    jFrame.setVisible(true);
   }
-
 }

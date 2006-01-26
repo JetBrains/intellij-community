@@ -43,7 +43,7 @@ public class SpeedSearchPane extends JDialog {
   public void update() {
     if (!isShowing()) {
       if (myPopup.getSpeedSearch().isHoldingFilter()) {
-        show();
+        setVisible(true);
 
         final JLabel title = myPopup.getTitle();
         final Point titleScreenPoint = title.getLocationOnScreen();
@@ -53,7 +53,7 @@ public class SpeedSearchPane extends JDialog {
     }
     else {
       if (!myPopup.getSpeedSearch().isHoldingFilter()) {
-        hide();
+        setVisible(false);
       }
       else {
         updateTextAndBounds();

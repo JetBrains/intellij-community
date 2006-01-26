@@ -40,10 +40,9 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
     if(project!=null){
       ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
       String[] ids=toolWindowManager.getToolWindowIds();
-      for(int i=0;i<ids.length;i++){
-        String id=ids[i];
-        ToolWindow toolWindow=toolWindowManager.getToolWindow(id);
-        if(ToolWindowType.FLOATING==toolWindow.getType() && toolWindow.isVisible()){
+      for (String id : ids) {
+        ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+        if (ToolWindowType.FLOATING == toolWindow.getType() && toolWindow.isVisible()) {
           toolWindow.hide(null);
         }
       }
@@ -59,7 +58,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
       frame.dispose();
       frame.setUndecorated(true);
       frame.setBounds(bounds);
-      frame.show();
+      frame.setVisible(true);
       graphicsConfiguration.getDevice().setFullScreenWindow(frame);
     }else{ // toggle full screen off
       Rectangle boundsBeforeFullScreen=(Rectangle)frame.getRootPane().getClientProperty(PROP_BOUNDS_BEFORE_FULL_SCREEN);
@@ -68,7 +67,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
       frame.setUndecorated(false);
       if(boundsBeforeFullScreen!=null){
         frame.setBounds(boundsBeforeFullScreen);
-        frame.show();
+        frame.setVisible(true);
       }else{
         frame.setBounds(
           bounds.x+insets.left,
@@ -76,7 +75,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
           bounds.width-insets.left-insets.right,
           bounds.height-insets.top-insets.bottom
         );
-        frame.show();
+        frame.setVisible(true);
         frame.setExtendedState(Frame.MAXIMIZED_BOTH);
       }
     }

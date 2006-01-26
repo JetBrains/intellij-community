@@ -184,12 +184,12 @@ public class CalloutComponent {
     myPointerComponent.setBounds(pointerBounds);
 
     myFrame.setBounds(frameBounds);
-    myFrame.show();
+    myFrame.setVisible(true);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         installDisposeListeners();
-        myFrame.show();
+        myFrame.setVisible(true);
       }
     });
   }

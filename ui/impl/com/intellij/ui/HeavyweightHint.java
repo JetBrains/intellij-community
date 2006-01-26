@@ -49,7 +49,7 @@ public class HeavyweightHint implements Hint {
     myWindow.getContentPane().add(myComponent, BorderLayout.CENTER);
     myWindow.setBounds(locationOnScreen.x + x, locationOnScreen.y + y, preferredSize.width, preferredSize.height);
     myWindow.pack();
-    myWindow.show();
+    myWindow.setVisible(true);
   }
 
   protected void fireHintHidden() {

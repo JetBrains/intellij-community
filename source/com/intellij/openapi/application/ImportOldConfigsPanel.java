@@ -160,6 +160,6 @@ public class ImportOldConfigsPanel extends JDialog {
 
   public static void main(String[] args) {
     ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
-    dlg.show();
+    dlg.setVisible(true);
   }
 }

@@ -39,8 +39,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 
-// Made non-final for Fabrique
-public class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
+public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
   private static boolean ourAlphaModeLibraryLoaded;
   @NonNls protected static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
@@ -79,8 +78,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
    */
   protected DesktopLayout myLayout;
 
-// Made protected for Fabrique
-  protected final HashMap<Project, IdeFrame> myProject2Frame;
+  private final HashMap<Project, IdeFrame> myProject2Frame;
 
   private final HashMap<Project, Set<JDialog>> myDialogsToDispose;
 
@@ -157,7 +155,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     if (myFrameBounds != null) {
       frame.setBounds(myFrameBounds);
     }
-    frame.show();
+    frame.setVisible(true);
     frame.setExtendedState(myFrameExtendedState);
   }
 
@@ -235,7 +233,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
       }
       else {
         queueForDisposal(dialog, project);
-        dialog.hide();
+        dialog.setVisible(false);
       }
     }
   }
@@ -259,8 +257,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     return myWindowWatcher.suggestParentWindow(project);
   }
 
-// made non-final for Fabrique
-  public StatusBar getStatusBar(final Project project) {
+  public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {
       return null;
     }
@@ -269,12 +266,10 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     return frame.getStatusBar();
   }
 
-  // made non-final for Fabrique
-  public IdeFrame getFrame(final Project project) {
+  public final IdeFrame getFrame(final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
-    final IdeFrame frame = myProject2Frame.get(project);
-    return frame;
+    return myProject2Frame.get(project);
   }
 
   public final IdeFrame allocateFrame(final Project project) {
@@ -294,7 +289,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
       }
       frame.setProject(project);
       myProject2Frame.put(project, frame);
-      frame.show();
+      frame.setVisible(true);
     }
 
     frame.addWindowListener(myActivationListener);
@@ -350,8 +345,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     return myWindowWatcher.getFocusedWindow();
   }
 
-// made non-final for Fabrique
-  public Component getFocusedComponent(final Window window) {
+  public final Component getFocusedComponent(final Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
@@ -370,8 +364,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     return "window.manager";
   }
 
-// Non final for Fabrique
-  public void readExternal(final Element element) throws InvalidDataException {
+  public final void readExternal(final Element element) throws InvalidDataException {
     final Element frameElement = element.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
 // load frame bounds
@@ -412,8 +405,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     }
   }
 
-// Non final for Fabrique
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public final void writeExternal(final Element element) throws WriteExternalException {
     // Save frame bounds
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);

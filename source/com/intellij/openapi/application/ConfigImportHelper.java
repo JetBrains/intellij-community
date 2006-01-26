@@ -37,7 +37,7 @@ public class ConfigImportHelper {
   public static void importConfigsTo(String newConfigPath) {
     do {
       ImportOldConfigsPanel dlg = new ImportOldConfigsPanel();
-      dlg.show();
+      dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();
         File oldConfigDir = getOldConfigDir(instHome);
