@@ -378,7 +378,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     ArrayList<PsiClass> psiClasses = new ArrayList<PsiClass>();
     for (TreePath path : paths) {
       PsiClass psiClass = extractPsiClass(path);
-      if (psiClass == null) continue;
+      if (psiClass == null || !psiClass.isValid()) continue;
       psiClasses.add(psiClass);
     }
     return psiClasses.toArray(new PsiClass[psiClasses.size()]);
@@ -386,7 +386,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
 
   public final Object getData(final String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      return getSelectedClass();
+      final PsiClass aClass = getSelectedClass();
+      return aClass != null && aClass.isValid()? aClass : null;
     }
     if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
