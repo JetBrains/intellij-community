@@ -1,5 +1,6 @@
 package com.intellij.find.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
@@ -56,7 +57,12 @@ import java.util.regex.Pattern;
 public class FindInProjectUtil {
   private static final int USAGES_LIMIT = 1000;
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
-  private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
+  private static final int SINGLE_FILE_SIZE_LIMIT = 1024; // = 5 * 1024 * 1024; // megabytes.
+
+  private static final int SKIP = 0;
+  private static final int PROCESS = 1;
+  private static final int SKIP_ALL = 2;
+  private static final int PROCESS_ALL = 3;
 
   private FindInProjectUtil() {}
 
@@ -174,6 +180,8 @@ public class FindInProjectUtil {
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
+    boolean skipAllLarge = false;
+    boolean processAllLarge = false;
     try {
       int i =0;
       long totalFilesSize = 0;
@@ -190,11 +198,23 @@ public class FindInProjectUtil {
         if (fileLength == -1) continue; // Binary or invalid
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-          int retCode = showMessage(project, FindBundle.message("find.skip.large.file.prompt",
-                                                                ApplicationNamesInfo.getInstance().getProductName(),
-                                                                getPresentablePath(virtualFile), presentableSize(fileLength)),
-                                    FindBundle.message("find.skip.large.file.title"));
-          if (retCode == DialogWrapper.OK_EXIT_CODE) continue;
+          if (skipAllLarge) continue;
+          if (!processAllLarge) {
+            int retCode = showMessage(project, FindBundle.message("find.skip.large.file.prompt",
+                                                                  ApplicationNamesInfo.getInstance().getProductName(),
+                                                                  getPresentablePath(virtualFile), presentableSize(fileLength)),
+                                      FindBundle.message("find.skip.large.file.title"));
+            if (retCode == SKIP_ALL) {
+              skipAllLarge = true;
+              continue;
+            }
+            else if (retCode == SKIP) {
+              continue;
+            }
+            else if (retCode == PROCESS_ALL) {
+              processAllLarge = true;
+            }
+          }
         }
 
         int countBefore = count[0];
@@ -273,7 +293,8 @@ public class FindInProjectUtil {
   }
 
   private static void showTooManyUsagesWaring(final Project project, final String message) {
-    if (showMessage(project, message, FindBundle.message("find.excessive.usages.title")) != DialogWrapper.OK_EXIT_CODE) {
+    int retCode = Messages.showYesNoDialog(project, message, FindBundle.message("find.excessive.usages.title"), Messages.getWarningIcon());
+    if (retCode != DialogWrapper.OK_EXIT_CODE) {
       throw new ProcessCanceledException();
     }
   }
@@ -283,7 +304,13 @@ public class FindInProjectUtil {
     try {
       SwingUtilities.invokeAndWait(new Runnable() {
         public void run() {
-          answer[0] = Messages.showYesNoDialog(project, message, title, Messages.getWarningIcon());
+          answer[0] = Messages.showDialog(project, message, title,
+                                          new String[] {
+                                            CommonBundle.message("button.yes"),
+                                            CommonBundle.message("button.no"),
+                                            CommonBundle.message("button.yes.for.all"),
+                                            CommonBundle.message("button.no.for.all")
+                                          }, 0, Messages.getWarningIcon());
         }
       });
     }
