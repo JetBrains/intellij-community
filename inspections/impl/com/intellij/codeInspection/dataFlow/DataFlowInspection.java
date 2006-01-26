@@ -211,8 +211,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       final String text = isNullLiteralExpression(expr)
                           ? InspectionsBundle.message("dataflow.message.passing.null.argument")
                           : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
-
-      descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      LocalQuickFix[] fixes = createNPEFixes(expr);
+      descriptions.add(manager.createProblemDescriptor(expr, text, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     exprs = runner.getNullableAssignments();

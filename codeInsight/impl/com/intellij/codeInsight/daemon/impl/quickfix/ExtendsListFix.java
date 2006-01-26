@@ -10,6 +10,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtendsListFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListFix");
@@ -66,8 +67,12 @@ public class ExtendsListFix implements IntentionAction {
     PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
                                  myClass.getExtendsList() : myClass.getImplementsList();
     try {
-      modifyList(extendsList, myToAdd, -1);
-      modifyList(otherList, !myToAdd, -1);
+      if (extendsList != null) {
+        modifyList(extendsList, myToAdd, -1);
+      }
+      if (otherList != null) {
+        modifyList(otherList, !myToAdd, -1);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -82,7 +87,7 @@ public class ExtendsListFix implements IntentionAction {
   /**
    * @param position to add new class to or -1 if add to the end
    */
-  PsiReferenceList modifyList(PsiReferenceList extendsList, boolean add, int position) throws IncorrectOperationException {
+  PsiReferenceList modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     boolean alreadyExtends = false;
     for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {

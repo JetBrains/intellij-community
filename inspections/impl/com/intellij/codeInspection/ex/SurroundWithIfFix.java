@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
  * @author ven
  */
 public class SurroundWithIfFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.AddAssertStatementFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SurroundWithIfFix");
   private PsiExpression myExpression;
   private String myText;
 
