@@ -18,31 +18,31 @@ package org.jetbrains.idea.devkit.module;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.j2ee.make.ModuleBuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
-import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
-import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.build.PluginBuildUtil;
+import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
@@ -133,7 +133,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     // don't allow modules that don't use an IDEA-JDK
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       //noinspection unchecked
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     final Module[] modules = ModuleManager.getInstance(module.getProject()).getModules();
