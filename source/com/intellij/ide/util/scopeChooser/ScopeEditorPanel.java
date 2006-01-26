@@ -221,12 +221,12 @@ public class ScopeEditorPanel {
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
       final String modulePattern = node.toString();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     } else if (node instanceof ModuleNode) {
-      if (!recursively) return null;
+      if (!recursively) return null;                            
       final String scope = getSelectedScopeType(node);
       final String modulePattern = ((ModuleNode)node).getModuleName();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     }
     else if (node instanceof PackageNode) {
       String pattern = ((PackageNode)node).getPackageQName();

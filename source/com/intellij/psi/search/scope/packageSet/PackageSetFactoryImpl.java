@@ -101,7 +101,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           pattern.append("*");
         } else if (myLexer.getTokenType() == TokenTypeEx.DOT){
           wasIdentifier = false;
-          pattern.append("\\.");
+          pattern.append(".");
         } else if (myLexer.getTokenType() == TokenTypeEx.WHITE_SPACE){
           wasIdentifier = false;
           pattern.append(" ");

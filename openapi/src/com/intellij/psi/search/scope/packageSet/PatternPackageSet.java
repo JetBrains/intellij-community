@@ -59,9 +59,9 @@ public class PatternPackageSet implements PackageSet {
     myModulePattern = modulePattern == null || modulePattern.length() == 0
                       ? null
                       : Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
-    myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern)) : null;
+    myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern, '.')) : null;
     if (filePattern != null){
-      myFilePattern = Pattern.compile(StringUtil.replace(filePattern, "*", ".*"));
+      myFilePattern = Pattern.compile(convertToRegexp(filePattern, '/'));
     }
   }
 
@@ -121,27 +121,27 @@ public class PatternPackageSet implements PackageSet {
     return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + file.getVirtualFile().getNameWithoutExtension();
   }
 
-  private static String convertToRegexp(String aspectsntx) {
+  private static String convertToRegexp(String aspectsntx, char separator) {
     StringBuffer buf = new StringBuffer(aspectsntx.length());
     int cur = 0;
-    boolean isAfterDot = false;
+    boolean isAfterSeparator = false;
     while (cur < aspectsntx.length()) {
       char curChar = aspectsntx.charAt(cur);
-      if (curChar != '.' && isAfterDot) {
-        buf.append("\\."); // Dot
-        isAfterDot = false;
+      if (curChar != separator && isAfterSeparator) {
+        buf.append("\\" + separator);
+        isAfterSeparator = false;
       }
 
       if (curChar == '*') {
-        buf.append("[^\\.]*"); // Any char sequence that does not contain dots.;
+        buf.append("[^\\" + separator + "]*");
       }
-      else if (curChar == '.') {
-        if (isAfterDot) {
-          buf.append("\\.(.*\\.)?"); // Any char sequence starts and ends with dot.;
-          isAfterDot = false;
+      else if (curChar == separator) {
+        if (isAfterSeparator) {
+          buf.append("\\" +separator+ "(.*\\" + separator + ")?");
+          isAfterSeparator = false;
         }
         else {
-          isAfterDot = true;
+          isAfterSeparator = true;
         }
       }
       else {
