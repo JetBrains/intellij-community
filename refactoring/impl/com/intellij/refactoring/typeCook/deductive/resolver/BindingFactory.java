@@ -5,6 +5,7 @@ import com.intellij.psi.PsiTypeVariable;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
+import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.psi.Bottom;
 import com.intellij.psi.*;
@@ -20,11 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jan 13, 2005
- * Time: 3:46:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public class BindingFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.resolver.BindingFactory");
@@ -52,9 +49,9 @@ public class BindingFactory {
         }
         else {
           final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-          final PsiClass[] bSubs = helper.findInheritors(bClass, GlobalSearchScope.allScope(myProject), false);
-          for (int i = 0; i < bSubs.length; i++) {
-            getGreatestLowerClasses(bSubs[i], aClass, descendants);
+          final PsiClass[] bInheritors = helper.findInheritors(bClass, GlobalSearchScope.allScope(myProject), false);
+          for (PsiClass bInheritor : bInheritors) {
+            getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }
       }
@@ -393,9 +390,7 @@ public class BindingFactory {
               boolean first = true;
               int direction = Binding.SAME;
 
-              for (Iterator<PsiTypeParameter> i = xSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
-                final PsiTypeParameter p = i.next();
-
+              for (final PsiTypeParameter p : xSubst.getSubstitutionMap().keySet()) {
                 final PsiType xParm = xSubst.substitute(p);
                 final PsiType yParm = ySubst.substitute(p);
 
@@ -1009,9 +1004,7 @@ public class BindingFactory {
           else {
             final PsiClass[] descendants = getGreatestLowerClasses(xClass, yClass);
 
-            for (int i = 0; i < descendants.length; i++) {
-              final PsiClass descendant = descendants[i];
-
+            for (final PsiClass descendant : descendants) {
               final PsiSubstitutor x2aSubst = TypeConversionUtil.getClassSubstitutor(xClass, descendant, xSubst);
               final PsiSubstitutor y2aSubst = TypeConversionUtil.getClassSubstitutor(yClass, descendant, ySubst);
               LOG.assertTrue(x2aSubst != null && y2aSubst != null);
@@ -1091,11 +1084,9 @@ public class BindingFactory {
           else {
             final PsiClass[] ancestors = GenericsUtil.getLeastUpperClasses(xClass, yClass);
 
-            for (int i = 0; i < ancestors.length; i++) {
-              final PsiClass ancestor = ancestors[i];
-
+            for (final PsiClass ancestor : ancestors) {
               if ("java.lang.Object".equals(ancestor.getQualifiedName()) && ancestors.length > 1) {
-              continue;
+                continue;
               }
 
               final PsiSubstitutor x2aSubst = TypeConversionUtil.getSuperClassSubstitutor(ancestor, xClass, xSubst);
@@ -1113,7 +1104,7 @@ public class BindingFactory {
     return list;
   }
 
-  public BindingFactory(final com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem system) {
+  public BindingFactory(final ReductionSystem system) {
     myBoundVariables = system.getBoundVariables();
     myProject = system.getProject();
     myFactory = system.getVariableFactory();
