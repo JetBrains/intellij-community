@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -236,6 +237,9 @@ public class IdTableBuilding {
                                     return true;
                                   }
                                 });
+      }
+      catch(AlienFormFileException ex) {
+        // ignore
       }
       catch (Exception e) {
         LOG.error("Error indexing form file", e);
