@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 
 public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
@@ -61,9 +62,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         selectionStart = selectionModel.getSelectionStart();
         selectionEnd = selectionModel.getSelectionEnd();
       }
-      if ((commentStart < selectionStart || commentStart >= selectionEnd) &&
-          (commentEnd <= selectionStart || commentEnd > selectionEnd))
-      {
+      if ((commentStart < selectionStart || commentStart >= selectionEnd) && (commentEnd <= selectionStart || commentEnd > selectionEnd)) {
         commentRange(selectionStart, selectionEnd, prefix, suffix);
       }
       else {
@@ -198,8 +197,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         else {
           space = "";
         }
-        myDocument.insertString(endOffset, space + commentSuffix + "\n");
-        myDocument.insertString(startOffset, space + commentPrefix + "\n");
+        insertNestedComments(chars, startOffset, endOffset, space + commentPrefix + "\n", space + commentSuffix + "\n");
         myEditor.getSelectionModel().removeSelection();
         LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);
         myEditor.getCaretModel().moveToLogicalPosition(pos);
@@ -208,12 +206,54 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
     }
 
-    myDocument.insertString(endOffset, commentSuffix);
-    myDocument.insertString(startOffset, commentPrefix);
+    insertNestedComments(chars, startOffset, endOffset, commentPrefix, commentSuffix);
     myEditor.getSelectionModel().removeSelection();
     LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + commentPrefix.length());
     myEditor.getCaretModel().moveToLogicalPosition(pos);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private void insertNestedComments(CharSequence chars, int startOffset, int endOffset, String commentPrefix, String commentSuffix) {
+    String normalizedPrefix = commentPrefix.trim();
+    String normalizedSuffix = commentSuffix.trim();
+    IntArrayList nestedCommentPrefixes = new IntArrayList();
+    IntArrayList nestedCommentSuffixes = new IntArrayList();
+    for (int i = startOffset; i < endOffset; ++i) {
+      if (CharArrayUtil.regionMatches(chars, i, normalizedPrefix)) {
+        nestedCommentPrefixes.add(i);
+      }
+      else {
+        if (CharArrayUtil.regionMatches(chars, i, normalizedSuffix)) {
+          nestedCommentSuffixes.add(i);
+        }
+      }
+    }
+    myDocument.insertString(endOffset, commentSuffix);
+    // process nested comments in back order
+    int i = nestedCommentPrefixes.size() - 1, j = nestedCommentSuffixes.size() - 1;
+    while (i >= 0 && j >= 0) {
+      final int prefixIndex = nestedCommentPrefixes.get(i);
+      final int suffixIndex = nestedCommentSuffixes.get(j);
+      if (prefixIndex > suffixIndex) {
+        myDocument.insertString(prefixIndex, commentSuffix);
+        --i;
+      }
+      else {
+        myDocument.insertString(suffixIndex + commentSuffix.length(), commentPrefix);
+        --j;
+      }
+    }
+    while (i >= 0) {
+      final int prefixIndex = nestedCommentPrefixes.get(i);
+      myDocument.insertString(prefixIndex, commentSuffix);
+      --i;
+    }
+    while (j >= 0) {
+      final int suffixIndex = nestedCommentSuffixes.get(j);
+      myDocument.insertString(suffixIndex + commentSuffix.length(), commentPrefix);
+      --j;
+    }
+    myDocument.insertString(startOffset, commentPrefix);
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix) {
