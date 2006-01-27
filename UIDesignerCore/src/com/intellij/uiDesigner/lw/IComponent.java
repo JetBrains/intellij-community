@@ -41,4 +41,6 @@ public interface IComponent {
   IContainer getParentContainer();
 
   GridConstraints getConstraints();
+
+  boolean accept(ComponentVisitor visitor);
 }

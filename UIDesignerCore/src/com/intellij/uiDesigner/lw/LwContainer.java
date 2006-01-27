@@ -121,6 +121,21 @@ public class LwContainer extends LwComponent implements IContainer{
     return myBorderType;
   }
 
+  public boolean accept(ComponentVisitor visitor) {
+    if (!super.accept(visitor)) {
+      return false;
+    }
+
+    for (int i = 0; i < getComponentCount(); i++) {
+      final IComponent c = getComponent(i);
+      if (!c.accept(visitor)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /**
    * @see BorderType
    *

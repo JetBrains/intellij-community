@@ -15,8 +15,7 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.PropertiesProvider;
+import com.intellij.uiDesigner.lw.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.Document;
 import org.xml.sax.Attributes;
@@ -31,13 +30,15 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  *
  * NOTE: the class must be compilable with JDK 1.3, so any methods and filds introduced in 1.4 or later must not be used
- *
+ * @noinspection unchecked
  */
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
@@ -161,4 +162,46 @@ public final class Utils {
     return null;
   }
 
+  public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader) throws CodeGenerationException {
+    HashSet usedFormNames = new HashSet();
+    validateNestedFormLoop(usedFormNames, formName, nestedFormLoader);
+  }
+
+  private static void validateNestedFormLoop(final Set usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
+    throws CodeGenerationException {
+    if (usedFormNames.contains(formName)) {
+      throw new CodeGenerationException("Recursive form nesting is not allowed");
+    }
+    usedFormNames.add(formName);
+    final LwRootContainer rootContainer;
+    try {
+      rootContainer = nestedFormLoader.loadForm(formName);
+    }
+    catch (Exception e) {
+      throw new CodeGenerationException("Error loading nested form: " + e.getMessage());
+    }
+    final Set<String> thisFormNestedForms = new HashSet<String>();
+    final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
+    rootContainer.accept(new ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        if (component instanceof LwNestedForm) {
+          LwNestedForm nestedForm = (LwNestedForm) component;
+          if (!thisFormNestedForms.contains(nestedForm.getFormFileName())) {
+            thisFormNestedForms.add(nestedForm.getFormFileName());
+            try {
+              validateNestedFormLoop(usedFormNames, nestedForm.getFormFileName(), nestedFormLoader);
+            }
+            catch (CodeGenerationException e) {
+              validateExceptions [0] = e;
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    });
+    if (validateExceptions [0] != null) {
+      throw validateExceptions [0];
+    }
+  }
 }

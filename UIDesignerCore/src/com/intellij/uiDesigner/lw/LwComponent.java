@@ -127,6 +127,10 @@ public abstract class LwComponent implements IComponent{
     return myConstraints;
   }
 
+  public boolean accept(ComponentVisitor visitor) {
+    return visitor.visit(this);
+  }
+
   public final LwContainer getParent(){
     return myParent;
   }

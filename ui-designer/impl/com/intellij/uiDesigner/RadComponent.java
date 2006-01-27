@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -508,5 +509,9 @@ public abstract class RadComponent implements IComponent {
 
   public boolean hasIntrospectedProperties() {
     return true;
+  }
+
+  public boolean accept(ComponentVisitor visitor) {
+    return visitor.visit(this);
   }
 }

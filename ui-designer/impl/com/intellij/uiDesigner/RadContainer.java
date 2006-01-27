@@ -7,6 +7,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.ComponentVisitor;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -571,6 +573,20 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  public boolean accept(ComponentVisitor visitor) {
+    if (!super.accept(visitor)) {
+      return false;
+    }
+
+    for (int i = 0; i < getComponentCount(); i++) {
+      final IComponent c = getComponent(i);
+      if (!c.accept(visitor)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
   private final class MyBorderTitleProperty extends Property{
     private final StringEditor myEditor;
 

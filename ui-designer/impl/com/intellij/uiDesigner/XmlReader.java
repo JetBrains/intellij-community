@@ -2,9 +2,11 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
@@ -38,7 +40,24 @@ public final class XmlReader {
 
     if (lwComponent instanceof LwNestedForm) {
       LwNestedForm nestedForm = (LwNestedForm) lwComponent;
-      component = new RadNestedForm(module, nestedForm.getFormFileName(), id);
+      boolean recursiveNesting = false;
+      try {
+        Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module));
+      }
+      catch(CodeGenerationException ex) {
+        recursiveNesting = true;
+      }
+      if (recursiveNesting) {
+        component = RadErrorComponent.create(
+          module,
+          id,
+          lwComponent.getComponentClassName(),
+          lwComponent.getErrorComponentProperties(),
+          "Form cannot be loaded because of recursive form nesting");
+      }
+      else {
+        component = new RadNestedForm(module, nestedForm.getFormFileName(), id);
+      }
     }
     else {
       if (lwComponent.getErrorComponentProperties() == null) {

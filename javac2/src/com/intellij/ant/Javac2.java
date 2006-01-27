@@ -296,12 +296,16 @@ public final class Javac2 extends Javac{
 
   private class AntNestedFormLoader implements NestedFormLoader {
     private ClassLoader myLoader;
+    private HashMap myFormCache = new HashMap();
 
     public AntNestedFormLoader(final ClassLoader loader) {
       myLoader = loader;
     }
 
     public LwRootContainer loadForm(String formFileName) throws Exception {
+      if (myFormCache.containsKey(formFileName)) {
+        return (LwRootContainer) myFormCache.get(formFileName);
+      }
       String formFileFullName = formFileName.toLowerCase();
       log("Searching for form " + formFileFullName, Project.MSG_VERBOSE);
       for (Iterator iterator = myFormFiles.iterator(); iterator.hasNext();) {
@@ -310,12 +314,16 @@ public final class Javac2 extends Javac{
         log("Comparing with " + name, Project.MSG_VERBOSE);
         if (name.endsWith(formFileFullName)) {
           InputStream formInputStream = new FileInputStream(file);
-          return Utils.getRootContainer(formInputStream, null);
+          final LwRootContainer container = Utils.getRootContainer(formInputStream, null);
+          myFormCache.put(formFileName, container);
+          return container;
         }
       }
       InputStream resourceStream = myLoader.getResourceAsStream("/" + formFileName + ".form");
       if (resourceStream != null) {
-        return Utils.getRootContainer(resourceStream, null);
+        final LwRootContainer container = Utils.getRootContainer(resourceStream, null);
+        myFormCache.put(formFileName, container);
+        return container;
       }
       throw new Exception("Cannot find nested form file " + formFileName);
     }

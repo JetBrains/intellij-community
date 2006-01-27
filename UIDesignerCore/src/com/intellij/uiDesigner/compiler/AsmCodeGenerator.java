@@ -248,7 +248,8 @@ public class AsmCodeGenerator {
       GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
       buildSetupMethod(generator);
 
-      if (myRootContainer.getComponent(0).getBinding() != null) {
+      final String rootBinding = myRootContainer.getComponent(0).getBinding();
+      if (rootBinding != null && myFieldDescMap.containsKey(rootBinding)) {
         buildGetRootComponenMethod();
       }
       super.visitEnd();
@@ -308,6 +309,7 @@ public class AsmCodeGenerator {
         if (nestedFormContainer.getComponent(0).getBinding() == null) {
           throw new CodeGenerationException("No binding on root component of nested form " + nestedForm.getFormFileName());
         }
+        Utils.validateNestedFormLoop(nestedForm.getFormFileName(), myFormLoader);
         className = nestedFormContainer.getClassToBind();
       }
       else {
