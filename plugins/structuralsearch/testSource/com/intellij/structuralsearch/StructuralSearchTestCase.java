@@ -1,20 +1,13 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.psi.PsiManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.testFramework.IdeaTestCase;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim.mossienko
- * Date: Oct 11, 2005
- * Time: 10:05:31 PM
- * To change this template use File | Settings | File Templates.
- */
 abstract class StructuralSearchTestCase extends IdeaTestCase {
   protected MatchOptions options;
   protected Matcher testMatcher;
@@ -27,6 +20,13 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     options.setLooseMatching( true );
     options.setRecursiveSearch(true);
     PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    testMatcher = null;
+    options = null;
+    super.tearDown();
   }
 
   protected int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {
