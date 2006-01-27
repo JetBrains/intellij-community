@@ -5,17 +5,24 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.LwNestedForm;
+import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,6 +30,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -209,9 +217,13 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   public void processComponentInsert(final Point point, final ComponentItem item) {
     myEditor.getActiveDecorationLayer().removeFeedback();
-    myInsertedComponent = createInsertedComponent(myEditor, item);
-
     myEditor.setDesignTimeInsets(2);
+
+    if (!validateNestedFormInsert(item)) {
+      return;
+    }
+
+    myInsertedComponent = createInsertedComponent(myEditor, item);
 
     final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0);
     if (FormEditingUtil.canDrop(myEditor, point.x, point.y, 1) || location.getMode() != GridInsertMode.None) {
@@ -271,6 +283,53 @@ public final class InsertComponentProcessor extends EventProcessor {
         null
       );
     }
+  }
+
+  private boolean validateNestedFormInsert(final ComponentItem item) {
+    final PsiManager manager = PsiManager.getInstance(myEditor.getProject());
+    PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(item.getClassName());
+    if (boundForms.length > 0) {
+      Set<String> usedFormNames = new HashSet<String>();
+      PsiFile editedFormFile = manager.findFile(myEditor.getFile());
+      usedFormNames.add(GuiEditorUtil.buildResourceName(editedFormFile));
+      if (!validateNestedFormLoop(usedFormNames, GuiEditorUtil.buildResourceName(boundForms [0]))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean validateNestedFormLoop(final Set<String> usedFormNames, final String formName) {
+    if (usedFormNames.contains(formName)) {
+      Messages.showErrorDialog(myEditor, "Adding this form is not allowed because it would create a loop of form nesting");
+      return false;
+    }
+    final LwRootContainer rootContainer;
+    try {
+      rootContainer = new PsiNestedFormLoader(myEditor.getModule()).loadForm(formName);
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(myEditor, "Error loading nested form: " + e.getMessage());
+      return false;
+    }
+    final Set<String> thisFormNestedForms = new HashSet<String>();
+    final Ref<Boolean> iterateResult = new Ref<Boolean>(Boolean.TRUE);
+    FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        if (component instanceof LwNestedForm) {
+          LwNestedForm nestedForm = (LwNestedForm) component;
+          if (!thisFormNestedForms.contains(nestedForm.getFormFileName())) {
+            thisFormNestedForms.add(nestedForm.getFormFileName());
+            if (!validateNestedFormLoop(usedFormNames, nestedForm.getFormFileName())) {
+              iterateResult.set(Boolean.FALSE);
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    });
+    return iterateResult.get().booleanValue();
   }
 
   public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {

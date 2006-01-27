@@ -28,6 +28,7 @@ import java.util.Iterator;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @noinspection unchecked
  */
 public final class LwRootContainer extends LwContainer implements IRootContainer{
   private String myClassToBind;
