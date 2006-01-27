@@ -142,7 +142,7 @@ import java.util.*;
       }
     }
 
-    if (aClass == IdeaTestCase.class) return;
+    if (aClass == LightIdeaTestCase.class) return;
     resetClassFields(aClass.getSuperclass());
   }
 
