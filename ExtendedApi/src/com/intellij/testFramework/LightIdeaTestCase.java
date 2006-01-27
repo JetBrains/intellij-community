@@ -17,6 +17,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -49,6 +49,8 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -116,6 +118,34 @@ import java.util.*;
     }
     */
   }
+
+  private void resetAllFields() {
+    resetClassFields(getClass());
+  }
+
+  private void resetClassFields(final Class<?> aClass) {
+    if (aClass == null) return;
+
+    final Field[] fields = aClass.getDeclaredFields();
+    for (Field field : fields) {
+      final int modifiers = field.getModifiers();
+      if ((modifiers & Modifier.FINAL) == 0
+          &&  (modifiers & Modifier.STATIC) == 0
+          && !field.getType().isPrimitive()) {
+        field.setAccessible(true);
+        try {
+          field.set(this, null);
+        }
+        catch (IllegalAccessException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    if (aClass == IdeaTestCase.class) return;
+    resetClassFields(aClass.getSuperclass());
+  }
+
 
   private void initProject() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -323,6 +353,7 @@ import java.util.*;
         }
         finally {
           ourTestThread = null;
+          resetAllFields();
         }
       }
     });

@@ -234,7 +234,13 @@ import java.util.HashSet;
   }
 
   private void resetAllFields() {
-    final Field[] fields = getClass().getDeclaredFields();
+    resetClassFields(getClass());
+  }
+
+  private void resetClassFields(final Class<?> aClass) {
+    if (aClass == null) return;
+
+    final Field[] fields = aClass.getDeclaredFields();
     for (Field field : fields) {
       final int modifiers = field.getModifiers();
       if ((modifiers & Modifier.FINAL) == 0
@@ -249,6 +255,9 @@ import java.util.HashSet;
         }
       }
     }
+
+    if (aClass == IdeaTestCase.class) return;
+    resetClassFields(aClass.getSuperclass());
   }
 
   private String getFullName() {
