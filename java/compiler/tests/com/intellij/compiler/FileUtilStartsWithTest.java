@@ -23,6 +23,7 @@ public class FileUtilStartsWithTest extends TestCase{
     assertTrue(FileUtil.startsWith("/usr/local/jeka", "/"));
     assertTrue(FileUtil.startsWith("c:/idea", "c:/"));
     assertTrue(FileUtil.startsWith("c:/idea", "c:"));
+    assertTrue(FileUtil.startsWith("c:/idea", ""));
     if (SystemInfo.isWindows) {
       assertTrue(FileUtil.startsWith("c:/idea/x", "c:/IDEA"));
     }
