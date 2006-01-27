@@ -120,7 +120,7 @@ import java.util.*;
     */
   }
 
-  private void resetAllFields() {
+  protected void resetAllFields() {
     resetClassFields(getClass());
   }
 

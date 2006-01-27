@@ -237,7 +237,7 @@ import java.util.HashSet;
 
   }
 
-  private void resetAllFields() {
+  protected void resetAllFields() {
     resetClassFields(getClass());
   }
 
