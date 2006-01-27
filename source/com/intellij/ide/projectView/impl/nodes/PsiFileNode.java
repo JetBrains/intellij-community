@@ -28,8 +28,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
     if (getSettings().isStructureView() && getValue() instanceof PsiJavaFile){
       PsiClass[] classes = ((PsiJavaFile)getValue()).getClasses();
       ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-      for (int i = 0; i < classes.length; i++) {
-        PsiClass aClass = classes[i];
+      for (PsiClass aClass : classes) {
         result.add(new ClassTreeNode(getProject(), aClass, getSettings()));
       }
       return result;

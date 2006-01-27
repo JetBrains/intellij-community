@@ -10,6 +10,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -38,10 +40,11 @@ public class ResourceBundleReference implements PsiPolyVariantReference {
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = myElement.getProject().getComponent(PropertiesReferenceManager.class);
     final Module module = ModuleUtil.findModuleForPsiElement(myElement);
-    PropertiesFile[] propertiesFiles = referenceManager.findPropertiesFiles(module, myBundleName);
-    final ResolveResult[] result = new ResolveResult[propertiesFiles.length];
-    for(int i=0; i<propertiesFiles.length; i++) {
-      result [i] = new PsiElementResolveResult(propertiesFiles [i]);
+    List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(module, myBundleName);
+    final ResolveResult[] result = new ResolveResult[propertiesFiles.size()];
+    for(int i=0; i<propertiesFiles.size(); i++) {
+      PropertiesFile file = propertiesFiles.get(i);
+      result[i] = new PsiElementResolveResult(file);
     }
     return result;
   }

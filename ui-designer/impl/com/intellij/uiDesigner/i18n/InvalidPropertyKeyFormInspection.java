@@ -12,6 +12,8 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -46,9 +48,9 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     }
 
     PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
-    PropertiesFile[] propFiles = manager.findPropertiesFiles(module, bundleName);
+    List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, bundleName);
 
-    if (propFiles.length == 0) {
+    if (propFiles.size() == 0) {
       return CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.found", bundleName);
     }
 

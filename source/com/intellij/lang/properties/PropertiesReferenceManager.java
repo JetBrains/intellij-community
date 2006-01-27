@@ -4,6 +4,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -18,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -35,9 +39,22 @@ public class PropertiesReferenceManager implements ProjectComponent {
     return project.getComponent(PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager) {
+  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, FileTypeManager fileTypeManager) {
     myProject = project;
     myPropertiesFilesManager = propertiesFilesManager;
+    fileTypeManager.addFileTypeListener(new FileTypeListener() {
+      public void beforeFileTypesChanged(FileTypeEvent event) {
+
+      }
+
+      public void fileTypesChanged(FileTypeEvent event) {
+        StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable(){
+          public void run() {
+                refreshAllPropFilesInProject();
+          }
+        });
+      }
+    });
   }
 
   public void projectOpened() {
@@ -65,17 +82,21 @@ public class PropertiesReferenceManager implements ProjectComponent {
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
-          public boolean processFile(VirtualFile fileOrDir) {
-            boolean isPropertiesFile = myPropertiesFilesManager.addNewFile(fileOrDir);
-            if (isPropertiesFile) {
-              synchronized (myChangedFiles) {
-                myChangedFiles.add(fileOrDir);
-              }
-            }
-            return true;
+        refreshAllPropFilesInProject();
+      }
+    });
+  }
+
+  private void refreshAllPropFilesInProject() {
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        boolean isPropertiesFile = myPropertiesFilesManager.addNewFile(fileOrDir);
+        if (isPropertiesFile) {
+          synchronized (myChangedFiles) {
+            myChangedFiles.add(fileOrDir);
           }
-        });
+        }
+        return true;
       }
     });
   }
@@ -117,41 +138,47 @@ public class PropertiesReferenceManager implements ProjectComponent {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
-      for (String key : keys) {
-        Collection<VirtualFile> containingFiles = myPropertiesMap.get(key);
-        if (containingFiles == null) {
-          containingFiles = new THashSet<VirtualFile>();
-          myPropertiesMap.put(key, containingFiles);
+      synchronized (myPropertiesMap) {
+        for (String key : keys) {
+          Collection<VirtualFile> containingFiles = myPropertiesMap.get(key);
+          if (containingFiles == null) {
+            containingFiles = new THashSet<VirtualFile>();
+            myPropertiesMap.put(key, containingFiles);
+          }
+          containingFiles.add(virtualFile);
         }
-        containingFiles.add(virtualFile);
       }
     }
   }
 
   public Collection<Property> findPropertiesByKey(final String key) {
     updateChangedFiles();
-    Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
-    if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
-    Collection<Property> result = new ArrayList<Property>(virtualFiles.size());
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
-      VirtualFile virtualFile = iterator.next();
-      if (!virtualFile.isValid()) {
-        iterator.remove();
-        continue;
+    Collection<Property> result;
+    synchronized (myPropertiesMap) {
+      Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
+      if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
+      result = new ArrayList<Property>(virtualFiles.size());
+      PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
+        VirtualFile virtualFile = iterator.next();
+        if (!virtualFile.isValid()) {
+          iterator.remove();
+          continue;
+        }
+        PsiFile psiFile = psiManager.findFile(virtualFile);
+        if (!(psiFile instanceof PropertiesFile)) {
+          iterator.remove();
+          continue;
+        }
+        List<Property> properties = ((PropertiesFile)psiFile).findPropertiesByKey(key);
+        result.addAll(properties);
       }
-      PsiFile psiFile = psiManager.findFile(virtualFile);
-      if (!(psiFile instanceof PropertiesFile)) {
-        iterator.remove();
-        continue;
-      }
-      List<Property> properties = ((PropertiesFile)psiFile).findPropertiesByKey(key);
-      result.addAll(properties);
     }
     return result;
   }
 
-  public PropertiesFile[] findPropertiesFiles(final Module module, final String bundleName) {
+  @NotNull
+  public List<PropertiesFile> findPropertiesFiles(final Module module, final String bundleName) {
     final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
     processPropertiesFiles(module, new PropertiesFileProcessor() {
       public void process(String baseName, PropertiesFile propertiesFile) {
@@ -160,12 +187,12 @@ public class PropertiesReferenceManager implements ProjectComponent {
         }
       }
     });
-    return result.toArray(new PropertiesFile[result.size()]);
+    return result;
   }
 
   @Nullable
   public PropertiesFile findPropertiesFile(final Module module, final String bundleName, final Locale locale) {
-    PropertiesFile[] propFiles = findPropertiesFiles(module, bundleName);
+    List<PropertiesFile> propFiles = findPropertiesFiles(module, bundleName);
     if (locale != null) {
       for(PropertiesFile propFile: propFiles) {
         if (propFile.getLocale().equals(locale)) {
@@ -199,7 +226,8 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   private void processPropertiesFiles(final Module module, PropertiesFileProcessor processor) {
-    final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
+    updateChangedFiles();
+    final Set<Module> dependentModules = new THashSet<Module>();
     ModuleUtil.getDependencies(module, dependentModules);
 
     PsiManager psiManager = PsiManager.getInstance(myProject);

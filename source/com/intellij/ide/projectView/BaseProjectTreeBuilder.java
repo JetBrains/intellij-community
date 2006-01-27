@@ -40,8 +40,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     Object element = ((NodeDescriptor)node.getUserObject()).getElement();
     VirtualFile[] virtualFiles = getFilesToRefresh(element);
     super.expandNodeChildren(node);
-    for (int i = 0; i < virtualFiles.length; i++) {
-      VirtualFile virtualFile = virtualFiles[i];
+    for (VirtualFile virtualFile : virtualFiles) {
       virtualFile.refresh(true, false);
     }
   }

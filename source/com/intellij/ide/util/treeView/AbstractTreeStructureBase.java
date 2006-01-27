@@ -4,12 +4,11 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   protected final Project myProject;
@@ -26,7 +25,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     AbstractTreeNode treeNode = (AbstractTreeNode)element;
     Collection<AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProviders();
-    ArrayList<AbstractTreeNode> modified = elements != null ? new ArrayList<AbstractTreeNode>(elements) : new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
     for (TreeStructureProvider provider : providers) {
       modified = new ArrayList<AbstractTreeNode>(provider.modify(treeNode, modified, ViewSettings.DEFAULT));
     }

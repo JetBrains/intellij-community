@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -53,8 +52,8 @@ public final class FormEditingUtil {
       boolean wasPackedVert = false;
       if (parent.getParent() != null && parent.getParent().isXY()) {
         final Dimension minSize = parent.getMinimumSize();
-        wasPackedHorz = (parent.getWidth() == minSize.width);
-        wasPackedVert = (parent.getHeight() == minSize.height);
+        wasPackedHorz = parent.getWidth() == minSize.width;
+        wasPackedVert = parent.getHeight() == minSize.height;
       }
 
       GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
@@ -349,7 +348,7 @@ public final class FormEditingUtil {
     }
 
     if (component != null) {
-      return (component instanceof RadContainer)
+      return component instanceof RadContainer
              ? (RadContainer)component
              : component.getParent();
     }
@@ -426,7 +425,7 @@ public final class FormEditingUtil {
     final Set<Locale> locales = new HashSet<Locale>();
     final PropertiesReferenceManager propManager = module.getProject().getComponent(PropertiesReferenceManager.class);
     for(String bundleName: collectUsedBundleNames(rootContainer)) {
-      PropertiesFile[] propFiles = propManager.findPropertiesFiles(module, bundleName.replace('/', '.'));
+      List<PropertiesFile> propFiles = propManager.findPropertiesFiles(module, bundleName.replace('/', '.'));
       for(PropertiesFile propFile: propFiles) {
         locales.add(propFile.getLocale());
       }
