@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public abstract class QuickFixFactory implements ApplicationComponent {
-  public static final QuickFixFactory getInstance() {
+  public static QuickFixFactory getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickFixFactory.class);
   }
 
