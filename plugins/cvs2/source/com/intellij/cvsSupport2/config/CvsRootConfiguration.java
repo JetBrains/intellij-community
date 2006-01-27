@@ -29,9 +29,7 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 import java.io.IOException;
 import java.util.List;
 
-public class CvsRootConfiguration
-  extends AbstractConfiguration
-  implements CvsEnvironment, Cloneable {
+public class CvsRootConfiguration extends AbstractConfiguration implements CvsEnvironment, Cloneable {
 
   public String CVS_ROOT = "";
   public String PATH_TO_WORKING_FOLDER = "";
@@ -46,7 +44,6 @@ public class CvsRootConfiguration
 
   private static final String SEPARATOR = ":";
   private static final String AT = "@";
-
 
 
   public CvsRootConfiguration(CvsApplicationLevelConfiguration mainConfiguration) {
@@ -77,19 +74,12 @@ public class CvsRootConfiguration
 
   private static String createFieldByFieldCvsRoot(CvsRepository cvsRepository) {
 
-    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()),
-                                        cvsRepository.getUser(),
-                                        cvsRepository.getHost(),
-                                        String.valueOf(cvsRepository.getPort()),
-                                        cvsRepository.getRepository());
+    return createStringRepresentationOn(CvsMethod.getValue(cvsRepository.getMethod()), cvsRepository.getUser(), cvsRepository.getHost(),
+                                        String.valueOf(cvsRepository.getPort()), cvsRepository.getRepository());
 
   }
 
-  public static String createStringRepresentationOn(CvsMethod method,
-                                                    String user,
-                                                    String host,
-                                                    String port,
-                                                    String repository) {
+  public static String createStringRepresentationOn(CvsMethod method, String user, String host, String port, String repository) {
     StringBuffer result = new StringBuffer();
 
     if (method == CvsMethod.LOCAL_METHOD) return repository;
@@ -111,9 +101,15 @@ public class CvsRootConfiguration
 
   public String toString() {
     if (useBranch()) {
-      return CvsBundle.message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.BRANCH);
-    } else {
-      return CvsBundle.message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.getDate());
+      return CvsBundle
+        .message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.BRANCH);
+    }
+    else if (useDate()) {
+      return CvsBundle
+        .message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.getDate());
+    }
+    else {
+      return getCvsRootAsString();
     }
   }
 
@@ -143,8 +139,7 @@ public class CvsRootConfiguration
     ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
-                                                                                        errorProcessor,
-                                                                                        new ModalityContext(true),
+                                                                                        errorProcessor, new ModalityContext(true),
                                                                                         PostCvsActivity.DEAF);
 
     final CvsResult result = new CvsResultEx();
@@ -202,9 +197,8 @@ public class CvsRootConfiguration
     }
     CvsRootConfiguration another = ((CvsRootConfiguration)obj);
 
-    return CVS_ROOT.equals(another.CVS_ROOT)
-           && DATE_OR_REVISION_SETTINGS.equals(another.DATE_OR_REVISION_SETTINGS)
-           && Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
+    return CVS_ROOT.equals(another.CVS_ROOT) && DATE_OR_REVISION_SETTINGS.equals(another.DATE_OR_REVISION_SETTINGS) &&
+           Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
   }
 
   public boolean login(ModalityContext executor) {
@@ -230,13 +224,8 @@ public class CvsRootConfiguration
   public CvsRepository createCvsRepository() {
     CvsConnectionSettings settings = createSettings();
 
-    return new CvsRepository(settings.getCvsRootAsString(),
-                             settings.METHOD.getName(),
-                             settings.USER,
-                             settings.HOST,
-                             settings.REPOSITORY,
-                             settings.PORT,
-                             DATE_OR_REVISION_SETTINGS);
+    return new CvsRepository(settings.getCvsRootAsString(), settings.METHOD.getName(), settings.USER, settings.HOST, settings.REPOSITORY,
+                             settings.PORT, DATE_OR_REVISION_SETTINGS);
 
   }
 
