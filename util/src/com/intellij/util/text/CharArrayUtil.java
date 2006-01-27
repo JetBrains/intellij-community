@@ -155,6 +155,14 @@ public class CharArrayUtil {
     return true;
   }
 
+  public static boolean equals(char[] buffer1, int start1, int end1, char[] buffer2, int start2, int end2) {
+    if (end1 - start1 != end2 - start2) return false;
+    for (int i = start1; i < end1; i++) {
+      if (buffer1[i] != buffer2[i - start1 + start2]) return false;
+    }
+    return true;
+  }
+
   public static int indexOf(char[] buffer, String pattern, int fromIndex) {
     char[] chars = pattern.toCharArray();
     int limit = buffer.length - chars.length;
@@ -209,6 +217,16 @@ public class CharArrayUtil {
       final char c = chars.charAt(i);
       if (c == ' ' || c == '\t' || c == '\n' || c == '\r') continue;
       return false;
+    }
+    return true;
+  }
+
+  public static boolean subArraysEqual(char[] ca1, int startOffset1, int endOffset1,char[] ca2, int startOffset2, int endOffset2) {
+    if (endOffset1 - startOffset1 != endOffset2 - startOffset2) return false;
+    for (int i = startOffset1; i < endOffset1; i++) {
+      char c1 = ca1[i];
+      char c2 = ca2[i - startOffset1 + startOffset2];
+      if (c1 != c2) return false;
     }
     return true;
   }
