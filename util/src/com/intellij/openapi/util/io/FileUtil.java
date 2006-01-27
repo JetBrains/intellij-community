@@ -460,16 +460,19 @@ public class FileUtil {
   }
 
   public static boolean startsWith(String path1, String path2) {
-    if (path2.length() > path1.length()) return false;
-    if (!path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, path2.length())) return false;
-    if (path1.length() == path2.length()) return true;
-    char last2 = path2.charAt(path2.length() - 1);
+    final int length1 = path1.length();
+    final int length2 = path2.length();
+    if (length2 == 0) return true;
+    if (length2 > length1) return false;
+    if (!path1.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, path2, 0, length2)) return false;
+    if (length1 == length2) return true;
+    char last2 = path2.charAt(length2 - 1);
     char next1;
     if (last2 == '/' || last2 == File.separatorChar) {
-      next1 = path1.charAt(path2.length()-1);
+      next1 = path1.charAt(length2 -1);
     }
     else {
-      next1 = path1.charAt(path2.length());
+      next1 = path1.charAt(length2);
     }
     return next1 == '/' || next1 == File.separatorChar;
   }
