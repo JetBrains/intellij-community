@@ -90,4 +90,8 @@ public final class RadErrorComponent extends RadAtomicComponent {
       g.fillRect(0,0,getWidth(),getHeight());
     }
   }
+
+  @Override public boolean hasIntrospectedProperties() {
+    return false;
+  }
 }

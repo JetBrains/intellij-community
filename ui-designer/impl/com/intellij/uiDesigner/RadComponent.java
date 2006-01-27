@@ -505,4 +505,8 @@ public abstract class RadComponent implements IComponent {
   public IContainer getParentContainer() {
     return myParent;
   }
+
+  public boolean hasIntrospectedProperties() {
+    return true;
+  }
 }

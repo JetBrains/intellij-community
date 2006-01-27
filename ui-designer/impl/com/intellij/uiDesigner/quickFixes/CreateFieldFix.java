@@ -30,23 +30,11 @@ public final class CreateFieldFix extends QuickFix{
 
   public CreateFieldFix(
     final GuiEditor editor,
-    final PsiClass aClass,
-    final String fieldClass,
-    final String fieldName
+    @NotNull final PsiClass aClass,
+    @NotNull final String fieldClass,
+    @NotNull final String fieldName
   ) {
     super(editor, UIDesignerBundle.message("action.create.field", fieldName));
-    if (aClass == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("aClass cannot be null");
-    }
-    if (fieldClass == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("fieldClass cannot be null");
-    }
-    if (fieldName == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("fieldName cannot be null");
-    }
     myClass = aClass;
     myFieldClassName = fieldClass;
     myFieldName = fieldName;

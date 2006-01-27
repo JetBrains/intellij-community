@@ -369,8 +369,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
 
 
-        final Class componentClass = component.getComponentClass();
-        final String componentClassName = componentClass.getName();
+        final String componentClassName = component.getComponentClassName();
 
         if (component instanceof RadVSpacer) {
           append(UIDesignerBundle.message("component.vertical.spacer"), getAttribute(myClassAttributes, error));
@@ -395,10 +394,10 @@ public final class ComponentTree extends Tree implements DataProvider {
           append(")", getAttribute(myPackageAttributes, error));
         }
         else {
-          final Package aPackage = componentClass.getPackage();
           String packageName = null;
-          if (aPackage != null/*null for classes in default package*/) {
-            packageName = aPackage.getName();
+          int pos = componentClassName.lastIndexOf('.');
+          if (pos >= 0) {
+            packageName = componentClassName.substring(0, pos);
           }
 
           SimpleTextAttributes classAttributes = hasText ? myPackageAttributes : myClassAttributes;

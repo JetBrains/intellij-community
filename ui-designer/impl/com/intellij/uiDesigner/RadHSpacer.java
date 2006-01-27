@@ -20,4 +20,8 @@ public final class RadHSpacer extends RadAtomicComponent {
       writer.endElement(); // hspacer
     }
   }
+
+  @Override public boolean hasIntrospectedProperties() {
+    return false;
+  }
 }

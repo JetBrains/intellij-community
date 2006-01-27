@@ -21,4 +21,8 @@ public final class RadVSpacer extends RadAtomicComponent {
       writer.endElement(); // vspacer
     }
   }
+
+  @Override public boolean hasIntrospectedProperties() {
+    return false;
+  }
 }

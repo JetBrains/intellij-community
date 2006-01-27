@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,5 +67,14 @@ public class RadNestedForm extends RadComponent {
     } finally {
       writer.endElement(); // component
     }
+  }
+
+  @Override @NotNull
+  public String getComponentClassName() {
+    return myRootContainer.getClassToBind();
+  }
+
+  @Override public boolean hasIntrospectedProperties() {
+    return false;
   }
 }

@@ -488,7 +488,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         result.add(myButtonGroupProperty);
       }
 
-      if (!isSpacer && !(component instanceof RadErrorComponent)){
+      if (component.hasIntrospectedProperties()) {
         final Class componentClass = component.getComponentClass();
         final Property[] introspectedProperties =
           Palette.getInstance(myEditor.getProject()).getIntrospectedProperties(componentClass);
