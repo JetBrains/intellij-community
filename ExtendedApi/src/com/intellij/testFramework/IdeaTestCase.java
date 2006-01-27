@@ -314,7 +314,16 @@ import java.util.HashSet;
         catch (Throwable th) {
           throwable[0] = th;
         } finally {
-          cleanupApplicationCaches();
+          try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+              public void run() {
+                cleanupApplicationCaches();
+              }
+            });
+          }
+          catch (Throwable e) {
+            // Ignore
+          }
         }
       }
     }, "IDEA Test Case Thread");
