@@ -44,7 +44,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     for (Iterator<AbstractProjectViewPSIPane> iterator = myPanes.iterator(); iterator.hasNext();) {
       iterator.next().dispose();
     }
-    myPanes.clear();
+    myPanes = null;
+    myStructure = null;
     super.tearDown();
   }
 
