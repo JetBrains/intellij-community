@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
@@ -39,12 +40,12 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
     // Assert document commited.
     PsiFile file = element.getContainingFile();
     if (file != null) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
       Document doc = documentManager.getCachedDocument(file);
       if (doc != null) {
         //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
         if (!(element instanceof PsiFile)) {
-          LOG.assertTrue(!documentManager.isUncommited(doc));
+          LOG.assertTrue(!documentManager.isUncommited(doc) || documentManager.isCommitingDocument(doc));
         }
       }
     }

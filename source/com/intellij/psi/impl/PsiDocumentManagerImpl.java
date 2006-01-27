@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.TreeWrapperPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
@@ -29,7 +28,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
 
 import javax.swing.*;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +38,7 @@ import java.util.Set;
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
+  private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
 
   private final Project myProject;
   private PsiManager myPsiManager;
@@ -282,13 +281,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  protected void commit(final Document document, final PsiFile file) {
+  protected void
+    commit(final Document document, final PsiFile file) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document);
     if (textBlock.isEmpty()) return;
 
     myIsCommitInProgress = true;
+    document.putUserData(KEY_COMMITING, Boolean.TRUE);
     try{
       if (file.getModificationStamp() != document.getModificationStamp()){
         if (mySmartPointerManager != null) { // can be true in "mock" tests
@@ -314,6 +315,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
     finally{
       myIsCommitInProgress = false;
+      document.putUserData(KEY_COMMITING, false);
     }
 
     //mySmartPointerManager.synchronizePointers(file);
@@ -449,5 +451,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
+  }
+
+  public boolean isCommitingDocument(final Document doc) {
+    return doc.getUserData(KEY_COMMITING) != null;
   }
 }
