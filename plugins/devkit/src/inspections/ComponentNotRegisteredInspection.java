@@ -21,10 +21,13 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -46,6 +49,7 @@ import javax.swing.event.ChangeListener;
 public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   public boolean CHECK_ACTIONS = true;
   public boolean IGNORE_NON_PUBLIC = true;
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection");
 
   public String getDisplayName() {
     return DevKitBundle.message("inspections.component.not.registered.name");
@@ -96,10 +100,13 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkClass(PsiClass checkedClass, InspectionManager manager, boolean isOnTheFly) {
+    final PsiFile psiFile = checkedClass.getContainingFile();
+    final PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
     if (checkedClass.getQualifiedName() != null &&
-            checkedClass.getNameIdentifier() != null &&
-            checkedClass.getContainingFile().getVirtualFile() != null &&
-            !isAbstract(checkedClass))
+        classIdentifier != null &&
+        psiFile != null &&
+        psiFile.getVirtualFile() != null &&
+        !isAbstract(checkedClass))
     {
       if (PsiUtil.isInnerClass(checkedClass)) {
         // don't check inner classes (make this an option?)
@@ -122,9 +129,9 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           if (!isActionRegistered(checkedClass)) {
             final LocalQuickFix fix = canFix(checkedClass) ? new RegisterActionFix(checkedClass) : null;
             final ProblemDescriptor problem = manager.createProblemDescriptor(
-                    checkedClass.getNameIdentifier(),
+                    classIdentifier,
                     DevKitBundle.message("inspections.component.not.registered.message",
-                            DevKitBundle.message("new.menu.action.text")),
+                                         DevKitBundle.message("new.menu.action.text")),
                     fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             return new ProblemDescriptor[]{problem};
           } else {
@@ -144,10 +151,10 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         if (checkedClass.isInheritor(compClass, true)) {
           if (getRegistrationTypes(checkedClass, false) == null) {
             final LocalQuickFix fix = canFix(checkedClass) ? new RegisterComponentFix(type, checkedClass) : null;
-            final ProblemDescriptor problem = manager.createProblemDescriptor(checkedClass.getNameIdentifier(),
-                    DevKitBundle.message("inspections.component.not.registered.message",
-                            DevKitBundle.message(type.myPropertyKey)),
-                    fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            final ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
+                                                                              DevKitBundle.message("inspections.component.not.registered.message",
+                                                                                                   DevKitBundle.message(type.myPropertyKey)),
+                                                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             return new ProblemDescriptor[]{problem};
           } else {
             // component IS registered, stop here
@@ -159,9 +166,11 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     return null;
   }
 
-  private boolean canFix(PsiClass psiClass) {
+  private static boolean canFix(PsiClass psiClass) {
     final Project project = psiClass.getProject();
-    final Module module = VfsUtil.getModuleForFile(project, psiClass.getContainingFile().getVirtualFile());
+    final PsiFile psiFile = psiClass.getContainingFile();
+    LOG.assertTrue(psiFile != null);
+    final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
     return PluginModuleType.isPluginModuleOrDependency(module);
   }
 }
