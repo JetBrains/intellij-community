@@ -62,9 +62,6 @@ public class AssignmentToForLoopParameterInspection
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
@@ -81,18 +78,12 @@ public class AssignmentToForLoopParameterInspection
                 @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();
-            if (operand == null) {
-                return;
-            }
             checkForForLoopParam(operand);
         }
 
