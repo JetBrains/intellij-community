@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     PsiElement[] result = searchImplementations(editor, file, element, false);
     if (result != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
-      show(project, editor, element, result);
+      show(editor, element, result);
     }
   }
 
@@ -90,33 +91,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   private static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list) {
-    if (!method.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiManager manager = method.getManager();
-      PsiSearchHelper helper = manager.getSearchHelper();
-      GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
-      PsiMethod[] methods = helper.findOverridingMethods(method, scope, true);
-
-      AddMethodLoop:
-        for (int i = 0; i < methods.length; i++) {
-          PsiMethod m = methods[i];
-          PsiClass aClass = m.getContainingClass();
-          if (aClass != null) {
-            for (int j = 0; j < methods.length; j++) {
-              if (j == i) continue;
-              PsiMethod method1 = methods[j];
-              PsiClass aClass1 = method1.getContainingClass();
-              if (aClass1 != null) {
-                if (aClass.isInheritor(aClass1, true)) continue AddMethodLoop;
-              }
-            }
-          }
-          if (!list.contains(m)) {
-            list.add(m);
-            getOverridingMethods(m, list);
-          }
-        }
+    for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+      list.add(psiMethod);
     }
-
   }
 
   protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements) {
@@ -180,7 +157,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
     return null;
   }
-  private PsiElement[] getSearchResults(PsiElement sourceElement) {
+  private static PsiElement[] getSearchResults(PsiElement sourceElement) {
     final ImplementationSearcher implementationSearcher = getImplementationSearcher(sourceElement);
     if (implementationSearcher != null) return implementationSearcher.getImplementations(sourceElement);
 
@@ -219,7 +196,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     return result.toArray(new PsiElement[result.size()]);
   }
 
-  private static void show(final Project project, Editor editor, final PsiElement sourceElement, final PsiElement[] elements) {
+  private static void show(Editor editor, final PsiElement sourceElement, final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
       return;
     }
@@ -233,7 +210,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     else {
       PsiElementListCellRenderer renderer = sourceElement instanceof PsiMethod
                                             ? new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(Arrays.asList(elements).toArray(PsiMethod.EMPTY_ARRAY)))
-                                            : (PsiElementListCellRenderer)new PsiClassListCellRenderer();
+                                            : new PsiClassListCellRenderer();
 
       Arrays.sort(elements, renderer.getComparator());
 
