@@ -93,7 +93,8 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
       final boolean matched = BraceMatchingUtil.matchBrace(editorText, fileType, i, true);
 
       if (matched) {
-        result.add(new TextRange(start, i.getEnd()));
+        final int tagEnd = i.getEnd();
+        result.add(new TextRange(start, tagEnd));
 
         HighlighterIterator j = highlighter.createIterator(start);
         while (!j.atEnd() && j.getTokenType() != XmlTokenType.XML_TAG_END) j.advance();
@@ -104,6 +105,9 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
         }
         if (!j.atEnd()) {
           result.add(new TextRange(start, j.getEnd()));
+        }
+        if (!i.atEnd()) {
+          result.add(new TextRange(i.getStart(),tagEnd));
         }
       }
 
