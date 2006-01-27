@@ -40,7 +40,7 @@ public class BraceMatchingUtil {
 
   public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    iterator.retreat();
+    if (iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
       final CharSequence chars = editor.getDocument().getCharsSequence();
@@ -179,7 +179,7 @@ public class BraceMatchingUtil {
       return isLBraceToken(getToken(iterator));
     }
 
-    private boolean isLBraceToken(final IElementType tokenType) {
+    private static boolean isLBraceToken(final IElementType tokenType) {
       PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
       if (matcher != null) {
         BracePair[] pairs = matcher.getPairs();
@@ -282,7 +282,7 @@ public class BraceMatchingUtil {
       }
     }
 
-    private boolean isJspJspxStructuralBrace(final IElementType tokenType) {
+    private static boolean isJspJspxStructuralBrace(final IElementType tokenType) {
       return tokenType == JavaTokenType.LBRACE ||
              tokenType == JavaTokenType.RBRACE ||
              tokenType == XmlTokenType.XML_START_TAG_START ||
