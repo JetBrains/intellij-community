@@ -12,18 +12,21 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BorderTypeRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class BorderProperty extends Property{
+public final class BorderProperty extends Property {
+  private Project myProject;
   private final Property[] myChildren;
   private final BorderTypeRenderer myRenderer;
 
-  public BorderProperty(){
+  public BorderProperty(final Project project){
     super(null, "border");
+    myProject = project;
     myChildren=new Property[]{
       new MyTypeProperty(),
       new MyTitleProperty()
@@ -158,7 +161,7 @@ public final class BorderProperty extends Property{
 
     public PropertyEditor getEditor() {
       if (myEditor == null) {
-        myEditor = new StringEditor();
+        myEditor = new StringEditor(myProject);
       }
       return myEditor;
     }

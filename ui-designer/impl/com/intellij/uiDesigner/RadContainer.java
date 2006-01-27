@@ -576,7 +576,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
     public MyBorderTitleProperty() {
       super(null, "Title");
-      myEditor = new StringEditor();
+      myEditor = new StringEditor(getModule().getProject());
     }
 
     public Dimension getPreferredSize(){

@@ -166,13 +166,9 @@ public final class PreviewFormAction extends AnAction{
     try {
       final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-      //noinspection HardCodedStringLiteral
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyWindowListener", true);
-      //noinspection HardCodedStringLiteral
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-      //noinspection HardCodedStringLiteral
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-      //noinspection HardCodedStringLiteral
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
 
       Locale locale = Locale.getDefault();
@@ -185,12 +181,8 @@ public final class PreviewFormAction extends AnAction{
       }
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null);
       codeGenerator.patchFile(tempFile);
-      /*
-      final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, tempFile, loader);
-      codeGenerator.patch();
-      */
       final String[] errors = codeGenerator.getErrors();
       if(errors.length != 0){
         Messages.showErrorDialog(

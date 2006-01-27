@@ -35,7 +35,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     final ClassLoader classLoader = getClass().getClassLoader();
     final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(classLoader);
     final LwRootContainer rootContainer = Utils.getRootContainer(formData, provider);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classLoader);
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classLoader, null);
     final FileInputStream classStream = new FileInputStream(classPath);
     try {
       codeGenerator.patchClass(classStream);

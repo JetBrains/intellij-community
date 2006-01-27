@@ -120,7 +120,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   PropertyInspectorTable(Project project, /*@NotNull*/ final GuiEditor editor, @NotNull final ComponentTree componentTree){
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
-    myBorderProperty = new BorderProperty();
+    myBorderProperty = new BorderProperty(project);
     myMarginProperty = new MarginProperty();
     myHGapProperty = new HGapProperty();
     myVGapProperty = new VGapProperty();
@@ -165,6 +165,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   public void setEditor(final GuiEditor editor) {
+    finishEditing();
     myEditor = editor;
     if (myEditor == null) {
       myComponent = null;

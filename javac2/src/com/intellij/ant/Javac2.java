@@ -19,6 +19,7 @@ import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.apache.tools.ant.BuildException;
@@ -37,6 +38,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+/**
+ * @noinspection unchecked
+ */
 public final class Javac2 extends Javac{
   private ArrayList myFormFiles;
 
@@ -146,7 +150,8 @@ public final class Javac2 extends Javac{
       }
       class2form.put(classToBind, formFile);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
+                                                                  new AntNestedFormLoader(loader));
       codeGenerator.patchFile(classFile);
       final String[] warnings = codeGenerator.getWarnings();
 
@@ -232,7 +237,7 @@ public final class Javac2 extends Javac{
     return buf.toString().intern();
   }
 
-  private static final void getPathComponents(String path, ArrayList list) {
+  private static void getPathComponents(String path, ArrayList list) {
     if(path != null) {
       StringTokenizer tok = new StringTokenizer(path, File.pathSeparator);
 
@@ -286,6 +291,33 @@ public final class Javac2 extends Javac{
         log("Found form file " + file, Project.MSG_VERBOSE);
         myFormFiles.add(new File(srcDir, file));
       }
+    }
+  }
+
+  private class AntNestedFormLoader implements NestedFormLoader {
+    private ClassLoader myLoader;
+
+    public AntNestedFormLoader(final ClassLoader loader) {
+      myLoader = loader;
+    }
+
+    public LwRootContainer loadForm(String formFileName) throws Exception {
+      String formFileFullName = formFileName.toLowerCase();
+      log("Searching for form " + formFileFullName, Project.MSG_VERBOSE);
+      for (Iterator iterator = myFormFiles.iterator(); iterator.hasNext();) {
+        File file = (File)iterator.next();
+        String name = file.getAbsolutePath().replace(File.separatorChar, '/').toLowerCase();
+        log("Comparing with " + name, Project.MSG_VERBOSE);
+        if (name.endsWith(formFileFullName)) {
+          InputStream formInputStream = new FileInputStream(file);
+          return Utils.getRootContainer(formInputStream, null);
+        }
+      }
+      InputStream resourceStream = myLoader.getResourceAsStream("/" + formFileName + ".form");
+      if (resourceStream != null) {
+        return Utils.getRootContainer(resourceStream, null);
+      }
+      throw new Exception("Cannot find nested form file " + formFileName);
     }
   }
 }

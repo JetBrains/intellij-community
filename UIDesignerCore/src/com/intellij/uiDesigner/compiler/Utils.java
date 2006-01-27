@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.PropertiesProvider;
 import org.jdom.input.SAXBuilder;
+import org.jdom.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -26,9 +27,10 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.swing.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 
 /**
  * @author Anton Katilin
@@ -41,6 +43,9 @@ public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
+
+  private Utils() {
+  }
 
   private static SAXParser createParser() {
     try {
@@ -59,7 +64,16 @@ public final class Utils {
       throw new AlienFormFileException();
     }
 
-    final org.jdom.Document document = SAX_BUILDER.build(new StringReader(formFileContent), "UTF-8");
+    final Document document = SAX_BUILDER.build(new StringReader(formFileContent), "UTF-8");
+
+    final LwRootContainer root = new LwRootContainer();
+    root.read(document.getRootElement(), provider);
+
+    return root;
+  }
+
+  public static LwRootContainer getRootContainer(final InputStream stream, final PropertiesProvider provider) throws Exception {
+    final Document document = SAX_BUILDER.build(stream, "UTF-8");
 
     final LwRootContainer root = new LwRootContainer();
     root.read(document.getRootElement(), provider);
@@ -130,7 +144,7 @@ public final class Utils {
 
     try {
       final Constructor constructor = aClass.getConstructor(new Class[0]);
-      if ((constructor.getModifiers() & Member.PUBLIC) != 0) {
+      if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
         return "Class \"" + className + "\" does not have default public constructor";
       }
     }

@@ -84,6 +84,7 @@ public final class PropertyInspector extends JPanel{
       }
       myEditor = editor;
       myInspectorTable.setEditor(myEditor);
+      myQuickFixManager.setEditor(myEditor);
       if (myEditor != null) {
         myEditor.addComponentSelectionListener(myComponentSelectionListener);
       }

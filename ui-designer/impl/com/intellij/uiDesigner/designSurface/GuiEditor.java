@@ -137,15 +137,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * is <code>true</code> then we do not react on incoming DocumentEvent.
    */
   private boolean myInsideChange;
-  //@NotNull private final PropertyInspector myPropertyInspector;
-  //@NotNull private final ComponentTree myComponentTree;
   private final DocumentAdapter myDocumentListener;
   private final CardLayout myCardLayout;
 
-  @NonNls
-  private final static String CARD_VALID = "valid";
-  @NonNls
-  private final static String CARD_INVALID = "invalid";
+  @NonNls private final static String CARD_VALID = "valid";
+  @NonNls private final static String CARD_INVALID = "invalid";
   private final JPanel myValidCard;
   private final JPanel myInvalidCard;
 
@@ -159,6 +155,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private boolean myShowGrid = true;
   private DesignDropTargetListener myDropTargetListener;
+  private JLabel myFormInvalidLabel;
 
   /**
    * @param file file to be edited
@@ -376,9 +373,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return null;
   }
 
-  private static JPanel createInvalidCard() {
+  private JPanel createInvalidCard() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel(UIDesignerBundle.message("error.form.file.is.invalid")),
+    myFormInvalidLabel = new JLabel(UIDesignerBundle.message("error.form.file.is.invalid"));
+    panel.add(myFormInvalidLabel,
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     return panel;
   }
@@ -664,6 +662,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       LOG.info(exc);
       // setting fictive container
       setRootContainer(new RadRootContainer(myModule, JPanel.class, "0"));
+      myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
       myCardLayout.show(this, CARD_INVALID);
       repaint();
     }

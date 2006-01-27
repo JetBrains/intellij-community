@@ -258,7 +258,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     public MyTitleProperty(final int index) {
       super(null, "Title");
       myIndex = index;
-      myEditor = new StringEditor();
+      myEditor = new StringEditor(getModule().getProject());
     }
 
     public Object getValue(final RadComponent component) {

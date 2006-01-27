@@ -1,16 +1,18 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,8 +31,10 @@ public final class StringEditor extends PropertyEditor{
   private final TextFieldWithBrowseButton myTfWithButton;
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
+  private Project myProject;
 
-  public StringEditor(){
+  public StringEditor(Project project){
+    myProject = project;
     myTfWithButton = new TextFieldWithBrowseButton(new MyActionListener());
     myTfWithButton.getTextField().setBorder(null);
 
@@ -132,9 +136,8 @@ public final class StringEditor extends PropertyEditor{
     public void actionPerformed(final ActionEvent e) {
       // 1. Show editor dialog
 
-      final DataContext dataContext = DataManager.getInstance().getDataContext(myTfWithButton.getTextField());
-      final UIFormEditor editor = (UIFormEditor)dataContext.getData(DataConstants.FILE_EDITOR);
-      final GuiEditor guiEditor = editor.getEditor();
+      final GuiEditor guiEditor = UIDesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+      LOG.assertTrue(guiEditor != null);
       final Module module = guiEditor.getModule();
 
       final StringEditorDialog dialog = new StringEditorDialog(

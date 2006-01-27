@@ -31,82 +31,87 @@ public final class XmlReader {
   public static RadComponent createComponent(@NotNull final Module module,
                                              @NotNull final LwComponent lwComponent,
                                              @NotNull final ClassLoader loader) throws Exception{
-    final Class componentClass;
-    if (lwComponent.getErrorComponentProperties() != null) {
-      componentClass = null;
-    }
-    else {
-      componentClass = Class.forName(lwComponent.getComponentClassName(), true, loader);
-    }
-
     // Id
     final String id = lwComponent.getId();
-
     final RadComponent component;
-    if (lwComponent instanceof LwHSpacer) {
-      component = new RadHSpacer(module, id);
-    }
-    else if (lwComponent instanceof LwVSpacer) {
-      component = new RadVSpacer(module, id);
-    }
-    else if (lwComponent instanceof LwAtomicComponent) {
-      if (componentClass == null) {
-        component = createErrorComponent(module, id, lwComponent, loader);
-      }
-      else {
-        RadComponent component1;
-        try {
-          component1 = new RadAtomicComponent(module, componentClass, id);
-        }
-        catch (final Exception exc) {
-          String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
-          final String message = FormEditingUtil.getExceptionMessage(exc);
-          if (message != null) {
-            errorDescription += ": " + message;
-          }
-          component1 = RadErrorComponent.create(
-            module,
-            id,
-            lwComponent.getComponentClassName(),
-            lwComponent.getErrorComponentProperties(),
-            errorDescription
-          );
-        }
-        component = component1;
-      }
-    }
-    else if (lwComponent instanceof LwScrollPane) {
-      component = new RadScrollPane(module, id);
-    }
-    else if (lwComponent instanceof LwTabbedPane) {
-      component = new RadTabbedPane(module, id);
-    }
-    else if (lwComponent instanceof LwSplitPane) {
-      component = new RadSplitPane(module, id);
-    }
-    else if (lwComponent instanceof LwContainer) {
-      final LwContainer lwContainer = (LwContainer)lwComponent;
-      AbstractLayout layout = lwContainer.getLayout();
-      if (layout instanceof XYLayoutManager) {
-        // replace stub layout with the real one
-        final XYLayoutManagerImpl xyLayoutManager = new XYLayoutManagerImpl();
-        layout = xyLayoutManager;
-        xyLayoutManager.setPreferredSize(lwComponent.getBounds().getSize());
-      }
-      if (componentClass == null) {
-        component = createErrorComponent(module, id, lwComponent, loader);
-      }
-      else if (lwContainer instanceof LwRootContainer) {
-        component = new RadRootContainer(module, componentClass, id);
-      }
-      else {
-        component = new RadContainer(module, componentClass, id);
-      }
-      ((RadContainer)component).setLayout(layout);
+    Class componentClass = null;
+
+    if (lwComponent instanceof LwNestedForm) {
+      LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+      component = new RadNestedForm(module, nestedForm.getFormFileName(), id);
     }
     else {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("unexpected component: " + lwComponent);
+      if (lwComponent.getErrorComponentProperties() == null) {
+        componentClass = Class.forName(lwComponent.getComponentClassName(), true, loader);
+      }
+
+      if (lwComponent instanceof LwHSpacer) {
+        component = new RadHSpacer(module, id);
+      }
+      else if (lwComponent instanceof LwVSpacer) {
+        component = new RadVSpacer(module, id);
+      }
+      else if (lwComponent instanceof LwAtomicComponent) {
+        if (componentClass == null) {
+          component = createErrorComponent(module, id, lwComponent, loader);
+        }
+        else {
+          RadComponent component1;
+          try {
+            component1 = new RadAtomicComponent(module, componentClass, id);
+          }
+          catch (final Exception exc) {
+            String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
+            final String message = FormEditingUtil.getExceptionMessage(exc);
+            if (message != null) {
+              errorDescription += ": " + message;
+            }
+            component1 = RadErrorComponent.create(
+              module,
+              id,
+              lwComponent.getComponentClassName(),
+              lwComponent.getErrorComponentProperties(),
+              errorDescription
+            );
+          }
+          component = component1;
+        }
+      }
+      else if (lwComponent instanceof LwScrollPane) {
+        component = new RadScrollPane(module, id);
+      }
+      else if (lwComponent instanceof LwTabbedPane) {
+        component = new RadTabbedPane(module, id);
+      }
+      else if (lwComponent instanceof LwSplitPane) {
+        component = new RadSplitPane(module, id);
+      }
+      else if (lwComponent instanceof LwContainer) {
+        final LwContainer lwContainer = (LwContainer)lwComponent;
+        AbstractLayout layout = lwContainer.getLayout();
+        if (layout instanceof XYLayoutManager) {
+          // replace stub layout with the real one
+          final XYLayoutManagerImpl xyLayoutManager = new XYLayoutManagerImpl();
+          layout = xyLayoutManager;
+          xyLayoutManager.setPreferredSize(lwComponent.getBounds().getSize());
+        }
+        if (componentClass == null) {
+          component = createErrorComponent(module, id, lwComponent, loader);
+        }
+        else {
+          if (lwContainer instanceof LwRootContainer) {
+            component = new RadRootContainer(module, componentClass, id);
+          }
+          else {
+            component = new RadContainer(module, componentClass, id);
+          }
+          ((RadContainer)component).setLayout(layout);
+        }
+      }
+      else {
+        //noinspection HardCodedStringLiteral
+        throw new IllegalArgumentException("unexpected component: " + lwComponent);
+      }
     }
 
     // binding

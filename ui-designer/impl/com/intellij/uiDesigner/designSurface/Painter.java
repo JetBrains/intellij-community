@@ -112,15 +112,17 @@ public final class Painter {
    * of <code>RadContainer</code>.
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
-    if (!(component instanceof RadContainer)){
+    if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm)){
       return;
     }
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    RadContainer container = (RadContainer) component;
-    if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
-      return;
+    if (component instanceof RadContainer) {
+      RadContainer container = (RadContainer) component;
+      if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
+        return;
+      }
     }
     final Point point = SwingUtilities.convertPoint(
       component.getDelegee(),

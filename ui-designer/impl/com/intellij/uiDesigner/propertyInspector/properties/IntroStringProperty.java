@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,10 +33,10 @@ public final class IntroStringProperty extends IntrospectedProperty{
   private final StringRenderer myRenderer;
   private final StringEditor myEditor;
 
-  public IntroStringProperty(final String name, final Method readMethod, final Method writeMethod) {
+  public IntroStringProperty(final String name, final Method readMethod, final Method writeMethod, final Project project) {
     super(name, readMethod, writeMethod);
     myRenderer = new StringRenderer();
-    myEditor = new StringEditor();
+    myEditor = new StringEditor(project);
   }
 
   @NotNull

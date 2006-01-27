@@ -769,7 +769,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
           property = new IntroDoubleProperty(name, readMethod, writeMethod);
         }
         else if (String.class.equals(propertyType)){ // java.lang.String
-          property = new IntroStringProperty(name, readMethod, writeMethod);
+          property = new IntroStringProperty(name, readMethod, writeMethod, myProject);
         }
         else if (Insets.class.equals(propertyType)) { // java.awt.Insets
           property = new IntroInsetsProperty(name, readMethod, writeMethod);

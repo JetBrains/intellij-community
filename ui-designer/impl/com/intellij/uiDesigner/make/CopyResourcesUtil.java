@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.actions.PreviewFormAction;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,8 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public final class CopyResourcesUtil {
+  private CopyResourcesUtil() {
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static File copyClass(final String targetPath, final String className, final boolean deleteOnExit) throws IOException{
+  public static File copyClass(final String targetPath, @NonNls final String className, final boolean deleteOnExit) throws IOException{
     final File targetDir = new File(targetPath).getAbsoluteFile();
     final File file = new File(targetDir, className + ".class");
     FileUtil.createParentDirs(file);
@@ -58,7 +62,6 @@ public final class CopyResourcesUtil {
     copyStreamToFile(stream, file);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void copyFormsRuntime(final String targetDir, final boolean deleteOnExit) throws IOException {
     copyClass(targetDir, "com/intellij/uiDesigner/core/AbstractLayout", deleteOnExit);
     copyClass(targetDir, "com/intellij/uiDesigner/core/DimensionInfo", deleteOnExit);

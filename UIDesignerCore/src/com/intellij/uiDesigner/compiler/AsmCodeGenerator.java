@@ -48,7 +48,9 @@ public class AsmCodeGenerator {
   private static Map myComponentLayoutCodeGenerators = new HashMap();
   private static Map myPropertyCodeGenerators = new HashMap();
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
+  public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
+  private NestedFormLoader myFormLoader;
 
   static {
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
@@ -64,8 +66,8 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put("javax.swing.Icon", new IconPropertyCodeGenerator());
   }
 
-  public AsmCodeGenerator(final LwRootContainer rootContainer,
-                          final ClassLoader loader) {
+  public AsmCodeGenerator(LwRootContainer rootContainer, ClassLoader loader, NestedFormLoader formLoader) {
+    myFormLoader = formLoader;
     if (loader == null){
       throw new IllegalArgumentException("loader cannot be null");
     }
@@ -225,7 +227,7 @@ public class AsmCodeGenerator {
                                      final String signature,
                                      final String[] exceptions) {
 
-      if (name.equals(SETUP_METHOD_NAME)) {
+      if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME)) {
         return null;
       }
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
@@ -243,9 +245,28 @@ public class AsmCodeGenerator {
 
     public void visitEnd() {
       Method method = Method.getMethod("void " + SETUP_METHOD_NAME + " ()");
-      GeneratorAdapter adapter = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
-      buildSetupMethod(adapter);
+      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
+      buildSetupMethod(generator);
+
+      if (myRootContainer.getComponent(0).getBinding() != null) {
+        buildGetRootComponenMethod();
+      }
       super.visitEnd();
+    }
+
+    private void buildGetRootComponenMethod() {
+      final Type componentType = Type.getType(JComponent.class);
+      final Method method = new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]);
+      GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC, method, null, null, cv);
+
+      final LwComponent topComponent = (LwComponent)myRootContainer.getComponent(0);
+      final String binding = topComponent.getBinding();
+
+      generator.loadThis();
+      generator.getField(typeFromClassName(myClassName), binding,
+                         Type.getType((String) myFieldDescMap.get(binding)));
+      generator.returnValue();
+      generator.endMethod();
     }
 
     private void buildSetupMethod(final GeneratorAdapter generator) {
@@ -265,10 +286,35 @@ public class AsmCodeGenerator {
     private void generateSetupCodeForComponent(final LwComponent lwComponent,
                                                final GeneratorAdapter generator,
                                                final int parentLocal) throws CodeGenerationException {
-      final String className = myLayoutCodeGenerator.mapComponentClass(lwComponent.getComponentClassName());
-      Class componentClass = getComponentClass(className, myLoader);
-      final Type componentType = Type.getType(componentClass);
-      final int componentLocal = generator.newLocal(componentType);
+
+      String className;
+      LwRootContainer nestedFormContainer = null;
+      if (lwComponent instanceof LwNestedForm) {
+        // TODO[yole]: remove
+        if (myFormLoader == null) {
+          throw new CodeGenerationException("Nested forms not supported in this compile configuration");
+        }
+        LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+        try {
+          nestedFormContainer = myFormLoader.loadForm(nestedForm.getFormFileName());
+        }
+        catch (Exception e) {
+          throw new CodeGenerationException(e.getMessage());
+        }
+        // if nested form is empty, ignore
+        if (nestedFormContainer.getComponentCount() == 0) {
+          return;
+        }
+        if (nestedFormContainer.getComponent(0).getBinding() == null) {
+          throw new CodeGenerationException("No binding on root component of nested form " + nestedForm.getFormFileName());
+        }
+        className = nestedFormContainer.getClassToBind();
+      }
+      else {
+        className = myLayoutCodeGenerator.mapComponentClass(lwComponent.getComponentClassName());
+      }
+      final Type componentType = typeFromClassName(className);
+      int componentLocal = generator.newLocal(componentType);
 
       myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
 
@@ -277,15 +323,21 @@ public class AsmCodeGenerator {
       generator.invokeConstructor(componentType, Method.getMethod("void <init>()"));
       generator.storeLocal(componentLocal);
 
-      generateFieldBinding(lwComponent, componentClass, generator, componentLocal);
+      Class componentClass = getComponentClass(className, myLoader);
+      validateFieldBinding(lwComponent, componentClass);
+      generateFieldBinding(lwComponent, generator, componentLocal);
 
       getComponentCodeGenerator(lwComponent).generateContainerLayout(lwComponent, generator, componentLocal);
 
-      generateComponentProperties(lwComponent, componentType, generator, componentLocal);
+      generateComponentProperties(lwComponent, componentClass, generator, componentLocal);
 
       // add component to parent
       if (!(lwComponent.getParent() instanceof LwRootContainer)) {
-        getComponentCodeGenerator(lwComponent.getParent()).generateComponentLayout(lwComponent, generator, componentLocal, parentLocal);
+        final LayoutCodeGenerator parentCodeGenerator = getComponentCodeGenerator(lwComponent.getParent());
+        if (lwComponent instanceof LwNestedForm) {
+          componentLocal = getNestedFormComponent(generator, componentClass, componentLocal);
+        }
+        parentCodeGenerator.generateComponentLayout(lwComponent, generator, componentLocal, parentLocal);
       }
 
       if (lwComponent instanceof LwContainer) {
@@ -299,6 +351,16 @@ public class AsmCodeGenerator {
       }
     }
 
+    private int getNestedFormComponent(GeneratorAdapter generator, Class componentClass, int formLocal) throws CodeGenerationException {
+      final Type componentType = Type.getType(JComponent.class);
+      int componentLocal = generator.newLocal(componentType);
+      generator.loadLocal(formLocal);
+      generator.invokeVirtual(Type.getType(componentClass),
+                              new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]));
+      generator.storeLocal(componentLocal);
+      return componentLocal;
+    }
+
     private LayoutCodeGenerator getComponentCodeGenerator(final LwComponent lwComponent) {
       LayoutCodeGenerator generator = (LayoutCodeGenerator) myComponentLayoutCodeGenerators.get(lwComponent.getClass());
       if (generator != null) {
@@ -308,10 +370,9 @@ public class AsmCodeGenerator {
     }
 
     private void generateComponentProperties(final LwComponent lwComponent,
-                                             final Type componentType,
+                                             final Class componentClass,
                                              final GeneratorAdapter generator,
                                              final int componentLocal) throws CodeGenerationException {
-      final Class componentClass = getComponentClass(lwComponent.getComponentClassName(), myLoader);
       // introspected properties
       final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
@@ -349,20 +410,22 @@ public class AsmCodeGenerator {
             continue;
           }
           propGen.generatePushValue(generator, value);
-          setterArgType = getSetterArgType(property);
+          setterArgType = typeFromClassName(property.getPropertyClassName());
         }
 
+        Type componentType = Type.getType(componentClass);
         generator.invokeVirtual(componentType, new Method(property.getWriteMethodName(),
                                                           Type.VOID_TYPE, new Type[] { setterArgType } ));
       }
     }
 
-    private Type getSetterArgType(final LwIntrospectedProperty property) {
-      return Type.getType("L" + property.getPropertyClassName().replace('.', '/') + ";");
+    private Type typeFromClassName(final String className) {
+      return Type.getType("L" + className.replace('.', '/') + ";");
     }
 
     private void generateComponentReferenceProperties(final LwComponent component,
                                                       final GeneratorAdapter generator) throws CodeGenerationException {
+      if (component instanceof LwNestedForm) return;
       int componentLocal = ((Integer) myIdToLocalMap.get(component.getId())).intValue();
       Class componentClass = getComponentClass(myLayoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
       final Type componentType = Type.getType(componentClass);
@@ -378,7 +441,7 @@ public class AsmCodeGenerator {
             generator.loadLocal(targetLocal);
             generator.invokeVirtual(componentType,
                                     new Method(property.getWriteMethodName(),
-                                               Type.VOID_TYPE, new Type[] { getSetterArgType(property) } ));
+                                               Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
           }
         }
       }
@@ -419,15 +482,10 @@ public class AsmCodeGenerator {
     }
 
     private void generateFieldBinding(final LwComponent lwComponent,
-                                      final Class componentClass,
                                       final GeneratorAdapter generator,
                                       final int componentLocal) throws CodeGenerationException {
       final String binding = lwComponent.getBinding();
       if (binding != null) {
-        if (!myFieldDescMap.containsKey(binding)) {
-          throw new CodeGenerationException("Cannot bind: field does not exist: " + myClassToBind + "." + binding);
-        }
-
         Integer access = (Integer) myFieldAccessMap.get(binding);
         if ((access.intValue() & Opcodes.ACC_STATIC) != 0) {
           throw new CodeGenerationException("Cannot bind: field is static: " + myClassToBind + "." + binding);
@@ -436,25 +494,35 @@ public class AsmCodeGenerator {
           throw new CodeGenerationException("Cannot bind: field is final: " + myClassToBind + "." + binding);
         }
 
-        final Type fieldType = Type.getType((String)myFieldDescMap.get(binding));
-        if (fieldType.getSort() != Type.OBJECT) {
-          throw new CodeGenerationException("Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
-        }
-
-        Class fieldClass;
-        try {
-          fieldClass = myLoader.loadClass(fieldType.getClassName());
-        }
-        catch (ClassNotFoundException e) {
-          throw new CodeGenerationException("Class not found: " + fieldType.getClassName());
-        }
-        if (!fieldClass.isAssignableFrom(componentClass)) {
-          throw new CodeGenerationException("Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
-        }
-
         generator.loadThis();
         generator.loadLocal(componentLocal);
-        generator.putField(Type.getType("L" + myClassName + ";"), binding, fieldType);
+        generator.putField(Type.getType("L" + myClassName + ";"), binding,
+                           Type.getType((String)myFieldDescMap.get(binding)));
+      }
+    }
+
+    private void validateFieldBinding(LwComponent component, final Class componentClass) throws CodeGenerationException {
+      String binding = component.getBinding();
+      if (binding == null) return;
+
+      if (!myFieldDescMap.containsKey(binding)) {
+        throw new CodeGenerationException("Cannot bind: field does not exist: " + myClassToBind + "." + binding);
+      }
+
+      final Type fieldType = Type.getType((String)myFieldDescMap.get(binding));
+      if (fieldType.getSort() != Type.OBJECT) {
+        throw new CodeGenerationException("Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
+      }
+
+      Class fieldClass;
+      try {
+        fieldClass = myLoader.loadClass(fieldType.getClassName());
+      }
+      catch (ClassNotFoundException e) {
+        throw new CodeGenerationException("Class not found: " + fieldType.getClassName());
+      }
+      if (!fieldClass.isAssignableFrom(componentClass)) {
+        throw new CodeGenerationException("Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
       }
     }
 

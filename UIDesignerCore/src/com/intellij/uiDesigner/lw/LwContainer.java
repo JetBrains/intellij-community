@@ -247,6 +247,9 @@ public class LwContainer extends LwComponent implements IContainer{
       final String className = LwXmlReader.getRequiredString(child, "class");
       component = new LwAtomicComponent(className);
     }
+    else if (UIFormXmlConstants.ELEMENT_NESTED_FORM.equals(name)) {
+      component = new LwNestedForm();
+    }
     else if("vspacer".equals(name)){
       component = new LwVSpacer();
     }

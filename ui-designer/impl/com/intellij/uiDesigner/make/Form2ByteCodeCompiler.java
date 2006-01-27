@@ -234,6 +234,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
     final String outerQualifiedName = outerClass.getQualifiedName();
 
+    assert outerQualifiedName != null;
     return outerQualifiedName.replace('.','/') + _className.substring(outerQualifiedName.length()).replace('.','$');
   }
 
@@ -294,7 +295,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             final File classFile = VfsUtil.virtualToIoFile(item.getFile());
             LOG.assertTrue(classFile.exists(), classFile.getPath());
 
-            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
+            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
+                                                                        new PsiNestedFormLoader(module));
             codeGenerator.patchFile(classFile);
             final String[] errors = codeGenerator.getErrors();
             final String[] warnings = codeGenerator.getWarnings();

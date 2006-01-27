@@ -4,20 +4,16 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.ClassToBindNotFoundException;
-import com.intellij.uiDesigner.compiler.CodeGenerationException;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
@@ -39,7 +35,7 @@ public final class FormSourceCodeGenerator {
   private LayoutSourceGenerator myLayoutSourceGenerator = new GridLayoutSourceGenerator();
 
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
-  private static TIntObjectHashMap ourFontStyleMap = new TIntObjectHashMap();
+  @NonNls private static TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -144,11 +140,10 @@ public final class FormSourceCodeGenerator {
       throw new CodeGenerationException(UIDesignerBundle.message("error.nonempty.xy.panels.found"));
     }
 
-    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     generateSetupCodeForComponent(topComponent,
                                   component2variable,
                                   class2variableIndex,
-                                  id2component, scope);
+                                  id2component, module);
     generateComponentReferenceProperties(topComponent, component2variable, class2variableIndex, id2component);
     generateButtonGroups(rootContainer, component2variable, class2variableIndex, id2component);
 
@@ -187,11 +182,35 @@ public final class FormSourceCodeGenerator {
     final PsiElement method = aClass.add(fakeClass.getMethods()[0]);
     final PsiElement initializer = aClass.addBefore(fakeClass.getInitializers()[0], method);
 
+    PsiMethod grcMethod = null;
+    PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
+    if (topComponent.getBinding() == null) {
+      for(PsiMethod oldGrcMethod: grcMethods) {
+        oldGrcMethod.delete();
+      }
+    }
+    else {
+      grcMethod = elementFactory.createMethodFromText(
+            "public javax.swing.JComponent " + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
+            "() { return " + topComponent.getBinding() + "; }",
+            aClass);
+      if (grcMethods.length > 0) {
+        grcMethods [0].replace(grcMethod);
+      }
+      else {
+        aClass.addAfter(grcMethod, method);
+      }
+    }
+
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
     codeStyleManager.shortenClassReferences(method);
     codeStyleManager.reformat(method);
     codeStyleManager.shortenClassReferences(initializer);
     codeStyleManager.reformat(initializer);
+    if (grcMethod != null) {
+      codeStyleManager.shortenClassReferences(grcMethod);
+      codeStyleManager.reformat(grcMethod);
+    }
   }
 
   @NonNls public final static String METHOD_NAME = "$$$setupUI$$$";
@@ -251,14 +270,17 @@ public final class FormSourceCodeGenerator {
     final HashMap<LwComponent, String> component2TempVariable,
     final TObjectIntHashMap<String> class2variableIndex,
     final HashMap<String, LwComponent> id2component,
-    final GlobalSearchScope globalSearchScope
+    final Module module
   ) throws CodeGenerationException{
     id2component.put(component.getId(), component);
+    GlobalSearchScope globalSearchScope = module.getModuleWithDependenciesAndLibrariesScope(false);
 
     final LwContainer parent = component.getParent();
 
     final String variable = getVariable(component, component2TempVariable, class2variableIndex);
-    final String componentClass = myLayoutSourceGenerator.mapComponentClass(component.getComponentClassName());
+    final String componentClass = component instanceof LwNestedForm
+                                  ? getNestedFormClass(module, (LwNestedForm) component)
+                                  : myLayoutSourceGenerator.mapComponentClass(component.getComponentClassName());
 
     final String binding = component.getBinding();
     if (binding != null) {
@@ -409,7 +431,11 @@ public final class FormSourceCodeGenerator {
     if (!(component.getParent() instanceof LwRootContainer)) {
 
       final String parentVariable = getVariable(parent, component2TempVariable, class2variableIndex);
-      getComponentLayoutGenerator(component.getParent()).generateComponentLayout(component, this, variable, parentVariable);
+      String componentVar = variable;
+      if (component instanceof LwNestedForm) {
+        componentVar = variable + "." + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME + "()";
+      }
+      getComponentLayoutGenerator(component.getParent()).generateComponentLayout(component, this, componentVar, parentVariable);
     }
 
     if (component instanceof LwContainer) {
@@ -442,8 +468,19 @@ public final class FormSourceCodeGenerator {
 
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
-                                      globalSearchScope);
+                                      module);
       }
+    }
+  }
+
+  private static String getNestedFormClass(Module module, final LwNestedForm nestedForm) throws CodeGenerationException {
+    final LwRootContainer container;
+    try {
+      container = new PsiNestedFormLoader(module).loadForm(nestedForm.getFormFileName());
+      return container.getClassToBind();
+    }
+    catch (Exception e) {
+      throw new CodeGenerationException(e.getMessage());
     }
   }
 
@@ -598,7 +635,9 @@ public final class FormSourceCodeGenerator {
       return component.getBinding();
     }
 
-    @NonNls final String className = component.getComponentClassName();
+    @NonNls final String className = component instanceof LwNestedForm
+                                     ? "nestedForm"
+                                     : component.getComponentClassName();
 
     final String shortName;
     if (className.startsWith("javax.swing.J")) {
@@ -661,7 +700,7 @@ public final class FormSourceCodeGenerator {
   }
 
 
-  void startMethodCall(final String variable, @NonNls final String methodName) {
+  void startMethodCall(@NonNls final String variable, @NonNls final String methodName) {
     checkParameter();
 
     append(variable);

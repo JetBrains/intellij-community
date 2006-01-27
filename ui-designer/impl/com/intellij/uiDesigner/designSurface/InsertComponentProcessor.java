@@ -6,6 +6,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.*;
@@ -259,7 +261,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             checkBindTopLevelPanel();
 
-            myEditor.refresh();
+            myEditor.refreshAndSave(false);
 
             myInitialPoint = point;
           }
@@ -274,6 +276,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
     RadComponent result;
     final String id = editor.generateId();
+
     if (JScrollPane.class.getName().equals(item.getClassName())) {
       result = new RadScrollPane(editor.getModule(), id);
     }
@@ -294,28 +297,46 @@ public final class InsertComponentProcessor extends EventProcessor {
         result = new RadSplitPane(editor.getModule(), id);
       }
       else {
-        final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
-        try {
-          final Class aClass = Class.forName(item.getClassName(), true, loader);
-          result = new RadAtomicComponent(editor.getModule(), aClass, id);
-        }
-        catch (final Exception exc) {
-          //noinspection NonConstantStringShouldBeStringBuffer
-          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
-          if (errorDescription == null) {
-            errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
-            final String message = FormEditingUtil.getExceptionMessage(exc);
-            if (message != null) {
-              errorDescription += ": " + message;
-            }
+        final PsiManager manager = PsiManager.getInstance(editor.getProject());
+        PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(item.getClassName());
+        if (boundForms.length > 0) {
+          try {
+            result = new RadNestedForm(editor.getModule(), GuiEditorUtil.buildResourceName(boundForms [0]), id);
           }
-          result = RadErrorComponent.create(
-            editor.getModule(),
-            id,
-            item.getClassName(),
-            null,
-            errorDescription
-          );
+          catch(Exception ex) {
+            result = RadErrorComponent.create(
+              editor.getModule(),
+              id,
+              item.getClassName(),
+              null,
+              ex.getMessage()
+            );
+          }
+        }
+        else {
+          final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
+          try {
+            final Class aClass = Class.forName(item.getClassName(), true, loader);
+            result = new RadAtomicComponent(editor.getModule(), aClass, id);
+          }
+          catch (final Exception exc) {
+            //noinspection NonConstantStringShouldBeStringBuffer
+            String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
+            if (errorDescription == null) {
+              errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
+              final String message = FormEditingUtil.getExceptionMessage(exc);
+              if (message != null) {
+                errorDescription += ": " + message;
+              }
+            }
+            result = RadErrorComponent.create(
+              editor.getModule(),
+              id,
+              item.getClassName(),
+              null,
+              errorDescription
+            );
+          }
         }
       }
     }

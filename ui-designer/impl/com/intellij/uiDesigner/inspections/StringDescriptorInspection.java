@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
   protected enum StringDescriptorType { PROPERTY, BORDER, TAB }
-  private static BorderProperty myBorderProperty = new BorderProperty();
+  private static BorderProperty myBorderProperty = new BorderProperty(null);
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
     super(inspectionKey);
