@@ -293,32 +293,45 @@ public class FindInProjectUtil {
   }
 
   private static void showTooManyUsagesWaring(final Project project, final String message) {
-    int retCode = Messages.showYesNoDialog(project, message, FindBundle.message("find.excessive.usages.title"), Messages.getWarningIcon());
+    int retCode = invokeAndWait(new Computable<Integer>() {
+      public Integer compute() {
+        return Messages.showYesNoDialog(project, message, FindBundle.message("find.excessive.usages.title"), Messages.getWarningIcon());
+      }
+    });
+
     if (retCode != DialogWrapper.OK_EXIT_CODE) {
       throw new ProcessCanceledException();
     }
   }
 
-  private static int showMessage(final Project project, final String message, final String title) {
+  private static int invokeAndWait(final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
       SwingUtilities.invokeAndWait(new Runnable() {
         public void run() {
-          answer[0] = Messages.showDialog(project, message, title,
+          answer[0] = f.compute();
+        }
+      });
+    }
+    catch (Exception e) {
+      answer[0] = 0;
+    }
+
+    return answer[0];
+  }
+
+  private static int showMessage(final Project project, final String message, final String title) {
+    return invokeAndWait(new Computable<Integer>() {
+      public Integer compute() {
+        return Messages.showDialog(project, message, title,
                                           new String[] {
                                             CommonBundle.message("button.yes"),
                                             CommonBundle.message("button.no"),
                                             CommonBundle.message("button.yes.for.all"),
                                             CommonBundle.message("button.no.for.all")
                                           }, 0, Messages.getWarningIcon());
-        }
-      });
-    }
-    catch (Exception e) {
-      answer[0] = DialogWrapper.OK_EXIT_CODE;
-    }
-
-    return answer[0];
+      }
+    });
   }
 
   private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
