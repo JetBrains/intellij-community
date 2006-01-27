@@ -125,6 +125,7 @@ public class PatternPackageSet implements PackageSet {
     StringBuffer buf = new StringBuffer(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
+    boolean isAfterAsterix = false;
     while (cur < aspectsntx.length()) {
       char curChar = aspectsntx.charAt(cur);
       if (curChar != separator && isAfterSeparator) {
@@ -132,8 +133,18 @@ public class PatternPackageSet implements PackageSet {
         isAfterSeparator = false;
       }
 
+      if (curChar != '*' && isAfterAsterix) {
+        buf.append(".*");
+        isAfterAsterix = false;
+      }
+
       if (curChar == '*') {
-        buf.append("[^\\" + separator + "]*");
+        if (!isAfterAsterix){
+          isAfterAsterix = true;
+        } else {
+          buf.append("[^\\" + separator + "]*");
+          isAfterAsterix = false;
+        }
       }
       else if (curChar == separator) {
         if (isAfterSeparator) {
@@ -148,6 +159,9 @@ public class PatternPackageSet implements PackageSet {
         buf.append(curChar);
       }
       cur++;
+    }
+    if (isAfterAsterix){
+      buf.append(".*");
     }
 
     return buf.toString();

@@ -950,6 +950,48 @@
       <reference ref="JavaeeMigrationGroup"/>
     </group>
 
+    <group id="ScopeViewPopupMenu">
+      <reference ref="NewGroup"/>
+      <reference ref="OpenCustomEditor"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="AnalyzeMenu"/>
+      <reference ref="RefactoringMenu"/>
+      <reference ref="ValidateXml"/>
+      <reference ref="AddAntBuildFile"/>
+      <separator/>
+      <reference ref="TypeHierarchy"/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>
+      <separator/>
+      <reference ref="ValidateJsp"/>
+      <reference ref="PackageFile"/>
+      <reference ref="MakeModule"/>
+      <reference ref="Compile"/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ModuleSettings"/>
+      <separator/>
+      <reference ref="JavaeeMigrationGroup"/>
+    </group>
+
     <group id="StructureViewPopupMenu">
       <reference ref="EditSource"/>
       <separator/>

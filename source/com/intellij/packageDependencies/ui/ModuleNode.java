@@ -1,11 +1,11 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -40,6 +40,10 @@ public class ModuleNode extends PackageDependenciesNode {
 
   public String getModuleName() {
     return myModule.getName();
+  }
+
+  public Module getModule() {
+    return myModule;
   }
 
   public int getWeight() {

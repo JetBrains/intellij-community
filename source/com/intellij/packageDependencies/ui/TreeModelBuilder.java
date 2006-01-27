@@ -24,7 +24,10 @@ import gnu.trove.TObjectHashingStrategy;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class TreeModelBuilder {
   private ProjectFileIndex myFileIndex;
@@ -74,7 +77,7 @@ public class TreeModelBuilder {
   public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
   public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
 
-  private TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+  public TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     myShowModules = settings.UI_SHOW_MODULES;
     myGroupByScopeType = settings.UI_GROUP_BY_SCOPE_TYPE;
@@ -185,21 +188,21 @@ public class TreeModelBuilder {
     myFileIndex.iterateContent(new ContentIterator() {
       public boolean processFile(VirtualFile fileOrDir) {
         if (!fileOrDir.isDirectory()) {
-          if (myFileIndex.isContentJavaSourceFile(fileOrDir)) {
-            counting(fileOrDir);
-          }
+          counting(fileOrDir);
         }
         return true;
       }
     });
 
-    VirtualFile[] roots = getLibraryRoots(project);
-    for (VirtualFile root : roots) {
-      countFilesRecursively(root);
+    if (!myGroupByFiles) {
+      VirtualFile[] roots = getLibraryRoots(project);
+      for (VirtualFile root : roots) {
+        countFilesRecursively(root);
+      }
     }
   }
 
-  private TreeModel build(final Project project, boolean showProgress) {
+  public TreeModel build(final Project project, boolean showProgress) {
 
     Runnable buildingRunnable = new Runnable() {
       public void run() {
@@ -281,8 +284,10 @@ public class TreeModelBuilder {
 
     Runnable buildingRunnable = new Runnable() {
       public void run() {
-        for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
-          buildFileNode(iterator.next());
+        for (final PsiFile file : files) {
+          if (file != null) {
+            buildFileNode(file);
+          }
         }
       }
     };
@@ -299,7 +304,6 @@ public class TreeModelBuilder {
   }
 
   private void buildFileNode(PsiFile file) {
-    //if (!(file instanceof PsiJavaFile)) return;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
@@ -326,9 +330,19 @@ public class TreeModelBuilder {
   private PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
+    final VirtualFile containingDirectory = vFile.getParent();
+    LOG.assertTrue(containingDirectory != null);
     if (!myGroupByFiles) {
-      if (file instanceof PsiJavaFile) {
-        PsiPackage aPackage = getFilePackage((PsiJavaFile)file);
+      PsiPackage aPackage = null;
+      if (file instanceof PsiJavaFile){
+        aPackage = getFilePackage((PsiJavaFile)file);
+      } else {
+        final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
+        if (packageName != null) {
+          aPackage = myPsiManager.findPackage(packageName);
+        }
+      }
+      if (aPackage != null) {
         if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
           return getLibraryDirNode(aPackage, getLibraryForFile(file));
         }
@@ -338,12 +352,57 @@ public class TreeModelBuilder {
       }
       return getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
     } else {
-      final VirtualFile parent = vFile.getParent();
-      LOG.assertTrue(parent != null);
-      final PsiDirectory directory = myPsiManager.findDirectory(parent);
-      return getModuleDirNode(directory, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+      return getModuleDirNode(file.getContainingDirectory(), myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
     }
   }
+
+  public PackageDependenciesNode removeNode(final PsiElement element, final PsiDirectory parent){
+    boolean isMarked = false;
+    if (element instanceof PsiFile){
+      isMarked = myMarker.isMarked((PsiFile)element);
+    } else if (element instanceof PsiDirectory){
+      final PsiDirectory psiDirectory = (PsiDirectory)element;
+      final PsiFile[] psiFiles = psiDirectory.getFiles();
+      for (PsiFile psiFile : psiFiles) {
+        isMarked |= myMarker.isMarked(psiFile);
+      }
+    }
+    if (!isMarked) return null;
+    final PackageDependenciesNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE);
+    if (dirNode != null){
+      final PackageDependenciesNode fileNode = findNodeForPsiElement(dirNode, element);
+      if (fileNode != null){
+        dirNode.remove(fileNode);
+      }
+    }
+    return dirNode;
+  }
+
+  public PackageDependenciesNode addFileNode(final PsiFile file){
+    boolean isMarked = myMarker != null && myMarker.isMarked(file);
+    if (!isMarked) return null;
+    PackageDependenciesNode dirNode = getFileParentNode(file);
+    dirNode.add(new FileNode(file, isMarked));
+    return dirNode;
+  }
+
+  private static PackageDependenciesNode findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
+    for (int i = 0; i < parent.getChildCount(); i++){
+      final TreeNode treeNode = parent.getChildAt(i);
+      if (treeNode instanceof PackageDependenciesNode){
+        final PackageDependenciesNode fileNode = (PackageDependenciesNode)treeNode;
+        if (fileNode.getPsiElement() == element){
+          return fileNode;
+        }
+      }
+    }
+    return null;
+  }
+
+  public void updateModuleNode(final Module module) {
+
+  }
+
 
   private PsiPackage getFilePackage(PsiJavaFile file) {
     VirtualFile vFile = file.getVirtualFile();
