@@ -67,12 +67,12 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return error info for the current {@link #myComponent} state.
    */
-  @Nullable
-  protected abstract ErrorInfo getErrorInfo();
+  @NotNull
+  protected abstract ErrorInfo[] getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
-   * area that contains errors. This methods is invoked only if {@link #getErrorInfo()}
+   * area that contains errors. This methods is invoked only if {@link #getErrorInfos()}
    * returned non empty list of error infos. <code>null</code> means that
    * error bounds are not defined.
    */
@@ -100,8 +100,8 @@ public abstract class QuickFixManager <T extends JComponent>{
     hideIntentionHint();
 
     // 2. Found error (if any)
-    final ErrorInfo errorInfo = getErrorInfo();
-    if(errorInfo == null || errorInfo.myFixes.length == 0){
+    final ErrorInfo[] errorInfos = getErrorInfos();
+    if(!haveFixes(errorInfos)) {
       hideIntentionHint();
       return;
     }
@@ -148,6 +148,17 @@ public abstract class QuickFixManager <T extends JComponent>{
     hint.show(myComponent, bounds.x - width, bounds.y, myComponent);
   }
 
+  private boolean haveFixes(final ErrorInfo[] errorInfos) {
+    boolean haveFixes = false;
+    for(ErrorInfo errorInfo: errorInfos) {
+      if (errorInfo.myFixes.length > 0) {
+        haveFixes = true;
+        break;
+      }
+    }
+    return haveFixes;
+  }
+
   /**
    * Hides currently visible hint (light bulb) .If any.
    */
@@ -163,14 +174,16 @@ public abstract class QuickFixManager <T extends JComponent>{
     if(myHint == null || !myHint.isVisible()){
       return;
     }
-    final ErrorInfo errorInfo = getErrorInfo();
-    if(errorInfo == null || errorInfo.myFixes.length == 0){
+    final ErrorInfo[] errorInfos = getErrorInfos();
+    if(!haveFixes(errorInfos)){
       return;
     }
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (QuickFix myFix: errorInfo.myFixes) {
-      actionGroup.add(new QuickFixActionImpl(myEditor, myFix));
+    for(ErrorInfo errorInfo: errorInfos) {
+      for (QuickFix fix: errorInfo.myFixes) {
+        actionGroup.add(new QuickFixActionImpl(myEditor, fix));
+      }
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);

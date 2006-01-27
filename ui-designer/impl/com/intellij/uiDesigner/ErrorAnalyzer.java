@@ -301,4 +301,21 @@ public final class ErrorAnalyzer {
 
     return null;
   }
+
+  @NotNull public static ErrorInfo[] getAllErrorsForComponent(@NotNull IComponent component) {
+    List<ErrorInfo> result = new ArrayList<ErrorInfo>();
+    ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR);
+    if (errorInfo != null) {
+      result.add(errorInfo);
+    }
+    errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_BINDING_ERROR);
+    if (errorInfo != null) {
+      result.add(errorInfo);
+    }
+    final ArrayList<ErrorInfo> errorInfos = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+    if (errorInfos != null) {
+      result.addAll(errorInfos);
+    }
+    return result.toArray(new ErrorInfo[result.size()]);
+  }
 }

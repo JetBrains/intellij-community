@@ -8,20 +8,14 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class ErrorInfo {
+  public static ErrorInfo[] EMPTY_ARRAY = new ErrorInfo[0];
+
   public final String myDescription;
   private final String myPropertyName;
   public final QuickFix[] myFixes;
 
   public ErrorInfo(final String propertyName, @NotNull final String description, @NotNull final QuickFix[] fixes) {
     myPropertyName = propertyName;
-    //noinspection ConstantConditions
-    if (description == null) {
-      throw new IllegalArgumentException("description cannot be null");
-    }
-    //noinspection ConstantConditions
-    if (fixes == null) {
-      throw new IllegalArgumentException("fixes cannot be null");
-    }
     myDescription = description;
     myFixes = fixes;
   }

@@ -1,20 +1,19 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -28,13 +27,13 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
 
-  @Nullable
-  protected ErrorInfo getErrorInfo() {
+  @NotNull
+  protected ErrorInfo[] getErrorInfos() {
     final RadComponent component = myComponent.getSelectedComponent();
     if(component == null){
-      return null;
+      return ErrorInfo.EMPTY_ARRAY;
     }
-    return ErrorAnalyzer.getErrorForComponent(component);
+    return ErrorAnalyzer.getAllErrorsForComponent(component);
   }
 
   public Rectangle getErrorBounds() {
@@ -48,10 +47,10 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
       hideIntentionHint();
       updateIntentionHintVisibility();
 
-      ErrorInfo errorInfo = getErrorInfo();
+      ErrorInfo[] errorInfos = getErrorInfos();
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(getEditor().getProject());
-      if (errorInfo != null && errorInfo.myDescription != null) {
-        statusBar.setInfo(errorInfo.myDescription);
+      if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
+        statusBar.setInfo(errorInfos [0].myDescription);
       }
       else {
         statusBar.setInfo("");

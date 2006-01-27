@@ -4,12 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -41,12 +41,13 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
     }
   }
 
-  public ErrorInfo getErrorInfo() {
+  @NotNull
+  public ErrorInfo[] getErrorInfos() {
     final int selectedRow = myComponent.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
-      return null;
+      return ErrorInfo.EMPTY_ARRAY;
     }
-    return myComponent.getErrorInfoForRow(selectedRow);
+    return new ErrorInfo[] { myComponent.getErrorInfoForRow(selectedRow) };
   }
 
   private final class MyListSelectionListener implements ListSelectionListener{
