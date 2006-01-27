@@ -1,6 +1,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -83,8 +85,8 @@ public class FileNode extends PackageDependenciesNode {
   }
 
   public String getFQName() {
+    StringBuffer buf = new StringBuffer(20);
     if (myFile instanceof PsiJavaFile) {
-      StringBuffer buf = new StringBuffer(20);
       String packageName = ((PsiJavaFile)myFile).getPackageName();
       buf.append(packageName);
       if (buf.length() > 0) {
@@ -94,8 +96,12 @@ public class FileNode extends PackageDependenciesNode {
       LOG.assertTrue(virtualFile != null);
       buf.append(virtualFile.getNameWithoutExtension());
       return buf.toString();
+    } else {
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      final VirtualFile contentRoot =
+      ProjectRootManager.getInstance(myFile.getProject()).getFileIndex().getContentRootForFile(virtualFile);
+      return VfsUtil.getRelativePath(virtualFile, contentRoot, '/');
     }
-
-    return null;
   }
 }
