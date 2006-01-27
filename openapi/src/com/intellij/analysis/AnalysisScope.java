@@ -157,6 +157,7 @@ public class AnalysisScope {
       public void visitFile(PsiFile file) {
         if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile == null) return;
           if (!myIncludeTestSource){
             if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)){
               return;
