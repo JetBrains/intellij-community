@@ -1,5 +1,6 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.*;
@@ -23,10 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.HashSet;
-import com.intellij.CommonBundle;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
@@ -208,8 +208,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myProject = null;
   }
 
-  public void setCurrentEditorProvider(CurrentEditorProvider currentEditorProvider) {
+  public CurrentEditorProvider setCurrentEditorProvider(CurrentEditorProvider currentEditorProvider) {
+    final CurrentEditorProvider old = myCurrentEditorProvider;
     myCurrentEditorProvider = currentEditorProvider;
+    return old;
   }
 
   public void projectOpened() {
