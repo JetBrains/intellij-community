@@ -47,7 +47,11 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
       return ErrorInfo.EMPTY_ARRAY;
     }
-    return new ErrorInfo[] { myComponent.getErrorInfoForRow(selectedRow) };
+    final ErrorInfo info = myComponent.getErrorInfoForRow(selectedRow);
+    if (info != null) {
+      return new ErrorInfo[] { info };
+    }
+    return ErrorInfo.EMPTY_ARRAY;
   }
 
   private final class MyListSelectionListener implements ListSelectionListener{
