@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
 public class FindInProjectUtil {
   private static final int USAGES_LIMIT = 1000;
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
-  private static final int SINGLE_FILE_SIZE_LIMIT = 1024; // = 5 * 1024 * 1024; // megabytes.
+  private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
 
   private static final int SKIP = 0;
   private static final int PROCESS = 1;
