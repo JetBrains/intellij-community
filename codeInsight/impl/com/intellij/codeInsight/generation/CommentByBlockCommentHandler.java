@@ -37,7 +37,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     myDocument = editor.getDocument();
 
     if (!myFile.isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(myDocument, project)) {
         return;
       }
     }
@@ -53,7 +53,22 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     TextRange commentedRange = findCommentedRange(commenter);
     if (commentedRange != null) {
-      uncommentRange(commentedRange, prefix, suffix);
+      final int commentStart = commentedRange.getStartOffset();
+      final int commentEnd = commentedRange.getEndOffset();
+      int selectionStart = commentStart;
+      int selectionEnd = commentEnd;
+      if (selectionModel.hasSelection()) {
+        selectionStart = selectionModel.getSelectionStart();
+        selectionEnd = selectionModel.getSelectionEnd();
+      }
+      if ((commentStart < selectionStart || commentStart >= selectionEnd) &&
+          (commentEnd <= selectionStart || commentEnd > selectionEnd))
+      {
+        commentRange(selectionStart, selectionEnd, prefix, suffix);
+      }
+      else {
+        uncommentRange(commentedRange, prefix, suffix);
+      }
     }
     else {
       if (selectionModel.hasBlockSelection()) {
@@ -151,7 +166,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       elt = elt.getPrevSibling();
     }
     if (elt == null) {
-      if (offset > 0) elt = myFile.findElementAt(offset-1);
+      if (offset > 0) elt = myFile.findElementAt(offset - 1);
       if (elt == null) return null;
     }
     return elt.getLanguage();
@@ -179,7 +194,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
             minIndent = codeStyleManager.zeroIndent();
           }
           space = codeStyleManager.fillIndent(minIndent, fileType);
-        } else {
+        }
+        else {
           space = "";
         }
         myDocument.insertString(endOffset, space + commentSuffix + "\n");
