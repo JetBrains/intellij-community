@@ -180,7 +180,7 @@ public final class Utils {
     catch (Exception e) {
       throw new CodeGenerationException("Error loading nested form: " + e.getMessage());
     }
-    final Set<String> thisFormNestedForms = new HashSet<String>();
+    final Set thisFormNestedForms = new HashSet();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
     rootContainer.accept(new ComponentVisitor() {
       public boolean visit(final IComponent component) {
