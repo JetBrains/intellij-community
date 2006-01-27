@@ -139,7 +139,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
       }
     }
 
-    public void stopRunning(boolean flush){
+    public synchronized void stopRunning(boolean flush){
       myRunning = false;
       try {
         if (myFileStream != null){          
