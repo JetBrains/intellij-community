@@ -21,9 +21,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class AssignmentToForLoopParameterInspection
         extends ExpressionInspection {
@@ -44,7 +48,16 @@ public class AssignmentToForLoopParameterInspection
         return new AssignmentToForLoopParameterVisitor();
     }
 
-    private static class AssignmentToForLoopParameterVisitor
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option"), this,
+                                              "m_checkForeachParameters");
+
+    }
+
+    public boolean m_checkForeachParameters = false;
+
+    private class AssignmentToForLoopParameterVisitor
             extends BaseInspectionVisitor {
 
         public void visitAssignmentExpression(
@@ -64,7 +77,7 @@ public class AssignmentToForLoopParameterInspection
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+                !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();
@@ -72,6 +85,7 @@ public class AssignmentToForLoopParameterInspection
                 return;
             }
             checkForForLoopParam(operand);
+            checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
         }
 
         public void visitPostfixExpression(
@@ -80,11 +94,12 @@ public class AssignmentToForLoopParameterInspection
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                    !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+                !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
             final PsiExpression operand = expression.getOperand();
             checkForForLoopParam(operand);
+            checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
         }
 
         private void checkForForLoopParam(PsiExpression expression) {
@@ -123,6 +138,9 @@ public class AssignmentToForLoopParameterInspection
         }
 
         private void checkForForeachLoopParam(PsiExpression expression) {
+            if (!m_checkForeachParameters) {
+                return;
+            }
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
@@ -139,7 +157,7 @@ public class AssignmentToForLoopParameterInspection
             registerError(expression);
         }
 
-        private static boolean isInForStatementBody(PsiExpression expression,
+        private boolean isInForStatementBody(PsiExpression expression,
                                                     PsiForStatement statement) {
             final PsiStatement body = statement.getBody();
             return body != null && PsiTreeUtil.isAncestor(body, expression, true);
