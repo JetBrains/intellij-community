@@ -32,8 +32,10 @@ import java.util.*;
 public class PropertiesReferenceManager implements ProjectComponent {
   private final Project myProject;
   private final PropertiesFilesManager myPropertiesFilesManager;
+  private final FileTypeManager myFileTypeManager;
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
+  private final FileTypeListener myFileTypeChangedListener;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
@@ -42,7 +44,8 @@ public class PropertiesReferenceManager implements ProjectComponent {
   public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, FileTypeManager fileTypeManager) {
     myProject = project;
     myPropertiesFilesManager = propertiesFilesManager;
-    fileTypeManager.addFileTypeListener(new FileTypeListener() {
+    myFileTypeManager = fileTypeManager;
+    myFileTypeChangedListener = new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
 
       }
@@ -50,11 +53,12 @@ public class PropertiesReferenceManager implements ProjectComponent {
       public void fileTypesChanged(FileTypeEvent event) {
         StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable(){
           public void run() {
-                refreshAllPropFilesInProject();
+             refreshAllPropFilesInProject();
           }
         });
       }
-    });
+    };
+    fileTypeManager.addFileTypeListener(myFileTypeChangedListener);
   }
 
   public void projectOpened() {
@@ -108,6 +112,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
+    myFileTypeManager.removeFileTypeListener(myFileTypeChangedListener);
   }
 
   public String getComponentName() {
