@@ -47,19 +47,21 @@ public class DomUIFactory {
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
+    if (type.equals(PsiClass.class)) {
+      return new PsiClassControl(new DomStringWrapper(element));
+    }
+
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);
     if (type.equals(boolean.class) || type.equals(Boolean.class)) {
       return new BooleanControl(wrapper);
     }
-    else if (type.equals(String.class)) {
+    if (type.equals(String.class)) {
       return new StringControl(wrapper);
     }
-    else if (type.equals(PsiClass.class)) {
-      return new PsiClassControl(wrapper);
-    }
-    else if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
+    if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
       return new EnumControl(wrapper, (Class)type);
     }
+
     throw new IllegalArgumentException("Not supported: " + type);
   }
 

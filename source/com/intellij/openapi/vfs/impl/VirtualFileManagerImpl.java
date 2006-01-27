@@ -156,7 +156,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myModificationAttemptListenerMulticaster.removeListener(listener);
   }
 
-  public void fireReadOnlyModificationAttempt(VirtualFile[] files) {
+  public void fireReadOnlyModificationAttempt(VirtualFile... files) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final ModificationAttemptEvent event = new ModificationAttemptEvent(this, files);

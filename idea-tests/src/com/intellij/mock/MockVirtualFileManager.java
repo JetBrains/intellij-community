@@ -44,7 +44,7 @@ public class MockVirtualFileManager extends VirtualFileManager {
   public void removeModificationAttemptListener(ModificationAttemptListener listener) {
   }
 
-  public void fireReadOnlyModificationAttempt(VirtualFile[] files) {
+  public void fireReadOnlyModificationAttempt(VirtualFile... files) {
   }
 
   public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
