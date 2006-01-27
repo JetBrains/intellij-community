@@ -106,8 +106,6 @@ import java.util.HashSet;
 
     initApplication();
 
-    cleanupVfs();
-
     myFilesToDelete = new HashSet<File>();
 
     setUpProject();
@@ -171,15 +169,21 @@ import java.util.HashSet;
     return module;
   }
 
-  private static void cleanupVfs() throws IOException {
-    LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-    if (localFileSystem != null) {
-      localFileSystem.cleanupForNextTest();
+  private void cleanupApplicationCaches() {
+    try {
+      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      if (localFileSystem != null) {
+        localFileSystem.cleanupForNextTest();
+      }
+    }
+    catch (IOException e) {
+      // ignore
     }
     VirtualFilePointerManagerImpl virtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     if (virtualFilePointerManager != null) {
       virtualFilePointerManager.cleanupForNextTest();
     }
+    resetAllFields();
   }
 
   protected void tearDown() throws Exception {
@@ -310,7 +314,7 @@ import java.util.HashSet;
         catch (Throwable th) {
           throwable[0] = th;
         } finally {
-          resetAllFields();
+          cleanupApplicationCaches();
         }
       }
     }, "IDEA Test Case Thread");

@@ -103,14 +103,15 @@ import java.util.*;
   private void initApplication() throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);
-    cleanupApplicationCaches();
   }
 
-  private static void cleanupApplicationCaches() {
+  private void cleanupApplicationCaches() {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
     if (ourProject != null) {
       UndoManager.getInstance(ourProject).dropHistory();
     }
+
+    resetAllFields();
 
     /*
     if (ourPsiManager != null) {
@@ -353,7 +354,7 @@ import java.util.*;
         }
         finally {
           ourTestThread = null;
-          resetAllFields();
+          cleanupApplicationCaches();
         }
       }
     });
