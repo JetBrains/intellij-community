@@ -31,7 +31,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
       buffer.append("* ");
       buffer.append(tag.getText());
     }
-    goNextLine(indentLevel, buffer);
+    goNextLine(indentLevel + 1, buffer);
     buffer.append("*/");
   }
 
