@@ -709,7 +709,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
     ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
     ((ClsElementImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
-    ((ClsElementImpl)getThrowsList()).appendMirrorText(indentLevel, buffer);
+    final PsiReferenceList throwsList = getThrowsList();
+    if (throwsList.getReferencedTypes().length > 0) {
+      buffer.append(' ');
+      ((ClsElementImpl)throwsList).appendMirrorText(indentLevel, buffer);
+    }
 
     PsiAnnotationMemberValue defaultValue = getDefaultValue();
     if (defaultValue != null) {
