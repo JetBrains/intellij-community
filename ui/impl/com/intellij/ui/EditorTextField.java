@@ -40,6 +40,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private boolean myIsViewer;
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
+  private boolean myUseTextFieldPreferredSize = true;
 
   public EditorTextField(String text) {
     this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
@@ -315,7 +316,11 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
 
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer));
-    editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
+
+    if (myUseTextFieldPreferredSize) {
+      editor.getComponent().setPreferredSize(new JTextField().getPreferredSize());
+    }
+
     return editor;
   }
 
@@ -362,6 +367,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
       return preferredSize;
     }
     return new Dimension(100, 20);
+  }
+
+  public void setUseTextFieldPreferredSize(final boolean b) {
+    myUseTextFieldPreferredSize = b;
   }
 
   public Component getNextFocusableComponent() {
