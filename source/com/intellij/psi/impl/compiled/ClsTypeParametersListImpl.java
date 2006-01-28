@@ -37,7 +37,7 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
       buffer.append('<');
       for (int i = 0; i < myParameters.length; i++) {
         ClsTypeParameterImpl parameter = myParameters[i];
-        if (i > 0) buffer.append(',');
+        if (i > 0) buffer.append(", ");
         parameter.appendMirrorText(indentLevel, buffer);
       }
       buffer.append("> ");
