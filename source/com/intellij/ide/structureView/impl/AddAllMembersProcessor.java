@@ -6,9 +6,9 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ import java.util.Map;
 public class AddAllMembersProcessor extends BaseScopeProcessor {
   private List<PsiElement> myAllMembers;
   private PsiClass myPsiClass;
-  private Map<MethodSignature,PsiMethod> myMethodsBySignature = new com.intellij.util.containers.HashMap<MethodSignature, PsiMethod>();
+  private Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<MethodSignature, PsiMethod>();
   private MemberFilter myFilter;
 
   public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass) {
@@ -26,10 +26,8 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   }
 
   public AddAllMembersProcessor(List<PsiElement> allMembers, PsiClass psiClass, MemberFilter filter) {
-    for (Iterator<PsiElement> iterator = allMembers.iterator(); iterator.hasNext();) {
-      PsiElement psiElement = iterator.next();
-      if (psiElement instanceof PsiMethod)
-        mapMethodBySignature((PsiMethod) psiElement);
+    for (PsiElement psiElement : allMembers) {
+      if (psiElement instanceof PsiMethod) mapMethodBySignature((PsiMethod)psiElement);
     }
     myAllMembers = allMembers;
     myPsiClass = psiClass;
@@ -57,7 +55,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     return true;
   }
 
-  private boolean isObjectMember(PsiElement element) {
+  private static boolean isObjectMember(PsiElement element) {
     if (!(element instanceof PsiMethod))
       return false;
     final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
@@ -89,7 +87,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     return false;
   }
 
-  private boolean isInteresting(PsiElement element) {
+  private static boolean isInteresting(PsiElement element) {
     return element instanceof PsiMethod ||
             element instanceof PsiField ||
             element instanceof PsiClass;
@@ -123,7 +121,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
       };
     }
 
-    private boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
+    private static boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
       if (!(member instanceof PsiMethod))
         return false;
       PsiMethod method = (PsiMethod)member;
@@ -132,10 +130,8 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
 
     public ArrayList<PsiElement> copyVisible(List<PsiElement> list) {
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-      for (Iterator<PsiElement> iterator = list.iterator(); iterator.hasNext();) {
-        PsiElement psiElement = iterator.next();
-        if (psiElement instanceof PsiModifierListOwner && !isVisible((PsiModifierListOwner) psiElement))
-          continue;
+      for (PsiElement psiElement : list) {
+        if (psiElement instanceof PsiModifierListOwner && !isVisible((PsiModifierListOwner)psiElement)) continue;
         result.add(psiElement);
       }
       return result;
