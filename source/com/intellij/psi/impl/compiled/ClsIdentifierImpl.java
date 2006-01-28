@@ -35,8 +35,8 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
     return myParent;
   }
 
-  public String getMirrorText(){
-    return getText();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer){
+    buffer.append(getText());
   }
 
   public void setMirror(TreeElement element){

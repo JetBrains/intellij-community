@@ -21,17 +21,16 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     super(manager, repositoryId);
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
-      buffer.append(docComment.getMirrorText());
+      docComment.appendMirrorText(indentLevel, buffer);
+      goNextLine(indentLevel, buffer);
     }
 
-    buffer.append(((ClsElementImpl)getModifierList()).getMirrorText());
+    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
     buffer.append(' ');
-    buffer.append(((ClsElementImpl)getNameIdentifier()).getMirrorText());
-    return buffer.toString();
+    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
   }
 
   public void setMirror(TreeElement element) {

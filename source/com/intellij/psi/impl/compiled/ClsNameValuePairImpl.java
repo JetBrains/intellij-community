@@ -27,8 +27,10 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     myMemberValue = memberValue;
   }
 
-  public String getMirrorText() {
-    return myNameIdentifier.getMirrorText() + "=" + ((ClsElementImpl)myMemberValue).getMirrorText();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    myNameIdentifier.appendMirrorText(0, buffer);
+    buffer.append(" = ");
+    ((ClsElementImpl)myMemberValue).appendMirrorText(0, buffer);
   }
 
   public void setMirror(TreeElement element) {

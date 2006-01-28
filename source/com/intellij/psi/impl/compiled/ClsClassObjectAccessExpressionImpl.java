@@ -15,15 +15,16 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsClassObjectAccessExpressionImpl");
   private ClsTypeElementImpl myTypeElement;
   private ClsElementImpl myParent;
-  private static final @NonNls String CLASS_FILE_EXCEPTION = ".class";
+  private static final @NonNls String CLASS_ENDING = ".class";
 
   public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {
     myParent = parent;
     myTypeElement = new ClsTypeElementImpl(this, canonicalClassText, ClsTypeElementImpl.VARIANCE_NONE);
   }
 
-  public String getMirrorText() {
-    return myTypeElement.getMirrorText() + CLASS_FILE_EXCEPTION;
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    myTypeElement.appendMirrorText(0, buffer);
+    buffer.append(CLASS_ENDING);
   }
 
   public void setMirror(TreeElement element) {
@@ -58,6 +59,8 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   public String getText() {
-    return getMirrorText();
+    StringBuffer buffer = new StringBuffer();
+    appendMirrorText(0, buffer);
+    return buffer.toString();
   }
 }

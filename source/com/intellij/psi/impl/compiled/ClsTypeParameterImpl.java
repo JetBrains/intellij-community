@@ -281,19 +281,17 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return "PsiTypeParameter";
   }
 
-  public String getMirrorText() {
-    @NonNls StringBuffer buf = new StringBuffer();
-    buf.append(myName);
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    buffer.append(myName);
     PsiJavaCodeReferenceElement[] bounds = myBoundsList.getReferenceElements();
     if (bounds.length > 0) {
-      buf.append(" extends ");
+      buffer.append(" extends ");
       for (int i = 0; i < bounds.length; i++) {
         PsiJavaCodeReferenceElement bound = bounds[i];
-        if (i > 0) buf.append("&");
-        buf.append(bound.getCanonicalText());
+        if (i > 0) buffer.append(" & ");
+        buffer.append(bound.getCanonicalText());
       }
     }
-    return buf.toString();
   }
 
   public void setMirror(TreeElement element) {

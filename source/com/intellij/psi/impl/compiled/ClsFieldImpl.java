@@ -540,24 +540,21 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
-      buffer.append(docComment.getMirrorText());
+      docComment.appendMirrorText(indentLevel, buffer);
+      goNextLine(indentLevel, buffer);
     }
-    buffer.append(((ClsElementImpl)getModifierList()).getMirrorText());
+    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
+    ((ClsElementImpl)getTypeElement()).appendMirrorText(indentLevel, buffer);
     buffer.append(' ');
-    buffer.append(((ClsElementImpl)getTypeElement()).getMirrorText());
-    buffer.append(' ');
-    buffer.append(((ClsElementImpl)getNameIdentifier()).getMirrorText());
+    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
     if (getInitializer() != null) {
-      buffer.append("=");
+      buffer.append(" = ");
       buffer.append(getInitializer().getText());
     }
     buffer.append(';');
-    return buffer.toString();
-
   }
 
   public void setMirror(TreeElement element) {

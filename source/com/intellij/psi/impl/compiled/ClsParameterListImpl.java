@@ -39,16 +39,14 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append('(');
     for (int i = 0; i < myParameters.length; i++) {
       PsiParameter parm = myParameters[i];
-      if (i > 0) buffer.append(",");
-      buffer.append(((ClsElementImpl)parm).getMirrorText());
+      if (i > 0) buffer.append(", ");
+      ((ClsElementImpl)parm).appendMirrorText(indentLevel, buffer);
     }
     buffer.append(')');
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

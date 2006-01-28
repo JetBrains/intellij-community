@@ -68,8 +68,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              i == THIS_EXPRESSION ||
              i == SUPER_EXPRESSION ||
              i == DOC_METHOD_OR_FIELD_REF ||
-             i == DOC_REFERENCE_HOLDER ||
-             i == DOC_TYPE_HOLDER ||
              i == DOC_TAG_VALUE_TOKEN ||
              i == REFERENCE_PARAMETER_LIST ||
              i == ANNOTATION) {
@@ -286,7 +284,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    public JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
+    public static JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
       final PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
       final int kind = referenceElement.getKind();
       JavaResolveResult[] result = referenceElement.resolve(kind);
@@ -312,11 +310,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         for (int i = 0; i < result.length; i++) {
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
           final PsiClass aClass = (PsiClass)resolveResult.getElement();
+          assert aClass != null;
           newResult[i] = aClass.getTypeParameters().length == 0 ?
                          resolveResult :
                          new CandidateInfo(
                            resolveResult,
-                           ((PsiSubstitutorEx)resolveResult.getSubstitutor()).putAll(aClass, parameters)
+                           resolveResult.getSubstitutor().putAll(aClass, parameters)
                          );
         }
         return newResult;
@@ -345,7 +344,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, needToPreventRecursion, incompleteCode);
   }
 
-  private final PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {
+  private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {
     final PsiType[] parameters = getTypeParameters();
     if (psiClass != null) {
       subst = ((PsiSubstitutorEx)subst).inplacePutAll(psiClass, parameters);
@@ -605,7 +604,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            {
              if (!(element instanceof PsiPackage)) return false;
              final String qName = ((PsiPackage)element).getQualifiedName();
-             if (qName == null) return false;
              return qName.equals(getCanonicalText());
            }
 
@@ -614,7 +612,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              //        if (lastChild.type != IDENTIFIER) return false;
              if (element instanceof PsiPackage) {
                final String qName = ((PsiPackage)element).getQualifiedName();
-               if (qName == null) return false;
                return qName.equals(getCanonicalText());
              }
              else if (element instanceof PsiClass) {
@@ -636,7 +633,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
            else if (element instanceof PsiPackage) {
              final String qName = ((PsiPackage)element).getQualifiedName();
-             if (qName == null) return false;
              return qName.equals(getCanonicalText());
            }
            else {

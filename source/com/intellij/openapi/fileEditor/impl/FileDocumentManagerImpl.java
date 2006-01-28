@@ -174,17 +174,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       PsiFile mirror = manager.getElementFactory().createFileFromText("test.java", text);
 
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
+      //TODO: need shorten to work
+      /*CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
       boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
       codeStyleManager.shortenClassReferences(mirror);
       codeStyleManager.reformat(mirror);
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
+      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;*/
 
       return mirror.textToCharArray();
     }
-    catch(IncorrectOperationException e){
+    catch(Exception e){
       LOG.error(e);
       return null;
     }

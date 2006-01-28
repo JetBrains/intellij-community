@@ -47,31 +47,29 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-  synchronized (PsiLock.LOCK) {
-    if (myTypes == null) {
-      final PsiElementFactory factory = getManager().getElementFactory();
-      myTypes = new PsiClassType[myReferences.length];
-      for (int i = 0; i < myReferences.length; i++) {
-        PsiJavaCodeReferenceElement reference = myReferences[i];
-        myTypes[i] = factory.createType(reference);
+    synchronized (PsiLock.LOCK) {
+      if (myTypes == null) {
+        final PsiElementFactory factory = getManager().getElementFactory();
+        myTypes = new PsiClassType[myReferences.length];
+        for (int i = 0; i < myReferences.length; i++) {
+          PsiJavaCodeReferenceElement reference = myReferences[i];
+          myTypes[i] = factory.createType(reference);
+        }
       }
     }
-  ;
-  }
-               return myTypes;
+    return myTypes;
   }
 
-  public String getMirrorText() {
-    if (myReferences.length == 0) return "";
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(myType);
-    buffer.append(" ");
-    for (int i = 0; i < myReferences.length; i++) {
-      PsiJavaCodeReferenceElement ref = myReferences[i];
-      if (i > 0) buffer.append(",");
-      buffer.append(((ClsElementImpl)ref).getMirrorText());
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    if (myReferences.length != 0) {
+      buffer.append(myType);
+      buffer.append(" ");
+      for (int i = 0; i < myReferences.length; i++) {
+        PsiJavaCodeReferenceElement ref = myReferences[i];
+        if (i > 0) buffer.append(", ");
+        ((ClsElementImpl)ref).appendMirrorText(indentLevel, buffer);
+      }
     }
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

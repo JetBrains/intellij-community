@@ -137,8 +137,8 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return false;
   }
 
-  public String getMirrorText() {
-    return getText();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    buffer.append(getText());
   }
 
   public void setMirror(TreeElement element) {

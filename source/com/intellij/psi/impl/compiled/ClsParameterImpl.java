@@ -93,17 +93,15 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     ClsAnnotationImpl[] annotations = getAnnotations();
     for (ClsAnnotationImpl annotation : annotations) {
-      buffer.append(annotation.getMirrorText());
+      annotation.appendMirrorText(indentLevel, buffer);
       buffer.append(" ");
     }
-    buffer.append(((ClsElementImpl)getTypeElement()).getMirrorText());
+    ((ClsElementImpl)getTypeElement()).appendMirrorText(indentLevel, buffer);
     buffer.append(" ");
     buffer.append(getMirrorName());
-    return buffer.toString();
   }
 
   private String getMirrorName() {

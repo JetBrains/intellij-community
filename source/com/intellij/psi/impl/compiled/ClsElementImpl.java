@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -78,7 +79,16 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
 
   protected static final String CAN_NOT_MODIFY_MESSAGE = PsiBundle.message("psi.error.attempt.to.edit.class.file");
 
-  public abstract String getMirrorText();
+  public abstract void appendMirrorText(final int indentLevel, final StringBuffer buffer);
+
+  protected static void goNextLine(int indentLevel, StringBuffer buffer) {
+    buffer.append('\n');
+    for (int i = 0; i < indentLevel; i++) buffer.append(' ');
+  }
+
+  protected int getIndentSize() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(StdFileTypes.JAVA);
+  }
 
   public abstract void setMirror(TreeElement element);
 

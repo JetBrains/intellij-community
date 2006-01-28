@@ -32,17 +32,16 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
     myParameters = parameters;
   }
 
-  public String getMirrorText() {
-    if (myParameters.length == 0) return "";
-    StringBuffer buf = new StringBuffer();
-    buf.append('<');
-    for (int i = 0; i < myParameters.length; i++) {
-      ClsTypeParameterImpl parameter = myParameters[i];
-      if (i > 0) buf.append(',');
-      buf.append(parameter.getMirrorText());
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    if (myParameters.length != 0) {
+      buffer.append('<');
+      for (int i = 0; i < myParameters.length; i++) {
+        ClsTypeParameterImpl parameter = myParameters[i];
+        if (i > 0) buffer.append(',');
+        parameter.appendMirrorText(indentLevel, buffer);
+      }
+      buffer.append("> ");
     }
-    buf.append('>');
-    return buf.toString();
   }
 
   public void setMirror(TreeElement element) {

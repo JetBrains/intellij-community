@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
@@ -62,12 +61,10 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     return myPackageName;
   }
 
-  public String getMirrorText() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append("package ");
     buffer.append(getPackageName());
     buffer.append(";");
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

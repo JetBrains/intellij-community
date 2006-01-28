@@ -268,13 +268,13 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiModifierList getModifierList() {
-  synchronized (PsiLock.LOCK) {
-    if (myModifierList == null) {
-      int flags = getAccessFlags();
-      myModifierList = new ClsModifierListImpl(this, flags);
+    synchronized (PsiLock.LOCK) {
+      if (myModifierList == null) {
+        int flags = getAccessFlags();
+        myModifierList = new ClsModifierListImpl(this, flags);
+      }
+      return myModifierList;
     }
-    return myModifierList;
-  }
   }
 
   public boolean hasModifierProperty(String name) {
@@ -958,49 +958,76 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
   }
 
-  public String getMirrorText() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
-      buffer.append(docComment.getMirrorText());
+      docComment.appendMirrorText(indentLevel, buffer);
+      goNextLine(indentLevel, buffer);
     }
-    buffer.append(((ClsElementImpl)getModifierList()).getMirrorText());
-    buffer.append(' ');
+    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
     buffer.append(isEnum() ? "enum " : isAnnotationType() ? "@interface " : isInterface() ? "interface " : "class ");
-    buffer.append(((ClsElementImpl)getNameIdentifier()).getMirrorText());
-    buffer.append(((ClsTypeParametersListImpl)getTypeParameterList()).getMirrorText());
+    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
+    ((ClsTypeParametersListImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
     buffer.append(' ');
     if (!isEnum() & !isAnnotationType()) {
-      buffer.append(((ClsElementImpl)getExtendsList()).getMirrorText());
+      ((ClsElementImpl)getExtendsList()).appendMirrorText(indentLevel, buffer);
       buffer.append(' ');
     }
     if (!isInterface()) {
-      buffer.append(((ClsElementImpl)getImplementsList()).getMirrorText());
+      ((ClsElementImpl)getImplementsList()).appendMirrorText(indentLevel, buffer);
     }
     buffer.append('{');
+    final int newIndentLevel = indentLevel + getIndentSize();
     PsiField[] fields = getFields();
-    for (int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
-      buffer.append(((ClsElementImpl)field).getMirrorText());
-      if (field instanceof ClsEnumConstantImpl) {
-        if (i < fields.length - 1 && fields[i + 1] instanceof ClsEnumConstantImpl) {
-          buffer.append(", ");
-        }
-        else {
-          buffer.append(";");
+    if (fields.length > 0) {
+      goNextLine(newIndentLevel, buffer);
+      for (int i = 0; i < fields.length; i++) {
+        PsiField field = fields[i];
+        ((ClsElementImpl)field).appendMirrorText(newIndentLevel, buffer);
+        if (field instanceof ClsEnumConstantImpl) {
+          if (i < fields.length - 1 && fields[i + 1] instanceof ClsEnumConstantImpl) {
+            buffer.append(", ");
+          }
+          else {
+            buffer.append(";");
+            if (i < fields.length - 1) {
+              goNextLine(newIndentLevel, buffer);
+            }
+          }
+        } else if (i < fields.length - 1) {
+          goNextLine(newIndentLevel, buffer);
         }
       }
     }
+
     PsiMethod[] methods = getMethods();
-    for (PsiMethod method : methods) {
-      buffer.append(((ClsElementImpl)method).getMirrorText());
+    if (methods.length > 0) {
+      goNextLine(newIndentLevel, buffer);
+      goNextLine(newIndentLevel, buffer);
+      for (int i = 0; i < methods.length; i++) {
+        PsiMethod method = methods[i];
+        ((ClsElementImpl)method).appendMirrorText(newIndentLevel, buffer);
+        if (i < methods.length - 1) {
+          goNextLine(newIndentLevel, buffer);
+          goNextLine(newIndentLevel, buffer);
+        }
+      }
     }
+
     PsiClass[] classes = getInnerClasses();
-    for (PsiClass aClass : classes) {
-      buffer.append(((ClsElementImpl)aClass).getMirrorText());
+    if (classes.length > 0) {
+      goNextLine(newIndentLevel, buffer);
+      for (int i = 0; i < classes.length; i++) {
+        PsiClass aClass = classes[i];
+        ((ClsElementImpl)aClass).appendMirrorText(newIndentLevel, buffer);
+        if (i < classes.length - 1) {
+          goNextLine(newIndentLevel, buffer);
+          goNextLine(newIndentLevel, buffer);
+        }
+      }
     }
+    goNextLine(indentLevel, buffer);
     buffer.append('}');
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

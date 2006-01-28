@@ -23,19 +23,20 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   public String getText() {
-    return getMirrorText();
+    StringBuffer buffer = new StringBuffer();
+    appendMirrorText(0, buffer);
+    return buffer.toString();
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer("{");
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    buffer.append('{');
     for (int i = 0; i < myInitializers.length; i++) {
-      buffer.append(((ClsElementImpl)myInitializers[i]).getMirrorText());
-      if (i < myInitializers.length - 1) {
-        buffer.append(", ");
+      ((ClsElementImpl)myInitializers[i]).appendMirrorText(0, buffer);
+      if (i > 0) {
+        buffer.append(" ,");
       }
     }
     buffer.append('}');
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

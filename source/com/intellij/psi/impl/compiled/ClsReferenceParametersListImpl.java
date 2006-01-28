@@ -21,17 +21,16 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     myTypeElements = typeElements;
   }
 
-  public String getMirrorText() {
-    if (myTypeElements.length == 0) return "";
-    StringBuffer buf = new StringBuffer();
-    buf.append('<');
-    for (int i = 0; i < myTypeElements.length; i++) {
-      if (i > 0) buf.append(',');
-      ClsTypeElementImpl typeElement = (ClsTypeElementImpl)myTypeElements[i];
-      buf.append(typeElement.getMirrorText());
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    if (myTypeElements.length != 0) {
+      buffer.append('<');
+      for (int i = 0; i < myTypeElements.length; i++) {
+        if (i > 0) buffer.append(" ,");
+        ClsTypeElementImpl typeElement = (ClsTypeElementImpl)myTypeElements[i];
+        typeElement.appendMirrorText(indentLevel, buffer);
+      }
+      buffer.append('>');
     }
-    buf.append('>');
-    return buf.toString();
   }
 
   public void setMirror(TreeElement element) {

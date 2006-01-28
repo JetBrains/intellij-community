@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,12 +82,12 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     PsiAnnotation[] annotations = getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      buffer.append(((ClsAnnotationImpl)annotation).getMirrorText());
-      buffer.append(" ");
+    for (int i = 0; i < annotations.length; i++) {
+      if (i > 0) buffer.append(" ");
+      PsiAnnotation annotation = annotations[i];
+      ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
     }
 
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
@@ -145,7 +144,6 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
       buffer.append(PsiModifier.VOLATILE);
       buffer.append(' ');
     }
-    return buffer.toString();
   }
 
   public void setMirror(TreeElement element) {

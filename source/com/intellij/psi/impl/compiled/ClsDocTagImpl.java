@@ -25,8 +25,8 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     myNameElement = new NameElement(name);
   }
 
-  public String getMirrorText() {
-    return myNameElement.getText();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    buffer.append(myNameElement.getText());
   }
 
   public void setMirror(TreeElement element) {
@@ -110,8 +110,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    public String getMirrorText() {
-      return null;
+    public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     }
 
     public void setMirror(TreeElement element) {

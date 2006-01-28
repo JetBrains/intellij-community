@@ -49,8 +49,8 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return "-" + myOperand.getText();
   }
 
-  public String getMirrorText() {
-    return getText();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    buffer.append(getText());
   }
 
   public void setMirror(TreeElement element) {
@@ -81,8 +81,8 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
       return ClsPrefixExpressionImpl.this;
     }
 
-    public String getMirrorText() {
-      return "-";
+    public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+      buffer.append("-");
     }
 
     public void setMirror(TreeElement element) {

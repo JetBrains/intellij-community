@@ -26,19 +26,17 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     myAttributes = attributes;
   }
 
-  public String getMirrorText() {
-    if (myAttributes.length == 0) return "";
-
-    StringBuffer buffer = new StringBuffer("(");
-    for (int i = 0; i < myAttributes.length; i++) {
-      buffer.append(myAttributes[i].getMirrorText());
-      if (i < myAttributes.length - 1) {
-        buffer.append(", ");
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    if (myAttributes.length != 0) {
+      for (int i = 0; i < myAttributes.length; i++) {
+        myAttributes[i].appendMirrorText(indentLevel, buffer);
+        if (i > 0) {
+          buffer.append(" ,");
+        }
       }
-    }
 
-    buffer.append(")");
-    return buffer.toString();
+      buffer.append(")");
+    }
   }
 
   public void setMirror(TreeElement element) {

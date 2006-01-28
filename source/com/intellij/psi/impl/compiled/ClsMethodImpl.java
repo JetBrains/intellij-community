@@ -216,44 +216,44 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiTypeElement getReturnTypeElement() {
-               if (isConstructor()) return null;
+    if (isConstructor()) return null;
 
-  synchronized (PsiLock.LOCK) {
-    if (myReturnType == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        if (!parseViaGenericSignature()) {
-          try {
-            ClassFileData classFileData = myParent.getClassFileData();
-            byte[] data = classFileData.getData();
-            int offset = myStartOffset + 4;
-            int b1 = data[offset++] & 0xFF;
-            int b2 = data[offset++] & 0xFF;
-            int index = (b1 << 8) + b2;
-            offset = classFileData.getOffsetInConstantPool(index);
-            offset += 3; // skip tag and length
-            while (true) {
-              if (offset >= data.length) {
-                throw new ClsFormatException();
+    synchronized (PsiLock.LOCK) {
+      if (myReturnType == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          if (!parseViaGenericSignature()) {
+            try {
+              ClassFileData classFileData = myParent.getClassFileData();
+              byte[] data = classFileData.getData();
+              int offset = myStartOffset + 4;
+              int b1 = data[offset++] & 0xFF;
+              int b2 = data[offset++] & 0xFF;
+              int index = (b1 << 8) + b2;
+              offset = classFileData.getOffsetInConstantPool(index);
+              offset += 3; // skip tag and length
+              while (true) {
+                if (offset >= data.length) {
+                  throw new ClsFormatException();
+                }
+                if (data[offset++] == ')') break;
               }
-              if (data[offset++] == ')') break;
+              String typeText = ClsUtil.getTypeText(data, offset);
+              myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
             }
-            String typeText = ClsUtil.getTypeText(data, offset);
-            myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-          }
-          catch (ClsFormatException e) {
-            myReturnType = null;
+            catch (ClsFormatException e) {
+              myReturnType = null;
+            }
           }
         }
+        else {
+          String typeText = getRepositoryManager().getMethodView().getReturnTypeText(repositoryId);
+          myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+        }
       }
-      else {
-        String typeText = getRepositoryManager().getMethodView().getReturnTypeText(repositoryId);
-        myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-      }
+      ;
     }
-  ;
-  }
-               return myReturnType;
+    return myReturnType;
   }
 
   public PsiType getReturnType() {
@@ -682,40 +682,42 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
-    appendMethodHeader(buffer);
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    appendMethodHeader(buffer, indentLevel);
 
     if (hasModifierProperty(PsiModifier.ABSTRACT) || hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(";");
     }
     else {
+      buffer.append('{');
+      final int newIndentLevel = indentLevel + getIndentSize();
+      goNextLine(newIndentLevel, buffer);
       buffer.append(PsiBundle.message("psi.decompiled.method.body"));
+      goNextLine(indentLevel, buffer);
+      buffer.append('}');
     }
-    return buffer.toString();
   }
 
-  private void appendMethodHeader(@NonNls StringBuffer buffer) {
+  private void appendMethodHeader(@NonNls StringBuffer buffer, final int indentLevel) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
-      buffer.append(docComment.getMirrorText());
+      docComment.appendMirrorText(indentLevel, buffer);
+      goNextLine(indentLevel, buffer);
     }
-    buffer.append(((ClsElementImpl)getModifierList()).getMirrorText());
-    buffer.append(' ');
-    buffer.append(((ClsElementImpl)getTypeParameterList()).getMirrorText());
+    ((ClsElementImpl)getModifierList()).appendMirrorText(indentLevel, buffer);
+    ((ClsElementImpl)getTypeParameterList()).appendMirrorText(indentLevel, buffer);
     if (!isConstructor()) {
+      ((ClsElementImpl)getReturnTypeElement()).appendMirrorText(indentLevel, buffer);
       buffer.append(' ');
-      buffer.append(((ClsElementImpl)getReturnTypeElement()).getMirrorText());
     }
-    buffer.append(' ');
-    buffer.append(((ClsElementImpl)getNameIdentifier()).getMirrorText());
-    buffer.append(((ClsElementImpl)getParameterList()).getMirrorText());
-    buffer.append(((ClsElementImpl)getThrowsList()).getMirrorText());
+    ((ClsElementImpl)getNameIdentifier()).appendMirrorText(indentLevel, buffer);
+    ((ClsElementImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
+    ((ClsElementImpl)getThrowsList()).appendMirrorText(indentLevel, buffer);
 
     PsiAnnotationMemberValue defaultValue = getDefaultValue();
     if (defaultValue != null) {
       buffer.append(" default ");
-      buffer.append(((ClsElementImpl)defaultValue).getMirrorText());
+      ((ClsElementImpl)defaultValue).appendMirrorText(indentLevel, buffer);
     }
   }
 

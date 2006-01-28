@@ -179,16 +179,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append(PsiBundle.message("psi.decompiled.text.header"));
+    goNextLine(indentLevel, buffer);
+    goNextLine(indentLevel, buffer);
     final PsiPackageStatement packageStatement = getPackageStatement();
     if (packageStatement != null) {
-      buffer.append(((ClsElementImpl)packageStatement).getMirrorText());
+      ((ClsElementImpl)packageStatement).appendMirrorText(0, buffer);
+      goNextLine(indentLevel, buffer);
+      goNextLine(indentLevel, buffer);
     }
     PsiClass aClass = getClasses()[0];
-    buffer.append(((ClsClassImpl)aClass).getMirrorText());
-    return buffer.toString();
+    ((ClsClassImpl)aClass).appendMirrorText(0, buffer);
   }
 
   public void setMirror(TreeElement element) {
@@ -285,6 +287,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   public static String decompile(PsiManager manager, VirtualFile file) {
     final ClsFileImpl psiFile = new ClsFileImpl((PsiManagerImpl)manager, new SingleRootFileViewProvider(manager, file), true);
-    return psiFile.getMirrorText();
+    StringBuffer buffer = new StringBuffer();
+    psiFile.appendMirrorText(0, buffer);
+    return buffer.toString();
   }
 }
