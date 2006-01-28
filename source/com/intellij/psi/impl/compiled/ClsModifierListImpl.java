@@ -84,10 +84,9 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     PsiAnnotation[] annotations = getAnnotations();
-    for (int i = 0; i < annotations.length; i++) {
-      if (i > 0) buffer.append(" ");
-      PsiAnnotation annotation = annotations[i];
+    for (PsiAnnotation annotation : annotations) {
       ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
+      buffer.append(' ');
     }
 
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
