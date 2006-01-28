@@ -108,7 +108,6 @@ public class LayoutCodeDialog extends DialogWrapper {
     panel.add(myRbFile, gbConstraints);
 
     myRbSelectedText = new JRadioButton(CodeInsightBundle.message("reformat.option.selected.text"));
-    myRbSelectedText.setMnemonic('S');
     if (myTextSelected != null) {
       gbConstraints.gridy++;
       gbConstraints.insets = new Insets(0, 0, 0, 0);
