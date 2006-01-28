@@ -24,7 +24,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private PsiField[] myEqualsFields = null;
   private PsiField[] myHashCodeFields = null;
   private PsiField[] myNonNullFields = null;
-  private static final PsiField[] DUMMY_RESULT = PsiField.EMPTY_ARRAY;
+  private static final PsiField[] DUMMY_RESULT = new PsiField[1]; //cannot return empty array, but this result won't be used anyway
 
   public GenerateEqualsHandler() {
     super("");
