@@ -689,12 +689,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       buffer.append(";");
     }
     else {
-      buffer.append('{');
-      final int newIndentLevel = indentLevel + getIndentSize();
-      goNextLine(newIndentLevel, buffer);
+      buffer.append(" { /* ");
       buffer.append(PsiBundle.message("psi.decompiled.method.body"));
-      goNextLine(indentLevel, buffer);
-      buffer.append('}');
+      buffer.append(" */ }");
     }
   }
 
