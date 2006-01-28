@@ -89,8 +89,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   public List<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
     ArrayList<StructureViewExtension> result = new ArrayList<StructureViewExtension>();
 
-    for (Iterator<Class<? extends PsiElement>> iterator = myExtensions.keySet().iterator(); iterator.hasNext();) {
-      Class<? extends PsiElement> registeregType = iterator.next();
+    for (Class<? extends PsiElement> registeregType : myExtensions.keySet()) {
       if (registeregType.isAssignableFrom(type)) result.addAll(myExtensions.get(registeregType));
     }
     return result;
@@ -109,7 +108,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     ACTIVE_ACTIONS = toString(activeActions);
   }
 
-  private String toString(final Collection<String> activeActions) {
+  private static String toString(final Collection<String> activeActions) {
     return StringUtil.join(activeActions, ",");
   }
 
