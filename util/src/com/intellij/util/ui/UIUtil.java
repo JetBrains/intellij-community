@@ -39,6 +39,8 @@ public class UIUtil {
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
 
+  private UIUtil() {}
+
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
     if (!(c >= 0x20 && c != 0x7F)) return false;
@@ -79,7 +81,7 @@ public class UIUtil {
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
       if (mnemoChar.length() == 1) {
-        action.putValue(Action.MNEMONIC_KEY, new Integer(mnemoChar.charAt(0)));
+        action.putValue(Action.MNEMONIC_KEY, (int)mnemoChar.charAt(0));
       }
     }
 
@@ -512,7 +514,6 @@ public class UIUtil {
       }
       catch (Exception e) {
         // JRE has problems working with the font. Just skip.
-        continue;
       }
     }
     return result.toArray(new String[result.size()]);
