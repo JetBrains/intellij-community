@@ -153,11 +153,15 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     if (scopes != null) {
       final List children = scopes.getChildren(SCOPE);
       if (children != null) {
+        final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
         for (Object s : children) {
           Element scopeElement = (Element)s;
           final String profile = scopeElement.getAttributeValue(PROFILE);
           if (profile != null) {
-            myScopeToProfileMap.put(DependencyValidationManager.getInstance(myProject).getScope(scopeElement.getAttributeValue(NAME)), profile);
+            final NamedScope scope = holder.getScope(scopeElement.getAttributeValue(NAME));
+            if (scope != null) {
+              myScopeToProfileMap.put(scope, profile);
+            }
           }
         }
       }
