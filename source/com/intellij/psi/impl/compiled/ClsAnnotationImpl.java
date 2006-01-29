@@ -29,18 +29,8 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    buffer.append("@");
-    buffer.append(myReferenceElement.getCanonicalText());
-    ClsNameValuePairImpl[] attributes = (ClsNameValuePairImpl[])getParameterList().getAttributes();
-    if (attributes.length > 0) {
-      buffer.append("(");
-      for (int i = 0; i < attributes.length; i++) {
-        ClsNameValuePairImpl attribute = attributes[i];
-        attribute.appendMirrorText(indentLevel, buffer);
-        if (i < attributes.length - 1) buffer.append(",");
-      }
-      buffer.append(")");
-    }
+    buffer.append("@").append(myReferenceElement.getCanonicalText());
+    myParameterList.appendMirrorText(indentLevel, buffer);
   }
 
   public void setMirror(TreeElement element) {

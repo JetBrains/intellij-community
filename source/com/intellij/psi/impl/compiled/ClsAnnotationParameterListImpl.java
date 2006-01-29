@@ -28,11 +28,10 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     if (myAttributes.length != 0) {
+      buffer.append("(");
       for (int i = 0; i < myAttributes.length; i++) {
+        if (i > 0) buffer.append(", ");
         myAttributes[i].appendMirrorText(indentLevel, buffer);
-        if (i > 0) {
-          buffer.append(" ,");
-        }
       }
 
       buffer.append(")");
