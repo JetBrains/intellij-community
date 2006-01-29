@@ -34,7 +34,7 @@ public class ImageLoader implements Serializable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
-  private static Map myUrl2Image = new THashMap(48, 0.9f);
+  private static Map<String,Image> myUrl2Image = new THashMap<String, Image>(48, 0.9f);
 
   private static boolean waitForImage(Image image) {
     if (image == null) return false;
@@ -68,7 +68,7 @@ public class ImageLoader implements Serializable {
 
   public static Image loadFromURL(final URL url) {
     try {
-      Image image = (Image)myUrl2Image.get(url.toString());
+      Image image = myUrl2Image.get(url.toString());
       if (image != null) {
         return image;
       }
