@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
@@ -28,7 +29,9 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
     final boolean allowStaticMethod = queryParameters.isAllowStaticMethod();
     final List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : supers) {
-      if (!addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer)) return false;
+      if (MethodSignatureUtil.isSubsignature(superSignature, signature)) {
+        if (!addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer)) return false;
+      }
     }
 
     return true;
@@ -52,7 +55,9 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
       }
     }
     for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
-      addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer);
+      if (MethodSignatureUtil.isSubsignature(superSignature, signature)) {
+        addSuperMethods(superSignature, method, parentClass, allowStaticMethod, checkBases, consumer);
+      }
     }
 
     return true;

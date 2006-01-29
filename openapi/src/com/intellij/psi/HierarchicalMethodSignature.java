@@ -37,6 +37,7 @@ public abstract class HierarchicalMethodSignature extends MethodSignatureBackedB
    * Returns the list of super method signatures for the specified signature.
    *
    * @return the super method signature list.
+   * Note that the list may include signatures for which isSubsignature() check returns false, but erasures are equal 
    */
   @NotNull public abstract List<HierarchicalMethodSignature> getSuperSignatures();
 }

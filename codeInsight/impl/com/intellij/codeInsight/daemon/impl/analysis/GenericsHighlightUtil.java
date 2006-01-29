@@ -9,6 +9,8 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -256,79 +258,73 @@ public class GenericsHighlightUtil {
   public static List<HighlightInfo> checkOverrideEquivalentMethods(final PsiClass aClass) {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
-    HighlightInfo classInfo = null;
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature = new HashMap<MethodSignature, MethodSignatureBackedByPsiMethod>();
 
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
-      PsiMethod method = signature.getMethod();
-      //if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
-      MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
-      MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
-      if (sameErasure != null) {
-        classInfo = checkSameErasureNotSubsignature(sameErasure, toCheckSubsignature, signature, aClass, method, result, classInfo);
-      }
-      sameErasureMethods.put(signatureToErase, signature);
-      toCheckSubsignature.put(signature, signature);
-      List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
-      for (HierarchicalMethodSignature superSignature : supers) {
-        PsiMethod superMethod = superSignature.getMethod();
-        if (!manager.getResolveHelper().isAccessible(superMethod, aClass, null)) continue;
-        classInfo = checkSameErasureNotSubsignature(signature, toCheckSubsignature, superSignature, aClass, superMethod, result, classInfo);
-
-        MethodSignature inOwnClass = superMethod.getSignature(PsiSubstitutor.EMPTY);
-        sameErasure = sameErasureMethods.get(inOwnClass);
-        if (sameErasure != null) {
-          classInfo = checkSameErasureNotSubsignature(sameErasure, toCheckSubsignature, superSignature, aClass, superMethod, result, classInfo);
-        }
-        sameErasureMethods.put(inOwnClass, superSignature);
-        toCheckSubsignature.put(superSignature, signature);
-      }
+      checkSameErasureNotSubsignatureInner(signature, manager, aClass, toCheckSubsignature, result, sameErasureMethods);
     }
-
-    if (classInfo != null) result.add(classInfo);
 
     return result;
   }
 
-  private static HighlightInfo checkSameErasureNotSubsignature(
+  private static void checkSameErasureNotSubsignatureInner(final HierarchicalMethodSignature signature,
+                                                           final PsiManager manager,
+                                                           final PsiClass aClass,
+                                                           final Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature,
+                                                           final List<HighlightInfo> result,
+                                                           final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+    PsiMethod method = signature.getMethod();
+    if (!manager.getResolveHelper().isAccessible(method, aClass, null)) return;
+    MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
+    if (sameErasure != null) {
+      checkSameErasureNotSubsignature(sameErasure, toCheckSubsignature, signature, aClass, method, result);
+    }
+    sameErasureMethods.put(signatureToErase, signature);
+    toCheckSubsignature.put(signature, signature);
+    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : supers) {
+      checkSameErasureNotSubsignatureInner(superSignature, manager, aClass, toCheckSubsignature, result, sameErasureMethods);
+    }
+  }
+
+  private static void checkSameErasureNotSubsignature(
     final MethodSignatureBackedByPsiMethod signatureToCheck,
     final Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature,
     final HierarchicalMethodSignature superSignature,
     final PsiClass aClass,
     final PsiMethod superMethod,
-    final List<HighlightInfo> methodHighlights,
-    HighlightInfo classHighliht) {
+    final List<HighlightInfo> highlights) {
 
     MethodSignatureBackedByPsiMethod toCheck = toCheckSubsignature.get(signatureToCheck);
     final PsiMethod checkMethod = toCheck.getMethod();
     if (checkMethod.isConstructor()) {
-      if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
-    } else if (superMethod.isConstructor()) return null;
+      if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
+    } else if (superMethod.isConstructor()) return;
 
 
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return null;
+      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
     }
 
     if (!MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
       PsiMethod method1 = signatureToCheck.getMethod();
       if (aClass.equals(method1.getContainingClass())) {
         boolean sameClass = method1.getContainingClass().equals(superMethod.getContainingClass());
-        methodHighlights.add(getSameErasureMessage(sameClass, method1, superMethod));
+        highlights.add(getSameErasureMessage(sameClass, method1, superMethod));
       }
-      else if (classHighliht == null) {
+      else {
         final String descr = JavaErrorMessages.message(
           "generics.methods.have.same.erasure.override",
           HighlightMethodUtil.createClashMethodMessage(method1, superMethod, true)
         );
-        TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
-        classHighliht = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, descr);
+        TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+        highlights.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, descr));
       }
     }
-    return classHighliht;
   }
 
   private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod) {

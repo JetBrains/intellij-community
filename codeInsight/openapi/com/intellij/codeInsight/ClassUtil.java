@@ -5,6 +5,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -92,7 +93,8 @@ public class ClassUtil {
         for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
           final PsiMethod superMethod = superSignatureHierarchical.getMethod();
           if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-              !resolveHelper.isAccessible(superMethod, method, null)) return superMethod;
+              (!MethodSignatureUtil.isSubsignature(superSignatureHierarchical, signatureHierarchical) ||
+               !resolveHelper.isAccessible(superMethod, method, null))) return superMethod;
         }
       }
     }
@@ -106,12 +108,12 @@ public class ClassUtil {
     }
     final PsiElement psiElement = aClass instanceof PsiAnonymousClass
                                   ? ((PsiAnonymousClass)aClass).getBaseClassReference()
-                                  : aClass.getModifierList() == null ? (PsiElement)aClass.getNameIdentifier() : aClass.getModifierList();
+                                  : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
     if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
     TextRange startTextRange = psiElement.getTextRange();
     int start = startTextRange == null ? 0 : startTextRange.getStartOffset();
     TextRange endTextRange = (aClass instanceof PsiAnonymousClass
-                              ? (PsiElement)((PsiAnonymousClass)aClass).getBaseClassReference()
+                              ? ((PsiAnonymousClass)aClass).getBaseClassReference()
                               : aClass.getImplementsList()).getTextRange();
     int end = endTextRange == null ? start : endTextRange.getEndOffset();
     return new TextRange(start, end);
