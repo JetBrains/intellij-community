@@ -205,10 +205,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return constraint == null ? PsiType.NULL : constraint.getFirst();
   }
 
-  public Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
-                                                           PsiType param,
-                                                           PsiType arg,
-                                                           boolean isContraVariantPosition) {
+  public static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterConstraint(PsiTypeParameter typeParam,
+                                                                                        PsiType param,
+                                                                                        PsiType arg,
+                                                                                        boolean isContraVariantPosition) {
     //Ellipsis types are analyzed somewhere else
     LOG.assertTrue(!(param instanceof PsiEllipsisType));
 
@@ -264,10 +264,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   @Nullable
-  private Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,
-                                                                             PsiType arg,
-                                                                             PsiType patternType,
-                                                                             final ConstraintType constraintType) {
+  private static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,
+                                                                                    PsiType arg,
+                                                                                    PsiType patternType,
+                                                                                    final ConstraintType constraintType) {
     if (arg instanceof PsiCapturedWildcardType) arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
 
     if (patternType.equals(param)) {
@@ -354,12 +354,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       if (paramTypes.length != argTypes.length) return null;
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (int i = 0; i < argTypes.length; i++) {
-        Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramTypes[i], argTypes[i], patternType, ConstraintType.EQUALS);
+        final PsiType argType = argTypes[i];
+        final PsiType paramType = paramTypes[i];
+        Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS);
         if (res != null) {
           PsiType type = res.getFirst();
           if (!(type instanceof PsiWildcardType)) return res;
           if (wildcardCaptured != null) return null;
-          wildcardCaptured = res;
+          if (argType instanceof PsiWildcardType || argType instanceof PsiCapturedWildcardType) { //otherwise we got not a toplevel wildcard and won't capture it
+            wildcardCaptured = res;
+          }
         }
       }
 
