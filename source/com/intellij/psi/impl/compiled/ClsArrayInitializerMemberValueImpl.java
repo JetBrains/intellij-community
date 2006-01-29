@@ -31,10 +31,8 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append('{');
     for (int i = 0; i < myInitializers.length; i++) {
+      if (i > 0) buffer.append(", ");
       ((ClsElementImpl)myInitializers[i]).appendMirrorText(0, buffer);
-      if (i > 0) {
-        buffer.append(" ,");
-      }
     }
     buffer.append('}');
   }
