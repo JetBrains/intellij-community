@@ -111,14 +111,17 @@ public abstract class EditorComposite{
       myComponent = new MyComponent(editors[0].getComponent()){
         public void requestFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
-          LOG.assertTrue(component != null);
-          component.requestFocus();
+          if (component != null) {
+            component.requestFocus();
+          }
         }
 
         public boolean requestDefaultFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
-          LOG.assertTrue(component != null);
-          return component.requestDefaultFocus();
+          if (component != null) {
+            return component.requestDefaultFocus();
+          }
+          return false;
         }
       };
     }
