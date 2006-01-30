@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,28 +44,38 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(final PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
     if (topLevelClass == null) return null;
     final PsiField[] fields = aClass.getFields();
-    NextField:
-    for (PsiField field : fields) {
-      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) continue;
-        final Collection<PsiReference> refs = ReferencesSearch.search(field, new LocalSearchScope(field.getContainingFile()), true).findAll();
-        if (refs.size() == 0) continue;
-        for (PsiReference ref : refs) {
-          PsiElement element = ref.getElement();
-          final PsiMember parentOfType = PsiTreeUtil.getParentOfType(element, PsiMember.class);
-          if (!(parentOfType instanceof PsiMethod) &&
-              !(parentOfType instanceof PsiClassInitializer)) {
-            continue NextField;
+    candidates.addAll(Arrays.asList(fields));
+
+    topLevelClass.accept(new PsiRecursiveElementVisitor() {
+      public void visitMethod(PsiMethod method) {
+        //do not go inside method
+      }
+
+      public void visitClassInitializer(PsiClassInitializer initializer) {
+        //do not go inside class initializer
+      }
+
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final PsiExpression qualifier = expression.getQualifierExpression();
+        if (qualifier == null || (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
+          final PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiField) {
+            final PsiField field = (PsiField)resolved;
+            if (aClass.equals(field.getContainingClass())) {
+              candidates.remove(field);
+            }
           }
         }
-        candidates.add(field);
+
+        super.visitReferenceExpression(expression);
       }
-    }
+    });
+
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
         if (candidates.size() > 0) super.visitElement(element);
@@ -205,7 +214,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
-    private void retargetReferences(final PsiElementFactory elementFactory, final String localName, final Set<PsiReference> refs)
+    private static void retargetReferences(final PsiElementFactory elementFactory, final String localName, final Set<PsiReference> refs)
       throws IncorrectOperationException {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
       for (PsiReference ref : refs) {
