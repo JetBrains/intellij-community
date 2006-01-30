@@ -3,7 +3,6 @@ package com.intellij.refactoring;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {
@@ -87,9 +86,11 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("Client.V", "Client.L", false);
   }
 
+  /* TODO[ven]: Tests changes that were rolled back.
   public void testIDEA6505() throws Exception {
     doTest("Impl", "IB", false);
   }
+  */
 
 
   private void doTest(final String className, final String superClassName, final boolean replaceInstanceOf) throws Exception {
