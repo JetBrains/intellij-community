@@ -609,6 +609,7 @@ public class DependenciesPanel extends JPanel {
     public boolean UI_FILTER_LEGALS = false;
     public boolean UI_GROUP_BY_SCOPE_TYPE = true;
     public boolean UI_GROUP_BY_FILES = false;
+    public boolean UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
 
     public DependencyPanelSettings() {
       final DependencyUISettings settings = DependencyUISettings.getInstance();
@@ -618,6 +619,7 @@ public class DependenciesPanel extends JPanel {
       UI_FILTER_LEGALS = settings.UI_FILTER_LEGALS;
       UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
       UI_GROUP_BY_FILES = settings.UI_GROUP_BY_FILES;
+      UI_COMPACT_EMPTY_MIDDLE_PACKAGES = settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
     public void copyToApplicationDependencySettings(){
@@ -628,6 +630,7 @@ public class DependenciesPanel extends JPanel {
       settings.UI_FILTER_LEGALS = UI_FILTER_LEGALS;
       settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
       settings.UI_GROUP_BY_FILES = UI_GROUP_BY_FILES;
+      settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
   }
 }

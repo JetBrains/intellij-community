@@ -15,6 +15,7 @@ public class DependencyUISettings implements JDOMExternalizable, ApplicationComp
   public boolean UI_FILTER_LEGALS = false;
   public boolean UI_GROUP_BY_SCOPE_TYPE = true;
   public boolean UI_GROUP_BY_FILES = false;
+  public boolean UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
 
   public static DependencyUISettings getInstance() {
     return ApplicationManager.getApplication().getComponent(DependencyUISettings.class);

@@ -15,12 +15,17 @@ import java.util.Set;
 public class DirectoryNode extends PackageDependenciesNode {
 
   private String myDirName;
-  private final PsiDirectory myDirectory;
+  private PsiDirectory myDirectory;
 
+  private DirectoryNode myCompactedDirNode;
+  private DirectoryNode myWrapper;
 
-  public DirectoryNode(PsiDirectory aDirectory) {
+  private boolean myCompactPackages = true;
+
+  public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages) {
     myDirectory = aDirectory;
     myDirName = aDirectory.getName();
+    myCompactPackages = compactPackages;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
@@ -35,17 +40,28 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public String toString() {
+    if (myCompactPackages && myCompactedDirNode != null){
+      return myDirName + "/" + myCompactedDirNode.toString();
+    }
     return myDirName;
   }
 
   public String getDirName(){
     final VirtualFile contentRoot =
       ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex().getContentRootForFile(myDirectory.getVirtualFile());
-    return VfsUtil.getRelativePath(myDirectory.getVirtualFile(), contentRoot, '/');    
+    final String dirName = VfsUtil.getRelativePath(myDirectory.getVirtualFile(), contentRoot, '/');
+    if (myCompactPackages && myCompactedDirNode != null){
+      return dirName + "/" + myCompactedDirNode.toString();
+    }
+    return dirName;
   }
 
   public PsiElement getPsiElement() {
     return myDirectory;
+  }
+
+  public void setDirectory(final PsiDirectory directory) {
+    myDirectory = directory;
   }
 
   public int getWeight() {
@@ -78,5 +94,20 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public Icon getClosedIcon() {
     return Icons.PACKAGE_ICON;
+  }
+
+  public void setCompactedDirNode(final DirectoryNode compactedDirNode) {
+    myCompactedDirNode = compactedDirNode;
+    if (myCompactedDirNode != null) {
+      myCompactedDirNode.myWrapper = this;
+    }
+  }
+
+  public DirectoryNode getWrapper() {
+    return myWrapper;
+  }
+
+  public DirectoryNode getCompactedDirNode() {
+    return myCompactedDirNode;
   }
 }

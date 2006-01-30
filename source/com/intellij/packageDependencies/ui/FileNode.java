@@ -84,9 +84,9 @@ public class FileNode extends PackageDependenciesNode {
     return myFile.hashCode();
   }
 
-  public String getFQName() {
+  public String getFQName(final boolean fileSeparator) {
     StringBuffer buf = new StringBuffer(20);
-    if (myFile instanceof PsiJavaFile) {
+    if (myFile instanceof PsiJavaFile && !fileSeparator) {
       String packageName = ((PsiJavaFile)myFile).getPackageName();
       buf.append(packageName);
       if (buf.length() > 0) {

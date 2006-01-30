@@ -990,6 +990,8 @@
       <reference ref="ModuleSettings"/>
       <separator/>
       <reference ref="JavaeeMigrationGroup"/>
+      <separator/>
+      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">

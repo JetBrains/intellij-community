@@ -34,6 +34,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 public class ScopeEditorPanel {
+  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private JPanel myButtonsPanel;
   private JTextField myNameField;
   private JTextField myPatternField;
@@ -221,7 +222,7 @@ public class ScopeEditorPanel {
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
       final String modulePattern = node.toString();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*", scope, modulePattern, null);
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;                            
       final String scope = getSelectedScopeType(node);
@@ -249,7 +250,7 @@ public class ScopeEditorPanel {
     else if (node instanceof FileNode) {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
-      String fqName = fNode.getFQName();
+      String fqName = fNode.getFQName(getSelectedScopeType(node) == PatternPackageSet.SCOPE_FILE);
       if (fqName != null) return getPatternSet(node, fqName);
     }
     else if (node instanceof GeneralGroupNode) {
@@ -309,6 +310,7 @@ public class ScopeEditorPanel {
   private JComponent createTreeToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new FlattenPackagesAction());
+    group.add(new CompactEmptyMiddlePackagesAction());
     group.add(new ShowFilesAction());
     group.add(new ShowModulesAction());
     group.add(new GroupByScopeTypeAction());
@@ -465,6 +467,28 @@ public class ScopeEditorPanel {
     }
   }
 
+
+  private final class CompactEmptyMiddlePackagesAction extends ToggleAction {
+    CompactEmptyMiddlePackagesAction() {
+      super(IdeBundle.message("action.compact.empty.middle.packages"),
+            IdeBundle.message("action.compact.empty.middle.packages"), COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
+      rebuild(true);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
+    }
+  }
+
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
       super(IdeBundle.message("action.show.files"),
@@ -517,7 +541,6 @@ public class ScopeEditorPanel {
       settings.UI_GROUP_BY_FILES = flag;
       if (flag){
         settings.UI_GROUP_BY_SCOPE_TYPE = false;
-        settings.UI_FLATTEN_PACKAGES = false;
       }
       rebuild(true);
     }

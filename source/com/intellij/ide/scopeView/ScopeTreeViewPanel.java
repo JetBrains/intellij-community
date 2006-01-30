@@ -165,7 +165,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public void selectCurrentScope() {
     final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-    final NamedScope scope = holder.getScope(CURRENT_SCOPE);
+    final NamedScope scope = CURRENT_SCOPE != null ? holder.getScope(CURRENT_SCOPE) : holder.getProjectScope();
     myScopesCombo.setSelectedItem(scope);
     refreshScope(scope, holder, true);
   }
