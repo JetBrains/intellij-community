@@ -32,6 +32,9 @@ import java.util.Map;
 public class MethodSignatureUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureUtil");
 
+  private MethodSignatureUtil() {
+  }
+
   public static MethodSignature createMethodSignature(@NonNls String name,
                                                       PsiParameterList parameterTypes,
                                                       PsiTypeParameterList typeParameterList,
@@ -249,9 +252,6 @@ public class MethodSignatureUtil {
 
   // null means raw
   private static PsiType promoteType(PsiType type, PsiSubstitutor parentSubstitutor) {
-    if (type instanceof PsiTypeParameter) {
-      return parentSubstitutor.substitute((PsiTypeParameter)type);
-    }
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
