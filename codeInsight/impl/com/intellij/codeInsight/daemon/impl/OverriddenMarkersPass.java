@@ -13,12 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import java.util.*;
@@ -36,8 +37,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
 
   private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
-
-  private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new THashMap<PsiClass, PsiClass>();
 
   public OverriddenMarkersPass(
     Project project,
@@ -76,30 +75,32 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     return Pass.UPDATE_OVERRIDEN_MARKERS;
   }
 
-  private Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
+  private static Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
+    Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
-      addLineMarkerInfo(element, array);
+      if (element instanceof PsiIdentifier) {
+        if (element.getParent() instanceof PsiMethod) {
+          final PsiMethod method = ((PsiMethod)element.getParent());
+          if (element.equals(method.getNameIdentifier()) && PsiUtil.canBeOverriden(method)) {
+            methods.add(method);
+          }
+        }
+        else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
+          collectInheritingClasses(element, array);
+        }
+      }
+    }
+    if (!methods.isEmpty()) {
+      collectOverridingMethods(methods, array);
     }
     return array;
   }
 
-  private void addLineMarkerInfo(PsiElement element, List<LineMarkerInfo> result) {
-    if (element instanceof PsiIdentifier) {
-      PsiManager manager = PsiManager.getInstance(myProject);
-      if (element.getParent() instanceof PsiMethod) {
-        collectOverridingMethods(element, manager, result);
-      }
-      else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
-        collectInheritingClasses(element, result);
-      }
-    }
-  }
-
-  private void collectInheritingClasses(PsiElement element, List<LineMarkerInfo> result) {
+  private static void collectInheritingClasses(PsiElement element, List<LineMarkerInfo> result) {
     PsiClass aClass = (PsiClass) element.getParent();
     if (element.equals(aClass.getNameIdentifier())) {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -107,9 +108,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
 
         final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
         if (inheritor != null) {
-          if (!myClassToFirstDerivedMap.containsKey(aClass)){
-            myClassToFirstDerivedMap.put(aClass, inheritor);
-          }
           int offset = element.getTextRange().getStartOffset();
           LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
 
@@ -119,47 +117,49 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void collectOverridingMethods(PsiElement element, PsiManager manager, List<LineMarkerInfo> result) {
-    PsiMethod method = (PsiMethod)element.getParent();
-    if (method.getNameIdentifier().equals(element)){
-      if (!PsiUtil.canBeOverriden(method)) return;
-
-      PsiClass parentClass = method.getContainingClass();
-      if ("java.lang.Object".equals(parentClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
-
-      if (!myClassToFirstDerivedMap.containsKey(parentClass)){
-        final PsiClass derived = ClassInheritorsSearch.search(parentClass, false).findFirst();
-        myClassToFirstDerivedMap.put(parentClass, derived);
-      }
-
-      PsiClass derived = myClassToFirstDerivedMap.get(parentClass);
-      if (derived == null) return;
-
-      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, derived, PsiSubstitutor.EMPTY);
-      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-      MethodSignature signature = method.getSignature(substitutor);
-      PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(derived, signature, false);
-      if (method1 != null) {
-        if (method1.hasModifierProperty(PsiModifier.STATIC) ||
-            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !manager.arePackagesTheSame(parentClass, derived))) {
-          method1 = null;
+  private static void collectOverridingMethods(Set<PsiMethod> methods, List<LineMarkerInfo> result) {
+    final Set<PsiMethod> overridden = new HashSet<PsiMethod>();
+    Map<PsiClass, List<PsiMethod>> classesToMethods = new HashMap<PsiClass, List<PsiMethod>>();
+    for (PsiMethod method : methods) {
+      final PsiClass parentClass = method.getContainingClass();
+      if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
+        List<PsiMethod> hisMethods = classesToMethods.get(parentClass);
+        if (hisMethods == null) {
+          hisMethods = new ArrayList<PsiMethod>();
+          classesToMethods.put(parentClass, hisMethods);
         }
+        hisMethods.add(method);
       }
-      boolean found = method1 != null;
+    }
 
-      if (!found){
-        found = OverridingMethodsSearch.search(method, true).findFirst() != null;
-      }
+    for (final PsiClass aClass : classesToMethods.keySet()) {
+      final List<PsiMethod> hisMethods = classesToMethods.get(aClass);
+      ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+        public boolean process(final PsiClass inheritor) {
+          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, inheritor, PsiSubstitutor.EMPTY);
+          for (Iterator<PsiMethod> iterator = hisMethods.iterator(); iterator.hasNext();) {
+            PsiMethod hisMethod = iterator.next();
+            final MethodSignature hisSignature = hisMethod.getSignature(substitutor);
+            if (MethodSignatureUtil.findMethodBySignature(inheritor, hisSignature, false) != null) {
+              iterator.remove();
+              overridden.add(hisMethod);
+            }
+          }
 
-      if (found) {
-        boolean overrides;
-        overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
+          return !hisMethods.isEmpty();
+        }
+      });
+    }
 
-        int offset = method.getNameIdentifier().getTextRange().getStartOffset();
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDEN_METHOD, method, offset, overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER);
+    for (PsiMethod method : overridden) {
+      boolean overrides;
+      overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
-        result.add(info);
-      }
+      int offset = method.getNameIdentifier().getTextRange().getStartOffset();
+      LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDEN_METHOD, method, offset,
+                                               overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER);
+
+      result.add(info);
     }
   }
 }
