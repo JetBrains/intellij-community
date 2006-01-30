@@ -98,9 +98,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
 
-      final Iterator<Map.Entry<PsiVariable, String>> iterator = myVariablesRenames.entrySet().iterator();
-      while (iterator.hasNext()) {
-        Map.Entry<PsiVariable, String> entry = iterator.next();
+      for (Map.Entry<PsiVariable, String> entry : myVariablesRenames.entrySet()) {
         final String newName = entry.getValue();
         if (newName != null) {
           entry.getKey().setName(newName);
@@ -138,15 +136,18 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   protected void processTurnToSuperRefs(UsageInfo[] usages, final PsiClass aSuper) throws IncorrectOperationException {
-    HashSet<PsiFile> fileSet = new HashSet<PsiFile>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof TurnToSuperReferenceUsageInfo && usage.getElement() != null) {
-        fileSet.add(usage.getElement().getContainingFile());
-        PsiElement newElement = usage.getElement().getReference().bindToElement(aSuper);
+      if (usage instanceof TurnToSuperReferenceUsageInfo) {
+        final PsiElement element = usage.getElement();
+        if (element != null) {
+          final PsiReference ref = element.getReference();
+          assert ref != null;
+          PsiElement newElement = ref.bindToElement(aSuper);
 
-        if (newElement.getParent() instanceof PsiTypeElement) {
-          if (newElement.getParent().getParent() instanceof PsiTypeCastExpression) {
-            fixPossiblyRedundantCast((PsiTypeCastExpression)newElement.getParent().getParent());
+          if (newElement.getParent() instanceof PsiTypeElement) {
+            if (newElement.getParent().getParent() instanceof PsiTypeCastExpression) {
+              fixPossiblyRedundantCast((PsiTypeCastExpression)newElement.getParent().getParent());
+            }
           }
         }
       }
@@ -311,6 +312,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       final PsiElement element = ref.getElement();
       addLink(element, type);
       addLink(type, element);
+      analyzeVarUsage(element);
     }
 
     if (variable instanceof PsiParameter) {
@@ -341,6 +343,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
             else {
               continue;
             }
+            if (argumentList == null) continue;
             PsiExpression[] args = argumentList.getExpressions();
             if (index >= args.length) continue;
             addLink(type, args[index]);
@@ -358,7 +361,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
             }
           }
         }
-      ;
 
         final PsiMethod[] superMethods = method.findSuperMethods();
         new Inner().linkInheritors(superMethods);
@@ -376,6 +378,22 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         LOG.assertTrue(false);
       }
     }
+  }
+
+  private void analyzeVarUsage(final PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiReturnStatement) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+      assert method != null;
+      final PsiType returnType = method.getReturnType();
+      if (returnType instanceof PsiClassType) {
+        final PsiClass resolved = ((PsiClassType)returnType).resolve();
+        if (resolved == null || !isSuperInheritor(resolved)) {
+          markNode(element);
+        }
+      }
+    }
+    //TODO: I expect more cases here
   }
 
   private void processMethodReturnType(final PsiMethod method) {

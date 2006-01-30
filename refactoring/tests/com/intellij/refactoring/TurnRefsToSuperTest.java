@@ -87,6 +87,10 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("Client.V", "Client.L", false);
   }
 
+  public void testIDEA6505() throws Exception {
+    doTest("Impl", "IB", false);
+  }
+
 
   private void doTest(final String className, final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
