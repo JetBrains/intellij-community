@@ -51,19 +51,20 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private DebuggerContextListener mySessionListener = new DebuggerContextListener() {
     public void changeEvent(DebuggerContextImpl newContext, int event) {
 
-      if (event == DebuggerSession.EVENT_PAUSE && myDebuggerStateManager.myDebuggerSession != newContext.getDebuggerSession()) {
+      final DebuggerSession session = newContext.getDebuggerSession();
+      if (event == DebuggerSession.EVENT_PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
-        myDebuggerStateManager.setState(newContext, newContext.getDebuggerSession().getState(), event, null);
+        myDebuggerStateManager.setState(newContext, session.getState(), event, null);
         return;
       }
 
-      if(myDebuggerStateManager.myDebuggerSession == newContext.getDebuggerSession()) {
+      if(myDebuggerStateManager.myDebuggerSession == session) {
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
 
       if(event == DebuggerSession.EVENT_DISPOSE) {
-        dispose(newContext.getDebuggerSession());
-        if(myDebuggerStateManager.myDebuggerSession == newContext.getDebuggerSession()) {
+        dispose(session);
+        if(myDebuggerStateManager.myDebuggerSession == session) {
           myDebuggerStateManager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
         }
       }
