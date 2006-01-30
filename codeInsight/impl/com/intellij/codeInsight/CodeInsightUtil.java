@@ -14,24 +14,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -135,9 +132,17 @@ public class CodeInsightUtil {
     return array.toArray(new PsiElement[array.size()]);
   }
 
-  public static PsiElement[] getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
+  public static List<PsiElement> getElementsIntersectingRange(PsiElement root, final int startOffset, final int endOffset) {
+    return getElementsInRange(root, startOffset, endOffset, true);
+  }
+
+  public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
+    return getElementsInRange(root, startOffset, endOffset, false);
+  }
+
+  public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset, boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
-    if (commonParent == null) return PsiElement.EMPTY_ARRAY;
+    if (commonParent == null) return Collections.emptyList();
     final List<PsiElement> list = new ArrayList<PsiElement>();
 
     final int currentOffset = commonParent.getTextRange().getStartOffset();
@@ -160,7 +165,16 @@ public class CodeInsightUtil {
     };
     ((TreeElement)commonParent.getNode()).acceptTree(visitor);
     list.add(commonParent);
-    return list.toArray(new PsiElement[list.size()]);
+
+    if (includeAllParents) {
+      PsiElement parent = commonParent;
+      while (parent != root) {
+        parent = parent.getParent();
+        list.add(parent);
+      }
+    }
+
+    return Collections.unmodifiableList(list);
   }
 
   @Nullable public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {

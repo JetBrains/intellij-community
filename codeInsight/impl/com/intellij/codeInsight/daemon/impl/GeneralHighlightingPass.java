@@ -128,7 +128,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       for (final PsiElement psiRoot : psiRoots) {
         if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
         //long time = System.currentTimeMillis();
-        PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+        List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
         //LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
         //time = System.currentTimeMillis();
 
@@ -188,8 +188,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         // binary file? see IDEADEV-2809
         return new ArrayList<LineMarkerInfo>();
       }
-      PsiElement[] elements = CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset);
-      return collectLineMarkers(elements);
+      return collectLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset));
     }
     catch (ProcessCanceledException e) {
       return null;
@@ -201,7 +200,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return myHighlights;
   }
 
-  private Collection<HighlightInfo> collectHighlights(final PsiElement[] elements) {
+  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
@@ -280,7 +279,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
 
-  private Collection<LineMarkerInfo> collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
+  private Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();

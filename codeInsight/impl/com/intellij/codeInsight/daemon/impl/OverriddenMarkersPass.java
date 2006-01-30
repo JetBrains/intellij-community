@@ -58,7 +58,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     PsiElement[] psiRoots = myFile.getPsiRoots();
     for (final PsiElement psiRoot : psiRoots) {
       if (!HighlightUtil.isRootHighlighted(psiRoot)) continue;
-      PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+      List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       myMarkers = collectLineMarkers(elements);
     }
   }
@@ -76,7 +76,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     return Pass.UPDATE_OVERRIDEN_MARKERS;
   }
 
-  private Collection<LineMarkerInfo> collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
+  private Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();

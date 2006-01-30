@@ -23,11 +23,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -104,6 +104,15 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myTools = new ArrayList<LocalInspectionTool>();
 
     final LocalInspectionTool[] tools = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile).getHighlightingLocalInspectionTools();
+
+    final ProblemsHolder holder = new ProblemsHolder(iManager);
+    final List<Pair<LocalInspectionTool, PsiElementVisitor>> visitors = new ArrayList<Pair<LocalInspectionTool, PsiElementVisitor>>();
+    for (LocalInspectionTool tool : tools) {
+      final PsiElementVisitor visitor = tool.buildVisitor(holder, true);
+      if (visitor != null) visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
+    }
+
+
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : workSet) {
@@ -157,6 +166,16 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             }
           }
         }
+
+        if (!visitors.isEmpty()) {
+          final List<PsiElement> elements = CodeInsightUtil.getElementsIntersectingRange(psiRoot, myStartOffset, myEndOffset);
+          for (PsiElement element : elements) {
+            for (Pair<LocalInspectionTool,PsiElementVisitor> visitor : visitors) {
+              element.accept(visitor.getSecond());
+              appendDescriptors(holder.getResults(), visitor.getFirst());
+            }
+          }
+        }
       }
     });
   }
@@ -195,6 +214,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
+    if (problemDescriptors == null) return;
+    appendDescriptors(Arrays.asList(problemDescriptors), tool);
+  }
+
+  private void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile);
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;

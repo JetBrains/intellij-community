@@ -1,18 +1,16 @@
 package com.intellij.codeInspection.java15api;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.ExtensionPoints;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author max
@@ -26,9 +24,10 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initForbiddenApi() {
+    BufferedReader reader = null;
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream("apiList.txt");
-      BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+      reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
 
       do {
         String line = reader.readLine();
@@ -42,6 +41,16 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     }
     catch (IOException e) {
       // can't be
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          // Will not happen
+        }
+      }
     }
   }
 
@@ -69,54 +78,13 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   @Override
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    return checkReferencesIn(method, manager);
-  }
-
-  @Override
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    ProblemDescriptor[] result = null;
-    result = merge(result, checkReferencesIn(aClass.getImplementsList(), manager));
-    result = merge(result, checkReferencesIn(aClass.getExtendsList(), manager));
-    final PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (PsiClassInitializer initializer : initializers) {
-      result = merge(result, checkReferencesIn(initializer, manager));
-    }
-    return result;
-  }
-
-  @Override
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
-    return checkReferencesIn(field, manager);
-  }
-
-  private static ProblemDescriptor[] merge(ProblemDescriptor[] a, ProblemDescriptor[] b) {
-    if (a == null || a.length == 0) return b;
-    if (b == null || b.length == 0) return a;
-    ProblemDescriptor[] res = new ProblemDescriptor[a.length + b.length];
-    System.arraycopy(a, 0, res, 0, a.length);
-    System.arraycopy(b, 0, res, a.length, b.length);
-    return res;
-  }
-
   @Nullable
-  private ProblemDescriptor[] checkReferencesIn(@Nullable PsiElement elt, InspectionManager manager) {
-    if (elt == null || !isInProject(elt, manager)) return null;
-    final MyVisitor visitor = new MyVisitor();
-    elt.accept(visitor);
-    final List<PsiElement> results = visitor.getResults();
-    if (results == null) return null;
-    ProblemDescriptor[] descriptors = new ProblemDescriptor[results.size()];
-    for (int i = 0; i < descriptors.length; i++) {
-      descriptors[i] = manager .createProblemDescriptor(results.get(i), InspectionsBundle.message("inspection.1.5.problem.descriptor", "@since 1.5"), (LocalQuickFix)null,
-                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-
-    }
-    return descriptors;
+  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    return new MyVisitor(holder);
   }
 
-  private boolean isInProject(final PsiElement elt, final InspectionManager manager) {
-    return PsiManager.getInstance(manager.getProject()).isInProject(elt);
+  private static boolean isInProject(final PsiElement elt) {
+    return elt.getManager().isInProject(elt);
   }
 
   @Override @Nullable
@@ -134,7 +102,11 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   private static class MyVisitor extends PsiRecursiveElementVisitor {
-    private List<PsiElement> results = null;
+    private ProblemsHolder myHolder;
+
+    public MyVisitor(final ProblemsHolder holder) {
+      myHolder = holder;
+    }
 
     public void visitDocComment(PsiDocComment comment) {
       // No references inside doc comment are of interest.
@@ -160,14 +132,9 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     }
 
     private void registerError(PsiJavaCodeReferenceElement reference) {
-      if (results == null) {
-        results = new ArrayList<PsiElement>(1);
+      if (isInProject(reference)) {
+        myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", "@since 1.5"));
       }
-      results.add(reference);
-    }
-
-    public List<PsiElement> getResults() {
-      return results;
     }
   }
 

@@ -1,16 +1,16 @@
 package com.intellij.lang.java;
 
 import com.intellij.find.impl.HelpID;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.WebDirectoryElement;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
@@ -294,11 +294,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   private static class Inner {
-    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
-      ElementType.DOC_COMMENT_DATA,
-      ElementType.DOC_TAG_VALUE_TOKEN,
-      ElementType.C_STYLE_COMMENT,
-      ElementType.END_OF_LINE_COMMENT});
+    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(ElementType.DOC_COMMENT_DATA,
+                                                                    ElementType.DOC_TAG_VALUE_TOKEN,
+                                                                    ElementType.C_STYLE_COMMENT,
+                                                                    ElementType.END_OF_LINE_COMMENT);
   }
 
   public boolean mayHaveReferences(IElementType token, final short searchContext) {

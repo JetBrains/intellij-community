@@ -11,14 +11,12 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.StringSearcher;
 
-import java.util.Set;
-
 public class LowLevelSearchUtil {
+  private LowLevelSearchUtil() {}
+
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher,
@@ -42,14 +40,11 @@ public class LowLevelSearchUtil {
     }
 
     final Language lang = scopePsi.getLanguage();
-    //TODO[ven]: lang is null for PsiPlainText for example. Should be reviewed.
-    if (lang == null || lang.getFindUsagesProvider().mayHaveReferences(scope.getElementType(), searchContext)) {
-      int startOffset;
-      int endOffset;
+    if (lang.getFindUsagesProvider().mayHaveReferences(scope.getElementType(), searchContext)) {
       if (scope instanceof LeafElement) {
         LeafElement leaf = (LeafElement)scope;
-        startOffset = 0;
-        endOffset = leaf.getTextLength();
+        int startOffset = 0;
+        int endOffset = leaf.getTextLength();
         do {
           int i = leaf.searchWord(startOffset, searcher);
           if (i >= 0) {
@@ -61,7 +56,6 @@ public class LowLevelSearchUtil {
           }
         }
         while (startOffset < endOffset);
-        endOffset = startOffset + leaf.getTextLength();
       }
       else {
         char[] buffer = ((CompositeElement)scope).textToCharArray();
@@ -78,8 +72,8 @@ public class LowLevelSearchUtil {
         //  startOffset = 0;
         //  endOffset = buffer.length;
         //}
-        startOffset = 0;
-        endOffset = buffer.length;
+        int startOffset = 0;
+        int endOffset = buffer.length;
 
         final int originalStartOffset = startOffset;
         do {
@@ -143,6 +137,7 @@ public class LowLevelSearchUtil {
     return true;
   }
 
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
   public static int searchWord(char[] text, int startOffset, int endOffset, StringSearcher searcher) {
     for (int index = startOffset; index < endOffset; index++) {
       index = searcher.scan(text, index, endOffset);
@@ -165,32 +160,5 @@ public class LowLevelSearchUtil {
       return index;
     }
     return -1;
-  }
-
-  public static boolean processIdentifiersBySet(
-    PsiElementProcessor processor,
-    ASTNode scope,
-    TokenSet elementTypes,
-    Set namesSet,
-    ProgressIndicator progress) {
-    ProgressManager.getInstance().checkCanceled();
-
-    if (elementTypes.contains(scope.getElementType())) {
-      String text = scope.getText(); //TODO: optimization to not fetch text?
-      if (namesSet.contains(text)) {
-        if (!processor.execute(SourceTreeToPsiMap.treeElementToPsi(scope))) return false;
-      }
-    }
-
-    if (scope instanceof CompositeElement) {
-      ASTNode _scope = scope;
-      ChameleonTransforming.transformChildren(_scope);
-
-      for (ASTNode child = _scope.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (!processIdentifiersBySet(processor, child, elementTypes, namesSet, progress)) return false;
-      }
-    }
-
-    return true;
   }
 }

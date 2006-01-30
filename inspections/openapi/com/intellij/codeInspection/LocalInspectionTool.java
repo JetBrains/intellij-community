@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +79,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return null;
   }
 
+  @Nullable
+  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    return null;
+  }
 
   /**
    * @return descriptive name to be used in "suppress" comments and annotations,

@@ -2,8 +2,10 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,12 +14,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -36,7 +37,18 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   }
 
   public void processFile(PsiFile file) {
+    final ProblemsHolder holder = new ProblemsHolder(getManager());
+    final PsiElementVisitor customVisitor = myTool.buildVisitor(holder, false);
+
     file.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        if (customVisitor != null) {
+          element.accept(customVisitor);
+        }
+
+        super.visitElement(element);
+      }
+
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }
@@ -57,17 +69,6 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         }
       }
 
-      private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
-        Set<ProblemDescriptor> set = null;
-        for (ProblemDescriptor description : problemDescriptions) {
-          if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
-            if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
-            set.remove(description);
-          }
-        }
-        return set == null ? problemDescriptions : set.toArray(new ProblemDescriptor[set.size()]);
-      }
-
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
         if (InspectionManagerEx.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
@@ -85,29 +86,70 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         }
       }
 
-      private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions) {
-        if (problemDescriptions != null) {
-          problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
-          if (problemDescriptions.length != 0) {
-            RefManager refManager = getManager().getRefManager();
-            RefElement refElement = refManager.getReference(element);
-            if (refElement != null) {
-              addProblemElement(refElement, problemDescriptions);
-            }
-          }
-        }
-      }
-
       public void visitFile(PsiFile file) {
         super.visitFile(file);
         ProblemDescriptor[] problemDescriptions = myTool.checkFile(file, getManager(), false);
         addProblemDescriptors(file, problemDescriptions);
       }
     });
+
+    addProblemDescriptors(holder.getResults());
   }
 
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[0];
+  }
+
+  private void addProblemDescriptors(List<ProblemDescriptor> descriptors) {
+    if (descriptors == null || descriptors.isEmpty()) return;
+
+    Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
+    RefManager refManager = getManager().getRefManager();
+    for (ProblemDescriptor descriptor : descriptors) {
+      final PsiElement elt = descriptor.getPsiElement();
+      if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), myTool.getID())) continue;
+
+      final PsiNamedElement problemElement =
+        PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
+
+      RefElement refElement = refManager.getReference(problemElement);
+      List<ProblemDescriptor> elementProblems = problems.get(refElement);
+      if (elementProblems == null) {
+        elementProblems = new ArrayList<ProblemDescriptor>();
+        problems.put(refElement, elementProblems);
+      }
+      elementProblems.add(descriptor);
+    }
+
+    for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
+      final List<ProblemDescriptor> problemDescriptors = entry.getValue();
+      addProblemElement(entry.getKey(),
+                        problemDescriptors.toArray(new CommonProblemDescriptor[problemDescriptors.size()]));
+    }
+  }
+
+  private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
+    Set<ProblemDescriptor> set = null;
+    for (ProblemDescriptor description : problemDescriptions) {
+      if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
+        if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
+        set.remove(description);
+      }
+    }
+    return set == null ? problemDescriptions : set.toArray(new ProblemDescriptor[set.size()]);
+  }
+
+  private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions) {
+    if (problemDescriptions != null) {
+      problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
+      if (problemDescriptions.length != 0) {
+        RefManager refManager = getManager().getRefManager();
+        RefElement refElement = refManager.getReference(element);
+        if (refElement != null) {
+          addProblemElement(refElement, problemDescriptions);
+        }
+      }
+    }
   }
 
   public void runInspection(AnalysisScope scope) {

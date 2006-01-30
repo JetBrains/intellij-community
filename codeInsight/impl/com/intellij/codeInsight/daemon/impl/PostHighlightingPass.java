@@ -140,7 +140,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     for (final PsiElement psiRoot : psiRoots) {
       if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
-      PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+      List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       collectHighlights(elements, highlights);
     }
 
@@ -209,7 +209,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return myHighlights;
   }
 
-  private void collectHighlights(PsiElement[] elements, List<HighlightInfo> array) throws ProcessCanceledException {
+  private void collectHighlights(List<PsiElement> elements, List<HighlightInfo> array) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     for (PsiElement element : elements) {

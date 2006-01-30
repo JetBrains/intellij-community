@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
   private EditorActionHandler myOriginalAction;
@@ -66,8 +67,8 @@ public class CopyHandler extends EditorActionHandler {
 
     //System.out.println("(copy block) " + referenceData[0].length + " references collected");
     final Transferable transferable = referenceData.length > 0 || foldingData.length > 0
-      ? (Transferable)new TextBlockTransferable(text, referenceData, foldingData)
-      : new StringSelection(text);
+                                      ? (Transferable)new TextBlockTransferable(text, referenceData, foldingData)
+                                      : new StringSelection(text);
 
     CopyPasteManager.getInstance().setContents(transferable);
   }
@@ -79,9 +80,9 @@ public class CopyHandler extends EditorActionHandler {
       final int startOffset = startOffsets[i];
       final PsiElement elementAtCaret = file.findElementAt(startOffset);
       if (!(elementAtCaret instanceof PsiJavaToken &&
-          (((PsiJavaToken) elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
-          startOffset > elementAtCaret.getTextRange().getStartOffset() &&
-          endOffsets[i] < elementAtCaret.getTextRange().getEndOffset())) {
+            (((PsiJavaToken) elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
+            startOffset > elementAtCaret.getTextRange().getStartOffset() &&
+            endOffsets[i] < elementAtCaret.getTextRange().getEndOffset())) {
         isLiteral = false;
       }
     }
@@ -101,7 +102,7 @@ public class CopyHandler extends EditorActionHandler {
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       final int endOffset = endOffsets[j];
-      final PsiElement[] elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
+      final List<PsiElement> elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
       for (final PsiElement element : elements) {
         if (element instanceof PsiJavaCodeReferenceElement) {
           if (!((PsiJavaCodeReferenceElement)element).isQualified()) {

@@ -19,13 +19,12 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: anna
@@ -50,36 +49,31 @@ public class AccessStaticViaInstance extends LocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
-    final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
-    file.accept(new PsiRecursiveElementVisitor() {
+  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+    return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        JavaResolveResult result = expression.advancedResolve(false);
-        final ProblemDescriptor problemDescriptor = checkAccessStaticMemberViaInstanceReference(expression, result, manager);
-        if (problemDescriptor != null) {
-          problems.add(problemDescriptor);
-        }
+        checkAccessStaticMemberViaInstanceReference(expression, expression.advancedResolve(false), holder);
       }
-    });
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    };
   }
 
   @Nullable
-  static ProblemDescriptor checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result, InspectionManager manager) {
+  static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result, ProblemsHolder holder) {
     PsiElement resolved = result.getElement();
 
-    if (!(resolved instanceof PsiMember)) return null;
+    if (!(resolved instanceof PsiMember)) return;
     PsiExpression qualifierExpression = expr.getQualifierExpression();
-    if (qualifierExpression == null) return null;
-    if (qualifierExpression instanceof PsiReferenceExpression
-        && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
-      return null;
+    if (qualifierExpression == null) return;
+
+    if (qualifierExpression instanceof PsiReferenceExpression &&
+        ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
+      return;
     }
-    if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return;
 
     String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
                                                    HighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
-    return manager.createProblemDescriptor(expr, description, new LocalQuickFix[]{new AccessStaticViaInstanceFix(expr, result)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result));
   }
 }
