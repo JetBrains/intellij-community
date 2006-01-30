@@ -500,12 +500,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myFileManager.findViewProvider(file);
   }
 
-  public
-  @NotNull
-  Language[] getKnownAspects(@NotNull VirtualFile file) {
-    return new Language[0];
-  }
-
   public void cleanupForNextTest() {
     //myFileManager.cleanupForNextTest();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
