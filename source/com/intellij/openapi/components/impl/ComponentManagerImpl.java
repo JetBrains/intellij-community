@@ -47,12 +47,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private boolean myComponentsCreated = false;
 
-  private Map<Class, BaseComponent> myInterfaceToComponentMap = new HashMap<Class, BaseComponent>();
+  private Map<Class, Object> myInterfaceToComponentMap = new HashMap<Class, Object>();
 
   private Map<String, Element> myNameToConfiguration = new HashMap<String, Element>();
   private Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
-  private Map<Class, BaseComponent> myInitializedComponents = new HashMap<Class, BaseComponent>();
-  private Set<BaseComponent> myInitializingComponents = new HashSet<BaseComponent>();
+  private Map<Class, Object> myInitializedComponents = new HashMap<Class, Object>();
+  private Set<Object> myInitializingComponents = new HashSet<Object>();
   private Set<Class> myLazyComponents = new HashSet<Class>();
 
   private static Map<String, Element> ourDescriptorToRootMap = new HashMap<String, Element>();
@@ -98,9 +98,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   }
 
-  private BaseComponent createComponent(Class componentInterface) {
+  private Object createComponent(Class componentInterface) {
     Class componentClass = myInterfaceToClassMap.get(componentInterface);
-    final BaseComponent component = instantiateComponent(componentClass);
+    final Object component = instantiateComponent(componentClass);
     myInterfaceToComponentMap.put(componentInterface, component);
 
     if (component == null) {
@@ -108,34 +108,40 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return null;
     }
 
-    final String componentName = component.getComponentName();
-    if (componentName == null) {
-      LOG.error("Component name is null: " + component.getClass().getName());
-    }
-
-    if (myNameToComponent.containsKey(componentName)) {
-      BaseComponent loadedComponent = myNameToComponent.get(componentName);
-      // component may have been already loaded by PicoContainer, so fire error only if components are really different
-      if (!component.equals(loadedComponent)) {
-        LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + component.getClass());
+    if (component instanceof BaseComponent) {
+      BaseComponent baseComponent = (BaseComponent)component;
+      final String componentName = baseComponent.getComponentName();
+      if (componentName == null) {
+        LOG.error("Component name is null: " + component.getClass().getName());
       }
-    }
-    else {
-      myNameToComponent.put(componentName, component);
+
+      if (myNameToComponent.containsKey(componentName)) {
+        BaseComponent loadedComponent = myNameToComponent.get(componentName);
+        // component may have been already loaded by PicoContainer, so fire error only if components are really different
+        if (!component.equals(loadedComponent)) {
+          LOG.error("Component name collision: " + componentName + " " + loadedComponent.getClass() + " and " + component.getClass());
+        }
+      }
+      else {
+        myNameToComponent.put(componentName, baseComponent);
+      }
     }
 
     return component;
   }
 
   protected void disposeComponents() {
-    final BaseComponent[] components = getComponents(false);
+    final Object[] components = getComponents(false);
 
-    for (BaseComponent component : components) {
-      try {
-        component.disposeComponent();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+    for (Object component : components) {
+      if (component instanceof BaseComponent) {
+        BaseComponent baseComponent = (BaseComponent)component;
+        try {
+          baseComponent.disposeComponent();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
 
@@ -144,7 +150,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public <T> T getComponentFromContainer(Class<T> interfaceClass) {
     synchronized (this) {
-      final BaseComponent initializedComponent = myInitializedComponents.get(interfaceClass);
+      final Object initializedComponent = myInitializedComponents.get(interfaceClass);
       if (initializedComponent != null) return (T)initializedComponent;
     }
 
@@ -164,7 +170,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         myLazyComponents.remove(interfaceClass);
       }
 
-      BaseComponent component = myInterfaceToComponentMap.get(interfaceClass);
+      Object component = myInterfaceToComponentMap.get(interfaceClass);
       if (component == null) {
         component = createComponent(interfaceClass);
       }
@@ -258,16 +264,16 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myInterfaceToClassMap.containsKey(interfaceClass);
   }
 
-  protected BaseComponent[] getComponents(boolean includeLazyComponents) {
+  protected Object[] getComponents(boolean includeLazyComponents) {
     Class[] componentClasses = getComponentInterfaces();
-    ArrayList<BaseComponent> components = new ArrayList<BaseComponent>(componentClasses.length);
+    ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class interfaceClass : componentClasses) {
       if (includeLazyComponents || !myLazyComponents.contains(interfaceClass)) {
-        BaseComponent component = (BaseComponent)getComponent(interfaceClass);
+        Object component = getComponent(interfaceClass);
         if (component != null) components.add(component);
       }
     }
-    return components.toArray(new BaseComponent[components.size()]);
+    return components.toArray(new Object[components.size()]);
   }
 
   @NotNull
@@ -351,8 +357,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final BaseComponent instantiateComponent(Class componentClass) {
-    return (BaseComponent)getPicoContainer().getComponentInstance(componentClass);
+  protected final Object instantiateComponent(Class componentClass) {
+    return getPicoContainer().getComponentInstance(componentClass);
   }
 
   protected abstract Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException;

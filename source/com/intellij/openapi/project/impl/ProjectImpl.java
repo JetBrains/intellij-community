@@ -289,8 +289,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     String iprUrl = myFilePointer.getUrl();
     String iprProtocol = VirtualFileManager.extractProtocol(iprUrl);
     LOG.assertTrue(LocalFileSystem.PROTOCOL.equals(iprProtocol));
-    String iprPath = VirtualFileManager.extractPath(iprUrl).replace('/', File.separatorChar);
-    return iprPath;
+    return VirtualFileManager.extractPath(iprUrl).replace('/', File.separatorChar);
   }
 
   public VirtualFile getProjectFile() {
@@ -331,8 +330,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     if (parent == null) return null;
     final String name = projectFile.getNameWithoutExtension() + WORKSPACE_EXTENSION;
 
-    VirtualFile workspaceFile = parent.findChild(name);
-    return workspaceFile;
+    return parent.findChild(name);
   }
 
   protected Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException {
@@ -591,27 +589,31 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   private void projectOpened() {
-    final BaseComponent[] components = getComponents(false);
-    for (BaseComponent component1 : components) {
-      try {
-        ProjectComponent component = (ProjectComponent)component1;
-        component.projectOpened();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+    final Object[] components = getComponents(false);
+    for (Object component : components) {
+      if (component instanceof ProjectComponent) {
+        try {
+          ProjectComponent projectComponent = (ProjectComponent)component;
+          projectComponent.projectOpened();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
 
   private void projectClosed() {
-    final BaseComponent[] components = getComponents(false);
+    final Object[] components = getComponents(false);
     for (int i = components.length - 1; i >= 0; i--) {
-      try {
-        ProjectComponent component = (ProjectComponent)components[i];
-        component.projectClosed();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+      if (components[i] instanceof ProjectComponent) {
+        try {
+          ProjectComponent component = (ProjectComponent)components[i];
+          component.projectClosed();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }

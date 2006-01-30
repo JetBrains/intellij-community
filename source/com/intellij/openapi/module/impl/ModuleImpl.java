@@ -338,27 +338,31 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   }
 
   public void projectOpened() {
-    final BaseComponent[] components = getComponents(false);
-    for (BaseComponent component1 : components) {
-      ModuleComponent component = (ModuleComponent)component1;
-      try {
-        component.projectOpened();
-      }
-      catch (Exception e) {
-        LOG.error(e);
+    final Object[] components = getComponents(false);
+    for (Object component1 : components) {
+      if (component1 instanceof ModuleComponent) {
+        ModuleComponent component = (ModuleComponent)component1;
+        try {
+          component.projectOpened();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }
 
   public void projectClosed() {
-    final BaseComponent[] components = getComponents(false);
-    for (BaseComponent component1 : components) {
-      ModuleComponent component = (ModuleComponent)component1;
-      try {
-        component.projectClosed();
-      }
-      catch (Exception e) {
-        LOG.error(e);
+    final Object[] components = getComponents(false);
+    for (Object component1 : components) {
+      if (component1 instanceof ModuleComponent) {
+        ModuleComponent component = (ModuleComponent)component1;
+        try {
+          component.projectClosed();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -393,10 +397,12 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   public void moduleAdded() {
     isModuleAdded = true;
-    final BaseComponent[] components = getComponents(false);
-    for (BaseComponent component1 : components) {
-      ModuleComponent component = (ModuleComponent)component1;
-      component.moduleAdded();
+    final Object[] components = getComponents(false);
+    for (Object component1 : components) {
+      if (component1 instanceof ModuleComponent) {
+        ModuleComponent component = (ModuleComponent)component1;
+        component.moduleAdded();
+      }
     }
   }
 
