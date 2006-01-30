@@ -76,6 +76,9 @@ public class InheritanceUtil{
         }
 
         public boolean hasMutualSubclass() {
+            final ProgressManager progressManager =
+                    ProgressManager.getInstance();
+            progressManager.runProcess(this, null);
             return mutualSubClass;
         }
 
