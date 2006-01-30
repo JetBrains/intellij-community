@@ -122,16 +122,16 @@ class DeclarationMover extends LineMover {
     }
     PsiElement nextWhitespace = range.lastElement.getNextSibling();
     if (nextWhitespace instanceof PsiWhiteSpace) {
-      int endLine = editor.offsetToLogicalPosition(nextWhitespace.getTextRange().getEndOffset()).line;
       Document document = editor.getDocument();
-      while (true) {
+      int endLine;
+      for (endLine = editor.offsetToLogicalPosition(nextWhitespace.getTextRange().getEndOffset()).line;
+           endLine >= 0 && endLine != range.endLine;
+           endLine--) {
         int lineStartOffset = document.getLineStartOffset(endLine);
         int lineEndOffset = document.getLineEndOffset(endLine);
         PsiElement elementAtStart = file.findElementAt(lineStartOffset);
         PsiElement elementAtEnd = file.findElementAt(lineEndOffset - 1);
         if (elementAtEnd == nextWhitespace && elementAtStart == nextWhitespace) break;
-        endLine--;
-        if (endLine == range.endLine) break;
       }
       LineRange newRange = new LineRange(range.startLine, endLine);
       newRange.firstElement = range.firstElement;
