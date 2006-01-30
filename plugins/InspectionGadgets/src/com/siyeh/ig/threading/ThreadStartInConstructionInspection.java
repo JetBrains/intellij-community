@@ -71,9 +71,6 @@ public class ThreadStartInConstructionInspection extends ExpressionInspection {
 
                     final PsiReferenceExpression methodExpression =
                             expression.getMethodExpression();
-                    if (methodExpression == null) {
-                        return;
-                    }
                     @NonNls final String methodName = methodExpression.getReferenceName();
                     if (!"start".equals(methodName)) {
                         return;
