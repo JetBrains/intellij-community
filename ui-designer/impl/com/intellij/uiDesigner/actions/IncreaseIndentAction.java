@@ -16,20 +16,33 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.IncreaseIndentAction");
   private IndentProperty myIndentProperty = new IndentProperty();
 
+  public IncreaseIndentAction() {
+    super(true);
+  }
+
   protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    RadComponent component = selection.get(0);
-    int indent = ((Integer) myIndentProperty.getValue(component)).intValue();
-    try {
-      myIndentProperty.setValue(component, adjustIndent(indent));
-      editor.refreshAndSave(true);
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
+    for(RadComponent c: selection) {
+      int indent = ((Integer) myIndentProperty.getValue(c)).intValue();
+      try {
+        myIndentProperty.setValue(c, adjustIndent(indent));
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
     }
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    e.getPresentation().setEnabled(selection.size() == 1 && canAdjustIndent(selection.get(0)));
+    e.getPresentation().setEnabled(canAdjustIndent(selection));
+  }
+
+  private boolean canAdjustIndent(final ArrayList<RadComponent> selection) {
+    for(RadComponent c: selection) {
+      if (canAdjustIndent(c)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected int adjustIndent(final int indent) {
