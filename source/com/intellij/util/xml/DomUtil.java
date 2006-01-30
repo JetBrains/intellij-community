@@ -34,6 +34,13 @@ public class DomUtil {
           }
         }
       }
+    } else if (type instanceof Class) {
+      for (final Type t : ((Class)type).getGenericInterfaces()) {
+        final Class aClass = extractParameterClassFromGenericType(t);
+        if (aClass != null) {
+          return aClass;
+        }
+      }
     }
     return null;
   }
