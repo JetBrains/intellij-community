@@ -1020,17 +1020,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
-    if (docMarkup != null) {
-      paintLineMarkersSeparators(g, clip, docMarkup);
-    }
+    paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
     paintText(g, clip);
     paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip);
     BorderEffect borderEffect = new BorderEffect(this, g);
     borderEffect.paintHighlighters(getHighlighter());
-    if (docMarkup != null) {
-      borderEffect.paintHighlighters(docMarkup.getAllHighlighters());
-    }
+    borderEffect.paintHighlighters(docMarkup.getAllHighlighters());
     borderEffect.paintHighlighters((getMarkupModel()).getAllHighlighters());
     paintCaretCursor(g);
 
@@ -1110,12 +1106,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
     RangeHighlighter[] segmentHighlighters;
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
-    if (docMarkup != null) {
-      segmentHighlighters = docMarkup.getAllHighlighters();
-      for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
-        paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber,
-                                              endLineNumber);
-      }
+    segmentHighlighters = docMarkup.getAllHighlighters();
+    for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
+      paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber, endLineNumber);
     }
 
     segmentHighlighters = getMarkupModel().getAllHighlighters();
@@ -1713,10 +1706,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     else {
       FontInfo fnt = fontForChar(data[start], fontType);
       CachedFontContent cache = null;
-      for (int i = 0; i < myFontCache.size(); i++) {
-        CachedFontContent cache1 = myFontCache.get(i);
-        if (cache1.myFontType == fnt) {
-          cache = cache1;
+      for (CachedFontContent fontCache : myFontCache) {
+        if (fontCache.myFontType == fnt) {
+          cache = fontCache;
           break;
         }
       }
@@ -2638,9 +2630,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         public void run() {
           if (myCursorUpdater == null) return;
           myCursorUpdater = null;
-
-          if (getDocument().getMarkupModel(myProject) == null) return;
-
           VisualPosition caretPosition = getCaretModel().getVisualPosition();
           Point pos1 = visualPositionToXY(caretPosition);
           Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1));
@@ -3401,8 +3390,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
         TextHitInfo caretPos = e.getCaret();
         if (caretPos != null) {
-          int index = caretPos.getInsertionIndex();
-          dot += index;
+          dot += caretPos.getInsertionIndex();
         }
 
         getCaretModel().moveToOffset(dot);
@@ -3630,7 +3618,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     public void setEditorFontSize(int fontSize) {
       if (fontSize < 8) fontSize = 8;
       if (fontSize > 20) fontSize = 20;
-      myFontSize = new Integer(fontSize);
+      myFontSize = fontSize;
       initFonts();
     }
 
