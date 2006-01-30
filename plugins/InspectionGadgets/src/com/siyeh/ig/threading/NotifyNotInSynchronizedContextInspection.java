@@ -37,9 +37,6 @@ public class NotifyNotInSynchronizedContextInspection extends ExpressionInspecti
 
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
       final String methodName = methodExpression.getReferenceName();
       @NonNls final String notify = "notify";
       @NonNls final String notifyAll = "notifyAll";
@@ -51,9 +48,6 @@ public class NotifyNotInSynchronizedContextInspection extends ExpressionInspecti
         return;
       }
       final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return;
-      }
       final PsiParameter[] parameters = paramList.getParameters();
       final int numParams = parameters.length;
       if (numParams != 0) {
