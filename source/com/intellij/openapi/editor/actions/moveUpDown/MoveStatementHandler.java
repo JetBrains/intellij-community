@@ -26,7 +26,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     final PsiFile file = documentManager.getPsiFile(document);
-
+    if (file == null) return;
     final Mover mover = getSuitableMover(editor, file);
     mover.move(editor,file);
   }
@@ -39,6 +39,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
     final PsiFile file = documentManager.getPsiFile(document);
+    if (file == null) return false;
     final Mover mover = getSuitableMover(editor, file);
     if (mover == null || mover.insertOffset == -1) return false;
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
