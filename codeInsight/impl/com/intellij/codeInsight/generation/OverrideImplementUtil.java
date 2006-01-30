@@ -37,26 +37,30 @@ import java.util.*;
 public class OverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
 
+  @NotNull
   public static CandidateInfo[] getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
     Collection<CandidateInfo> infos = getMapToOverrideImplement(aClass, toImplement).values();
     CandidateInfo[] result = new CandidateInfo[infos.size()];
     int i = 0;
-    for (Iterator<CandidateInfo> it = infos.iterator(); it.hasNext(); i++) {
-      result[i] = it.next();
+    for (final CandidateInfo info : infos) {
+      result[i++] = info;
     }
     return result;
   }
 
+  @NotNull
   public static MethodSignature[] getMethodSignaturesToImplement(PsiClass aClass) {
     Set<MethodSignature> signatures = getMapToOverrideImplement(aClass, true).keySet();
     return signatures.toArray(new MethodSignature[signatures.size()]);
   }
 
+  @NotNull
   public static MethodSignature[] getMethodSignaturesToOverride(PsiClass aClass) {
     Set<MethodSignature> signatures = getMapToOverrideImplement(aClass, false).keySet();
     return signatures.toArray(new MethodSignature[signatures.size()]);
   }
 
+  @NotNull
   private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
                                                                                boolean toImplement) {
     final PsiSubstitutor contextSubstitutor = getContextSubstitutor(aClass);
@@ -160,6 +164,7 @@ public class OverrideImplementUtil {
    * @param toCopyJavaDoc true if copy JavaDoc from method declaration
    * @return list of method prototypes
    */
+  @NotNull
   public static PsiMethod[] overrideOrImplementMethod(PsiClass aClass, PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
     final PsiClass containingClass = method.getContainingClass();
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true) ?
@@ -167,6 +172,7 @@ public class OverrideImplementUtil {
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, false);
   }
 
+  @NotNull
   private static PsiMethod[] overrideOrImplementMethod(PsiClass aClass,
                                                        PsiMethod method,
                                                        PsiSubstitutor substitutor,
@@ -243,6 +249,7 @@ public class OverrideImplementUtil {
            && !method.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
+  @NotNull
   public static PsiMethod[] overrideOrImplementMethods(PsiClass aClass,
                                                        CandidateInfo[] candidates,
                                                        boolean toCopyJavaDoc,
@@ -255,6 +262,7 @@ public class OverrideImplementUtil {
     return result.toArray(new PsiMethod[result.size()]);
   }
 
+  @NotNull
   private static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuffer buffer = new StringBuffer();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
@@ -454,6 +462,7 @@ public class OverrideImplementUtil {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(baseMethod.getProject());
 
     PsiMethod[] prototypes = overrideOrImplementMethod(psiClass, baseMethod, false);
+    if (prototypes.length == 0) return;
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseMethod.getContainingClass(), psiClass, PsiSubstitutor.EMPTY);
     PsiElement anchor = getDefaultAnchorToOverrideOrImplement(psiClass, baseMethod, substitutor);
     Object[] results = GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor, prototypes);

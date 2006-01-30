@@ -168,6 +168,9 @@ public class GenerateMembersUtil {
         anchor = info.element;
         before = false;
       }
+      else {
+        LOG.error("unknown element: " + memberPrototype);
+      }
     }
 
     return newMembersList.toArray();
