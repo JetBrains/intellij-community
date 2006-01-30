@@ -17,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -670,7 +669,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public JComponent getPreferredFocusedComponent() {
     if (myValidCard.isVisible()) {
-      return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myValidCard);
+      return myGlassLayer;
     }
     else {
       return myInvalidCard;

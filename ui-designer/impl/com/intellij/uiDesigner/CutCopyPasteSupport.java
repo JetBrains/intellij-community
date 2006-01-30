@@ -37,6 +37,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   private final GuiEditor myEditor;
   @NonNls private static final String ELEMENT_SERIALIZED = "serialized";
+  @NonNls private static final String ATTRIBUTE_X = "x";
+  @NonNls private static final String ATTRIBUTE_Y = "y";
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
@@ -166,8 +168,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
       for (final Object aChildren : children) {
         final Element e = (Element)aChildren;
 
-        final int x = Integer.parseInt(e.getAttributeValue("x"));
-        final int y = Integer.parseInt(e.getAttributeValue("y"));
+        final int x = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X));
+        final int y = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y));
 
         xs.add(x);
         ys.add(y);
@@ -276,8 +278,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
       component.getX();
 
       writer.startElement("item");
-      writer.addAttribute("x", shift.x);
-      writer.addAttribute("y", shift.y);
+      writer.addAttribute(ATTRIBUTE_X, shift.x);
+      writer.addAttribute(ATTRIBUTE_Y, shift.y);
       component.write(writer);
 
       writer.endElement();

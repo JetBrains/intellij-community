@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.componentTree;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -64,6 +65,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
+  private CutCopyPasteSupport myCutCopyPasteSupport;
 
   public ComponentTree(/*@NotNull*/ final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -115,6 +117,12 @@ public final class ComponentTree extends Tree implements DataProvider {
     myEditor = editor;
     myQuickFixManager.setEditor(editor);
     myStartInplaceEditingAction.setEditor(editor);
+    if (myEditor == null) {
+      myCutCopyPasteSupport = null;
+    }
+    else {
+      myCutCopyPasteSupport = new CutCopyPasteSupport(myEditor);
+    }
   }
 
   public void updateIntentionHintVisibility() {
@@ -201,6 +209,18 @@ public final class ComponentTree extends Tree implements DataProvider {
    * binding of currently selected component (if any)
    */
   public Object getData(final String dataId) {
+    if (GuiEditor.class.getName().equals(dataId)) {
+      return myEditor;
+    }
+
+    if (
+      DataConstantsEx.COPY_PROVIDER.equals(dataId) ||
+      DataConstantsEx.CUT_PROVIDER.equals(dataId) ||
+      DataConstantsEx.PASTE_PROVIDER.equals(dataId)
+    ) {
+      return myCutCopyPasteSupport;
+    }
+
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
       return null;
     }
