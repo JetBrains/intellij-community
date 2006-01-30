@@ -55,9 +55,6 @@ public class EqualsWhichDoesntCheckParameterClassInspection
                   return;
               }
               final PsiParameterList paramList = method.getParameterList();
-              if(paramList == null){
-                  return;
-              }
               final PsiParameter[] parameters = paramList.getParameters();
               if(parameters.length != 1){
                   return;
