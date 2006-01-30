@@ -242,19 +242,18 @@ public final class ComponentItemDialog extends DialogWrapper{
 
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      PsiFile iconFile = null;
+      PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
-        VirtualFile iconVFile = ModuleUtil.findResourceFileInProject(myProject, myTextField.getText());
-        if (iconVFile != null) {
-          iconFile = PsiManager.getInstance(myProject).findFile(iconVFile);
+        VirtualFile formVFile = ModuleUtil.findResourceFileInProject(myProject, myTextField.getText());
+        if (formVFile != null) {
+          formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
-      TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("add.component.choose.form"), iconFile,
+      TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("add.component.choose.form"), formFile,
                                                               null, myFilter);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();
       if (file != null) {
-
         myTextField.setText(GuiEditorUtil.buildResourceName(file));
       }
     }
