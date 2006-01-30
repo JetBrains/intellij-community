@@ -26,6 +26,33 @@
       <property name="rolloverEnabled"/>
     </expert-properties>
     <inplace-property name="text"/>
+
+    <enum-properties>
+      <property name="horizontalAlignment">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
+      <property name="horizontalTextPosition">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
+      <property name="verticalAlignment">
+        <constant value="1" message="property.top"/>
+        <constant value="0" message="property.center"/>
+        <constant value="3" message="property.bottom"/>
+      </property>
+      <property name="verticalTextPosition">
+        <constant value="1" message="property.top"/>
+        <constant value="0" message="property.center"/>
+        <constant value="3" message="property.bottom"/>
+      </property>
+    </enum-properties>
   </class>
 
   <class name="javax.swing.JButton">
@@ -43,6 +70,33 @@
 
   <class name="javax.swing.JLabel">
     <inplace-property name="text"/>
+
+    <enum-properties>
+      <property name="horizontalAlignment">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
+      <property name="horizontalTextPosition">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
+      <property name="verticalAlignment">
+        <constant value="1" message="property.top"/>
+        <constant value="0" message="property.center"/>
+        <constant value="3" message="property.bottom"/>
+      </property>
+      <property name="verticalTextPosition">
+        <constant value="1" message="property.top"/>
+        <constant value="0" message="property.center"/>
+        <constant value="3" message="property.bottom"/>
+      </property>
+    </enum-properties>
   </class>
   
   <class name="javax.swing.text.JTextComponent">
@@ -60,6 +114,15 @@
     <expert-properties>
       <property name="scrollOffset"/>
     </expert-properties>
+    <enum-properties>
+      <property name="horizontalAlignment">
+        <constant value="2" message="property.left"/>
+        <constant value="0" message="property.center"/>
+        <constant value="4" message="property.right"/>
+        <constant value="10" message="property.leading"/>
+        <constant value="11" message="property.trailing"/>
+      </property>
+    </enum-properties>
   </class>
 
   <class name="javax.swing.JTextArea">
@@ -82,6 +145,13 @@
     <expert-properties>
       <property name="lastDividerLocation"/>
     </expert-properties>
+
+    <enum-properties>
+      <property name="orientation">
+        <constant value="0" message="property.vertical"/>
+        <constant value="1" message="property.horizontal"/>
+      </property>
+    </enum-properties>
   </class>
 
   <class name="javax.swing.JTable">
@@ -97,6 +167,16 @@
       <property name="autoCreateColumnsFromModel"/>
       <property name="dragEnabled"/>
     </expert-properties>
+
+    <enum-properties>
+      <property name="autoResizeMode">
+        <constant value="0" message="property.resize.off"/>
+        <constant value="1" message="property.resize.next.column"/>
+        <constant value="2" message="property.resize.subsequent.columns"/>
+        <constant value="3" message="property.resize.last.column"/>
+        <constant value="4" message="property.resize.all.columns"/>
+      </property>
+    </enum-properties>
   </class>
 
   <class name="javax.swing.JTree">
@@ -121,11 +201,72 @@
       <property name="fixedCellWidth"/>
       <property name="selectedIndex"/>
     </expert-properties>
+
+    <enum-properties>
+      <property name="layoutOrientation">
+        <constant value="0" message="property.vertical"/>
+        <constant value="1" message="property.vertical.wrap"/>
+        <constant value="2" message="property.horizontal.wrap"/>
+      </property>
+      <property name="selectionMode">
+        <constant value="0" message="property.selection.single"/>
+        <constant value="1" message="property.selection.single.interval"/>
+        <constant value="2" message="property.selection.multiple.interval"/>
+      </property>
+    </enum-properties>
   </class>
 
   <class name="javax.swing.JScrollPane">
     <expert-properties>
       <property name="wheelScrollingEnabled"/>
     </expert-properties>
+
+    <enum-properties>
+      <property name="horizontalScrollBarPolicy">
+        <constant value="30" message="property.as.needed"/>
+        <constant value="31" message="property.never"/>
+        <constant value="32" message="property.always"/>
+      </property>
+      <property name="verticalScrollBarPolicy">
+        <constant value="20" message="property.as.needed"/>
+        <constant value="21" message="property.never"/>
+        <constant value="22" message="property.always"/>
+      </property>
+    </enum-properties>
+  </class>
+
+  <class name="javax.swing.JTabbedPane">
+    <enum-properties>
+      <property name="tabLayoutPolicy">
+        <constant value="0" message="property.wrap"/>
+        <constant value="1" message="property.scroll"/>
+      </property>
+      <property name="tabPlacement">
+        <constant value="1" message="property.top"/>
+        <constant value="2" message="property.left"/>
+        <constant value="3" message="property.bottom"/>
+        <constant value="4" message="property.right"/>
+      </property>
+    </enum-properties>
+  </class>
+
+  <class name="javax.swing.JSlider">
+    <enum-properties>
+      <property name="orientation">
+        <constant value="0" message="property.horizontal"/>
+        <constant value="1" message="property.vertical"/>
+      </property>
+    </enum-properties>
+  </class>
+
+  <class name="javax.swing.JFormattedTextField">
+    <enum-properties>
+      <property name="focusLostBehavior">
+        <constant value="0" message="property.focuslost.commit"/>
+        <constant value="1" message="property.focuslost.commit.or.revert"/>
+        <constant value="2" message="property.focuslost.revert"/>
+        <constant value="3" message="property.focuslost.persist"/>
+      </property>
+    </enum-properties>
   </class>
 </component>

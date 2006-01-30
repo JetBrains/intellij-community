@@ -5,11 +5,14 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.uiDesigner.lw.LwXmlReader;
+import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -18,6 +21,7 @@ import java.util.HashSet;
 public final class Properties implements ApplicationComponent, JDOMExternalizable{
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
+  private Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
 
   public static Properties getInstance() {
     return ApplicationManager.getApplication().getComponent(Properties.class);
@@ -26,6 +30,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
   public Properties(){
     myClass2InplaceProperty = new HashMap<String,String>();
     myClass2ExpertProperties = new HashMap<String,HashSet<String>>();
+    myClass2EnumProperties = new HashMap<String, Map<String, IntEnumEditor.Pair[]>>();
   }
 
   /**
@@ -50,6 +55,17 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
       final String property = myClass2InplaceProperty.get(c.getName());
       if (property != null){
         return property;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public IntEnumEditor.Pair[] getEnumPairs(final Class aClass, final String name) {
+    for (Class c = aClass; c != null; c = c.getSuperclass()) {
+      final Map<String, IntEnumEditor.Pair[]> map = myClass2EnumProperties.get(c.getName());
+      if (map != null) {
+        return map.get(name);
       }
     }
     return null;
@@ -89,6 +105,35 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
       if (inplacePropertyElement != null) {
         myClass2InplaceProperty.put(className, LwXmlReader.getRequiredString(inplacePropertyElement, "name"));
       }
+
+      final Element enumPropertyElement = classElement.getChild("enum-properties");
+      if (enumPropertyElement != null) {
+        loadEnumProperties(className, enumPropertyElement);
+      }
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void loadEnumProperties(final String className, final Element enumPropertyElement) {
+    Map<String, IntEnumEditor.Pair[]> map = new HashMap<String, IntEnumEditor.Pair[]>();
+    for(final Object o: enumPropertyElement.getChildren("property")) {
+      final Element e = (Element) o;
+      final String name = LwXmlReader.getRequiredString(e, "name");
+      final List list = e.getChildren("constant");
+      IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[list.size()];
+      for(int i=0; i<list.size(); i++) {
+        Element constant = (Element) list.get(i);
+        int value = LwXmlReader.getRequiredInt(constant, "value");
+        String message = constant.getAttributeValue("message");
+        String text = (message != null)
+                      ? UIDesignerBundle.message(message)
+                      : LwXmlReader.getRequiredString(constant, "name");
+        pairs [i] = new IntEnumEditor.Pair(value, text);
+      }
+      map.put(name, pairs);
+    }
+    if (map.size() > 0) {
+      myClass2EnumProperties.put(className, map);
     }
   }
 
