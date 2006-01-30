@@ -853,7 +853,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
               profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
             }
           }
-          incrementJobDoneAmount(LOCAL_ANALYSIS, file.getVirtualFile().getPresentableUrl());
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            incrementJobDoneAmount(LOCAL_ANALYSIS, virtualFile.getPresentableUrl());
+          }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
           for (InspectionTool tool : tools) {
             ((LocalInspectionToolWrapper)tool).processFile(file);
