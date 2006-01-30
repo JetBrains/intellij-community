@@ -319,6 +319,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
     options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
     options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
+    options.add(new DisableInspectionToolAction(tool));
     return options;
   }
 
