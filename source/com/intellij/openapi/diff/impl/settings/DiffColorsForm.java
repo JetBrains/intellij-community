@@ -4,10 +4,10 @@ import com.intellij.application.options.colors.ClickNavigator;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorAndFontPanel;
 import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeSearchHelper;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -36,9 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DiffColorsForm {
   private MergePanel2.AsComponent myMergePanelComponent;
@@ -90,8 +88,8 @@ public class DiffColorsForm {
     MergePanel2 mergePanel = getMergePanel();
     mergePanel.setEditorProperty(MergePanel2.LINE_NUMBERS, Boolean.FALSE);
     mergePanel.setEditorProperty(MergePanel2.LINE_MARKERS_AREA, Boolean.FALSE);
-    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_LINES, new Integer(1));
-    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_COLUMNS, new Integer(1));
+    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_LINES, 1);
+    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_COLUMNS, 1);
     for (int i = 0; i < MergePanel2.EDITORS_COUNT; i++) {
       final EditorMouseListener motionListener = new EditorMouseListener(i);
       final EditorClickListener clickListener = new EditorClickListener(i);
@@ -194,8 +192,7 @@ public class DiffColorsForm {
   }
 
   public static void addSchemeDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions, EditorColorsScheme scheme) {
-    for (Iterator<TextDiffType> iterator = TextDiffType.MERGE_TYPES.iterator(); iterator.hasNext();) {
-      TextDiffType diffType = iterator.next();
+    for (TextDiffType diffType : TextDiffType.MERGE_TYPES) {
       descriptions.add(new MyColorAndFontDescription(diffType, scheme));
     }
   }
@@ -280,7 +277,7 @@ public class DiffColorsForm {
       return new DiffContent[]{createContent(LEFT_TEXT), createContent(CENTER_TEXT), createContent(RIGHT_TEXT)};
     }
 
-    private SimpleContent createContent(String text) {
+    private static SimpleContent createContent(String text) {
       return new SimpleContent(text, StdFileTypes.JAVA);
     }
 
