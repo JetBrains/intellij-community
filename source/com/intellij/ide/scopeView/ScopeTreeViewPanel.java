@@ -15,10 +15,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.ui.DependenciesPanel;
-import com.intellij.packageDependencies.ui.ModuleNode;
-import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.packageDependencies.ui.TreeModelBuilder;
+import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -59,6 +56,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   private boolean myInitialized = false;
 
+  private TreeExpantionMonitor myTreeExpantionMonitor;
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -150,9 +148,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
                                     (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_SCOPE_VIEW_POPUP),
                                     ActionPlaces.SCOPE_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(myTree);
+    myTreeExpantionMonitor = TreeExpantionMonitor.install(myTree, myProject);
   }
 
   private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
+    myTreeExpantionMonitor.freeze();
     final DefaultMutableTreeNode root = ((DefaultMutableTreeNode)myTree.getModel().getRoot());
     root.removeAllChildren();
     if (scope == null){ //was deleted
@@ -176,6 +176,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       root.add ((MutableTreeNode)scopeRootNode.getChildAt(i));
     }
     ((DefaultTreeModel)myTree.getModel()).reload();
+    myTreeExpantionMonitor.restore();
   }
 
   public void reloadScopes(final NamedScopesHolder holder) {
