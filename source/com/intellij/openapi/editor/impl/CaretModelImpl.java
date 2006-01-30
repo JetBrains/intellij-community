@@ -108,8 +108,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
 
       CaretListener[] listeners = myCaretListeners.toArray(new CaretListener[myCaretListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].caretPositionChanged(event);
+      for (CaretListener listener : listeners) {
+        listener.caretPositionChanged(event);
       }
     }
   }
@@ -247,8 +247,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       Runnable runnable = new Runnable() {
         public void run() {
           FoldRegion[] allCollapsedAt = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchCollapsedAt(offset);
-          for (int i = 0; i < allCollapsedAt.length; i++) {
-            FoldRegion foldRange = allCollapsedAt[i];
+          for (FoldRegion foldRange : allCollapsedAt) {
             foldRange.setExpanded(true);
           }
         }
@@ -275,8 +274,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
 
       CaretListener[] listeners = myCaretListeners.toArray(new CaretListener[myCaretListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].caretPositionChanged(event);
+      for (CaretListener listener : listeners) {
+        listener.caretPositionChanged(event);
       }
     }
   }
