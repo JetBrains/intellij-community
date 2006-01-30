@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Pair;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
@@ -36,38 +35,40 @@ public class SyncScrollSupport implements Disposable {
   }
 
   public void dispose() {
-    for (Iterator<ScrollListener> iterator = myScrollers.iterator(); iterator.hasNext();) {
-      ScrollListener scrollListener = iterator.next();
+    for (ScrollListener scrollListener : myScrollers) {
       scrollListener.dispose();
     }
     myScrollers.clear();
   }
 
   private void install2(Editor[] editors, EditingSides[] sideContainers) {
-    addSlavesScroller(editors[0], new Pair[]{new Pair(FragmentSide.SIDE1, sideContainers[0])});
-    addSlavesScroller(editors[1], new Pair[]{new Pair(FragmentSide.SIDE2, sideContainers[0])});
+    addSlavesScroller(editors[0], new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE1, sideContainers[0]));
+    addSlavesScroller(editors[1], new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[0]));
   }
 
   private void install3(Editor[] editors, EditingSides[] sideContainers) {
-    addSlavesScroller(editors[0], new Pair[]{new Pair(FragmentSide.SIDE1, sideContainers[0]),
-                                             new Pair(FragmentSide.SIDE1, sideContainers[1])});
-    addSlavesScroller(editors[1], new Pair[]{new Pair(FragmentSide.SIDE2, sideContainers[0]),
-                                             new Pair(FragmentSide.SIDE1, sideContainers[1])});
-    addSlavesScroller(editors[2], new Pair[]{new Pair(FragmentSide.SIDE2, sideContainers[1]),
-                                             new Pair(FragmentSide.SIDE2, sideContainers[0])});
+    addSlavesScroller(editors[0],
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE1, sideContainers[0]),
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE1, sideContainers[1]));
+    addSlavesScroller(editors[1],
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[0]),
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE1, sideContainers[1]));
+    addSlavesScroller(editors[2],
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[1]),
+                      new Pair<FragmentSide, EditingSides>(FragmentSide.SIDE2, sideContainers[0]));
   }
 
-  private void addSlavesScroller(Editor editor, Pair[] contexts) {
+  private void addSlavesScroller(Editor editor, Pair<FragmentSide, EditingSides>... contexts) {
     ScrollListener scroller = new ScrollListener(contexts, editor);
     scroller.install();
     myScrollers.add(scroller);
   }
 
   private class ScrollListener implements VisibleAreaListener, Disposable {
-    private final Pair[] myScrollContexts;
+    private final Pair<FragmentSide, EditingSides>[] myScrollContexts;
     private final Editor myEditor;
 
-    public ScrollListener(Pair[] scrollContexts, Editor editor) {
+    public ScrollListener(Pair<FragmentSide, EditingSides>[] scrollContexts, Editor editor) {
       myScrollContexts = scrollContexts;
       myEditor = editor;
       install();
@@ -88,8 +89,7 @@ public class SyncScrollSupport implements Disposable {
       if (newRectangle == null || oldRectangle == null) return;
       myDuringVerticalScroll = true;
       try {
-        for (int i = 0; i < myScrollContexts.length; i++) {
-          Pair<FragmentSide, EditingSides> context = (Pair<FragmentSide, EditingSides>)myScrollContexts[i];
+        for (Pair<FragmentSide, EditingSides> context : myScrollContexts) {
           syncVerticalScroll(context, newRectangle, oldRectangle);
           syncHorizontalScroll(context, newRectangle, oldRectangle);
         }
