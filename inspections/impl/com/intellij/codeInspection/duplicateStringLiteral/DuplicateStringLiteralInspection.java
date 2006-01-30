@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -162,7 +163,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     else {
       classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {
         public String fun(final PsiClass aClass) {
-          final boolean thisFile = aClass.getContainingFile() == originalExpression.getContainingFile();
           return "'" + aClass.getQualifiedName() + "'";
         }
       }, ", ");
@@ -170,7 +170,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     if (classes.size() > tenClassesMost.size()) {
       //noinspection HardCodedStringLiteral
-      classList += "<br>" + InspectionsBundle.message("inspection.duplicates.message.more", (classes.size() - 10));
+      classList += "<br>" + InspectionsBundle.message("inspection.duplicates.message.more", classes.size() - 10);
     }
 
     String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
@@ -216,7 +216,9 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           if (!CodeInsightUtil.prepareFileForWrite(originalExpression.getContainingFile())) return;
           try {
             final PsiReferenceExpression reference = createReferenceTo(constant, originalExpression);
-            originalExpression.replace(reference);
+            if (reference != null) {
+              originalExpression.replace(reference);
+            }
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -241,26 +243,26 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
 
       public void applyFix(final Project project, ProblemDescriptor descriptor) {
-        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-          protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-            final OccurenceFilter filter = new OccurenceFilter() {
-              public boolean isOK(PsiExpression occurence) {
-                return true;
-              }
-            };
-            return new BaseOccurenceManager(filter) {
-              protected PsiExpression[] defaultOccurences() {
-                return expressions;
-              }
-
-              protected PsiExpression[] findOccurences() {
-                return expressions;
-              }
-            };
-          }
-        };
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+              protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+                final OccurenceFilter filter = new OccurenceFilter() {
+                  public boolean isOK(PsiExpression occurence) {
+                    return true;
+                  }
+                };
+                return new BaseOccurenceManager(filter) {
+                  protected PsiExpression[] defaultOccurences() {
+                    return expressions;
+                  }
+
+                  protected PsiExpression[] findOccurences() {
+                    return expressions;
+                  }
+                };
+              }
+            };
             handler.invoke(project, expressions);
           }
         });
@@ -273,13 +275,15 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return introduceConstFix;
   }
 
+  @Nullable
   private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
     PsiReferenceExpression reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText(constant.getName(), context);
     if (reference.isReferenceTo(constant)) return reference;
-    //noinspection HardCodedStringLiteral
     reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText("XXX."+constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
-    classQualifier.bindToElement(constant.getContainingClass());
+    PsiClass containingClass = constant.getContainingClass();
+    if (containingClass.getQualifiedName() == null) return null;
+    classQualifier.bindToElement(containingClass);
 
     if (reference.isReferenceTo(constant)) return reference;
     return null;
