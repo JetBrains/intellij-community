@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,10 +18,15 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +39,6 @@ public final class ComponentItemDialog extends DialogWrapper{
   private ComponentWithBrowseButton<EditorTextField> myTfClassName;
   private Project myProject;
   private final ComponentItem myItemToBeEdited;
-  private JLabel myLblClass;
   private JLabel myLblIcon;
   private TextFieldWithBrowseButton myTfIconPath;
   private JCheckBox myChkHorCanShrink;
@@ -43,6 +48,9 @@ public final class ComponentItemDialog extends DialogWrapper{
   private JCheckBox myChkVerCanGrow;
   private JCheckBox myChkVerWantGrow;
   private JPanel myClassNamePlaceholder;
+  private JRadioButton myClassRadioButton;
+  private JRadioButton myNestedFormRadioButton;
+  private TextFieldWithBrowseButton myTfNestedForm;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
@@ -58,31 +66,32 @@ public final class ComponentItemDialog extends DialogWrapper{
     myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA);
     myEditorTextField.setFontInheritedFromLAF(true);
     myTfClassName = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, new MyChooseClassActionListener(project));
-    setEditorText(myItemToBeEdited.getClassName());
+
+    final PsiManager manager = PsiManager.getInstance(myProject);
+    PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(itemToBeEdited.getClassName());
+    if (boundForms.length > 0) {
+      myNestedFormRadioButton.setSelected(true);
+      myTfNestedForm.setText(GuiEditorUtil.buildResourceName(boundForms [0]));
+    }
+    else {
+      myClassRadioButton.setSelected(true);
+      setEditorText(myItemToBeEdited.getClassName());
+    }
+    updateEnabledTextField();
+
     myTfClassName.getButton().setEnabled(!project.isDefault()); // chooser should not work in default project
     myClassNamePlaceholder.setLayout(new BorderLayout());
     myClassNamePlaceholder.add(myTfClassName, BorderLayout.CENTER);
 
     myTfIconPath.setText(myItemToBeEdited.getIconPath());
-    myTfIconPath.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(project);
-        PsiFile iconFile = null;
-        if (myItemToBeEdited.getIconPath() != null) {
-          VirtualFile iconVFile = ModuleUtil.findResourceFileInProject(project, myItemToBeEdited.getIconPath());
-          if (iconVFile != null) {
-            iconFile = PsiManager.getInstance(project).findFile(iconVFile);
-          }
-        }
-        TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("title.choose.icon.file"), iconFile,
-                                                                null, new ImageFileFilter(null));
-        fileChooser.showDialog();
-        PsiFile file = fileChooser.getSelectedFile();
-        if (file != null) {
-          myTfIconPath.setText("/" + GuiEditorUtil.buildResourceName(file));
-        }
+    myTfIconPath.addActionListener(new MyChooseFileActionListener(project, new ImageFileFilter(null), myTfIconPath));
+
+    myTfNestedForm.addActionListener(new MyChooseFileActionListener(project, new TreeFileChooser.PsiFileFilter() {
+      public boolean accept(PsiFile file) {
+        return file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM);
       }
-    });
+    }, myTfNestedForm));
+
 
     final GridConstraints defaultConstraints = myItemToBeEdited.getDefaultConstraints();
 
@@ -102,8 +111,9 @@ public final class ComponentItemDialog extends DialogWrapper{
       myChkVerWantGrow.setSelected((vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0);
     }
 
-    myLblClass.setLabelFor(myTfClassName);
     myLblIcon.setLabelFor(myTfIconPath);
+    myClassRadioButton.addChangeListener(new MyRadioChangeListener());
+    myNestedFormRadioButton.addChangeListener(new MyRadioChangeListener());
 
     init();
   }
@@ -120,7 +130,12 @@ public final class ComponentItemDialog extends DialogWrapper{
 
   protected void doOKAction() {
     // TODO[vova] implement validation
-    myItemToBeEdited.setClassName(myDocument.getText().trim());
+    if (myClassRadioButton.isSelected()) {
+      myItemToBeEdited.setClassName(myDocument.getText().trim());
+    }
+    else {
+      if (!saveNestedForm()) return;
+    }
     myItemToBeEdited.setIconPath(myTfIconPath.getText().trim());
 
     // Horizontal size policy
@@ -146,6 +161,33 @@ public final class ComponentItemDialog extends DialogWrapper{
     super.doOKAction();
   }
 
+  private boolean saveNestedForm() {
+    VirtualFile formFile = ModuleUtil.findResourceFileInProject(myProject, myTfNestedForm.getText());
+    if (formFile == null) {
+      Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.cannot.load.form", myTfNestedForm.getText()), CommonBundle.getErrorTitle());
+      return false;
+    }
+    LwRootContainer lwRootContainer;
+    try {
+      lwRootContainer = Utils.getRootContainer(formFile.getInputStream(), null);
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(getWindow(), e.getMessage(), CommonBundle.getErrorTitle());
+      return false;
+    }
+    if (lwRootContainer.getClassToBind() == null) {
+      Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.form.not.bound"), CommonBundle.getErrorTitle());
+      return false;
+    }
+    if (lwRootContainer.getComponent(0).getBinding() == null) {
+      Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.root.not.bound"),
+                               CommonBundle.getErrorTitle());
+      return false;
+    }
+    myItemToBeEdited.setClassName(lwRootContainer.getClassToBind());
+    return true;
+  }
+
   protected String getDimensionServiceKey() {
     return "#com.intellij.uiDesigner.palette.ComponentItemDialog";
   }
@@ -156,6 +198,11 @@ public final class ComponentItemDialog extends DialogWrapper{
 
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  private void updateEnabledTextField() {
+    myEditorTextField.setEnabled(myClassRadioButton.isSelected());
+    myTfNestedForm.setEnabled(myNestedFormRadioButton.isSelected());
   }
 
   private class MyChooseClassActionListener implements ActionListener {
@@ -177,6 +224,45 @@ public final class ComponentItemDialog extends DialogWrapper{
       if (result != null) {
         setEditorText(result.getQualifiedName());
       }
+    }
+  }
+
+  private static class MyChooseFileActionListener implements ActionListener {
+    private final Project myProject;
+    private TreeFileChooser.PsiFileFilter myFilter;
+    private TextFieldWithBrowseButton myTextField;
+
+    public MyChooseFileActionListener(final Project project,
+                                      final TreeFileChooser.PsiFileFilter filter,
+                                      final TextFieldWithBrowseButton textField) {
+      myProject = project;
+      myFilter = filter;
+      myTextField = textField;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
+      PsiFile iconFile = null;
+      if (myTextField.getText().length() > 0) {
+        VirtualFile iconVFile = ModuleUtil.findResourceFileInProject(myProject, myTextField.getText());
+        if (iconVFile != null) {
+          iconFile = PsiManager.getInstance(myProject).findFile(iconVFile);
+        }
+      }
+      TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("add.component.choose.form"), iconFile,
+                                                              null, myFilter);
+      fileChooser.showDialog();
+      PsiFile file = fileChooser.getSelectedFile();
+      if (file != null) {
+
+        myTextField.setText(GuiEditorUtil.buildResourceName(file));
+      }
+    }
+  }
+
+  private class MyRadioChangeListener implements ChangeListener {
+    public void stateChanged(ChangeEvent e) {
+      updateEnabledTextField();
     }
   }
 }

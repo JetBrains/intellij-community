@@ -9,24 +9,15 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="dcb98" class="javax.swing.JLabel" binding="myLblClass">
-        <constraints>
-          <xy x="2" y="7" width="33" height="14"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/UIDesignerBundle" key="editbox.class"/>
-        </properties>
-      </component>
       <vspacer id="28e07">
         <constraints>
-          <xy x="219" y="166" width="11" height="73"/>
+          <xy x="217" y="197" width="11" height="42"/>
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
         </constraints>
       </vspacer>
       <component id="f6ea7" class="javax.swing.JLabel" binding="myLblIcon">
         <constraints>
-          <xy x="2" y="34" width="29" height="14"/>
+          <xy x="2" y="65" width="29" height="14"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
@@ -36,7 +27,7 @@
       <grid id="5754c" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="56" width="403" height="110"/>
+          <xy x="2" y="87" width="403" height="110"/>
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
@@ -122,23 +113,65 @@
       </grid>
       <component id="6d2df" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfIconPath">
         <constraints>
-          <xy x="45" y="31" width="360" height="20"/>
+          <xy x="41" y="62" width="364" height="20"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0">
             <preferred-size width="333" height="-1"/>
           </grid>
         </constraints>
         <properties/>
       </component>
-      <grid id="9b790" binding="myClassNamePlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="fafe1" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="45" y="2" width="360" height="24"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+          <xy x="2" y="2" width="403" height="55"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
-        <children/>
+        <children>
+          <grid id="9b790" binding="myClassNamePlaceholder" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="68" y="2" width="333" height="24"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+          <component id="877e4" class="javax.swing.JRadioButton" binding="myClassRadioButton">
+            <constraints>
+              <xy x="2" y="3" width="56" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/UIDesignerBundle" key="add.component.class"/>
+            </properties>
+          </component>
+          <component id="a76e9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfNestedForm">
+            <constraints>
+              <xy x="68" y="32" width="333" height="20"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="f71b" class="javax.swing.JRadioButton" binding="myNestedFormRadioButton">
+            <constraints>
+              <xy x="2" y="31" width="51" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/UIDesignerBundle" key="add.component.form"/>
+            </properties>
+          </component>
+        </children>
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="877e4"/>
+      <member id="f71b"/>
+    </group>
+  </buttonGroups>
 </form>
