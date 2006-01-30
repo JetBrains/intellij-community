@@ -81,7 +81,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     return list;
   }
 
-  protected VisibilityPanel createVisibilityPanel() {
+  protected static VisibilityPanel createVisibilityPanel() {
     final VisibilityPanel visibilityPanel = new VisibilityPanel (false, false);
     visibilityPanel.setVisibility (null);
     return visibilityPanel;
