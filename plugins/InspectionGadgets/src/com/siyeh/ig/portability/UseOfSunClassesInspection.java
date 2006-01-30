@@ -47,13 +47,7 @@ public class UseOfSunClassesInspection extends VariableInspection {
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
-            if (type == null) {
-                return;
-            }
             final PsiType deepComponentType = type.getDeepComponentType();
-            if (deepComponentType == null) {
-                return;
-            }
             if(!(deepComponentType instanceof PsiClassType)) {
                 return;
             }
