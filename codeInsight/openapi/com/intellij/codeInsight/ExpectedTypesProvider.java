@@ -28,8 +28,6 @@ public abstract class ExpectedTypesProvider {
 
   public abstract ExpectedTypeInfo createInfo(PsiType type, int kind, PsiType defaultType, int tailType);
 
-  public abstract void registerAdditionalProvider(AdditionalExpectedTypesProvider provider);
-
   public abstract ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion);
 
   public abstract ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
