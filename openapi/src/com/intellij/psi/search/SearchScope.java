@@ -24,6 +24,19 @@ import java.util.List;
 
 
 public abstract class SearchScope {
+  private static int hashcode_counter = 0;
+
+  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+  private int _hashcode = hashcode_counter++;
+
+  /**
+   * Overriden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.
+   * @return hashCode value semantically identical to one from Object but not native
+   */
+  public int hashCode() {
+    return _hashcode;
+  }
+
   public String getDisplayName() {
     return PsiBundle.message("psi.search.scope.unknown");
   }

@@ -4,6 +4,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.*;
 
 /**
@@ -37,20 +39,18 @@ public class ReplacePathToMacroMap extends PathMacroMap{
     return text;
   }
 
-  private String replacePathMacro(String text, String path, final String macro, boolean ignoreCase) {
+  private String replacePathMacro(String text, String path, final String macro, boolean caseSensitive) {
     if (text.length() < path.length()) {
       return text;
     }
 
-    String text1 = ignoreCase ? text.toLowerCase() : text;
-    String path1 = ignoreCase ? path.toLowerCase() : path;
-    StringBuffer newText = null;
+    StringBuilder newText = null;
     int i = 0;
-    while (i < text1.length()) {
-      int i1 = text1.indexOf(path1, i);
+    while (i < text.length()) {
+      int i1 = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
       if (i1 >= 0) {
-        int endOfOccurence = i1 + path1.length();
-        if (endOfOccurence < text1.length() && text1.charAt(endOfOccurence) != '/') {
+        int endOfOccurence = i1 + path.length();
+        if (endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/') {
           i = endOfOccurence;
           continue;
         }
@@ -67,7 +67,7 @@ public class ReplacePathToMacroMap extends PathMacroMap{
           return null;
         }
         if (newText == null) {
-          newText = new StringBuffer();
+          newText = new StringBuilder();
         }
         newText.append(text.substring(i, i1));
         newText.append(macro);
