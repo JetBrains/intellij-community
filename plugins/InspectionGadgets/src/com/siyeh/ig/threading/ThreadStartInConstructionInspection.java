@@ -18,98 +18,90 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class ThreadStartInConstructionInspection extends ExpressionInspection{
-    public String getID(){
+public class ThreadStartInConstructionInspection extends ExpressionInspection {
+    public String getID() {
         return "CallToThreadStartDuringObjectConstruction";
     }
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message("thread.start.in.construction.display.name");
     }
 
-    public String getGroupDisplayName(){
+    public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location){
+    public String buildErrorString(PsiElement location) {
         return InspectionGadgetsBundle.message("thread.start.in.construction.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    public BaseInspectionVisitor buildVisitor() {
         return new ThreadStartInConstructionVisitor();
     }
 
     private static class ThreadStartInConstructionVisitor
-            extends BaseInspectionVisitor{
-        private boolean inConstruction = false;
-
-        public void visitMethod(@NotNull PsiMethod method){
-            boolean wasInConstructor = false;
-            if(method.isConstructor()){
-                inConstruction = true;
-                wasInConstructor = inConstruction;
-            }
-            super.visitMethod(method);
-            if(method.isConstructor()){
-                inConstruction = wasInConstructor;
+            extends BaseInspectionVisitor {
+        public void visitMethod(@NotNull PsiMethod method) {
+            if (method.isConstructor()) {
+                checkForThreadStartIn(method);
             }
         }
 
-        public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
-            boolean wasInConstructor = false;
-            if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
-                inConstruction = true;
-                wasInConstructor = inConstruction;
-            }
-            super.visitClassInitializer(initializer);
-            if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
-                inConstruction = wasInConstructor;
+        public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
+            if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                checkForThreadStartIn(initializer);
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            if(!inConstruction){
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
-            @NonNls final String methodName = methodExpression.getReferenceName();
-            if(!"start".equals(methodName)){
-                return;
-            }
-
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if(parameters.length != 0){
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if(methodClass == null ||
-               !ClassUtils.isSubclass(methodClass, "java.lang.Thread")){
-                return;
-            }
-                final PsiClass containingClass =
-                                PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-                if (containingClass == null ||
-                    containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                        return;
+        private void checkForThreadStartIn(PsiElement context) {
+            context.accept(new PsiRecursiveElementVisitor() {
+                public void visitClass(PsiClass aClass) {
+                    // Do not recurse into.
                 }
-                registerMethodCallError(expression);
+
+                public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+                    super.visitMethodCallExpression(expression);
+
+                    final PsiReferenceExpression methodExpression =
+                            expression.getMethodExpression();
+                    if (methodExpression == null) {
+                        return;
+                    }
+                    @NonNls final String methodName = methodExpression.getReferenceName();
+                    if (!"start".equals(methodName)) {
+                        return;
+                    }
+
+                    final PsiMethod method = expression.resolveMethod();
+                    if (method == null) {
+                        return;
+                    }
+                    final PsiParameterList paramList = method.getParameterList();
+                    final PsiParameter[] parameters = paramList.getParameters();
+                    if (parameters.length != 0) {
+                        return;
+                    }
+                    final PsiClass methodClass = method.getContainingClass();
+                    if (methodClass == null ||
+                            !ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
+                        return;
+                    }
+                    final PsiClass containingClass =
+                            PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                    if (containingClass == null ||
+                            containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+                        return;
+                    }
+                    registerMethodCallError(expression);
+                }
+            });
         }
     }
 }

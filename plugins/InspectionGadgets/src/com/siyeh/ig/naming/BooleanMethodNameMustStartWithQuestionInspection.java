@@ -18,7 +18,6 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -35,9 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -127,11 +124,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
-        private boolean inClass = false;
-
-
         public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
             if(returnType== null)
             {
@@ -155,17 +148,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             }
             registerMethodError(method);
         }
-
-        public void visitClass(@NotNull PsiClass aClass){
-            if(inClass){
-                return;
-            }
-            final boolean wasInClass = inClass;
-            inClass = true;
-            super.visitClass(aClass);
-            inClass = wasInClass;
-        }
-                }
+    }
 
     private class Form{
         JPanel contentPanel;

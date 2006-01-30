@@ -22,14 +22,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -120,10 +120,7 @@ public class QuestionableNameInspection extends ClassInspection{
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
-        private boolean inClass = false;
-
         public void visitVariable(@NotNull PsiVariable variable){
-            super.visitVariable(variable);
             final String name = variable.getName();
             synchronized(lock) {
                 if(nameList.contains(name)){
@@ -133,7 +130,6 @@ public class QuestionableNameInspection extends ClassInspection{
         }
 
         public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
             final String name = method.getName();
             synchronized(lock) {
                 if(nameList.contains(name)){
@@ -143,19 +139,12 @@ public class QuestionableNameInspection extends ClassInspection{
         }
 
         public void visitClass(@NotNull PsiClass aClass){
-            if(inClass){
-                return;
-            }
             final String name = aClass.getName();
             synchronized(lock) {
                 if(nameList.contains(name)){
                     registerClassError(aClass);
                 }
             }
-            final boolean wasInClass = inClass;
-            inClass = true;
-            super.visitClass(aClass);
-            inClass = wasInClass;
         }
     }
 

@@ -17,11 +17,11 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOfSunClassesInspection extends VariableInspection {
 
@@ -42,7 +42,8 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-        @NonNls private final String prefix = "sun.";
+        @NonNls private static final String prefix = "sun.";
+
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();

@@ -17,10 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CompareToUsesNonFinalVariableInspection extends ExpressionInspection {
@@ -43,33 +43,27 @@ public class CompareToUsesNonFinalVariableInspection extends ExpressionInspectio
     }
 
     private static class CompareToUsesNonFinalVariableVisitor extends BaseInspectionVisitor {
-        private boolean m_inCompareTo = false;
-
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (!m_inCompareTo) {
-                return;
-            }
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerError(expression);
-        }
-
         public void visitMethod(@NotNull PsiMethod method) {
             final boolean isCompareTo = MethodUtils.isCompareTo(method);
             if (isCompareTo) {
-                m_inCompareTo = true;
-            }
+                method.accept(new PsiRecursiveElementVisitor() {
+                    public void visitClass(PsiClass aClass) {
+                        // Do not recurse into.
+                    }
 
-            super.visitMethod(method);
-            if (isCompareTo) {
-                m_inCompareTo = false;
+                    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+                        super.visitReferenceExpression(expression);
+                        final PsiElement element = expression.resolve();
+                        if (!(element instanceof PsiField)) {
+                            return;
+                        }
+                        final PsiField field = (PsiField) element;
+                        if (field.hasModifierProperty(PsiModifier.FINAL)) {
+                            return;
+                        }
+                        registerError(expression);
+                    }
+                });
             }
         }
 

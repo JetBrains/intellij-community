@@ -17,10 +17,11 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInSynchronizedContextInspection extends ExpressionInspection {
 
@@ -38,13 +39,9 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
 
   private static class WaitNotInSynchronizedContextVisitor
     extends BaseInspectionVisitor {
-    private boolean m_inSynchronizedContext = false;
 
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (m_inSynchronizedContext) {
-        return;
-      }
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
       if (methodExpression == null) {
@@ -80,27 +77,19 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
           return;
         }
       }
+
+      if (isInSynchronizedContext(expression)) {
+        return;
+      }
+
       registerMethodCallError(expression);
     }
 
-    public void visitMethod(@NotNull PsiMethod method) {
-      final boolean wasInSynchronizedContext = m_inSynchronizedContext;
-      if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-
-        m_inSynchronizedContext = true;
-      }
-      super.visitMethod(method);
-      if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-
-        m_inSynchronizedContext = wasInSynchronizedContext;
-      }
-    }
-
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement psiSynchronizedStatement) {
-      final boolean wasInSynchronizedContext = m_inSynchronizedContext;
-      m_inSynchronizedContext = true;
-      super.visitSynchronizedStatement(psiSynchronizedStatement);
-      m_inSynchronizedContext = wasInSynchronizedContext;
-    }
+    private static boolean isInSynchronizedContext(PsiElement element) {
+      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
+      if (context instanceof PsiSynchronizedStatement) return true;
+      if (context != null && ((PsiMethod)context).hasModifierProperty(PsiModifier.SYNCHRONIZED)) return true;
+      return false;
+    }        
   }
 }

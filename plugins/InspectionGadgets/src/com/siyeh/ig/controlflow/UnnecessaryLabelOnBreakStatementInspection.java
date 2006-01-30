@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -70,48 +71,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
     private static class UnnecessaryLabelOnBreakStatementVisitor
             extends StatementInspectionVisitor {
 
-        private PsiStatement currentContainer = null;
-
-        public void visitForStatement(@NotNull PsiForStatement statement) {
-            final PsiStatement prevContainer = currentContainer;
-            currentContainer = statement;
-            super.visitForStatement(statement);
-            currentContainer = prevContainer;
-        }
-
-        public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            final PsiStatement prevContainer = currentContainer;
-            currentContainer = statement;
-            super.visitDoWhileStatement(statement);
-            currentContainer = prevContainer;
-        }
-
-        public void visitForeachStatement(
-                @NotNull PsiForeachStatement statement) {
-            final PsiStatement prevContainer = currentContainer;
-            currentContainer = statement;
-            super.visitForeachStatement(statement);
-            currentContainer = prevContainer;
-        }
-
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-            final PsiStatement prevContainer = currentContainer;
-            currentContainer = statement;
-            super.visitWhileStatement(statement);
-            currentContainer = prevContainer;
-        }
-
-        public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            final PsiStatement prevContainer = currentContainer;
-            currentContainer = statement;
-            super.visitSwitchStatement(statement);
-            currentContainer = prevContainer;
-        }
-
         public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-            super.visitBreakStatement(statement);
             final PsiIdentifier labelIdentifier =
                     statement.getLabelIdentifier();
             if (labelIdentifier == null) {
@@ -125,10 +85,16 @@ public class UnnecessaryLabelOnBreakStatementInspection
             if (exitedStatement == null) {
                 return;
             }
-            if (currentContainer == null) {
+
+            PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement,
+                    PsiForStatement.class, PsiDoWhileStatement.class, PsiForeachStatement.class,
+                    PsiWhileStatement.class, PsiSwitchStatement.class);
+
+            if (labelEnabledParent == null) {
                 return;
             }
-            if (exitedStatement.equals(currentContainer)) {
+
+            if (exitedStatement.equals(labelEnabledParent)) {
                 registerStatementError(statement);
             }
         }

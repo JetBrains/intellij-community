@@ -18,10 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
@@ -44,29 +45,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
     private static class AssignmentToStaticFieldFromInstanceMethod
             extends BaseInspectionVisitor{
-        private boolean inClass = false;
-        private boolean inInstanceMethod = false;
-
-        public void visitClass(@NotNull PsiClass aClass){
-            if(!inClass){
-                inClass = true;
-                super.visitClass(aClass);
-                inClass = false;
-            }
-        }
-
-        public void visitMethod(@NotNull PsiMethod method){
-            final boolean wasInInstanceMethod = inInstanceMethod;
-            inInstanceMethod = !method.hasModifierProperty(PsiModifier.STATIC);
-            super.visitMethod(method);
-            inInstanceMethod = wasInInstanceMethod;
-        }
-
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
-            super.visitAssignmentExpression(expression);
-            if(!inInstanceMethod){
-                return;
-            }
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
             }
@@ -75,10 +54,6 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         }
 
         public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
-            super.visitPrefixExpression(expression);
-            if(!inInstanceMethod){
-                return;
-            }
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){
                 return;
@@ -96,10 +71,6 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         }
 
         public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
-            super.visitPostfixExpression(expression);
-            if(!inInstanceMethod){
-                return;
-            }
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){
                 return;
@@ -120,6 +91,11 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             if(!(expression instanceof PsiReferenceExpression)){
                 return;
             }
+
+            if (isInStaticMethod(expression)) {
+                return;
+            }
+
             final PsiElement referent = ((PsiReference) expression).resolve();
             if(referent == null){
                 return;
@@ -131,6 +107,14 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             if(fieldReferenced.hasModifierProperty(PsiModifier.STATIC)){
                 registerError(expression);
             }
+        }
+
+        private static boolean isInStaticMethod(PsiElement elt) {
+            final PsiMethod method = PsiTreeUtil.getParentOfType(elt, PsiMethod.class);
+            if (method == null) {
+                return false;
+            }
+            return method.hasModifierProperty(PsiModifier.STATIC);
         }
     }
 }

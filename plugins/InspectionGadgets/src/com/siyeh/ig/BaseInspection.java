@@ -18,12 +18,13 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 
@@ -83,6 +84,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(PsiFile file,
                                        InspectionManager manager,
                                        boolean isOnTheFly) {
+    /*
     if (telemetryEnabled) {
       initializeTelemetryIfNecessary();
       final long start = System.currentTimeMillis();
@@ -98,6 +100,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
     else {
       return doCheckFile(file, manager, isOnTheFly);
     }
+    */
+
+    return null;
   }
 
   @Nullable
@@ -111,6 +116,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkMethod(PsiMethod method,
                                          InspectionManager manager,
                                          boolean isOnTheFly) {
+    /*
     if (telemetryEnabled) {
       initializeTelemetryIfNecessary();
       final long start = System.currentTimeMillis();
@@ -126,6 +132,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
     else {
       return doCheckMethod(method, manager, isOnTheFly);
     }
+    */
+
+    return null;
   }
 
   @Nullable
@@ -139,6 +148,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkClass(PsiClass aClass,
                                         InspectionManager manager,
                                         boolean isOnTheFly) {
+    /*
     if (telemetryEnabled) {
       initializeTelemetryIfNecessary();
       final long start = System.currentTimeMillis();
@@ -154,6 +164,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
     else {
       return doCheckClass(aClass, manager, isOnTheFly);
     }
+    */
+
+    return null;
   }
 
   @Nullable
@@ -167,6 +180,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkField(PsiField field,
                                         InspectionManager manager,
                                         boolean isOnTheFly) {
+    /*
     if (telemetryEnabled) {
       initializeTelemetryIfNecessary();
       final long start = System.currentTimeMillis();
@@ -182,6 +196,8 @@ public abstract class BaseInspection extends LocalInspectionTool {
     else {
       return doCheckField(field, manager, isOnTheFly);
     }
+    */
+    return null;
   }
 
   @Nullable
@@ -239,4 +255,12 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   public abstract BaseInspectionVisitor buildVisitor();
+
+  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    final BaseInspectionVisitor visitor = buildVisitor();
+    visitor.setProblemsHolder(holder);
+    visitor.setOnTheFly(isOnTheFly);
+    visitor.setInspection(this);
+    return visitor;
+  }
 }

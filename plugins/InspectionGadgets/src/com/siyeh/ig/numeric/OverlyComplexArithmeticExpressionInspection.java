@@ -18,13 +18,13 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,6 +39,17 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
    */
   public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
   private final InspectionGadgetsFix fix = new ExtractMethodFix();
+
+    private static final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(5);
+
+    static {
+      arithmeticTokens.add(JavaTokenType.PLUS);
+      arithmeticTokens.add(JavaTokenType.MINUS);
+      arithmeticTokens.add(JavaTokenType.ASTERISK);
+      arithmeticTokens.add(JavaTokenType.DIV);
+      arithmeticTokens.add(JavaTokenType.PERC);
+    }
+
 
   public String getGroupDisplayName() {
     return GroupNames.NUMERIC_GROUP_NAME;
@@ -66,16 +77,6 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
   }
 
   private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
-    private final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(5);
-
-    {
-      arithmeticTokens.add(JavaTokenType.PLUS);
-      arithmeticTokens.add(JavaTokenType.MINUS);
-      arithmeticTokens.add(JavaTokenType.ASTERISK);
-      arithmeticTokens.add(JavaTokenType.DIV);
-      arithmeticTokens.add(JavaTokenType.PERC);
-    }
-
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       checkExpression(expression);

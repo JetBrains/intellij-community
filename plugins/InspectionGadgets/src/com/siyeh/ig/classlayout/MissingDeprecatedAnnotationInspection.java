@@ -23,12 +23,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MissingDeprecatedAnnotationInspection extends ClassInspection {
 
@@ -73,13 +73,9 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
 
   private static class MissingDeprecatedAnnotationVisitor
     extends BaseInspectionVisitor {
-    private boolean inClass = false;
 
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
-      final boolean wasInClass = inClass;
-      if (!inClass) {
-        inClass = true;
         final PsiManager manager = aClass.getManager();
         final LanguageLevel languageLevel =
           manager.getEffectiveLanguageLevel();
@@ -93,8 +89,6 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection {
           return;
         }
         registerClassError(aClass);
-      }
-      inClass = wasInClass;
     }
 
     public void visitMethod(@NotNull PsiMethod method) {

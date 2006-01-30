@@ -17,11 +17,11 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantEqualsInspection extends MethodInspection {
@@ -43,43 +43,42 @@ public class CovariantEqualsInspection extends MethodInspection {
     }
 
     private static class CovariantEqualsVisitor extends BaseInspectionVisitor {
-        private static final String EQUALS_METHOD_NAME = HardcodedMethodConstants.EQUALS;
 
-      public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            final String name = method.getName();
-            if (!EQUALS_METHOD_NAME.equals(name)) {
-                return;
-            }
-            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 1) {
-                return;
-            }
-            final PsiType argType = parameters[0].getType();
-            if (TypeUtils.isJavaLangObject(argType)) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            for(PsiMethod method1 : methods){
-                if(isNonVariantEquals(method1)){
-                    return;
-                }
-            }
-            registerMethodError(method);
+        public void visitMethod(@NotNull PsiMethod method) {
+              // note: no call to super
+              final String name = method.getName();
+              if (!HardcodedMethodConstants.EQUALS.equals(name)) {
+                  return;
+              }
+              if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                  return;
+              }
+              final PsiParameterList paramList = method.getParameterList();
+              final PsiParameter[] parameters = paramList.getParameters();
+              if (parameters.length != 1) {
+                  return;
+              }
+              final PsiType argType = parameters[0].getType();
+              if (TypeUtils.isJavaLangObject(argType)) {
+                  return;
+              }
+              final PsiClass aClass = method.getContainingClass();
+              if (aClass == null) {
+                  return;
+              }
+              final PsiMethod[] methods = aClass.getMethods();
+              for(PsiMethod method1 : methods){
+                  if(isNonVariantEquals(method1)){
+                      return;
+                  }
+              }
+              registerMethodError(method);
 
-        }
+          }
 
         private static boolean isNonVariantEquals(PsiMethod method) {
             final String name = method.getName();
-            if (!EQUALS_METHOD_NAME.equals(name)) {
+            if (!HardcodedMethodConstants.EQUALS.equals(name)) {
                 return false;
             }
             final PsiParameterList paramList = method.getParameterList();

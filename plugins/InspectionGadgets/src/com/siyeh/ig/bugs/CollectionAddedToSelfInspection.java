@@ -17,13 +17,13 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
@@ -45,17 +45,6 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
     }
 
     private static class CollectionAddedToSelfVisitor extends BaseInspectionVisitor {
-        private boolean inClass = false;
-
-        public void visitClass(@NotNull PsiClass aClass){
-            if(!inClass)
-            {
-                inClass = true;
-                super.visitClass(aClass);
-                inClass = false;
-            }
-        }
-
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();

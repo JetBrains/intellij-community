@@ -109,6 +109,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             if(text.indexOf((int) '.') < 0){
                 return;
             }
+
+            if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
+                return;
+            }
+
             if(m_ignoreJavadoc){
                 final PsiElement containingComment =
                         PsiTreeUtil.getParentOfType(reference,

@@ -18,12 +18,12 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,13 +59,10 @@ public class InstanceVariableUninitializedUseInspection
         return new InstanceVariableInitializationVisitor();
     }
 
-    private class InstanceVariableInitializationVisitor
-            extends BaseInspectionVisitor {
-
-        private UninitializedReadCollector uninitializedReadsCollector =
-                new UninitializedReadCollector();
+    private class InstanceVariableInitializationVisitor extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
+            UninitializedReadCollector uninitializedReadsCollector = new UninitializedReadCollector();
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
@@ -87,12 +84,11 @@ public class InstanceVariableUninitializedUseInspection
             if (searchHelper.isFieldBoundToForm(field)) {
                 return;
             }
-            if (!isInitializedInInitializer(field)) {
+            if (!isInitializedInInitializer(field, uninitializedReadsCollector)) {
                 final PsiMethod[] constructors = aClass.getConstructors();
                 for(final PsiMethod constructor : constructors){
                     final PsiCodeBlock body = constructor.getBody();
-                    uninitializedReadsCollector.blockAssignsVariable(body,
-                                                                     field);
+                    uninitializedReadsCollector.blockAssignsVariable(body, field);
                 }
             }
             final PsiExpression[] badReads =
@@ -102,7 +98,8 @@ public class InstanceVariableUninitializedUseInspection
             }
         }
 
-        private boolean isInitializedInInitializer(@NotNull PsiField field) {
+        private boolean isInitializedInInitializer(@NotNull PsiField field,
+                                                   UninitializedReadCollector uninitializedReadsCollector) {
             final PsiClass aClass = field.getContainingClass();
             if(aClass == null) {
                 return false;
@@ -111,8 +108,7 @@ public class InstanceVariableUninitializedUseInspection
             for(final PsiClassInitializer initializer : initializers) {
                 if(!initializer.hasModifierProperty(PsiModifier.STATIC)) {
                     final PsiCodeBlock body = initializer.getBody();
-                    if(uninitializedReadsCollector.blockAssignsVariable(
-                            body, field)) {
+                    if(uninitializedReadsCollector.blockAssignsVariable(body, field)) {
                         return true;
                     }
                 }

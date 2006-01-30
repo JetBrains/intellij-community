@@ -18,27 +18,29 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
+public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     private BaseInspection inspection = null;
-    private InspectionManager inspectionManager = null;
     private boolean onTheFly = false;
     private List<ProblemDescriptor> errors = null;
     private boolean classVisited = false;
+    private ProblemsHolder holder;
+
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitExpression(expression);
+    }
 
     public void setInspection(BaseInspection inspection){
         this.inspection = inspection;
     }
 
     public void setInspectionManager(InspectionManager inspectionManager){
-        this.inspectionManager = inspectionManager;
     }
 
     public void setOnTheFly(boolean onTheFly){
@@ -108,18 +110,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
 
     private void registerError(PsiElement location, String description,
                                LocalQuickFix[] fixes){
-        final ProblemDescriptor problem =
-                inspectionManager.createProblemDescriptor(
-                        location, description, fixes,
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        addError(problem);
-    }
-
-    private void addError(ProblemDescriptor problem){
-        if(errors == null){
-            errors = new ArrayList<ProblemDescriptor>(5);
-        }
-        errors.add(problem);
+        holder.registerProblem(location, description, fixes);
     }
 
     protected void registerError(PsiElement location, Object arg){
@@ -178,4 +169,8 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
             super.visitClass(aClass);
         }
     }
+
+  public void setProblemsHolder(final ProblemsHolder holder) {
+    this.holder = holder;
+  }
 }
