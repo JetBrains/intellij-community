@@ -45,11 +45,16 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   public ProblemDescriptor[] checkClass(final PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+    if (aClass.isInterface()) return null;
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
     if (topLevelClass == null) return null;
     final PsiField[] fields = aClass.getFields();
-    candidates.addAll(Arrays.asList(fields));
+    for (PsiField field : fields) {
+      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        candidates.add(field);
+      }
+    }
 
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
       public void visitMethod(PsiMethod method) {
