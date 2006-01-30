@@ -26,6 +26,7 @@ public final class MainProcessor extends EventProcessor{
   private EventProcessor myCurrentProcessor;
   @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
   @NotNull private final GuiEditor myEditor;
+  private boolean myInsertFeedbackEnabled = true;
 
   public MainProcessor(@NotNull final GuiEditor editor){
     myEditor = editor;
@@ -116,7 +117,9 @@ public final class MainProcessor extends EventProcessor{
     Cursor cursor = Cursor.getDefaultCursor();
     if(id==MouseEvent.MOUSE_MOVED){
       if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
-        cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
+        if (myInsertFeedbackEnabled) {
+          cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
+        }
       }
       else {
         final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
@@ -302,6 +305,10 @@ public final class MainProcessor extends EventProcessor{
       return true;
     }
     return false;
+  }
+
+  public void setInsertFeedbackEnabled(final boolean enabled) {
+    myInsertFeedbackEnabled = enabled;
   }
 
   private final class MyComponentSelectionListener implements ComponentSelectionListener{

@@ -540,6 +540,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     });
   }
 
+  public MainProcessor getMainProcessor() {
+    return myProcessor;
+  }
+
   public static final class ReplaceInfo {
     private final int myStartOffset;
     private final int myEndOffset;
