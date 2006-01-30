@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,8 +27,10 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     Collection<AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProviders();
     ArrayList<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
-    for (TreeStructureProvider provider : providers) {
-      modified = new ArrayList<AbstractTreeNode>(provider.modify(treeNode, modified, ViewSettings.DEFAULT));
+    if (providers != null) {
+      for (TreeStructureProvider provider : providers) {
+        modified = new ArrayList<AbstractTreeNode>(provider.modify(treeNode, modified, ViewSettings.DEFAULT));
+      }
     }
     elements = modified;
     for (AbstractTreeNode node : elements) {
@@ -49,5 +52,6 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return (AbstractTreeNode)element;
   }
 
+  @Nullable
   public abstract List<TreeStructureProvider> getProviders();
 }

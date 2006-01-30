@@ -47,4 +47,6 @@ public abstract class TreeClassChooserFactory implements ProjectComponent{
   public abstract @NotNull TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, boolean acceptsSelf, boolean acceptInner, Condition<PsiClass> addtionalCondition);
 
   public abstract @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter);
+
+  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter, boolean disableStructureProviders);
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
@@ -63,15 +64,19 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   @Nullable private final PsiFileFilter myFilter;
   @Nullable private final FileType myFileType;
 
+  private boolean myDisableStructureProviders;
+
   public TreeFileChooserDialog(final Project project,
                                String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
-                               @Nullable PsiFileFilter filter) {
+                               @Nullable PsiFileFilter filter,
+                               final boolean disableStructureProviders) {
     super(project, true);
     myInitialFile = initialFile;
     myFilter = filter;
     myFileType = fileType;
+    myDisableStructureProviders = disableStructureProviders;
     setTitle(title);
     myProject = project;
     init();
@@ -122,6 +127,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
       public boolean isShowModules() {
         return false;
+      }
+
+      public List<TreeStructureProvider> getProviders() {
+        return myDisableStructureProviders ? null : super.getProviders(); 
       }
     };
     myBuilder = new ProjectTreeBuilder(myProject, myTree, model, AlphaComparator.INSTANCE, treeStructure);

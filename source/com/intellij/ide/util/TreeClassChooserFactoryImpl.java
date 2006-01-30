@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -65,7 +66,17 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
-    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter);
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false);
+  }
+
+  public
+  @NotNull
+  TreeFileChooser createFileChooser(@NotNull String title,
+                                    @Nullable PsiFile initialFile,
+                                    @Nullable FileType fileType,
+                                    @Nullable TreeFileChooser.PsiFileFilter filter,
+                                    boolean disableStructureProviders) {
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders);
   }
 
   public void projectOpened() {
