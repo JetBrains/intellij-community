@@ -34,7 +34,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 public class ScopeEditorPanel {
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
+  public static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private JPanel myButtonsPanel;
   private JTextField myNameField;
   private JTextField myPatternField;

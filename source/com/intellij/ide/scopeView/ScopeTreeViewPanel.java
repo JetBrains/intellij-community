@@ -1,5 +1,7 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -11,6 +13,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.packageDependencies.ui.ModuleNode;
@@ -50,6 +53,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private JComboBox myScopesCombo;
   private JPanel myPanel;
 
+  private JPanel myToolbar;
+
   public String CURRENT_SCOPE;
 
   private boolean myInitialized = false;
@@ -60,7 +65,33 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     myProject = project;
     initScopes();
     initTree();
+    initToolbar();
     add(myPanel, BorderLayout.CENTER);
+  }
+
+  private void initToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new CompactEmptyMiddlePackagesAction());
+    myToolbar.setLayout(new BorderLayout());
+    myToolbar.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.EAST);
+  }
+
+  private final class CompactEmptyMiddlePackagesAction extends ToggleAction {
+    CompactEmptyMiddlePackagesAction() {
+      super(IdeBundle.message("action.compact.empty.middle.packages"),
+            IdeBundle.message("action.compact.empty.middle.packages"), ScopeEditorPanel.COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
+      final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
+      final NamedScope scope = (NamedScope)myScopesCombo.getSelectedItem();
+      refreshScope(scope, holder, true);
+    }
   }
 
   public void initListeners(){
