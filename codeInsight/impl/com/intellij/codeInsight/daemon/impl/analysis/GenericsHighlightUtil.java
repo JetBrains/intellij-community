@@ -633,7 +633,9 @@ public class GenericsHighlightUtil {
       if (iterable == null) return null;
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterable, aClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return null;
-      final PsiTypeParameter itemTypeParameter = iterable.getTypeParameters()[0];
+      PsiTypeParameter[] typeParameters = iterable.getTypeParameters();
+      if (typeParameters.length != 1) return null;
+      final PsiTypeParameter itemTypeParameter = typeParameters[0];
       PsiType itemType = substitutor.substitute(itemTypeParameter);
       itemType = resolveResult.getSubstitutor().substitute(itemType);
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
