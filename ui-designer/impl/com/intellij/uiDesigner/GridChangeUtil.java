@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class GridChangeUtil {
+  private GridChangeUtil() {
+  }
+
   public static void insertRowBefore(final RadContainer grid, final int rowIndex) {
     insertRowOrColumn(grid, rowIndex, true, true);
   }

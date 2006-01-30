@@ -18,11 +18,27 @@ import java.util.ArrayList;
  * @author yole
  */
 public abstract class AbstractGuiEditorAction extends AnAction {
+  private boolean myModifying;
+
+  protected AbstractGuiEditorAction() {
+    myModifying = false;
+  }
+
+  protected AbstractGuiEditorAction(final boolean modifying) {
+    myModifying = modifying;
+  }
+
   public final void actionPerformed(AnActionEvent e) {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
+    if (myModifying) {
+      if (!editor.ensureEditable()) return;
+    }
     actionPerformed(editor, selection, e);
+    if (myModifying) {
+      editor.refreshAndSave(true);
+    }
   }
 
   protected abstract void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e);

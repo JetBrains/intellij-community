@@ -1329,6 +1329,8 @@
       <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction"/>
       <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
       <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
+      <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
+        use-shortcut-of="EditorDuplicate"/>
       <separator/>
       <group id="GuiDesigner.SurroundGroup" class="com.intellij.uiDesigner.actions.SurroundActionGroup" popup="true"/>
       <separator/>

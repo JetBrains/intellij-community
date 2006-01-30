@@ -14,7 +14,6 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +35,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
     if (!editor.ensureEditable()) {
       return;
     }
-    final RadContainer selectionParent = getSelectionParent(selection);
+    final RadContainer selectionParent = GuiEditorUtil.getSelectionParent(selection);
     assert selectionParent != null;
 
     final Palette palette = Palette.getInstance(editor.getProject());
@@ -84,20 +83,6 @@ public class SurroundAction extends AbstractGuiEditorAction {
       }, null, null);
   }
 
-  @Nullable private static RadContainer getSelectionParent(final ArrayList<RadComponent> selection) {
-    RadContainer parent = null;
-    for(RadComponent c: selection) {
-      if (parent == null) {
-        parent = c.getParent();
-      }
-      else if (parent != c.getParent()) {
-        parent = null;
-        break;
-      }
-    }
-    return parent;
-  }
-
   private static Rectangle getSelectionBounds(ArrayList<RadComponent> selection) {
     int minRow = Integer.MAX_VALUE;
     int minCol = Integer.MAX_VALUE;
@@ -114,7 +99,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    RadContainer selectionParent = getSelectionParent(selection);
+    RadContainer selectionParent = GuiEditorUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
         (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
         isSelectionContiguous(selectionParent, selection) &&

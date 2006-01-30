@@ -23,6 +23,7 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -256,7 +257,12 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
   }
 
-  public static String serializeForCopy(final GuiEditor editor, final ArrayList<RadComponent> components) {
+  @Nullable
+  public static List<RadComponent> copyComponents(GuiEditor editor, List<RadComponent> components) {
+    return deserializeComponents(editor, serializeForCopy(editor, components));
+  }
+
+  public static String serializeForCopy(final GuiEditor editor, final List<RadComponent> components) {
     final XmlWriter writer = new XmlWriter();
 
     writer.startElement(ELEMENT_SERIALIZED, Utils.FORM_NAMESPACE);
