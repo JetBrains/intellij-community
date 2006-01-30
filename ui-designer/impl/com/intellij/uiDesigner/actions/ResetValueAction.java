@@ -1,33 +1,27 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.GuiEditorUtil;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadComponent;
 
 import java.util.ArrayList;
 
 /**
  * @author yole
  */
-public class ResetValueAction extends AnAction {
+public class ResetValueAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#intellij.uiDesigner.actions.ResetValueAction");
 
-  public void actionPerformed(AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     final PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
     assert property != null;
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    assert editor != null;
-    final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-    final RadComponent component = selectedComponents.get(0);
+    final RadComponent component = selection.get(0);
     doResetValue(component, property, editor);
   }
 
@@ -44,15 +38,13 @@ public class ResetValueAction extends AnAction {
     }
   }
 
-  @Override public void update(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
-    if (editor != null && inspector != null) {
-      final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
+    if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();
       e.getPresentation().setEnabled(selectedProperty != null &&
-                                     selectedComponents.size() == 1 &&
-                                     selectedProperty.isModified(selectedComponents.get(0)));
+                                     selection.size() == 1 &&
+                                     selectedProperty.isModified(selection.get(0)));
     }
     else {
       e.getPresentation().setEnabled(false);

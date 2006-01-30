@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class StartInplaceEditingAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.StartInplaceEditingAction");
 
   private GuiEditor myEditor;
 

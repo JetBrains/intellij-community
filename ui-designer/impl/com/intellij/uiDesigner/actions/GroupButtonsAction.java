@@ -1,9 +1,11 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.uiDesigner.RadButtonGroup;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -11,13 +13,9 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public class GroupButtonsAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    if (editor != null) {
-      ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-      groupButtons(editor, selectedComponents);
-    }
+public class GroupButtonsAction extends AbstractGuiEditorAction {
+  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    groupButtons(editor, selection);
   }
 
   public static void groupButtons(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
@@ -29,23 +27,16 @@ public class GroupButtonsAction extends AnAction {
     editor.refreshAndSave(true);
   }
 
-  @Override public void update(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    if (editor != null) {
-      final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-      e.getPresentation().setEnabled(canGroup(selectedComponents) &&
-                                     !UngroupButtonsAction.isSameGroup(editor, selectedComponents));
-    }
-    else {
-      e.getPresentation().setVisible(false);
-    }
+  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    e.getPresentation().setEnabled(canGroup(selection) &&
+                                   !UngroupButtonsAction.isSameGroup(editor, selection));
   }
 
-  private boolean canGroup(final ArrayList<RadComponent> selectedComponents) {
-    if (selectedComponents.size() < 2) {
+  private static boolean canGroup(final ArrayList<RadComponent> selection) {
+    if (selection.size() < 2) {
       return false;
     }
-    for(RadComponent component: selectedComponents) {
+    for(RadComponent component: selection) {
       if (!(component.getDelegee() instanceof AbstractButton) ||
           component.getDelegee() instanceof JButton) {
         return false;

@@ -1,39 +1,29 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.uiDesigner.RadButtonGroup;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.*;
 
 import java.util.ArrayList;
 
 /**
  * @author yole
  */
-public class UngroupButtonsAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    if (editor != null) {
-      final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-      for(RadComponent component: selectedComponents) {
-        editor.getRootContainer().setGroupForComponent(component, null);
-      }
-      editor.refreshAndSave(true);
+public class UngroupButtonsAction extends AbstractGuiEditorAction {
+  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    for(RadComponent component: selection) {
+      editor.getRootContainer().setGroupForComponent(component, null);
     }
+    editor.refreshAndSave(true);
   }
 
-  public void update(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    if (editor != null) {
-      final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(editor);
-      e.getPresentation().setEnabled(canUngroup(editor, selectedComponents));
-    }
-    else {
-      e.getPresentation().setVisible(false);
-    }
+  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    e.getPresentation().setEnabled(canUngroup(editor, selection));
   }
 
-  private boolean canUngroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
+  private static boolean canUngroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
     if (selectedComponents.size() < 2) {
       return false;
     }

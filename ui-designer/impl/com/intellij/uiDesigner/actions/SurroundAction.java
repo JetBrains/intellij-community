@@ -4,15 +4,14 @@
 
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,7 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public class SurroundAction extends AnAction {
+public class SurroundAction extends AbstractGuiEditorAction {
   private String myComponentClass;
 
   public SurroundAction(String componentClass) {
@@ -33,13 +32,10 @@ public class SurroundAction extends AnAction {
     myComponentClass = componentClass;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    assert editor != null;
+  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     if (!editor.ensureEditable()) {
       return;
     }
-    final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
     final RadContainer selectionParent = getSelectionParent(selection);
     assert selectionParent != null;
 
@@ -117,20 +113,12 @@ public class SurroundAction extends AnAction {
     return new Rectangle(minCol, minRow, maxCol-minCol, maxRow-minRow);
   }
 
-  @Override public void update(AnActionEvent e) {
-    GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    if (editor != null) {
-      final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
-      RadContainer selectionParent = getSelectionParent(selection);
-      if (selectionParent != null &&
-          (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
-          isSelectionContiguous(selectionParent, selection) &&
-          canWrapSelection(selection)) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-    }
-    e.getPresentation().setEnabled(false);
+  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    RadContainer selectionParent = getSelectionParent(selection);
+    e.getPresentation().setEnabled(selectionParent != null &&
+        (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
+        isSelectionContiguous(selectionParent, selection) &&
+        canWrapSelection(selection));
   }
 
   private boolean canWrapSelection(final ArrayList<RadComponent> selection) {
