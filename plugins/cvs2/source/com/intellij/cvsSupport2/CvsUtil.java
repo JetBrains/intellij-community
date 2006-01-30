@@ -487,6 +487,10 @@ public class CvsUtil {
 
     }
 
+    if (repository.startsWith("./")) {
+      repository = repository.substring(2);
+    }
+
     return repository;
   }
 

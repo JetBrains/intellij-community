@@ -53,7 +53,7 @@ public class ImportWizard extends CvsWizard{
   public ImportDetails createImportDetails() {
     CvsElement module = mySelectCvsElementStep.getSelectedCvsElement();
     String moduleName = mySettingsStep.getModuleName();
-    String importModuleName = module.getName().equals(".") ? moduleName : module.getElementPath() + "/" + moduleName;
+    String importModuleName = module.getElementPath().equals(".") ? moduleName : module.getElementPath() + "/" + moduleName;
 
     return new ImportDetails(mySelectImportLocationStep.getSelectedFile(),
                              mySettingsStep.getVendor(),
