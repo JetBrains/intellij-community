@@ -4,11 +4,10 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.xml.JavaMethodSignature;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,6 +25,13 @@ public class DomUtil {
         final Type[] arguments = parameterizedType.getActualTypeArguments();
         if (arguments.length == 1 && arguments[0] instanceof Class) {
           return (Class)arguments[0];
+        }
+      } else {
+        for (final Type t : ((Class)rawType).getGenericInterfaces()) {
+          final Class aClass = extractParameterClassFromGenericType(t);
+          if (aClass != null) {
+            return aClass;
+          }
         }
       }
     }
