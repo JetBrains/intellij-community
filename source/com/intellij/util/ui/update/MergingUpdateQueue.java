@@ -12,8 +12,6 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -52,7 +50,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   public void cancelAllUpdates() {
-    synchronized(mySheduledUpdates) {
+    synchronized (mySheduledUpdates) {
       mySheduledUpdates.clear();
     }
   }
@@ -116,21 +114,18 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     final Runnable toRun = new Runnable() {
       public void run() {
         try {
-          List<Update> toUpdate;
           final Update[] all;
 
-          synchronized(mySheduledUpdates) {
-            toUpdate = new ArrayList<Update>(mySheduledUpdates.size());
+          synchronized (mySheduledUpdates) {
             all = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
             mySheduledUpdates.clear();
           }
 
           for (Update each : all) {
-            toUpdate.add(each);
             each.setProcessed();
           }
 
-          execute(toUpdate.toArray(new Update[toUpdate.size()]));
+          execute(all);
         }
         finally {
           myFlushing = false;
@@ -152,7 +147,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     return !current.dominates(modalityState);
   }
 
-  private boolean isExpired(Update each) {
+  private static boolean isExpired(Update each) {
     return each.isDisposed() || each.isExpired();
   }
 
@@ -180,13 +175,13 @@ public class MergingUpdateQueue implements Runnable, Disposable {
       return;
     }
 
-    synchronized(mySheduledUpdates) {
-      boolean updateWasEatenByQueue = eatThisOrOthers(update);
-      if (updateWasEatenByQueue) {
+    final boolean active = myActive;
+    synchronized (mySheduledUpdates) {
+      if (eatThisOrOthers(update)) {
         return;
       }
 
-      if (myActive) {
+      if (active) {
         if (mySheduledUpdates.isEmpty()) {
           restartTimer();
         }
@@ -216,7 +211,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   }
 
   public final void run(Update update) {
-    execute(new Update[] {update});
+    execute(new Update[]{update});
   }
 
   private void put(Update update) {
@@ -224,7 +219,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     mySheduledUpdates.add(update);
   }
 
-  protected boolean passThroughForUnitTesting() {
+  protected static boolean passThroughForUnitTesting() {
     return true;
   }
 
