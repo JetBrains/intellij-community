@@ -187,13 +187,13 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     return myClassName;
   }
 
-  public String getClassShortName() {
+  private String getClassShortName() {
     final int lastDotIndex = myClassName.lastIndexOf('.');
     if (lastDotIndex != -1 && lastDotIndex != myClassName.length() - 1/*not the last char in class name*/) {
-      return myClassName.substring(lastDotIndex + 1);
+      return myClassName.substring(lastDotIndex + 1).replace('$', '.');
     }
     else{
-      return myClassName;
+      return myClassName.replace('$', '.');
     }
   }
 

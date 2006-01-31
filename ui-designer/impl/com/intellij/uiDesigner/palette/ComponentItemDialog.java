@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.GuiEditorUtil;
@@ -75,7 +76,7 @@ public final class ComponentItemDialog extends DialogWrapper{
     }
     else {
       myClassRadioButton.setSelected(true);
-      setEditorText(myItemToBeEdited.getClassName());
+      setEditorText(myItemToBeEdited.getClassName().replace('$', '.'));
     }
     updateEnabledTextField();
 
@@ -131,7 +132,14 @@ public final class ComponentItemDialog extends DialogWrapper{
   protected void doOKAction() {
     // TODO[vova] implement validation
     if (myClassRadioButton.isSelected()) {
-      myItemToBeEdited.setClassName(myDocument.getText().trim());
+      final String className = myDocument.getText().trim();
+      PsiClass psiClass = PsiManager.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+      if (psiClass != null) {
+        myItemToBeEdited.setClassName(getClassOrInnerName(psiClass));        
+      }
+      else {
+        myItemToBeEdited.setClassName(className);
+      }
     }
     else {
       if (!saveNestedForm()) return;
@@ -205,6 +213,14 @@ public final class ComponentItemDialog extends DialogWrapper{
     myTfNestedForm.setEnabled(myNestedFormRadioButton.isSelected());
   }
 
+  private String getClassOrInnerName(final PsiClass aClass) {
+    PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    if(parentClass != null) {
+      return getClassOrInnerName(parentClass) + "$" + aClass.getName();
+    }
+    return aClass.getQualifiedName();
+  }
+
   private class MyChooseClassActionListener implements ActionListener {
     private final Project myProject;
 
@@ -218,7 +234,7 @@ public final class ComponentItemDialog extends DialogWrapper{
         UIDesignerBundle.message("title.choose.component.class"),
         GlobalSearchScope.allScope(myProject),
         PsiManager.getInstance(myProject).findClass(JComponent.class.getName(), GlobalSearchScope.allScope(myProject)),
-        true, false, null);
+        true, true, null);
       chooser.showDialog();
       final PsiClass result = chooser.getSelectedClass();
       if (result != null) {

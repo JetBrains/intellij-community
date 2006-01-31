@@ -411,7 +411,8 @@ public final class ComponentTree extends Tree implements DataProvider {
           SimpleTextAttributes classAttributes = hasText ? myPackageAttributes : myClassAttributes;
 
           if (packageName != null) {
-            append(componentClassName.substring(packageName.length() + 1), getAttribute(classAttributes, error));
+            append(componentClassName.substring(packageName.length() + 1).replace('$', '.'),
+                   getAttribute(classAttributes, error));
             if (!packageName.equals(SWING_PACKAGE)) {
               append(" (", getAttribute(myPackageAttributes, error));
               append(packageName, getAttribute(myPackageAttributes, error));
@@ -419,7 +420,7 @@ public final class ComponentTree extends Tree implements DataProvider {
             }
           }
           else {
-            append(componentClassName, getAttribute(classAttributes, error));
+            append(componentClassName.replace('$', '.'), getAttribute(classAttributes, error));
           }
         }
 
