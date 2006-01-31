@@ -2,6 +2,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.scopeView.ClassNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -20,6 +21,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -330,7 +332,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public PackageDependenciesNode getFileParentNode(PsiFile file) {
+  public @NotNull PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();
@@ -361,21 +363,31 @@ public class TreeModelBuilder {
 
   public PackageDependenciesNode removeNode(final PsiElement element, final PsiDirectory parent){
     boolean isMarked = false;
-    if (element instanceof PsiFile){
-      isMarked = myMarker.isMarked((PsiFile)element);
-    } else if (element instanceof PsiDirectory){
-      final PsiDirectory psiDirectory = (PsiDirectory)element;
-      final PsiFile[] psiFiles = psiDirectory.getFiles();
-      for (PsiFile psiFile : psiFiles) {
-        isMarked |= myMarker.isMarked(psiFile);
+    if (element != null && element.isValid()) {
+      if (element instanceof PsiFile){
+        isMarked = myMarker.isMarked((PsiFile)element);
+      } else if (element instanceof PsiDirectory){
+        final PsiDirectory psiDirectory = (PsiDirectory)element;
+        final PsiFile[] psiFiles = psiDirectory.getFiles();
+        for (PsiFile psiFile : psiFiles) {
+          isMarked |= myMarker.isMarked(psiFile);
+        }
       }
+      if (!isMarked) return null;
     }
-    if (!isMarked) return null;
-    final PackageDependenciesNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE, null);
+    PackageDependenciesNode dirNode = getModuleDirNode(parent, myFileIndex.getModuleForFile(parent.getVirtualFile()), ScopeType.SOURCE, null);
     if (dirNode != null){
-      final PackageDependenciesNode fileNode = findNodeForPsiElement(dirNode, element);
-      if (fileNode != null){
-        dirNode.remove(fileNode);
+      final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement(dirNode, element);
+      if (classOrDirNodes != null){
+        for (PackageDependenciesNode classNode : classOrDirNodes) {
+          classNode.removeFromParent();
+        }
+      }
+      if (dirNode.getChildCount() == 0) {
+        final TreeNode treeNode = dirNode.getParent();
+        dirNode.removeFromParent();
+        getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
+        dirNode = (PackageDependenciesNode)treeNode;
       }
     }
     return dirNode;
@@ -384,22 +396,38 @@ public class TreeModelBuilder {
   public PackageDependenciesNode addFileNode(final PsiFile file){
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (!isMarked) return null;
+
+    final VirtualFile vFile = file.getVirtualFile();
+    PsiDirectory dirToReload = file.getContainingDirectory();
+    PackageDependenciesNode rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+    while (rootToReload == null && dirToReload != null){
+      dirToReload = dirToReload.getParentDirectory();
+      rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+    }
+
     PackageDependenciesNode dirNode = getFileParentNode(file);
     dirNode.add(new FileNode(file, isMarked));
-    return dirNode;
+    return rootToReload;
   }
 
-  private static PackageDependenciesNode findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
+  private static PackageDependenciesNode[] findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
+    final Set<PackageDependenciesNode> result = new HashSet<PackageDependenciesNode>();
     for (int i = 0; i < parent.getChildCount(); i++){
       final TreeNode treeNode = parent.getChildAt(i);
       if (treeNode instanceof PackageDependenciesNode){
-        final PackageDependenciesNode fileNode = (PackageDependenciesNode)treeNode;
-        if (fileNode.getPsiElement() == element){
-          return fileNode;
+        final PackageDependenciesNode node = (PackageDependenciesNode)treeNode;
+        if (element instanceof PsiDirectory && node.getPsiElement() == element){
+          return new PackageDependenciesNode[] {node};
+        }
+        if (element instanceof PsiFile){
+          final PsiElement psiElement = node instanceof ClassNode ? ((ClassNode)node).getContainingFile() : node.getPsiElement();
+          if (element == psiElement){
+            result.add(node);
+          }
         }
       }
     }
-    return null;
+    return result.isEmpty() ? null : result.toArray(new PackageDependenciesNode[result.size()]);
   }
 
   public void updateModuleNode(final Module module) {
@@ -508,10 +536,12 @@ public class TreeModelBuilder {
           }
         } else if (directoryNode.getParent() == null){    //find first node in tree
           DirectoryNode parentWrapper = ((DirectoryNode)directoryNode).getWrapper();
-          while (parentWrapper.getWrapper() != null){
-            parentWrapper = parentWrapper.getWrapper();
+          if (parentWrapper != null) {
+            while (parentWrapper.getWrapper() != null){
+              parentWrapper = parentWrapper.getWrapper();
+            }
+            return parentWrapper;
           }
-          return parentWrapper;
         }
       }
       return directoryNode;

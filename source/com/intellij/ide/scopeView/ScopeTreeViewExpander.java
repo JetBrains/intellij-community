@@ -1,11 +1,13 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.packageDependencies.ui.DependecyNodeComparator;
 import com.intellij.packageDependencies.ui.DirectoryNode;
 import com.intellij.packageDependencies.ui.FileNode;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -44,7 +46,9 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
               classNodes = new HashSet<ClassNode>();
             }
             for (PsiClass psiClass : psiClasses) {
-              classNodes.add(new ClassNode(psiClass));
+              if (psiClass != null && psiClass.isValid()) {
+                classNodes.add(new ClassNode(psiClass));
+              }
             }
             node.remove(fileNode);
           }
@@ -55,6 +59,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(classNode);
         }
       }
+      TreeUtil.sort(node, new DependecyNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
   }
@@ -68,7 +73,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
         if (childNode instanceof ClassNode) {
           final ClassNode classNode = (ClassNode)childNode;
           final PsiElement psiElement = classNode.getPsiElement();
-          if (psiElement != null){
+          if (psiElement != null && psiElement.isValid()){
             if (fileNodes == null){
               fileNodes = new HashSet<FileNode>();
             }
@@ -82,6 +87,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(fileNode);
         }
       }
+      TreeUtil.sort(node, new DependecyNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
   }

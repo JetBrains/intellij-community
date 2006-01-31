@@ -2,6 +2,8 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -64,6 +66,10 @@ public class FileNode extends PackageDependenciesNode {
 
   public PsiElement getPsiElement() {
     return myFile;
+  }
+
+  public FileStatus getStatus() {
+    return FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile());
   }
 
   public boolean equals(Object o) {

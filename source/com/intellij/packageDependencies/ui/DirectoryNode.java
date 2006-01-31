@@ -47,6 +47,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public String getDirName(){
+    if (myDirectory == null || !myDirectory.isValid()) return null;
     final VirtualFile contentRoot =
       ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex().getContentRootForFile(myDirectory.getVirtualFile());
     final String dirName = VfsUtil.getRelativePath(myDirectory.getVirtualFile(), contentRoot, '/');
@@ -58,10 +59,6 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public PsiElement getPsiElement() {
     return myDirectory;
-  }
-
-  public void setDirectory(final PsiDirectory directory) {
-    myDirectory = directory;
   }
 
   public int getWeight() {

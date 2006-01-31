@@ -1,18 +1,35 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.ide.CopyPasteManagerEx;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.util.DeleteHandler;
+import com.intellij.ide.util.EditorHelper;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.localVcs.impl.LvcsIntegration;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
@@ -20,7 +37,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.HashSet;
@@ -30,10 +49,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,6 +66,8 @@ import java.util.Set;
  * Date: 25-Jan-2006
  */
 public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, DataProvider {
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
+  private IdeView myIdeView = new  MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
   private ModuleRootListener myModuleRootListener = new MyModuleRootListener();
 
@@ -57,6 +84,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private boolean myInitialized = false;
 
   private TreeExpantionMonitor myTreeExpantionMonitor;
+  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
+  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -145,11 +175,32 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     PopupHandler.installPopupHandler(myTree,
-                                    (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_SCOPE_VIEW_POPUP),
-                                    ActionPlaces.SCOPE_VIEW_POPUP, ActionManager.getInstance());
+                                     (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_SCOPE_VIEW_POPUP),
+                                     ActionPlaces.SCOPE_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(myTree);
+    myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
+      protected PsiElement[] getSelectedElements() {
+        return getSelectedPsiElements();
+      }
+    };
     myTreeExpantionMonitor = TreeExpantionMonitor.install(myTree, myProject);
     myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree));
+  }
+
+  private PsiElement[] getSelectedPsiElements() {
+    final TreePath[] treePaths = myTree.getSelectionPaths();
+    if (treePaths != null){
+      Set<PsiElement> result = new HashSet<PsiElement>();
+      for (TreePath path : treePaths) {
+        PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        final PsiElement psiElement = node.getPsiElement();
+        if (psiElement != null && psiElement.isValid()){
+          result.add(psiElement);
+        }
+      }
+      return result.toArray(new PsiElement[result.size()]);
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
@@ -243,18 +294,51 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         return psiElements.isEmpty() ? null : psiElements.toArray(new PsiElement[psiElements.size()]);
       }
     }
+    if (dataId.equals(DataConstants.IDE_VIEW)){
+      return myIdeView;
+    }
+    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+      return myCopyPasteDelegator.getCutProvider();
+    }
+    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+      return myCopyPasteDelegator.getCopyProvider();
+    }
+    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+      return myCopyPasteDelegator.getPasteProvider();
+    }
+    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      if (getSelectedModules() != null){
+        return myDeleteModuleProvider;
+      }
+      if (getSelectedPsiElements() != null){
+        return myDeletePSIElementProvider;
+      }
+    }
     return null;
   }
 
-  private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+  private Module[] getSelectedModules(){
+    final TreePath[] treePaths = myTree.getSelectionPaths();
+    if (treePaths != null){
+      Set<Module> result = new HashSet<Module>();
+      for (TreePath path : treePaths) {
+        PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        if (node instanceof ModuleNode){
+          result.add(((ModuleNode)node).getModule());
+        } else if (node instanceof ModuleGroupNode){
+          final ModuleGroupNode groupNode = (ModuleGroupNode)node;
+          final ModuleGroup moduleGroup = groupNode.getModuleGroup();
+          result.addAll(Arrays.asList(moduleGroup.modulesInGroup(myProject, true)));
+        }
+      }
+      return result.isEmpty() ? null : result.toArray(new Module[result.size()]);
+    }
+    return null;
+  }
+
+
+  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         if (expanded) {
@@ -263,69 +347,170 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         else {
           setIcon(node.getClosedIcon());
         }
+        final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        final TextAttributes textAttributes = regularAttributes.toTextAttributes();
+        textAttributes.setForegroundColor(node.getStatus().getColor());
+        final String text = node.toString();
+        if (text != null) {
+          append(text, SimpleTextAttributes.fromTextAttributes(textAttributes));
+        }
       }
-      return this;
     }
   }
 
-  private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter{
+  private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
 
-    public void childAdded(PsiTreeChangeEvent event) {
-      final PsiElement element = event.getParent();
-      if (element instanceof PsiDirectory || element instanceof PsiPackage){
-        final PsiElement child = event.getChild();
-        if (child instanceof PsiFile) {
-          final PackageDependenciesNode dirNode = myBuilder.addFileNode((PsiFile)child);
-          if (dirNode != null) {
-            ((DefaultTreeModel)myTree.getModel()).reload(dirNode);
+    public void beforeChildAddition(final PsiTreeChangeEvent event) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final PsiElement element = event.getParent();
+          if (element instanceof PsiDirectory || element instanceof PsiPackage) {
+            final PsiElement child = event.getChild();
+            if (child instanceof PsiFile) {
+              final PackageDependenciesNode rootToReload = myBuilder.addFileNode((PsiFile)child);
+              final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+              if (rootToReload != null) {
+                TreeUtil.sort(rootToReload, new DependecyNodeComparator());
+                treeModel.reload(rootToReload);
+              } else {
+                TreeUtil.sort(treeModel, new DependecyNodeComparator());
+                treeModel.reload();
+              }
+            }
           }
         }
-      }
+      }, ModalityState.NON_MMODAL);
     }
 
-    public void childRemoved(PsiTreeChangeEvent event) {
-      final PsiElement child = event.getChild();
-      final PsiElement parent = event.getParent();
-      if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
-        final PackageDependenciesNode node = myBuilder.removeNode(child, (PsiDirectory)parent);
-        if (node != null){
-          ((DefaultTreeModel)myTree.getModel()).reload(node);
+    public void beforeChildRemoval(final PsiTreeChangeEvent event) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final PsiElement child = event.getChild();
+          final PsiElement parent = event.getParent();
+          if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
+            final PackageDependenciesNode node = myBuilder.removeNode(child, (PsiDirectory)parent);
+            if (node != null) {
+              ((DefaultTreeModel)myTree.getModel()).reload(node);
+            }
+          }
         }
-      }
+      }, ModalityState.NON_MMODAL);
     }
 
-    public void childMoved(PsiTreeChangeEvent event) {
-      final PsiElement oldParent = event.getOldParent();
-      final PsiElement newParent = event.getNewParent();
-      PsiElement child = event.getChild();
-      if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory){
-        if (child instanceof PsiFile) {
-          myBuilder.removeNode(child, (PsiDirectory)oldParent);
-          myBuilder.addFileNode((PsiFile)child);
+    public void beforeChildMovement(final PsiTreeChangeEvent event) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final PsiElement oldParent = event.getOldParent();
+          final PsiElement newParent = event.getNewParent();
+          PsiElement child = event.getChild();
+          if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory) {
+            if (child instanceof PsiFile) {
+              myBuilder.removeNode(child, (PsiDirectory)oldParent);
+              myBuilder.addFileNode((PsiFile)child);
+            }
+          }
         }
-      }
+      }, ModalityState.NON_MMODAL);
     }
 
-    public void childrenChanged(PsiTreeChangeEvent event) {
-      final PsiElement parent = event.getParent();
-      if (parent instanceof PsiJavaFile){
-        final PackageDependenciesNode parentNode = myBuilder.getFileParentNode((PsiFile)parent);
-        final TreePath treePath = new TreePath(parentNode.getPath());
-        if (!myTree.isCollapsed(treePath)){
-          myTree.collapsePath(treePath);
-          myTree.expandPath(treePath);
+    public void beforeChildrenChange(final PsiTreeChangeEvent event) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final PsiElement parent = event.getParent();
+          if (parent instanceof PsiJavaFile) {
+            final PackageDependenciesNode parentNode = myBuilder.getFileParentNode((PsiFile)parent);
+            final TreePath treePath = new TreePath(parentNode.getPath());
+            if (!myTree.isCollapsed(treePath)) {
+              myTree.collapsePath(treePath);
+              myTree.expandPath(treePath);
+              TreeUtil.sort(parentNode, new DependecyNodeComparator());
+            }
+          }
         }
-      }
+      }, ModalityState.NON_MMODAL);
     }
   }
 
-  private class MyModuleRootListener implements ModuleRootListener{
+  private class MyModuleRootListener implements ModuleRootListener {
     public void beforeRootsChange(ModuleRootEvent event) {
     }
 
     public void rootsChanged(ModuleRootEvent event) {
       final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
       refreshScope(holder.getScope(CURRENT_SCOPE), holder, false);
+    }
+  }
+
+  private class MyIdeView implements IdeView {
+    public void selectElement(final PsiElement element) {
+      if (element != null) {
+        final boolean isDirectory = element instanceof PsiDirectory;
+        if (!isDirectory) {
+          Editor editor = EditorHelper.openInEditor(element);
+          if (editor != null) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          }
+        }
+      }
+    }
+
+    private PsiDirectory getDirectory() {
+      final TreePath[] selectedPaths = myTree.getSelectionPaths();
+      if (selectedPaths != null) {
+        if (selectedPaths.length != 1) return null;
+        TreePath path = selectedPaths[0];
+        final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        if (node instanceof DirectoryNode) {
+          return (PsiDirectory)node.getPsiElement();
+        }
+        else if (node instanceof ClassNode) {
+          final PsiElement psiClass = node.getPsiElement();
+          LOG.assertTrue(psiClass != null);
+          final PsiFile psiFile = psiClass.getContainingFile();
+          LOG.assertTrue(psiFile != null);
+          return psiFile.getContainingDirectory();
+        }
+        else if (node instanceof FileNode) {
+          final PsiFile psiFile = (PsiFile)node.getPsiElement();
+          LOG.assertTrue(psiFile != null);
+          return psiFile.getContainingDirectory();
+        }
+      }
+      return null;
+    }
+
+    public PsiDirectory[] getDirectories() {
+      PsiDirectory directory = getDirectory();
+      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
+    }
+
+    @Nullable
+    public PsiDirectory getOrChooseDirectory() {
+      return PackageUtil.getOrChooseDirectory(this);
+    }
+  }
+
+  private final class MyDeletePSIElementProvider implements DeleteProvider {
+    public boolean canDeleteElement(DataContext dataContext) {
+      final PsiElement[] elements = getSelectedPsiElements();
+      return DeleteHandler.shouldEnableDeleteAction(elements);
+    }
+
+    public void deleteElement(DataContext dataContext) {
+      List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
+      ArrayList<PsiElement> validElements = new ArrayList<PsiElement>();
+      for (PsiElement psiElement : allElements) {
+        if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
+      }
+      final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
+
+      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
+      try {
+        DeleteHandler.deletePsiElement(elements, myProject);
+      }
+      finally {
+        LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
+      }
     }
   }
 }

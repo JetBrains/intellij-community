@@ -2,11 +2,10 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,22 +18,25 @@ import javax.swing.*;
 public class ClassNode extends PackageDependenciesNode {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ClassNode");
 
-
   private SmartPsiElementPointer myClassElementPointer;
+  private PsiFile myFile;
 
   public ClassNode(final PsiClass aClass) {
     myClassElementPointer =
       SmartPointerManager.getInstance(aClass.getProject()).createLazyPointer(aClass);
+    myFile = aClass.getContainingFile();
   }
 
   @Nullable
   public PsiElement getPsiElement() {
-    return myClassElementPointer.getElement();
+    final PsiElement element = myClassElementPointer.getElement();
+    return element != null && element.isValid() ? element : null;
   }
 
 
   public String toString() {
-    return ClassPresentationUtil.getNameForClass((PsiClass)myClassElementPointer.getElement(), false);
+    final PsiClass aClass = (PsiClass)myClassElementPointer.getElement();
+    return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : null;
   }
 
   public Icon getOpenIcon() {
@@ -46,11 +48,16 @@ public class ClassNode extends PackageDependenciesNode {
   }
 
   private Icon getIcon() {
-    return myClassElementPointer.getElement().getIcon(Iconable.ICON_FLAG_VISIBILITY);
+    final PsiElement element = myClassElementPointer.getElement();
+    return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY) : null;
+  }
+
+  public FileStatus getStatus() {
+    return FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile());
   }
 
   public int getWeight() {
-    return 5;
+    return 4;
   }
 
   public int getContainingFiles() {
@@ -75,4 +82,7 @@ public class ClassNode extends PackageDependenciesNode {
     return myClassElementPointer.hashCode();
   }
 
+  public PsiFile getContainingFile() {
+    return myFile;
+  }
 }

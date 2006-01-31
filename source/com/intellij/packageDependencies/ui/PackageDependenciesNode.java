@@ -1,24 +1,24 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.IconUtilEx;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
@@ -68,6 +68,10 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   @Nullable
   public PsiElement getPsiElement() {
     return null;
+  }
+
+  public FileStatus getStatus(){
+    return FileStatus.NOT_CHANGED;
   }
 
   public int getContainingFiles(){

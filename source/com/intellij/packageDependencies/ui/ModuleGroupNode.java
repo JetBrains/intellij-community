@@ -16,10 +16,10 @@ import java.util.Set;
 public class ModuleGroupNode extends PackageDependenciesNode {
   public static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
   public static final Icon OPENED_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
-  private ModuleGroup myModule;
+  private ModuleGroup myModuleGroup;
 
-  public ModuleGroupNode(ModuleGroup module) {
-    myModule = module;
+  public ModuleGroupNode(ModuleGroup moduleGroup) {
+    myModuleGroup = moduleGroup;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
@@ -40,11 +40,15 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myModule == null ? AnalysisScopeBundle.message("unknown.node.text") : myModule.toString();
+    return myModuleGroup == null ? AnalysisScopeBundle.message("unknown.node.text") : myModuleGroup.toString();
   }
 
   public String getModuleGroupName() {
-    return myModule.presentableText();
+    return myModuleGroup.presentableText();
+  }
+
+  public ModuleGroup getModuleGroup() {
+    return myModuleGroup;
   }
 
   public int getWeight() {
@@ -60,10 +64,10 @@ public class ModuleGroupNode extends PackageDependenciesNode {
 
     final ModuleGroupNode moduleNode = (ModuleGroupNode)o;
 
-    return Comparing.equal(myModule, moduleNode.myModule);
+    return Comparing.equal(myModuleGroup, moduleNode.myModuleGroup);
   }
 
   public int hashCode() {
-    return myModule == null ? 0 : myModule.hashCode();
+    return myModuleGroup == null ? 0 : myModuleGroup.hashCode();
   }
 }
