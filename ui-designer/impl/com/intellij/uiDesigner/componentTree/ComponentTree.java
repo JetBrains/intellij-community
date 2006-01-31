@@ -66,7 +66,6 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
-  private CutCopyPasteSupport myCutCopyPasteSupport;
 
   public ComponentTree(/*@NotNull*/ final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -118,12 +117,6 @@ public final class ComponentTree extends Tree implements DataProvider {
     myEditor = editor;
     myQuickFixManager.setEditor(editor);
     myStartInplaceEditingAction.setEditor(editor);
-    if (myEditor == null) {
-      myCutCopyPasteSupport = null;
-    }
-    else {
-      myCutCopyPasteSupport = new CutCopyPasteSupport(myEditor);
-    }
   }
 
   public void refreshIntentionHint() {
@@ -210,9 +203,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (
       DataConstantsEx.COPY_PROVIDER.equals(dataId) ||
       DataConstantsEx.CUT_PROVIDER.equals(dataId) ||
-      DataConstantsEx.PASTE_PROVIDER.equals(dataId)
+      DataConstantsEx.PASTE_PROVIDER.equals(dataId) ||
+      DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)
     ) {
-      return myCutCopyPasteSupport;
+      return myEditor.getData(dataId);
     }
 
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
