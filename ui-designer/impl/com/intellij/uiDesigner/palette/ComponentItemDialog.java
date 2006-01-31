@@ -250,7 +250,7 @@ public final class ComponentItemDialog extends DialogWrapper{
         }
       }
       TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("add.component.choose.form"), formFile,
-                                                              null, myFilter);
+                                                              null, myFilter, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();
       if (file != null) {
