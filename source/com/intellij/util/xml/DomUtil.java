@@ -148,7 +148,20 @@ public class DomUtil {
   }
 
   public static boolean isTagValueGetter(final Method method) {
-    return isGetter(method) && (hasTagValueAnnotation(method) || "getValue".equals(method.getName()));
+    if (!isGetter(method)) {
+      return false;
+    }
+    if (hasTagValueAnnotation(method)) {
+      return true;
+    }
+    if ("getValue".equals(method.getName())) {
+      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+      final Class<?> declaringClass = method.getDeclaringClass();
+      if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
+      if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
+      return true;
+    }
+    return false;
   }
 
   private static boolean hasTagValueAnnotation(final Method method) {

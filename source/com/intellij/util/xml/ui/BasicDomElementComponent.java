@@ -3,6 +3,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -56,25 +57,27 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
     }
   }
 
-  private void doBind(final DomUIControl control, final JComponent boundComponent) {
+  protected void doBind(final DomUIControl control, final JComponent boundComponent) {
     control.bind(boundComponent);
     addComponent(control);
 
-    control.getBoundComponent().addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-      }
+    if (control.getFocusedComponent() != null) {
+      control.getFocusedComponent().addFocusListener(new FocusListener() {
+        public void focusGained(FocusEvent e) {
+        }
 
-      public void focusLost(FocusEvent e) {
-        if (!e.isTemporary()) {
-          try {
-            commit();
-          }
-          catch (ReadOnlyDeploymentDescriptorModificationException e1) {
-            LOG.error(e1);
+        public void focusLost(FocusEvent e) {
+          if (!e.isTemporary()) {
+            try {
+              commit();
+            }
+            catch (ReadOnlyDeploymentDescriptorModificationException e1) {
+              LOG.error(e1);
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     control.reset();
   }
@@ -85,8 +88,8 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
       try {
         field.setAccessible(true);
 
-        if (convertFieldName(field.getName(), description).equals(description.getXmlElementName()) &&
-            field.get(this) instanceof JComponent) {
+        if (convertFieldName(field.getName(), description).equals(description.getXmlElementName()) && field.get(this) instanceof JComponent)
+        {
           return (JComponent)field.get(this);
         }
       }
@@ -106,8 +109,12 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
     if (description instanceof DomCollectionChildDescription) {
       final String unpluralizedStr = StringUtil.unpluralize(convertedName);
 
-      if(unpluralizedStr != null) return unpluralizedStr;
+      if (unpluralizedStr != null) return unpluralizedStr;
     }
     return convertedName;
+  }
+
+  protected Project getProject() {
+    return getDomElement().getManager().getProject();
   }
 }

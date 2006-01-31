@@ -103,7 +103,7 @@ public class DomUIFactory {
     return new DomCollectionControl<GenericDomValue<?>>(element, description, aClass == null, columnInfo);
   }
 
-  private static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
+  public static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
                                              final DomElement element) {
     final String presentableName = description.getCommonPresentableName(element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());

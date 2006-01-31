@@ -9,7 +9,7 @@ import com.intellij.util.xml.DomElement;
  * Date: Nov 18, 2005
  */
 public abstract class AbstractDomElementComponent extends CompositeCommittable implements CommittablePanel {
-  private final DomElement myDomElement;
+  protected DomElement myDomElement;
 
   protected AbstractDomElementComponent(final DomElement domElement) {
     myDomElement = domElement;
