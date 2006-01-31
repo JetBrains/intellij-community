@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -491,6 +492,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public void doInspections(final AnalysisScope scope) {
     while (PsiManager.getInstance(getProject()).findClass("java.lang.Object") == null) {
+      if (ModuleManager.getInstance(getProject()).getModules().length == 0){
+        Messages.showMessageDialog(getProject(), InspectionsBundle.message("inspection.no.modules.error.message"),
+                                 CommonBundle.message("title.error"), Messages.getErrorIcon());
+        return;
+      }
       Messages.showMessageDialog(getProject(), InspectionsBundle.message("inspection.no.jdk.error.message"),
                                  CommonBundle.message("title.error"), Messages.getErrorIcon());
       final ProjectJdk projectJdk = JdkChooserPanel.chooseAndSetJDK(myProject);
