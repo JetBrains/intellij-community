@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ide.palette.impl.PaletteManager;
 
 import javax.swing.*;
@@ -18,6 +19,8 @@ import java.util.List;
  * @author yole
  */
 class DesignDropTargetListener implements DropTargetListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DesignDropTargetListener");
+
   private DraggedComponentList myDraggedComponentList;
   private Point myLastPoint;
   private final GuiEditor myEditor;
@@ -30,19 +33,24 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   public void dragEnter(DropTargetDragEvent dtde) {
-    DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-    if (dcl != null) {
-      myDraggedComponentList = dcl;
-      processDragEnter(dcl, dtde.getLocation());
-      dtde.acceptDrag(dtde.getDropAction());
-      myLastPoint = dtde.getLocation();
-    }
-    else {
-      ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-      if (componentItem != null) {
+    try {
+      DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+      if (dcl != null) {
+        myDraggedComponentList = dcl;
+        processDragEnter(dcl, dtde.getLocation());
         dtde.acceptDrag(dtde.getDropAction());
         myLastPoint = dtde.getLocation();
       }
+      else {
+        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (componentItem != null) {
+          dtde.acceptDrag(dtde.getDropAction());
+          myLastPoint = dtde.getLocation();
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -92,32 +100,37 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   public void dragOver(DropTargetDragEvent dtde) {
-    final int dx = (int)(dtde.getLocation().getX() - myLastPoint.x);
-    final int dy = (int)(dtde.getLocation().getY() - myLastPoint.y);
+    try {
+      final int dx = (int)(dtde.getLocation().getX() - myLastPoint.x);
+      final int dy = (int)(dtde.getLocation().getY() - myLastPoint.y);
 
-    int dragSize = 1;
-    int dragCol = 0;
-    if (myDraggedComponentList != null) {
-      for (RadComponent aMySelection : myDraggedComponentList.getComponents()) {
-        aMySelection.shift(dx, dy);
+      int dragSize = 1;
+      int dragCol = 0;
+      if (myDraggedComponentList != null) {
+        for (RadComponent aMySelection : myDraggedComponentList.getComponents()) {
+          aMySelection.shift(dx, dy);
+        }
+        dragSize = myDraggedComponentList.getComponents().size();
+        dragCol = myDraggedComponentList.getDragRelativeColumn();
       }
-      dragSize = myDraggedComponentList.getComponents().size();
-      dragCol = myDraggedComponentList.getDragRelativeColumn();
-    }
 
-    myLastPoint = dtde.getLocation();
-    myEditor.getDragLayer().repaint();
+      myLastPoint = dtde.getLocation();
+      myEditor.getDragLayer().repaint();
 
-    int action = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
-                                                        dtde.getLocation().y,
-                                                        dtde.getDropAction() == DnDConstants.ACTION_COPY,
-                                                        dragSize,
-                                                        dragCol);
-    if (action == DnDConstants.ACTION_NONE) {
-      dtde.rejectDrag();
+      int action = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
+                                                          dtde.getLocation().y,
+                                                          dtde.getDropAction() == DnDConstants.ACTION_COPY,
+                                                          dragSize,
+                                                          dragCol);
+      if (action == DnDConstants.ACTION_NONE) {
+        dtde.rejectDrag();
+      }
+      else {
+        dtde.acceptDrag(action);
+      }
     }
-    else {
-      dtde.acceptDrag(action);
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -125,37 +138,47 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   public void dragExit(DropTargetEvent dte) {
-    myUseDragDelta = false;
-    if (myDraggedComponentList != null) {
-      cancelDrag(myDraggedComponentList);
-      myDraggedComponentList = null;
-      myEditor.setDesignTimeInsets(2);
+    try {
+      myUseDragDelta = false;
+      if (myDraggedComponentList != null) {
+        cancelDrag(myDraggedComponentList);
+        myDraggedComponentList = null;
+        myEditor.setDesignTimeInsets(2);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
   public void drop(DropTargetDropEvent dtde) {
-    DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-    if (dcl != null) {
-      if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
-        myEditor.refreshAndSave(true);
+    try {
+      DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+      if (dcl != null) {
+        if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
+          myEditor.refreshAndSave(true);
+        }
       }
-    }
-    else {
-      ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-      if (componentItem != null) {
-        myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
-        new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
-            myEditor.getActiveDecorationLayer().removeFeedback();
-            myEditor.getLayeredPane().setCursor(null);
-            myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
-          }
-        });
+      else {
+        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (componentItem != null) {
+          myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
+          new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+              myEditor.getActiveDecorationLayer().removeFeedback();
+              myEditor.getLayeredPane().setCursor(null);
+              myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
+            }
+          });
+        }
       }
+      myEditor.repaintLayeredPane();
     }
-    myEditor.repaintLayeredPane();
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {
