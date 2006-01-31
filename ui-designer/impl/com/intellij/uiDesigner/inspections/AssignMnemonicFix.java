@@ -44,6 +44,7 @@ public class AssignMnemonicFix extends QuickFix {
         else {
           StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor, myEditor.getStringDescriptorLocale(), result);
         }
+        myEditor.refreshAndSave(false);
       }
       catch (Exception e) {
         LOG.error(e);

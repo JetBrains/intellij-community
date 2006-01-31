@@ -91,15 +91,8 @@ public final class PropertyInspector extends JPanel{
     }
   }
 
-  public void updateIntentionHintVisibility(){
-    myQuickFixManager.updateIntentionHintVisibility();
-  }
-
-  /**
-   * Hides intention hint (if any)
-   */
-  public void hideIntentionHint(){
-    myQuickFixManager.hideIntentionHint();
+  public void refreshIntentionHint() {
+    myQuickFixManager.refreshIntentionHint();
   }
 
   public void synchWithTree(final boolean forceSynch){

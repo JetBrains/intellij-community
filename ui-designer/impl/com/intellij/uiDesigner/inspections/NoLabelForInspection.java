@@ -98,6 +98,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         if (prop.getName().equals(SwingProperties.LABEL_FOR)) {
           try {
             prop.setValue(myLabel, myComponent.getId());
+            myEditor.refreshAndSave(false);
           }
           catch (Exception e) {
             LOG.error(e);

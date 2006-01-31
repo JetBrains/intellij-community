@@ -129,14 +129,16 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   public void refreshErrors() {
-    myComponentTree.hideIntentionHint();
-    myComponentTree.updateIntentionHintVisibility();
+    myComponentTree.refreshIntentionHint();
     myComponentTree.repaint(myComponentTree.getVisibleRect());
 
     // PropertyInspector
-    myPropertyInspector.hideIntentionHint();
-    myPropertyInspector.updateIntentionHintVisibility();
+    myPropertyInspector.refreshIntentionHint();
     myPropertyInspector.repaint(myPropertyInspector.getVisibleRect());
+  }
+
+  public void updateComponentTree() {
+    myComponentTreeBuilder.updateFromRoot();
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {

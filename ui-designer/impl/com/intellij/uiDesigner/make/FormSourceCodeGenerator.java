@@ -80,7 +80,7 @@ public final class FormSourceCodeGenerator {
       return;
     }
 
-    ErrorAnalyzer.analyzeErrors(module, formFile, null, rootContainer);
+    ErrorAnalyzer.analyzeErrors(module, formFile, null, rootContainer, null);
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<LwComponent>() {

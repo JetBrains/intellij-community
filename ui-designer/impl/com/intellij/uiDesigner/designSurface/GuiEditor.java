@@ -31,6 +31,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.util.Alarm;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,6 +156,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private boolean myShowGrid = true;
   private DesignDropTargetListener myDropTargetListener;
   private JLabel myFormInvalidLabel;
+  private QuickFixManagerImpl myQuickFixManager;
 
   /**
    * @param file file to be edited
@@ -242,7 +244,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    new QuickFixManagerImpl(this, myGlassLayer);
+    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer);
 
     myDropTargetListener = new DesignDropTargetListener(this);
     new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
@@ -303,7 +305,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     repaintLayeredPane();
 
     // Collect errors
-    ErrorAnalyzer.analyzeErrors(this, myRootContainer);
+    // TODO [yole]: restore
+    //ErrorAnalyzer.analyzeErrors(this, myRootContainer, progress);
+
   }
 
   public void refreshAndSave(final boolean forceSync) {
@@ -313,18 +317,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     refresh();
     saveToFile();
-  }
-
-  /**
-   * Refresh error markers in all components
-   */
-  public void refreshErrors() {
-    // Collect errors
-    ErrorAnalyzer.analyzeErrors(this, myRootContainer);
-    if (isShowing()) {
-      //  ComponentTree
-      UIDesignerToolWindowManager.getInstance(getProject()).refreshErrors();
-    }
   }
 
   private static void refreshImpl(final RadComponent component) {
@@ -509,7 +501,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
   public void setStringDescriptorLocale(final Locale locale) {
     myRootContainer.setStringDescriptorLocale(locale);
     refreshProperties();
-    refreshErrors();   // this also has the nice side-effect of refreshing the component tree
+    UIDesignerToolWindowManager.getInstance(getProject()).updateComponentTree();
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
   }
 
   public Locale getStringDescriptorLocale() {
@@ -542,6 +535,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   public MainProcessor getMainProcessor() {
     return myProcessor;
+  }
+
+  public void refreshIntentionHint() {
+    myQuickFixManager.refreshIntentionHint();
   }
 
   public static final class ReplaceInfo {
@@ -861,7 +858,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }
       final PsiClass aClass = FormEditingUtil.findClassToBind(myModule, classToBind);
       if (aClass != null) {
-        refreshErrors();
+        // TODO[yole]: is it necessary?
+        DaemonCodeAnalyzer.getInstance(getProject()).restart();
       }
     }
   }

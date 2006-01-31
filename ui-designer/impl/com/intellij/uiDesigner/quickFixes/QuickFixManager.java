@@ -38,6 +38,8 @@ public abstract class QuickFixManager <T extends JComponent>{
    * My currently visible hint. May be null if there is no visible hint
    */
   private HeavyweightHint myHint;
+  private Icon myIcon = IconLoader.getIcon("/actions/intentionBulb.png");
+  private Rectangle myLastHintBounds;
 
   public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component) {
     myEditor = editor;
@@ -79,6 +81,24 @@ public abstract class QuickFixManager <T extends JComponent>{
   @Nullable
   protected abstract Rectangle getErrorBounds();
 
+  public void refreshIntentionHint() {
+    if(!myComponent.isShowing() || !IJSwingUtilities.hasFocus(myComponent)){
+      hideIntentionHint();
+      return;
+    }
+    if (myHint == null || !myHint.isVisible()) {
+      updateIntentionHintVisibility();
+    }
+    else {
+      final ErrorInfo[] errorInfos = getErrorInfos();
+      final Rectangle bounds = getErrorBounds();
+      if (!haveFixes(errorInfos) || bounds == null || !bounds.equals(myLastHintBounds)) {
+        hideIntentionHint();
+        updateIntentionHintVisibility();
+      }
+    }
+  }
+
   /**
    * Adds in timer queue requst for updating visibility of the popup hint
    */
@@ -117,10 +137,9 @@ public abstract class QuickFixManager <T extends JComponent>{
     final int width;
     try {
       final Robot robot = new Robot();
-      final Icon icon = IconLoader.getIcon("/actions/intentionBulb.png");
       final Point locationOnScreen = myComponent.getLocationOnScreen();
-      width = icon.getIconWidth() + 4;
-      final int height = icon.getIconHeight() + 4;
+      width = myIcon.getIconWidth() + 4;
+      final int height = myIcon.getIconHeight() + 4;
       final BufferedImage image = robot.createScreenCapture(
         new Rectangle(
           locationOnScreen.x + bounds.x - width,
@@ -131,7 +150,7 @@ public abstract class QuickFixManager <T extends JComponent>{
       );
       final Graphics2D g = image.createGraphics();
       try{
-        icon.paintIcon(myComponent, g, (width - icon.getIconWidth())/2, (height - icon.getIconHeight())/2);
+        myIcon.paintIcon(myComponent, g, (width - myIcon.getIconWidth())/2, (height - myIcon.getIconHeight())/2);
       }
       finally{
         g.dispose();
@@ -145,10 +164,11 @@ public abstract class QuickFixManager <T extends JComponent>{
 
     final HeavyweightHint hint = new HeavyweightHint(lightBulbComponent, false);
     setHint(hint);
+    myLastHintBounds = bounds;
     hint.show(myComponent, bounds.x - width, bounds.y, myComponent);
   }
 
-  private boolean haveFixes(final ErrorInfo[] errorInfos) {
+  private static boolean haveFixes(final ErrorInfo[] errorInfos) {
     boolean haveFixes = false;
     for(ErrorInfo errorInfo: errorInfos) {
       if (errorInfo.myFixes.length > 0) {
@@ -182,7 +202,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     for(ErrorInfo errorInfo: errorInfos) {
       for (QuickFix fix: errorInfo.myFixes) {
-        actionGroup.add(new QuickFixActionImpl(myEditor, fix));
+        actionGroup.add(new QuickFixActionImpl(fix));
       }
     }
 

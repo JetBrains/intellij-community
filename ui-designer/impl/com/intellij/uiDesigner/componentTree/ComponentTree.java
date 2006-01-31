@@ -125,15 +125,8 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
-  public void updateIntentionHintVisibility() {
-    myQuickFixManager.updateIntentionHintVisibility();
-  }
-
-  /**
-   * Hides intention hint (if any)
-   */
-  public void hideIntentionHint() {
-    myQuickFixManager.hideIntentionHint();
+  public void refreshIntentionHint() {
+    myQuickFixManager.refreshIntentionHint();
   }
 
   @Nullable

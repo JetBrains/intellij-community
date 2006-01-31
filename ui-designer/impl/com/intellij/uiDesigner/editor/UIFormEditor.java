@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormHighlightingPass;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 public final class UIFormEditor extends UserDataHolderBase implements FileEditor{
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
+  private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
   public UIFormEditor(final Project project, final VirtualFile file){
     final Module module = VfsUtil.getModuleForFile(project, file);
@@ -86,8 +89,10 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    // TODO[jeka]: seems like it actually should be implemented.
-    return null;
+    if (myBackgroundEditorHighlighter == null) {
+      myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(myEditor);
+    }
+    return myBackgroundEditorHighlighter;
   }
 
   public FileEditorLocation getCurrentLocation() {
@@ -133,5 +138,21 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
+  }
+
+  private static class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
+    private HighlightingPass[] myPasses;
+
+    public MyBackgroundEditorHighlighter(final GuiEditor editor) {
+      myPasses = new HighlightingPass[] { new FormHighlightingPass(editor) };
+    }
+
+    public HighlightingPass[] createPassesForEditor() {
+      return myPasses;
+    }
+
+    public HighlightingPass[] createPassesForVisibleArea() {
+      return myPasses;
+    }
   }
 }

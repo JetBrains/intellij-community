@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -44,19 +45,18 @@ public final class ErrorAnalyzer {
   private ErrorAnalyzer() {
   }
 
-  public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer){
-    analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer);
+  public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer, @Nullable final ProgressIndicator progress) {
+    analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer, progress);
   }
 
   /**
    * @param editor if null, no quick fixes are created. This is used in form to source compiler.
    */
-  public static void analyzeErrors(
-    @NotNull final Module module,
-    @NotNull final VirtualFile formFile,
-    @Nullable final GuiEditor editor,
-    @NotNull final IRootContainer rootContainer
-  ){
+  public static void analyzeErrors(@NotNull final Module module,
+                                   @NotNull final VirtualFile formFile,
+                                   @Nullable final GuiEditor editor,
+                                   @NotNull final IRootContainer rootContainer,
+                                   @Nullable final ProgressIndicator progress) {
     // 1. Validate class to bind
     final String classToBind = rootContainer.getClassToBind();
     final PsiClass psiClass;
@@ -84,6 +84,8 @@ public final class ErrorAnalyzer {
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
+          if (progress != null && progress.isCanceled()) return false;
+
           // Reset previous error (if any)
           component.putClientProperty(CLIENT_PROP_BINDING_ERROR, null);
 
@@ -176,12 +178,15 @@ public final class ErrorAnalyzer {
         }
       }
     );
+    if (progress != null) progress.checkCanceled();
 
     // Check that there are no panels in XY with children
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
+          if (progress != null && progress.isCanceled()) return false;
+
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
@@ -212,6 +217,7 @@ public final class ErrorAnalyzer {
         }
       }
     );
+    if (progress != null) progress.checkCanceled();
 
     try {
       // Run inspections for form elements
@@ -233,6 +239,8 @@ public final class ErrorAnalyzer {
             rootContainer,
             new FormEditingUtil.ComponentVisitor<RadComponent>() {
               public boolean visit(final RadComponent component) {
+                if (progress != null && progress.isCanceled()) return false;
+
                 for(FormInspectionTool tool: formInspectionTools) {
                   ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
                   if (errorInfos != null) {
