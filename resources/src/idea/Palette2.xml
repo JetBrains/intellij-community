@@ -1,4 +1,4 @@
-<component>
+<component version="2">
   <group name="Swing">
     <item
       class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer"
@@ -188,6 +188,36 @@
       removable="false"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+        <preferred-size width="-1" height="-1"/>
+      </default-constraints>
+    </item>
+    <item
+      class="javax.swing.JSeparator"
+      icon="/com/intellij/uiDesigner/icons/separator.png"
+      removable="false"
+      since-version="2"
+      >
+      <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+        <preferred-size width="-1" height="-1"/>
+      </default-constraints>
+    </item>
+    <item
+      class="javax.swing.JProgressBar"
+      icon="/com/intellij/uiDesigner/icons/progressbar.png"
+      removable="false"
+      since-version="2"
+      >
+      <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
+        <preferred-size width="-1" height="-1"/>
+      </default-constraints>
+    </item>
+    <item
+      class="javax.swing.JToolBar"
+      icon="/com/intellij/uiDesigner/icons/toolbar.png"
+      removable="false"
+      since-version="2"
+      >
+      <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
         <preferred-size width="-1" height="-1"/>
       </default-constraints>
     </item>

@@ -9,8 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.Properties;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -21,7 +21,9 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +35,10 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -76,6 +80,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   @NonNls private static final String ATTRIBUTE_REMOVABLE = "removable";
   @NonNls private static final String ELEMENT_ITEM = "item";
   @NonNls private static final String ELEMENT_GROUP = "group";
+  @NonNls private static final String ATTRIBUTE_VERSION = "version";
+  @NonNls private static final String ATTRIBUTE_SINCE_VERSION = "since-version";
 
   public static Palette getInstance(@NotNull final Project project) {
     return project.getComponent(Palette.class);
@@ -132,18 +138,50 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myGroups.clear();
 
     // Parse XML
-    //noinspection HardCodedStringLiteral
     final List groupElements = element.getChildren(ELEMENT_GROUP);
     processGroups(groupElements);
 
     // Ensure that all predefined items are loaded
     LOG.assertTrue(myPanelItem != null);
+
+    if (!element.getAttributeValue(ATTRIBUTE_VERSION, "1").equals("2")) {
+      upgradePalette();
+    }
+  }
+
+  private void upgradePalette() {
+    // load new components from the predefined Palette2.xml
+    try {
+      final Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
+      for(Object o: document.getRootElement().getChildren(ELEMENT_GROUP)) {
+        Element groupElement = (Element) o;
+        for(GroupItem group: myGroups) {
+          if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
+            upgradeGroup(group, groupElement);
+            break;
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private void upgradeGroup(final GroupItem group, final Element groupElement) {
+    for(Object o: groupElement.getChildren(ELEMENT_ITEM)) {
+      Element itemElement = (Element) o;
+      if (itemElement.getAttributeValue(ATTRIBUTE_SINCE_VERSION, "").equals("2")) {
+        processItemElement(itemElement, group, true);
+      }
+    }
   }
 
   public void writeExternal(@NotNull final Element element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     writeGroups(element);
+    //element.setAttribute(ATTRIBUTE_VERSION, "2");
   }
 
   public void initComponent() {}
@@ -260,9 +298,12 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     return constraints;
   }
 
-  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group){
+  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group, final boolean skipExisting){
     // Class name. It's OK if class does not exist.
     final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
+    if (skipExisting && getItem(className) != null) {
+      return;
+    }
 
     // Icon (optional)
     final String iconPath = LwXmlReader.getString(itemElement, ATTRIBUTE_ICON);
@@ -280,7 +321,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       constraints = new GridConstraints();
     }
 
-    final HashMap<String, StringDescriptor> propertyName2intitialValue = new HashMap<String, StringDescriptor>();
+    final HashMap<String, StringDescriptor> propertyName2initialValue = new HashMap<String, StringDescriptor>();
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null){
@@ -289,7 +330,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
           final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
           final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, ATTRIBUTE_VALUE));
-          propertyName2intitialValue.put(name, value);
+          propertyName2initialValue.put(name, value);
         }
       }
     }
@@ -302,7 +343,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       iconPath,
       toolTipText,
       constraints,
-      propertyName2intitialValue,
+      propertyName2initialValue,
       removable
     );
     addItem(group, item);
@@ -320,7 +361,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       for (final Object o : groupElement.getChildren(ELEMENT_ITEM)) {
         final Element itemElement = (Element)o;
         try {
-          processItemElement(itemElement, group);
+          processItemElement(itemElement, group, false);
         }
         catch (Exception ex) {
           LOG.error(ex);
