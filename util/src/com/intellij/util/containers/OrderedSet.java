@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.AbstractSet;
@@ -22,11 +23,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class OrderedSet<T> extends AbstractSet<T> {
-  private GenericHashSet<T> myHashSet;
+  private THashSet<T> myHashSet;
   private ArrayList<T> myElements;
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
-    myHashSet = new GenericHashSet<T>(hashingStrategy);
+    myHashSet = new THashSet<T>(hashingStrategy);
     myElements = new ArrayList<T>();
   }
 
@@ -78,7 +79,7 @@ public class OrderedSet<T> extends AbstractSet<T> {
   public Object clone() {
     try{
       OrderedSet newSet = (OrderedSet)super.clone();
-      newSet.myHashSet = (GenericHashSet)myHashSet.clone();
+      newSet.myHashSet = (THashSet)myHashSet.clone();
       newSet.myElements = (ArrayList)myElements.clone();
       return newSet;
     }

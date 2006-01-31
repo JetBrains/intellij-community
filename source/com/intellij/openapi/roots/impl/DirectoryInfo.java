@@ -4,10 +4,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ArrayListSet;
+import com.intellij.util.containers.OrderedSet;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 public class DirectoryInfo {
   public Module module; // module to which content it belongs or null
@@ -70,7 +72,7 @@ public class DirectoryInfo {
       this.orderEntries = orderEntries;
     }
     else {
-      ArrayListSet<OrderEntry> tmp = new ArrayListSet<OrderEntry>();
+      Set<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.CANONICAL);
       tmp.addAll(this.orderEntries);
       tmp.addAll(orderEntries);
       this.orderEntries = tmp;

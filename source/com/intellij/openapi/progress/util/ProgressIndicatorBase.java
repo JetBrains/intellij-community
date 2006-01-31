@@ -43,6 +43,10 @@ public class ProgressIndicatorBase implements ProgressIndicator {
       myRunning = true;
     }
 
+    enterModality();
+  }
+
+  protected void enterModality() {
     if (myModalityProgress == this){
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(
@@ -63,6 +67,10 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
 
+    exitModality();
+  }
+
+  protected void exitModality() {
     if (myModalityProgress == this){
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(

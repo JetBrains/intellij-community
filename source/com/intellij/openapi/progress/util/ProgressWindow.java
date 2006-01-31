@@ -111,6 +111,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
     LOG.assertTrue(!isRunning());
     LOG.assertTrue(!myStoppedAlready);
 
+    enterModality();
+
     IdeEventQueue.getInstance().flushQueue();
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
       public boolean value(final AWTEvent object) {
@@ -128,6 +130,8 @@ public class ProgressWindow extends BlockingProgressIndicator {
         return myStared && !isRunning();
       }
     });
+
+    exitModality();
   }
 
   private void showDialog() {

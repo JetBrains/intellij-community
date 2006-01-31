@@ -12,9 +12,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.GenericHashSet;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,7 +173,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   private void addElementsByIds(ArrayList<PsiElement> list, long[] ids, final GlobalSearchScope scope) {
     RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
-    GenericHashSet<PsiElement> set = new GenericHashSet<PsiElement>(new TObjectHashingStrategy<PsiElement>() {
+    THashSet<PsiElement> set = new THashSet<PsiElement>(new TObjectHashingStrategy<PsiElement>() {
       public int computeHashCode(PsiElement psiElement) {
         if (psiElement instanceof PsiMember) {
           PsiMember member = (PsiMember)psiElement;

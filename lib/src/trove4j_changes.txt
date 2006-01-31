@@ -1,3 +1,8 @@
+Date: 31 Jan 2006
+  Changed classes:
+    gnu.trove.THash
+    gnu.trove.TPrimitiveHash - removed unnecessary usages of Math.floor and Math.ceil as those are native functions and thus very slow.
+    
 Date: 20 Sep 2004
   Added classes:
     gnu.trove.generate.Generate - class to generate gnu.trove.decorator classes

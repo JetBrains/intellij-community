@@ -16,9 +16,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Icons;
-import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 
 import javax.swing.*;
@@ -111,7 +111,7 @@ public class TreeModelBuilder {
   private void createMaps(ScopeType scopeType) {
     myModuleDirNodes.put(scopeType, new HashMap<PsiDirectory, DirectoryNode>());
     myModulePackageNodes.put(scopeType, new HashMap<Pair<Module, PsiPackage>, PackageNode>());
-    myLibraryPackageNodes.put(scopeType, new GenericHashMap<Pair<OrderEntry, PsiPackage>, PackageNode>(new TObjectHashingStrategy<Pair<OrderEntry, PsiPackage>>() {
+    myLibraryPackageNodes.put(scopeType, new THashMap<Pair<OrderEntry, PsiPackage>, PackageNode>(new TObjectHashingStrategy<Pair<OrderEntry, PsiPackage>>() {
       public int computeHashCode(final Pair<OrderEntry, PsiPackage> key) {
         return key.getSecond() == null ? 0 : key.getSecond().hashCode();
       }
