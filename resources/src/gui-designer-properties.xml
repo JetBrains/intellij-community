@@ -11,6 +11,9 @@
       <property name="verifyInputWhenFocusTarget"/>
       <property name="requestFocusEnabled"/>
       <property name="visible"/>
+      <property name="inheritsPopupMenu"/>
+      <property name="nextFocusableComponent"/>
+      <property name="focusTraversalPolicyProvider"/>
     </expert-properties>
   </class>
   
@@ -24,6 +27,12 @@
       <property name="borderPainted"/>
       <property name="contentAreaFilled"/>
       <property name="rolloverEnabled"/>
+      <property name="disabledIcon"/>
+      <property name="disabledSelectedIcon"/>
+      <property name="pressedIcon"/>
+      <property name="rolloverIcon"/>
+      <property name="rolloverSelectedIcon"/>
+      <property name="selectedIcon"/>
     </expert-properties>
     <inplace-property name="text"/>
 
@@ -71,6 +80,11 @@
   <class name="javax.swing.JLabel">
     <inplace-property name="text"/>
 
+    <expert-properties>
+      <property name="iconTextGap"/>
+      <property name="disabledIcon"/>
+    </expert-properties>
+
     <enum-properties>
       <property name="horizontalAlignment">
         <constant value="2" message="property.left"/>
@@ -107,6 +121,10 @@
       <property name="selectionEnd"/>
       <property name="selectionStart"/>
       <property name="margin"/>
+      <property name="caretColor"/>
+      <property name="disabledTextColor"/>
+      <property name="selectedTextColor"/>
+      <property name="selectionColor"/>
     </expert-properties>
   </class>
 

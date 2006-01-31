@@ -19,11 +19,12 @@ import java.lang.reflect.Method;
  */
 public class IntroComponentProperty extends IntrospectedProperty {
   private ComponentRenderer myRenderer = new ComponentRenderer();
-  private ComponentEditor myEditor = new ComponentEditor();
+  private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
 
-  public IntroComponentProperty(final String name, final Method readMethod, final Method writeMethod) {
+  public IntroComponentProperty(String name, Method readMethod, Method writeMethod, Class propertyType) {
     super(name, readMethod, writeMethod);
+    myEditor = new ComponentEditor(propertyType);
   }
 
   @NotNull public PropertyRenderer getRenderer() {

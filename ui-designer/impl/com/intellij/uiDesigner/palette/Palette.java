@@ -531,7 +531,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
           continue;
         }
 
-        final String name = descriptor.getName();
+        @NonNls final String name = descriptor.getName();
 
         //noinspection HardCodedStringLiteral
         if (
@@ -593,8 +593,14 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         else if(Rectangle.class.equals(propertyType)){ // java.awt.Rectangle
           property = new IntroRectangleProperty(name, readMethod, writeMethod);
         }
-        else if (propertyType.isAssignableFrom(Component.class)) {
-          property = new IntroComponentProperty(name, readMethod, writeMethod);
+        else if (Component.class.isAssignableFrom(propertyType)) {
+          if (JSplitPane.class.isAssignableFrom(aClass) &&
+            (name.equals("leftComponent") || name.equals("rightComponent") ||
+             name.equals("topComponent") || name.equals("bottomComponent"))) {
+            // these properties are set through layout
+            continue;
+          }
+          property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType);
         }
         else if (Color.class.equals(propertyType)) {
           property = new IntroColorProperty(name, readMethod, writeMethod);

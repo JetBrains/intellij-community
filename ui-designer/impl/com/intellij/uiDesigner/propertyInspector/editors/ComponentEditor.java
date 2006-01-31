@@ -14,7 +14,10 @@ import java.util.ArrayList;
  * @author yole
  */
 public class ComponentEditor extends ComboBoxPropertyEditor {
-  public ComponentEditor() {
+  private Class myPropertyType;
+
+  public ComponentEditor(final Class propertyType) {
+    myPropertyType = propertyType;
     myCbx.setRenderer(new ComponentRenderer());
   }
 
@@ -50,6 +53,9 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
       public boolean visit(final IComponent component) {
         RadComponent radComponent = (RadComponent) component;
         final JComponent delegee = radComponent.getDelegee();
+        if (!myPropertyType.isInstance(delegee)) {
+          return true;
+        }
         if (delegee instanceof JTextComponent || delegee instanceof JComboBox || delegee instanceof JSpinner) {
           result.add(radComponent);
         }
