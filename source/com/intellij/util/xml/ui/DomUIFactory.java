@@ -81,7 +81,7 @@ public class DomUIFactory {
     }
 
     if (PsiClass.class.equals(type)) {
-      return new PsiClassTableCellEditor(element);
+      return new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope());
     }
 
     if (Enum.class.isAssignableFrom(type)) {

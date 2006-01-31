@@ -25,7 +25,7 @@ public class NamedEnumUtil {
 
   public static <T extends Enum> String getEnumValueByElement(final T element) {
     if (element == null) return null;
-    if (element.getClass().isAssignableFrom(NamedEnum.class)) {
+    if (NamedEnum.class.isAssignableFrom(element.getClass())) {
       return ((NamedEnum) element).getValue();
     } else {
       return element.name();

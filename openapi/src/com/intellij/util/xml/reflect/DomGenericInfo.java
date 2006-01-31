@@ -5,6 +5,7 @@ package com.intellij.util.xml.reflect;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -26,16 +27,16 @@ public interface DomGenericInfo {
   List<DomAttributeChildDescription> getAttributeChildrenDescriptions();
 
   @Nullable
-  DomChildrenDescription getChildDescription(String tagName);
+  DomChildrenDescription getChildDescription(@NonNls String tagName);
 
   @Nullable
-  DomFixedChildDescription getFixedChildDescription(String tagName);
+  DomFixedChildDescription getFixedChildDescription(@NonNls String tagName);
 
   @Nullable
-  DomCollectionChildDescription getCollectionChildDescription(String tagName);
+  DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName);
 
   @Nullable
-  DomAttributeChildDescription getAttributeChildDescription(String attributeName);
+  DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName);
 
   boolean isTagValueElement();
 

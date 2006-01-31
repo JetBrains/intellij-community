@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -55,6 +56,10 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
           LOG.error(e);
         }
         catch (InvocationTargetException e) {
+          final Throwable throwable = e.getCause();
+          if (throwable instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)throwable;
+          }
           LOG.error(e);
         }
       }
