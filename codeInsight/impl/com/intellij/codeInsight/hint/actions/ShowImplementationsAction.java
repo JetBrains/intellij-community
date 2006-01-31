@@ -48,9 +48,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ShowImplementationsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -107,10 +105,18 @@ public class ShowImplementationsAction extends AnAction {
     else if (ref instanceof PsiPolyVariantReference) {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
       final ResolveResult[] results = polyReference.multiResolve(false);
-      impls = new PsiElement[results.length];
-      for (int i = 0; i < results.length; i++) {
-        ResolveResult result = results[i];
-        impls[i] = result.getElement();
+      final List<PsiElement> implsList = new ArrayList<PsiElement>(results.length);
+
+      for (ResolveResult result : results) {
+        final PsiElement resolvedElement = result.getElement();
+
+        if (resolvedElement != null && resolvedElement.isPhysical()) {
+          implsList.add(resolvedElement);
+        }
+      }
+
+      if (implsList.size() > 0) {
+        implsList.toArray( impls = new PsiElement[implsList.size()] );
       }
     }
 
