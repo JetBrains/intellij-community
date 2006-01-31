@@ -67,19 +67,21 @@ public class DirectoryInfo {
     return orderEntries == null ? Collections.<OrderEntry>emptySet() : orderEntries;
   }
 
-  public void addOrderEntries(final Collection<OrderEntry> orderEntries, final Collection<OrderEntry> parentEntries) {
-    if (this.orderEntries == null || orderEntries.containsAll(this.orderEntries)) {
+  @SuppressWarnings({"unchecked"})
+  public void addOrderEntries(final Collection<OrderEntry> orderEntries,
+                              final DirectoryInfo parentInfo,
+                              final Collection<OrderEntry> oldParentEntries) {
+    if (this.orderEntries == null) {
       this.orderEntries = orderEntries;
     }
+    else if (parentInfo != null && oldParentEntries == this.orderEntries) {
+      this.orderEntries = parentInfo.getOrderEntries();
+    }
     else {
-      Set<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.CANONICAL);
+      Set<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.IDENTITY);
       tmp.addAll(this.orderEntries);
       tmp.addAll(orderEntries);
       this.orderEntries = tmp;
-    }
-
-    if (this.orderEntries.equals(parentEntries)) {
-      this.orderEntries = parentEntries;
     }
   }
 

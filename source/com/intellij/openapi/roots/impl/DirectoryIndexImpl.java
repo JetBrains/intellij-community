@@ -332,12 +332,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] importedClassRoots = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
           for (VirtualFile importedClassRoot : importedClassRoots) {
-            fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir, null);
+            fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir, null, null);
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null, null);
           }
         }
         else if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -345,18 +345,18 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null, null);
           }
         }
         else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (VirtualFile classRoot : classRoots) {
-            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir, null);
+            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir, null, null);
           }
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir, null);
+            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir, null, null);
           }
         }
       }
@@ -641,7 +641,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                                        VirtualFile libraryClassRoot,
                                        VirtualFile librarySourceRoot,
                                        VirtualFile forDir,
-                                       DirectoryInfo parentInfo) {
+                                       DirectoryInfo parentInfo,
+                                       final Collection<OrderEntry> oldParentEntries) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
     if (forDir != null) {
@@ -665,13 +666,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (info.libraryClassRoot != null) return;
     }
 
-    final Collection<OrderEntry> parentEntries = parentInfo != null ? parentInfo.getOrderEntries() : null;
-    info.addOrderEntries(orderEntries, parentEntries);
+    final Collection<OrderEntry> oldEntries = info.getOrderEntries();
+    info.addOrderEntries(orderEntries, parentInfo, oldParentEntries);
 
     final VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
-        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, forDir, info);
+        fillMapWithOrderEntries(child, orderEntries, module, libraryClassRoot, librarySourceRoot, forDir, info, oldEntries);
       }
     }
   }
@@ -784,7 +785,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         }
 
         if (parentInfo.getOrderEntries().size() > 0) {
-          fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, null, parentInfo);
+          fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, null, parentInfo, null);
         }
       }
     }
