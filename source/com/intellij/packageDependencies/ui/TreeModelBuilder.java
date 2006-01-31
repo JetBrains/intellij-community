@@ -330,7 +330,7 @@ public class TreeModelBuilder {
     }
   }
 
-  private PackageDependenciesNode getFileParentNode(PsiFile file) {
+  public PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     final VirtualFile containingDirectory = vFile.getParent();

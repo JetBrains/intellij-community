@@ -6,20 +6,20 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class SmartPointerManagerImpl extends SmartPointerManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
@@ -122,7 +122,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
         if (document != null) {
           //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
           if (!(element instanceof PsiFile)) {
-            LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).isUncommited(document));
+            PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
+            LOG.assertTrue(!documentManager.isUncommited(document) || documentManager.isCommitingDocument(document), "Document for : " + file + " is not commited");
           }
         }
 

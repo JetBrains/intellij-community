@@ -81,7 +81,7 @@ public class ClassPresentationUtil {
     while(true){
       String name = getNameForElement(parent, qualified);
       if (name != null) return name;
-      if (parent instanceof PsiFile) return null;
+      if (parent instanceof PsiFile || parent == null) return null;
       parent = parent.getParent();
     }
   }

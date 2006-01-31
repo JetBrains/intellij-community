@@ -149,6 +149,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
                                     ActionPlaces.SCOPE_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(myTree);
     myTreeExpantionMonitor = TreeExpantionMonitor.install(myTree, myProject);
+    myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree));
   }
 
   private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
@@ -301,6 +302,18 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         if (child instanceof PsiFile) {
           myBuilder.removeNode(child, (PsiDirectory)oldParent);
           myBuilder.addFileNode((PsiFile)child);
+        }
+      }
+    }
+
+    public void childrenChanged(PsiTreeChangeEvent event) {
+      final PsiElement parent = event.getParent();
+      if (parent instanceof PsiJavaFile){
+        final PackageDependenciesNode parentNode = myBuilder.getFileParentNode((PsiFile)parent);
+        final TreePath treePath = new TreePath(parentNode.getPath());
+        if (!myTree.isCollapsed(treePath)){
+          myTree.collapsePath(treePath);
+          myTree.expandPath(treePath);
         }
       }
     }

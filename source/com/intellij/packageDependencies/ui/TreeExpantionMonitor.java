@@ -32,8 +32,8 @@ public class TreeExpantionMonitor {
         mySelectionNodes = new ArrayList<PackageDependenciesNode>();
         TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
-          for (int i = 0; i < paths.length; i++) {
-            mySelectionNodes.add((PackageDependenciesNode)paths[i].getLastPathComponent());
+          for (TreePath path : paths) {
+            mySelectionNodes.add((PackageDependenciesNode)path.getLastPathComponent());
           }
         }
       }
@@ -53,8 +53,7 @@ public class TreeExpantionMonitor {
         TreePath path = event.getPath();
         if (path != null) {
           TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[myExpandedPaths.size()]);
-          for (int i = 0; i < allPaths.length; i++) {
-            TreePath treePath = allPaths[i];
+          for (TreePath treePath : allPaths) {
             if (treePath.equals(path) || path.isDescendant(treePath)) {
               myExpandedPaths.remove(treePath);
             }
@@ -70,14 +69,14 @@ public class TreeExpantionMonitor {
 
 
   public void restore() {
-      freeze();
-      for (int i = 0; i < mySelectionNodes.size(); i++) {
-        myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNodes.get(i)));
-      }
-      for (Iterator<TreePath> iterator = myExpandedPaths.iterator(); iterator.hasNext();) {
-        myTree.expandPath(iterator.next());
-      }
-      myFrozen = false;
+    freeze();
+    for (PackageDependenciesNode mySelectionNode : mySelectionNodes) {
+      myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
+    }
+    for (final TreePath myExpandedPath : myExpandedPaths) {
+      myTree.expandPath(myExpandedPath);
+    }
+    myFrozen = false;
   }
 
 
@@ -88,9 +87,12 @@ public class TreeExpantionMonitor {
       PsiManager manager = PsiManager.getInstance(myProject);
       Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).breadthFirstEnumeration();
       while (enumeration.hasMoreElements()) {
-        PackageDependenciesNode child = (PackageDependenciesNode)enumeration.nextElement();
-        if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
-          return new TreePath(child.getPath());
+        final Object nextElement = enumeration.nextElement();
+        if (nextElement instanceof PackageDependenciesNode) { //do not include root
+          PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
+          if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
+            return new TreePath(child.getPath());
+          }
         }
       }
       return null;
