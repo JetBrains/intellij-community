@@ -105,6 +105,26 @@ public class ContainerUtil {
     };
   }
 
+  public static <T> int findByEquals(T[] array, T element) {
+    return findByEquals(Arrays.asList(array), element);
+  }
+
+  public static <T> int findByEquals(List<? extends T> list, T element) {
+    for (int i = 0; i < list.size(); i++) {
+      T t = list.get(i);
+      if (element == null) {
+        if (t == null) {
+          return i;
+        }
+      } else {
+        if (element.equals(t)) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
   public static <T> T find(Object[] array, Condition<T> condition) {
     for (Object anArray : array) {
       T element = (T)anArray;

@@ -4,10 +4,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,15 +55,52 @@ public class DomUtil {
     return extractParameterClassFromGenericType(type) != null;
   }
 
+  private static Type resolveVariable(TypeVariable variable, final Class classType) {
+    final Class aClass = DomUtil.getRawType(classType);
+    int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), variable);
+    if (index >= 0) {
+      return variable;
+    }
+
+    final Class[] classes = aClass.getInterfaces();
+    final Type[] genericInterfaces = aClass.getGenericInterfaces();
+    for (int i = 0; i < classes.length; i++) {
+      Class anInterface = classes[i];
+      final Type resolved = resolveVariable(variable, anInterface);
+      if (resolved instanceof Class || resolved instanceof ParameterizedType) {
+        return resolved;
+      }
+      if (resolved instanceof TypeVariable) {
+        final TypeVariable typeVariable = (TypeVariable)resolved;
+        index = ContainerUtil.findByEquals(anInterface.getTypeParameters(), typeVariable);
+        assert index >= 0 : typeVariable + " " + Arrays.asList(anInterface.getTypeParameters());
+        final Type type = genericInterfaces[i];
+        if (type instanceof Class) {
+          return Object.class;
+        }
+        if (type instanceof ParameterizedType) {
+          return ((ParameterizedType)type).getActualTypeArguments()[index];
+        }
+        throw new AssertionError("Invalid type: " + type);
+      }
+    }
+    return null;
+  }
+
   public static Class<?> getClassFromGenericType(final Type genericType, final Type classType) {
-    if (genericType instanceof TypeVariable && classType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)classType;
-      final Type rawType = parameterizedType.getRawType();
-      if (isGenericValue(rawType)) {
-        final Type[] arguments = parameterizedType.getActualTypeArguments();
-        final TypeVariable[] typeParameters = ((Class)rawType).getTypeParameters();
-        if (typeParameters.length == 1 && arguments[0] instanceof Class) {
-          return (Class)arguments[0];
+    if (genericType instanceof TypeVariable) {
+      final Class<?> aClass = getRawType(classType);
+      final Type type = resolveVariable((TypeVariable)genericType, aClass);
+      if (type instanceof Class) {
+        return (Class)type;
+      }
+      if (type instanceof ParameterizedType) {
+        return (Class<?>)((ParameterizedType)type).getRawType();
+      }
+      if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
+        final int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), type);
+        if (index >= 0) {
+          return getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
         }
       }
     }
