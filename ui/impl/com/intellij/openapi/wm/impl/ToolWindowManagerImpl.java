@@ -443,6 +443,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     final WindowInfo info = getInfo(id);
+    if (!info.isVisible()) return;
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     final boolean wasActive = info.isActive();
 
