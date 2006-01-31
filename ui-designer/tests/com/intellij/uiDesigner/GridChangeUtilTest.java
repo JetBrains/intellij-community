@@ -4,6 +4,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadHSpacer;
 
 import java.awt.*;
 

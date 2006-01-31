@@ -20,6 +20,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableUtil;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.AbstractLayout;

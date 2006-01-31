@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -10,6 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.XmlReader;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

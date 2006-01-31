@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.ResetValueAction;
 import com.intellij.uiDesigner.designSurface.GuiEditor;

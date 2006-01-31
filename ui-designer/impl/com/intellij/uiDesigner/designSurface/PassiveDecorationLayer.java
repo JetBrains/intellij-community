@@ -1,10 +1,10 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadRootContainer;
-import com.intellij.uiDesigner.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 

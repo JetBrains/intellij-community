@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;

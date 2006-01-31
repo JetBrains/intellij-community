@@ -13,6 +13,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;

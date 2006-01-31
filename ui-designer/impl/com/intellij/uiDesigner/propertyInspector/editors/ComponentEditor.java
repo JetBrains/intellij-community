@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;

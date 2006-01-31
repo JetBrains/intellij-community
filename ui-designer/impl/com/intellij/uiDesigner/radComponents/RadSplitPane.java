@@ -1,8 +1,12 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.LwSplitPane;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.DropInfo;
+import com.intellij.uiDesigner.XmlWriter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

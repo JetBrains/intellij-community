@@ -1,7 +1,11 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.DropInfo;
+import com.intellij.uiDesigner.XmlWriter;
 
 import javax.swing.*;
 
@@ -13,7 +17,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class RadScrollPane extends RadContainer{
+public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
 
   public RadScrollPane(final Module module, final String id){

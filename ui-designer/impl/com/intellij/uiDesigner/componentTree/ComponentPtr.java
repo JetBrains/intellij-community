@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 /**

@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -6,6 +6,12 @@ import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.FormEditingUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

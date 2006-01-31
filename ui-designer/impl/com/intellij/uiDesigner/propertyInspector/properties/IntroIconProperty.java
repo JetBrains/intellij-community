@@ -2,7 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.lw.IconDescriptor;

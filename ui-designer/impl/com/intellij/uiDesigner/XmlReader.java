@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.uiDesigner.radComponents.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;

@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;

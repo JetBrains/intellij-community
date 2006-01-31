@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;

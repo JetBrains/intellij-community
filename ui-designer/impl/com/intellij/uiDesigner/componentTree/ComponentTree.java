@@ -17,6 +17,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;

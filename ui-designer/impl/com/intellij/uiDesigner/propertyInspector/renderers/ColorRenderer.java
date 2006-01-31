@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.openapi.util.IconLoader;

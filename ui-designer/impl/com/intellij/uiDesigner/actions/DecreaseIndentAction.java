@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
 /**
  * @author yole

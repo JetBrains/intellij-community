@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IconDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;

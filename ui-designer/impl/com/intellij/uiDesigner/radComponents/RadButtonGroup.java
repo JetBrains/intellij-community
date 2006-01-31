@@ -1,4 +1,7 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
+
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 
 import java.util.ArrayList;
 import java.util.List;

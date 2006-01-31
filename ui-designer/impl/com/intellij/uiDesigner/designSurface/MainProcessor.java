@@ -5,6 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.ide.palette.impl.PaletteManager;
 import org.jetbrains.annotations.NotNull;
 

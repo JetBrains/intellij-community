@@ -1,6 +1,7 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.XmlWriter;
 
 /**
  * @author Anton Katilin

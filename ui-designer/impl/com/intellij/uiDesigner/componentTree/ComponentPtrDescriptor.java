@@ -2,8 +2,8 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 /**

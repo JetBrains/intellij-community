@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.core.AbstractLayout;
 
 import java.awt.*;

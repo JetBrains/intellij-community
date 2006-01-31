@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 
 import javax.swing.*;

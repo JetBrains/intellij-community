@@ -5,6 +5,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import javax.swing.event.TreeSelectionEvent;

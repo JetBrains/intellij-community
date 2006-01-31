@@ -11,7 +11,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;

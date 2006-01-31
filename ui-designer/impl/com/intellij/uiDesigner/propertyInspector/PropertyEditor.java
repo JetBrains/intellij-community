@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -44,7 +44,7 @@ public abstract class PropertyEditor {
    * The method must always return not <code>null</code> component.
    */
   public abstract JComponent getComponent(
-    RadComponent component, 
+    RadComponent component,
     Object value,
     boolean inplace
   );

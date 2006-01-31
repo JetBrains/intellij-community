@@ -1,9 +1,9 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.uiDesigner.RadButtonGroup;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
 

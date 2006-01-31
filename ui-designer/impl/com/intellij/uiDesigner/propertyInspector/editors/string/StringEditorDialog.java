@@ -27,7 +27,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;

@@ -1,6 +1,8 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import com.intellij.uiDesigner.XmlWriter;
 
 
 /**

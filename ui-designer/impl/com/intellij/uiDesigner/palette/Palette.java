@@ -640,7 +640,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
   /**
    * @return "inplace" property for the component with the specified class.
-   * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link com.intellij.uiDesigner.RadComponent#getInplaceProperty(int, int) }
+   * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link com.intellij.uiDesigner.radComponents.RadComponent#getInplaceProperty(int, int) }
    * instead.
    */
   @Nullable

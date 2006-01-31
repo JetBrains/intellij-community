@@ -1,14 +1,15 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.lw.IContainer;
-import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -51,7 +52,7 @@ public class RadContainer extends RadComponent implements IContainer {
     this(module, JPanel.class, id);
   }
 
-  protected RadContainer(final Module module, final Class aClass, final String id){
+  public RadContainer(final Module module, final Class aClass, final String id){
     super(module, aClass, id);
 
     myComponents = new ArrayList<RadComponent>();

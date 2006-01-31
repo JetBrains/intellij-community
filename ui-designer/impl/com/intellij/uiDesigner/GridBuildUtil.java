@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
