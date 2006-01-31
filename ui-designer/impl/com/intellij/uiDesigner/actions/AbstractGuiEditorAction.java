@@ -30,14 +30,15 @@ public abstract class AbstractGuiEditorAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
-    assert editor != null;
-    final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
-    if (myModifying) {
-      if (!editor.ensureEditable()) return;
-    }
-    actionPerformed(editor, selection, e);
-    if (myModifying) {
-      editor.refreshAndSave(true);
+    if (editor != null) {
+      final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
+      if (myModifying) {
+        if (!editor.ensureEditable()) return;
+      }
+      actionPerformed(editor, selection, e);
+      if (myModifying) {
+        editor.refreshAndSave(true);
+      }
     }
   }
 
@@ -47,6 +48,7 @@ public abstract class AbstractGuiEditorAction extends AnAction {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     if (editor == null) {
       e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabled(false);
     }
     else {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
