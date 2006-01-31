@@ -45,9 +45,6 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
-  public HighlightManagerImpl() {
-  }
-
   public String getComponentName() {
     return "HighlightManager";
   }
