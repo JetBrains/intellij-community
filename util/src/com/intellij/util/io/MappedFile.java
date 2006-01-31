@@ -44,15 +44,17 @@ public class MappedFile {
       buf = channel.map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
     }
     catch (IOException e) {
-      new RuntimeException("Mapping failed: " + myFile.getAbsolutePath(), e);
+      throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath(), e);
     }
     finally {
       channel.close();
       raf.close();
     }
+
     if (buf == null) {
-      new RuntimeException("Mapping failed: " + myFile.getAbsolutePath());
+      throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath());
     }
+
     myHolder = new ByteBufferUtil.ByteBufferHolder(buf, myFile);
     myRealSize = myFile.length();
     buf.position((int)myPosition);
