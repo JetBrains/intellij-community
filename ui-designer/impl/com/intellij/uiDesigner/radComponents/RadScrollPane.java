@@ -1,16 +1,12 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.DropInfo;
 import com.intellij.uiDesigner.XmlWriter;
-
-import javax.swing.*;
-
+import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -65,18 +61,9 @@ public final class RadScrollPane extends RadContainer {
 
   public void write(final XmlWriter writer) {
     writer.startElement("scrollpane");
-    try{
-      writeId(writer);
-      writeBinding(writer);
-
-      // Constraints and properties
-      writeConstraints(writer);
-      writeProperties(writer);
-
-      // Margin and border
-      writeBorder(writer);
-      writeChildren(writer);
-    }finally{
+    try {
+      writeNoLayout(writer);
+    } finally {
       writer.endElement(); // scrollpane
     }
   }

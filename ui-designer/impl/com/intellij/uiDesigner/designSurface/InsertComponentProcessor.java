@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class InsertComponentProcessor extends EventProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InsertComponentProcessor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.InsertComponentProcessor");
 
   private final GuiEditor myEditor;
   private boolean mySticky;
@@ -319,6 +319,9 @@ public final class InsertComponentProcessor extends EventProcessor {
       }
       else if (JSplitPane.class.getName().equals(item.getClassName())) {
         result = new RadSplitPane(editor.getModule(), id);
+      }
+      else if (JToolBar.class.getName().equals(item.getClassName())) {
+        result = new RadToolBar(editor.getModule(), id);
       }
       else {
         final PsiManager manager = PsiManager.getInstance(editor.getProject());

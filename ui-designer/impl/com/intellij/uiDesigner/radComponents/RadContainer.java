@@ -588,6 +588,20 @@ public class RadContainer extends RadComponent implements IContainer {
 
     return true;
   }
+
+  protected void writeNoLayout(final XmlWriter writer) {
+    writeId(writer);
+    writeBinding(writer);
+
+    // Constraints and properties
+    writeConstraints(writer);
+    writeProperties(writer);
+
+    // Margin and border
+    writeBorder(writer);
+    writeChildren(writer);
+  }
+
   private final class MyBorderTitleProperty extends Property{
     private final StringEditor myEditor;
 

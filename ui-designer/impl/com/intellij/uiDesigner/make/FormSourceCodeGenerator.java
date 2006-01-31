@@ -41,6 +41,7 @@ public final class FormSourceCodeGenerator {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
     ourComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutSourceGenerator());
     ourComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutSourceGenerator());
+    ourComponentLayoutCodeGenerators.put(LwToolBar.class, new ToolBarLayoutSourceGenerator());
 
     ourFontStyleMap.put(Font.PLAIN, "java.awt.Font.PLAIN");
     ourFontStyleMap.put(Font.BOLD, "java.awt.Font.BOLD");

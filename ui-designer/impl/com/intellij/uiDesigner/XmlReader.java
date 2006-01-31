@@ -106,6 +106,9 @@ public final class XmlReader {
       else if (lwComponent instanceof LwSplitPane) {
         component = new RadSplitPane(module, id);
       }
+      else if (lwComponent instanceof LwToolBar) {
+        component = new RadToolBar(module, id);
+      }
       else if (lwComponent instanceof LwContainer) {
         final LwContainer lwContainer = (LwContainer)lwComponent;
         AbstractLayout layout = lwContainer.getLayout();

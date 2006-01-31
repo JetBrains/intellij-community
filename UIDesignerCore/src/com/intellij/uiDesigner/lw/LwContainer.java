@@ -283,6 +283,9 @@ public class LwContainer extends LwComponent implements IContainer{
     else if("splitpane".equals(name)){
       component = new LwSplitPane();
     }
+    else if (UIFormXmlConstants.ELEMENT_TOOLBAR.equals(name)) {
+      component = new LwToolBar();
+    }
     else{
       throw new IllegalArgumentException("unexpected element: "+child);
     }
@@ -342,6 +345,20 @@ public class LwContainer extends LwComponent implements IContainer{
     // Border
     readBorder(element);
     
+    readChildren(element, provider);
+  }
+
+  protected void readNoLayout(final Element element, final PropertiesProvider provider) throws Exception {
+    readId(element);
+    readBinding(element);
+
+    // Constraints and properties
+    readConstraints(element);
+    readProperties(element, provider);
+
+    // Border
+    readBorder(element);
+
     readChildren(element, provider);
   }
 }

@@ -43,6 +43,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_GROUP = "group";
   public static final String ELEMENT_MEMBER = "member";
   public static final String ELEMENT_NESTED_FORM = "nested-form";
+  public static final String ELEMENT_TOOLBAR = "toolbar";
 
   private UIFormXmlConstants() {
   }

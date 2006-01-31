@@ -218,7 +218,7 @@
       since-version="2"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
-        <preferred-size width="-1" height="-1"/>
+        <preferred-size width="-1" height="20"/>
       </default-constraints>
     </item>
   </group>

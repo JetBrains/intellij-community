@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.core.AbstractLayout;
@@ -21,15 +22,14 @@ import org.jdom.Element;
 import javax.swing.*;
 
 /**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
+ * @author yole
  */
-public final class LwScrollPane extends LwContainer{
-  public LwScrollPane() throws Exception{
-    super(JScrollPane.class.getName());
+public class LwToolBar extends LwContainer {
+  public LwToolBar() {
+    super(JToolBar.class.getName());
   }
 
-  protected AbstractLayout createInitialLayout(){
+  protected AbstractLayout createInitialLayout() {
     return null;
   }
 
@@ -37,5 +37,6 @@ public final class LwScrollPane extends LwContainer{
     readNoLayout(element, provider);
   }
 
-  protected void readConstraintsForChild(final Element element, final LwComponent component) {}
+  protected void readConstraintsForChild(final Element element, final LwComponent component) {
+  }
 }

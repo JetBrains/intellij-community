@@ -56,6 +56,7 @@ public class AsmCodeGenerator {
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutCodeGenerator());
+    myComponentLayoutCodeGenerators.put(LwToolBar.class, new ToolBarLayoutCodeGenerator());
 
     myPropertyCodeGenerators.put("java.lang.String", new StringPropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Dimension", new DimensionPropertyCodeGenerator());

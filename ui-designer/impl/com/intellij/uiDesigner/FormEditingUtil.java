@@ -2,6 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -390,7 +391,13 @@ public final class FormEditingUtil {
   }
 
   public static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
-    final boolean shouldContinue = visitor.visit(component);
+    final boolean shouldContinue;
+    try {
+      shouldContinue = visitor.visit(component);
+    }
+    catch (ProcessCanceledException ex) {
+      return false;
+    }
     if (!shouldContinue) {
       return false;
     }

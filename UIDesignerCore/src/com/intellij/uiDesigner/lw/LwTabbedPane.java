@@ -35,17 +35,7 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   }
 
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
-    readId(element);
-    readBinding(element);
-
-    // Constraints and properties
-    readConstraints(element);
-    readProperties(element, provider);
-
-    // Border
-    readBorder(element);
-    
-    readChildren(element, provider);
+    readNoLayout(element, provider);
   }
 
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
