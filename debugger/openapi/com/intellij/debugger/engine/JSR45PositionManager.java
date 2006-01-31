@@ -23,6 +23,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.j2ee.deployment.JspDeploymentManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -36,21 +37,15 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 5, 2004
- * Time: 2:18:27 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class JSR45PositionManager implements PositionManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");
   private final DebugProcess      myDebugProcess;
   private final Module[] myScope;
   private final JspDeploymentManager myHelper;
@@ -93,6 +88,10 @@ public abstract class JSR45PositionManager implements PositionManager {
       sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
     }
     catch (AbsentInformationException e) {
+      // ignored
+    }
+    catch (Throwable e) {
+      LOG.info(e);
     }
 
     if(sourcePosition == null) throw new NoDataException();
