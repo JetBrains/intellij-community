@@ -19,10 +19,15 @@ import java.util.List;
 public class DomUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
 
+  public static Class getGenericValueType(Type type) {
+    return getClassFromGenericType(GenericValue.class.getTypeParameters()[0], type);
+  }
+
   public static Class extractParameterClassFromGenericType(Type type) {
     if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
       final Type rawType = parameterizedType.getRawType();
+
       if (isGenericValue(rawType)) {
         final Type[] arguments = parameterizedType.getActualTypeArguments();
         if (arguments.length == 1 && arguments[0] instanceof Class) {
@@ -52,7 +57,7 @@ public class DomUtil {
   }
 
   public static boolean isGenericValueType(Type type) {
-    return extractParameterClassFromGenericType(type) != null;
+    return getGenericValueType(type) != null;
   }
 
   private static Type resolveVariable(TypeVariable variable, final Class classType) {
@@ -136,7 +141,7 @@ public class DomUtil {
               }
             }
             else if (argument instanceof ParameterizedType) {
-              if (extractParameterClassFromGenericType(argument) != null) {
+              if (getGenericValueType(argument) != null) {
                 return argument;
               }
             }
@@ -228,7 +233,7 @@ public class DomUtil {
 
   public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
     return boolean.class.equals(type) || Boolean.class.equals(type)
-           || Boolean.class.equals(extractParameterClassFromGenericType(type));
+           || Boolean.class.equals(getGenericValueType(type));
   }
 
   public final static void tryAccept(final DomElementVisitor visitor, final Class aClass, DomElement proxy) {

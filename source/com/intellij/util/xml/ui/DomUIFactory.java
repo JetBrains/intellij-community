@@ -43,7 +43,7 @@ public class DomUIFactory {
 
 
   public static DomUIControl createControl(GenericDomValue element) {
-    return createGenericValueControl(DomUtil.extractParameterClassFromGenericType(element.getDomElementType()), element);
+    return createGenericValueControl(DomUtil.getGenericValueType(element.getDomElementType()), element);
   }
 
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
