@@ -197,6 +197,10 @@ class DesignDropTargetListener implements DropTargetListener {
       return false;
     }
 
+    if (!myEditor.ensureEditable()) {
+      return false;
+    }
+
     ArrayList<RadComponent> droppedComponents;
 
     if (dropAction == DnDConstants.ACTION_COPY) {

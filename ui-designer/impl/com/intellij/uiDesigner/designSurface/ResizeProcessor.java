@@ -125,7 +125,9 @@ public final class ResizeProcessor extends EventProcessor {
       newBounds.width = size.width;
       newBounds.height = size.height;
 
-      myComponent.setBounds(newBounds);
+      if (myOriginalParent.isGrid() || myEditor.ensureEditable()) {
+        myComponent.setBounds(newBounds);
+      }
 
       myEditor.refresh();
 
@@ -133,7 +135,7 @@ public final class ResizeProcessor extends EventProcessor {
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       if (myOriginalParent.isGrid()) {
-        if (doResize) {
+        if (doResize && myEditor.ensureEditable()) {
           Dimension preferredSize = (Dimension) myPreferredSizeProperty.getValue(myComponent);
           if ((myResizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0) {
             preferredSize.width= myComponent.getWidth();

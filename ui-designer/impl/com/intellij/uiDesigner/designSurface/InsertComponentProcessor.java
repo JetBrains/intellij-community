@@ -220,6 +220,10 @@ public final class InsertComponentProcessor extends EventProcessor {
       return;
     }
 
+    if (!myEditor.ensureEditable()) {
+      return;
+    }
+
     myInsertedComponent = createInsertedComponent(myEditor, item);
 
     final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0);
