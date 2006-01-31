@@ -8,17 +8,13 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.StackFrame;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.InternalException;
+import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadReferenceProxyImpl");
@@ -56,7 +52,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public String name() {
     checkValid();
     if (myName == null) {
-      myName = getThreadReference().name();
+      try {
+        myName = getThreadReference().name();
+      }
+      catch (ObjectCollectedException e) {
+        myName = "";
+      }
     }
     return myName;
   }
