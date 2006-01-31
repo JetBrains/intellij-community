@@ -22,6 +22,7 @@ public interface HighlightingPass {
   /**
    * pass is intended to perform analysis stuff and hold collected information internally
    * until {@link #collectInformation(com.intellij.openapi.progress.ProgressIndicator)} is called.
+   * This method is called from a background thread.
    *
    * @param progress to check for highlighting process is cancelled. Pass is to check progress.isCanceled() as often as possible and
    * throw {@link com.intellij.openapi.progress.ProcessCanceledException} if <code>true</code> is returned.
@@ -30,6 +31,7 @@ public interface HighlightingPass {
 
   /**
    * Called to apply information collected by {@linkplain #collectInformation(com.intellij.openapi.progress.ProgressIndicator)} to the editor.
+   * This method is called from the event dispatch thread.
    */ 
   void applyInformationToEditor();
 }
