@@ -712,6 +712,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
 
+  public int logicalLineToY(int line) {
+    VisualPosition visible = logicalToVisualPosition(new LogicalPosition(line, 0));
+    return visibleLineNumberToYPosition(visible.line);
+  }
+
   @NotNull
   public Point logicalPositionToXY(LogicalPosition pos) {
     VisualPosition visible = logicalToVisualPosition(pos);
@@ -849,7 +854,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private void repaintToScreenBotton(int startLine) {
     Rectangle visibleRect = getScrollingModel().getVisibleArea();
-    int yStartLine = logicalPositionToXY(new LogicalPosition(startLine, 0)).y;
+    int yStartLine = logicalLineToY(startLine);
     int yEndLine = visibleRect.y + visibleRect.height;
 
     myEditorComponent.repaintEditorComponent(visibleRect.x,
@@ -861,8 +866,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   public void repaintLines(int startLine, int endLine) {
     Rectangle visibleRect = getScrollingModel().getVisibleArea();
-    int yStartLine = logicalPositionToXY(new LogicalPosition(startLine, 0)).y;
-    int yEndLine = logicalPositionToXY(new LogicalPosition(endLine, 0)).y + getLineHeight() + WAVE_HEIGHT;
+    int yStartLine = logicalLineToY(startLine);
+    int yEndLine = logicalLineToY(endLine) + getLineHeight() + WAVE_HEIGHT;
 
     myEditorComponent.repaintEditorComponent(visibleRect.x,
                                              yStartLine,
