@@ -246,6 +246,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
     protected boolean applyFix(RefElement[] refElements) {
       for (RefElement refElement : refElements) {
+        if (!refElement.checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) continue;
         PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
 
         if (psiElement == null) continue;
