@@ -21,4 +21,8 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testSimple () throws Exception {
     doTest();
   }
+
+  public void testTwoMethods () throws Exception {
+    doTest();
+  }
 }

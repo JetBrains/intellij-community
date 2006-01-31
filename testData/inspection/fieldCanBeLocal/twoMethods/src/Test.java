@@ -5,4 +5,9 @@ class Test {
         f = 0;
         int k = f;
     }
+
+    int bar () {
+        f = 5;
+        return f;
+    }
 }
