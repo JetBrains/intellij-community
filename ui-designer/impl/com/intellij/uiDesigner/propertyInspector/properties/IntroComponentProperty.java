@@ -45,4 +45,9 @@ public class IntroComponentProperty extends IntrospectedProperty {
   @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
   }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    setValue(component, null);
+    markTopmostModified(component, false);
+  }
 }
