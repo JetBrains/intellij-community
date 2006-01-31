@@ -81,7 +81,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
     });
 
+    final Set<PsiField> usedFields = new HashSet<PsiField>();
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
+
       public void visitElement(PsiElement element) {
         if (candidates.size() > 0) super.visitElement(element);
       }
@@ -104,6 +106,17 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       private void checkCodeBlock(final PsiCodeBlock body, final Set<PsiField> candidates) {
         try {
           final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
+          final PsiVariable[] usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
+          for (PsiVariable usedVariable : usedVars) {
+            if (usedVariable instanceof PsiField) {
+              final PsiField usedField = ((PsiField)usedVariable);
+              if (usedFields.contains(usedField)) {
+                candidates.remove(usedField); //used in more than one code block
+              } else {
+                usedFields.add(usedField);
+              }
+            }
+          }
           final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
           for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
             final PsiElement resolved = readBeforeWrite.resolve();
@@ -120,14 +133,15 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     });
 
     if (candidates.isEmpty()) return null;
-    ProblemDescriptor[] result = new ProblemDescriptor[candidates.size()];
-    int i = 0;
-    for (Iterator<PsiField> iterator = candidates.iterator(); iterator.hasNext(); i++) {
-      PsiField field = iterator.next();
-      final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-      result[i] = manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    for (PsiField field : candidates) {
+      if (usedFields.contains(field)) {
+        final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
+        result.add(manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field),
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      }
     }
-    return result;
+    return result.toArray(new ProblemDescriptor[result.size()]);
   }
 
   private static class MyQuickFix implements LocalQuickFix {

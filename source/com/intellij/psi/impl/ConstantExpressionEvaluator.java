@@ -12,20 +12,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Collections;
 
+@SuppressWarnings({"UnnecessaryBoxing"})
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
   private boolean myThrowExceptionOnOverflow;
 
-  /** used in Fabrique:*/
-  protected Object myValue;
+  private Object myValue;
   
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
-  /**
-   * used in Fabrique
-   */
-  protected ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
+  private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
     myVisitedVars = visitedVars;
     myThrowExceptionOnOverflow = throwExceptionOnOverflow;
   }
@@ -371,7 +368,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
         public CachedValueProvider.Result<Map<PsiElement,Object>> compute() {
           Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
-          return new Result<Map<PsiElement, Object>>(value, new Object[]{PsiModificationTracker.MODIFICATION_COUNT});
+          return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }, false);
       project.putUserData(CONSTANT_VALUE_MAP_KEY, cachedValue);
@@ -392,11 +389,12 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-    PsiType castType = expression.getCastType().getType();
-    if(expression.getOperand() == null) {
+    final PsiTypeElement castTypeElement = expression.getCastType();
+    if(castTypeElement == null || expression.getOperand() == null) {
       myValue = null;
       return;
     }
+    PsiType castType = castTypeElement.getType();
 
     Object operand = accept(expression.getOperand());
 
@@ -582,10 +580,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     return _compute(evaluator, expression);
   }
 
-  /**
-   * used in Fabrique
-   */
-  protected static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
+  private static Object _compute(ConstantExpressionEvaluator evaluator, PsiExpression expression) {
     return evaluator.accept(expression);
   }
 
