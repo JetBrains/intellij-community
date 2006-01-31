@@ -25,7 +25,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.GenericHashMap;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.util.*;
@@ -66,7 +66,7 @@ public class PatternCompiler {
 
     return result[0];
   }
-  
+
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
 
     CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
@@ -86,8 +86,8 @@ public class PatternCompiler {
         context.scanRequest = 0;
 
         if (context.filesToScan==null) {
-          context.filesToScan = new GenericHashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-          context.filesToScan2 = new GenericHashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
+          context.filesToScan = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
+          context.filesToScan2 = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
           context.scanned = new HashMap<String,String>();
           context.scannedComments = new HashMap<String,String>();
           context.scannedLiterals = new HashMap<String,String>();

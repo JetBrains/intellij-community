@@ -1,11 +1,11 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.GenericHashMap;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import gnu.trove.THashMap;
 
 import java.util.HashMap;
 
@@ -18,8 +18,8 @@ import java.util.HashMap;
  */
 class CompileContext {
   PsiSearchHelper helper;
-  GenericHashMap<PsiFile,PsiFile> filesToScan;
-  GenericHashMap<PsiFile,PsiFile> filesToScan2;
+  THashMap<PsiFile,PsiFile> filesToScan;
+  THashMap<PsiFile,PsiFile> filesToScan2;
   HashMap<String,String> scanned;
   HashMap<String,String> scannedComments;
   HashMap<String,String> scannedLiterals;

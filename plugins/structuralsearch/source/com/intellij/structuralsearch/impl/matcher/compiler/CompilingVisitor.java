@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import static com.intellij.structuralsearch.MatchOptions.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -11,6 +10,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
+import static com.intellij.structuralsearch.MatchOptions.*;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -24,7 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.GenericHashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -503,7 +503,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   private void endTransaction() {
-    GenericHashMap<PsiFile,PsiFile> map = context.filesToScan;
+    THashMap<PsiFile,PsiFile> map = context.filesToScan;
     if (map.size() > 0) map.clear();
     context.filesToScan = context.filesToScan2;
     context.filesToScan2 = map;
@@ -718,11 +718,11 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
   public void visitXmlToken(XmlToken token) {
     super.visitXmlToken(token);
-    
+
     if (token.getParent() instanceof XmlText && context.pattern.isRealTypedVar(token)) {
       final Handler handler = context.pattern.getHandler(token);
       handler.setFilter(TagValueFilter.getInstance());
-      
+
       final XmlTextHandler parentHandler = new XmlTextHandler();
       context.pattern.setHandler(token.getParent(), parentHandler);
       parentHandler.setFilter(TagValueFilter.getInstance());
@@ -736,7 +736,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       context.pattern.setStrategy(XmlMatchingStrategy.getInstance());
     }
   }
-  
+
   public void visitCodeBlock(PsiCodeBlock block) {
     ++codeBlockLevel;
     MatchingStrategy strategy = null;
