@@ -304,6 +304,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final PsiIdentifier identifier = field.getNameIdentifier();
     final PsiFile boundForm = CodeInsightUtil.getFormFile(field);
     final boolean isBoundToForm = boundForm != null;
+    final boolean injected = field.getModifierList().findAnnotation("javax.annotation.Resource") != null ||
+                             field.getModifierList().findAnnotation("javax.ejb.EJB") != null ||
+                             field.getModifierList().findAnnotation("javax.xml.ws.WebServiceRef") != null;
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field)) {
@@ -331,7 +334,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
       if (!field.hasInitializer()) {
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
-        if (!writeReferenced && !isBoundToForm) {
+        if (!writeReferenced && !isBoundToForm && !injected) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
           HighlightInfo info = createUnusedSymbolInfo(identifier, message);
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
