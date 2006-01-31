@@ -30,12 +30,16 @@ public class LightweightHint implements Hint, UserDataHolder {
   private MyEscListener myEscListener;
   private JBPopup myPopup;
   private JComponent myParentComponent;
-  private Rectangle myLastShownRect = null;
   private boolean myIsRealPopup = false;
+  private boolean myForceLightweightPopup = false;
 
   public LightweightHint(final JComponent component) {
     LOG.assertTrue(component != null);
     myComponent = component;
+  }
+
+  public void setForceLightweightPopup(final boolean forceLightweightPopup) {
+    myForceLightweightPopup = forceLightweightPopup;
   }
 
   /**
@@ -55,7 +59,7 @@ public class LightweightHint implements Hint, UserDataHolder {
                                        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
-    if (fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)))) {
+    if (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)))) {
       final Dimension preferredSize = myComponent.getPreferredSize();
       final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
@@ -73,11 +77,12 @@ public class LightweightHint implements Hint, UserDataHolder {
     }
   }
 
-  private boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation) {
+  private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation) {
     final Rectangle lpRect = new Rectangle(pane.getLocationOnScreen().x, pane.getLocationOnScreen().y, pane.getWidth(), pane.getHeight());
-    RelativePoint p = desiredLocation;
-    Rectangle componentRect =
-      new Rectangle(p.getScreenPoint().x, p.getScreenPoint().y, component.getPreferredSize().width, component.getPreferredSize().height);
+    Rectangle componentRect = new Rectangle(desiredLocation.getScreenPoint().x,
+                                            desiredLocation.getScreenPoint().y,
+                                            component.getPreferredSize().width,
+                                            component.getPreferredSize().height);
     return lpRect.contains(componentRect);
   }
 
@@ -134,7 +139,6 @@ public class LightweightHint implements Hint, UserDataHolder {
       if (myIsRealPopup) {
         myPopup.cancel();
         myPopup = null;
-        myLastShownRect = null;
       }
       else {
         final Rectangle bounds = myComponent.getBounds();
@@ -162,6 +166,7 @@ public class LightweightHint implements Hint, UserDataHolder {
     return myComponent;
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> T getUserData(final Key<T> key) {
     return (T)myUserMap.get(key);
   }
