@@ -381,21 +381,27 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   }
 
   private void analyzeVarUsage(final PsiElement element) {
+    PsiType constrainingType = null;
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
       assert method != null;
-      final PsiType returnType = method.getReturnType();
-      if (returnType instanceof PsiClassType) {
-        final PsiClass resolved = ((PsiClassType)returnType).resolve();
-        if (!myClass.equals(resolved)) {
+      constrainingType = method.getReturnType();
+    } else if (parent instanceof PsiAssignmentExpression) {
+      constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
+    } else if (parent instanceof PsiLocalVariable) {
+      constrainingType = ((PsiLocalVariable)parent).getType();
+    }
+    //TODO: I expect more cases here
+
+    if (constrainingType instanceof PsiClassType) {
+      final PsiClass resolved = ((PsiClassType)constrainingType).resolve();
+      if (!myClass.equals(resolved)) {
           if (resolved == null || !isSuperInheritor(resolved)) {
             markNode(element);
           }
         }
-      }
     }
-    //TODO: I expect more cases here
   }
 
   private void processMethodReturnType(final PsiMethod method) {
