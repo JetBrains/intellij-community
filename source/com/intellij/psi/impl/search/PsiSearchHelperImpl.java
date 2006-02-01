@@ -13,8 +13,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
@@ -346,6 +348,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
+  private static final TokenSet COMMENT_BIT_SET = TokenSet.create(ElementType.DOC_COMMENT_DATA,
+                                                                    ElementType.DOC_TAG_VALUE_TOKEN,
+                                                                    ElementType.C_STYLE_COMMENT,
+                                                                    ElementType.END_OF_LINE_COMMENT);
 
   public PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
@@ -353,7 +359,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset() + offsetInElement) == null) {
+        if (!COMMENT_BIT_SET.contains(element.getNode().getElementType())) return true;
+        if (element.findReferenceAt(offsetInElement) == null) {
           results.add(element);
         }
         return true;

@@ -1,20 +1,21 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.util.text.StringSearcher;
 
 public class LowLevelSearchUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
   private LowLevelSearchUtil() {}
 
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
@@ -32,6 +33,52 @@ public class LowLevelSearchUtil {
                                                                 ProgressIndicator progress,
                                                                 final short searchContext) {
     ProgressManager.getInstance().checkCanceled();
+    char[] buffer = ((CompositeElement)scope).textToCharArray();
+    int startOffset = 0;
+    int endOffset = buffer.length;
+    final int patternLength = searcher.getPatternLength();
+
+    int prevStartInLeaf = 0;
+    LeafElement prevLeaf = null;
+    do {
+      int i = searchWord(buffer, startOffset, endOffset, searcher);
+      if (i >= 0) {
+        LeafElement leafNode = ((TreeElement)scope).findLeafElementAt(i);
+        if (leafNode == null) return true;
+        int offsetInLeaf = leafNode == prevLeaf ? prevStartInLeaf + 1 : 0;
+        int start = leafNode.searchWord(offsetInLeaf, searcher);
+        LOG.assertTrue(start >= 0);
+        prevStartInLeaf = start;
+        prevLeaf = leafNode;
+        boolean contains = leafNode.getTextLength() - start >= patternLength;
+        if (contains) {
+          if (!processor.execute(leafNode.getPsi(), start)) return false;
+        }
+
+        TreeElement prev = leafNode;
+        CompositeElement run = leafNode.getTreeParent();
+        while(run != null) {
+          start += prev.getStartOffsetInParent();
+          contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
+          if (contains) {
+            if (!processor.execute(run.getPsi(), start)) return false;
+          }
+          prev = run;
+          if (run == scope) break;
+          run = run.getTreeParent();
+        }
+
+        assert run == scope;
+
+        startOffset = i + 1;
+      }
+      else {
+        return true;
+      }
+    }
+    while (startOffset < endOffset);
+
+    /*scope.findLeafElementAt()
     final PsiElement scopePsi = SourceTreeToPsiMap.treeElementToPsi(scope);
     if (scopePsi instanceof PsiWhiteSpace) {
       // Optimization. Taking language from whitespace may expand a chameleon next to this whitespace
@@ -92,7 +139,7 @@ public class LowLevelSearchUtil {
 
     if (scope instanceof CompositeElement) {
       return processChildren(scope, searcher, processor, progress, searchContext);
-    }
+    }*/
 
     return true;
   }

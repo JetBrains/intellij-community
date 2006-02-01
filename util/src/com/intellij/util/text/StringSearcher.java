@@ -29,6 +29,10 @@ public class StringSearcher {
   public StringSearcher() {
   }
 
+  public int getPatternLength() {
+    return myPatternLength;
+  }
+
   public StringSearcher(String pattern) {
     setPattern(pattern);
   }

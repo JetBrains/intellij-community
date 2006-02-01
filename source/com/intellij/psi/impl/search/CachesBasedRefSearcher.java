@@ -73,7 +73,17 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
           myLastFileProcessed = currentfile;
         }
 
-        final PsiReference reference = element.findReferenceAt(offsetInElement);
+        final PsiReference[] refs = element.getReferences();
+        for (PsiReference ref : refs) {
+          if (ref.getRangeInElement().contains(offsetInElement)) {
+            if (!myRefs.add(ref)) return true;  //Hack:(
+            if (ref.isReferenceTo(refElement)) {
+              return consumer.process(ref);
+            }
+          }
+        }
+        return true;
+        /*final PsiReference reference = element.findReferenceAt(offsetInElement);
         if (reference == null) return true;
         if (!myRefs.add(reference)) return true;  //Hack:(
         if (reference.isReferenceTo(refElement)) {
@@ -81,7 +91,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
         }
         else {
           return true;
-        }
+        }*/
       }
     };
 
