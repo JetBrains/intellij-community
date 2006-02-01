@@ -88,9 +88,6 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                   }
                 }
               }
-              else {
-                return true;
-              }
             }
           }
         }
