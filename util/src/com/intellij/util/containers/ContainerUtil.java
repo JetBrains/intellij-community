@@ -154,11 +154,11 @@ public class ContainerUtil {
   }
 
   public static <T,V> Set<V> map2Set(Collection<? extends T> collection, Function<T,V> mapper) {
-    final Set<V> list = new HashSet<V>(collection.size());
+    final HashSet<V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
-      list.add(mapper.fun(t));
+      set.add(mapper.fun(t));
     }
-    return list;
+    return set;
   }
 
 
