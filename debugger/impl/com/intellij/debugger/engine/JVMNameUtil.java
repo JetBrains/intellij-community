@@ -262,7 +262,11 @@ public class JVMNameUtil {
   }
 
   public static @Nullable PsiClass getClassAt(SourcePosition position) {
-    PsiElement element = position.getFile().findElementAt(position.getOffset());
+    final int offset = position.getOffset();
+    if (offset < 0) {
+      return null;
+    }
+    PsiElement element = position.getFile().findElementAt(offset);
     return PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
   }
 

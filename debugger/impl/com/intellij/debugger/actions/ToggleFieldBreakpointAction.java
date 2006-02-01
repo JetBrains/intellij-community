@@ -1,9 +1,9 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -46,10 +46,11 @@ public class ToggleFieldBreakpointAction extends AnAction {
       if (document != null) {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
-        Breakpoint breakpoint = manager.findFieldBreakpoint(document, place.getOffset());
+        final int offset = place.getOffset();
+        final Breakpoint breakpoint = offset >= 0? manager.findFieldBreakpoint(document, offset) : null;
 
         if(breakpoint == null) {
-          FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, place.getOffset());
+          FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, offset);
           if (fieldBreakpoint != null) {
             if(DebuggerAction.isContextView(e)) {
               DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(e.getDataContext());
@@ -90,10 +91,10 @@ public class ToggleFieldBreakpointAction extends AnAction {
       if(place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
         if (document != null) {
-          Breakpoint fieldBreakpoint = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager().findFieldBreakpoint(
-                    document,
-                    place.getOffset());
-          if(fieldBreakpoint != null) {
+          final int offset = place.getOffset();
+          final Breakpoint fieldBreakpoint = 
+            offset >= 0? (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager().findFieldBreakpoint(document, offset) : null;
+          if (fieldBreakpoint != null) {
             presentation.setEnabled(false);
             return;
           }

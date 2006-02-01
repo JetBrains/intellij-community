@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -117,7 +117,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
           return null;
         }
 
-        final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), sourcePosition.getOffset(), " \t");
+        final int spOffset = sourcePosition.getOffset();
+        if (spOffset < 0) {
+          return null;
+        }
+        final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), spOffset, " \t");
         return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiField.class, false);
       }
     });

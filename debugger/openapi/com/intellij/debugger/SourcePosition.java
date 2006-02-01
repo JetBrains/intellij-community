@@ -94,7 +94,11 @@ public abstract class SourcePosition implements Navigatable{
       if (virtualFile == null || !virtualFile.isValid()) {
         return null;
       }
-      return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, getOffset()), requestFocus);
+      final int offset = getOffset();
+      if (offset < 0) {
+        return null;
+      }
+      return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, offset), requestFocus);
     }
 
     private void updateData() {
@@ -169,8 +173,7 @@ public abstract class SourcePosition implements Navigatable{
   public boolean equals(Object o) {
     if(o instanceof SourcePosition) {
       SourcePosition sourcePosition = ((SourcePosition)o);
-      return Comparing.equal(sourcePosition.getFile(), getFile()) &&
-             sourcePosition.getOffset() == getOffset();
+      return Comparing.equal(sourcePosition.getFile(), getFile()) && sourcePosition.getOffset() == getOffset();
     }
 
     return false;
