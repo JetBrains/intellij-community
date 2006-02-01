@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Query;
 import com.intellij.util.QueryFactory;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -17,12 +18,13 @@ public class SuperMethodsSearch extends QueryFactory<MethodSignatureBackedByPsiM
 
   public static class SearchParameters {
     private final PsiMethod myMethod;
-    private final PsiClass myClass;
+    //null means any class would be matched
+    @Nullable private final PsiClass myClass;
     private final boolean myCheckBases;
     private final boolean myAllowStaticMethod;
 
     public SearchParameters(final PsiMethod method,
-                            final PsiClass aClass,
+                            @Nullable final PsiClass aClass,
                             final boolean checkBases,
                             final boolean allowStaticMethod) {
       myCheckBases = checkBases;
@@ -39,6 +41,7 @@ public class SuperMethodsSearch extends QueryFactory<MethodSignatureBackedByPsiM
       return myMethod;
     }
 
+    @Nullable
     public final PsiClass getPsiClass() {
       return myClass;
     }

@@ -37,7 +37,7 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
     return true;
   }
 
-  private boolean addSuperMethods(final HierarchicalMethodSignature signature,
+  private static boolean addSuperMethods(final HierarchicalMethodSignature signature,
                                   final PsiMethod method,
                                   final PsiClass parentClass,
                                   final boolean allowStaticMethod,
@@ -45,9 +45,9 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
                                   final Processor<MethodSignatureBackedByPsiMethod> consumer) {
     PsiMethod signatureMethod = signature.getMethod();
     PsiClass hisClass = signatureMethod.getContainingClass();
-    if (InheritanceUtil.isInheritorOrSelf(parentClass, hisClass, true)) {
+    if (parentClass == null || InheritanceUtil.isInheritorOrSelf(parentClass, hisClass, true)) {
       if (isAcceptable(signatureMethod, method, allowStaticMethod)) {
-        if (parentClass.equals(hisClass) || checkBases) {
+        if (parentClass == null || parentClass.equals(hisClass) || checkBases) {
           return consumer.process(signature); //no need to check super classes
         } else {
           return true;
@@ -63,7 +63,7 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
     return true;
   }
 
-  private boolean isAcceptable(final PsiMethod superMethod, final PsiMethod method, final boolean allowStaticMethod) {
+  private static boolean isAcceptable(final PsiMethod superMethod, final PsiMethod method, final boolean allowStaticMethod) {
     boolean hisStatic = superMethod.hasModifierProperty(PsiModifier.STATIC);
     if (hisStatic != method.hasModifierProperty(PsiModifier.STATIC) || !allowStaticMethod && hisStatic) return false;
 
