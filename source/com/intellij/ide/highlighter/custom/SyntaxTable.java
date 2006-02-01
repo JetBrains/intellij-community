@@ -8,10 +8,10 @@ import java.util.TreeSet;
  * @version 1.0
  */
 public class SyntaxTable implements Cloneable {
-  private Set myKeywords1;
-  private Set myKeywords2;
-  private Set myKeywords3;
-  private Set myKeywords4;
+  private Set<String> myKeywords1;
+  private Set<String> myKeywords2;
+  private Set<String> myKeywords3;
+  private Set<String> myKeywords4;
 
   private String myLineComment;
   private String myStartComment;
@@ -30,18 +30,18 @@ public class SyntaxTable implements Cloneable {
   // -------------------------------------------------------------------------
 
   public SyntaxTable() {
-    myKeywords1 = new TreeSet();
-    myKeywords2 = new TreeSet();
-    myKeywords3 = new TreeSet();
-    myKeywords4 = new TreeSet();
+    myKeywords1 = new TreeSet<String>();
+    myKeywords2 = new TreeSet<String>();
+    myKeywords3 = new TreeSet<String>();
+    myKeywords4 = new TreeSet<String>();
   }
 
   protected Object clone() throws CloneNotSupportedException {
     SyntaxTable cl = (SyntaxTable) super.clone();
-    cl.myKeywords1 = new TreeSet(myKeywords1);
-    cl.myKeywords2 = new TreeSet(myKeywords2);
-    cl.myKeywords3 = new TreeSet(myKeywords3);
-    cl.myKeywords4 = new TreeSet(myKeywords4);
+    cl.myKeywords1 = new TreeSet<String>(myKeywords1);
+    cl.myKeywords2 = new TreeSet<String>(myKeywords2);
+    cl.myKeywords3 = new TreeSet<String>(myKeywords3);
+    cl.myKeywords4 = new TreeSet<String>(myKeywords4);
 
     return cl;
   }
@@ -54,7 +54,7 @@ public class SyntaxTable implements Cloneable {
     myKeywords1.add(keyword);
   }
 
-  public Set getKeywords1() {
+  public Set<String> getKeywords1() {
     return myKeywords1;
   }
 
@@ -62,7 +62,7 @@ public class SyntaxTable implements Cloneable {
     myKeywords2.add(keyword);
   }
 
-  public Set getKeywords2() {
+  public Set<String> getKeywords2() {
     return myKeywords2;
   }
 
@@ -70,7 +70,7 @@ public class SyntaxTable implements Cloneable {
     myKeywords3.add(keyword);
   }
 
-  public Set getKeywords3() {
+  public Set<String> getKeywords3() {
     return myKeywords3;
   }
 
@@ -78,7 +78,7 @@ public class SyntaxTable implements Cloneable {
     myKeywords4.add(keyword);
   }
 
-  public Set getKeywords4() {
+  public Set<String> getKeywords4() {
     return myKeywords4;
   }
 
@@ -87,7 +87,7 @@ public class SyntaxTable implements Cloneable {
   }
 
   public void setLineComment(String lineComment) {
-    this.myLineComment = lineComment;
+    myLineComment = lineComment;
   }
 
   public String getStartComment() {
@@ -95,7 +95,7 @@ public class SyntaxTable implements Cloneable {
   }
 
   public void setStartComment(String startComment) {
-    this.myStartComment = startComment;
+    myStartComment = startComment;
   }
 
   public String getEndComment() {
@@ -103,7 +103,7 @@ public class SyntaxTable implements Cloneable {
   }
 
   public void setEndComment(String endComment) {
-    this.myEndComment = endComment;
+    myEndComment = endComment;
   }
 
   public String getHexPrefix() {
@@ -111,7 +111,7 @@ public class SyntaxTable implements Cloneable {
   }
 
   public void setHexPrefix(String hexPrefix) {
-    this.myHexPrefix = hexPrefix;
+    myHexPrefix = hexPrefix;
   }
 
   public String getNumPostfixChars() {
@@ -119,7 +119,7 @@ public class SyntaxTable implements Cloneable {
   }
 
   public void setNumPostfixChars(String numPostfixChars) {
-    this.myNumPostfixChars = numPostfixChars;
+    myNumPostfixChars = numPostfixChars;
   }
 
   public boolean isIgnoreCase() {
