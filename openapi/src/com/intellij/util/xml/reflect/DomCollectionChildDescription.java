@@ -17,6 +17,8 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
 
   DomElement addValue(DomElement parent);
   DomElement addValue(DomElement parent, int index);
+  DomElement addValue(DomElement parent, Class aClass);
+  DomElement addValue(DomElement parent, Class aClass, int index);
 
   Method getClassAdderMethod();
 

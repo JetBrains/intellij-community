@@ -57,12 +57,12 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public DomElement addValue(DomElement element) {
-    return addChild(element, Integer.MAX_VALUE);
+    return addChild(element, getType(), Integer.MAX_VALUE);
   }
 
-  private DomElement addChild(final DomElement element, final int index) {
+  private DomElement addChild(final DomElement element, final Type type, final int index) {
     try {
-      return DomManagerImpl.getDomInvocationHandler(element).addChild(getXmlElementName(), getType(), index);
+      return DomManagerImpl.getDomInvocationHandler(element).addChild(getXmlElementName(), type, index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
@@ -70,7 +70,15 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public DomElement addValue(DomElement element, int index) {
-    return addChild(element, index + myStartIndex);
+    return addChild(element, getType(), index + myStartIndex);
+  }
+
+  public DomElement addValue(DomElement parent, Class aClass) {
+    return addValue(parent, aClass, Integer.MAX_VALUE);
+  }
+
+  public final DomElement addValue(DomElement parent, Class aClass, int index) {
+    return addChild(parent, aClass, Integer.MAX_VALUE);
   }
 
   public Method getGetterMethod() {
