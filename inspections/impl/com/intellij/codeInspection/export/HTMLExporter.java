@@ -12,6 +12,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -64,9 +66,9 @@ public class HTMLExporter {
     buf.append("<hr>");
   }
 
-  public static void writeFile(String folder, @NonNls String fileName, StringBuffer buf, Project project) {
+  public static void writeFile(String folder, @NonNls String fileName, StringBuffer buf, final Project project) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    String fullPath = folder + File.separator + fileName;
+    final String fullPath = folder + File.separator + fileName;
 
     if (indicator != null) {
       ProgressManager.getInstance().checkCanceled();
@@ -80,12 +82,17 @@ public class HTMLExporter {
       writer = new FileWriter(fullPath);
       writer.write(buf.toString().toCharArray());
     } catch (IOException e) {
-      Messages.showMessageDialog(
-        project,
-        InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
-        InspectionsBundle.message("inspection.export.results.error.title"),
-        Messages.getErrorIcon()
-      );
+      Runnable showError = new Runnable() {
+        public void run() {
+          Messages.showMessageDialog(
+            project,
+            InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
+            InspectionsBundle.message("inspection.export.results.error.title"),
+            Messages.getErrorIcon()
+          );
+        }
+      };
+      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MMODAL);
       throw new ProcessCanceledException();
     } finally {
       if (writer != null) {
