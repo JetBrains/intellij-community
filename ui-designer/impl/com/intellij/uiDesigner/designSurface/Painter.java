@@ -1,11 +1,9 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,11 +30,11 @@ public final class Painter {
   /**
    * This color is used to paint grid cell for selected container
    */
-  private static final Color SELECTED_GRID_COLOR = new Color(47, 67, 96);
+  static final Color SELECTED_GRID_COLOR = new Color(47, 67, 96);
   /**
    * This color is used to paint grid cell for non selected container
    */
-  private static final Color NON_SELECTED_GRID_COLOR = new Color(130, 140, 155);
+  static final Color NON_SELECTED_GRID_COLOR = new Color(130, 140, 155);
 
   public final static int WEST_MASK = 1;
   public final static int EAST_MASK = 2;
@@ -192,72 +190,8 @@ public final class Painter {
     g.translate(point.x, point.y);
     try{
       // Paint grid
-      final GridLayoutManager gridLayout = (GridLayoutManager)container.getLayout();
-      if (component.isSelected()) {
-        g.setColor(SELECTED_GRID_COLOR);
-      }
-      else {
-        g.setColor(NON_SELECTED_GRID_COLOR);
-      }
-
-      // Horizontal lines
-      final int width = component.getWidth();
-      final int[] horzGridLines = gridLayout.getHorizontalGridLines();
-      final int height = component.getHeight();
-      final int[] vertGridLines = gridLayout.getVerticalGridLines();
-
-      boolean[][] horzSkippedLineSegments = null;
-      boolean[][] vertSkippedLineSegments = null;
-      for(RadComponent childComponent: container.getComponents()) {
-        final GridConstraints constraints = childComponent.getConstraints();
-        if (constraints.getColSpan() > 1) {
-          if (vertSkippedLineSegments == null) {
-            vertSkippedLineSegments = new boolean[vertGridLines.length][height+4];
-          }
-          for(int col = constraints.getColumn()+1; col < constraints.getColumn() + constraints.getColSpan(); col++) {
-            for(int y=horzGridLines [constraints.getRow()]+4;
-                y<horzGridLines [constraints.getRow() + constraints.getRowSpan()]-4;
-                y++) {
-              vertSkippedLineSegments [col][y] = true;
-            }
-          }
-
-        }
-        if (constraints.getRowSpan() > 1) {
-          if (horzSkippedLineSegments == null) {
-            horzSkippedLineSegments = new boolean[horzGridLines.length][width+4];
-          }
-          for(int row = constraints.getRow()+1; row < constraints.getRow() + constraints.getRowSpan(); row++) {
-            for(int x=vertGridLines [constraints.getColumn()]+4;
-                x<vertGridLines [constraints.getColumn() + constraints.getColSpan()]-4;
-                x++) {
-              horzSkippedLineSegments [row][x] = true;
-            }
-          }
-        }
-      }
-
-
-      for (int i = 1; i < horzGridLines.length - 1; i++) {
-        final int y = horzGridLines [i];
-        // Draw dotted horizontal line
-        for(int x = 0; x < width; x+=4) {
-          if (horzSkippedLineSegments == null || (!horzSkippedLineSegments[i][x] && !horzSkippedLineSegments[i][x+1] && !horzSkippedLineSegments[i][x+2])) {
-            UIUtil.drawLine(g, x, y, Math.min(x + 2, width - 1), y);
-          }
-        }
-      }
-
-      // Vertical lines
-      for (int i = 1; i < vertGridLines.length - 1; i++) {
-        final int x = vertGridLines [i];
-        // Draw dotted vertical line
-        for(int y = 0; y < height; y+=4) {
-          if (vertSkippedLineSegments == null || (!vertSkippedLineSegments[i][y] && !vertSkippedLineSegments[i][y+1] && !vertSkippedLineSegments[i][y+2])) {
-            UIUtil.drawLine(g, x, y, x, Math.min(y + 2, height - 1));
-          }
-        }
-      }
+      Image gridImage = CachedGridImage.getGridImage(container);
+      g.drawImage(gridImage, 0, 0, null);
     }finally{
       g.translate(-point.x, -point.y);
     }
@@ -411,7 +345,8 @@ public final class Painter {
     g2d.setColor(new Color(104, 107, 130));
     if (lastTop != Integer.MIN_VALUE) {
       // all items in group have same Y
-      int left = Integer.MAX_VALUE, right = Integer.MIN_VALUE;
+      int left = Integer.MAX_VALUE;
+      int right = Integer.MIN_VALUE;
       for(Rectangle rc: allBounds) {
         final int midX = (int)rc.getCenterX();
         left = Math.min(left, midX);
@@ -421,7 +356,8 @@ public final class Painter {
       g2d.drawLine(left, lastTop-8, right, lastTop-8);
     }
     else {
-      int top = Integer.MAX_VALUE, bottom = Integer.MIN_VALUE;
+      int top = Integer.MAX_VALUE;
+      int bottom = Integer.MIN_VALUE;
       for(Rectangle rc: allBounds) {
         final int midY = (int)rc.getCenterY();
         top = Math.min(top, midY);
