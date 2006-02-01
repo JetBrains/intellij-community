@@ -15,13 +15,11 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.util.ArrayUtil;
-import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
@@ -94,7 +92,6 @@ public abstract class RadComponent implements IComponent {
   private boolean myHasDragger;
   private boolean myResizing;
   private boolean myDragging;
-  private Border myOriginalBorder;
 
   /**
    * Creates new <code>RadComponent</code> with the specified
@@ -266,16 +263,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   public void setDragBorder(final boolean dragging) {
-    if (dragging != myDragging) {
-      myDragging = dragging;
-      if (dragging) {
-        myOriginalBorder = getDelegee().getBorder();
-        getDelegee().setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(LightColors.YELLOW, 2), myOriginalBorder));
-      }
-      else {
-        getDelegee().setBorder(myOriginalBorder);
-      }
-    }
+    myDragging = dragging;
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l){

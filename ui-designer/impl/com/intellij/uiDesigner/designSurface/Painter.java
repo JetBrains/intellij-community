@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -111,13 +112,13 @@ public final class Painter {
    * of <code>RadContainer</code>.
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
-    if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm)){
+    if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragging()){
       return;
     }
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    if (component instanceof RadContainer) {
+    if (component instanceof RadContainer && !component.isDragging()) {
       RadContainer container = (RadContainer) component;
       if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
         return;
@@ -131,7 +132,13 @@ public final class Painter {
     );
     g.translate(point.x, point.y);
     try{
-      if (highlightBoundaries) {
+      if (component.isDragging()) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(LightColors.YELLOW);
+        g2d.setStroke(new BasicStroke(2.0f));
+        g2d.translate(1, 1);
+      }
+      else if (highlightBoundaries) {
         g.setColor(HIGHLIGHTED_BOUNDARY_COLOR);
       }
       else if (component.isSelected()) {
@@ -141,6 +148,9 @@ public final class Painter {
         g.setColor(NON_SELECTED_BOUNDARY_COLOR);
       }
       g.drawRect(0, 0, component.getWidth() - 1, component.getHeight() - 1);
+      if (component.isDragging()) {
+        g.translate(-1, -1);
+      }
     }finally{
       g.translate(-point.x, -point.y);
     }
