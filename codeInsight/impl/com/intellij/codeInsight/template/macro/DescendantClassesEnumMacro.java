@@ -89,10 +89,11 @@ public class DescendantClassesEnumMacro implements Macro{
     if (classes == null || classes.size() == 0) return null;
 
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-    boolean isFQN = params.length > 1 && Boolean.valueOf(params[1].calculateResult(context).toString());
+    boolean isShortName = params.length > 1 && !Boolean.valueOf(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
-      LookupItemUtil.addLookupItem(set, isFQN ? object.getQualifiedName() : object.getName(), "");
+      final String name = isShortName ? object.getName() : object.getQualifiedName();
+      if (name != null && name.length() > 0) LookupItemUtil.addLookupItem(set, name, "");
     }
 
     return set.toArray(new LookupItem[set.size()]);
