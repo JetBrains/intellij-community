@@ -93,7 +93,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  private boolean isDocumentModified(VirtualFile virtualFile) {
+  private static boolean isDocumentModified(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return false;
     final Document editorDocument = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
 
@@ -160,8 +160,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     myCachedStatuses.clear();
 
     final FileStatusListener[] listeners = myListeners.toArray(new FileStatusListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      FileStatusListener listener = listeners[i];
+    for (FileStatusListener listener : listeners) {
       listener.fileStatusesChanged();
     }
   }
@@ -185,8 +184,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     myCachedStatuses.put(file, newStatus);
 
     final FileStatusListener[] listeners = myListeners.toArray(new FileStatusListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      FileStatusListener listener = listeners[i];
+    for (FileStatusListener listener : listeners) {
       listener.fileStatusChanged(file);
     }
   }
@@ -229,8 +227,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       myInsideCommand = false;
 
       if (!myChangedFiles.isEmpty()) {
-        for (Iterator<VirtualFile> i = myChangedFiles.iterator(); i.hasNext();) {
-          final VirtualFile file = i.next();
+        for (final VirtualFile file : myChangedFiles) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               fileStatusChanged(file);
