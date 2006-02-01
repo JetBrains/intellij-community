@@ -230,7 +230,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return result;
   }
 
-  private void makeSameSizes(int[] widths) {
+  private static void makeSameSizes(int[] widths) {
     int max = widths[0];
     for (int i = 0; i < widths.length; i++) {
       int width = widths[i];
@@ -242,7 +242,7 @@ public final class GridLayoutManager extends AbstractLayout {
     }
   }
 
-  private int[] getSameSizes(DimensionInfo info, int totalWidth) {
+  private static int[] getSameSizes(DimensionInfo info, int totalWidth) {
     int[] widths = new int[info.getCellCount()];
 
     int average = totalWidth / widths.length;
@@ -298,19 +298,25 @@ public final class GridLayoutManager extends AbstractLayout {
       insets.top + insets.bottom + countGap(vInfo, 0, vInfo.getCellCount()) + myMargin.top + myMargin.bottom);
   }
 
-  private Insets getInsets(Container container) {
-    final Insets insets = container.getInsets();
+  private static int getDesignTimeInsets(Container container) {
     while(container != null) {
       if (container instanceof JComponent) {
         Integer designTimeInsets = (Integer)((JComponent) container).getClientProperty(DESIGN_TIME_INSETS);
         if (designTimeInsets != null) {
-          int insetsValue = designTimeInsets.intValue();
-          return new Insets(insets.top+insetsValue, insets.left+insetsValue,
-                            insets.bottom+insetsValue, insets.right+insetsValue);
-
+          return designTimeInsets.intValue();
         }
       }
       container = container.getParent();
+    }
+    return 0;
+  }
+
+  private static Insets getInsets(Container container) {
+    final Insets insets = container.getInsets();
+    int insetsValue = getDesignTimeInsets(container);
+    if (insetsValue != 0) {
+      return new Insets(insets.top+insetsValue, insets.left+insetsValue,
+                        insets.bottom+insetsValue, insets.right+insetsValue);
     }
     return insets;
   }
@@ -510,7 +516,8 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private void validateInfos(final Container container) {
     if (myLayoutState == null) {
-      myLayoutState = new LayoutState(this, true);
+      // TODO[yole]: Implement cleaner way of determining whether invisible components should be ignored
+      myLayoutState = new LayoutState(this, getDesignTimeInsets(container) == 0);
       myHorizontalInfo = new HorizontalInfo(myLayoutState, getHGapImpl(container));
       myVerticalInfo = new VerticalInfo(myLayoutState, getVGapImpl(container));
     }
@@ -839,7 +846,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return getGridLineNear(x, epsilon, getVerticalGridLines());
   }
 
-  private int getGridLineNear(final int coord, final int epsilon, final int[] gridLines) {
+  private static int getGridLineNear(final int coord, final int epsilon, final int[] gridLines) {
     for(int col = 1; col <gridLines.length; col++) {
       if (coord < gridLines [col]) {
         if (coord - gridLines [col-1] < epsilon) {

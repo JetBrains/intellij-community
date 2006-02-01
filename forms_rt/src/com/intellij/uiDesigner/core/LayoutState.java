@@ -18,6 +18,9 @@ package com.intellij.uiDesigner.core;
 import java.awt.*;
 import java.util.ArrayList;
 
+/**
+ * @noinspection unchecked
+ */
 public final class LayoutState {
   private final Component[] myComponents;
   private final GridConstraints[] myConstraints;
@@ -26,7 +29,7 @@ public final class LayoutState {
   final Dimension[] myPreferredSizes;
   final Dimension[] myMinimumSizes;
 
-  public LayoutState(final GridLayoutManager layout, final boolean ignoreInvisibleComponents){
+  public LayoutState(final GridLayoutManager layout, final boolean ignoreInvisibleComponents) {
     // collect all visible components
     final ArrayList componentsList = new ArrayList(layout.getComponentCount());
     final ArrayList constraintsList = new ArrayList(layout.getComponentCount());

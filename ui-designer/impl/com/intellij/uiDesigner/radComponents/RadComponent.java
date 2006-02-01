@@ -1,25 +1,27 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.RevalidateInfo;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.RevalidateInfo;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
@@ -91,6 +93,8 @@ public abstract class RadComponent implements IComponent {
 
   private boolean myHasDragger;
   private boolean myResizing;
+  private boolean myDragging;
+  private Border myOriginalBorder;
 
   /**
    * Creates new <code>RadComponent</code> with the specified
@@ -250,6 +254,28 @@ public abstract class RadComponent implements IComponent {
 
   public void setResizing(final boolean resizing) {
     myResizing = resizing;
+  }
+
+  public boolean isDragging() {
+    return myDragging;
+  }
+
+  public void setDragging(final boolean dragging) {
+    myDragging = dragging;
+    getDelegee().setVisible(!myDragging);
+  }
+
+  public void setDragBorder(final boolean dragging) {
+    if (dragging != myDragging) {
+      myDragging = dragging;
+      if (dragging) {
+        myOriginalBorder = getDelegee().getBorder();
+        getDelegee().setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(LightColors.YELLOW, 2), myOriginalBorder));
+      }
+      else {
+        getDelegee().setBorder(myOriginalBorder);
+      }
+    }
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l){

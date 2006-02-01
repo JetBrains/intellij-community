@@ -1,18 +1,19 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ide.palette.impl.PaletteManager;
+import com.intellij.uiDesigner.CutCopyPasteSupport;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.SimpleTransferable;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,6 +23,7 @@ class DesignDropTargetListener implements DropTargetListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DesignDropTargetListener");
 
   private DraggedComponentList myDraggedComponentList;
+  private List<RadComponent> myDraggedComponentsCopy;
   private Point myLastPoint;
   private final GuiEditor myEditor;
   private final GridInsertProcessor myGridInsertProcessor;
@@ -37,7 +39,7 @@ class DesignDropTargetListener implements DropTargetListener {
       DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         myDraggedComponentList = dcl;
-        processDragEnter(dcl, dtde.getLocation());
+        processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
         dtde.acceptDrag(dtde.getDropAction());
         myLastPoint = dtde.getLocation();
       }
@@ -54,12 +56,8 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
-  private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location) {
-    // Remove components from their parents.
+  private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location, final int dropAction) {
     final List<RadComponent> dragComponents = draggedComponentList.getComponents();
-    for (final RadComponent c : dragComponents) {
-      c.getParent().removeComponent(c);
-    }
 
     Rectangle allBounds = null;
     if (!draggedComponentList.hasDragDelta() || !myUseDragDelta) {
@@ -79,10 +77,12 @@ class DesignDropTargetListener implements DropTargetListener {
     }
 
     // Place selected components to the drag layer.
-    for (final RadComponent c : dragComponents) {
-      final JComponent delegee = c.getDelegee();
+    myDraggedComponentsCopy = CutCopyPasteSupport.copyComponents(myEditor, dragComponents);
+    for (int i=0; i<dragComponents.size(); i++) {
+      myDraggedComponentsCopy.get(i).setSelected(true);
+      final JComponent delegee = myDraggedComponentsCopy.get(i).getDelegee();
       final Point point = SwingUtilities.convertPoint(
-        draggedComponentList.getOriginalParent(c).getDelegee(),
+        draggedComponentList.getOriginalParents() [i].getDelegee(),
         delegee.getLocation(),
         myEditor.getDragLayer()
       );
@@ -95,19 +95,26 @@ class DesignDropTargetListener implements DropTargetListener {
         delegee.setLocation((int) (point.getX() - allBounds.getX() + location.getX()),
                             (int) (point.getY() - allBounds.getY() + location.getY()));
       }
-      myEditor.getDragLayer().add(delegee);
+      //myEditor.getDragLayer().add(delegee);
+    }
+
+    for (final RadComponent c : dragComponents) {
+      if (dropAction != DnDConstants.ACTION_COPY) {
+        c.setDragBorder(true);
+      }
+      c.setSelected(false);
     }
   }
 
   public void dragOver(DropTargetDragEvent dtde) {
     try {
-      final int dx = (int)(dtde.getLocation().getX() - myLastPoint.x);
-      final int dy = (int)(dtde.getLocation().getY() - myLastPoint.y);
+      final int dx = dtde.getLocation().x - myLastPoint.x;
+      final int dy = dtde.getLocation().y - myLastPoint.y;
 
       int dragSize = 1;
       int dragCol = 0;
-      if (myDraggedComponentList != null) {
-        for (RadComponent aMySelection : myDraggedComponentList.getComponents()) {
+      if (myDraggedComponentsCopy != null && myDraggedComponentList != null) {
+        for (RadComponent aMySelection : myDraggedComponentsCopy) {
           aMySelection.shift(dx, dy);
         }
         dragSize = myDraggedComponentList.getComponents().size();
@@ -135,16 +142,21 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   public void dropActionChanged(DropTargetDragEvent dtde) {
+    DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+    if (dcl != null) {
+      setDraggingState(dcl, dtde.getDropAction() != DnDConstants.ACTION_COPY);
+    }
   }
 
   public void dragExit(DropTargetEvent dte) {
     try {
       myUseDragDelta = false;
       if (myDraggedComponentList != null) {
-        cancelDrag(myDraggedComponentList);
+        cancelDrag();
         myDraggedComponentList = null;
         myEditor.setDesignTimeInsets(2);
       }
+      myDraggedComponentsCopy = null;
     }
     catch (Exception e) {
       LOG.error(e);
@@ -174,6 +186,7 @@ class DesignDropTargetListener implements DropTargetListener {
           });
         }
       }
+      myDraggedComponentsCopy = null;
       myEditor.repaintLayeredPane();
     }
     catch (Exception e) {
@@ -183,8 +196,8 @@ class DesignDropTargetListener implements DropTargetListener {
 
   private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {
     myEditor.getActiveDecorationLayer().removeFeedback();
-    final int dropX = (int)dropPoint.getX();
-    final int dropY = (int)dropPoint.getY();
+    final int dropX = dropPoint.x;
+    final int dropY = dropPoint.y;
     final int componentCount = dcl.getComponents().size();
     GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(
       myEditor, dropX, dropY, dcl.getDragRelativeColumn());
@@ -201,32 +214,35 @@ class DesignDropTargetListener implements DropTargetListener {
       return false;
     }
 
-    ArrayList<RadComponent> droppedComponents;
+    List<RadComponent> droppedComponents;
 
+    RadContainer[] originalParents = dcl.getOriginalParents();
+
+    cancelDrag();
     if (dropAction == DnDConstants.ACTION_COPY) {
-      final String serializedComponents = CutCopyPasteSupport.serializeForCopy(myEditor, dcl.getComponents());
-      cancelDrag(dcl);
-
-      droppedComponents = CutCopyPasteSupport.deserializeComponents(myEditor, serializedComponents);
+      setDraggingState(dcl, false);
+      droppedComponents = myDraggedComponentsCopy;
       if (droppedComponents == null) {
         return false;
       }
     }
     else {
+      for(int i=0; i<dcl.getComponents().size(); i++) {
+        originalParents [i].removeComponent(dcl.getComponents().get(i));
+      }
       droppedComponents = dcl.getComponents();
     }
 
     final int[] dx = new int[componentCount];
     final int[] dy = new int[componentCount];
     for (int i = 0; i < componentCount; i++) {
-      final RadComponent component = droppedComponents.get(i);
+      final RadComponent component = myDraggedComponentsCopy.get(i);
       dx[i] = component.getX() - dropX;
       dy[i] = component.getY() - dropY;
     }
 
     final RadComponent[] components = droppedComponents.toArray(new RadComponent[componentCount]);
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
-    final RadContainer[] originalParents = dcl.getOriginalParents();
 
     if (location != null && location.getMode() != GridInsertMode.None) {
       myGridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
@@ -249,6 +265,9 @@ class DesignDropTargetListener implements DropTargetListener {
         InsertComponentProcessor.createBindingWhenDrop(myEditor, component);
       }
     }
+    else {
+      setDraggingState(dcl, false);
+    }
 
     for (int i = 0; i < originalConstraints.length; i++) {
       if (originalParents[i].isGrid()) {
@@ -258,17 +277,19 @@ class DesignDropTargetListener implements DropTargetListener {
     return true;
   }
 
-  private void cancelDrag(DraggedComponentList draggedComponentList) {
-    for (RadComponent c : draggedComponentList.getComponents()) {
-      c.getConstraints().restore(draggedComponentList.getOriginalConstraints(c));
-      c.setBounds(draggedComponentList.getOriginalBounds(c));
-
-      final RadContainer originalParent = draggedComponentList.getOriginalParent(c);
-      if (c.getParent() != originalParent) {
-        originalParent.addComponent(c);
+  private void cancelDrag() {
+    if (myDraggedComponentsCopy != null) {
+      for(RadComponent c: myDraggedComponentsCopy) {
+        myEditor.getDragLayer().remove(c.getDelegee());
       }
     }
     myEditor.refresh();
+  }
+
+  private static void setDraggingState(final DraggedComponentList draggedComponentList, final boolean dragging) {
+    for (RadComponent c: draggedComponentList.getComponents()) {
+      c.setDragBorder(dragging);
+    }
   }
 
   public void setUseDragDelta(final boolean useDragDelta) {

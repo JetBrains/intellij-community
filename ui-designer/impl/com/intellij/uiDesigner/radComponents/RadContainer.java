@@ -270,12 +270,16 @@ public class RadContainer extends RadComponent implements IContainer {
   public RadComponent getComponentAtGrid(final int row, final int column) {
     // If the target cell is not empty does not allow drop.
     for(int i=0; i<getComponentCount(); i++){
-      final GridConstraints c=getComponent(i).getConstraints();
+      final RadComponent component = getComponent(i);
+      if (component.isDragging()) {
+        continue;
+      }
+      final GridConstraints constraints=component.getConstraints();
       if(
-        c.getRow() <= row && row < c.getRow()+c.getRowSpan() &&
-        c.getColumn() <= column && column < c.getColumn()+c.getColSpan()
+        constraints.getRow() <= row && row < constraints.getRow()+constraints.getRowSpan() &&
+        constraints.getColumn() <= column && column < constraints.getColumn()+constraints.getColSpan()
       ){
-        return getComponent(i);
+        return component;
       }
     }
     return null;
