@@ -31,14 +31,8 @@ public class CurrentLineMarker implements CaretListener {
   public void set() {
     if (myEditor == null) return;
     hide();
-    myHighlighter = myEditor.getMarkupModel().addLineHighlighter(myEditor.getCaretModel().getLogicalPosition().line, LAYER, null);
-    if (myHighlighter != null) {
-      //myHighlighter.setGutterIconRenderer(new GutterIconRenderer() {
-      //  public Icon getIcon() {
-      //    return CURRENT_LINE_MARKER_ICON;
-      //  }
-      //});
-    }
+    final int line = myEditor.getCaretModel().getLogicalPosition().line;
+    myHighlighter = line < myEditor.getDocument().getLineCount() ? myEditor.getMarkupModel().addLineHighlighter(line, LAYER, null) : null;
   }
 
   private boolean isHiden() { return myHighlighter == null; }

@@ -4,12 +4,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,18 +40,13 @@ public class SharedPsiElementImplUtil {
 
   private static PsiReference[] extractReference(int offset, PsiElement element) {
     final List<PsiReference> referencesList = new ArrayList<PsiReference>();
-    int offsetInElement = offset;
-
-
-    final PsiReference[] references = element.getReferences();
-    LOG.assertTrue(references != null, element.toString());
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : element.getReferences()) {
       if (reference == null) {
         LOG.error(element.toString());
       }
       final TextRange range = reference.getRangeInElement();
-      if (range.getStartOffset() <= offsetInElement &&
-          (offsetInElement < range.getEndOffset() || (offsetInElement == range.getEndOffset() && range.getLength() == 0))) {
+      if (range.getStartOffset() <= offset &&
+          (offset < range.getEndOffset() || (offset == range.getEndOffset() && range.getLength() == 0))) {
         referencesList.add(reference);
       }
     }

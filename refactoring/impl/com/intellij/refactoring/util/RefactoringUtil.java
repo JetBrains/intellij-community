@@ -729,16 +729,21 @@ public class RefactoringUtil {
           anchor = firstAnchor;
         }
         else {
-          PsiElement parent = firstAnchor;
-          while (!parent.getParent().equals(commonParent)) {
-            parent = parent.getParent();
-          }
-          final PsiElement newAnchor = getParentExpressionAnchorElement(parent);
-          if (newAnchor != null) {
-            anchor = newAnchor;
+          if (commonParent instanceof PsiStatement) {
+            anchor = commonParent;
           }
           else {
-            anchor = parent;
+            PsiElement parent = firstAnchor;
+            while (!parent.getParent().equals(commonParent)) {
+              parent = parent.getParent();
+            }
+            final PsiElement newAnchor = getParentExpressionAnchorElement(parent);
+            if (newAnchor != null) {
+              anchor = newAnchor;
+            }
+            else {
+              anchor = parent;
+            }
           }
         }
       }

@@ -47,7 +47,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   public RangeHighlighter addLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) return null;
+    if (lineNumber >= getDocument().getLineCount() || lineNumber < 0) {
+      throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Shold be in [0, " + (getDocument().getLineCount() - 1) + "]");
+    }
 
     int offset = getFirstNonspaceCharOffset(getDocument(), lineNumber);
 
