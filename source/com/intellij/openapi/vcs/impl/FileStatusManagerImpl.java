@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -30,7 +31,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.FileStatusManagerImpl");
 
-  private final com.intellij.util.containers.HashMap<VirtualFile, FileStatus> myCachedStatuses = new com.intellij.util.containers.HashMap<VirtualFile, FileStatus>();
+  private final HashMap<VirtualFile, FileStatus> myCachedStatuses = new HashMap<VirtualFile, FileStatus>();
 
   private Project myProject;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
