@@ -58,41 +58,41 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
 
     final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        PsiReference reference = element.findReferenceAt(offsetInElement);
+        final PsiReference[] refs = element.getReferences();
+        for (PsiReference ref : refs) {
+          if (ref.getRangeInElement().contains(offsetInElement)) {
+            for (PsiMethod method : methods) {
+              if (ref.isReferenceTo(method)) {
+                return consumer.process(ref);
+              }
+              PsiElement refElement = ref.resolve();
 
-        if (reference != null) {
-          for (PsiMethod method : methods) {
-            if (reference.isReferenceTo(method)) {
-              return consumer.process(reference);
-            }
-            PsiElement refElement = reference.resolve();
+              if (refElement instanceof PsiMethod) {
+                PsiMethod refMethod = (PsiMethod)refElement;
+                PsiClass refMethodClass = refMethod.getContainingClass();
+                if (refMethodClass == null) return true;
 
-            if (refElement instanceof PsiMethod) {
-              PsiMethod refMethod = (PsiMethod)refElement;
-              PsiClass refMethodClass = refMethod.getContainingClass();
-              if (refMethodClass == null) return true;
+                if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
+                  PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
+                  if (substitutor != null) {
+                    if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
+                      if (!consumer.process(ref)) return false;
+                    }
+                  }
+                }
 
-              if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
-                if (substitutor != null) {
-                  if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
-                    if (!consumer.process(reference)) return false;
+                if (!isStrictSignatureSearch) {
+                  PsiManager manager = method.getManager();
+                  if (manager.areElementsEquivalent(refMethodClass, aClass)) {
+                    if (!consumer.process(ref)) return false;
                   }
                 }
               }
-
-              if (!isStrictSignatureSearch) {
-                PsiManager manager = method.getManager();
-                if (manager.areElementsEquivalent(refMethodClass, aClass)) {
-                  return consumer.process(reference);
-                }
+              else {
+                return true;
               }
             }
-            else {
-              return true;
-            }
           }
-          return true;
         }
 
         return true;
