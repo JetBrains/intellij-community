@@ -1,13 +1,10 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -27,20 +24,26 @@ import java.util.Map;
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
 
-  public static Object[] insertMembersAtOffset(Project project,
-                                               Document document,
-                                               PsiFile file,
-                                               int offset,
-                                               Object[] memberPrototypes) throws IncorrectOperationException {
+  private GenerateMembersUtil() {
+  }
+
+  public static Object[] insertMembersAtOffset(PsiFile file, int offset, Object[] memberPrototypes) throws IncorrectOperationException {
     PsiElement anchor = findAnchor(file, offset);
     if (anchor == null) return null;
     PsiClass aClass = (PsiClass) anchor.getParent();
 
     PsiJavaToken lBrace = aClass.getLBrace();
-    if (lBrace == null) return null;
-    PsiJavaToken rBrace = aClass.getRBrace();
-    if (!isChildInRange(anchor, lBrace.getNextSibling(), rBrace)) {
+    if (lBrace == null) {
       anchor = null;
+    } else {
+      PsiJavaToken rBrace = aClass.getRBrace();
+      if (!isChildInRange(anchor, lBrace.getNextSibling(), rBrace)) {
+        anchor = null;
+      }
+    }
+
+    if (anchor instanceof PsiWhiteSpace) {
+      anchor = anchor.getNextSibling();
     }
 
     // Q: shouldn't it be somewhere in PSI?
@@ -58,77 +61,6 @@ public class GenerateMembersUtil {
           anchor = field;
         }
       }
-    }
-
-    if (anchor instanceof PsiWhiteSpace) {
-      //If anchor was found further due to enum constants
-      offset = Math.max(anchor.getTextRange().getStartOffset(), offset);
-
-      String savedDocumentText = document.getText(); // debug only!
-
-      @NonNls String markerText = "/***/a b;";
-      document.insertString(offset, markerText);
-      RangeMarker marker = document.createRangeMarker(offset, offset + markerText.length());
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      Object[] newMembers = insertMembersAtOffset(project, document, file, offset, memberPrototypes);
-
-      SmartPsiElementPointer[] pointers = new SmartPsiElementPointer[newMembers.length];
-      for (int i = 0; i < newMembers.length; i++) {
-        Object member = newMembers[i];
-        PsiElement element;
-        if (member instanceof PsiElement) {
-          element = (PsiElement) member;
-        }
-        else if (member instanceof TemplateGenerationInfo) {
-          element = ((TemplateGenerationInfo) member).element;
-        }
-        else {
-          LOG.assertTrue(false);
-          continue;
-        }
-        pointers[i] = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
-      }
-
-      LOG.assertTrue(marker.isValid());
-      String newMarkerText = document.getCharsSequence().subSequence(marker.getStartOffset(),
-                                                                     marker.getEndOffset()).toString();
-      LOG.assertTrue(newMarkerText.equals(markerText));
-      int membersEnd = ((PsiElement) newMembers[newMembers.length - 1]).getTextRange().getEndOffset(); // do-now: templates!!
-
-      if (marker.getEndOffset() < membersEnd) {
-        LOG.error("marker.getEndOffset():" + marker.getEndOffset());
-        LOG.error("membersEnd:" + membersEnd);
-        LOG.error("offset:" + offset);
-        LOG.error(savedDocumentText);
-      }
-
-      document.deleteString(membersEnd, marker.getEndOffset());
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      PsiElement space = file.findElementAt(membersEnd);
-      LOG.assertTrue(space instanceof PsiWhiteSpace);
-      TextRange spaceRange = space.getTextRange();
-      CodeStyleManager.getInstance(project).reformatRange(file, spaceRange.getStartOffset(), spaceRange.getEndOffset());
-
-      for (int i = 0; i < pointers.length; i++) {
-        SmartPsiElementPointer pointer = pointers[i];
-        Object member = newMembers[i];
-        PsiElement element = pointer.getElement();
-        LOG.assertTrue(element != null);
-        if (member instanceof PsiElement) {
-          newMembers[i] = element;
-        }
-        else if (member instanceof TemplateGenerationInfo) {
-          ((TemplateGenerationInfo) member).element = element;
-        }
-        else {
-          LOG.assertTrue(false);
-          continue;
-        }
-      }
-
-      return newMembers;
     }
 
     return insertMembersBeforeAnchor(aClass, anchor, memberPrototypes);
@@ -188,8 +120,8 @@ public class GenerateMembersUtil {
         PsiElement r = body.getLastBodyElement();
         while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
         LOG.assertTrue(l != null && r != null);
-        int start = l.getTextRange().getStartOffset(),
-            end = r.getTextRange().getEndOffset();
+        int start = l.getTextRange().getStartOffset();
+        int end = r.getTextRange().getEndOffset();
 
         editor.getCaretModel().moveToOffset(Math.min(start, end));
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -229,24 +161,6 @@ public class GenerateMembersUtil {
     else {
       return parent.add(element);
     }
-    /*
-    try{
-      if (anchor != null){
-        return before ? parent.addBefore(element, anchor) : parent.addAfter(element, anchor);
-      }
-      else{
-        return parent.add(element);
-      }
-    }
-    catch(IncorrectOperationException e){
-      if (anchor != null){
-        return parent.add(element);
-      }
-      else{
-        throw e;
-      }
-    }
-    */
   }
 
   private static PsiElement findAnchor(PsiFile file, int offset) {
@@ -317,7 +231,7 @@ public class GenerateMembersUtil {
           Pair<String, Integer> pair = m.get(paramType);
           if (pair != null) {
             paramName = pair.first + pair.second;
-            m.put(paramType, Pair.create(pair.first, new Integer(pair.second.intValue() + 1)));
+            m.put(paramType, Pair.create(pair.first, pair.second.intValue() + 1));
           }
           else {
             String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, paramType).names;
@@ -325,7 +239,7 @@ public class GenerateMembersUtil {
               paramName = names[0];
             } else paramName = "p" + i;
 
-            m.put(paramType, new Pair<String, Integer>(paramName, new Integer(1)));
+            m.put(paramType, new Pair<String, Integer>(paramName, 1));
           }
         }
 

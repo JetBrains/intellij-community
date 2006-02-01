@@ -915,7 +915,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try{
-            Object[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(project, editor.getDocument(), aClass.getContainingFile(), offset, prototypes);
+            Object[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
             GenerateMembersUtil.positionCaret(editor, (PsiElement)resultMembers[0], true);
           }
           catch(IncorrectOperationException e){

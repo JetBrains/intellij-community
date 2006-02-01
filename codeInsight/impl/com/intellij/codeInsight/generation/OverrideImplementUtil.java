@@ -417,7 +417,7 @@ public class OverrideImplementUtil {
       }
       else{
         PsiMethod[] prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertAtOverride);
-        resultMembers = GenerateMembersUtil.insertMembersAtOffset(project, editor.getDocument(), aClass.getContainingFile(), offset, prototypes);
+        resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
       }
 
       GenerateMembersUtil.positionCaret(editor, (PsiElement)resultMembers[0], true);

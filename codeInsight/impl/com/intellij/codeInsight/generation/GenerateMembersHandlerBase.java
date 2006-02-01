@@ -67,7 +67,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     Object[] newMembers;
     try{
       Object[] prototypes = generateMemberPrototypes(aClass, members);
-      newMembers = GenerateMembersUtil.insertMembersAtOffset(project, editor.getDocument(), aClass.getContainingFile(), offset, prototypes);
+      newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

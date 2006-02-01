@@ -55,7 +55,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
             prototypes[i] = generateDelegatePrototype(candidates[i], target);
           }
 
-          Object[] results = GenerateMembersUtil.insertMembersAtOffset(project, editor.getDocument(), file, offset, prototypes);
+          Object[] results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
           PsiMethod firstMethod = (PsiMethod)results[0];
           final PsiCodeBlock block = firstMethod.getBody();
