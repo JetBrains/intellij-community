@@ -75,7 +75,7 @@ public class PatternPackageSet implements PackageSet {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
     boolean isSource = fileIndex.isInSourceContent(vFile);
-    if (myScope == SCOPE_ANY) return !isSource && myModulePattern == null || isSource && matchesModule(vFile, fileIndex);
+    if (myScope == SCOPE_ANY) return fileIndex.isInContent(vFile) && matchesModule(vFile, fileIndex);
     if (myScope == SCOPE_SOURCE) {
       return isSource && !fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
     }
