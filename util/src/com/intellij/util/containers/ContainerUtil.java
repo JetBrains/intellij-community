@@ -145,6 +145,10 @@ public class ContainerUtil {
     return null;
   }
 
+  public static <T,V> List<V> map2List(T[] array, Function<T,V> mapper) {
+    return map2List(Arrays.asList(array), mapper);
+  }
+
   public static <T,V> List<V> map2List(Collection<? extends T> collection, Function<T,V> mapper) {
     final ArrayList<V> list = new ArrayList<V>(collection.size());
     for (final T t : collection) {
