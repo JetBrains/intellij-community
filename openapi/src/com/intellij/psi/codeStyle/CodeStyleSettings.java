@@ -707,6 +707,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   @NonNls public String SESSION_LHI_SUFFIX = "Home";   //SessionBean local Home interface name suffix
   @NonNls public String SESSION_LI_PREFIX = "Local";   //SessionBean local interface name prefix
   @NonNls public String SESSION_LI_SUFFIX = "";        //SessionBean local interface name suffix
+  @NonNls public String SESSION_SI_PREFIX = "";   //SessionBean service endpoint interface name prefix
+  @NonNls public String SESSION_SI_SUFFIX = "Service";        //SessionBean service endpoint interface name suffix
   @NonNls public String SESSION_DD_PREFIX = "";        //SessionBean deployment descriptor name prefix
   @NonNls public String SESSION_DD_SUFFIX = "EJB";     //SessionBean deployment descriptor name suffix
 
