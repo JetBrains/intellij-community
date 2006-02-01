@@ -1,7 +1,7 @@
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.Location;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Location;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.FailedTestsNavigator;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
@@ -9,11 +9,10 @@ import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.junit2.ui.properties.ScrollToTestSourceAction;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.actions.ExpandAllToolbarAction;
-import com.intellij.ide.actions.NextOccurenceToolbarAction;
-import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -23,11 +22,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.config.ToggleBooleanProperty;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator {
   //private final DefaultActionGroup myActions = new DefaultActionGroup(null, false);
@@ -54,8 +52,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
     actionGroup.add(new ExpandAllToolbarAction(myTreeExpander, ExecutionBundle.message("junit.runing.info.expand.test.action.name")));
 
     actionGroup.addSeparator();
-    actionGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
-    actionGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
+    actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
     actionGroup.addSeparator();
     actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                               null,
