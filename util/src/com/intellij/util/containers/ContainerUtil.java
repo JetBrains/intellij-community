@@ -153,6 +153,15 @@ public class ContainerUtil {
     return list;
   }
 
+  public static <T,V> Set<V> map2Set(Collection<? extends T> collection, Function<T,V> mapper) {
+    final Set<V> list = new HashSet<V>(collection.size());
+    for (final T t : collection) {
+      list.add(mapper.fun(t));
+    }
+    return list;
+  }
+
+
   public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<V> aClass, Function<T,V> mapper) {
     final List<V> list = map2List(collection, mapper);
     return list.toArray((V[])Array.newInstance(aClass, list.size()));
