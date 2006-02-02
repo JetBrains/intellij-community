@@ -1111,7 +1111,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
       final VirtualFile vFile = getContainingFile().getVirtualFile();
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      final OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+      final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       for (OrderEntry orderEntry : orderEntries) {
         VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
         for (VirtualFile file : files) {

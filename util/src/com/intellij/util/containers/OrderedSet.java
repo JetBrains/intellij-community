@@ -18,11 +18,10 @@ package com.intellij.util.containers;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
-public class OrderedSet<T> extends AbstractSet<T> {
+@SuppressWarnings({"SuspiciousMethodCalls"})
+public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   private THashSet<T> myHashSet;
   private ArrayList<T> myElements;
 
@@ -106,4 +105,44 @@ public class OrderedSet<T> extends AbstractSet<T> {
     }
   }
 
+
+  public boolean addAll(final int index, final Collection<? extends T> c) {
+    throw new UnsupportedOperationException();
+  }
+
+  public T get(final int index) {
+    return myElements.get(index);
+  }
+
+  public T set(final int index, final T element) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void add(final int index, final T element) {
+    throw new UnsupportedOperationException();
+  }
+
+  public T remove(final int index) {
+    throw new UnsupportedOperationException();
+  }
+
+  public int indexOf(final Object o) {
+    return myElements.indexOf(o);
+  }
+
+  public int lastIndexOf(final Object o) {
+    return myElements.lastIndexOf(o);
+  }
+
+  public ListIterator<T> listIterator() {
+    return myElements.listIterator();
+  }
+
+  public ListIterator<T> listIterator(final int index) {
+    return myElements.listIterator(index);
+  }
+
+  public List<T> subList(final int fromIndex, final int toIndex) {
+    return myElements.subList(fromIndex, toIndex);
+  }
 }

@@ -3,15 +3,15 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.PackageViewSelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -26,14 +26,14 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
   @NonNls public static final String ID = "PackagesPane";
@@ -203,12 +203,12 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
         modules.add(module);
       }
       if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-        final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.length == 0) {
+        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+        if (orderEntries.isEmpty()) {
           return Module.EMPTY_ARRAY;
         }
-        for (int j = 0; j < orderEntries.length; j++) {
-          modules.add(orderEntries[j].getOwnerModule());
+        for (OrderEntry entry : orderEntries) {
+          modules.add(entry.getOwnerModule());
         }
       }
       return modules.toArray(new Module[modules.size()]);

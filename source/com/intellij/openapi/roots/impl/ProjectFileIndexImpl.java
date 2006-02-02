@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ProjectFileIndexImpl implements ProjectFileIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
@@ -90,14 +91,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   @NotNull
-  public OrderEntry[] getOrderEntriesForFile(VirtualFile file) {
+  public List<OrderEntry> getOrderEntriesForFile(VirtualFile file) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return OrderEntry.EMPTY_ARRAY;
+    if (dir == null) return Collections.emptyList();
     DirectoryIndex directoryIndex = myDirectoryIndex;
     final DirectoryInfo info = directoryIndex.getInfoForDirectory(dir);
-    if (info == null) return OrderEntry.EMPTY_ARRAY;
-    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
-    return orderEntries.toArray(new OrderEntry[orderEntries.size()]);
+    if (info == null) return Collections.emptyList();
+    return Collections.unmodifiableList(info.getOrderEntries());
   }
 
   public VirtualFile getClassRootForFile(VirtualFile file) {

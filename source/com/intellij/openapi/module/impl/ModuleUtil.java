@@ -20,7 +20,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,8 +120,8 @@ public class ModuleUtil {
     if (element instanceof PsiDirectory) {
       final VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
       if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-        final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.length == 0) {
+        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+        if (orderEntries.isEmpty()) {
           return null;
         }
         Set<Module> modules = new HashSet<Module>();

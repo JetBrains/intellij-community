@@ -24,6 +24,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 import java.util.Stack;
 
 public class JavaDocInfoComponent extends JPanel {
@@ -328,7 +329,7 @@ public class JavaDocInfoComponent extends JPanel {
                 label.setText(module.getName());
                 label.setIcon(module.getModuleType().getNodeIcon(false));
             } else {
-                final OrderEntry[] entries = fileIndex.getOrderEntriesForFile(vfile);
+                final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
 
                 OrderEntry entry = null;
 
@@ -342,7 +343,7 @@ public class JavaDocInfoComponent extends JPanel {
                 if (entry != null) {
                     label.setText(entry.getPresentableName());
                     label.setIcon(LIB_ICON_CLOSED);
-                } 
+                }
             }
         }
     }
@@ -406,99 +407,99 @@ public class JavaDocInfoComponent extends JPanel {
 
     private void registerActions() {
         myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(),
-                myEditorPane);
+                                                      myEditorPane);
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
-                        value = Math.max(value, 0);
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
+                                      value = Math.max(value, 0);
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
-                        value = Math.min(value, scrollBar.getMaximum());
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
+                                      value = Math.min(value, scrollBar.getMaximum());
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-                        int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
-                        value = Math.max(value, 0);
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+                                      int value = scrollBar.getValue() - scrollBar.getUnitIncrement(-1);
+                                      value = Math.max(value, 0);
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-                        int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
-                        value = Math.min(value, scrollBar.getMaximum());
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+                                      int value = scrollBar.getValue() + scrollBar.getUnitIncrement(+1);
+                                      value = Math.min(value, scrollBar.getMaximum());
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        int value = scrollBar.getValue() - scrollBar.getBlockIncrement(-1);
-                        value = Math.max(value, 0);
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      int value = scrollBar.getValue() - scrollBar.getBlockIncrement(-1);
+                                      value = Math.max(value, 0);
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        int value = scrollBar.getValue() + scrollBar.getBlockIncrement(+1);
-                        value = Math.min(value, scrollBar.getMaximum());
-                        scrollBar.setValue(value);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      int value = scrollBar.getValue() + scrollBar.getBlockIncrement(+1);
+                                      value = Math.min(value, scrollBar.getMaximum());
+                                      scrollBar.setValue(value);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-                        scrollBar.setValue(0);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+                                      scrollBar.setValue(0);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
-                        scrollBar.setValue(scrollBar.getMaximum());
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+                                      scrollBar.setValue(scrollBar.getMaximum());
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.CTRL_MASK),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        scrollBar.setValue(0);
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      scrollBar.setValue(0);
+                                  }
+                              });
 
         myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.CTRL_MASK),
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
-                        scrollBar.setValue(scrollBar.getMaximum());
-                    }
-                });
+                              new ActionListener() {
+                                  public void actionPerformed(ActionEvent e) {
+                                      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+                                      scrollBar.setValue(scrollBar.getMaximum());
+                                  }
+                              });
     }
 
     public String getText() {

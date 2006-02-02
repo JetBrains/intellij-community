@@ -154,7 +154,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     final ProjectFileIndex idx = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
 
     if (!idx.isInLibrarySource(vFile)) return this;
-    final Set<OrderEntry> orderEntries = new HashSet<OrderEntry>(Arrays.asList(idx.getOrderEntriesForFile(vFile)));
+    final Set<OrderEntry> orderEntries = new HashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
     PsiClass original = myManager.findClass(getQualifiedName(), new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
@@ -162,7 +162,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
       public boolean contains(VirtualFile file) {
         // order for file and vFile has non empty intersection.
-        Set<OrderEntry> entries = new HashSet<OrderEntry>(Arrays.asList(idx.getOrderEntriesForFile(file)));
+        Set<OrderEntry> entries = new HashSet<OrderEntry>(idx.getOrderEntriesForFile(file));
         int size = entries.size();
         entries.addAll(orderEntries);
         return size + orderEntries.size() > entries.size();

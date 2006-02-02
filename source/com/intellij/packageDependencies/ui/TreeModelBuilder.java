@@ -27,10 +27,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TreeModelBuilder {
   private ProjectFileIndex myFileIndex;
@@ -450,7 +447,7 @@ public class TreeModelBuilder {
   }
 
   private OrderEntry getLibraryForFile(PsiFile file) {
-    OrderEntry[] orders = myFileIndex.getOrderEntriesForFile(file.getVirtualFile());
+    List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(file.getVirtualFile());
     for (OrderEntry order : orders) {
       if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) return order;
     }

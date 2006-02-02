@@ -44,6 +44,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.List;
 
 public class JavaDocManager implements ProjectComponent {
   private final Project myProject;
@@ -479,7 +480,7 @@ public class JavaDocManager implements ProjectComponent {
       if (httpRoot != null) return httpRoot;
     }
 
-    final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
+    final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry orderEntry : orderEntries) {
       final VirtualFile[] files = orderEntry.getFiles(OrderRootType.JAVADOC);
       final String httpRoot = getHttpRoot(files, relPath);

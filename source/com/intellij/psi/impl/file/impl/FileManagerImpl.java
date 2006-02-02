@@ -314,18 +314,16 @@ public class FileManagerImpl implements FileManager {
       // resolve references in libraries in context of all modules which contain it
       GlobalSearchScope allInclusiveModuleScope = null;
 
-      OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-      if (orderEntries.length > 0) {
-        for (OrderEntry entry : orderEntries) {
-          if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-            Module ownerModule = entry.getOwnerModule();
-            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithLibrariesScope(ownerModule);
-            if (allInclusiveModuleScope == null) {
-              allInclusiveModuleScope = moduleScope;
-            }
-            else {
-              allInclusiveModuleScope = allInclusiveModuleScope.uniteWith(moduleScope);
-            }
+      List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+      for (OrderEntry entry : orderEntries) {
+        if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+          Module ownerModule = entry.getOwnerModule();
+          final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithLibrariesScope(ownerModule);
+          if (allInclusiveModuleScope == null) {
+            allInclusiveModuleScope = moduleScope;
+          }
+          else {
+            allInclusiveModuleScope = allInclusiveModuleScope.uniteWith(moduleScope);
           }
         }
       }

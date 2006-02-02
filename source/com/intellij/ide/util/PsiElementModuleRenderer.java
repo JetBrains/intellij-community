@@ -68,10 +68,8 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
               final boolean isInLibraries = fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile);
               if (isInLibraries){
                 setIcon(LIB_ICON);
-                OrderEntry[] orders = fileIndex.getOrderEntriesForFile(vFile);
-                for (int i = 0; i < orders.length; i++) {
-                  OrderEntry order = orders[i];
-                  if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry){
+                for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
+                  if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
                     myText = order.getPresentableName();
                     break;
                   }
@@ -96,6 +94,6 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     setHorizontalTextPosition(SwingConstants.LEFT);
     setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-    setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor()); 
+    setForeground(selected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
   }
 }

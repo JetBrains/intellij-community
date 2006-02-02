@@ -17,8 +17,10 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Provides information about files contained in a project.
@@ -40,7 +42,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the array of order entries containing the file.
    */
   @NotNull
-  OrderEntry[] getOrderEntriesForFile(@NotNull VirtualFile file);
+  List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file);
 
   /**
    * Returns a classpath entry to which the specified file or directory belongs.

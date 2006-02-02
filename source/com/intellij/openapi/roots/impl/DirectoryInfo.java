@@ -7,9 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 public class DirectoryInfo {
   public Module module; // module to which content it belongs or null
@@ -24,7 +23,7 @@ public class DirectoryInfo {
   /**
    *  orderEntry to (classes of) which a directory belongs
    */
-  private Collection<OrderEntry> orderEntries = null;
+  private List<OrderEntry> orderEntries = null;
 
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -63,14 +62,14 @@ public class DirectoryInfo {
            "}";
   }
 
-  public Collection<OrderEntry> getOrderEntries() {
-    return orderEntries == null ? Collections.<OrderEntry>emptySet() : orderEntries;
+  public List<OrderEntry> getOrderEntries() {
+    return orderEntries == null ? Collections.<OrderEntry>emptyList() : orderEntries;
   }
 
   @SuppressWarnings({"unchecked"})
-  public void addOrderEntries(final Collection<OrderEntry> orderEntries,
+  public void addOrderEntries(final List<OrderEntry> orderEntries,
                               final DirectoryInfo parentInfo,
-                              final Collection<OrderEntry> oldParentEntries) {
+                              final List<OrderEntry> oldParentEntries) {
     if (this.orderEntries == null) {
       this.orderEntries = orderEntries;
     }
@@ -78,14 +77,10 @@ public class DirectoryInfo {
       this.orderEntries = parentInfo.getOrderEntries();
     }
     else {
-      Set<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.IDENTITY);
+      List<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.IDENTITY);
       tmp.addAll(this.orderEntries);
       tmp.addAll(orderEntries);
       this.orderEntries = tmp;
     }
-  }
-
-  public void setOrderEntries(final Collection<OrderEntry> entries) {
-    orderEntries = entries;
   }
 }

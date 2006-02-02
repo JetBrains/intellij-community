@@ -280,8 +280,7 @@ public class AnalysisScope {
   private HashSet<Module> getAllInterstingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
     final HashSet<Module> modules = new HashSet<Module>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-      final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-      for (OrderEntry orderEntry : orderEntries) {
+      for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
         modules.add(orderEntry.getOwnerModule());
       }
     }

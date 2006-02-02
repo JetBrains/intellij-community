@@ -636,13 +636,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void fillMapWithOrderEntries(VirtualFile dir,
-                                       Collection<OrderEntry> orderEntries,
+                                       List<OrderEntry> orderEntries,
                                        Module module,
                                        VirtualFile libraryClassRoot,
                                        VirtualFile librarySourceRoot,
                                        VirtualFile forDir,
                                        DirectoryInfo parentInfo,
-                                       final Collection<OrderEntry> oldParentEntries) {
+                                       final List<OrderEntry> oldParentEntries) {
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
     if (forDir != null) {
@@ -666,7 +666,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (info.libraryClassRoot != null) return;
     }
 
-    final Collection<OrderEntry> oldEntries = info.getOrderEntries();
+    final List<OrderEntry> oldEntries = info.getOrderEntries();
     info.addOrderEntries(orderEntries, parentInfo, oldParentEntries);
 
     final VirtualFile[] children = dir.getChildren();

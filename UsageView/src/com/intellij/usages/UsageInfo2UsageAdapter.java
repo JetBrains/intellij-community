@@ -24,8 +24,8 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -197,7 +197,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
 
     if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
-      OrderEntry[] orders = fileIndex.getOrderEntriesForFile(psiFile.getVirtualFile());
+      List<OrderEntry> orders = fileIndex.getOrderEntriesForFile(psiFile.getVirtualFile());
       for (OrderEntry order : orders) {
         if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
           return order;

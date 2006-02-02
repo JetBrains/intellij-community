@@ -147,9 +147,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
         }
 
         public int compare(VirtualFile file1, VirtualFile file2) {
-          OrderEntry[] entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
-          OrderEntry[] entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
-          if (entries1.length != entries2.length) return 0;
+          List<OrderEntry> entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
+          List<OrderEntry> entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
+          if (entries1.size() != entries2.size()) return 0;
 
           int res = 0;
           for (OrderEntry entry1 : entries1) {
