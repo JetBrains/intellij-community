@@ -22,11 +22,6 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
 /**
  * User: anna
  * Date: 28-Dec-2005
@@ -42,26 +37,15 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
                             final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor,
                             final boolean filterSuppressed) {
-    final HashMap<RefEntity, List<CommonProblemDescriptor>> holder = new HashMap<RefEntity, List<CommonProblemDescriptor>>();
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (globalContext.isSuppressed(refEntity, getShortName())) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext);
-        if (descriptors != null){
-          List<CommonProblemDescriptor> problemDescriptors = holder.get(refEntity);
-          if (problemDescriptors == null){
-            problemDescriptors = new ArrayList<CommonProblemDescriptor>();
-            holder.put(refEntity, problemDescriptors);
-          }
-          problemDescriptors.addAll(Arrays.asList(descriptors));
+        if (descriptors != null) {
+          problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
         }
       }
     });
-
-    for (RefEntity refElement : holder.keySet()) {
-      final List<CommonProblemDescriptor> descriptors = holder.get(refElement);
-      problemDescriptionsProcessor.addProblemElement(refElement, descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]));
-    }
   }
 
   @Nullable
