@@ -258,7 +258,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return getRoot().getResolveScope();
   }
 
-  private <T extends DomElement> T _getParentOfType(Class<T> requiredClass, DomElement element) {
+  private static <T extends DomElement> T _getParentOfType(Class<T> requiredClass, DomElement element) {
     while (element != null && !(requiredClass.isInstance(element))) {
       element = element.getParent();
     }
@@ -436,7 +436,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myManager.createDomElement(new CollectionElementInvocationHandler(type, subTag, this));
   }
 
-  protected final XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
+  protected static XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
     if (tag == null) {
       return null;
     }
