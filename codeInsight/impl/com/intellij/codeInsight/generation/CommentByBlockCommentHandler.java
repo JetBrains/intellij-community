@@ -104,10 +104,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private TextRange findCommentedRange(final Commenter commenter) {
+    final CharSequence text = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
     if (fileType instanceof CustomFileType) {
       Lexer lexer = new CustomFileTypeLexer(((CustomFileType)fileType).getSyntaxTable());
-      final CharSequence text = myDocument.getCharsSequence();
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
@@ -119,14 +119,28 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       return null;
     }
 
+    final String prefix = commenter.getBlockCommentPrefix();
+    final String suffix = commenter.getBlockCommentSuffix();
     TextRange commentedRange = null;
     PsiElement comment = findCommentAtCaret();
     if (comment != null) {
       String commentText = comment.getText();
-      String prefix = commenter.getBlockCommentPrefix();
-      String suffix = commenter.getBlockCommentSuffix();
-      if (!commentText.startsWith(prefix) || !commentText.endsWith(suffix)) return null;
+      if (!commentText.startsWith(prefix) || !commentText.endsWith(suffix)) {
+        return null;
+      }
       commentedRange = comment.getTextRange();
+    }
+    else {
+      final SelectionModel selectionModel = myEditor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        int selectionStart = selectionModel.getSelectionStart();
+        int selectionEnd = selectionModel.getSelectionEnd();
+        if (selectionEnd - selectionStart >= prefix.length() + suffix.length() &&
+            CharArrayUtil.regionMatches(text, selectionStart, prefix) &&
+            CharArrayUtil.regionMatches(text, selectionEnd - suffix.length(), suffix)) {
+          commentedRange = new TextRange(selectionStart, selectionEnd);
+        }
+      }
     }
     return commentedRange;
   }
