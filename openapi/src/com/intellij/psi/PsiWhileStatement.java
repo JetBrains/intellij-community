@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java <code>while</code> statement.
  */
-public interface PsiWhileStatement extends PsiStatement {
+public interface PsiWhileStatement extends PsiLoopStatement {
   /**
    * Returns the expression representing the exit condition of the loop.
    *
@@ -28,14 +28,6 @@ public interface PsiWhileStatement extends PsiStatement {
    */
   @Nullable
   PsiExpression getCondition();
-
-  /**
-   * Returns the body of the statement.
-   *
-   * @return the body of the statement, or null if the statement is complete.
-   */
-  @Nullable
-  PsiStatement getBody();
 
   /**
    * Returns the opening parenthesis enclosing the statement condition.

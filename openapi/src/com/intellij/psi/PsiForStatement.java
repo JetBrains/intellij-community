@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java basic <code>for</code> statement.
  */
-public interface PsiForStatement extends PsiStatement{
+public interface PsiForStatement extends PsiLoopStatement{
   /**
    * Returns the initialization part of the statement.
    *
@@ -44,14 +44,6 @@ public interface PsiForStatement extends PsiStatement{
    */
   @Nullable
   PsiStatement getUpdate();
-
-  /**
-   * Returns the body of the statement.
-   *
-   * @return the body of the statement, or null if the statement is complete.
-   */
-  @Nullable
-  PsiStatement getBody();
 
   /**
    * Returns the opening parenthesis enclosing the statement header.

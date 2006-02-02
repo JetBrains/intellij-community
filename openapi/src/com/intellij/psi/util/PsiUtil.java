@@ -909,13 +909,6 @@ public final class PsiUtil {
     return null;
   }
 
-  public static boolean isLoopStatement(PsiElement element) {
-    return element instanceof PsiWhileStatement
-           || element instanceof PsiForStatement
-           || element instanceof PsiDoWhileStatement
-           || element instanceof PsiForeachStatement;
-  }
-
   @Nullable
   public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
@@ -1140,5 +1133,4 @@ public final class PsiUtil {
     }
     while (true);
   }
-
 }

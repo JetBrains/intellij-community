@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-public interface PsiForeachStatement extends PsiStatement {
+public interface PsiForeachStatement extends PsiLoopStatement {
   /**
    * Returns the variable containing the iteration parameter of the statement.
    *
@@ -39,14 +39,6 @@ public interface PsiForeachStatement extends PsiStatement {
    */
   @Nullable
   PsiExpression getIteratedValue();
-
-  /**
-   * Returns the body of the statement.
-   *
-   * @return the body of the statement, or null if the statement is complete.
-   */
-  @Nullable
-  PsiStatement getBody();
 
   /**
    * Returns the opening parenthesis enclosing the statement header.

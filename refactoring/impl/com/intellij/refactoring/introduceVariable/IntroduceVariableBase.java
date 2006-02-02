@@ -20,20 +20,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
@@ -269,9 +270,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
           }
 
-          if(IntroduceVariableBase.isLoopOrIf(container)) {
+          if(isLoopOrIf(container)) {
             PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
-            PsiStatement loopBodyCopy = (PsiStatement) loopBody.copy();
+            PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
             PsiBlockStatement blockStatement = (PsiBlockStatement) factory.createStatementFromText("{}", null);
             blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(project).reformat(blockStatement);
             final PsiElement prevSibling = loopBody.getPrevSibling();
@@ -285,7 +286,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
             declaration = (PsiDeclarationStatement) codeBlock.add(declaration);
             declaration.getManager().getCodeStyleManager().shortenClassReferences(declaration);
-            codeBlock.add(loopBodyCopy);
+            if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
           }
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           var.getModifierList().setModifierProperty(PsiModifier.FINAL, declareFinal);
@@ -364,8 +365,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
 
   private static boolean isLoopOrIf(PsiElement element) {
-    return PsiUtil.isLoopStatement(element)
-           || element instanceof PsiIfStatement;
+    return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
   }
 
   public interface Validator {
