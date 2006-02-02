@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
@@ -34,8 +32,6 @@ public abstract class RefUtil implements ApplicationComponent {
   public static RefUtil getInstance(){
     return ApplicationManager.getApplication().getComponent(RefUtil.class);
   }
-
-  public abstract RefManager getRefManager(Project project, AnalysisScope scope);
 
   public abstract boolean belongsToScope(PsiElement psiElement, RefManager refManager);
 

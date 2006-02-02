@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RefEntityImpl implements RefEntity {
+  private static final String NO_NAME = InspectionsBundle.message("inspection.reference.noname");
   private RefEntityImpl myOwner;
   protected ArrayList<RefEntity> myChildren;
   private final String myName;
@@ -24,7 +25,7 @@ public abstract class RefEntityImpl implements RefEntity {
   protected long myFlags = 0;
 
   protected RefEntityImpl(String name) {
-    myName = name != null ? name : InspectionsBundle.message("inspection.reference.noname");
+    myName = name != null ? name : NO_NAME;
     myOwner = null;
     myChildren = null;
   }
