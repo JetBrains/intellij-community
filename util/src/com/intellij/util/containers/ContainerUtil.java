@@ -169,6 +169,9 @@ public class ContainerUtil {
     return set;
   }
 
+  public static <T,V> V[] map2Array(T[] array, Class<V> aClass, Function<T,V> mapper) {
+    return map2Array(Arrays.asList(array), aClass, mapper);
+  }
 
   public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<V> aClass, Function<T,V> mapper) {
     final List<V> list = map2List(collection, mapper);
