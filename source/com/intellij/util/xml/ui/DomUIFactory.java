@@ -50,6 +50,9 @@ public class DomUIFactory {
     if (type.equals(PsiClass.class)) {
       return new PsiClassControl(new DomStringWrapper(element));
     }
+    if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
+      return new EnumControl(new DomStringWrapper(element), (Class)type);
+    }
 
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);
     if (type.equals(boolean.class) || type.equals(Boolean.class)) {
@@ -57,9 +60,6 @@ public class DomUIFactory {
     }
     if (type.equals(String.class)) {
       return new StringControl(wrapper);
-    }
-    if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
-      return new EnumControl(wrapper, (Class)type);
     }
 
     throw new IllegalArgumentException("Not supported: " + type);

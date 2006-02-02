@@ -157,6 +157,10 @@ public class ContainerUtil {
     return list;
   }
 
+  public static <T,V> Set<V> map2Set(T[] collection, Function<T,V> mapper) {
+    return map2Set(Arrays.asList(collection), mapper);
+  }
+
   public static <T,V> Set<V> map2Set(Collection<? extends T> collection, Function<T,V> mapper) {
     final HashSet<V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
