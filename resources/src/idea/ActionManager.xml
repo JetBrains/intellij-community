@@ -1332,7 +1332,8 @@
       <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
         use-shortcut-of="EditorDuplicate"/>
       <separator/>
-      <group id="GuiDesigner.SurroundGroup" class="com.intellij.uiDesigner.actions.SurroundActionGroup" popup="true"/>
+      <action id="GuiDesigner.SurroundPopup" class="com.intellij.uiDesigner.actions.SurroundPopupAction"
+        use-shortcut-of="SurroundWith"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1349,7 +1350,7 @@
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
       <separator/>
-      <reference ref="GuiDesigner.SurroundGroup"/>
+      <reference ref="GuiDesigner.SurroundPopup"/>
     </group>
 
     <group id="GuiDesigner.PropertyInspectorPopupMenu">

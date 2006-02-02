@@ -29,7 +29,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   public SurroundAction(String componentClass) {
     final String className = componentClass.substring(componentClass.lastIndexOf('.') + 1);
-    getTemplatePresentation().setText(UIDesignerBundle.message("action.surround.with", className));
+    getTemplatePresentation().setText(className);
     myComponentClass = componentClass;
   }
 
