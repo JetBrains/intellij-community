@@ -9,16 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class GroupButtonsAction extends AbstractGuiEditorAction {
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     groupButtons(editor, selection);
   }
 
-  public static void groupButtons(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
+  public static void groupButtons(final GuiEditor editor, final List<RadComponent> selectedComponents) {
     RadRootContainer rootContainer = editor.getRootContainer();
     RadButtonGroup group = rootContainer.createGroup(rootContainer.suggestGroupName());
     for(RadComponent component: selectedComponents) {

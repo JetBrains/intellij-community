@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -20,7 +21,7 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
     super(true);
   }
 
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
       int indent = ((Integer) myIndentProperty.getValue(c)).intValue();
       try {

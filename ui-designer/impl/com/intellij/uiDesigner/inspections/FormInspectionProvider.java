@@ -23,7 +23,8 @@ public class FormInspectionProvider implements ApplicationComponent, InspectionT
       DuplicateMnemonicInspection.class,
       MissingMnemonicInspection.class,
       NoLabelForInspection.class,
-      NoButtonGroupInspection.class
+      NoButtonGroupInspection.class,
+      NoScrollPaneInspection.class
     };
   }
 }

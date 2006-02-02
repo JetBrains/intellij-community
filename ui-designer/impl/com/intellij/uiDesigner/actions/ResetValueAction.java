@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 public class ResetValueAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#intellij.uiDesigner.actions.ResetValueAction");
 
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     final PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();

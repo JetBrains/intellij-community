@@ -18,7 +18,8 @@ import com.intellij.uiDesigner.palette.Palette;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,7 +33,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
     myComponentClass = componentClass;
   }
 
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  public void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     if (!editor.ensureEditable()) {
       return;
     }
@@ -62,8 +63,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
           selectionParent.addComponent(newContainer);
 
           if (newContainer instanceof RadTabbedPane ||
-              newContainer instanceof RadSplitPane ||
-              newContainer instanceof RadScrollPane) {
+              newContainer instanceof RadSplitPane) {
             RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
             if (newContainer instanceof RadSplitPane) {
               panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
@@ -72,7 +72,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer = panel;
           }
 
-          newContainer.setLayout(new GridLayoutManager(rc.height, rc.width));
+          if (!(newContainer instanceof RadScrollPane)) {
+            newContainer.setLayout(new GridLayoutManager(rc.height, rc.width));
+          }
 
           for(RadComponent c: selection) {
             c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
@@ -84,7 +86,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
       }, null, null);
   }
 
-  private static Rectangle getSelectionBounds(ArrayList<RadComponent> selection) {
+  private static Rectangle getSelectionBounds(List<RadComponent> selection) {
     int minRow = Integer.MAX_VALUE;
     int minCol = Integer.MAX_VALUE;
     int maxRow = 0;
@@ -102,9 +104,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     RadContainer selectionParent = GuiEditorUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
-        (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
-        isSelectionContiguous(selectionParent, selection) &&
-        canWrapSelection(selection));
+                                   (selectionParent instanceof RadRootContainer || selectionParent.isGrid()) &&
+                                   isSelectionContiguous(selectionParent, selection) &&
+                                   canWrapSelection(selection));
   }
 
   private boolean canWrapSelection(final ArrayList<RadComponent> selection) {

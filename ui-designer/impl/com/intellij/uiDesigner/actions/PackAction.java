@@ -13,7 +13,7 @@ import java.util.List;
  * @author yole
  */
 public class PackAction extends AbstractGuiEditorAction {
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     RadContainer container = getContainerToPack(selection);
     if (container != null) {
       container.getDelegee().setSize(container.getMinimumSize());

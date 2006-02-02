@@ -46,6 +46,10 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
     return myInspectionKey;
   }
 
+  @Override public boolean isEnabledByDefault() {
+    return true;
+  }
+
   public boolean isActive(PsiElement psiRoot) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getProfile(psiRoot);
     HighlightDisplayKey key = HighlightDisplayKey.find(myInspectionKey);

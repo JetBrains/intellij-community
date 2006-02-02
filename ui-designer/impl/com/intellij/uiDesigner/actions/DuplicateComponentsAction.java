@@ -24,7 +24,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     super(true);
   }
 
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     RadContainer parent = GuiEditorUtil.getSelectionParent(selection);
     assert parent != null;
     FormEditingUtil.clearSelection(parent);

@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -42,7 +43,7 @@ public abstract class AbstractGuiEditorAction extends AnAction {
     }
   }
 
-  protected abstract void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e);
+  protected abstract void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e);
 
   public final void update(AnActionEvent e) {
     GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());

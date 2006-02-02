@@ -7,12 +7,13 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class UngroupButtonsAction extends AbstractGuiEditorAction {
-  protected void actionPerformed(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     for(RadComponent component: selection) {
       editor.getRootContainer().setGroupForComponent(component, null);
     }
