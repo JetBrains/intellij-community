@@ -21,12 +21,40 @@ public class DeprecationInspection extends LocalInspectionTool {
 
   @Nullable
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiRecursiveElementVisitor(){
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    return new DeprecationElementVisitor(holder);
+  }
+
+  public String getDisplayName() {
+    return DISPLAY_NAME;
+  }
+
+  public String getGroupDisplayName() {
+    return "";
+  }
+
+  public String getShortName() {
+    return SHORT_NAME;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  private static class DeprecationElementVisitor extends PsiElementVisitor {
+    private final ProblemsHolder myHolder;
+
+    public DeprecationElementVisitor(final ProblemsHolder holder) {
+      myHolder = holder;
+    }
+
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
-        checkDeprecated(resolved, reference.getReferenceNameElement(), holder);
+        checkDeprecated(resolved, reference.getReferenceNameElement(), myHolder);
+      }
+
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
 
       public void visitNewExpression(PsiNewExpression expression) {
@@ -46,13 +74,18 @@ public class DeprecationInspection extends LocalInspectionTool {
         final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length > 0 && list != null) {
+          list.acceptChildren(new PsiRecursiveElementVisitor() {
+            public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
+              DeprecationElementVisitor.this.visitReferenceElement(element);
+            }
+          });
           JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
           MethodCandidateInfo result = null;
           if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
           PsiMethod constructor = result == null ? null : result.getElement();
           if (constructor != null && expression.getClassReference() != null) {
-            checkDeprecated(constructor, expression.getClassReference(), holder);
+            checkDeprecated(constructor, expression.getClassReference(), myHolder);
           }
         }
       }
@@ -62,7 +95,7 @@ public class DeprecationInspection extends LocalInspectionTool {
         PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
         JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
         PsiElement element = resolveResult.getElement();
-        checkDeprecated(element, referenceToMethod.getReferenceNameElement(), holder);
+        checkDeprecated(element, referenceToMethod.getReferenceNameElement(), myHolder);
       }
 
       public void visitMethod(PsiMethod method){
@@ -70,26 +103,9 @@ public class DeprecationInspection extends LocalInspectionTool {
         MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
         if (!method.isConstructor()) {
           List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, holder);
+          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myHolder);
         }
       }
-    };
-  }
-
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  public String getGroupDisplayName() {
-    return "";
-  }
-
-  public String getShortName() {
-    return SHORT_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   //@top
