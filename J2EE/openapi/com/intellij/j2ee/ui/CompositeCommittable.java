@@ -18,41 +18,41 @@ package com.intellij.j2ee.ui;
 import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * author: lesya
  */
 public class CompositeCommittable implements Committable {
-  private List<Committable> myComponents = new ArrayList<Committable>();
+  private final List<Committable> myComponents = new ArrayList<Committable>();
 
-  public void addComponent(Committable panel) {
+  public <T extends Committable> T addComponent(T panel) {
     myComponents.add(panel);
+    return panel;
   }
 
   public void commit() throws ReadOnlyDeploymentDescriptorModificationException {
-    for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Committable)iterator.next()).commit();
+    for (final Committable committable : myComponents) {
+      committable.commit();
     }
   }
 
   public void reset() {
-    for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Committable)iterator.next()).reset();
+    for (final Committable committable : myComponents) {
+      committable.reset();
     }
   }
 
   public void dispose() {
-    for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Committable)iterator.next()).dispose();
+    for (final Committable committable : myComponents) {
+      committable.dispose();
     }
   }
 
   public List<Warning> getWarnings() {
     ArrayList<Warning> result = new ArrayList<Warning>();
-    for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      List<Warning> warnings = ((Committable)iterator.next()).getWarnings();
+    for (final Committable committable : myComponents) {
+      List<Warning> warnings = committable.getWarnings();
       if (warnings != null) {
         result.addAll(warnings);
       }
