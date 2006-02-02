@@ -314,4 +314,13 @@
       </property>
     </enum-properties>
   </class>
+
+  <class name="javax.swing.JScrollBar">
+    <enum-properties>
+      <property name="orientation">
+        <constant value="0" message="property.horizontal"/>
+        <constant value="1" message="property.vertical"/>
+      </property>
+    </enum-properties>
+  </class>
 </component>
