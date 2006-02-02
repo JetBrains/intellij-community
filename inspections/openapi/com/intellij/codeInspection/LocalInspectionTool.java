@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
  * instances of this class provided by {@link InspectionToolProvider#getInspectionClasses()} will be created on demand.
  * The other important thing is problem anchors (PsiElements) reported by <code>check&lt;XXX&gt;</code> methods should
  * lie under corresponding first parameter of one method.
+ *
+ * @see GlobalInspectionTool
  */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**

@@ -23,19 +23,75 @@ import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * User: anna
- * Date: 28-Dec-2005
+ * Manager of the reference graph for a global inspection run.
+ *
+ * @author anna
+ * @see com.intellij.codeInspection.GlobalInspectionContext#getRefManager()
+ * @since 6.0
  */
 public abstract class RefManager {
+  /**
+   * Runs the specified visitor through all elements in the reference graph.
+   *
+   * @param visitor the visitor to run.
+   */
   public abstract void iterate(RefVisitor visitor);
 
+  /**
+   * Returns the analysis scope for which the reference graph has been built.
+   *
+   * @return the analysis scope.
+   */
   public abstract AnalysisScope getScope();
 
+  /**
+   * Returns the project for which the reference graph has been built.
+   *
+   * @return the project instance.
+   */
   public abstract Project getProject();
+
+  /**
+   * Returns the reference graph node pointing to the project for which the reference
+   * graph has been built.
+   *
+   * @return the node for the project.
+   */
   public abstract RefProject getRefProject();
 
+  /**
+   * Creates (if necessary) and returns the reference graph node for the package
+   * with the specified name.
+   *
+   * @param packageName the name of the package for which the reference graph node is requested.
+   * @return the node for the package.
+   */
   public abstract RefPackage getPackage(String packageName);
+
+  /**
+   * Creates (if necessary) and returns the reference graph node for the specified module.
+   *
+   * @param module the module for which the reference graph node is requested.
+   * @return the node for the module, or null if <code>module</code> is null.
+   */
   public abstract @Nullable RefModule getRefModule(Module module);
+
+  /**
+   * Creates (if necessary) and returns the reference graph node for the specified PSI element.
+   *
+   * @param elem the element for which the reference graph node is requested.
+   * @return the node for the element, or null if the element is not valid or does not have
+   * a corresponding reference graph node type (is not a field, method, class or file).
+   */
   public abstract @Nullable RefElement getReference(PsiElement elem);
+
+  /**
+   * Creates (if necessary) and returns the reference graph node for the specified PSI parameter.
+   *
+   * @param param the parameter for which the reference graph node is requested.
+   * @param index the index of the parameter in its parameter list.
+   * @return the node for the element, or null if the element is not valid or does not have
+   * a corresponding reference graph node type (is not a field, method, class or file).
+   */
   public abstract RefParameter getParameterReference(PsiParameter param, int index);
 }

@@ -18,11 +18,34 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.reference.RefEntity;
 
 /**
- * User: anna
- * Date: 09-Jan-2006
+ * Collects the results of a global inspection.
+ *
+ * @author anna
+ * @since 6.0
+ * @see GlobalInspectionTool#runInspection
  */
 public interface ProblemDescriptionsProcessor {
-  CommonProblemDescriptor [] getDescriptions(RefEntity refEntity);
+  /**
+   * Returns the problems which have been collected for the specified reference graph node.
+   *
+   * @param refEntity the reference graph node.
+   * @return the problems found for the specified node.
+   */
+  CommonProblemDescriptor[] getDescriptions(RefEntity refEntity);
+
+  /**
+   * Drops all problems which have been collected for the specified reference graph node.
+   *
+   * @param refEntity the reference graph node.
+   */
   void ignoreElement(RefEntity refEntity);
+
+  /**
+   * Registers a problem or several problems, with optional quickfixes, for the specified
+   * reference graph node.
+   *
+   * @param refEntity                the reference graph node.
+   * @param commonProblemDescriptors the descriptors for the problems to register.
+   */
   void addProblemElement(final RefEntity refEntity, final CommonProblemDescriptor[] commonProblemDescriptors);
 }
