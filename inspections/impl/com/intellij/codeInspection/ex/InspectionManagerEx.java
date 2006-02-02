@@ -553,7 +553,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = RefUtil.getInstance().getRefManager(myProject, myCurrentScope);
+      myRefManager = ((RefUtilImpl)RefUtil.getInstance()).getRefManager(myProject, myCurrentScope);
     }
 
     return myRefManager;
