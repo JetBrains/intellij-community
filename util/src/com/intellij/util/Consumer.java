@@ -16,8 +16,15 @@
 package com.intellij.util;
 
 public interface Consumer<T> {
+  Consumer EMPTY_CONSUMER = new Consumer() {
+    public void consume(final Object t) {
+    }
+  };
+
   /**
    * @param t consequently takes value of each element of the set this processor is passed to for processing.
    */
   void consume(T t);
+
+
 }
