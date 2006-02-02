@@ -34,12 +34,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -147,8 +147,8 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
 
     final VirtualFile vFile = dir.getVirtualFile();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-      final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-      if (orderEntries.length == 0) {
+      final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      if (orderEntries.isEmpty()) {
         return null;
       }
       Set<Module> modules = new HashSet<Module>();
