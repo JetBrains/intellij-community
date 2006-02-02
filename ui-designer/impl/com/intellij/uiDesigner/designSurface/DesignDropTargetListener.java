@@ -175,7 +175,7 @@ class DesignDropTargetListener implements DropTargetListener {
         ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
         if (componentItem != null) {
           myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
-          new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
+          new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem, true);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();

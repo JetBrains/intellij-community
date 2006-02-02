@@ -209,10 +209,10 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private void processMousePressed(final MouseEvent e) {
     final ComponentItem item = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
-    processComponentInsert(e.getPoint(), item);
+    processComponentInsert(e.getPoint(), item, false);
   }
 
-  public void processComponentInsert(final Point point, final ComponentItem item) {
+  public void processComponentInsert(final Point point, final ComponentItem item, final boolean keepDefaultSize) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
@@ -248,20 +248,29 @@ public final class InsertComponentProcessor extends EventProcessor {
             FormEditingUtil.clearSelection(myEditor.getRootContainer());
             myInsertedComponent.setSelected(true);
 
-            myInitialSize = null;
-            myShouldSetPreferredSizeIfNotResized = true;
-            if (myDropInfo.myTargetContainer.isXY()) {
-              setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-              myInitialSize = myInsertedComponent.getSize();
-              if (myInitialSize.width > 0 && myInitialSize.height > 0) {
-                myShouldSetPreferredSizeIfNotResized = false;
+            if (!keepDefaultSize) {
+              myInitialSize = null;
+              myShouldSetPreferredSizeIfNotResized = true;
+              if (myDropInfo.myTargetContainer.isXY()) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+                myInitialSize = myInsertedComponent.getSize();
+                if (myInitialSize.width > 0 && myInitialSize.height > 0) {
+                  myShouldSetPreferredSizeIfNotResized = false;
+                }
+                else {
+                  // size was not specified as initial value
+                  myInitialSize = new Dimension(7, 7);
+                }
+                Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
+                myInsertedComponent.setSize(myInitialSize);
               }
-              else {
-                // size was not specified as initial value
-                myInitialSize = new Dimension(7, 7);
+            }
+            else {
+              if (myDropInfo.myTargetContainer.isXY()) {
+                Dimension newSize = myInsertedComponent.getPreferredSize(); 
+                Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
+                myInsertedComponent.setSize(newSize);
               }
-              Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
-              myInsertedComponent.setSize(myInitialSize);
             }
 
             if (!GuiDesignerConfiguration.getInstance(myEditor.getProject()).IRIDA_LAYOUT_MODE &&
