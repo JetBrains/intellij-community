@@ -18,6 +18,9 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.lang.jsp.JspxFileViewProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,19 +28,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   public XmlFileImpl(FileViewProvider viewProvider) {
-    super(getElementType(viewProvider.getVirtualFile().getFileType()),
-          getElementType(viewProvider.getVirtualFile().getFileType()), viewProvider);
+    super(getElementType(viewProvider), getElementType(viewProvider), viewProvider);
   }
 
   public XmlFileImpl(FileViewProvider viewProvider, IElementType elementType, IElementType contentElementType) {
     super(elementType, contentElementType, viewProvider);
   }
 
-  private static IElementType getElementType(final FileType fileTypeByFile) {
-    if (fileTypeByFile == StdFileTypes.XML) return XML_FILE;
-    if (fileTypeByFile == StdFileTypes.XHTML) return XHTML_FILE;
-    if (fileTypeByFile == StdFileTypes.HTML) return HTML_FILE;
-    if (fileTypeByFile == StdFileTypes.DTD) return DTD_FILE;
+  private static IElementType getElementType(final FileViewProvider fileViewProvider) {
+    final Language dataLanguage = fileViewProvider instanceof JspxFileViewProvider ?
+                                  ((JspxFileViewProvider)fileViewProvider).getTemplateDataLanguage() :
+                                  fileViewProvider.getBaseLanguage();
+
+    if (dataLanguage == StdLanguages.XML) return XML_FILE;
+    if (dataLanguage == StdLanguages.XHTML) return XHTML_FILE;
+    if (dataLanguage == StdLanguages.HTML) return HTML_FILE;
+    if (dataLanguage == StdLanguages.DTD) return DTD_FILE;
     return null;
   }
 

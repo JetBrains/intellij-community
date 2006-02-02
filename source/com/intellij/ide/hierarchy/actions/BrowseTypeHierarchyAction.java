@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -86,7 +87,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
     if (editor != null) {
       final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      final boolean enabled = file instanceof PsiJavaFile || file instanceof JspFile;
+      final boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file);
       presentation.setVisible(enabled);
       presentation.setEnabled(enabled);
     }

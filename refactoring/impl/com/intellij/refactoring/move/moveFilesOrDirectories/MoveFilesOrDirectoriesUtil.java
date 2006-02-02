@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -161,7 +162,7 @@ public class MoveFilesOrDirectoriesUtil {
       throw new IllegalArgumentException("elements cannot be null");
     }
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(element instanceof JspFile))) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(PsiUtil.isInJspFile(element)))) {
         return false;
       }
     }

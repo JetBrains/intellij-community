@@ -51,7 +51,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
 
   public void visitJspFile(JspFile file) {
     super.visitJspFile(file);
-    visitClass(file.getJavaRoot());
+    visitClass(file.getJavaClass());
     visitFile(file.getBaseLanguageRoot());
   }
 }

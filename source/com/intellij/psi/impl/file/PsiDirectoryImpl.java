@@ -199,7 +199,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
     for (VirtualFile vFile : vFiles) {
       PsiFile file = myManager.findFile(vFile);
-      if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
+      if (file instanceof PsiJavaFile && !(PsiUtil.isInJspFile(file))) {
         PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
         for (PsiClass fileClass : fileClasses) {
           classes.add(fileClass);

@@ -5,6 +5,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -403,7 +404,7 @@ public class ExceptionUtil {
       if (codeFragment.getExceptionHandler() == null) return false;
       return codeFragment.getExceptionHandler().isHandledException(exceptionType);
     }
-    else if (parent instanceof JspFile) {
+    else if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) {
       return true;
     }
     else if (parent instanceof PsiFile) {

@@ -48,7 +48,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
                                            name,
                                            FileTypeManager.getInstance().getFileTypeByFileName(name),
                                            text), isPhysical));
-    if(isPhysical) ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
+    ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
   }
 
@@ -59,12 +59,19 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
     final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(
       getManager(),
-      new MockVirtualFile(getName(), FileTypeManager.getInstance().getFileTypeByFileName(getName()), getText()), false);
+      new MockVirtualFile(getName(), getLanguage(), getText()), false);
     dummyHolderViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = dummyHolderViewProvider;
     return clone;
   }
 
+  private FileViewProvider myViewProvider = null;
+
+  public FileViewProvider getViewProvider() {
+    if(myViewProvider != null) return myViewProvider;
+    return super.getViewProvider();
+  }
+  
   public boolean isValid() {
     if (!super.isValid()) return false;
     if (myContext != null && !myContext.isValid()) return false;

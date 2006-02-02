@@ -1,14 +1,15 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.jsp.JspFileViewProvider;
+import com.intellij.lang.jsp.JspFileViewProviderImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -24,6 +25,8 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.Set;
 
 public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -46,9 +49,11 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
   public void reparseRange(PsiFile file, int startOffset, int endOffset, String newTextS) throws IncorrectOperationException{
     LOG.assertTrue(file.isValid());
-    file.getViewProvider().contentsChanged();
+    final PsiFileImpl psiFile = (PsiFileImpl)file;
+    final CompositeElement element = psiFile.calcTreeElement();
+    file.getViewProvider().beforeContentsSynchronized();
     char[] newText = newTextS.toCharArray();
-    int fileLength = file.getTextLength();
+    int fileLength = element.getTextLength();
     int lengthShift = newText.length - (endOffset - startOffset);
 
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
@@ -69,17 +74,17 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
   private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
-    file.getViewProvider().contentsChanged();
+    Set<String> oldTaglibPrefixes = null;
+    if(file.getLanguage() == StdLanguages.JSP){
+      oldTaglibPrefixes = ((JspFileViewProvider)file.getViewProvider()).getKnownTaglibPrefixes();
+    }
+    file.getViewProvider().beforeContentsSynchronized();
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
     final CharTable charTable = fileImpl.getTreeElement().getCharTable();
     // hack
     final int textLength = file.getTextLength() + lengthShift;
 
-    if(fileImpl.getFileType() == StdFileTypes.JSP){
-      makeFullParse(fileImpl.getTreeElement(), newFileText, textLength, fileImpl, fileImpl.getFileType());
-      return;
-    }
     final FileElement treeFileElement = fileImpl.getTreeElement();
 
     final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
@@ -137,20 +142,20 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer(), project).getTreeParent());
     }
     else{
-      boolean leafChangeOptimized = false;
-      Document document = PsiDocumentManager.getInstance(project).getDocument(fileImpl);
-      if (document != null) {
-        int changedOffset;
-        synchronized (document) {
-          Integer offset = document.getUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET);
-          changedOffset = offset == null ? -1 : offset.intValue();
-          document.putUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET, null);
-        }
-        leafChangeOptimized = changedOffset != -1 && optimizeLeafChange(treeFileElement, newFileText, startOffset, endOffset, lengthShift, changedOffset);
-      }
-      if (leafChangeOptimized) {
-        return;
-      }
+      //boolean leafChangeOptimized = false;
+      //Document document = PsiDocumentManager.getInstance(project).getDocument(fileImpl);
+      //if (document != null) {
+      //  int changedOffset;
+      //  synchronized (document) {
+      //    Integer offset = document.getUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET);
+      //    changedOffset = offset == null ? -1 : offset.intValue();
+      //    document.putUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET, null);
+      //  }
+      //  leafChangeOptimized = changedOffset != -1 && optimizeLeafChange(treeFileElement, newFileText, startOffset, endOffset, lengthShift, changedOffset);
+      //}
+      //if (leafChangeOptimized) {
+      //  return;
+      //}
 
       // file reparse
       FileType fileType = file.getFileType();
@@ -160,7 +165,14 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
       final Grammar grammarByFileType = GrammarUtil.getGrammarByFileType(fileType);
       if(grammarByFileType != null){
-        ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset, lengthShift);
+        Set<String> newTaglibPrefixes = null;
+        if(file.getLanguage() == StdLanguages.JSP){
+          newTaglibPrefixes = ((JspFileViewProvider)file.getViewProvider()).getKnownTaglibPrefixes();
+        }
+        if(newTaglibPrefixes == null || newTaglibPrefixes.equals(oldTaglibPrefixes))
+          ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset, lengthShift,
+                              file.getViewProvider());
+        else makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
       }
       else{
         makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
@@ -197,10 +209,10 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
   private static void makeFullParse(ASTNode parent,
-                             char[] newFileText,
-                             int textLength,
-                             final PsiFileImpl fileImpl,
-                             FileType fileType) {
+                                    char[] newFileText,
+                                    int textLength,
+                                    final PsiFileImpl fileImpl,
+                                    FileType fileType) {
     if(parent instanceof CodeFragmentElement){
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));

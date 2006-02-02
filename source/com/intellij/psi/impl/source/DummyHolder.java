@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,17 +60,14 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if(contentElement != null) TreeUtil.addChildren(getTreeElement(), contentElement);
   }
 
-  public DummyHolder(PsiManager manager, PsiElement context, CharTable table, Language language) {
-    this(manager, context);
-    LOG.assertTrue(manager != null);
-    myContext = context;
-    myTable = table;
-    myLanguage = language;
-  }
-
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table) {
     this(manager, context);
     myTable = table;
+  }
+
+  public DummyHolder(final PsiManager manager, final CharTable table, final Language language) {
+    this(manager, null, table);
+    myLanguage = language;
   }
 
 
@@ -168,7 +166,9 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public Lexer createLexer() {
-    return new JavaLexer(myManager.getEffectiveLanguageLevel());
+    final ParserDefinition parserDefinition = getLanguage().getParserDefinition();
+    if(parserDefinition == null) return new JavaLexer(getManager().getEffectiveLanguageLevel());
+    return parserDefinition.createLexer(getManager().getProject());
   }
 
   public FileElement getTreeElement() {
@@ -193,11 +193,18 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   protected PsiFileImpl clone() {
     final PsiFileImpl psiFile = (PsiFileImpl)cloneImpl(myFileElement);
     final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
-    psiFile.myViewProvider = dummyHolderViewProvider;
+    myViewProvider = dummyHolderViewProvider;
     dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
     final FileElement treeClone = (FileElement)calcTreeElement().clone();
     psiFile.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     treeClone.setPsiElement(psiFile);
     return psiFile;
+  }
+
+  private FileViewProvider myViewProvider = null;
+
+  public FileViewProvider getViewProvider() {
+    if(myViewProvider != null) return myViewProvider;
+    return super.getViewProvider();
   }
 }

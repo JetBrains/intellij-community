@@ -35,5 +35,6 @@ public interface FileManager {
   void cleanupForNextTest();
 
   FileViewProvider findViewProvider(VirtualFile file);
+  FileViewProvider findCachedViewProvider(VirtualFile file);
   void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider);
 }

@@ -282,7 +282,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
-    if(file instanceof JspFile) return;
+    if (PsiUtil.isInJspFile(file)) return;
     final PsiImportList importList = file.getImportList();
     if (importList == null) {
       return;

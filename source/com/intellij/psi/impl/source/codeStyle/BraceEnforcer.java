@@ -63,7 +63,7 @@ public class BraceEnforcer extends AbstractPostFormatProcessor {
   }
 
   public void visitJspFile(JspFile file) {
-    final PsiClass javaRoot = file.getJavaRoot();
+    final PsiClass javaRoot = file.getJavaClass();
     if (javaRoot != null) {
       javaRoot.accept(this);
     }

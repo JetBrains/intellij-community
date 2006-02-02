@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -48,10 +49,12 @@ public class InlineHandler implements RefactoringActionHandler {
       new InlineMethodHandler().invoke(project, editor, (PsiMethod) element);
     } else if (element instanceof PsiField) {
       new InlineConstantFieldHandler().invoke(project, editor, (PsiField) element);
-    } else if (file instanceof JspFile) {
-      new InlineIncludeFileHandler().invoke(project, editor, (JspFile)file);;
-    } else {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
+    } else if (PsiUtil.isInJspFile(file)) {
+      new InlineIncludeFileHandler().invoke(project, editor, PsiUtil.getJspFile(file));
+    }
+    else {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
     }
   }

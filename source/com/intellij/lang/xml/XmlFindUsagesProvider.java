@@ -5,6 +5,8 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
@@ -17,12 +19,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(PsiElement element) {
-    return element instanceof XmlElementDecl ||
-           element instanceof XmlAttributeDecl ||
-           element instanceof XmlEntityDecl ||
-           element instanceof XmlTag ||
-           element instanceof XmlAttributeValue ||
-           element instanceof JspFile;
+    return element instanceof XmlElementDecl || element instanceof XmlAttributeDecl || element instanceof XmlEntityDecl ||
+           element instanceof XmlTag || element instanceof XmlAttributeValue || (PsiUtil.isInJspFile(element) && element instanceof PsiFile);
   }
 
   @NotNull

@@ -50,9 +50,8 @@ public class SharedImplUtil {
 
     if (element.getManager() == null) return null; // otherwise treeElementToPsi may crash!
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    if (psiElement instanceof DummyHolder) return psiElement.getContainingFile();
     if (!(psiElement instanceof PsiFile)) return null;
-    return (PsiFile)psiElement;
+    return psiElement.getContainingFile();
   }
 
   public static boolean isValid(TreeElement thisElement) {

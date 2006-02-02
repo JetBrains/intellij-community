@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
@@ -17,7 +18,8 @@ class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
     if (PsiType.BOOLEAN != type) return false;
     PsiElement parent = expr.getParent();
     if (!(parent instanceof PsiExpressionStatement)) return false;
-    if (!(parent.getParent() instanceof PsiCodeBlock) && !(parent.getParent() instanceof JspFile)) return false;
+    final PsiElement psiElement = parent.getParent();
+    if (!(psiElement instanceof PsiCodeBlock) && !(PsiUtil.isInJspFile(psiElement) && psiElement instanceof PsiFile)) return false;
     return true;
   }
 

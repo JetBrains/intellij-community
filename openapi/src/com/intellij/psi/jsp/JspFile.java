@@ -35,7 +35,7 @@ public interface JspFile extends XmlFile {
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
   XmlTag createDirective(XmlTag context, JspDirectiveKind page);
 
-  PsiClass getJavaRoot();
+  PsiClass getJavaClass();
 
   PsiFile getBaseLanguageRoot();
   /**

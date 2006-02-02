@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +126,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
     if (element instanceof JspClass) {
       final JspClass jspClass = (JspClass)element;
-      final JspxFileImpl jspxFile = jspClass.getJspxFile();
+      final PsiFile jspxFile = jspClass.getContainingFile();
       return "<" + jspxFile.getName() + ">";
     }
 

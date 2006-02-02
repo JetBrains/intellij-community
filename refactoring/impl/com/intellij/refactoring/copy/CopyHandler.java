@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.RefactoringBundle;
 
@@ -68,7 +69,7 @@ public class CopyHandler {
 
   private static boolean canCopyFiles(PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(element instanceof JspFile))) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(PsiUtil.isInJspFile(element)))) {
         return false;
       }
     }

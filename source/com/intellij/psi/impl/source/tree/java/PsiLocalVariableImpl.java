@@ -4,13 +4,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
+import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.JspFile;
@@ -247,12 +248,11 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public SearchScope getUseScope() {
-    final PsiFile file = getContainingFile();
-    if (file instanceof JspxFileImpl) {
+    if (PsiUtil.isInJspFile(this)) {
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
           getTreeParent().getTreeParent().getElementType() == JavaElementType.CODE_BLOCK &&
           getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final PsiFile[] includingFiles = JspUtil.getReferencingFiles((JspFile)file);
+        final PsiFile[] includingFiles = JspUtil.getReferencingFiles(PsiUtil.getJspFile(this));
         return new LocalSearchScope(includingFiles);
       }
     }

@@ -9,7 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
+import com.intellij.psi.impl.source.jsp.JspFileImpl;
+import com.intellij.lang.jsp.JspxFileViewProviderImpl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,7 +47,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     else{
       toParseTreeText(myFile);
     }
-    if(myFile instanceof JspxFileImpl) ((JspxFileImpl)myFile).checkAllTreesEqual();
+    if(myFile instanceof JspFileImpl) ((JspxFileViewProviderImpl)((JspFileImpl)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
@@ -86,7 +87,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
       FileWriter writer = new FileWriter(fullName);
       writer.write(text);
       writer.close();
-      assertTrue("No output text found. Created.", false);
+      assertTrue("No output text found. File " + fullName + " created.", false);
     }
   }
 

@@ -70,7 +70,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return new LocalSearchScope(element);
       }
       PsiFile file = element.getContainingFile();
-      if (file instanceof JspFile) return maximalUseScope;
+      if (PsiUtil.isInJspFile(file)) return maximalUseScope;
       PsiClass aClass = (PsiClass)element;
       if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return maximalUseScope;
@@ -107,7 +107,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else if (element instanceof PsiMethod || element instanceof PsiField) {
       PsiMember member = (PsiMember) element;
       PsiFile file = element.getContainingFile();
-      if (file instanceof JspFile) return maximalUseScope;
+      if (PsiUtil.isInJspFile(file)) return maximalUseScope;
 
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) {
@@ -558,7 +558,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         PsiFile file = files[i];
         PsiElement[] psiRoots = file.getPsiRoots();
+        Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
         for (PsiElement psiRoot : psiRoots) {
+          if(processed.contains(psiRoot)) continue;
+          processed.add(psiRoot);
           if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, progress, searchContext)) {
             return false;
           }

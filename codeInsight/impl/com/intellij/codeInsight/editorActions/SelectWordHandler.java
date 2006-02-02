@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 
 import java.util.List;
@@ -127,8 +128,8 @@ public class SelectWordHandler extends EditorActionHandler {
   private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {
     final PsiElement parent = e.getParent();
 
-    if (e.getContainingFile() instanceof JspFile && e.getLanguage() instanceof JavaLanguage) {
-      final JspFile psiFile = (JspFile)e.getContainingFile();
+    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage() instanceof JavaLanguage) {
+      final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
         PsiFile baseRoot = psiFile.getBaseLanguageRoot();
         PsiElement elt = baseRoot.getNode().findLeafElementAt(e.getTextRange().getStartOffset()).getPsi();

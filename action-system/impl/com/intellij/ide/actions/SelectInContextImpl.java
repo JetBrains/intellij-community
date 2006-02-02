@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 
 import javax.swing.*;
@@ -141,7 +142,7 @@ abstract class SelectInContextImpl implements SelectInContext {
 
     public Object getSelectorInFile() {
       final int offset = myEditor.getEditor().getCaretModel().getOffset();
-      if (myPsiFile instanceof PsiJavaFile && !(myPsiFile instanceof JspFile)
+      if (myPsiFile instanceof PsiJavaFile && !(PsiUtil.isInJspFile(myPsiFile))
           && offset >= 0 && offset < myPsiFile.getTextLength()) {
         return myPsiFile.findElementAt(offset);
       } else {

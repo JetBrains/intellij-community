@@ -12,6 +12,8 @@ import com.intellij.lang.Language;
  * To change this template use File | Settings | File Templates.
  */
 public interface JspxFileViewProvider extends FileViewProvider {
+  Language JAVA_HOLDER_METHOD_TREE_LANGUAGE = new Language("JAVA_HOLDER_METHOD_TREE", "") {};
+
   WebDirectoryElement getContainingWebDirectory();
   Language getTemplateDataLanguage();
 }

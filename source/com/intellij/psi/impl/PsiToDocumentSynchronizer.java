@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 
@@ -54,10 +53,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    final PsiElement scope = event.getParent();
-    if (scope != null && TreeUtil.getFileElement((TreeElement)scope.getNode()).getPsi() != scope.getContainingFile())
-      return;
-
     myPsiDocumentManager.setProcessDocumentEvents(false);
     try {
       syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
@@ -73,9 +68,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       mySmartPointerManager.synchronizePointers(psiFile);
       if (LOG.isDebugEnabled()) {
         PsiDocumentManagerImpl.checkConsistency(psiFile, document);
-        if (psiFile instanceof JspxFileImpl) {
-          ((JspxFileImpl)psiFile).checkAllConsistent();
-        }
       }
     }
   }
@@ -153,19 +145,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if(documentChangeTransaction != null) {
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, s);
     }
-    else {
-      DocumentEx ex = (DocumentEx) document;
-      ex.suppressGuardedExceptions();
-      try {
-        boolean isReadOnly = !document.isWritable();
-        ex.setReadOnly(false);
-        ex.replaceString(startOffset, endOffset, s);
-        ex.setReadOnly(isReadOnly);
-      }
-      finally {
-        ex.unSuppressGuardedExceptions();
-      }
-    }
   }
 
   public void insertString(Document document, int offset, String s) {
@@ -173,38 +152,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(offset, 0, s);
     }
-    else {
-      DocumentEx ex = (DocumentEx) document;
-      ex.suppressGuardedExceptions();
-      try {
-        boolean isReadOnly = !ex.isWritable();
-        ex.setReadOnly(false);
-        ex.insertString(offset, s);
-        ex.setReadOnly(isReadOnly);
-      }
-      finally {
-        ex.unSuppressGuardedExceptions();
-      }
-    }
   }
 
   public void deleteString(Document document, int startOffset, int endOffset){
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, "");
-    }
-    else {
-      DocumentEx ex = (DocumentEx) document;
-      ex.suppressGuardedExceptions();
-      try {
-        boolean isReadOnly = !ex.isWritable();
-        ex.setReadOnly(false);
-        ex.deleteString(startOffset, endOffset);
-        ex.setReadOnly(isReadOnly);
-      }
-      finally {
-        ex.unSuppressGuardedExceptions();
-      }
     }
   }
 

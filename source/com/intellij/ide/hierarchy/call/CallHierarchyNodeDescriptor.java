@@ -23,6 +23,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,8 +131,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
       }
     }
-    else if (enclosingElement instanceof JspFile) {
-      final JspFile file = (JspFile)enclosingElement;
+    else if (PsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile) {
+      final JspFile file = PsiUtil.getJspFile(enclosingElement);
       myHighlightedText.getEnding().addText(file.getName(), mainTextAttributes);
     }
     else {
@@ -140,7 +141,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myUsageCount > 1) {
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
-    if (!(enclosingElement instanceof JspFile)) {
+    if (!(PsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
       final String packageName = getPackageName(enclosingElement instanceof PsiMethod ? ((PsiMethod)enclosingElement).getContainingClass() : (PsiClass)enclosingElement);
       myHighlightedText.getEnding().addText("  (" + packageName + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
     }

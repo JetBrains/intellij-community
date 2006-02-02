@@ -38,6 +38,7 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -326,7 +327,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (classes.length == 1
         && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && !isCaretNearRef(editor,ref)
-        && !(ref.getContainingFile() instanceof JspFile)) {
+        && !(PsiUtil.isInJspFile(ref.getContainingFile()))) {
       action.execute();
       return false;
     }

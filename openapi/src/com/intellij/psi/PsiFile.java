@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.lang.jsp.JspFileViewProvider;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,4 +131,6 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
   @NotNull PsiFile[] getPsiRoots();
 
   FileViewProvider getViewProvider();
+
+  ASTNode getNode();
 }

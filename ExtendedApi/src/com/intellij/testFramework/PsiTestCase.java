@@ -72,8 +72,6 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
     final VirtualFile vFile = vDir.createChildData(vDir, fileName);
     VfsUtil.saveText(vFile, text);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     assertNotNull(vFile);
     final PsiFile file = myPsiManager.findFile(vFile);
     assertNotNull(file);

@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -22,6 +23,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,23 +41,28 @@ public class CodeInsightUtil {
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
-    PsiElement element1 = file.findElementAt(startOffset);
-    PsiElement element2 = file.findElementAt(endOffset - 1);
+    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
+    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
     }
     if (element2 instanceof PsiWhiteSpace) {
       endOffset = element2.getTextRange().getStartOffset();
     }
-    PsiExpression expression = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, PsiExpression.class);
+    final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
+    final PsiExpression expression = commonParent instanceof PsiExpression ?
+                                     (PsiExpression)commonParent :
+                                     PsiTreeUtil.getParentOfType(commonParent, PsiExpression.class);
     if (expression == null || expression.getTextRange().getEndOffset() != endOffset) return null;
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
     return expression;
   }
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    PsiElement element1 = file.findElementAt(startOffset);
-    PsiElement element2 = file.findElementAt(endOffset - 1);
+    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
+    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
@@ -74,7 +81,7 @@ public class CodeInsightUtil {
         break;
       }
       if (parent instanceof PsiCodeBlock) break;
-      if (parent instanceof JspFile) break;
+      if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
       if (parent instanceof PsiCodeFragment) break;
       if (parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();

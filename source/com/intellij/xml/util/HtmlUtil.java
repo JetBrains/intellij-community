@@ -2,6 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -126,8 +127,8 @@ public class HtmlUtil {
   public static XmlDocument getRealXmlDocument(XmlDocument doc) {
     final PsiFile containingFile = doc.getContainingFile();
 
-    if (containingFile instanceof JspFile) {
-      final PsiFile baseLanguageRoot = ((JspFile)containingFile).getBaseLanguageRoot();
+    if (PsiUtil.isInJspFile(containingFile)) {
+      final PsiFile baseLanguageRoot = (PsiUtil.getJspFile(containingFile)).getBaseLanguageRoot();
       final PsiElement[] children = baseLanguageRoot.getChildren();
 
       for (int i = 0; i < children.length; i++) {

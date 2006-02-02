@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -61,10 +62,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     myParentClass = getParentClass(selectedExpr);
     if (myParentClass == null) {
-      if (file instanceof JspFile) {
+      if (PsiUtil.isInJspFile(file)) {
         CommonRefactoringUtil.showErrorMessage(getRefactoringName(),
-                                                RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()), getHelpID(), project
-        );
+                                               RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()), getHelpID(),
+                                               project);
         return false;
       }
       else {

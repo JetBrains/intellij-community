@@ -135,7 +135,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     while(true){
       if (scope instanceof PsiFile) break;
       scope = scope.getParent();
-      if (scope instanceof PsiCodeBlock || scope instanceof JspFile) {
+      if (scope instanceof PsiCodeBlock || (scope instanceof PsiFile && PsiUtil.isInJspFile(scope))) {
         lastScope = scope;
       }
     }

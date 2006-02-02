@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
@@ -164,7 +165,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     final PsiElement element = elementArray[0];
     if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
-    return !(element instanceof PsiJavaFile) || element instanceof JspFile;
+    return !(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element) && element instanceof PsiFile;
   }
 
   public boolean isRenaming(DataContext dataContext) {

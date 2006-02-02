@@ -13,6 +13,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.util.Processor;
@@ -43,9 +44,9 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       if (refElement instanceof PsiMetaOwner) {
         final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
         if (metaData!=null) text = metaData.getName();
-      } else if (refElement instanceof JspFile) {
-        final VirtualFile virtualFile = ((JspFile)refElement).getVirtualFile();
-        text = virtualFile != null ? virtualFile.getNameWithoutExtension():text;
+      } else if (refElement instanceof PsiFile && PsiUtil.isInJspFile(refElement)) {
+        final VirtualFile virtualFile = (PsiUtil.getJspFile(refElement)).getVirtualFile();
+        text = virtualFile != null ? virtualFile.getNameWithoutExtension() : text;
       }
     }
     else {

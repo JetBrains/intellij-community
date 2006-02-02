@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
@@ -86,7 +87,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
       final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
       final PsiFile psiFile = instance.getPsiFile(document);
-      if(psiFile instanceof JspFile) ((JspHighlightLexer)myLexer).setBaseFile((JspFile)psiFile);
+      if (PsiUtil.isInJspFile(psiFile)) ((JspHighlightLexer)myLexer).setBaseFile(PsiUtil.getJspFile(psiFile));
     }
     if(mySegments.getSegmentCount() == 0) {
       setText(document.getCharsSequence());
@@ -264,7 +265,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
       final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
       final PsiFile psiFile = instance.getPsiFile(myEditor.getDocument());
-      if(psiFile instanceof JspFile) ((JspHighlightLexer)myLexer).setBaseFile((JspFile)psiFile);
+      if (PsiUtil.isInJspFile(psiFile)) ((JspHighlightLexer)myLexer).setBaseFile(PsiUtil.getJspFile(psiFile));
     }
     int startOffset = 0;
     myLexer.start(chars, startOffset, text.length());

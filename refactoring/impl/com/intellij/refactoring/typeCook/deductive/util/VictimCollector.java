@@ -82,7 +82,7 @@ public class VictimCollector extends Visitor {
   }
 
   public void visitFile(PsiFile file) {
-    if (file instanceof PsiJavaFile || file instanceof JspFile) {
+    if (file instanceof PsiJavaFile) {
       super.visitFile(file);
     }
   }

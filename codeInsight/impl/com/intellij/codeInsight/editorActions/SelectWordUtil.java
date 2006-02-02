@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -1081,13 +1082,13 @@ public class SelectWordUtil {
   static class ScriptletSelectioner extends BasicSelectioner {
     @Override
     public boolean canSelect(PsiElement e) {
-      return e.getContainingFile() instanceof JspFile && e.getLanguage() instanceof JavaLanguage;
+      return PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage() instanceof JavaLanguage;
     }
 
     @Override
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-      final JspFile psiFile = (JspFile)e.getContainingFile();
+      final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
           PsiFile baseRoot = psiFile.getBaseLanguageRoot();
           PsiElement elt = baseRoot.findElementAt(cursorOffset);

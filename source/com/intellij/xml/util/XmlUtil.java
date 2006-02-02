@@ -188,7 +188,8 @@ public class XmlUtil {
   public static XmlFile findXmlFile(PsiFile base, String uri) {
     PsiFile result = null;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String data = base.getUserData(TEST_PATH);
+      final JspFile jspFile = PsiUtil.getJspFile(base);
+      String data = jspFile != null ? jspFile.getUserData(TEST_PATH) : base.getUserData(TEST_PATH);
 
       if (data == null && base.getOriginalFile() != null) {
         data = base.getOriginalFile().getUserData(TEST_PATH);
@@ -205,16 +206,15 @@ public class XmlUtil {
       result = PsiUtil.findRelativeFile(uri, base);
     }
 
-    if (result == null && base instanceof JspFile) {
-      result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri,(JspFile)base);
+    if (result == null && PsiUtil.isInJspFile(base)) {
+      result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, PsiUtil.getJspFile(base));
     }
 
     if (result instanceof XmlFile) {
       XmlFile xmlFile = (XmlFile)result;
       return xmlFile;
     }
-    if(base instanceof JspFile)
-      return JspManager.getInstance(base.getProject()).getTldFileByUri(uri, (JspFile)base);
+    if (PsiUtil.isInJspFile(base)) return JspManager.getInstance(base.getProject()).getTldFileByUri(uri, PsiUtil.getJspFile(base));
     return null;
   }
 
@@ -592,8 +592,8 @@ public class XmlUtil {
       }
       else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
         String baseLanguageNameSpace = EMPTY_URI;
-        if (file instanceof JspFile) {
-          final Language baseLanguage = ((JspFile)file).getViewProvider().getTemplateDataLanguage();
+        if (PsiUtil.isInJspFile(file)) {
+          final Language baseLanguage = (PsiUtil.getJspFile(file)).getViewProvider().getTemplateDataLanguage();
           if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
             baseLanguageNameSpace = XHTML_URI;
           }
@@ -1062,7 +1062,10 @@ public class XmlUtil {
 
   public static XmlFile getContainingFile(PsiElement element) {
     while (!(element instanceof XmlFile) && element != null) {
-      element = element.getContext();
+      final PsiElement context = element.getContext();
+      if(context == null && PsiUtil.isInJspFile(element))
+        element = PsiUtil.getJspFile(element);
+      else element = context;
     }
     return (XmlFile)element;
   }

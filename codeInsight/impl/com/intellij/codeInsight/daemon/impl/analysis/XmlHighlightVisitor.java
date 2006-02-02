@@ -48,6 +48,7 @@ import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -192,7 +193,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           // check if there is invalid ns declaration
           if (taglibDeclaration) {
-            final XmlTag[] directiveTags = ((JspFile)containingFile).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
+            final XmlTag[] directiveTags = PsiUtil.getJspFile(containingFile).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
             for(XmlTag t:directiveTags) {
               if (namespacePrefix.equals(t.getAttributeValue("prefix"))) return;
             }

@@ -81,7 +81,6 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
   private void addMatchingProviders(final PsiElement position, final List<Pair<PsiReferenceProvider,ElementFilter>> providerList, final List<PsiReferenceProvider> ret) {
     for(final Pair<PsiReferenceProvider,ElementFilter> pair:providerList) {
       final ElementFilter elementFilter = pair.getSecond();
-
       if (elementFilter == null || elementFilter.isAcceptable(position,position)) {
         ret.add(pair.getFirst());
       }

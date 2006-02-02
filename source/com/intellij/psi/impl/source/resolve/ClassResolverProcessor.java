@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -114,9 +115,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
 
     boolean accessible = true;
 
-    if (aClass.getContainingFile() instanceof JspFile) {
+    if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
       PsiFile file = ResolveUtil.getContextFile(myPlace);
-      if (file instanceof JspFile) {
+      if (PsiUtil.isInJspFile(file)) {
         return true;
       }
     }

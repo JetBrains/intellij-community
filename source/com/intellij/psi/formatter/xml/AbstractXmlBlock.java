@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -334,14 +335,14 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return myXmlFormattingPolicy.getSettings();
   }
 
-  private boolean canBeAnotherTreeTagStart(final ASTNode child) {
+private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return myXmlFormattingPolicy.processJsp()
-           && myNode.getPsi().getContainingFile().getLanguage() == StdLanguages.JSP
+           && PsiUtil.getJspFile(myNode.getPsi()) != null
            && (isXmlTag(myNode) || myNode.getElementType() == ElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
            (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == ElementType.JSP_XML_TEXT ||
             child.getPsi() instanceof OuterLanguageElement);
-  }
 
+  }
   protected boolean isXmlTag(final ASTNode child) {
     return isXmlTag(child.getPsi());
   }
@@ -405,11 +406,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
-  public static Block creareJspRoot(final PsiElement element,
+  public static Block createJspRoot(final PsiElement element,
                                     final CodeStyleSettings settings,
                                     final FormattingDocumentModel documentModel) {
     final PsiFile file = element.getContainingFile();
-    final Language baseLanguage = ((JspFile)file).getViewProvider().getTemplateDataLanguage();
+    final Language baseLanguage = (PsiUtil.getJspFile(file)).getViewProvider().getTemplateDataLanguage();
     if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
       final PsiElement[] psiRoots = file.getPsiRoots();
       LOG.assertTrue(psiRoots.length == 4);

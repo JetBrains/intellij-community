@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -452,8 +453,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       if(known.isEmpty()) return ((XmlTag)parent).knownNamespaces();
       known.addAll(Arrays.asList(((XmlTag)parent).knownNamespaces()));
     }
-    else if(getContainingFile() instanceof JspFile) {
-      final XmlTag rootTag = ((JspFile)getContainingFile()).getDocument().getRootTag();
+    else if (PsiUtil.isInJspFile(getContainingFile())) {
+      final XmlTag rootTag = (PsiUtil.getJspFile(getContainingFile())).getDocument().getRootTag();
       if (rootTag != this) known.addAll(Arrays.asList((rootTag.knownNamespaces())));
     }
     return known.toArray(new String[known.size()]);

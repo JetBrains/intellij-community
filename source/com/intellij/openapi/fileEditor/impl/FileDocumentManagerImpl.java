@@ -32,24 +32,15 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.PsiExternalChangeAction;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PendingEventDispatcher;
-import com.intellij.util.text.CharArrayCharSequence;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -63,7 +54,6 @@ import java.util.Set;
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
-  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<WeakReference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
@@ -108,7 +98,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null){
-      final CharSequence text = loadText(file);
+      final CharSequence text = LoadTextUtil.loadText(file);
       if (text == null) return null;
       document = (DocumentEx)createDocument(text);
       document.setModificationStamp(file.getModificationStamp());
@@ -143,52 +133,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private static Document createDocument(final CharSequence text) {
     return EditorFactory.getInstance().createDocument(text);
-  }
-
-  private CharSequence loadText(VirtualFile file) {
-    if (file.isDirectory()) return null;
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-
-    if (fileType.equals(StdFileTypes.CLASS)){
-      return new CharArrayCharSequence(decompile(file));
-    }
-
-    if (fileType.isBinary()) return null;
-    if(file.isDirectory()) return ArrayUtil.EMPTY_CHAR_SEQUENCE;
-
-    final byte[] bytes;
-    try {
-      bytes = file.contentsToByteArray();
-    }
-    catch (IOException e) {
-      return ArrayUtil.EMPTY_CHAR_SEQUENCE;
-    }
-    return getTextByBinaryPresentation(bytes, file);
-  }
-
-  private char[] decompile(VirtualFile file) {
-    try{
-      final ProjectEx dummyProject = getDummyProject();
-      PsiManager manager = PsiManager.getInstance(dummyProject);
-      final String text = ClsFileImpl.decompile(manager, file);
-
-      PsiFile mirror = manager.getElementFactory().createFileFromText("test.java", text);
-
-      //TODO: need shorten to work
-      /*CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
-      boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-      codeStyleManager.shortenClassReferences(mirror);
-      codeStyleManager.reformat(mirror);
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;*/
-
-      return mirror.textToCharArray();
-    }
-    catch(Exception e){
-      LOG.error(e);
-      return null;
-    }
   }
 
   public Document getCachedDocument(VirtualFile file) {
@@ -322,7 +266,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public static String getLineSeparator(Document document, VirtualFile file) {
-    String lineSeparator = file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    String lineSeparator = file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY);
     if (lineSeparator == null){
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
     }
@@ -330,7 +274,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public String getLineSeparator(VirtualFile file, Project project) {
-    String lineSeparator = file != null ? file.getUserData(DETECTED_LINE_SEPARATOR_KEY) : null;
+    String lineSeparator = file != null ? file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY) : null;
     if (lineSeparator == null) {
       CodeStyleSettingsManager settingsManager = project == null
                                                  ? CodeStyleSettingsManager.getInstance()
@@ -340,12 +284,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     else {
       return lineSeparator;
     }
-  }
-
-  public CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
-    final Pair<CharSequence, String> result = LoadTextUtil.loadText(content, virtualFile);
-    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
-    return result.getFirst();
   }
 
   public void discardAllChanges() {
@@ -454,12 +392,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
           boolean wasWritable = document.isWritable();
           DocumentEx documentEx = (DocumentEx)document;
           documentEx.setReadOnly(false);
-          documentEx.replaceText(loadText(file), file.getModificationStamp());
+          documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
           documentEx.setReadOnly(!wasWritable);
         }
       }
     );
-    myUnsavedDocuments.remove(document);      
+    myUnsavedDocuments.remove(document);
 
     try {
       fireFileContentReloaded(file, document);
@@ -482,7 +420,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         SimpleDiffRequest request = new SimpleDiffRequest(getDummyProject(), windowtitle);
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        String fsContent = loadText(file).toString();
+        String fsContent = LoadTextUtil.loadText(file).toString();
         request.setContents(new SimpleContent(fsContent, fileType),
                             new DocumentContent(myDummyProject, document, fileType));
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),

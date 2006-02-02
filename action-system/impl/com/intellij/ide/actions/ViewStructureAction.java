@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 
 /**
@@ -82,9 +83,10 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
      else if (psiFile instanceof PropertiesFile){
        structureViewModel = new PropertiesFileStructureViewModel((PropertiesFile)psiFile);
      }
-     else if (psiFile instanceof JspFile) {
+     else if (PsiUtil.isInJspFile(psiFile)) {
        Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
-       StructureViewComposite structureViewComposite = (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
+       StructureViewComposite structureViewComposite =
+         (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
        StructureView structureView = structureViewComposite.getSelectedStructureView();
        structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
      }

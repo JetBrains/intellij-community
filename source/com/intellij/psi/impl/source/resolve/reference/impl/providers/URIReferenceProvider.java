@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -101,11 +102,12 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       final String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
       final PsiFile containingFile = myElement.getContainingFile();
 
-      if (containingFile instanceof JspFile) {
-        final Object[] possibleTldUris = JspManager.getInstance(containingFile.getProject()).getPossibleTldUris((JspFile)containingFile);
+      if (PsiUtil.isInJspFile(containingFile)) {
+        final Object[] possibleTldUris = JspManager.getInstance(containingFile.getProject()).getPossibleTldUris(
+          PsiUtil.getJspFile(containingFile));
         Object[] result = new Object[resourceUrls.length + possibleTldUris.length + 1];
-        System.arraycopy(resourceUrls,0,result,0,resourceUrls.length);
-        System.arraycopy(possibleTldUris,0,result,resourceUrls.length,possibleTldUris.length);
+        System.arraycopy(resourceUrls, 0, result, 0, resourceUrls.length);
+        System.arraycopy(possibleTldUris, 0, result, resourceUrls.length, possibleTldUris.length);
         result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
         return result;
       }

@@ -17,7 +17,9 @@ public class XmlFileElement extends FileElement{
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XML_DOCUMENT) {
+    if (child.getElementType() == XML_DOCUMENT ||
+        child.getElementType() == JSP_DOCUMENT ||
+        child.getElementType() == HTML_DOCUMENT) {
       return ChildRole.XML_DOCUMENT;
     }
     else {

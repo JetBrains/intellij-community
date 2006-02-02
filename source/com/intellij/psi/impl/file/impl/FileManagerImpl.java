@@ -117,6 +117,10 @@ public class FileManagerImpl implements FileManager {
     return viewProvider;
   }
 
+  public FileViewProvider findCachedViewProvider(final VirtualFile file) {
+    return myVFileToPsiFileMap.get(file);
+  }
+
   public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider fileViewProvider) {
     myVFileToPsiFileMap.put(virtualFile, fileViewProvider);
   }
@@ -156,24 +160,7 @@ public class FileManagerImpl implements FileManager {
     myVirtualFileListener = new MyVirtualFileListener();
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
 
-    myFileDocumentManagerListener = new FileDocumentManagerAdapter() {
-      public void fileWithNoDocumentChanged(VirtualFile file) {
-        if (!myUseRepository) {
-          clearNonRepositoryMaps();
-        }
-
-        final PsiFile psiFile = getCachedPsiFileInner(file);
-        if (psiFile != null) {
-          ApplicationManager.getApplication().runWriteAction(
-            new PsiExternalChangeAction() {
-              public void run() {
-                reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
-              }
-            }
-          );
-        }
-      }
-    };
+    myFileDocumentManagerListener = new MyFileDocumentManagerAdapter();
     myFileDocumentManager.addFileDocumentManagerListener(myFileDocumentManagerListener);
 
     myModuleRootListener = new MyModuleRootListener();
@@ -1263,6 +1250,25 @@ public class FileManagerImpl implements FileManager {
 
     public boolean isSearchInLibraries() {
       return true;
+    }
+  }
+
+  private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
+    public void fileWithNoDocumentChanged(VirtualFile file) {
+      if (!myUseRepository) {
+        clearNonRepositoryMaps();
+      }
+
+      final PsiFile psiFile = getCachedPsiFileInner(file);
+      if (psiFile != null) {
+        ApplicationManager.getApplication().runWriteAction(
+          new PsiExternalChangeAction() {
+            public void run() {
+              reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
+            }
+          }
+        );
+      }
     }
   }
 }

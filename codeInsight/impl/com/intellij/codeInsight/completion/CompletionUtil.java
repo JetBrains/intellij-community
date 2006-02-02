@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -174,7 +175,7 @@ public class CompletionUtil {
     if (completionDataByFileType != null) return completionDataByFileType;
 
     if((file instanceof PsiJavaFile || file instanceof PsiCodeFragment) &&
-            ! (file instanceof JspFile) // TODO: we need to check the java context of JspX
+            ! (PsiUtil.isInJspFile(file)) // TODO: we need to check the java context of JspX
             ){
       if (element != null && new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())){
         return ourJavaDocCompletionData;
@@ -183,10 +184,10 @@ public class CompletionUtil {
         return element != null && element.getManager().getEffectiveLanguageLevel() == LanguageLevel.JDK_1_5 ? ourJava15CompletionData : ourJavaCompletionData;
       }
     }
-    else if (file.getLanguage() == Language.findInstance(NewJspLanguage.class)) {
+    else if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSP) {
       return ourJSPCompletionData;
     }
-    else if (file instanceof XmlFile && file.getFileType() == StdFileTypes.XML) {
+    else if (file.getViewProvider().getBaseLanguage() == StdLanguages.XML) {
       return ourXmlCompletionData;
     }
     return ourGenericCompletionData;

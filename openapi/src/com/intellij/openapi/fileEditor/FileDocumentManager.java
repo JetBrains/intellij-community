@@ -61,6 +61,4 @@ public abstract class FileDocumentManager {
     }
 
   }
-
-  public abstract CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile);
 }

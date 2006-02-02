@@ -71,7 +71,7 @@ public class CodeFormatterFacade implements Constants {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final FormattingModel model = builder.createModel(containingFile, mySettings);
+      final FormattingModel model = builder.createModel(psiElement, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,

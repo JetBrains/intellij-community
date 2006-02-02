@@ -36,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -568,7 +569,7 @@ public class TypedHandler implements TypedActionHandler {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    JspFile file = (JspFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    JspFile file = PsiUtil.getJspFile(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
     PsiElement element = file.findElementAt(current);
     if (element == null) {
       element = file.findElementAt(editor.getDocument().getTextLength() - 1);

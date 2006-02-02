@@ -13,10 +13,13 @@ import com.intellij.psi.impl.source.parsing.xml.DTDMarkupParser;
 import com.intellij.psi.impl.source.parsing.xml.DTDParser;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.util.text.CharArrayUtil;
 
 
@@ -52,7 +55,8 @@ public interface XmlElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
+      final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
@@ -61,17 +65,19 @@ public interface XmlElementType {
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
+      final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
 
-  IElementType XHTML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XML){
+  IElementType XHTML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XHTML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XHTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
-      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, SharedImplUtil.getManagerByTree(chameleon));
+      final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
+      return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };

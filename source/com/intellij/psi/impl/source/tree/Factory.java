@@ -10,12 +10,15 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlDocument;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
@@ -40,7 +43,7 @@ public class Factory implements Constants {
 
   public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
     final LeafElement newElement;
-    final FileElement holderElement = new DummyHolder(manager, null, table).getTreeElement();
+    final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     return newElement;
@@ -143,6 +146,9 @@ public class Factory implements Constants {
     else if (type == XML_FILE) {
       element = new XmlFileElement(type);
     }
+    else if (type == JSP_TEMPLATE) {
+      element = new XmlFileElement(type);
+    }
     else if (type == DTD_FILE) {
       element = new XmlFileElement(type);
     }
@@ -151,6 +157,12 @@ public class Factory implements Constants {
     }
     else if (type == JSPX_FILE) {
       element = new XmlFileElement(type);
+    }
+    else if (type == JspElementType.JSP_ROOT_TAG) {
+      element = new JspXmlRootTag();
+    }
+    else if (type == JspElementType.JSP_DOCUMENT) {
+      element = new JspXmlDocument();
     }
     else if (type == HTML_FILE) {
       element = new HtmlFileElement();
@@ -442,7 +454,10 @@ public class Factory implements Constants {
     else if (type == ANNOTATION_PARAMETER_LIST) {
       element = new PsiAnnotationParameterListImpl();
     }
-    else {
+    else if(type instanceof IFileElementType) {
+      element = new FileElement(type);
+    }
+    else{
       for (int size = ourElementFactories.size(), i = 0; i < size; i++) {
         TreeElementFactory elementFactory = ourElementFactories.get(i);
         if (elementFactory.isMyElementType(type)) {

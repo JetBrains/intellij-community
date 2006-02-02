@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 
 public class ExternalJavaDocAction extends AnAction {
@@ -52,8 +53,7 @@ public class ExternalJavaDocAction extends AnAction {
     if (editor != null) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      boolean enabled = file instanceof PsiJavaFile ||
-                        file instanceof JspFile ||
+      boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
                         file!=null && JavaDocManager.getInstance(project).getProvider(file.getFileType())!=null;
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);

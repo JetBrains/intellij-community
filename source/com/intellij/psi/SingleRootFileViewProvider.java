@@ -9,7 +9,9 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -19,6 +21,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -26,6 +29,9 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -36,11 +42,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
   private final VirtualFile myFile;
+  private final boolean myPhysical;
   private PsiFile myPsiFile = null;
-  private CharSequence myContents = null;
-  private boolean myPhysical;
+  private Content myContent;
   private WeakReference<Document> myDocument;
-  private long myModificationStamp;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
     this(manager, file, true);
@@ -50,7 +55,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     myManager = manager;
     myFile = virtualFile;
     myPhysical = physical;
-    myModificationStamp = virtualFile.getModificationStamp();
+    setContent(new VirtualFileContent());
   }
 
   public Language getBaseLanguage() {
@@ -66,15 +71,45 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return Collections.singleton(getBaseLanguage());
   }
 
-  public synchronized PsiFile getPsi(Language target) {
-    if(!isPhysical())
+  public final synchronized PsiFile getPsi(Language target) {
+    if (!isPhysical()) {
       ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
-    if (target != getBaseLanguage()) return null;
+    }
+    return getPsiInner(target);
+  }
+
+  protected PsiFile getPsiInner(final Language target) {
+    if (target != getBaseLanguage()) {
+      return null;
+    }
     return myPsiFile != null ? myPsiFile : (myPsiFile = createFile());
   }
 
-  public void contentsChanged() {
-    myContents = null;
+  public void beforeContentsSynchronized() {
+    if(!(myContent instanceof PsiFileContent)) return;
+    unsetPsiContent();
+  }
+
+  private void unsetPsiContent() {
+    final Document cachedDocument = getCachedDocument();
+    if (cachedDocument != null) {
+      setContent(new DocumentContent());
+    }
+    else {
+      setContent(new VirtualFileContent());
+    }
+  }
+
+  public void beforeDocumentChanged() {
+    final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
+    if(psiFile != null && psiFile.isContentsLoaded() && getContent() instanceof DocumentContent)
+      setContent(new PsiFileContent(psiFile, getModificationStamp()));
+  }
+
+  public void rootChanged(PsiFile psiFile) {
+    if (((PsiFileImpl)psiFile).isContentsLoaded()) {
+      setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
+    }
   }
 
   public boolean isEventSystemEnabled() {
@@ -86,20 +121,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public long getModificationStamp() {
-    final Document document = getCachedDocument();
-    if (document != null) {
-      if (!PsiDocumentManager.getInstance(getManager().getProject()).isUncommited(document)) {
-        myModificationStamp = document.getModificationStamp();
-      }
-    }
-    else {
-      myModificationStamp = getVirtualFile().getModificationStamp();
-    }
-    return myModificationStamp;
+    return getContent().getModificationStamp();
   }
 
-  public void rootChanged(PsiFile psiFile) {
-  }
 
   public synchronized PsiFile getCachedPsi(Language target) {
     return myPsiFile;
@@ -126,10 +150,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       if (fileType instanceof LanguageFileType) {
         final Language language = ((LanguageFileType)fileType).getLanguage();
         if (language == StdLanguages.JAVA || vFile == null || !isTooLarge(vFile)) {
-          final ParserDefinition parserDefinition = language.getParserDefinition();
-          if (parserDefinition != null) {
-            return parserDefinition.createFile(this);
-          }
+          final PsiFile psiFile = createFile(language);
+          if(psiFile != null) return psiFile;
         }
       }
 
@@ -158,13 +180,18 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     }
   }
 
-  private boolean isTooLarge(final VirtualFile vFile) {
+  private static boolean isTooLarge(final VirtualFile vFile) {
     if (FileManagerImpl.MAX_INTELLISENSE_FILESIZE == -1) return false;
-    return getFileLength(vFile) > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
+    return vFile.getLength() > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
   }
 
-  private long getFileLength(final VirtualFile vFile) {
-    return vFile.getLength();
+  protected PsiFile createFile(Language lang){
+    if(lang != getBaseLanguage()) return null;
+    final ParserDefinition parserDefinition = lang.getParserDefinition();
+    if (parserDefinition != null) {
+      return parserDefinition.createFile(this);
+    }
+    return null;
   }
 
   public PsiManager getManager() {
@@ -173,23 +200,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
 
   @NotNull
   public synchronized CharSequence getContents() {
-    if(myModificationStamp != getModificationStamp()){
-      contentsChanged();
-    }
-    if(myContents == null){
-      final Document document = getDocument();
-      final PsiFileImpl cachedPsi = (PsiFileImpl)getCachedPsi(getBaseLanguage());
-      if (cachedPsi != null && cachedPsi.isContentsLoaded() && PsiDocumentManager.getInstance(myManager.getProject()).isUncommited(document)) {
-        myContents = new CharArrayCharSequence(cachedPsi.textToCharArray());
-      }
-      else if (document != null) {
-        return document.getCharsSequence();
-      }
-      else {
-        throw new RuntimeException("There can't be character contents for binary files!");
-      }
-    }
-    return myContents;
+    return getContent().getText();
   }
 
   @NotNull
@@ -209,6 +220,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = new WeakReference<Document>(document);
     }
+    if(document != null && getContent() instanceof VirtualFileContent){
+      setContent(new DocumentContent());
+    }
     return document;
   }
 
@@ -223,8 +237,132 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return clone;
   }
 
+  public PsiReference findReferenceAt(final int offset) {
+    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
+    return findReferenceAt(psiFile, offset);
+  }
+
+  public PsiElement findElementAt(final int offset, final Language language) {
+    final PsiFile psiFile = getPsi(language);
+    return psiFile != null ? findElementAt(psiFile, offset) : null;
+  }
+
+  public PsiReference findReferenceAt(final int offset, final Language language) {
+    final PsiFile psiFile = getPsi(language);
+    return psiFile != null ? findReferenceAt(psiFile, offset) : null;
+  }
+
+  public Lexer createLexer(final Language language) {
+    if(language != getBaseLanguage() && language != Language.ANY) return null;
+    final ParserDefinition parserDefinition = language.getParserDefinition();
+    if(parserDefinition == null) return ((PsiFileImpl)getPsi(getBaseLanguage())).createLexer();
+    return parserDefinition.createLexer(getManager().getProject());
+  }
+
+  protected PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
+    int offsetInElement = offset;
+    PsiElement child = psiFile.getFirstChild();
+    while(child != null){
+      final int length = child.getTextLength();
+      if(length <= offsetInElement) {
+        offsetInElement -= length;
+        child = child.getNextSibling();
+        continue;
+      }
+      return child.findReferenceAt(offsetInElement);
+    }
+    return null;
+  }
+
+  public PsiElement findElementAt(final int offset) {
+    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
+    return findElementAt(psiFile, offset);
+  }
+
+  protected PsiElement findElementAt(final PsiElement psiFile, final int offset) {
+    int offsetInElement = offset;
+    PsiElement child = psiFile.getFirstChild();
+    while(child != null){
+      final int length = child.getTextLength();
+      if(length <= offsetInElement) {
+        offsetInElement -= length;
+        child = child.getNextSibling();
+        continue;
+      }
+      return child.findElementAt(offsetInElement);
+    }
+    return null;
+  }
+
   public synchronized void forceCachedPsi(final PsiFile psiCodeFragment) {
     myPsiFile = psiCodeFragment;
     ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+  }
+
+  private Content getContent() {
+    return myContent;
+  }
+
+  private void setContent(final Content content) {
+    myContent = content;
+  }
+
+  private static interface Content{
+    CharSequence getText();
+    long getModificationStamp();
+  }
+
+  private class VirtualFileContent implements Content{
+    public CharSequence getText() {
+      final Document document = getDocument();
+      if (document == null) {
+        return LoadTextUtil.loadText(getVirtualFile());
+      }
+      else {
+        return document.getCharsSequence();
+      }
+    }
+
+    public long getModificationStamp() {
+      return getVirtualFile().getModificationStamp();
+    }
+  }
+
+  private class DocumentContent implements Content{
+    public CharSequence getText() {
+      return getDocument().getCharsSequence();
+    }
+
+    public long getModificationStamp() {
+      return getDocument().getModificationStamp();
+    }
+  }
+
+  private class PsiFileContent implements Content{
+    private PsiFileImpl myFile;
+    private CharSequence myContent = null;
+    private long myModificationStamp;
+
+    public PsiFileContent(final PsiFileImpl file, final long modificationStamp) {
+      myFile = file;
+      myModificationStamp = modificationStamp;
+    }
+
+    public CharSequence getText() {
+      if(!myFile.isContentsLoaded()){
+        unsetPsiContent();
+        return getContents();
+      }
+      if(myContent != null) return myContent;
+      return myContent = myFile.calcTreeElement().getText();
+    }
+
+    public long getModificationStamp() {
+      if(!myFile.isContentsLoaded()){
+        unsetPsiContent();
+        return SingleRootFileViewProvider.this.getModificationStamp();
+      }
+      return myModificationStamp;
+    }
   }
 }

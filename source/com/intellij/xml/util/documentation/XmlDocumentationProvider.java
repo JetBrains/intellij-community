@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlFile;
@@ -249,11 +250,11 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
         // The very special case of xml file 
         final PsiFile containingFile = xmlTag.getContainingFile();
-        if (containingFile instanceof JspFile) {
+        if (PsiUtil.isInJspFile(containingFile)) {
           final XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
           if (rootTag != null) {
             final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(rootTag.getNamespaceByPrefix(namespacePrefix), true);
-            elementDescriptor = (nsDescriptor != null)?nsDescriptor.getElementDescriptor(tagFromText):null;
+            elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(tagFromText) : null;
           }
         }
 

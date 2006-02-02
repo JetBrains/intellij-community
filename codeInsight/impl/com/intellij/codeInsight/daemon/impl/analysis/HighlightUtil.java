@@ -668,8 +668,7 @@ public class HighlightUtil {
   }
 
   private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
-    PsiFile containingFile = element.getContainingFile();
-    if (!(containingFile instanceof JspFile)) {
+    if (!PsiUtil.isInJspFile(element)) {
       return HighlightInfoType.UNHANDLED_EXCEPTION;
     }
     PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -1883,6 +1882,7 @@ public class HighlightUtil {
         String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
+        List<IntentionAction> options = new ArrayList<IntentionAction>();
         if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
           return null;
         }
@@ -1998,7 +1998,7 @@ public class HighlightUtil {
                                                      : FileHighlighingSetting.SKIP_HIGHLIGHTING;
     if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
-      final JspClass jspClass = (JspClass)((JspFile)file).getJavaRoot();
+      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
       component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
       component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), highlightingLevel);
     }
@@ -2033,7 +2033,7 @@ public class HighlightUtil {
                                                    : FileHighlighingSetting.SKIP_INSPECTION;
     if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
-      final JspClass jspClass = (JspClass)((JspFile)file).getJavaRoot();
+      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
       component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), inspectionLevel);
       component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), inspectionLevel);
     }

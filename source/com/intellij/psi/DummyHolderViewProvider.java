@@ -10,9 +10,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.lang.Language;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.lexer.Lexer;
 
 import java.util.Set;
 import java.util.Collections;
@@ -43,7 +47,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
 
   @NotNull
   public CharSequence getContents() {
-    return myHolder != null ? myHolder.getText() : "";
+    return myHolder != null ? myHolder.getNode().getText() : "";
   }
 
   @NotNull
@@ -64,7 +68,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
     return target == getBaseLanguage() ? myHolder : null;
   }
 
-  public void contentsChanged() {
+  public void beforeContentsSynchronized() {
   }
 
   public boolean isEventSystemEnabled() {
@@ -90,4 +94,25 @@ public class DummyHolderViewProvider implements FileViewProvider{
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 
+  public PsiReference findReferenceAt(final int offset) {
+    return SharedPsiElementImplUtil.findReferenceAt(getPsi(getBaseLanguage()), offset);
+  }
+
+  @Nullable
+  public PsiElement findElementAt(final int offset, final Language language) {
+    return language == getBaseLanguage() ? findElementAt(offset) : null;
+  }
+
+  public PsiReference findReferenceAt(final int offsetInElement, final Language language) {
+    return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
+  }
+
+  public Lexer createLexer(final Language language) {
+    return myHolder.createLexer();
+  }
+
+  public PsiElement findElementAt(final int offset) {
+    final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);
+    return element != null ? element.getPsi() : null;
+  }
 }

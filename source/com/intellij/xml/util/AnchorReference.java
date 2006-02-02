@@ -4,6 +4,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
@@ -182,7 +183,7 @@ class AnchorReference implements PsiReference {
     }
 
     final PsiFile containingFile = myElement.getContainingFile();
-    return containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
+    return containingFile instanceof XmlFile ? (XmlFile)containingFile: PsiUtil.getJspFile(containingFile);
   }
 
   public boolean isSoft() {

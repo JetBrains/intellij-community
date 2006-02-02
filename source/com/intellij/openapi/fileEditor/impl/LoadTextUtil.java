@@ -1,15 +1,27 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.SmartEncodingInputStream;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -18,6 +30,7 @@ public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
 
   private static char[] ourSharedBuffer = new char[50000];
+  static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
 
   public static Pair<CharSequence,String> loadText(byte[] bytes, final VirtualFile virtualFile) {
     try {
@@ -164,5 +177,56 @@ public final class LoadTextUtil {
     Charset charset = virtualFile.getCharset();
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
+  }
+
+  public static CharSequence loadText(VirtualFile file) {
+    if (file.isDirectory()) return null;
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+
+    if (fileType.equals(StdFileTypes.CLASS)){
+      return new CharArrayCharSequence(decompile(file));
+    }
+
+    if (fileType.isBinary()) return null;
+    if(file.isDirectory()) return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+
+    final byte[] bytes;
+    try {
+      bytes = file.contentsToByteArray();
+    }
+    catch (IOException e) {
+      return ArrayUtil.EMPTY_CHAR_SEQUENCE;
+    }
+    return getTextByBinaryPresentation(bytes, file);
+  }
+
+  static char[] decompile(VirtualFile file) {
+    try {
+      final ProjectEx dummyProject = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
+      PsiManager manager = PsiManager.getInstance(dummyProject);
+      final String text = ClsFileImpl.decompile(manager, file);
+
+      PsiFile mirror = manager.getElementFactory().createFileFromText("test.java", text);
+
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
+      boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
+      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+      codeStyleManager.shortenClassReferences(mirror);
+      codeStyleManager.reformat(mirror);
+      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
+
+      return mirror.textToCharArray();
+    }
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public static CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
+    final Pair<CharSequence, String> result = loadText(content, virtualFile);
+    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+    return result.getFirst();
   }
 }

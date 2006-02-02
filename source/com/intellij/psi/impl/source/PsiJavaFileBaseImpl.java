@@ -15,6 +15,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -320,8 +322,9 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       String packageName = getPackageName();
       PsiPackage aPackage = myManager.findPackage(packageName);
       if (aPackage != null){
-        if(!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place))
+        if (!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place)) {
           return false;
+        }
       }
 
       //On demand processing
@@ -430,5 +433,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   public void accept(PsiElementVisitor visitor){
     visitor.visitJavaFile(this);
+  }
+
+  @NotNull
+  public Language getLanguage() {
+    return StdLanguages.JAVA;
   }
 }

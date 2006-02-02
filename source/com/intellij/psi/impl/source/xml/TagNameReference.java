@@ -14,6 +14,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
@@ -73,7 +74,7 @@ public class TagNameReference implements PsiReference {
     if (element == null) return null;
 
     if ((newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
-        element.getContainingFile() instanceof JspFile
+        PsiUtil.isInJspFile(element.getContainingFile())
        ) {
       final String namespacePrefix = element.getNamespacePrefix();
       newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
@@ -85,7 +86,7 @@ public class TagNameReference implements PsiReference {
       final String namespacePrefix = element.getNamespacePrefix();
 
       if (namespacePrefix != null && namespacePrefix.length() > 0) {
-        if (element.getContainingFile() instanceof JspFile) {
+        if (PsiUtil.isInJspFile(element.getContainingFile())) {
           final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
 
           if (nsDescriptor instanceof TldDescriptor) {
@@ -110,7 +111,7 @@ public class TagNameReference implements PsiReference {
       if (metaData instanceof XmlElementDescriptor){
         getElement().setName(metaData.getName(getElement()));
       }
-    } else if (element instanceof JspFile) {
+    } else if (PsiUtil.isInJspFile(element) && element instanceof PsiFile) {
       // implicit reference to tag file
       return getElement();
     }
@@ -130,8 +131,8 @@ public class TagNameReference implements PsiReference {
     if(!myStartTagFlag){
       XmlTag fromJspTree = null;
       final PsiFile containingFile = element.getContainingFile();
-      if(containingFile.getLanguage() == StdLanguages.JSP){
-        final JspFile jspFile = (JspFile)containingFile;
+      if(containingFile.getViewProvider().getBaseLanguage() == StdLanguages.JSP){
+        final JspFile jspFile = PsiUtil.getJspFile(containingFile);
         final int startOffset = element.getTextRange().getStartOffset() + getRangeInElement().getStartOffset();
         PsiElement current = jspFile.getDocument().findElementAt(startOffset);
         if(current != element && (current = PsiTreeUtil.getParentOfType(current, XmlText.class)) != null) {
@@ -197,8 +198,8 @@ public class TagNameReference implements PsiReference {
         if (namespace == null) continue;
         if(namespace.length() == 0 && !visited.isEmpty()) continue;
         XmlNSDescriptor nsDescriptor = element.getNSDescriptor(namespace, false);
-        if(nsDescriptor == null && element.getContainingFile() instanceof JspFile)
-          nsDescriptor = ((JspFile)element.getContainingFile()).getDocument().getRootTag().getNSDescriptor(namespace, false);
+        if(nsDescriptor == null && PsiUtil.isInJspFile(element))
+          nsDescriptor = PsiUtil.getJspFile(element).getDocument().getRootTag().getNSDescriptor(namespace, false);
 
         if(nsDescriptor != null && !visited.contains(nsDescriptor)){
           visited.add(nsDescriptor);

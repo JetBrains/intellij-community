@@ -250,9 +250,9 @@ public class TemplateState implements Disposable {
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset) {
-    if (file instanceof JspFile) {
+    if (PsiUtil.isInJspFile(file)) {
       try {
-        caretOffset += JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
+        caretOffset += JspUtil.escapeCharsInJspContext((PsiUtil.getJspFile(file)), caretOffset, myTemplate.getTemplateText());
         myEditor.getCaretModel().moveToOffset(caretOffset);
       }
       catch (IncorrectOperationException e) {

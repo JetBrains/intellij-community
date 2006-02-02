@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -109,8 +110,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         if (file instanceof PsiJavaFile) {
           commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
-        else if (file instanceof JspFile) {
-          final JspFile jspFile = (JspFile)file;
+        else if (PsiUtil.isInJspFile(file)) {
+          final JspFile jspFile = PsiUtil.getJspFile(file);
           commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET);
           final ParserDefinition parserDefinition = jspFile.getViewProvider().getTemplateDataLanguage().getParserDefinition();
           if (parserDefinition != null) {

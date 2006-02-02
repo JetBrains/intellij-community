@@ -5,11 +5,8 @@ import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -32,7 +29,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
-  protected FileViewProvider myViewProvider = null;
+  private final FileViewProvider myViewProvider;
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
@@ -45,18 +42,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, table);
   }
 
-  protected PsiFileImpl(PsiManagerImpl manager, IElementType elementType) {
-    super(manager, (RepositoryTreeElement)Factory.createCompositeElement(elementType));
-    myElementType = elementType;
-    myContentElementType = null;
-  }
-
   public long getRepositoryId() {
     long id = super.getRepositoryId();
     if (id == -2) {
       RepositoryManager repositoryManager = getRepositoryManager();
       if (repositoryManager != null) {
-        id = repositoryManager.getFileId(myViewProvider.getVirtualFile());
+        id = repositoryManager.getFileId(getViewProvider().getVirtualFile());
       }
       else {
         id = -1;
@@ -71,8 +62,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement getTreeElement() {
-    if(!getViewProvider().isPhysical() && _getTreeElement() == null)
+    if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
       setTreeElement(loadTreeElement());
+    }
     return (FileElement)_getTreeElement();
   }
 
@@ -83,7 +75,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected boolean isKeepTreeElementByHardReference() {
-    return !myViewProvider.isEventSystemEnabled();
+    return !getViewProvider().isEventSystemEnabled();
   }
 
   private ASTNode _getTreeElement() {
@@ -91,11 +83,11 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public VirtualFile getVirtualFile() {
-    return myViewProvider.isEventSystemEnabled() ? myViewProvider.getVirtualFile() : null;
+    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
   }
 
   public boolean isValid() {
-    if (!myViewProvider.isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
+    if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
   }
 
@@ -108,7 +100,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     synchronized (PsiLock.LOCK) {
       FileElement treeElement = (FileElement)_getTreeElement();
       if (treeElement != null) return treeElement;
-      if (myViewProvider.isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
+      if (getViewProvider().isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
         LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
       final FileViewProvider viewProvider = getViewProvider();
@@ -117,8 +109,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
-      if (myViewProvider.isEventSystemEnabled()) ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-      if (myViewProvider.isPhysical() && LOG.isDebugEnabled()) {
+      if (getViewProvider().isEventSystemEnabled()) ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
+      if (getViewProvider().isPhysical() && LOG.isDebugEnabled()) {
         LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
       }
       return treeElement;
@@ -145,13 +137,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   public void unloadContent() {
     LOG.assertTrue(getTreeElement() != null);
     clearCaches();
+    myViewProvider.beforeContentsSynchronized();
     setTreeElement(null);
   }
 
   public void clearCaches() {}
 
   public String getText() {
-    return new String(textToCharArray());
+    return getViewProvider().getContents().toString();
   }
 
   public PsiElement getNextSibling() {
@@ -187,13 +180,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void subtreeChanged() {
-    myViewProvider.rootChanged(this);
     super.subtreeChanged();
+    clearCaches();
+    getViewProvider().rootChanged(this);
   }
 
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiFileImpl clone() {
-    FileViewProvider provider = myViewProvider.clone();
+    FileViewProvider provider = getViewProvider().clone();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
 
     HashMap<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
@@ -201,9 +195,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       final HashMap<Key,Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
       clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
     }
-    final FileElement treeClone = (FileElement)calcTreeElement().clone();
-    clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
-    treeClone.setPsiElement(clone);
+    if(myTreeElementPointer != null){
+      // not set by provider in clone
+      final FileElement treeClone = (FileElement)calcTreeElement().clone();
+      clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+      treeClone.setPsiElement(clone);
+    }
 
     if (getViewProvider().isEventSystemEnabled()) {
       clone.myOriginalFile = this;
@@ -226,7 +223,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void checkSetName(String name) throws IncorrectOperationException {
-    if (!myViewProvider.isEventSystemEnabled()) return;
+    if (!getViewProvider().isEventSystemEnabled()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
@@ -254,7 +251,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public void checkDelete() throws IncorrectOperationException {
-    if (!myViewProvider.isEventSystemEnabled()) {
+    if (!getViewProvider().isEventSystemEnabled()) {
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
@@ -292,18 +289,34 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public boolean isPhysical() {
     // TODO[ik] remove this shit with dummy file system
-    return myViewProvider.isEventSystemEnabled();
+    return getViewProvider().isEventSystemEnabled();
   }
 
   public abstract Lexer createLexer();
 
   @NotNull
   public Language getLanguage() {
-    final FileType fileType = getFileType();
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
+    return myContentElementType.getLanguage();
   }
 
   public FileViewProvider getViewProvider() {
     return myViewProvider;
+  }
+
+  public void setTreeElementPointer(FileElement element) {
+    myTreeElementPointer = element;
+  }
+
+  public PsiElement findElementAt(int offset) {
+    return getViewProvider().findElementAt(offset);
+  }
+
+  public PsiReference findReferenceAt(int offset) {
+    return getViewProvider().findReferenceAt(offset);
+  }
+
+  @NotNull
+  public char[] textToCharArray() {
+    return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 }

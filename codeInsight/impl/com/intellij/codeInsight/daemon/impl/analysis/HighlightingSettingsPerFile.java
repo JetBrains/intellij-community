@@ -36,7 +36,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlighingSetting[] fileHighlighingSettings = myHighlightSettings.get(virtualFile);
     if(fileHighlighingSettings == null){
-      fileHighlighingSettings = getDefaults(containingFile.getLanguage());
+      fileHighlighingSettings = getDefaults(containingFile.getViewProvider().getBaseLanguage());
     }
     return fileHighlighingSettings[PsiUtil.getRootIndex(root)];
   }
@@ -55,7 +55,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
-    if(defaults == null) defaults = getDefaults(containingFile.getLanguage()).clone();
+    if(defaults == null) defaults = getDefaults(containingFile.getViewProvider().getBaseLanguage()).clone();
     defaults[PsiUtil.getRootIndex(root)] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {

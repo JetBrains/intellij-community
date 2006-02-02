@@ -21,6 +21,9 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
@@ -48,7 +51,8 @@ public class JavaLanguage extends Language {
     myFormattingModelBuilder = new FormattingModelBuilder() {
       @NotNull
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element.getContainingFile(), AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element),
+        final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
+        return new PsiBasedFormattingModel(element.getContainingFile(), AbstractJavaBlock.createJavaBlock(fileElement,
                                                                                                           settings),
                                            FormattingDocumentModelImpl.createOn(element.getContainingFile()));
       }

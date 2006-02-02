@@ -66,7 +66,8 @@ public class RefCountHolder {
 
   public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
-    if (refElement != null && getFile().equals(refElement.getContainingFile())) {
+    final PsiFile psiFile = refElement != null ? refElement.getContainingFile() : null;
+    if (refElement != null && psiFile != null && getFile().getViewProvider().equals(psiFile.getViewProvider())) {
       registerLocalRef(ref, refElement);
     }
 

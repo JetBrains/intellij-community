@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.Hint;
 import com.intellij.ui.HintListener;
@@ -46,7 +47,7 @@ public class HectorComponent extends JPanel {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEtchedBorder());
     myFile = file;
-    mySliders = new JSlider[file instanceof JspFile ? file.getPsiRoots().length - 1 : 1];
+    mySliders = new JSlider[PsiUtil.isInJspFile(file) ? file.getPsiRoots().length - 1 : 1];
 
     final Project project = myFile.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

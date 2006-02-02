@@ -344,7 +344,7 @@ public class PsiTreeUtil {
     final PsiElement[] psiRoots = file.getPsiRoots();
     T result = null;
     for (PsiElement root : psiRoots) {
-      PsiElement elementAt = root.findElementAt(startOffset);
+      PsiElement elementAt = root.getNode().findLeafElementAt(startOffset).getPsi();
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;
       while (run != null && run.getTextRange().getStartOffset() == startOffset &&

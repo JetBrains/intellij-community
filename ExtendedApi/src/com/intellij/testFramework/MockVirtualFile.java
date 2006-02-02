@@ -5,7 +5,11 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.lang.Language;
 import junit.framework.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -50,6 +54,23 @@ public class MockVirtualFile extends VirtualFile {
     myFileType = fileType;
     myContent = text;
     myModStamp = modificationStamp;
+  }
+
+  public MockVirtualFile(final String name, final Language language, final String text) {
+    myName = name;
+    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    for (final FileType fileType : fileTypes) {
+      if(fileType instanceof LanguageFileType){
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if(languageFileType.getLanguage() == language){
+          myFileType = languageFileType;
+          break;
+        }
+      }
+    }
+    if(myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    myContent = text;
+    myModStamp = LocalTimeCounter.currentTime();
   }
 
   public void setListener(VirtualFileListener listener) {

@@ -8,6 +8,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 
 import java.util.HashSet;
@@ -48,7 +50,8 @@ public class OuterLanguageElement extends LeafPsiElement {
   public XmlTag[] getIncludeDirectivesInScope() {
     if(myIncludes != null) return myIncludes;
     final TextRange textRange = getTextRange();
-    final JspFile jspFile = (JspFile)getContainingFile();
+    final FileViewProvider viewProvider = getContainingFile().getViewProvider();
+    final JspFile jspFile = PsiUtil.getJspFile(viewProvider.getPsi(viewProvider.getBaseLanguage()));
     final XmlTag[] directiveTags = jspFile.getDirectiveTags(JspDirectiveKind.INCLUDE, false);
     final Set<XmlTag> includeDirectives = new HashSet<XmlTag>();
     for (final XmlTag directiveTag : directiveTags) {

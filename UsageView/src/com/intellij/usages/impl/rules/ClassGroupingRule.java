@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
@@ -67,7 +68,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
         }
         else {
           // skip JspClass synthetic classes.
-          if (containingClass.getParent() instanceof JspFile) {
+          if (containingClass.getParent() instanceof PsiFile && PsiUtil.isInJspFile(containingClass)) {
             containingClass = null;
           }
         }

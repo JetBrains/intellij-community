@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.jsp.JspFileViewProvider;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ProjectComponent;
@@ -28,6 +30,7 @@ import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -290,8 +293,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     if (nextSibling == null) {
       final PsiFile containingFile = element.getContainingFile();
-      if (containingFile instanceof JspFile) {
-        nextSibling = ((JspFile)containingFile).getBaseLanguageRoot().findElementAt(element.getTextOffset()+1);
+      if (PsiUtil.isInJspFile(containingFile)) {
+        final JspxFileViewProvider viewProvider = (JspxFileViewProvider)containingFile.getViewProvider();
+        nextSibling = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getTemplateDataLanguage());
       }
     }
 

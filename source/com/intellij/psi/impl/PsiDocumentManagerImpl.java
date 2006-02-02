@@ -84,6 +84,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public PsiFile getPsiFile(Document document) {
     PsiFile psiFile = getCachedPsiFile(document);
+    final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
+    if(userData != null) return userData;
 
     if (psiFile == null){
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -105,6 +107,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return getCachedPsiFile(virtualFile);
   }
 
+  public FileViewProvider getCachedViewProvider(Document document) {
+    final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || !virtualFile.isValid()) return null;
+    return ((PsiManagerImpl)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+  }
+
   protected PsiFile getCachedPsiFile(VirtualFile virtualFile) {
     return ((PsiManagerImpl)myPsiManager).getFileManager().getCachedPsiFile(virtualFile);
   }
@@ -121,18 +129,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
-
-    if(!file.getViewProvider().isPhysical()){ // need to hold not physical elements by hard ref because it 
-      document.putUserData(HARD_REF_TO_PSI, file);
-    }
+    document.putUserData(HARD_REF_TO_PSI, file);
 
     fireDocumentCreated(document, file);
 
     return document;
-  }
-
-  private static Document createDocument(String text) {
-    return EditorFactory.getInstance().createDocument(text);
   }
 
   public Document getCachedDocument(PsiFile file) {
@@ -355,6 +356,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         PsiFileImpl psiFile = (PsiFileImpl)file;
         // tree should be initialized and be kept until commit
         document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, psiFile.calcTreeElement());
+        ((SingleRootFileViewProvider)psiFile.getViewProvider()).beforeDocumentChanged();
       }
       finally{
         myIsCommitInProgress = false;
