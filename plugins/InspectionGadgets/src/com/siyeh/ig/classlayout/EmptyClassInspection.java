@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -37,7 +38,7 @@ public class EmptyClassInspection extends ClassInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       //don't call super, to prevent drilldown
 
-      if (aClass.getContainingFile() instanceof JspFile) {
+      if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
         return;
       }
       if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {

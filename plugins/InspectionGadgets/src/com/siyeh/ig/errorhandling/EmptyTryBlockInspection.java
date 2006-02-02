@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
@@ -44,7 +45,7 @@ public class EmptyTryBlockInspection extends StatementInspection {
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
 
-      if (statement.getContainingFile() instanceof JspFile) {
+      if (PsiUtil.isInJspFile(statement.getContainingFile())) {
         return;
       }
       final PsiCodeBlock finallyBlock = statement.getTryBlock();

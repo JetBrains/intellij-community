@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -65,9 +66,9 @@ public class UnnecessaryContinueInspection extends StatementInspection {
 
         public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
-            if (statement.getContainingFile() instanceof JspFile) {
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiStatement continuedStatement =
                     statement.findContinuedStatement();
             PsiStatement body = null;

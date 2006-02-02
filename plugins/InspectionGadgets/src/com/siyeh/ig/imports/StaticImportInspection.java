@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -81,9 +82,9 @@ public class StaticImportInspection extends ClassInspection{
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
-            if(aClass.getContainingFile() instanceof JspFile){
-                return;
-            }
+          if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+            return;
+          }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
             if(file == null){
                 return;

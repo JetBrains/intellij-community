@@ -17,6 +17,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -57,9 +58,9 @@ public class RedundantImportInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if(aClass.getContainingFile() instanceof JspFile) {
-                return;
-            }
+          if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+            return;
+          }
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }

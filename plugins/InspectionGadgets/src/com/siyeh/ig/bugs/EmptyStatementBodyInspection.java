@@ -17,12 +17,12 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,9 +66,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }    final PsiStatement body = statement.getBody();
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }    final PsiStatement body = statement.getBody();
             if (body == null) {
                 return;
             }
@@ -81,9 +81,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiStatement body = statement.getBody();
             if (body == null) {
                 return;
@@ -97,9 +97,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiStatement body = statement.getBody();
             if (body == null) {
                 return;
@@ -113,9 +113,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiStatement body = statement.getBody();
             if (body == null) {
                 return;
@@ -129,9 +129,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
 
-            if(statement.getContainingFile() instanceof JspFile){
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch != null) {
                 if (isEmpty(thenBranch)) {

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -77,9 +78,9 @@ public class UnnecessaryReturnInspection extends StatementInspection {
         public void visitReturnStatement(
                 @NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
-            if (statement.getContainingFile() instanceof JspFile) {
-                return;
-            }
+          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+            return;
+          }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
             if (method == null) {
