@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -36,7 +37,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return myTool;
   }
 
-  public void processFile(PsiFile file) {
+  public void processFile(PsiFile file, final boolean filterSuppressed) {
     final ProblemsHolder holder = new ProblemsHolder(getManager());
     final PsiElementVisitor customVisitor = myTool.buildVisitor(holder, false);
 
@@ -63,51 +64,52 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitField(PsiField field) {
         super.visitField(field);
-        if (InspectionManagerEx.isToCheckMember(field, myTool.getID())) {
+        if (!filterSuppressed || InspectionManagerEx.isToCheckMember(field, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkField(field, getManager(), false);
-          addProblemDescriptors(field, problemDescriptions);
+          addProblemDescriptors(field, problemDescriptions, filterSuppressed);
         }
       }
 
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
-        if (InspectionManagerEx.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
+        if (!filterSuppressed || InspectionManagerEx.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
           ProblemDescriptor[] problemDescriptions = myTool.checkClass(aClass, getManager(), false);
-          addProblemDescriptors(aClass, problemDescriptions);
+          addProblemDescriptors(aClass, problemDescriptions, filterSuppressed);
         }
       }
 
 
       public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
-        if (InspectionManagerEx.isToCheckMember(method, myTool.getID())) {
+        if (!filterSuppressed || InspectionManagerEx.isToCheckMember(method, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkMethod(method, getManager(), false);
-          addProblemDescriptors(method, problemDescriptions);
+          addProblemDescriptors(method, problemDescriptions, filterSuppressed);
         }
       }
 
       public void visitFile(PsiFile file) {
         super.visitFile(file);
         ProblemDescriptor[] problemDescriptions = myTool.checkFile(file, getManager(), false);
-        addProblemDescriptors(file, problemDescriptions);
+        addProblemDescriptors(file, problemDescriptions, filterSuppressed);
       }
     });
 
-    addProblemDescriptors(holder.getResults());
+    addProblemDescriptors(holder.getResults(), filterSuppressed);
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[0];
+    return JobDescriptor.EMPTY_ARRAY;
   }
 
-  private void addProblemDescriptors(List<ProblemDescriptor> descriptors) {
+  private void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
     if (descriptors == null || descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
     RefManager refManager = getManager().getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement elt = descriptor.getPsiElement();
-      if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), myTool.getID())) continue;
+      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), myTool.getID())) continue;
 
       final PsiNamedElement problemElement =
         PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
@@ -139,9 +141,11 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return set == null ? problemDescriptions : set.toArray(new ProblemDescriptor[set.size()]);
   }
 
-  private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions) {
+  private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions, final boolean filterSuppressed) {
     if (problemDescriptions != null) {
-      problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
+      if (filterSuppressed) {
+        problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
+      }
       if (problemDescriptions.length != 0) {
         RefManager refManager = getManager().getRefManager();
         RefElement refElement = refManager.getReference(element);
@@ -159,7 +163,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       }
 
       public void visitFile(PsiFile file) {
-        processFile(file);
+        processFile(file, true);
       }
     });
   }

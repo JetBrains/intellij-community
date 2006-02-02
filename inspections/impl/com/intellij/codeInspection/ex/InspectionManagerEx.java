@@ -56,6 +56,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -63,7 +64,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+                                                                                
 public class InspectionManagerEx extends InspectionManager implements GlobalInspectionContext, JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionManagerEx");
   private RefManager myRefManager;
@@ -144,13 +145,12 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     });
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NonNls Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myUIOptions, element);
 
     DefaultJDOMExternalizer.readExternal(this, element);
 
-    Element profileElement = element.getChild("profile");
+    @NonNls Element profileElement = element.getChild("profile");
     if (profileElement != null) {
       myCurrentProfileName = profileElement.getAttributeValue("name");
     }
@@ -159,12 +159,11 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(myUIOptions, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
 
-    Element profileElement = new Element("profile");
+    @NonNls Element profileElement = new Element("profile");
     profileElement.setAttribute("name", myCurrentProfileName);
     element.addContent(profileElement);
   }
@@ -265,7 +264,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  public static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
+  private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
     Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[,]");
 
     for (@NonNls String id : ids) {
@@ -275,27 +274,29 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
   }
 
   public static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
-    if (!isToCheckMemberInDocComment(owner, inspectionToolID)) {
-      return false;
-    }
-    if (!isToCheckMemberInAnnotation(owner, inspectionToolID)) {
-      return false;
-    }
+    return getElementMemberSuppressedIn(owner, inspectionToolID) == null;
+  }
+
+  private static PsiElement getElementMemberSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
+    PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
+    if (element != null) return element;
+    element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
+    if (element != null) return element;
     PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);
     while (classContainer != null) {
-      if (!isToCheckMemberInDocComment(classContainer, inspectionToolID)) {
-        return false;
-      }
-      if (!isToCheckMemberInAnnotation(classContainer, inspectionToolID)) {
-        return false;
-      }
+      element = getDocCommentToolSuppressedIn(classContainer, inspectionToolID);
+      if (element != null) return element;
+
+      element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
+      if (element != null) return element;
+
       classContainer = classContainer.getContainingClass();
     }
-    return true;
+    return null;
   }
 
   public static boolean isToCheckMember(PsiDocCommentOwner owner, InspectionTool tool) {
-    if (((InspectionManagerEx)InspectionManagerEx.getInstance(owner.getProject())).RUN_WITH_EDITOR_PROFILE &&
+    if (((InspectionManagerEx)getInstance(owner.getProject())).RUN_WITH_EDITOR_PROFILE &&
         InspectionProjectProfileManager.getInstance(owner.getProject()).getProfile(owner).getInspectionTool(tool.getShortName()) != tool) {
       return false;
     }
@@ -307,6 +308,11 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
   private static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierListOwner owner) {
     if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
+    return getInspectionIdsSuppressedInAnnotation(modifierList);
+  }
+
+  @NotNull
+  private static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -340,28 +346,32 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     return result;
   }
 
-  private static boolean isToCheckMemberInAnnotation(final PsiModifierListOwner owner, final String inspectionToolID) {
-    Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(owner);
+  private static PsiElement getAnnotationMemberSuppressedIn(final PsiModifierListOwner owner, final String inspectionToolID) {
+    PsiModifierList modifierList = owner.getModifierList();
+    Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
-      if (isInspectionToolIdMentioned(ids, inspectionToolID)) return false;
+      if (isInspectionToolIdMentioned(ids, inspectionToolID)) {
+        return modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+      }
     }
-    return true;
+    return null;
   }
 
-  private static boolean isToCheckMemberInDocComment(final PsiDocCommentOwner owner, final String inspectionToolID) {
+  private static PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null && inspectionTag.getValueElement() != null) {
         String valueText = inspectionTag.getValueElement().getText();
         if (isInspectionToolIdMentioned(valueText, inspectionToolID)) {
-          return false;
+          return docComment;
         }
       }
     }
-    return true;
+    return null;
   }
 
+  @Nullable
   public static String getSuppressedInspectionIdsIn(PsiElement element) {
     if (element instanceof PsiComment) {
       String text = element.getText();
@@ -389,21 +399,28 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     return null;
   }
 
-  public static boolean inspectionResultSuppressed(final PsiElement place, String id) {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
+  public static boolean inspectionResultSuppressed(final PsiElement place, String toolId) {
+    return getElementToolSuppressedIn(place, toolId) != null;
+  }
+
+  public static PsiElement getElementToolSuppressedIn(PsiElement place, String toolId) {
+    PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
     if (statement != null) {
-      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
+      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
       if (prev instanceof PsiComment) {
         String text = prev.getText();
         Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-        if (matcher.matches()) {
-          return isInspectionToolIdMentioned(matcher.group(1), id);
+        if (matcher.matches() && isInspectionToolIdMentioned(matcher.group(1), toolId)) {
+          return prev;
         }
       }
     }
 
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
-    if (local != null && !isToCheckMemberInAnnotation(local, id)) return true;
+    if (local != null && getAnnotationMemberSuppressedIn(local, toolId) != null) {
+      PsiModifierList modifierList = local.getModifierList();
+      return modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    }
 
     PsiElement container = place;
     do {
@@ -411,9 +428,17 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     }
     while (container instanceof PsiTypeParameter);
 
+    if (container != null) {
+      PsiElement element = getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);
+      if (element != null) return element;
+    }
     PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
-    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id) ||
-           classContainer != null && !isToCheckMember(classContainer, id);
+    if (classContainer != null) {
+      PsiElement element = getElementMemberSuppressedIn(classContainer, toolId);
+      if (element != null) return element;
+    }
+
+    return null;
   }
 
   public UIOptions getUIOptions() {
@@ -570,27 +595,26 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     final RefManager refManager = getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
-    final SearchScope searchScope = new GlobalSearchScope() {
-      public boolean contains(VirtualFile file) {
-        return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
-      }
-
-      public int compare(VirtualFile file1, VirtualFile file2) {
-        return 0;
-      }
-
-      public boolean isSearchInModuleContent(Module aModule) {
-        return true;
-      }
-
-      public boolean isSearchInLibraries() {
-        return false;
-      }
-    };
-
     final ProgressIndicator progress = myProgressIndicator == null ? null : new ProgressWrapper(myProgressIndicator);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
+        final SearchScope searchScope = new GlobalSearchScope() {
+          public boolean contains(VirtualFile file) {
+            return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
+          }
+
+          public int compare(VirtualFile file1, VirtualFile file2) {
+            return 0;
+          }
+
+          public boolean isSearchInModuleContent(Module aModule) {
+            return true;
+          }
+
+          public boolean isSearchInLibraries() {
+            return false;
+          }
+        };
         if (myDerivedClassesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
           for (PsiElement sortedID : sortedIDs) {
@@ -866,7 +890,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
           for (InspectionTool tool : tools) {
-            ((LocalInspectionToolWrapper)tool).processFile(file);
+            ((LocalInspectionToolWrapper)tool).processFile(file, true);
             psiManager.dropResolveCaches();
           }
         }
@@ -900,7 +924,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     if (runWithEditorSettings){
       final Set<String> profiles = scope.getActiveInspectionProfiles();
       for (String profile : profiles) {
-        final InspectionProfile inspectionProfile = ((InspectionProfileImpl)profileManager.getProfile(profile));
+        final InspectionProfile inspectionProfile = (InspectionProfileImpl)profileManager.getProfile(profile);
         processProfileTools(inspectionProfile, tools, localTools);
       }
     } else {

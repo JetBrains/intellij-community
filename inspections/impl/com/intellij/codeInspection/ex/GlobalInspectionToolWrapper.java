@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -36,15 +37,16 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   public void runInspection(final AnalysisScope scope) {
-    myGlobalInspectionTool.runInspection(scope, getManager(), this);
+    myGlobalInspectionTool.runInspection(scope, getManager(), this, true);
   }
 
   public boolean queryExternalUsagesRequests() {
     return myGlobalInspectionTool.queryExternalUsagesRequests(getManager(), getManager(), this);
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[0];
+    return JobDescriptor.EMPTY_ARRAY;
   }
 
   public String getDisplayName() {

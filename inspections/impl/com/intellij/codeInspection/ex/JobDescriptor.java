@@ -7,6 +7,7 @@ public class JobDescriptor {
   private String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;
+  public static final JobDescriptor[] EMPTY_ARRAY = new JobDescriptor[0];
 
   public JobDescriptor(String displayName) {
     myDisplayName = displayName;

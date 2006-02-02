@@ -1,9 +1,14 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
@@ -14,21 +19,22 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import gnu.trove.THashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
+  private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
+  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+
   protected void setUp() throws Exception {
     super.setUp();
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
@@ -53,10 +59,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       public InspectionTool getInspectionTool(String shortName) {
-        if (myAvailableTools.containsKey(shortName)) {
-          return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
-        }
-        return null;
+        return myAvailableLocalTools.get(shortName);
       }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
@@ -70,10 +73,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
     }
     myAvailableTools.put(shortName, tool);
+    myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
   }
 
   protected void disableInspectionTool(String shortName){
     myAvailableTools.remove(shortName);
+    myAvailableLocalTools.remove(shortName);
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {

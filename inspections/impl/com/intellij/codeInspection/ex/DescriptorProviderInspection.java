@@ -41,6 +41,10 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
+  public Collection<CommonProblemDescriptor> getProblemDescriptors() {
+    return myProblemToElements.keySet();
+  }
+
   private void collectQuickFixes(final QuickFix[] fixes, final RefEntity refEntity) {
     if (fixes != null) {
       Set<QuickFix> localQuickFixes = myQuickFixActions.get(refEntity);

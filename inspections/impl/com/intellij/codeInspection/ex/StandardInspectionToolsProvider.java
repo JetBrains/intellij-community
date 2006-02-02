@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
@@ -110,6 +111,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       BooleanMethodIsAlwaysInvertedInspection.class,
       UnnessecaryModuleDependencyInspection.class,
       UnhandledExceptionInJSP.class,
+      RedundantSuppressInspection.class,
       };
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -55,6 +56,7 @@ public abstract class InspectionTool implements JDOMExternalizable {
     return null;
   }
 
+  @NotNull
   public abstract JobDescriptor[] getJobDescriptors();
 
   protected JComponent createOptionsPanel() {

@@ -39,7 +39,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
 
   public void runInspection(final AnalysisScope scope,
                             final InspectionManager manager,
-                            final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+                            final ProblemDescriptionsProcessor problemDescriptionsProcessor,
+                            final boolean filterSuppressed) {
     final HashMap<RefEntity, List<CommonProblemDescriptor>> holder = new HashMap<RefEntity, List<CommonProblemDescriptor>>();
     manager.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
