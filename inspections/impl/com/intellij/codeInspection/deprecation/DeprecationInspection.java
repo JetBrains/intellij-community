@@ -74,9 +74,9 @@ public class DeprecationInspection extends LocalInspectionTool {
         final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length > 0 && list != null) {
-          list.acceptChildren(new PsiRecursiveElementVisitor() {
-            public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
-              DeprecationElementVisitor.this.visitReferenceElement(element);
+          list.acceptChildren(new PsiElementVisitor() {
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              DeprecationElementVisitor.this.visitReferenceElement(expression);
             }
           });
           JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
@@ -129,8 +129,8 @@ public class DeprecationInspection extends LocalInspectionTool {
   }
 
   static void checkDeprecated(PsiElement refElement,
-                                                  PsiElement elementToHighlight,
-                                                  ProblemsHolder holder) {
+                              PsiElement elementToHighlight,
+                              ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return;
 
