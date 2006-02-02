@@ -1,5 +1,7 @@
 package com.intellij.lang.xml;
 
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -13,18 +15,18 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
@@ -32,9 +34,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,11 +61,11 @@ public class XMLLanguage extends Language {
     myFormattingModelBuilder = new FormattingModelBuilder() {
       @NotNull
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);
+        final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
         final FormattingDocumentModelImpl documentModel = FormattingDocumentModelImpl.createOn(element.getContainingFile());
-        return new PsiBasedFormattingModel(element.getContainingFile(), new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel),
-                                                                                     null,
-                                                                                     null), documentModel);
+        return new PsiBasedFormattingModel(element.getContainingFile(),
+                                           new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null),
+                                           documentModel);
       }
     };
   }
@@ -73,7 +75,7 @@ public class XMLLanguage extends Language {
     return new XmlFileHighlighter();
   }
 
-  public XmlPsiPolicy getPsiPolicy(){
+  public XmlPsiPolicy getPsiPolicy() {
     return CDATA_ON_ANY_ENCODED_POLICY;
   }
 
@@ -83,12 +85,13 @@ public class XMLLanguage extends Language {
 
   @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
-    if(myXmlFindUsagesProvider == null) myXmlFindUsagesProvider = new XmlFindUsagesProvider();
+    if (myXmlFindUsagesProvider == null) myXmlFindUsagesProvider = new XmlFindUsagesProvider();
     return myXmlFindUsagesProvider;
   }
 
-  @NotNull public SurroundDescriptor[] getSurroundDescriptors() {
-    return new SurroundDescriptor[] {new XmlSurroundDescriptor()};
+  @NotNull
+  public SurroundDescriptor[] getSurroundDescriptors() {
+    return new SurroundDescriptor[]{new XmlSurroundDescriptor()};
   }
 
   public Commenter getCommenter() {
@@ -97,8 +100,9 @@ public class XMLLanguage extends Language {
 
   @NotNull
   public TokenSet getReadableTextContainerElements() {
-    return TokenSet.orSet(super.getReadableTextContainerElements(),
-                          TokenSet.create(XmlElementType.XML_CDATA, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_DATA_CHARACTERS));
+    return TokenSet.orSet(super.getReadableTextContainerElements(), TokenSet.create(XmlElementType.XML_CDATA,
+                                                                                    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
+                                                                                    XmlTokenType.XML_DATA_CHARACTERS));
   }
 
   public FoldingBuilder getFoldingBuilder() {
@@ -118,7 +122,8 @@ public class XMLLanguage extends Language {
           return new XmlStructureViewTreeModel((XmlFile)psiFile);
         }
       };
-    } else {
+    }
+    else {
       return null;
     }
   }
