@@ -25,7 +25,7 @@ public class ClassChooserManager {
       }
 
       public Class[] getChooserClasses() {
-        return new Class[0];
+        return new Class[]{aClass};
       }
     };
   }

@@ -1,22 +1,16 @@
 package com.intellij.util.xml.ui;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ui.DomUIFactory;
-import com.intellij.util.xml.ui.DomUIControl;
-import com.intellij.util.xml.ui.AbstractDomElementComponent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import javax.swing.*;
-import java.awt.event.FocusListener;
-import java.awt.event.FocusEvent;
 import java.lang.reflect.Field;
 
 /**
@@ -55,31 +49,12 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
         }
       }
     }
+    reset();
   }
 
   protected void doBind(final DomUIControl control, final JComponent boundComponent) {
     control.bind(boundComponent);
     addComponent(control);
-
-    if (control.getFocusedComponent() != null) {
-      control.getFocusedComponent().addFocusListener(new FocusListener() {
-        public void focusGained(FocusEvent e) {
-        }
-
-        public void focusLost(FocusEvent e) {
-          if (!e.isTemporary()) {
-            try {
-              commit();
-            }
-            catch (ReadOnlyDeploymentDescriptorModificationException e1) {
-              LOG.error(e1);
-            }
-          }
-        }
-      });
-    }
-
-    control.reset();
   }
 
   private JComponent getBoundComponent(final DomChildrenDescription description) {
