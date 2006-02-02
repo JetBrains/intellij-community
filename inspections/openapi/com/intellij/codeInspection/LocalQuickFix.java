@@ -20,11 +20,12 @@ import com.intellij.openapi.project.Project;
 /**
  * @author max
  */
-public interface LocalQuickFix extends QuickFix{
+public interface LocalQuickFix extends QuickFix {
 
   /**
    * Called to apply the fix.
-   * @param project {@link com.intellij.openapi.project.Project}
+   *
+   * @param project    {@link com.intellij.openapi.project.Project}
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
   void applyFix(Project project, ProblemDescriptor descriptor);

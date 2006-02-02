@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base class for global inspections. Global inspections work only in batch mode
  * (when the &quot;Analyze / Inspect Code&quot; is invoked) and can access the
- * complete graph of references between classes and methods in the scope selected
- * for the analysis.<p>
+ * complete graph of references between classes, methods and other elements in the scope
+ * selected for the analysis.
  *
  * @author anna
  * @see LocalInspectionTool
@@ -35,10 +35,13 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   /**
    * Returns the annotator which will receive callbacks while the reference graph
-   * is being built.
+   * is being built. The annotator can be used to add additional markers to reference
+   * graph nodes, through calls to {@link RefEntity#putUserData}.
    *
    * @param refManager the reference graph manager instance
-   * @return the annotator instance, or null if not required.
+   * @return the annotator instance, or null if the inspection does not need any
+   * additional markers or does not use the reference graph at all.
+   * @see #isGraphNeeded
    */
   @Nullable
   public RefGraphAnnotator getAnnotator(final RefManager refManager) {
@@ -91,7 +94,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * Checks if this inspection requires building of the reference graph. The reference graph
    * is built if at least one of the global inspection has requested that.
    *
-   * @return true if the reference graph is required, false otherwise.
+   * @return true if the reference graph is required, false if the inspection does not use a
+   * reference graph and uses some other APIs for its processing.
    */
   public boolean isGraphNeeded() {
     return false;

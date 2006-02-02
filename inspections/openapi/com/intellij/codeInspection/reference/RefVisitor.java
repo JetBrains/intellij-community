@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,13 @@
  */
 package com.intellij.codeInspection.reference;
 
+/**
+ * Visitor for reference graph nodes.
+ *
+ * @see RefEntity#accept
+ * @see RefManager#iterate
+ * @since 6.0
+ */
 public class RefVisitor {
   public void visitElement(RefEntity elem) {
 

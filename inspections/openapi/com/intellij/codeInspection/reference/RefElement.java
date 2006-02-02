@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import java.net.URL;
 import java.util.Collection;
 
 /**
- * User: anna
- * Date: 27-Dec-2005
+ * A node in the reference graph corresponding to a PSI element.
+ *
+ * @author anna
+ * @since 6.0
  */
-public interface RefElement extends RefEntity{
+public interface RefElement extends RefEntity {
   RefModule getModule();
 
   boolean isValid();

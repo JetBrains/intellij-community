@@ -16,10 +16,18 @@
 package com.intellij.codeInspection;
 
 /**
- * User: anna
- * Date: 04-Jan-2006
+ * Common base interface for quick fixes provided by local and global inspections.
+ *
+ * @author anna
+ * @since 6.0
+ * @see CommonProblemDescriptor#getFixes()
  */
 public interface QuickFix {
+  /**
+   * Returns the name of the quick fix.
+   *
+   * @return the name of the quick fix.
+   */
   String getName();
 
   //to appear in "Apply Fix" statement when multiple Quick Fixes exist
