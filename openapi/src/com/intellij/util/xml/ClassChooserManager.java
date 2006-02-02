@@ -23,6 +23,10 @@ public class ClassChooserManager {
 
       public void distinguishTag(final XmlTag tag, final Class aClass) {
       }
+
+      public Class[] getChooserClasses() {
+        return new Class[0];
+      }
     };
   }
 
