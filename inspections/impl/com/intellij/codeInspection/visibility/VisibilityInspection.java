@@ -178,7 +178,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
               }
               else if (!refMethod.isLibraryOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                        !(refMethod instanceof RefImplicitConstructor)) {
-                getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+                getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
                     getFilter().addIgnoreList(refMethod);
                     return false;
@@ -196,14 +196,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getFilter().addIgnoreList(refClass);
                     return false;
                   }
                 });
 
-                getManager().enqueueClassUsagesProcessing(refClass, new InspectionManagerEx.UsagesProcessor() {
+                getManager().enqueueClassUsagesProcessor(refClass, new InspectionManagerEx.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getFilter().addIgnoreList(refClass);
                     return false;

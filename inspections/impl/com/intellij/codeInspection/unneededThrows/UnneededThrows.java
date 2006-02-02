@@ -114,7 +114,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
         if (getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+              getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);
                   return true;

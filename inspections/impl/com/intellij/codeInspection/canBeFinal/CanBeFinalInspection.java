@@ -127,7 +127,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
             public void visitMethod(final RefMethod refMethod) {
               if (!refMethod.isStatic() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                   !(refMethod instanceof RefImplicitConstructor)) {
-                getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+                getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
                     ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
@@ -138,7 +138,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;

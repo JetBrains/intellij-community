@@ -38,11 +38,11 @@ public interface GlobalInspectionContext {
   interface UsagesProcessor extends Processor<PsiReference> {
   }
 
-  void enqueueClassUsagesProcessing(RefClass refClass, UsagesProcessor p);
+  void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p);
 
-  void enqueueDerivedClassesProcessing(RefClass refClass, DerivedClassesProcessor p);
+  void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p);
 
-  void enqueueDerivedMethodsProcessing(RefMethod refMethod, DerivedMethodsProcessor p);
+  void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p);
 
   void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p);
 

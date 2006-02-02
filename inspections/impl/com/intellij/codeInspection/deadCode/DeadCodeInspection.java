@@ -423,14 +423,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 getEntryPointsManager().addEntryPoint(refClass, false);
               }
               else if (!refClass.isAnonymous()) {
-                getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
+                getManager().enqueueDerivedClassesProcessor(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
                   }
                 });
 
-                getManager().enqueueClassUsagesProcessing(refClass, new InspectionManagerEx.UsagesProcessor() {
+                getManager().enqueueClassUsagesProcessor(refClass, new InspectionManagerEx.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;

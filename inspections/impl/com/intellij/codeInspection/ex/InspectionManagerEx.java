@@ -432,17 +432,17 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     myUIOptions.myAutoScrollToSourceHandler.install(tree);
   }
 
-  public void enqueueClassUsagesProcessing(RefClass refClass, UsagesProcessor p) {
+  public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
     if (myClassUsagesRequests == null) myClassUsagesRequests = new HashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
   }
 
-  public void enqueueDerivedClassesProcessing(RefClass refClass, DerivedClassesProcessor p) {
+  public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
     if (myDerivedClassesRequests == null) myDerivedClassesRequests = new HashMap<PsiElement, List<DerivedClassesProcessor>>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
-  public void enqueueDerivedMethodsProcessing(RefMethod refMethod, DerivedMethodsProcessor p) {
+  public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
     if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new HashMap<PsiElement, List<DerivedMethodsProcessor>>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);

@@ -73,7 +73,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
+              getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(refMethod);
                   return false;
