@@ -23,7 +23,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     myManager = manager;
   }
 
-  public void initialize(RefElement refElement) {
+  public void onInitialize(RefElement refElement) {
     ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
     if (refElement instanceof RefClass) {
       final RefClass refClass = ((RefClass)refElement);
@@ -74,7 +74,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     }
   }
 
-  public void markReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
+  public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
     if (!(refWhat instanceof RefField)) return;
     if (!(refFrom instanceof RefMethod) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer()) {
       if (!referencedFromClassInitializer) {
@@ -83,7 +83,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     }
   }
 
-  public void buildReferences(RefElement refElement) {
+  public void onReferencesBuild(RefElement refElement) {
     if (refElement instanceof RefClass) {
       final PsiClass psiClass = (PsiClass)refElement.getElement();
       if (psiClass != null) {

@@ -102,7 +102,7 @@ public class RefManagerImpl extends RefManager {
 
   public void fireNodeInitialized(RefElement refElement){
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
-      annotator.initialize(refElement);
+      annotator.onInitialize(refElement);
     }
   }
 
@@ -110,20 +110,23 @@ public class RefManagerImpl extends RefManager {
                                        RefElement refFrom,
                                        boolean referencedFromClassInitializer){
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
-      annotator.markReferenced(refWhat, refFrom, referencedFromClassInitializer);
+      annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer);
     }
   }
 
   public void fireBuildReferences(RefElement refElement){
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
-      annotator.buildReferences(refElement);
+      annotator.onReferencesBuild(refElement);
     }
   }
 
   public void registerGraphAnnotator(RefGraphAnnotator annotator){
     myGraphAnnotators.add(annotator);
+  }
+
+  public int getLastUsedMask() {
     myLastUsedMask *= 2;
-    annotator.setMask(myLastUsedMask);
+    return myLastUsedMask;
   }
 
   public void findAllDeclarations() {

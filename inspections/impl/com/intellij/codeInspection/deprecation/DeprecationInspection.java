@@ -9,9 +9,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -20,31 +18,15 @@ public class DeprecationInspection extends LocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Deprecation";
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
 
-  @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
-    if (!method.isConstructor()) {
-      List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-      final ProblemDescriptor problemDescriptor = checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, manager);
-      if (problemDescriptor != null){
-        return new ProblemDescriptor[]{problemDescriptor};
-      }
-    }
-    return null;
-  }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
-    final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
-    file.accept(new PsiRecursiveElementVisitor() {
+  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+    return new PsiRecursiveElementVisitor(){
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
-        final ProblemDescriptor problemDescriptor = checkDeprecated(resolved, reference.getReferenceNameElement(), manager);
-        if (problemDescriptor != null){
-          problems.add(problemDescriptor);
-        }
+        checkDeprecated(resolved, reference.getReferenceNameElement(), holder);
       }
 
       public void visitNewExpression(PsiNewExpression expression) {
@@ -70,10 +52,7 @@ public class DeprecationInspection extends LocalInspectionTool {
 
           PsiMethod constructor = result == null ? null : result.getElement();
           if (constructor != null && expression.getClassReference() != null) {
-            final ProblemDescriptor problemDescriptor = checkDeprecated(constructor, expression.getClassReference(), manager);
-            if (problemDescriptor != null){
-              problems.add(problemDescriptor);
-            }
+            checkDeprecated(constructor, expression.getClassReference(), holder);
           }
         }
       }
@@ -83,13 +62,18 @@ public class DeprecationInspection extends LocalInspectionTool {
         PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
         JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
         PsiElement element = resolveResult.getElement();
-        final ProblemDescriptor problemDescriptor = checkDeprecated(element, referenceToMethod.getReferenceNameElement(), manager);
-        if (problemDescriptor != null){
-          problems.add(problemDescriptor);
+        checkDeprecated(element, referenceToMethod.getReferenceNameElement(), holder);
+      }
+
+      public void visitMethod(PsiMethod method){
+        super.visitMethod(method);
+        MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
+        if (!method.isConstructor()) {
+          List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
+          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, holder);
         }
       }
-    });
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    };
   }
 
   public String getDisplayName() {
@@ -109,9 +93,9 @@ public class DeprecationInspection extends LocalInspectionTool {
   }
 
   //@top
-  static ProblemDescriptor checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
+  static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
                                                           List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                          InspectionManager manager) {
+                                                          ProblemsHolder holder) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
@@ -123,22 +107,20 @@ public class DeprecationInspection extends LocalInspectionTool {
       if (superMethod.isDeprecated()) {
         String description = JavaErrorMessages.message("overrides.deprecated.method",
                                                        HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
-        return manager.createProblemDescriptor(methodName, description, (LocalQuickFix [])null, ProblemHighlightType.LIKE_DEPRECATED);
+        holder.registerProblem(methodName, description, ProblemHighlightType.LIKE_DEPRECATED, (LocalQuickFix [])null);
       }
     }
-    return null;
   }
 
-  @Nullable
-  public static ProblemDescriptor checkDeprecated(PsiElement refElement,
+  static void checkDeprecated(PsiElement refElement,
                                                   PsiElement elementToHighlight,
-                                                  InspectionManager manager) {
-    if (!(refElement instanceof PsiDocCommentOwner)) return null;
-    if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
+                                                  ProblemsHolder holder) {
+    if (!(refElement instanceof PsiDocCommentOwner)) return;
+    if (!((PsiDocCommentOwner)refElement).isDeprecated()) return;
 
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
-    return manager.createProblemDescriptor(elementToHighlight, description, (LocalQuickFix[])null, ProblemHighlightType.LIKE_DEPRECATED);
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, (LocalQuickFix[])null);
   }
 }

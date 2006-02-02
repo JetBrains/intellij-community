@@ -30,7 +30,7 @@ public class UnnessecaryModuleDependencyAnnotator extends RefGraphAnnotator {
 
 
 
-  public void markReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
+  public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
     final PsiElement onElement = refWhat.getElement();
     final PsiElement fromElement = refFrom.getElement();
     if (onElement != null && fromElement!= null){

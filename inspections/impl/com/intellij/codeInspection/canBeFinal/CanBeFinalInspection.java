@@ -114,7 +114,9 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   public void initialize(InspectionManagerEx manager) {
     super.initialize(manager);
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
-    refManager.registerGraphAnnotator(new CanBeFinalAnnotator(refManager));
+    final CanBeFinalAnnotator annotator = new CanBeFinalAnnotator(refManager);
+    refManager.registerGraphAnnotator(annotator);
+    annotator.setMask(refManager.getLastUsedMask());
   }
 
   public boolean queryExternalUsagesRequests() {

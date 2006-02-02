@@ -20,17 +20,15 @@ package com.intellij.codeInspection.reference;
  * Date: 23-Dec-2005
  */
 public abstract class RefGraphAnnotator {
-  public void initialize(RefElement refElement){
+  public void onInitialize(RefElement refElement){
   }
 
-  public void buildReferences(RefElement refElement){
+  public void onReferencesBuild(RefElement refElement){
   }
 
-  public void markReferenced(RefElement refWhat,
-                             RefElement refFrom,
-                             boolean referencedFromClassInitializer){
+  public void onMarkReferenced(RefElement refWhat,
+                               RefElement refFrom,
+                               boolean referencedFromClassInitializer){
   }
 
-  public void setMask(int mask){
-  }
 }
