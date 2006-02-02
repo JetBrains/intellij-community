@@ -200,8 +200,10 @@ public final class Painter {
     g.translate(point.x, point.y);
     try{
       // Paint grid
-      Image gridImage = CachedGridImage.getGridImage(container);
-      g.drawImage(gridImage, 0, 0, null);
+      if (container.getWidth() > 0 && container.getHeight() > 0) {
+        Image gridImage = CachedGridImage.getGridImage(container);
+        g.drawImage(gridImage, 0, 0, null);
+      }
     }finally{
       g.translate(-point.x, -point.y);
     }
