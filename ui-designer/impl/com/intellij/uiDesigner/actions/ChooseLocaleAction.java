@@ -21,20 +21,11 @@ import java.util.Locale;
  * @author yole
  */
 public class ChooseLocaleAction extends ComboBoxAction {
-  private GuiEditor myEditor;
   private GuiEditor myLastEditor;
   private Presentation myPresentation;
 
   public ChooseLocaleAction() {
-    this(null);
-  }
-
-  public ChooseLocaleAction(GuiEditor editor) {
-    myEditor = editor;
-    Locale locale = editor != null ? editor.getStringDescriptorLocale() : null;
-    getTemplatePresentation().setText(locale == null || locale.getDisplayName().length() == 0
-                                      ? UIDesignerBundle.message("choose.locale.default")
-                                      : locale.getDisplayName());
+    getTemplatePresentation().setText(UIDesignerBundle.message("choose.locale.default"));
     getTemplatePresentation().setDescription(UIDesignerBundle.message("choose.locale.description"));
     getTemplatePresentation().setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/chooseLocale.png"));
   }
@@ -46,23 +37,27 @@ public class ChooseLocaleAction extends ComboBoxAction {
 
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     DefaultActionGroup group = new DefaultActionGroup();
-    GuiEditor editor = myLastEditor == null ? myEditor : myLastEditor;
+    GuiEditor editor = myLastEditor;
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
-      Arrays.sort(locales, new Comparator<Locale>() {
-        public int compare(final Locale o1, final Locale o2) {
-          return o1.getDisplayName().compareTo(o2.getDisplayName());
+      if (locales.length > 0) {
+        Arrays.sort(locales, new Comparator<Locale>() {
+          public int compare(final Locale o1, final Locale o2) {
+            return o1.getDisplayName().compareTo(o2.getDisplayName());
+          }
+        });
+        for(Locale locale: locales) {
+          group.add(new SetLocaleAction(editor, locale, true));
         }
-      });
-      for(Locale locale: locales) {
-        group.add(new SetLocaleAction(editor, locale));
+      }
+      else {
+        group.add(new SetLocaleAction(editor, new Locale(""), false));
       }
     }
     return group;
   }
 
   @Nullable private GuiEditor getEditor(final AnActionEvent e) {
-    if (myEditor != null) return myEditor;
     myLastEditor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
     return myLastEditor;
   }
@@ -74,18 +69,22 @@ public class ChooseLocaleAction extends ComboBoxAction {
   private class SetLocaleAction extends AnAction {
     private GuiEditor myEditor;
     private Locale myLocale;
+    private boolean myUpdateText;
 
-    public SetLocaleAction(final GuiEditor editor, final Locale locale) {
+    public SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
       super(locale.getDisplayName().length() == 0
             ? UIDesignerBundle.message("choose.locale.default")
             : locale.getDisplayName());
+      myUpdateText = updateText;
       myEditor = editor;
       myLocale = locale;
     }
 
     public void actionPerformed(AnActionEvent e) {
       myEditor.setStringDescriptorLocale(myLocale);
-      myPresentation.setText(getTemplatePresentation().getText());
+      if (myUpdateText) {
+        myPresentation.setText(getTemplatePresentation().getText());
+      }
     }
   }
 }
