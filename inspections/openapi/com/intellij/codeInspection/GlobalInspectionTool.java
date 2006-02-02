@@ -39,13 +39,14 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
 
   public void runInspection(final AnalysisScope scope,
                             final InspectionManager manager,
+                            final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor,
                             final boolean filterSuppressed) {
     final HashMap<RefEntity, List<CommonProblemDescriptor>> holder = new HashMap<RefEntity, List<CommonProblemDescriptor>>();
-    manager.getRefManager().iterate(new RefVisitor() {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (manager.isSuppressed(refEntity, getShortName())) return;
-        CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager);
+        if (globalContext.isSuppressed(refEntity, getShortName())) return;
+        CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext);
         if (descriptors != null){
           List<CommonProblemDescriptor> problemDescriptors = holder.get(refEntity);
           if (problemDescriptors == null){
@@ -64,7 +65,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   @Nullable
-  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager) {
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext) {
     return null;
   }
 

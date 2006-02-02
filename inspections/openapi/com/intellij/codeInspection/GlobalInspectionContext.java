@@ -16,19 +16,23 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefField;
-import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 02-Feb-2006
  */
 public interface GlobalInspectionContext {
+  @NotNull RefManager getRefManager();
+  boolean isSuppressed(RefEntity entity, String inspectionToolId);
+  boolean isSuppressed(PsiElement element, String inspectionToolId);
+  
   interface DerivedClassesProcessor extends Processor<PsiClass> {
   }
 

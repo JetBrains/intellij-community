@@ -37,7 +37,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   public void runInspection(final AnalysisScope scope) {
-    myGlobalInspectionTool.runInspection(scope, getManager(), this, true);
+    myGlobalInspectionTool.runInspection(scope, getManager(), getManager(), this, true);
   }
 
   public boolean queryExternalUsagesRequests() {

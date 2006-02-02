@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,7 @@ public abstract class InspectionManager {
   }
 
   @NotNull public abstract CommonProblemDescriptor createProblemDescriptor(String descriptionTemplate, QuickFix... fixes);
-  @NotNull public abstract RefManager getRefManager();
+
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
    * @param psiElement problem is reported against
@@ -50,8 +48,6 @@ public abstract class InspectionManager {
                                                                      LocalQuickFix... fixes
   );
 
-  public abstract boolean isSuppressed(RefEntity entity, String inspectionToolId);
-  public abstract boolean isSuppressed(PsiElement element, String inspectionToolId);
-
+  
   @NotNull public abstract Project getProject();
 }
