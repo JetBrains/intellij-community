@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -96,8 +95,7 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
       }
     }
 
-    ((RefManagerImpl)manager.getRefManager()).inspectionReadActionStarted();
-    
+
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (InspectionTool tool : suppressedTools) {
       tool.initialize((InspectionManagerEx)manager);
@@ -111,7 +109,7 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
       }
       else if (tool instanceof GlobalInspectionToolWrapper) {
         GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)tool;
-        global.getTool().runInspection(new AnalysisScope(file),manager, global, false);
+        global.getTool().runInspection(new AnalysisScope(file),manager, (GlobalInspectionContext)manager, global, false);
         descriptors = global.getProblemDescriptors();
       }
       else {
