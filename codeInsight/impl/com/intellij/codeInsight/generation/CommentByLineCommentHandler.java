@@ -126,8 +126,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myStartOffsets = new int[myLine2 - myLine1 + 1];
     myEndOffsets = new int[myLine2 - myLine1 + 1];
     myCommenters = new Commenter[myLine2 - myLine1 + 1];
-    boolean allLineComments = true;
-
+    boolean allLineCommented = true;
     CharSequence chars = myDocument.getCharsSequence();
 
     for (int line = myLine1; line <= myLine2; line++) {
@@ -140,12 +139,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       }
       myCommenters[line - myLine1] = commenter;
       if (!isLineCommented(line, chars, commenter)) {
-        allLineComments = false;
+        allLineCommented = false;
         break;
       }
     }
 
-    if (!allLineComments) {
+    if (!allLineCommented) {
       if (CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN) {
         doDefaultCommenting();
       }
@@ -157,16 +156,32 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       for (int line = myLine2; line >= myLine1; line--) {
         int offset1 = myStartOffsets[line - myLine1];
         int offset2 = myEndOffsets[line - myLine1];
+        if (offset1 == offset2) continue;
         Commenter commenter = myCommenters[line - myLine1];
-        if (offset2 >= 0) {
-          myDocument.deleteString(offset2 - commenter.getBlockCommentSuffix().length(), offset2);
+        String prefix = commenter.getBlockCommentPrefix();
+        if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
+          prefix = commenter.getLineCommentPrefix();
         }
-        if (offset1 >= 0) {
-          String prefix = commenter.getBlockCommentPrefix();
-          if (prefix == null || !myDocument.getText().substring(offset1, myDocument.getTextLength()).startsWith(prefix)) {
-            prefix = commenter.getLineCommentPrefix();
+        final String suffix = commenter.getBlockCommentSuffix();
+        if (prefix != null && suffix != null) {
+          final int suffixLen = suffix.length();
+          final int prefixLen = prefix.length();
+          if (offset2 >= 0) {
+            if (!CharArrayUtil.regionMatches(chars, offset1 + prefixLen, prefix)) {
+              myDocument.deleteString(offset2 - suffixLen, offset2);
+            }
           }
-          myDocument.deleteString(offset1, offset1 + prefix.length());
+          if (offset1 >= 0) {
+            for (int i = offset2 - suffixLen - 1; i > offset1 + prefixLen; --i) {
+              if (CharArrayUtil.regionMatches(chars, i, suffix)) {
+                myDocument.deleteString(i, i + suffixLen);
+              }
+              else if (CharArrayUtil.regionMatches(chars, i, prefix)) {
+                myDocument.deleteString(i, i + prefixLen);
+              }
+            }
+            myDocument.deleteString(offset1, offset1 + prefixLen);
+          }
         }
       }
     }
@@ -187,24 +202,21 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     else {
       prefix = commenter.getBlockCommentPrefix();
       String suffix = commenter.getBlockCommentSuffix();
-      int lineEnd = myDocument.getLineEndOffset(line);
       final int textLength = myDocument.getTextLength();
+      int lineEnd = myDocument.getLineEndOffset(line);
       if (lineEnd == textLength) {
         final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
         if (shifted < textLength - 1) lineEnd = shifted;
-
       }
       else {
         lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
       }
-
-      commented =
-        CharArrayUtil.regionMatches(chars, lineStart, prefix) && CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix);
+      commented = (lineStart == lineEnd && myLine1 != myLine2) || (CharArrayUtil.regionMatches(chars, lineStart, prefix) &&
+                                                                   CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix));
       if (commented) {
         myStartOffsets[line - myLine1] = lineStart;
         myEndOffsets[line - myLine1] = lineEnd;
       }
-
     }
     return commented;
   }
@@ -265,7 +277,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     for (int line = myLine2; line >= myLine1; line--) {
       int lineStart = myDocument.getLineStartOffset(line);
       int offset = lineStart;
-      StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+      final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
       try {
         while (true) {
           String space = buffer.toString();
@@ -285,7 +297,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       finally {
         StringBuilderSpinAllocator.dispose(buffer);
       }
-
       commentLine(line, offset);
     }
   }
@@ -293,7 +304,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private void commentLine(int line, int offset) {
     final Commenter commenter = findCommenter(line);
     if (commenter == null) return;
-
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       myDocument.insertString(offset, prefix);
@@ -301,10 +311,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     else {
       prefix = commenter.getBlockCommentPrefix();
       String suffix = commenter.getBlockCommentSuffix();
+      if (prefix == null || suffix == null) return;
       int endOffset = myDocument.getLineEndOffset(line);
+      if (endOffset == offset && myLine1 != myLine2) return;
       final int textLength = myDocument.getTextLength();
       final CharSequence chars = myDocument.getCharsSequence();
-
       offset = CharArrayUtil.shiftForward(chars, offset, " \t");
       if (endOffset == textLength) {
         final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
@@ -313,8 +324,36 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       else {
         endOffset = CharArrayUtil.shiftBackward(chars, endOffset, " \t");
       }
-      myDocument.insertString(endOffset, suffix);
-      myDocument.insertString(offset, prefix);
+      final int suffixLen = suffix.length();
+      final int prefixLen = prefix.length();
+      if (endOffset - offset > prefixLen + suffixLen) {
+        boolean insertPrefix = false;
+        int i = endOffset - suffixLen;
+        while (i >= offset) {
+          if (insertPrefix) {
+            if (CharArrayUtil.regionMatches(chars, i, prefix)) {
+              i -= suffixLen;
+              insertPrefix = false;
+              continue;
+            }
+            if (CharArrayUtil.regionMatches(chars, i, suffix)) {
+              myDocument.insertString(i + suffixLen, prefix);
+            }
+          }
+          else {
+            if (!CharArrayUtil.regionMatches(chars, i, suffix)) {
+              myDocument.insertString(i + suffixLen, suffix);
+            }
+            insertPrefix = true;
+          }
+          --i;
+        }
+        myDocument.insertString(offset, prefix);
+      }
+      else {
+        myDocument.insertString(endOffset, suffix);
+        myDocument.insertString(offset, prefix);
+      }
     }
   }
 }
