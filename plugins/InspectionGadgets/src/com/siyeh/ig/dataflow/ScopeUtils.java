@@ -17,7 +17,6 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,7 +173,7 @@ class ScopeUtils
                                             @NotNull PsiElement maxScope)
     {
         PsiElement result = maxScope;
-        if (PsiUtil.isLoopStatement(result))
+        if (result instanceof PsiLoopStatement)
         {
             return result;
         }
@@ -182,7 +181,7 @@ class ScopeUtils
         {
             final PsiElement element =
                     getChildWhichContainsElement(result, scope);
-            if (element == null || PsiUtil.isLoopStatement(element))
+            if (element == null || element instanceof PsiLoopStatement)
             {
                 while (result != null && !(result instanceof PsiCodeBlock))
                 {
