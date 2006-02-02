@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.PsiParameter;
+
 /**
  * User: anna
  * Date: 27-Dec-2005
@@ -28,4 +30,6 @@ public interface RefParameter extends RefElement {
   String getActualValueIfSame();
 
   void parameterReferenced(final boolean isParameterReferenced);
+
+  PsiParameter getElement();
 }

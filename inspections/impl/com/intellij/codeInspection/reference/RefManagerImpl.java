@@ -69,21 +69,21 @@ public class RefManagerImpl extends RefManager {
     myServlet = psiManager.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
-  public void iterate(RefIterator iterator) {
+  public void iterate(RefVisitor visitor) {
     final HashMap<PsiElement, RefElement> refTable = getRefTable();
     for (RefElement refElement : refTable.values()) {
-      iterator.accept(refElement);
+      refElement.accept(visitor);
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
         if (refDefaultConstructor instanceof RefImplicitConstructor) {
-          iterator.accept(refClass.getDefaultConstructor());
+          refClass.getDefaultConstructor().accept(visitor);
         }
       }
     }
     if (myModules != null) {
       for (RefModule refModule : myModules.values()) {
-        iterator.accept(refModule);
+        refModule.accept(visitor);
       }
     }
   }

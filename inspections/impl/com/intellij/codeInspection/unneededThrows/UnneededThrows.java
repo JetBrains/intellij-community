@@ -11,7 +11,10 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,8 +36,8 @@ public class UnneededThrows extends DescriptorProviderInspection {
   @NonNls public static final String SHORT_NAME = "UnneededThrows";
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this)) return;
@@ -106,8 +109,8 @@ public class UnneededThrows extends DescriptorProviderInspection {
   }
 
   public boolean queryExternalUsagesRequests() {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {

@@ -64,8 +64,7 @@ public class DeadHTMLComposer extends HTMLComposer {
           }
         });
       } else {
-        appendNoProblems(buf);
-        throw new RuntimeException();
+        appendNoProblems(buf);        
       }
       appendCallesList(refElement, buf, new HashSet<RefElement>(), true);
     }

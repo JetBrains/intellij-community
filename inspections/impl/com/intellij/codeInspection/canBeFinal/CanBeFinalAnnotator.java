@@ -2,9 +2,9 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.javaee.ejb.role.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.javaee.ejb.role.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,17 +24,17 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
   }
 
   public void initialize(RefElement refElement) {
-    refElement.setFlag(true, CAN_BE_FINAL_MASK);
+    ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
     if (refElement instanceof RefClass) {
       final RefClass refClass = ((RefClass)refElement);
-      final PsiClass psiClass = (PsiClass)refClass.getElement();
+      final PsiClass psiClass = refClass.getElement();
       EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
       if (role != null) {
-        refClass.setFlag(false, CAN_BE_FINAL_MASK);
+        ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
       }
       if (refClass.isAbstract() || refClass.isAnonymous() || refClass.isInterface()) {
-        refClass.setFlag(false, CAN_BE_FINAL_MASK);
+        ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
       }
       if (!refClass.isSelfInheritor(psiClass)) {
@@ -42,7 +42,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
           if (RefUtil.getInstance().belongsToScope(psiSuperClass, myManager)) {
             RefClass refSuperClass = (RefClass)myManager.getReference(psiSuperClass);
             if (refSuperClass != null) {
-              refSuperClass.setFlag(false, CAN_BE_FINAL_MASK);
+              ((RefClassImpl)refSuperClass).setFlag(false, CAN_BE_FINAL_MASK);
             }
           }
         }
@@ -50,21 +50,24 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     }
     else if (refElement instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refElement;
-      PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-      if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
-          PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || refMethod.getOwnerClass().isAnonymous() ||
-          refMethod.getOwnerClass().isInterface()) {
-        refMethod.setFlag(false, CAN_BE_FINAL_MASK);
-      }
-      if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) && refMethod.getOwner() != null &&
-          !(refMethod.getOwnerClass().getOwner() instanceof RefElement)) {
-        refMethod.setFlag(false, CAN_BE_FINAL_MASK);
-      }
-      for (PsiMethod psiSuperMethod : psiMethod.findSuperMethods()) {
-        if (RefUtil.getInstance().belongsToScope(psiSuperMethod, myManager)) {
-          RefMethod refSuperMethod = (RefMethod)myManager.getReference(psiSuperMethod);
-          if (refSuperMethod != null) {
-            refSuperMethod.setFlag(false, CAN_BE_FINAL_MASK);
+      final PsiElement element = refMethod.getElement();
+      if (element instanceof PsiMethod) {
+        PsiMethod psiMethod = (PsiMethod)element;
+        if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
+            PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) || refMethod.getOwnerClass().isAnonymous() ||
+            refMethod.getOwnerClass().isInterface()) {
+          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
+        }
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) && refMethod.getOwner() != null &&
+            !(refMethod.getOwnerClass().getOwner() instanceof RefElement)) {
+          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
+        }
+        for (PsiMethod psiSuperMethod : psiMethod.findSuperMethods()) {
+          if (RefUtil.getInstance().belongsToScope(psiSuperMethod, myManager)) {
+            RefMethod refSuperMethod = (RefMethod)myManager.getReference(psiSuperMethod);
+            if (refSuperMethod != null) {
+              ((RefMethodImpl)refSuperMethod).setFlag(false, CAN_BE_FINAL_MASK);
+            }
           }
         }
       }
@@ -75,7 +78,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     if (!(refWhat instanceof RefField)) return;
     if (!(refFrom instanceof RefMethod) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer()) {
       if (!referencedFromClassInitializer) {
-        refWhat.setFlag(false, CAN_BE_FINAL_MASK);
+        ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
   }
@@ -87,7 +90,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
 
         EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
         if (role != null) {
-          refElement.setFlag(false, CAN_BE_FINAL_MASK);
+          ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
         }
 
         PsiMethod[] psiMethods = psiClass.getMethods();
@@ -99,34 +102,32 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
         boolean hasInitializers = false;
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           PsiCodeBlock body = initializer.getBody();
-          if (body != null) {
-            hasInitializers = true;
-            ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-            ControlFlow flow;
-            try {
-              flow = analyzer.buildControlFlow();
-            }
-            catch (AnalysisCanceledException e) {
-              flow = ControlFlow.EMPTY;
-            }
-            PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
-            PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-            for (int j = 0; j < ssaVariables.length; j++) {
-              PsiVariable psiVariable = writtenVariables[j];
-              if (allFields.contains(psiVariable)) {
-                if (instanceInitializerInitializedFields.contains(psiVariable)) {
-                  allFields.remove(psiVariable);
-                  instanceInitializerInitializedFields.remove(psiVariable);
-                }
-                else {
-                  instanceInitializerInitializedFields.add(psiVariable);
-                }
-              }
-            }
-            for (PsiVariable psiVariable : writtenVariables) {
-              if (!instanceInitializerInitializedFields.contains(psiVariable)) {
+          hasInitializers = true;
+          ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+          ControlFlow flow;
+          try {
+            flow = analyzer.buildControlFlow();
+          }
+          catch (AnalysisCanceledException e) {
+            flow = ControlFlow.EMPTY;
+          }
+          PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
+          PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
+          for (int j = 0; j < ssaVariables.length; j++) {
+            PsiVariable psiVariable = writtenVariables[j];
+            if (allFields.contains(psiVariable)) {
+              if (instanceInitializerInitializedFields.contains(psiVariable)) {
                 allFields.remove(psiVariable);
+                instanceInitializerInitializedFields.remove(psiVariable);
               }
+              else {
+                instanceInitializerInitializedFields.add(psiVariable);
+              }
+            }
+          }
+          for (PsiVariable psiVariable : writtenVariables) {
+            if (!instanceInitializerInitializedFields.contains(psiVariable)) {
+              allFields.remove(psiVariable);
             }
           }
         }
@@ -168,7 +169,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
 
         for (PsiField psiField : psiFields) {
           if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
-            myManager.getReference(psiField).setFlag(false, CAN_BE_FINAL_MASK);
+            ((RefFieldImpl)myManager.getReference(psiField)).setFlag(false, CAN_BE_FINAL_MASK);
           }
         }
 
@@ -179,17 +180,15 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final PsiElement element = refMethod.getElement();
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
-        if (method != null) {
-          final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
-          EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
-          if (classRole != null) {
-            if (!refMethod.getSuperMethods().isEmpty() || refMethod.isLibraryOverride()) {
-              refMethod.setFlag(false, CAN_BE_FINAL_MASK);
-            }
-            EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
-            if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
-              refMethod.setFlag(false, CAN_BE_FINAL_MASK);
-            }
+        final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
+        EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
+        if (classRole != null) {
+          if (!refMethod.getSuperMethods().isEmpty() || refMethod.isLibraryOverride()) {
+            ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
+          }
+          EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
+          if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
+            ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
           }
         }
       }

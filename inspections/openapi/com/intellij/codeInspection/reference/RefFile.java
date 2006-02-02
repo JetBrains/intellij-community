@@ -15,9 +15,12 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.PsiFile;
+
 /**
  * User: anna
  * Date: 27-Dec-2005
  */
 public interface RefFile extends RefElement {
+  PsiFile getElement();
 }

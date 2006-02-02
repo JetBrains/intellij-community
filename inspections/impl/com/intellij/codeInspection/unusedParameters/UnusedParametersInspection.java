@@ -50,8 +50,8 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
               final UnusedParametersFilter filter = getFilter();
               final PsiSearchHelper helper = PsiManager.getInstance(getManager().getProject()).getSearchHelper();
 
-              getRefManager().iterate(new RefManager.RefIterator() {
-                public void accept(RefEntity refEntity) {
+              getRefManager().iterate(new RefVisitor() {
+                public void visitElement(RefEntity refEntity) {
                   if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
                     RefMethod refMethod = (RefMethod) refEntity;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
@@ -105,8 +105,8 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
   public void exportResults(final Element parentNode) {
     final UnusedParametersFilter filter = getFilter();
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
           ArrayList unusedParameters = filter.getUnusedParameters((RefMethod)refEntity);
           for (int i = 0; i < unusedParameters.size(); i++) {

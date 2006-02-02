@@ -37,6 +37,10 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     }    
   }
 
+  public PsiField getElement() {
+    return (PsiField)super.getElement(); 
+  }
+
   protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
 
@@ -87,7 +91,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
   }
 
   public void buildReferences() {
-    PsiField psiField = (PsiField) getElement();
+    PsiField psiField = getElement();
     if (psiField != null) {
       final RefUtilImpl refUtil = (RefUtilImpl)RefUtil.getInstance();
       refUtil.addReferences(psiField, this, psiField.getInitializer());
@@ -102,24 +106,22 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
           setFlag(true, USED_FOR_WRITING_MASK);
         }
       }
-      PsiType type = psiField.getType();
-      if (type != null) {
-        PsiType psiType = type;
-        RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), psiField);
+      PsiType psiType = psiField.getType();
+      RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), psiField);
 
-        if (ownerClass != null) {
-          psiType = psiType.getDeepComponentType();
-          if (psiType instanceof PsiClassType) {
-            PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-            if (psiClass != null && refUtil.belongsToScope(psiClass, getRefManager())) {
-                RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
-              if (refClass != null) {
-                refClass.addTypeReference(ownerClass);
-                refClass.addClassExporter(this);
-              }
+      if (ownerClass != null) {
+        psiType = psiType.getDeepComponentType();
+        if (psiType instanceof PsiClassType) {
+          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+          if (psiClass != null && refUtil.belongsToScope(psiClass, getRefManager())) {
+              RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
+            if (refClass != null) {
+              refClass.addTypeReference(ownerClass);
+              refClass.addClassExporter(this);
             }
           }
         }
+
       }
       ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
     }
@@ -133,7 +135,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     final String[] result = new String[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        PsiField psiField = (PsiField) getElement();
+        PsiField psiField = getElement();
         result[0] = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME |
           PsiFormatUtil.SHOW_FQ_NAME |
           PsiFormatUtil.SHOW_CONTAINING_CLASS,

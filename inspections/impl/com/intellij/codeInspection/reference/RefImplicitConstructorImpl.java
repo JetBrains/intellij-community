@@ -46,7 +46,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   public PsiModifierListOwner getElement() {
-    return (PsiModifierListOwner)getOwnerClass().getElement();
+    return getOwnerClass().getElement();
   }
 
   public RefClass getOwnerClass() {

@@ -9,7 +9,10 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -23,8 +26,8 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
   private QuickFix myQuickFix;
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnusedReturnValue.this)) return;
@@ -58,8 +61,8 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
   }
 
   public boolean queryExternalUsagesRequests() {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {

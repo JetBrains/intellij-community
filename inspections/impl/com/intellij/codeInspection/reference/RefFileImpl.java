@@ -74,6 +74,10 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     }
   }
 
+  public PsiFile getElement() {
+    return (PsiFile)super.getElement();
+  }
+
   public void accept(RefVisitor visitor) {
     visitor.visitFile(this);
   }

@@ -50,6 +50,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -63,7 +64,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class InspectionManagerEx extends InspectionManager implements JDOMExternalizable, ProjectComponent {
+public class InspectionManagerEx extends InspectionManager implements GlobalInspectionContext, JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionManagerEx");
   private RefManager myRefManager;
   private ContentManager myContentManager;

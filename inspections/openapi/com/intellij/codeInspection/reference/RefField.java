@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.PsiField;
+
 /**
  * User: anna
  * Date: 27-Dec-2005
@@ -27,4 +29,6 @@ public interface RefField extends RefElement {
   boolean isOnlyAssignedInInitializer();
 
   RefClass getOwnerClass();
+
+  PsiField getElement();
 }

@@ -336,7 +336,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       }
 
       for (RefParameter parameter : getParameters()) {
-        refUtil.setIsFinal(parameter, ((PsiModifierListOwner)parameter.getElement()).hasModifierProperty(PsiModifier.FINAL));
+        refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
       }
 
       ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
@@ -707,5 +707,9 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
   private void setTestMethod(boolean testMethod){
     setFlag(testMethod, IS_TEST_METHOD_MASK);
+  }
+
+  public PsiModifierListOwner getElement() {
+    return (PsiModifierListOwner)super.getElement();
   }
 }

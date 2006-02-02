@@ -128,8 +128,8 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   public void exportResults(final Element parentNode) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(final RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(final RefEntity refEntity) {
         if (myProblemElements.containsKey(refEntity)) {
           CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
           for (CommonProblemDescriptor description : descriptions) {

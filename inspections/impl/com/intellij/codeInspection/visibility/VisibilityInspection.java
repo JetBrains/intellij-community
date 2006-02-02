@@ -14,12 +14,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.javaee.ejb.EjbModuleUtil;
+import com.intellij.javaee.model.common.EjbRootElement;
+import com.intellij.javaee.model.common.EntityBean;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.model.common.EjbRootElement;
-import com.intellij.javaee.model.common.EntityBean;
-import com.intellij.javaee.ejb.EjbModuleUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -156,8 +156,8 @@ public class VisibilityInspection extends FilteringInspectionTool {
   }
 
   public boolean queryExternalUsagesRequests() {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (getFilter().accepts((RefElement)refEntity)) {
           refEntity.accept(new RefVisitor() {
@@ -220,8 +220,8 @@ public class VisibilityInspection extends FilteringInspectionTool {
   }
 
   public void exportResults(final Element parentNode) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (getFilter().accepts((RefElement)refEntity)) {
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);

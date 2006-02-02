@@ -27,10 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 28-Dec-2005
  */
 public abstract class RefManager {
-  public interface RefIterator {
-    void accept(RefEntity refEntity);
-  }
-  public abstract void iterate(RefIterator iterator);
+  public abstract void iterate(RefVisitor visitor);
 
   public abstract AnalysisScope getScope();
 

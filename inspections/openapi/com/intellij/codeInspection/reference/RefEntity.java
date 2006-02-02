@@ -31,8 +31,4 @@ public interface RefEntity extends UserDataHolder {
   RefEntity getOwner();
 
   void accept(final RefVisitor refVisitor);
-
-  boolean checkFlag(final int mask);
-
-  void setFlag(final boolean flag, final int mask);
 }

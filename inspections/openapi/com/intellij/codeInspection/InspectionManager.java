@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,27 +54,4 @@ public abstract class InspectionManager {
   public abstract boolean isSuppressed(PsiElement element, String inspectionToolId);
 
   @NotNull public abstract Project getProject();
-
-  public interface DerivedClassesProcessor extends Processor<PsiClass> {
-  }
-
-  public interface DerivedMethodsProcessor extends Processor<PsiMethod> {
-  }
-
-  public interface UsagesProcessor extends Processor<PsiReference> {
-  }
-
-  protected interface Processor<T> {
-    boolean process(T element);
-  }
-
-  public abstract void enqueueClassUsagesProcessing(RefClass refClass, UsagesProcessor p);
-
-  public abstract void enqueueDerivedClassesProcessing(RefClass refClass, DerivedClassesProcessor p);
-
-  public abstract void enqueueDerivedMethodsProcessing(RefMethod refMethod, DerivedMethodsProcessor p);
-
-  public abstract void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p);
-
-  public abstract void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p);
 }

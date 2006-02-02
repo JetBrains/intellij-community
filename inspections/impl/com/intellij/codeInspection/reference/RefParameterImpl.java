@@ -43,6 +43,10 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
     setFlag(true, USED_FOR_READING_MASK);
   }
 
+  public PsiParameter getElement() {
+    return (PsiParameter)super.getElement();
+  }
+
   public boolean isUsedForWriting() {
     return checkFlag(USED_FOR_WRITING_MASK);
   }

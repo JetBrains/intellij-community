@@ -40,8 +40,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   public boolean queryExternalUsagesRequests() {
-    return myGlobalInspectionTool.queryExternalUsagesRequests(getManager(), this);
-
+    return myGlobalInspectionTool.queryExternalUsagesRequests(getManager(), getManager(), this);
   }
 
   public JobDescriptor[] getJobDescriptors() {

@@ -66,7 +66,7 @@ public class XMLExportUtl {
   }
 
   private static void appendClass(RefClass refClass, Element parentNode) {
-    PsiClass psiClass = (PsiClass) refClass.getElement();
+    PsiClass psiClass = refClass.getElement();
     PsiDocComment psiDocComment = psiClass.getDocComment();
 
     PsiFile psiFile = psiClass.getContainingFile();
@@ -81,8 +81,7 @@ public class XMLExportUtl {
     Element classElement = new Element(InspectionsBundle.message("inspection.export.results.class"));
     if (psiDocComment != null) {
       PsiDocTag[] tags = psiDocComment.getTags();
-      for (int i = 0; i < tags.length; i++) {
-        PsiDocTag tag = tags[i];
+      for (PsiDocTag tag : tags) {
         if (InspectionsBundle.message("inspection.export.results.author").equals(tag.getName()) && tag.getValueElement() != null) {
           classElement.setAttribute(InspectionsBundle.message("inspection.export.results.author"), tag.getValueElement().getText());
         }
@@ -135,7 +134,7 @@ public class XMLExportUtl {
 
   private static void appendField(final RefField refField, Element parentNode) {
     Element fieldElement = new Element(InspectionsBundle.message("inspection.export.results.field"));
-    PsiField psiField = (PsiField) refField.getElement();
+    PsiField psiField = refField.getElement();
     String name = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME |
                                                          PsiFormatUtil.SHOW_TYPE,
         PsiSubstitutor.EMPTY);

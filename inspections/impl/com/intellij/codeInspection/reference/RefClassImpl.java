@@ -55,7 +55,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     myInstanceReferences = new HashSet<RefElement>(0);
     myDefaultConstructor = null;
 
-    final PsiClass psiClass = (PsiClass)getElement();
+    final PsiClass psiClass = getElement();
 
     PsiElement psiParent = psiClass.getParent();
     if (psiParent instanceof PsiFile) {
@@ -170,6 +170,10 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return isSelfInheritor(psiClass, new ArrayList<PsiClass>());
   }
 
+  public PsiClass getElement() {
+    return (PsiClass)super.getElement(); 
+  }
+
   private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<PsiClass> visited) {
     if (visited.contains(psiClass)) return true;
 
@@ -198,7 +202,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   }
 
   public void buildReferences() {
-    PsiClass psiClass = (PsiClass) getElement();
+    PsiClass psiClass = getElement();
 
     if (psiClass != null) {
       for (PsiClassInitializer classInitializer : psiClass.getInitializers()) {
@@ -306,7 +310,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     final String[] result = new String[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        PsiClass psiClass = (PsiClass) getElement();
+        PsiClass psiClass = getElement();
         result[0] = PsiFormatUtil.formatClass(psiClass, PsiFormatUtil.SHOW_NAME |
           PsiFormatUtil.SHOW_FQ_NAME);
       }

@@ -24,8 +24,8 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
   }
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameParameterValueInspection.this.getShortName())) return;
@@ -46,27 +46,25 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
     if (refMethod.isLibraryOverride()) return null;
     if (!refMethod.getSuperMethods().isEmpty()) return null;
 
-    ArrayList problems = null;
+    ArrayList<ProblemDescriptor> problems = null;
     RefParameter[] parameters = refMethod.getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      RefParameter refParameter = parameters[i];
+    for (RefParameter refParameter : parameters) {
       String value = refParameter.getActualValueIfSame();
       if (value != null) {
-        if (problems == null) problems = new ArrayList(1);
-        problems.add(getManager().createProblemDescriptor(refMethod.getElement(),
-                                                          InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                                    "<code>" + refParameter.getName() + "</code>",
-                                                                                    "<code>" + value + "</code>"),
-                                                          (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+        problems.add(getManager().createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
+          "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
+                                                                                  (LocalQuickFix [])null,
+                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
-    return problems == null ? null : (ProblemDescriptor[]) problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+    return problems == null ? null : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
   public boolean queryExternalUsagesRequests() {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {

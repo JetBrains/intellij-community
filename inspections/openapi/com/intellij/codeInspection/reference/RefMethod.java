@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiModifierListOwner;
 
 import java.util.Collection;
 
@@ -47,4 +48,6 @@ public interface RefMethod extends RefElement{
 
   RefParameter[] getParameters();
   RefClass getOwnerClass();
+
+  PsiModifierListOwner getElement();
 }

@@ -60,4 +60,6 @@ public interface RefClass extends RefElement {
   boolean isLocalClass();
 
   boolean isSelfInheritor(PsiClass psiClass);
+
+  PsiClass getElement();
 }

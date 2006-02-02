@@ -119,8 +119,8 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
   public boolean queryExternalUsagesRequests() {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (filter.accepts((RefElement)refEntity)) {
           refEntity.accept(new RefVisitor() {
@@ -129,7 +129,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
                   !(refMethod instanceof RefImplicitConstructor)) {
                 getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
-                    refMethod.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                    ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                 });
@@ -140,7 +140,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
               if (!refClass.isAnonymous()) {
                 getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
-                    refClass.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                    ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                 });
@@ -152,7 +152,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
                 public boolean process(PsiReference psiReference) {
                   PsiElement expression = psiReference.getElement();
                   if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
-                    refField.setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                    ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                     return false;
                   }
                   return true;
@@ -188,8 +188,8 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   public void exportResults(final Element parentNode) {
     final CanBeFinalFilter filter = new CanBeFinalFilter(this);
 
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (filter.accepts((RefElement)refEntity)) {
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1);
@@ -246,7 +246,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
     protected boolean applyFix(RefElement[] refElements) {
       for (RefElement refElement : refElements) {
-        if (!refElement.checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) continue;
+        if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) continue;
         PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
 
         if (psiElement == null) continue;

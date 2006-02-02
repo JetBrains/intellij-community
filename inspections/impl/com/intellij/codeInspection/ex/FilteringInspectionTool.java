@@ -2,8 +2,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefUtil;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
@@ -38,8 +38,8 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   public void updateContent() {
     resetFilter();
     myPackageContents = new HashMap<String, Set<RefElement>>();
-    getManager().getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getManager().getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         RefElement refElement = (RefElement) refEntity;
         if (!myIgnoreElements.contains(refElement) && refElement.isValid() && getFilter().accepts(refElement)) {

@@ -33,8 +33,8 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   @NonNls public static final String SHORT_NAME = "EmptyMethod";
 
   public void runInspection(AnalysisScope scope) {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
@@ -123,8 +123,8 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   public boolean queryExternalUsagesRequests() {
-    getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {

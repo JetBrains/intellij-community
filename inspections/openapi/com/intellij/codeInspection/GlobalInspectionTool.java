@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefVisitor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,8 +41,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
                             final InspectionManager manager,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     final HashMap<RefEntity, List<CommonProblemDescriptor>> holder = new HashMap<RefEntity, List<CommonProblemDescriptor>>();
-    manager.getRefManager().iterate(new RefManager.RefIterator() {
-      public void accept(RefEntity refEntity) {
+    manager.getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
         if (manager.isSuppressed(refEntity, getShortName())) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager);
         if (descriptors != null){
@@ -70,7 +71,9 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     return false;
   }
 
-  public boolean queryExternalUsagesRequests(InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor){
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor){
     return false;
   }
 
