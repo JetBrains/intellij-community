@@ -26,7 +26,11 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
   }
 
   public void append(String fragment, SimpleTextAttributes attributes) {
-    super.append(fragment, myCellState.modifyAttributes(attributes));
+    super.append(fragment, modifyAttributes(attributes));
+  }
+
+  protected SimpleTextAttributes modifyAttributes(final SimpleTextAttributes attributes) {
+    return myCellState.modifyAttributes(attributes);
   }
 
   public TableCellState getCellState() {
