@@ -58,13 +58,11 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
    * @param globalContext                the context for the current global inspection run.
    * @param problemDescriptionsProcessor the collector for problems reported by the inspection
-   * @param filterSuppressed
    */
   public void runInspection(final AnalysisScope scope,
                             final InspectionManager manager,
                             final GlobalInspectionContext globalContext,
-                            final ProblemDescriptionsProcessor problemDescriptionsProcessor,
-                            final boolean filterSuppressed) {
+                            final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (globalContext.isSuppressed(refEntity, getShortName())) return;

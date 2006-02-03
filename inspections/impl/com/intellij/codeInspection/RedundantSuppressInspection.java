@@ -112,7 +112,7 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
       }
       else if (tool instanceof GlobalInspectionToolWrapper) {
         GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)tool;
-        global.getTool().runInspection(new AnalysisScope(file),manager, (GlobalInspectionContext)manager, global, false);
+        global.processFile(new AnalysisScope(file), manager, (GlobalInspectionContext)manager, false);
         descriptors = global.getProblemDescriptors();
       }
       else {

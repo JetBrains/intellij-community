@@ -5,9 +5,14 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -37,8 +42,10 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   public void runInspection(final AnalysisScope scope) {
-    myGlobalInspectionTool.runInspection(scope, getManager(), getManager(), this, true);
+    myGlobalInspectionTool.runInspection(scope, getManager(), getManager(), this);
   }
+
+
 
   public boolean queryExternalUsagesRequests() {
     return myGlobalInspectionTool.queryExternalUsagesRequests(getManager(), getManager(), this);
@@ -89,5 +96,20 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
 
   public GlobalInspectionTool getTool() {
     return myGlobalInspectionTool;
+  }
+
+  public void processFile(final AnalysisScope analysisScope,
+                          final InspectionManager manager,
+                          final GlobalInspectionContext context,
+                          final boolean filterSuppressed) {
+    ((GlobalInspectionContext)manager).getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
+        if (filterSuppressed && ((GlobalInspectionContext)manager).isSuppressed(refEntity, myGlobalInspectionTool.getShortName())) return;
+        CommonProblemDescriptor[] descriptors = myGlobalInspectionTool.checkElement(refEntity, analysisScope, manager, (GlobalInspectionContext)manager);
+        if (descriptors != null) {
+          addProblemElement(refEntity, descriptors);
+        }
+      }
+    });
   }
 }
