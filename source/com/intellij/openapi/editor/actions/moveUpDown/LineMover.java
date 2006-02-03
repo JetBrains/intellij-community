@@ -1,16 +1,14 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 
 class LineMover extends Mover {
   public LineMover(final boolean isDown) {
@@ -56,12 +54,10 @@ class LineMover extends Mover {
   }
 
   static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
-    final PsiElement element = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
-    return firstNonWhiteElement(element, lookRight);
-    //final ASTNode leafElementAt = file.getNode().findLeafElementAt(offset);
-    //if(leafElementAt != null)
-    //  return firstNonWhiteElement(leafElementAt.getPsi(), lookRight);
-    //return null;
+    //final PsiElement element = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
+    //return firstNonWhiteElement(element, lookRight);
+    final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
+    return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }
 
   static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight) {

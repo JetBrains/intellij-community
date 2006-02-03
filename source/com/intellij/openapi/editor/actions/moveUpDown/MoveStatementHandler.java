@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
   private final boolean isDown;
@@ -25,8 +27,8 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
-    final PsiFile file = documentManager.getPsiFile(document);
-    if (file == null) return;
+    PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
+
     final Mover mover = getSuitableMover(editor, file);
     mover.move(editor,file);
   }
@@ -38,7 +40,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
-    final PsiFile file = documentManager.getPsiFile(document);
+    PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
     if (file == null) return false;
     final Mover mover = getSuitableMover(editor, file);
     if (mover == null || mover.insertOffset == -1) return false;
@@ -46,6 +48,12 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final LineRange range = mover.whatToMove;
     if (range.startLine <= 1 && !isDown) return false;
     return range.endLine < maxLine - 1 || !isDown;
+  }
+
+  private static PsiFile getRoot(final PsiFile file, final Editor editor) {
+    PsiElement leafElement = file.findElementAt(editor.getCaretModel().getOffset());
+    if (leafElement == null) return null;
+    return (PsiFile)PsiUtil.getRoot(leafElement.getNode()).getPsi();
   }
 
   private Mover getSuitableMover(final Editor editor, final PsiFile file) {

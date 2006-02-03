@@ -97,7 +97,6 @@ class DeclarationMover extends LineMover {
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
     final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
     if (firstMember == null || lastMember == null) return false;
-    file = (PsiFile)PsiUtil.getRoot(firstMember.getNode()).getPsi();
 
     LineRange range;
     if (firstMember == lastMember) {

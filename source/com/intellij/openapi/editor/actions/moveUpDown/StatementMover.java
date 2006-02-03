@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,9 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.StdLanguages;
 
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
@@ -42,8 +41,9 @@ class StatementMover extends LineMover {
 
         whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
                                    document.getLineNumber(lineRangeMarker.getEndOffset()));
-        insertOffset = myIsDown ? newStatement.getCodeBlock().getFirstBodyElement().getTextRange().getEndOffset() :
-                       newStatement.getCodeBlock().getRBrace().getTextRange().getStartOffset();
+        PsiCodeBlock newCodeBlock = newStatement.getCodeBlock();
+        insertOffset = myIsDown ? newCodeBlock.getFirstBodyElement().getTextRange().getEndOffset() :
+                       newCodeBlock.getRBrace().getTextRange().getStartOffset();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -52,7 +52,7 @@ class StatementMover extends LineMover {
   }
 
   protected boolean checkAvailable(Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
+    //if (!(file instanceof PsiJavaFile)) return false;
     final boolean available = super.checkAvailable(editor, file);
     if (!available) return false;
     LineRange range = whatToMove;
@@ -66,8 +66,6 @@ class StatementMover extends LineMover {
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
 
-    file = (PsiFile)PsiUtil.getRoot(range.firstElement.getNode()).getPsi();
-
     if (!checkMovingInsideOutside(file, editor, range)) {
       insertOffset = -1;
       return true;
@@ -77,8 +75,7 @@ class StatementMover extends LineMover {
   }
 
   private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range) {
-    int nearLine = myIsDown ? range.endLine + 2 : range.startLine - 1;
-    int line = nearLine;
+    int line = myIsDown ? range.endLine + 2 : range.startLine - 1;
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
