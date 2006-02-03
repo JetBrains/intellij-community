@@ -480,7 +480,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       parentElement.addContent(groupElement);
       groupElement.setAttribute(ATTRIBUTE_NAME, group.getName());
 
-      final ArrayList<ComponentItem> itemList = group.getItems();
+      final ComponentItem[] itemList = group.getItems();
       for (ComponentItem aItemList : itemList) {
         writeComponentItem(groupElement, aItemList);
       }
@@ -663,9 +663,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   public static boolean isRemovable(@NotNull final GroupItem group){
-    final ArrayList<ComponentItem> items = group.getItems();
-    for(int i = items.size() - 1; i >=0; i--){
-      if(!items.get(i).isRemovable()){
+    final ComponentItem[] items = group.getItems();
+    for(int i = items.length - 1; i >=0; i--){
+      if(!items [i].isRemovable()){
         return false;
       }
     }

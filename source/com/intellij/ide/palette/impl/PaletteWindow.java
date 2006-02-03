@@ -1,12 +1,10 @@
 package com.intellij.ide.palette.impl;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +35,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   public PaletteWindow(Project project) {
     myProject = project;
-    myProviders = (PaletteItemProvider[]) Extensions.getExtensions(ExtensionPoints.PALETTE_ITEM_PROVIDER, project);
+    myProviders = project.getComponents(PaletteItemProvider.class);
     for(PaletteItemProvider provider: myProviders) {
       provider.addListener(myPropertyChangeListener);
     }

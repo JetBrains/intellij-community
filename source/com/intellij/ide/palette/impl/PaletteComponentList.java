@@ -39,11 +39,11 @@ public class PaletteComponentList extends JList {
     myGroup = group;
     setModel(new AbstractListModel() {
       public int getSize() {
-        return myGroup.getItemCount();
+        return myGroup.getItems().length;
       }
 
       public Object getElementAt(int index) {
-        return myGroup.getItemAt(index);
+        return myGroup.getItems() [index];
       }
     });
 
@@ -79,11 +79,12 @@ public class PaletteComponentList extends JList {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             int index = locationToIndex(new Point(x, y));
-            if (index >= 0 && index < myGroup.getItemCount()) {
+            PaletteItem[] items = myGroup.getItems();
+            if (index >= 0 && index < items.length) {
               if (getSelectedIndex() != index) {
                 addSelectionInterval(index, index);
               }
-              PaletteItem item = myGroup.getItemAt(index);
+              PaletteItem item = items [index];
               ActionGroup group = item.getPopupActionGroup();
               if (group != null) {
                 ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
@@ -191,7 +192,7 @@ public class PaletteComponentList extends JList {
     if (myDropTargetIndex >= 0) {
       int dropLineY;
       Rectangle rc;
-      if (myDropTargetIndex == myGroup.getItemCount()) {
+      if (myDropTargetIndex == myGroup.getItems().length) {
         rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
         dropLineY = (int)rc.getMaxY()-1;
       }

@@ -55,8 +55,8 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   /**
    * @return read-only list of items that belong to the group.
    */
-  @NotNull public ArrayList<ComponentItem> getItems() {
-    return myItems;
+  @NotNull public ComponentItem[] getItems() {
+    return myItems.toArray(new ComponentItem[myItems.size()]);
   }
 
   /** Adds specified {@link ComponentItem} to the group.*/
@@ -99,14 +99,6 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     }
 
     return false;
-  }
-
-  public int getItemCount() {
-    return myItems.size();
-  }
-
-  public PaletteItem getItemAt(int index) {
-    return myItems.get(index);
   }
 
   @Nullable public ActionGroup getPopupActionGroup() {

@@ -29,9 +29,7 @@ import java.awt.datatransfer.Transferable;
 public interface PaletteGroup {
   PaletteGroup[] EMPTY_ARRAY = new PaletteGroup[0];
 
-  int getItemCount();
-
-  PaletteItem getItemAt(int index);
+  PaletteItem[] getItems();
 
   String getName();
 
