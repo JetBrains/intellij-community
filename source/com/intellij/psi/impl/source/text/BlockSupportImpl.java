@@ -51,7 +51,6 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
     final CompositeElement element = psiFile.calcTreeElement();
-    file.getViewProvider().beforeContentsSynchronized();
     char[] newText = newTextS.toCharArray();
     int fileLength = element.getTextLength();
     int lengthShift = newText.length - (endOffset - startOffset);
@@ -63,7 +62,8 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     System.arraycopy(newFileText, endOffset, newFileText, endOffset + lengthShift, fileLength - endOffset);
     System.arraycopy(newText, 0, newFileText, startOffset, newText.length);
 
-    reparseRange(file, startOffset, endOffset, lengthShift, newFileText);
+    if(startOffset > 0) startOffset--;
+    reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
   }
 
 
@@ -71,6 +71,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     // adjust editor offsets to damage area markers
     if(startOffset > 0) startOffset--;
     reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
+    file.getViewProvider().contentsSynchronized();
   }
 
   private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
@@ -178,7 +179,6 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
       }
     }
-    file.getViewProvider().contentsSynchronized();
   }
 
   private static boolean hasErrorElementChild(ASTNode element) {
