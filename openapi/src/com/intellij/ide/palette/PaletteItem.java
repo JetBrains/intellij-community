@@ -20,6 +20,7 @@ package com.intellij.ide.palette;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ide.dnd.DnDDragStartBean;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
@@ -33,11 +34,11 @@ public interface PaletteItem {
                              boolean hasFocus);
 
   /**
-   * Returns the Transferable used for dragging the item.
+   * Processes dragging the item.
    *
-   * @return the Transferable instance, or null if the item cannot be dragged.
+   * @return the drag start bean for the drag process, or null if the item cannot be dragged.
    */
-  @Nullable Transferable createTransferable();
+  @Nullable DnDDragStartBean startDragging();
 
   /**
    * Returns the action group from which the context menu is built when the palette

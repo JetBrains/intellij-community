@@ -42,7 +42,7 @@ public final class SimpleTransferable<T> implements Transferable {
     if (result == null) {
       try {
         //noinspection HardCodedStringLiteral
-        result = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + dataClass.getName());
+        result = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
         ourDataFlavorMap.put(dataClass.getName(), result);
       }
       catch (ClassNotFoundException e) {
@@ -74,7 +74,11 @@ public final class SimpleTransferable<T> implements Transferable {
 
   @Nullable public static <T> T getData(Transferable transferable, Class<T> dataClass) {
     try {
-      final Object transferData = transferable.getTransferData(getDataFlavor(dataClass));
+      final DataFlavor dataFlavor = getDataFlavor(dataClass);
+      if (!transferable.isDataFlavorSupported(dataFlavor)) {
+        return null;
+      }
+      final Object transferData = transferable.getTransferData(dataFlavor);
       if (!dataClass.isInstance(transferData)) {
         return null;
       }

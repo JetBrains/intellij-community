@@ -21,8 +21,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.Transferable;
-
 /**
  * @author yole
  */
@@ -52,5 +50,12 @@ public interface PaletteGroup {
    */
   @Nullable Object getData(Project project, String dataId);
 
-  void handleDrop(Project project, Transferable transferable, int index);
+  /**
+   * Processes the drop of a palette item on the specified index in the palette group.
+   *
+   * @param project the project to which the drop target palette belongs.
+   * @param item    the dropped item.
+   * @param index   the index at which the dropped item should be inserted (from 0 to getItems().length).
+   */
+  void handleDrop(Project project, PaletteItem item, int index);
 }

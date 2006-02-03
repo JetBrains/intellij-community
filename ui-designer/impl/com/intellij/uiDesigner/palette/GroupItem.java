@@ -112,9 +112,9 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     return null;
   }
 
-  public void handleDrop(Project project, Transferable transferable, int index) {
-    ComponentItem componentItem = SimpleTransferable.getData(transferable, ComponentItem.class);
-    if (componentItem != null) {
+  public void handleDrop(Project project, PaletteItem droppedItem, int index) {
+    if (droppedItem instanceof ComponentItem) {
+      ComponentItem componentItem = (ComponentItem) droppedItem;
       Palette palette = Palette.getInstance(project);
       int oldIndex = myItems.indexOf(componentItem);
       if (oldIndex >= 0) {

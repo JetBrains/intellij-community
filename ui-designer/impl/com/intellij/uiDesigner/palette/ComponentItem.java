@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -279,8 +281,8 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     cellRenderer.setToolTipText(getToolTipText());
   }
 
-  public Transferable createTransferable() {
-    return new SimpleTransferable<ComponentItem>(this, ComponentItem.class);
+  @Nullable public DnDDragStartBean startDragging() {
+    return new DnDDragStartBean(DnDAction.MOVE, this);
   }
 
   @Nullable public ActionGroup getPopupActionGroup() {

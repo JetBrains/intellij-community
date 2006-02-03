@@ -1,6 +1,10 @@
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
@@ -54,6 +58,25 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       setPreferredSize(pref);
     }
 
+    DnDManager.getInstance(paletteWindow.getProject()).registerTarget(new DnDTarget() {
+      public boolean update(DnDEvent aEvent) {
+        setBorderPainted(true);
+        aEvent.setDropPossible(aEvent.getAttachedObject() instanceof PaletteItem, null);
+        return true;
+      }
+
+      public void drop(DnDEvent aEvent) {
+        setBorderPainted(false);
+        if (aEvent.getAttachedObject() instanceof PaletteItem) {
+          myGroup.handleDrop(myPaletteWindow.getProject(), (PaletteItem) aEvent.getAttachedObject(), -1);
+        }
+      }
+
+      public void cleanUpOnLeave() {
+        setBorderPainted(false);
+      }
+    }, this);
+
     new DropTarget(this, new DropTargetAdapter() {
       public void dragEnter(DropTargetDragEvent dtde) {
         setBorderPainted(true);
@@ -64,8 +87,6 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       }
 
       public void drop(DropTargetDropEvent dtde) {
-        setBorderPainted(false);
-        myGroup.handleDrop(myPaletteWindow.getProject(), dtde.getTransferable(), -1);
       }
     });
 

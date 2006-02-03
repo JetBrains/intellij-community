@@ -1,5 +1,6 @@
 package com.intellij.ide.palette.impl;
 
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -10,14 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -107,23 +105,10 @@ public class PaletteComponentList extends JList {
     setVisibleRowCount(0);
     setLayoutOrientation(HORIZONTAL_WRAP);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setDragEnabled(true);
-    setTransferHandler(new TransferHandler() {
-      public int getSourceActions(JComponent c) {
-        return DnDConstants.ACTION_MOVE;
-      }
 
-      @Nullable protected Transferable createTransferable(JComponent c) {
-        final Object selectedValue = getSelectedValue();
-        if (selectedValue != null) {
-          PaletteItem paletteItem = (PaletteItem) selectedValue;
-          return paletteItem.createTransferable();
-        }
-        return null;
-      }
-    });
-
-    new DropTarget(this, DnDConstants.ACTION_MOVE, new MyDropTargetAdapter());
+    final DnDManager dndManager = DnDManager.getInstance(project);
+    dndManager.registerSource(new MyDnDSource(), this);
+    dndManager.registerTarget(new MyDnDTarget(), this);
 
     initActions();
   }
@@ -307,10 +292,33 @@ public class PaletteComponentList extends JList {
     }
   }
 
-  private class MyDropTargetAdapter extends DropTargetAdapter {
-    public void dragOver(DropTargetDragEvent dtde) {
+  private class MyDnDTarget implements DnDTarget {
+
+    public boolean update(DnDEvent aEvent) {
       setHoverIndex(-1);
-      setDropTargetIndex(locationToTargetIndex(dtde.getLocation()));
+      if (aEvent.getAttachedObject() instanceof PaletteItem) {
+        setDropTargetIndex(locationToTargetIndex(aEvent.getPoint()));
+        aEvent.setDropPossible(true, null);
+      }
+      else {
+        setDropTargetIndex(-1);
+        aEvent.setDropPossible(false, null);
+      }
+      return false;
+    }
+
+    public void drop(DnDEvent aEvent) {
+      setDropTargetIndex(-1);
+      if (aEvent.getAttachedObject() instanceof PaletteItem) {
+        int index = locationToTargetIndex(aEvent.getPoint());
+        if (index >= 0) {
+          myGroup.handleDrop(myProject, (PaletteItem) aEvent.getAttachedObject(), index);
+        }
+      }
+    }
+
+    public void cleanUpOnLeave() {
+      setDropTargetIndex(-1);
     }
 
     private int locationToTargetIndex(Point location) {
@@ -322,16 +330,18 @@ public class PaletteComponentList extends JList {
       return location.y < rc.getCenterY() ? row : row + 1;
     }
 
-    public void dragExit(DropTargetEvent dte) {
-      setDropTargetIndex(-1);
+  }
+
+  private class MyDnDSource implements DnDSource {
+    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      int index = locationToIndex(dragOrigin);
+      return index >= 0;
     }
 
-    public void drop(DropTargetDropEvent dtde) {
-      setDropTargetIndex(-1);
-      int index = locationToTargetIndex(dtde.getLocation());
-      if (index >= 0) {
-        myGroup.handleDrop(myProject, dtde.getTransferable(), index);
-      }
+    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      int index = locationToIndex(dragOrigin);
+      if (index < 0) return null;
+      return myGroup.getItems() [index].startDragging();
     }
   }
 }
