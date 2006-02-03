@@ -201,27 +201,27 @@ public final class LoadTextUtil {
   }
 
   static char[] decompile(VirtualFile file) {
-    try {
+    //try {
       final ProjectEx dummyProject = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
       PsiManager manager = PsiManager.getInstance(dummyProject);
       final String text = ClsFileImpl.decompile(manager, file);
 
       PsiFile mirror = manager.getElementFactory().createFileFromText("test.java", text);
 
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
-      boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-      codeStyleManager.shortenClassReferences(mirror);
-      codeStyleManager.reformat(mirror);
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
+      //CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
+      //CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
+      //boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
+      //settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+      //codeStyleManager.shortenClassReferences(mirror);
+      //codeStyleManager.reformat(mirror);
+      //settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
 
       return mirror.textToCharArray();
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-      return null;
-    }
+    //}
+    //catch(IncorrectOperationException e){
+    //  LOG.error(e);
+    //  return null;
+    //}
   }
 
   public static CharSequence getTextByBinaryPresentation(final byte[] content, final VirtualFile virtualFile) {
