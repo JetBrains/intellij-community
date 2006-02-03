@@ -8,14 +8,19 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -26,12 +31,8 @@ public final class CreateClassToBindFix extends QuickFix{
 
   private final String myClassName;
 
-  public CreateClassToBindFix(final GuiEditor editor, final String className) {
+  public CreateClassToBindFix(final GuiEditor editor, @NotNull final String className) {
     super(editor, UIDesignerBundle.message("action.create.class", className));
-    if (className == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("className cannot be null");
-    }
     myClassName = className;
   }
 
@@ -85,23 +86,20 @@ public final class CreateClassToBindFix extends QuickFix{
 
                 // 2. Create class in the package
                 try {
-                  psiDirectory.createClass(
-                    myClassName.substring(
-                      indexOfLastDot != -1 ? indexOfLastDot + 1 : 0
-                    )
-                  );
+                  final String name = myClassName.substring(indexOfLastDot != -1 ? indexOfLastDot + 1 : 0);
+                  final PsiClass aClass = psiDirectory.createClass(name);
+                  createBoundFields(aClass);
                 }
                 catch (final IncorrectOperationException e) {
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                                     public void run() {
                                       Messages.showErrorDialog(
                                         myEditor,
-                                        UIDesignerBundle.message("error.cannot.create.package", packageName, e.getMessage()),
+                                        UIDesignerBundle.message("error.cannot.create.class", packageName, e.getMessage()),
                                         CommonBundle.getErrorTitle()
                                       );
                                     }
                                   });
-                  return;
                 }
               }
             },
@@ -111,5 +109,36 @@ public final class CreateClassToBindFix extends QuickFix{
         }
       }
     );
+  }
+
+  private void createBoundFields(final PsiClass formClass) throws IncorrectOperationException {
+    final Module module = myEditor.getRootContainer().getModule();
+    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+    final PsiManager psiManager = PsiManager.getInstance(myEditor.getProject());
+
+    final Ref<IncorrectOperationException> exception = new Ref<IncorrectOperationException>();
+    FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        if (component.getBinding() != null) {
+          final PsiClass fieldClass = psiManager.findClass(component.getComponentClassName(), scope);
+          if (fieldClass != null) {
+            PsiType fieldType = psiManager.getElementFactory().createType(fieldClass);
+            try {
+              PsiField field = psiManager.getElementFactory().createField(component.getBinding(), fieldType);
+              formClass.add(field);
+            }
+            catch (IncorrectOperationException e) {
+              exception.set(e);
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    });
+
+    if (!exception.isNull()) {
+      throw exception.get();
+    }
   }
 }
