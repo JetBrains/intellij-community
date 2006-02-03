@@ -2,22 +2,21 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ide.dnd;
+package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
-import jetbrains.fabrique.openapi.ide.dnd.DropTargetHighlightingType;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Highlighters implements DropTargetHighlightingType {
-  private static List ourHightlighters = new ArrayList();
+public class Highlighters implements DnDEvent.DropTargetHighlightingType {
+  private static List<Accessible> ourHightlighters = new ArrayList<Accessible>();
 
-  private static List ourCurrentHighlighters = new ArrayList();
+  private static List<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<DropTargetHighlighter>();
 
   static {
     ourHightlighters.add(new RectangleHighlighter());
@@ -29,16 +28,16 @@ public class Highlighters implements DropTargetHighlightingType {
   }
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-    List toShow = new ArrayList();
-    for (int i = 0; i < ourHightlighters.size(); i++) {
-      DropTargetHighlighter each = (DropTargetHighlighter) ourHightlighters.get(i);
+    List<DropTargetHighlighter> toShow = new ArrayList<DropTargetHighlighter>();
+    for (Accessible ourHightlighter : ourHightlighters) {
+      DropTargetHighlighter each = (DropTargetHighlighter)ourHightlighter;
       if ((each.getMask() & aType) != 0) {
         toShow.add(each);
       }
     }
 
     for (int i = 0; i < toShow.size(); i++) {
-      DropTargetHighlighter each = (DropTargetHighlighter) toShow.get(i);
+      DropTargetHighlighter each = toShow.get(i);
       each.show(aPane, aRectangle, aEvent);
     }
     ourCurrentHighlighters.addAll(toShow);
@@ -46,7 +45,7 @@ public class Highlighters implements DropTargetHighlightingType {
 
   static void hideAllBut(int aType) {
     for (int i = 0; i < ourCurrentHighlighters.size(); i++) {
-      final DropTargetHighlighter each = (DropTargetHighlighter) ourCurrentHighlighters.get(i);
+      final DropTargetHighlighter each = ourCurrentHighlighters.get(i);
       if ((each.getMask() & aType) == 0) {
         each.vanish();
         ourCurrentHighlighters.remove(each);
@@ -56,14 +55,14 @@ public class Highlighters implements DropTargetHighlightingType {
 
   static void hide() {
     for (int i = 0; i < ourCurrentHighlighters.size(); i++) {
-      ((DropTargetHighlighter) ourCurrentHighlighters.get(i)).vanish();
+      (ourCurrentHighlighters.get(i)).vanish();
     }
     ourCurrentHighlighters.clear();
   }
 
   static void hide(int aType) {
     for (int i = 0; i < ourCurrentHighlighters.size(); i++) {
-      final DropTargetHighlighter each = (DropTargetHighlighter) ourCurrentHighlighters.get(i);
+      final DropTargetHighlighter each = ourCurrentHighlighters.get(i);
       if ((each.getMask() & aType) != 0) {
         each.vanish();
         ourCurrentHighlighters.remove(each);
@@ -74,7 +73,7 @@ public class Highlighters implements DropTargetHighlightingType {
   static boolean isVisibleExcept(int type) {
     int resultType = type;
     for (int i = 0; i < ourCurrentHighlighters.size(); i++) {
-      final DropTargetHighlighter each = (DropTargetHighlighter) ourCurrentHighlighters.get(i);
+      final DropTargetHighlighter each = ourCurrentHighlighters.get(i);
       resultType = resultType | each.getMask();
     }
 

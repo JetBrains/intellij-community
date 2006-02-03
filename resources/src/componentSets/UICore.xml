@@ -64,4 +64,11 @@
       <implementation-class>com.intellij.ui.popup.PopupFactoryImpl</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.ide.dnd.DnDManager</interface-class>
+      <implementation-class>com.intellij.ide.dnd.DnDManagerImpl</implementation-class>
+    </component>
+  </project-components>
 </components>

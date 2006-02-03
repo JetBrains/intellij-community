@@ -2,9 +2,7 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ide.dnd;
-
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
+package com.intellij.ide.dnd;
 
 import javax.swing.*;
 import java.awt.*;

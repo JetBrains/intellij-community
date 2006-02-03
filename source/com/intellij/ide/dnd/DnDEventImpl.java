@@ -2,15 +2,11 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ide.dnd;
+package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import jetbrains.fabrique.openapi.ide.dnd.DnDAction;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
-import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
-import jetbrains.fabrique.openapi.ide.dnd.DropActionHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +16,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
 public class DnDEventImpl implements Transferable, DnDEvent {
-  private static final Logger LOG = Logger.getInstance("jetbrains.fabrique.ide.dnd.DnDEventImpl");
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDEventImpl");
 
   private static DataFlavor ourDataFlavor;
 
@@ -35,7 +31,7 @@ public class DnDEventImpl implements Transferable, DnDEvent {
     }
   }
 
-  private DnDManager myManager;
+  private DnDManagerImpl myManager;
   private DnDAction myAction;
   private Object myAttachedObject;
   private boolean myDropPossible;
@@ -51,11 +47,7 @@ public class DnDEventImpl implements Transferable, DnDEvent {
   private Point myLocalPoint;
   private Cursor myCursor;
 
-  public DnDEventImpl(DnDManager manager, DnDAction aAction, Object aAttachedObject) {
-    this(manager, aAction, aAttachedObject, null);
-  }
-
-  public DnDEventImpl(DnDManager manager, DnDAction action, Object attachedObject, Point point) {
+  public DnDEventImpl(DnDManagerImpl manager, DnDAction action, Object attachedObject, Point point) {
     myManager = manager;
     myAction = action;
     myAttachedObject = attachedObject;
@@ -221,7 +213,7 @@ public class DnDEventImpl implements Transferable, DnDEvent {
   }
 
   protected Object clone() {
-    final DnDEventImpl result = new DnDEventImpl(myManager, myAction, myAttachedObject);
+    final DnDEventImpl result = new DnDEventImpl(myManager, myAction, myAttachedObject, myPoint);
     result.myDropHandler = myDropHandler;
     result.myDropPossible = myDropPossible;
     result.myExpectedDropResult = myExpectedDropResult;

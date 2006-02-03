@@ -2,16 +2,12 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ide.dnd;
+package com.intellij.ide.dnd;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.awt.RelativeRectangle;
-import jetbrains.fabrique.openapi.ide.dnd.DnDAction;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
-import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
-import jetbrains.fabrique.openapi.ide.dnd.DropTargetHighlightingType;
-import jetbrains.fabrique.ui.GeometryUtil;
+import com.intellij.util.ui.GeometryUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,8 +15,8 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class DnDManagerImpl extends DnDManager implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("jetbrains.fabrique.ide.dnd.DnDManager");
+public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDEvent.DropTargetHighlightingType {
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
 
   static final String SOURCE_KEY = "DnD Source";
   static final String TARGET_KEY = "DnD Target";
@@ -72,22 +68,22 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     myTooltipTimer.stop();
   }
 
-  public void register(DnDSource source, JComponent component) {
+  public void registerSource(DnDSource source, JComponent component) {
     component.putClientProperty(SOURCE_KEY, source);
     final DragSource defaultDragSource = DragSource.getDefaultDragSource();
     defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
   }
 
-  public void unregister(DnDSource source, JComponent component) {
+  public void unregisterSource(DnDSource source, JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
   }
 
-  public void register(DnDTarget target, JComponent component) {
+  public void registerTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, target);
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
   }
 
-  public void unregister(DnDTarget target, JComponent component) {
+  public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
   }
 
@@ -159,7 +155,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     if (sameTarget) {
       if (myCurrentEvent.isDropPossible()) {
         if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
-          if (!Highlighters.isVisibleExcept(DropTargetHighlightingType.TEXT | DropTargetHighlightingType.ERROR_TEXT)) {
+          if (!Highlighters.isVisibleExcept(TEXT | ERROR_TEXT)) {
             hideCurrentHighlighter();
             restartTimer();
             queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
@@ -188,7 +184,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     myLastProcessedTarget = target;
     myLastProcessedPoint = myCurrentEvent.getPoint();
     myLastProcessedOverComponent = myCurrentEvent.getCurrentOverComponent();
-    myLastProcessedAction = myCurrentEvent.getAction().getId();
+    myLastProcessedAction = myCurrentEvent.getAction().getActionId();
     myLastProcessedEvent = (DnDEvent)myCurrentEvent.clone();
   }
 
@@ -316,7 +312,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
       queueTooltip(aEvent, layeredPane, rectangle);
     }
     else {
-      Highlighters.hide(DropTargetHighlightingType.TEXT | DropTargetHighlightingType.ERROR_TEXT);
+      Highlighters.hide(TEXT | ERROR_TEXT);
     }
   }
 
@@ -324,12 +320,12 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     myHightlighterShowRequest = new Runnable() {
       public void run() {
         if (myCurrentEvent != aEvent) return;
-        Highlighters.hide(DropTargetHighlightingType.TEXT | DropTargetHighlightingType.ERROR_TEXT);
+        Highlighters.hide(TEXT | ERROR_TEXT);
         if (aEvent.isDropPossible()) {
-          Highlighters.show(DropTargetHighlightingType.TEXT, aLayeredPane, aRectangle, aEvent);
+          Highlighters.show(TEXT, aLayeredPane, aRectangle, aEvent);
         }
         else {
-          Highlighters.show(DropTargetHighlightingType.ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
+          Highlighters.show(ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
         }
       }
     };
@@ -424,7 +420,8 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
           LOG.debug("Starting dragging for " + action);
           hideCurrentHighlighter();
-          myCurrentEvent = source.createEventForNewDragging(action, dge.getDragOrigin());
+          final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
+          myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
           myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
           // [spleaner]: no drop cursor by default (jira: FBQ-12864)
@@ -477,7 +474,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     public void dragDropEnd(DragSourceDropEvent dsde) {
       myLastProcessedTarget.cleanUpOnLeave();
       resetCurrentEvent("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
-      Highlighters.hide(DropTargetHighlightingType.TEXT | DropTargetHighlightingType.ERROR_TEXT);
+      Highlighters.hide(TEXT | ERROR_TEXT);
     }
 
     public void dragExit(DragSourceEvent dse) {

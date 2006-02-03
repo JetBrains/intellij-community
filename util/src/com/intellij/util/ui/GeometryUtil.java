@@ -2,13 +2,13 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ui;
+package com.intellij.util.ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 
 public class GeometryUtil implements SwingConstants {

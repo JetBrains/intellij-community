@@ -2,17 +2,12 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package jetbrains.fabrique.ide.dnd;
-
-import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
-import jetbrains.fabrique.openapi.ide.dnd.DnDAction;
-import jetbrains.fabrique.openapi.ide.dnd.DropActionHandler;
+package com.intellij.ide.dnd;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class DnDDemo {
+public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
   public static void main(String[] args) {
 
     JFrame frame = new JFrame("DnD Demo");
@@ -22,13 +17,13 @@ public class DnDDemo {
     final JTree source = new JTree();
     panel.add(source, BorderLayout.WEST);
     final DnDManager dndManager = new DnDManagerImpl();
-    dndManager.register(new DnDSource() {
+    dndManager.registerSource(new DnDSource() {
       public boolean canStartDragging(DnDAction action, Point dragOrigin) {
         return true;
       }
 
-      public DnDEventImpl createEventForNewDragging(DnDAction action, Point point) {
-        return new DnDEventImpl(dndManager, DnDAction.ADD, source.getLastSelectedPathComponent().toString());
+      public DnDDragStartBean startDragging(DnDAction action, Point point) {
+        return new DnDDragStartBean(DnDAction.ADD, source.getLastSelectedPathComponent().toString());
       }
     }, source);
 
@@ -57,7 +52,7 @@ public class DnDDemo {
 
     final DnDTarget delegee2 = new DnDTarget() {
       public boolean update(DnDEvent aEvent) {
-        aEvent.setDropPossible("Delegee 2", new DropActionHandler("Delegee 2 action") {
+        aEvent.setDropPossible("Delegee 2", new DropActionHandler() {
           public void performDrop(DnDEvent aEvent) {
             System.out.println("Delegee 2 accepted drop");
           }
@@ -74,7 +69,7 @@ public class DnDDemo {
       }
     };
 
-    dndManager.register(new DnDTarget() {
+    dndManager.registerTarget(new DnDTarget() {
       public boolean update(DnDEvent aEvent) {
         if (aEvent.getCurrentOverComponent() == delegate1Label) {
           return aEvent.delegateUpdateTo(delegee1);
@@ -101,7 +96,7 @@ public class DnDDemo {
     tabs.add("Delegates", delegates);
 
     final JPanel xy = new JPanel();
-    dndManager.register(new DnDTarget() {
+    dndManager.registerTarget(new DnDTarget() {
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible(true, "Drop to " + asXyString(aEvent));
         return false;
