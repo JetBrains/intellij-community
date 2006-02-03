@@ -112,13 +112,13 @@ public final class Painter {
    * of <code>RadContainer</code>.
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
-    if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragging()){
+    if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragBorder()){
       return;
     }
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    if (component instanceof RadContainer && !component.isDragging()) {
+    if (component instanceof RadContainer && !component.isDragBorder()) {
       RadContainer container = (RadContainer) component;
       if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
         return;
@@ -132,7 +132,7 @@ public final class Painter {
     );
     g.translate(point.x, point.y);
     try{
-      if (component.isDragging()) {
+      if (component.isDragBorder()) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(LightColors.YELLOW);
         g2d.setStroke(new BasicStroke(2.0f));
@@ -148,7 +148,7 @@ public final class Painter {
         g.setColor(NON_SELECTED_BOUNDARY_COLOR);
       }
       g.drawRect(0, 0, component.getWidth() - 1, component.getHeight() - 1);
-      if (component.isDragging()) {
+      if (component.isDragBorder()) {
         g.translate(-1, -1);
       }
     }finally{

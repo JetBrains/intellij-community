@@ -92,6 +92,7 @@ public abstract class RadComponent implements IComponent {
   private boolean myHasDragger;
   private boolean myResizing;
   private boolean myDragging;
+  private boolean myDragBorder;
 
   /**
    * Creates new <code>RadComponent</code> with the specified
@@ -264,6 +265,11 @@ public abstract class RadComponent implements IComponent {
 
   public void setDragBorder(final boolean dragging) {
     myDragging = dragging;
+    myDragBorder = dragging;
+  }
+
+  public boolean isDragBorder() {
+    return myDragBorder;
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l){
