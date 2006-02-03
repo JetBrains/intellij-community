@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
+import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -180,6 +181,7 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence loadText(VirtualFile file) {
+    if(file instanceof MockVirtualFile) return ((MockVirtualFile)file).getContent();
     if (file.isDirectory()) return null;
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
 

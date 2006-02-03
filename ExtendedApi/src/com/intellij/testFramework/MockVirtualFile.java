@@ -12,10 +12,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.lang.Language;
 import junit.framework.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 
 import org.jetbrains.annotations.NotNull;
@@ -221,7 +218,7 @@ public class MockVirtualFile extends VirtualFile {
     myName = newName;
   }
 
-  protected CharSequence getContent() {
+  public CharSequence getContent() {
     return myContent;
   }
 

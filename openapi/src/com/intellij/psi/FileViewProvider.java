@@ -32,6 +32,7 @@ public interface FileViewProvider extends Cloneable{
 
   void rootChanged(PsiFile psiFile);
   void beforeContentsSynchronized();
+  void contentsSynchronized();
   FileViewProvider clone();
 
   PsiElement findElementAt(final int offset);

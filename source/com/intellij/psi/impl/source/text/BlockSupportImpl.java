@@ -178,6 +178,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
       }
     }
+    file.getViewProvider().contentsSynchronized();
   }
 
   private static boolean hasErrorElementChild(ASTNode element) {

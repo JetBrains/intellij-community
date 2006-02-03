@@ -26,7 +26,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
   private PsiManager myManager;
   private final long myModificationStamp;
   final MockVirtualFile myMockVirtualFile = new MockVirtualFile(myHolder != null ? myHolder.getName() : "DummyHolder", ""){
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       return DummyHolderViewProvider.this.getContents();
     }
   };
@@ -68,8 +68,9 @@ public class DummyHolderViewProvider implements FileViewProvider{
     return target == getBaseLanguage() ? myHolder : null;
   }
 
-  public void beforeContentsSynchronized() {
-  }
+  public void beforeContentsSynchronized() {}
+
+  public void contentsSynchronized() {}
 
   public boolean isEventSystemEnabled() {
     return false;
