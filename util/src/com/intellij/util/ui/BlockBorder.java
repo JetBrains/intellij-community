@@ -15,8 +15,8 @@ public class BlockBorder implements Border {
 
   private static final Insets DEFAULT_INSETS = new Insets(1, 1, 3, 3);
 
-  private static final Color DEFAULT_SHADE1 = new Color(0, 0, 0, 203);
-  private static final Color DEFAULT_SHADE2 = new Color(0, 0, 0, 238);
+  private static final SameColor DEFAULT_SHADE1 = new SameColor(203);
+  private static final SameColor DEFAULT_SHADE2 = new SameColor(238);
 
   private static final Insets EMPTY = new Insets(0, 0, 0, 0);
   private Insets myInsets;
