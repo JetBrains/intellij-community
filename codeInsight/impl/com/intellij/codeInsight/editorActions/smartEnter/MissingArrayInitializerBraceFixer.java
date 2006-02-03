@@ -2,6 +2,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -17,11 +18,21 @@ public class MissingArrayInitializerBraceFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiArrayInitializerExpression)) return;
     PsiArrayInitializerExpression expr = (PsiArrayInitializerExpression)psiElement;
-
     final Document doc = editor.getDocument();
-
-    if (!expr.getText().endsWith("}")) {
-      doc.insertString(expr.getTextRange().getEndOffset(), "}");
+    final String exprText = expr.getText();
+    final TextRange textRange = expr.getTextRange();
+    final int endOffset = textRange.getEndOffset();
+    int caretOffset = editor.getCaretModel().getOffset();
+    final int startOffset = textRange.getStartOffset();
+    if (caretOffset > startOffset && caretOffset < endOffset) {
+      final int index = exprText.indexOf('\n', caretOffset - startOffset);
+      if (index >= 0) {
+        doc.insertString(index + startOffset, "}");
+        return;
+      }
+    }
+    if (!exprText.endsWith("}")) {
+      doc.insertString(endOffset, "}");
     }
   }
 }

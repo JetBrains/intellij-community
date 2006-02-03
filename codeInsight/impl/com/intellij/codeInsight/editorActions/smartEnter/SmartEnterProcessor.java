@@ -31,35 +31,38 @@ import java.util.List;
  */
 public class SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor");
-  private static final List<Fixer> ourFixers = new ArrayList<Fixer>();
-  private static final List<EnterProcessor> ourEnterProcessors = new ArrayList<EnterProcessor>();
+  private static final Fixer[] ourFixers;
+  private static final EnterProcessor[] ourEnterProcessors;
   static {
-    ourFixers.add(new LiteralFixer());
-    ourFixers.add(new MethodCallFixer());
-    ourFixers.add(new IfConditionFixer());
-    ourFixers.add(new WhileConditionFixer());
-    ourFixers.add(new DoWhileConditionFixer());
-    ourFixers.add(new BlockBraceFixer());
-    ourFixers.add(new MissingIfBranchesFixer());
-    ourFixers.add(new MissingArrayInitializerBraceFixer());
-    ourFixers.add(new MissingWhileBodyFixer());
-    ourFixers.add(new MissingSynchronizedBodyFixer());
-    ourFixers.add(new MissingForBodyFixer());
-    ourFixers.add(new MissingForeachBodyFixer());
-    ourFixers.add(new ParameterListFixer());
-    ourFixers.add(new MissingMethodBodyFixer());
-    ourFixers.add(new MissingReturnExpressionFixer());
-    ourFixers.add(new MissingThrowExpressionFixer());
-    ourFixers.add(new ParenthesizedFixer());
-    ourFixers.add(new SemicolonFixer());
-    ourFixers.add(new EnumFieldFixer());
+    final List<Fixer> fixers = new ArrayList<Fixer>();
+    fixers.add(new LiteralFixer());
+    fixers.add(new MethodCallFixer());
+    fixers.add(new IfConditionFixer());
+    fixers.add(new WhileConditionFixer());
+    fixers.add(new DoWhileConditionFixer());
+    fixers.add(new BlockBraceFixer());
+    fixers.add(new MissingIfBranchesFixer());
+    fixers.add(new MissingWhileBodyFixer());
+    fixers.add(new MissingSynchronizedBodyFixer());
+    fixers.add(new MissingForBodyFixer());
+    fixers.add(new MissingForeachBodyFixer());
+    fixers.add(new ParameterListFixer());
+    fixers.add(new MissingMethodBodyFixer());
+    fixers.add(new MissingReturnExpressionFixer());
+    fixers.add(new MissingThrowExpressionFixer());
+    fixers.add(new ParenthesizedFixer());
+    fixers.add(new SemicolonFixer());
+    fixers.add(new MissingArrayInitializerBraceFixer());
+    fixers.add(new EnumFieldFixer());
     //ourFixers.add(new CompletionFixer());
+    ourFixers = fixers.toArray(new Fixer[fixers.size()]);
 
-
-    ourEnterProcessors.add(new CommentBreakerEnterProcessor());
-    ourEnterProcessors.add(new AfterSemicolonEnterProcessor());
-    ourEnterProcessors.add(new BreakingControlFlowEnterProcessor());
-    ourEnterProcessors.add(new PlainEnterProcessor());
+    List<EnterProcessor> processors = new ArrayList<EnterProcessor>();
+    processors.add(new CommentBreakerEnterProcessor());
+    processors.add(new AfterSemicolonEnterProcessor());
+    processors.add(new BreakingControlFlowEnterProcessor());
+    processors.add(new PlainEnterProcessor());
+    ourEnterProcessors = processors.toArray(new EnterProcessor[processors.size()]);
   }
 
   private Project myProject;
@@ -101,7 +104,9 @@ public class SmartEnterProcessor {
         if (StdFileTypes.JAVA.getLanguage().equals(psiElement.getLanguage())) {
           for (Fixer fixer : ourFixers) {
             fixer.apply(myEditor, this, psiElement);
-            if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
+            if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) {
+              return;
+            }
             if (isUncommited() || !psiElement.isValid()) {
               moveCaretInsideBracesIfAny();
               process(attempt + 1);
