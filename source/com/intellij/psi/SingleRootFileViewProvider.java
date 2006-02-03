@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -138,6 +139,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       final String name = getVirtualFile().getName();
       if (fileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
 
+      final Project project = myManager.getProject();
+      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
       if(isPhysical()){ // check directories consistency
         final VirtualFile parent = vFile.getParent();
         if (parent == null) return null;
@@ -145,8 +149,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
         if (psiDir == null) return null;
       }
 
-      FileType fileType = getVirtualFile().getFileType();
-      final Project project = myManager.getProject();
+      FileType fileType = getRealFileType();
+
       if (fileType instanceof LanguageFileType) {
         final Language language = ((LanguageFileType)fileType).getLanguage();
         if (language == StdLanguages.JAVA || vFile == null || !isTooLarge(vFile)) {
@@ -156,7 +160,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       }
 
       if (fileType instanceof JavaClassFileType) {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        ProjectFileIndex fileIndex = projectFileIndex;
         if (fileIndex.isInLibraryClasses(vFile)) {
           // skip inners & anonymous
           int dotIndex = name.lastIndexOf('.');
@@ -178,6 +182,13 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       LOG.error(e);
       return null;
     }
+  }
+
+  private FileType getRealFileType() {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getManager().getProject()).getFileIndex();
+    FileType fileType = getVirtualFile().getFileType();
+    if(fileType == StdFileTypes.JAVA && !projectFileIndex.isInSource(getVirtualFile())) fileType = StdFileTypes.PLAIN_TEXT;
+    return fileType;
   }
 
   private static boolean isTooLarge(final VirtualFile vFile) {
@@ -230,7 +241,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     final SingleRootFileViewProvider clone =
       new SingleRootFileViewProvider(getManager(),
                                      new MockVirtualFile(getVirtualFile().getName(),
-                                                         getVirtualFile().getFileType(),
+                                                         getRealFileType(),
                                                          getContents(),
                                                          getModificationStamp()),
                                      false);
