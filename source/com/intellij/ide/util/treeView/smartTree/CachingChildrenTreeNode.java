@@ -173,35 +173,27 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   protected void synchronizeChildren() {
     if (myOldChildren != null && myChildren != null) {
-      for (CachingChildrenTreeNode oldInstance : myOldChildren) {
-        final int newIndex = getIndexOfPointerToTheSameValue(oldInstance);
-        if (newIndex >= 0) {
-          final CachingChildrenTreeNode newInstance = myChildren.get(newIndex);
-          oldInstance.copyFromNewInstance(newInstance);
-          oldInstance.setValue(newInstance.getValue());
-          myChildren.set(newIndex, oldInstance);
+      HashMap<Object, CachingChildrenTreeNode> oldValuesToChildrenMap = new HashMap<Object, CachingChildrenTreeNode>();
+      for (CachingChildrenTreeNode oldChild : myOldChildren) {
+        final Object oldValue = oldChild instanceof TreeElementWrapper ? oldChild.getValue() : oldChild;
+        if (oldValue != null) {
+          oldValuesToChildrenMap.put(oldValue, oldChild);
         }
       }
-    }
-  }
 
-  private int getIndexOfPointerToTheSameValue(final CachingChildrenTreeNode oldInstance) {
-    for (int i = 0; i < myChildren.size(); i++) {
-      CachingChildrenTreeNode newInstance = myChildren.get(i);
-
-      if (newInstance instanceof TreeElementWrapper) {
-        final StructureViewTreeElement newElement = (StructureViewTreeElement)newInstance.getValue();
-        if (oldInstance instanceof TreeElementWrapper) {
-          final StructureViewTreeElement oldElement = (StructureViewTreeElement)oldInstance.getValue();
-          if (newElement.getValue() != null) {
-            if (Comparing.equal(newElement.getValue(), oldElement.getValue())) return i;
+      for (int i = 0; i < myChildren.size(); i++) {
+        CachingChildrenTreeNode newChild = myChildren.get(i);
+        final Object newValue = newChild instanceof TreeElementWrapper ? newChild.getValue() : newChild;
+        if (newValue != null) {
+          final CachingChildrenTreeNode oldChild = oldValuesToChildrenMap.get(newValue);
+          if (oldChild != null) {
+            oldChild.copyFromNewInstance(newChild);
+            oldChild.setValue(newChild.getValue());
+            myChildren.set(i, oldChild);
           }
         }
-      } else {
-        if (newInstance.equals(oldInstance)) return i;
       }
     }
-    return -1;
   }
 
   protected abstract void copyFromNewInstance(final CachingChildrenTreeNode newInstance);
