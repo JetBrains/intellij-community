@@ -62,6 +62,10 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiElement getNextSibling(PsiElement element) {
+    if(element instanceof PsiFile) {
+      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      element = viewProvider.getPsi(viewProvider.getBaseLanguage());
+    }
     PsiElement parent = element.getParent();
     if (parent == null) return null;
     PsiElement[] children = parent.getChildren();
@@ -77,6 +81,10 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiElement getPrevSibling(PsiElement element) {
+    if(element instanceof PsiFile) {
+      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      element = viewProvider.getPsi(viewProvider.getBaseLanguage());
+    }
     PsiElement parent = element.getParent();
     if (parent == null) return null;
     PsiElement[] children = parent.getChildren();
