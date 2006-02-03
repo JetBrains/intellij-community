@@ -8,6 +8,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 
 class LineMover extends Mover {
   public LineMover(final boolean isDown) {
@@ -53,8 +56,12 @@ class LineMover extends Mover {
   }
 
   static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
-    PsiElement element = file.findElementAt(offset);
+    final PsiElement element = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
     return firstNonWhiteElement(element, lookRight);
+    //final ASTNode leafElementAt = file.getNode().findLeafElementAt(offset);
+    //if(leafElementAt != null)
+    //  return firstNonWhiteElement(leafElementAt.getPsi(), lookRight);
+    //return null;
   }
 
   static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight) {
@@ -65,8 +72,8 @@ class LineMover extends Mover {
   }
 
   protected static Pair<PsiElement, PsiElement> getElementRange(final PsiElement parent,
-                                                              PsiElement element1,
-                                                              PsiElement element2) {
+                                                                PsiElement element1,
+                                                                PsiElement element2) {
     if (PsiTreeUtil.isAncestor(element1, element2, false) || PsiTreeUtil.isAncestor(element2, element1, false)) {
       return Pair.create(parent, parent);
     }

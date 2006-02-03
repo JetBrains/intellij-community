@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.StdLanguages;
 
 class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.StatementMover");
@@ -93,8 +94,8 @@ class StatementMover extends LineMover {
             found = true;
           }
           else if (element instanceof PsiJavaToken
-              && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
-              && element.getParent() instanceof PsiCodeBlock) {
+                   && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
+                   && element.getParent() instanceof PsiCodeBlock) {
             // before code block closing brace
             found = true;
           }
@@ -125,7 +126,7 @@ class StatementMover extends LineMover {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiCodeBlock) return true;
     if (parent instanceof PsiIfStatement &&
-    (element == ((PsiIfStatement)parent).getThenBranch() || element == ((PsiIfStatement)parent).getElseBranch())) {
+        (element == ((PsiIfStatement)parent).getThenBranch() || element == ((PsiIfStatement)parent).getElseBranch())) {
       return true;
     }
     if (parent instanceof PsiWhileStatement && element == ((PsiWhileStatement)parent).getBody()) {
@@ -140,7 +141,7 @@ class StatementMover extends LineMover {
   private boolean checkMovingInsideOutside(PsiFile file, final Editor editor, final LineRange result) {
     final int offset = editor.getCaretModel().getOffset();
 
-    PsiElement guard = file.findElementAt(offset);
+    PsiElement guard = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
     if (guard == null) return false;
 
     do {
@@ -150,7 +151,7 @@ class StatementMover extends LineMover {
 
     // cannot move in/outside method/class/initializer/comment
     if (!calcInsertOffset(file, editor, result)) return false;
-    PsiElement newGuard = file.findElementAt(insertOffset);
+    PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset, StdLanguages.JAVA);
     do {
       newGuard = PsiTreeUtil.getParentOfType(newGuard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
     }
@@ -167,10 +168,10 @@ class StatementMover extends LineMover {
   private static boolean isInside(final int offset, final PsiElement guard) {
     if (guard == null) return false;
     TextRange inside = guard instanceof PsiMethod ? ((PsiMethod)guard).getBody().getTextRange() : guard instanceof PsiClassInitializer
-      ? ((PsiClassInitializer)guard).getBody().getTextRange()
-      : guard instanceof PsiClass
-      ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(), ((PsiClass)guard).getRBrace().getTextOffset())
-      : guard.getTextRange();
+                                                                                                  ? ((PsiClassInitializer)guard).getBody().getTextRange()
+                                                                                                  : guard instanceof PsiClass
+                                                                                                    ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(), ((PsiClass)guard).getRBrace().getTextOffset())
+                                                                                                    : guard.getTextRange();
     return inside != null && inside.contains(offset);
   }
 
@@ -181,6 +182,6 @@ class StatementMover extends LineMover {
     Pair<PsiElement, PsiElement> elementRange = getElementRange(parent, psiRange.getFirst(), psiRange.getSecond());
     if (elementRange == null) return null;
     return new LineRange(editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line,
-                     editor.offsetToLogicalPosition(elementRange.getSecond().getTextRange().getEndOffset()).line);
+                         editor.offsetToLogicalPosition(elementRange.getSecond().getTextRange().getEndOffset()).line);
   }
 }
