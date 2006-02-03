@@ -40,6 +40,9 @@ public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
   public static final Key<IndentInfo> INDENT_INFO_KEY = new Key<IndentInfo>("IndentInfo");
 
+  private CodeEditUtil() {
+  }
+
   public static ASTNode addChild(CompositeElement parent, ASTNode child, ASTNode anchorBefore) {
     return addChildren(parent, child, child, anchorBefore);
   }
@@ -51,18 +54,19 @@ public class CodeEditUtil {
 
     if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.addChildren(first, lastChild, anchorBefore);
-      return (TreeElement) first;
-    } else {
+      return (TreeElement)first;
+    }
+    else {
       checkAllWhiteSpaces(parent);
-      TreeElement element = addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent, parent.getPsi().getContainingFile());
-      return element;
+      return addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent, getTreeElementContainingFile(parent));
     }
   }
 
   private static TreeElement addChildrenAndAdjustWhiteSpaces(ASTNode first,
                                                              final ASTNode lastChild,
                                                              final ASTNode anchorBefore,
-                                                             final CompositeElement parent, final PsiFile file) {
+                                                             final CompositeElement parent,
+                                                             final PsiFile file) {
     final ArrayList<PsiElement> dirtyElements = new ArrayList<PsiElement>();
     final List<ASTNode> treePrev;
     try {
@@ -132,13 +136,15 @@ public class CodeEditUtil {
 
   private static TreeElement returnFirstChangedNode(final List<ASTNode> treePrev, final CompositeElement parent) {
     if (treePrev == null) {
-      return (TreeElement) parent.getFirstChildNode();
-    } else {
+      return parent.getFirstChildNode();
+    }
+    else {
       ASTNode firstValid = findFirstValid(treePrev);
       if (firstValid == null) {
-        return (TreeElement) parent.getFirstChildNode();
-      } else {
-        return (TreeElement) firstValid.getTreeNext();
+        return parent.getFirstChildNode();
+      }
+      else {
+        return (TreeElement)firstValid.getTreeNext();
       }
     }
   }
@@ -153,7 +159,8 @@ public class CodeEditUtil {
     ASTNode nextElement = anchorBefore;
     if (nextElement == null) {
       nextElement = findElementAfter(parent, false);
-    } else if (isWS(nextElement) || nextElement.getTextLength() == 0) {
+    }
+    else if (isWS(nextElement) || nextElement.getTextLength() == 0) {
       nextElement = findElementAfter(anchorBefore, false);
     }
     if (nextElement != null) {
@@ -199,10 +206,12 @@ public class CodeEditUtil {
     if (lastChild != null) {
       if (lastChild.getTextLength() > 0) {
         return lastChild;
-      } else {
+      }
+      else {
         return TreeUtil.prevLeaf(lastChild);
       }
-    } else {
+    }
+    else {
       return TreeUtil.prevLeaf(parent);
     }
 
@@ -223,10 +232,15 @@ public class CodeEditUtil {
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
     if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.removeRange(first, findLastChild(last));
-    } else {
-      checkAllWhiteSpaces(parent);
-      removeChildrenAndAdjustWhiteSpaces(first, last, parent, parent.getPsi().getContainingFile());
     }
+    else {
+      checkAllWhiteSpaces(parent);
+      removeChildrenAndAdjustWhiteSpaces(first, last, parent, getTreeElementContainingFile(parent));
+    }
+  }
+
+  private static PsiFile getTreeElementContainingFile(final ASTNode parent) {
+    return (PsiFile)TreeUtil.getFileElement((TreeElement)parent).getPsi();
   }
 
   private static void removeChildrenAndAdjustWhiteSpaces(final ASTNode first,
@@ -277,7 +291,8 @@ public class CodeEditUtil {
           adjustWhiteSpaceBefore(nextElement, true, true, true, false, file);
         }
 
-      } else {
+      }
+      else {
         final ASTNode fileNode = TreeUtil.getFileElement(parent);
         ASTNode lastLeaf = TreeUtil.findLastLeaf(fileNode);
         if (isWS(lastLeaf)) {
@@ -296,7 +311,8 @@ public class CodeEditUtil {
 
   private static void adjustSpacePositions(final ASTNode nextElement,
                                            final ASTNode prevElement,
-                                           final CodeStyleSettings.IndentOptions options, final PsiFile file) {
+                                           final CodeStyleSettings.IndentOptions options,
+                                           final PsiFile file) {
     ASTNode elementBeforeNext = TreeUtil.prevLeaf(nextElement);
 
     if (prevElement != null && isWS(prevElement) && isWS(elementBeforeNext) && prevElement != elementBeforeNext) {
@@ -322,20 +338,23 @@ public class CodeEditUtil {
 
   private static void replaceTwoSpacesWithOne(ASTNode elementBeforeNext,
                                               final ASTNode prevElement,
-                                              final CodeStyleSettings.IndentOptions options, final PsiFile file) {
+                                              final CodeStyleSettings.IndentOptions options,
+                                              final PsiFile file) {
     elementBeforeNext = transform(elementBeforeNext);
     if (!canModifyWS(file)) {
       final String text = prevElement.getText() + elementBeforeNext.getText();
       delete(elementBeforeNext);
       replace(prevElement, text);
-    } else if (!elementBeforeNext.textContains('\n') && prevElement.textContains('\n')) {
+    }
+    else if (!elementBeforeNext.textContains('\n') && prevElement.textContains('\n')) {
       /*
           void foo1(){}
           static void foo2(){}
           remove static
       */
       delete(elementBeforeNext);
-    } else {
+    }
+    else {
       final String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
       delete(elementBeforeNext);
       replace(prevElement, text);
@@ -350,9 +369,7 @@ public class CodeEditUtil {
     final String text = elementBeforeNext.getText();
     ASTNode nextAnchor = TreeUtil.nextLeaf(elementBeforeNext);
     delete(elementBeforeNext);
-    FormatterUtil.replaceWhiteSpace(text,
-      nextAnchor,
-      ElementType.WHITE_SPACE, null);
+    FormatterUtil.replaceWhiteSpace(text, nextAnchor, ElementType.WHITE_SPACE, null);
   }
 
   private static boolean isInvalidWhiteSpace(final ASTNode elementBeforeNext, final PsiFile file) {
@@ -362,13 +379,10 @@ public class CodeEditUtil {
   private static void replace(final ASTNode element, final String text) {
     if (!text.equals(element.getText())) {
       final CharTable charTable = SharedImplUtil.findCharTableByTree(element);
-      LeafElement newWhiteSpace = Factory.createSingleLeafElement(element.getElementType(),
-        text.toCharArray(), 0, text.length(),
-        charTable,
-        SharedImplUtil.getManagerByTree(element));
+      LeafElement newWhiteSpace = Factory.createSingleLeafElement(element.getElementType(), text.toCharArray(), 0, text.length(), charTable,
+                                                                  SharedImplUtil.getManagerByTree(element));
 
-      element.getTreeParent().replaceChild(element,
-        newWhiteSpace);
+      element.getTreeParent().replaceChild(element, newWhiteSpace);
     }
   }
 
@@ -421,12 +435,14 @@ public class CodeEditUtil {
     if (treeParent.getElementType() == ElementType.HTML_DOCUMENT) return false;
     if (treeParent.getElementType() == ElementType.ERROR_ELEMENT) return false;
     if (treeParent.getElementType() instanceof IChameleonElementType) {
-      if (((IChameleonElementType) treeParent.getElementType()).isParsable(treeParent.getText(), file.getProject())) {
+      if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), file.getProject())) {
         return false;
-      } else {
+      }
+      else {
         return true;
       }
-    } else {
+    }
+    else {
       return true;
     }
   }
@@ -442,7 +458,7 @@ public class CodeEditUtil {
 
   private static void saveIndents(ASTNode first, final ASTNode lastChild, final Collection<PsiElement> dirtyElements, final PsiFile file) {
     first = transform(first);
-    final PsiFile newElementFile = transformToPsiElement(first).getContainingFile();
+    final PsiFile newElementFile = getTreeElementContainingFile(first);
     final Language language = newElementFile.getLanguage();
     final FormattingModelBuilder builder = language.getFormattingModelBuilder();
     if (builder != null) {
@@ -451,14 +467,10 @@ public class CodeEditUtil {
       ASTNode current = first;
       while (current != null && current != lastChild) {
         final IElementType elementType = current.getElementType();
-        if (elementType != ElementType.WHITE_SPACE
-          && elementType != ElementType.DOC_COMMENT_LEADING_ASTERISKS
-          && elementType != ElementType.DOC_TAG
-          && current.getTextLength() > 0) {
-          FormatterEx.getInstanceEx().saveIndents(model, current.getTextRange(),
-            new MyIndentInfoStorage(newElementFile, dirtyElements),
-            settings,
-            settings.getIndentOptions(file.getFileType()));
+        if (elementType != ElementType.WHITE_SPACE && elementType != ElementType.DOC_COMMENT_LEADING_ASTERISKS &&
+            elementType != ElementType.DOC_TAG && current.getTextLength() > 0) {
+          FormatterEx.getInstanceEx().saveIndents(model, current.getTextRange(), new MyIndentInfoStorage(newElementFile, dirtyElements),
+                                                  settings, settings.getIndentOptions(file.getFileType()));
         }
         current = current.getTreeNext();
       }
@@ -478,8 +490,7 @@ public class CodeEditUtil {
       if (current.getElementType() != ElementType.XML_TEXT) {
         LeafElement leaf = TreeUtil.findFirstLeaf(current);
 
-        if (((current == first && current.getTreeNext() != lastChild)
-             || current.getElementType() != ElementType.WHITE_SPACE)) {
+        if (((current == first && current.getTreeNext() != lastChild) || current.getElementType() != ElementType.WHITE_SPACE)) {
           if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
             if (leaf == result) result = leaf.getTreeNext();
             delete(leaf);
@@ -537,13 +548,14 @@ public class CodeEditUtil {
   private static void adjustWhiteSpaceBefore(ASTNode first,
                                              final boolean keepBlankLines,
                                              final boolean keepLineBreaks,
-                                             final boolean changeWSBeforeFirstElement, final boolean changeLineFeedsBeforeFirstElement,
+                                             final boolean changeWSBeforeFirstElement,
+                                             final boolean changeLineFeedsBeforeFirstElement,
                                              final PsiFile file) {
     first = transform(first);
     if (first != null) {
       final PsiElement psi = first.getPsi();
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psi.getProject());
-      final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+      final FormattingModelBuilder builder = file.getViewProvider().getBaseLanguage().getFormattingModelBuilder();
       final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
 
       final boolean keepWhiteSpaces = settings.HTML_KEEP_WHITESPACES;
@@ -564,11 +576,8 @@ public class CodeEditUtil {
             if (startOffset < endOffset) {
               FormatterEx.getInstanceEx().adjustTextRange(builder.createModel(file, settings), settings,
                                                           settings.getIndentOptions(file.getFileType()),
-                                                          new TextRange(startOffset, endOffset),
-                                                          keepBlankLines,
-                                                          keepLineBreaks,
-                                                          changeWSBeforeFirstElement,
-                                                          changeLineFeedsBeforeFirstElement,
+                                                          new TextRange(startOffset, endOffset), keepBlankLines, keepLineBreaks,
+                                                          changeWSBeforeFirstElement, changeLineFeedsBeforeFirstElement,
                                                           canModifyWhiteSpaces ? new MyIndentInfoStorage(file, null) : null);
             }
           }
@@ -588,7 +597,8 @@ public class CodeEditUtil {
     final ASTNode elem = TreeUtil.prevLeaf(firstNonSpaceLeaf);
     if (elem != null && elem.getElementType() == ElementType.WHITE_SPACE) {
       return elem;
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -603,15 +613,11 @@ public class CodeEditUtil {
   }
 
 
-  private static String composeNewWS(final String firstText,
-                                     final String secondText,
-                                     final CodeStyleSettings.IndentOptions options) {
+  private static String composeNewWS(final String firstText, final String secondText, final CodeStyleSettings.IndentOptions options) {
     IndentInfo first = createInfo(firstText, options);
     IndentInfo second = createInfo(secondText, options);
     final int lineFeeds = Math.max(first.getLineFeeds(), second.getLineFeeds());
-    return new IndentInfo(lineFeeds,
-      0,
-      second.getSpaces()).generateNewWhiteSpace(options);
+    return new IndentInfo(lineFeeds, 0, second.getSpaces()).generateNewWhiteSpace(options);
   }
 
   private static IndentInfo createInfo(final String text, final CodeStyleSettings.IndentOptions options) {
@@ -648,7 +654,8 @@ public class CodeEditUtil {
     final ASTNode treeParent = parent.getTreeParent();
     if (treeParent != null) {
       return findElementAfter(treeParent, canBeWhiteSpace);
-    } else {
+    }
+    else {
       return null;
     }
   }
@@ -677,9 +684,10 @@ public class CodeEditUtil {
     if (FormatterEx.getInstanceEx().isDisabled()) {
       parent.replaceChild(oldChild, newChild);
       return newChild;
-    } else {
+    }
+    else {
       checkAllWhiteSpaces(parent);
-      return replaceAndAdjustWhiteSpaces(oldChild, newChild, parent, parent.getPsi().getContainingFile());
+      return replaceAndAdjustWhiteSpaces(oldChild, newChild, parent, getTreeElementContainingFile(parent));
     }
   }
 
@@ -718,8 +726,7 @@ public class CodeEditUtil {
       adjustWhiteSpaceBefore(newChild, true, false, changeFirstWS, false, file);
 
       if (shouldInsertNewLineBefore(findElementAfter(newChild, false))) {
-        adjustWhiteSpaceBefore(findElementAfter(newChild, false),
-                               true, true, true, true, file);
+        adjustWhiteSpaceBefore(findElementAfter(newChild, false), true, true, true, true, file);
       }
 
       else if (elementAfter != null && !isWS(elementAfter)) {
@@ -743,7 +750,8 @@ public class CodeEditUtil {
 
     if (prevNonWSElement != null && isLineComment(prevNonWSElement) && (ws == null || !ws.textContains('\n'))) {
       return true;
-    } else {
+    }
+    else {
       return false;
     }
 
@@ -755,9 +763,7 @@ public class CodeEditUtil {
     }
   }
 
-  private static void adjustWSPositionsAfterReplacement(final boolean checkWhiteSpaces,
-                                                        final ASTNode newChild,
-                                                        final PsiFile file) {
+  private static void adjustWSPositionsAfterReplacement(final boolean checkWhiteSpaces, final ASTNode newChild, final PsiFile file) {
     if (checkWhiteSpaces) {
       final ASTNode nextLeaf = TreeUtil.nextLeaf(newChild);
       final ASTNode prevLeaf = TreeUtil.nextLeaf(newChild);
@@ -766,10 +772,12 @@ public class CodeEditUtil {
         final CodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(file.getProject())
           .getIndentOptions(file.getFileType());
         replaceTwoSpacesWithOne(prevLeaf, nextLeaf, options, file);
-      } else if (isInvalidWhiteSpace(prevLeaf, file)) {
+      }
+      else if (isInvalidWhiteSpace(prevLeaf, file)) {
         replaceInvalidWhiteSpace(prevLeaf);
 
-      } else if (isInvalidWhiteSpace(nextLeaf, file)) {
+      }
+      else if (isInvalidWhiteSpace(nextLeaf, file)) {
         replaceInvalidWhiteSpace(nextLeaf);
       }
     }
@@ -790,15 +798,17 @@ public class CodeEditUtil {
     LOG.assertTrue(token2 != null);
 
     if (token1.getElementType() instanceof IJavaElementType && token2.getElementType() instanceof IJavaElementType) {
-      return canStickJavaTokens((PsiJavaToken) SourceTreeToPsiMap.treeElementToPsi(token1),
-        (PsiJavaToken) SourceTreeToPsiMap.treeElementToPsi(token2));
-    } else {
+      return canStickJavaTokens((PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token1),
+                                (PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token2));
+    }
+    else {
       return true; //?
     }
 
   }
 
-  private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix = new HashMap<Pair<IElementType, IElementType>, Boolean>();
+  private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
+    new HashMap<Pair<IElementType, IElementType>, Boolean>();
 
   public static boolean canStickJavaTokens(PsiJavaToken token1, PsiJavaToken token2) {
     IElementType type1 = token1.getTokenType();
@@ -814,10 +824,10 @@ public class CodeEditUtil {
       boolean canMerge = lexer.getTokenType() == type1;
       lexer.advance();
       canMerge &= lexer.getTokenType() == type2;
-      res = Boolean.valueOf(canMerge);
+      res = canMerge;
       myCanStickJavaTokensMatrix.put(pair, res);
     }
-    return res;
+    return res.booleanValue();
   }
 
   private static boolean checkToken(final PsiJavaToken token1) {
@@ -838,25 +848,24 @@ public class CodeEditUtil {
   private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<String, Integer>();
 
   static { //TODO : options?
-    ourModifierToOrderMap.put(PsiModifier.PUBLIC, new Integer(1));
-    ourModifierToOrderMap.put(PsiModifier.PRIVATE, new Integer(1));
-    ourModifierToOrderMap.put(PsiModifier.PROTECTED, new Integer(1));
-    ourModifierToOrderMap.put(PsiModifier.STATIC, new Integer(2));
-    ourModifierToOrderMap.put(PsiModifier.ABSTRACT, new Integer(2));
-    ourModifierToOrderMap.put(PsiModifier.FINAL, new Integer(3));
-    ourModifierToOrderMap.put(PsiModifier.SYNCHRONIZED, new Integer(4));
-    ourModifierToOrderMap.put(PsiModifier.TRANSIENT, new Integer(4));
-    ourModifierToOrderMap.put(PsiModifier.VOLATILE, new Integer(4));
-    ourModifierToOrderMap.put(PsiModifier.NATIVE, new Integer(5));
-    ourModifierToOrderMap.put(PsiModifier.STRICTFP, new Integer(6));
+    ourModifierToOrderMap.put(PsiModifier.PUBLIC, 1);
+    ourModifierToOrderMap.put(PsiModifier.PRIVATE, 1);
+    ourModifierToOrderMap.put(PsiModifier.PROTECTED, 1);
+    ourModifierToOrderMap.put(PsiModifier.STATIC, 2);
+    ourModifierToOrderMap.put(PsiModifier.ABSTRACT, 2);
+    ourModifierToOrderMap.put(PsiModifier.FINAL, 3);
+    ourModifierToOrderMap.put(PsiModifier.SYNCHRONIZED, 4);
+    ourModifierToOrderMap.put(PsiModifier.TRANSIENT, 4);
+    ourModifierToOrderMap.put(PsiModifier.VOLATILE, 4);
+    ourModifierToOrderMap.put(PsiModifier.NATIVE, 5);
+    ourModifierToOrderMap.put(PsiModifier.STRICTFP, 6);
   }
 
   public static ASTNode getDefaultAnchor(PsiModifierList modifierList, PsiKeyword modifier) {
     Integer order = ourModifierToOrderMap.get(modifier.getText());
     if (order == null) return null;
-    for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode();
-         child != null;
-         child = child.getTreeNext()) {
+    for (ASTNode child = SourceTreeToPsiMap.psiElementToTree(modifierList).getFirstChildNode(); child != null; child = child.getTreeNext())
+    {
       if (ElementType.KEYWORD_BIT_SET.contains(child.getElementType())) {
         Integer order1 = ourModifierToOrderMap.get(child.getText());
         if (order1 == null) continue;
@@ -881,12 +890,12 @@ public class CodeEditUtil {
       if (order1 > order) {
         if (lastMember != null) {
           PsiElement nextSibling = lastMember.getNextSibling();
-          while (nextSibling instanceof PsiJavaToken &&
-            (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
+          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
             nextSibling = nextSibling.getNextSibling();
           }
           return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
-        } else {
+        }
+        else {
           return aClass.getLBrace().getNextSibling();
         }
       }
@@ -898,11 +907,14 @@ public class CodeEditUtil {
   private static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {
       return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
-    } else if (member instanceof PsiMethod) {
-      return ((PsiMethod) member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
-    } else if (member instanceof PsiClass) {
+    }
+    else if (member instanceof PsiMethod) {
+      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
+    }
+    else if (member instanceof PsiClass) {
       return settings.INNER_CLASSES_ORDER_WEIGHT + 1;
-    } else {
+    }
+    else {
       return -1;
     }
   }
@@ -910,28 +922,24 @@ public class CodeEditUtil {
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
     final FormattingModelBuilder modelBuilder = language.getFormattingModelBuilder();
     if (modelBuilder == null) {
-      final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement) first, null);
+      final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
       if (leafElement != second) {
         return leafElement.getText();
-      } else {
+      }
+      else {
         return null;
       }
-    } else {
-      final PsiElement secondAsPsiElement = transformToPsiElement(second);
-      LOG.assertTrue(secondAsPsiElement != null);
-      final PsiFile file = secondAsPsiElement.getContainingFile();
-      final Project project = secondAsPsiElement.getProject();
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    }
+    else {
+      final PsiFile file = getTreeElementContainingFile(second);
+      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
       return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
     }
 
   }
 
-  public static IndentInfo getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                          final Language language) {
-    return getWhiteSpaceBeforeToken(tokenNode,
-                                    chooseLanguage(tokenNode, language, transformToPsiElement(tokenNode).getContainingFile()),
-                                    false);
+  public static IndentInfo getIndentWhiteSpaceBeforeToken(final ASTNode tokenNode, final Language language) {
+    return getWhiteSpaceBeforeToken(tokenNode, chooseLanguage(tokenNode, language, getTreeElementContainingFile(tokenNode)), false);
   }
 
   private static Language chooseLanguage(final ASTNode tokenNode, final Language language, final PsiFile file) {
@@ -944,22 +952,19 @@ public class CodeEditUtil {
       return language;
     }
 
-    if (((LanguageFileType) fileType).getLanguage().getFormattingModelBuilder() == null) {
+    if (((LanguageFileType)fileType).getLanguage().getFormattingModelBuilder() == null) {
       return language;
-    } else {
-      return ((LanguageFileType) fileType).getLanguage();
+    }
+    else {
+      return ((LanguageFileType)fileType).getLanguage();
     }
 
   }
 
-  public static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode,
-                                                    final Language language,
-                                                    final boolean mayChangeLineFeeds) {
+  public static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode, final Language language, final boolean mayChangeLineFeeds) {
     LOG.assertTrue(tokenNode != null);
-    final PsiElement secondAsPsiElement = transformToPsiElement(tokenNode);
-    LOG.assertTrue(secondAsPsiElement != null);
-    final PsiFile file = secondAsPsiElement.getContainingFile();
-    final Project project = secondAsPsiElement.getProject();
+    final PsiFile file = getTreeElementContainingFile(tokenNode);
+    final Project project = file.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     final int tokenStartOffset = tokenNode.getStartOffset();
 
@@ -974,11 +979,11 @@ public class CodeEditUtil {
 
         final TextRange textRange = element.getTextRange();
         final FormattingModel model = builder.createModel(file, settings);
-        return FormatterEx.getInstanceEx().getWhiteSpaceBefore(model.getDocumentModel(),
-          model.getRootBlock(),
-          settings, settings.getIndentOptions(file.getFileType()), textRange,
-          mayChangeLineFeeds);
-      } else {
+        return FormatterEx.getInstanceEx().getWhiteSpaceBefore(model.getDocumentModel(), model.getRootBlock(), settings,
+                                                               settings.getIndentOptions(file.getFileType()), textRange,
+                                                               mayChangeLineFeeds);
+      }
+      else {
         return new IndentInfo(0, 0, 0);
       }
 
