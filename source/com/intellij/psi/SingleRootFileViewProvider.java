@@ -185,8 +185,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   private FileType getRealFileType() {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getManager().getProject()).getFileIndex();
     FileType fileType = getVirtualFile().getFileType();
+    if(!isPhysical()) return fileType;
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getManager().getProject()).getFileIndex();
     if(fileType == StdFileTypes.JAVA && !projectFileIndex.isInSource(getVirtualFile())) fileType = StdFileTypes.PLAIN_TEXT;
     return fileType;
   }
