@@ -141,22 +141,22 @@ public final class FormSourceCodeGenerator {
       throw new CodeGenerationException(UIDesignerBundle.message("error.nonempty.xy.panels.found"));
     }
 
+    final PsiClass aClass = FormEditingUtil.findClassToBind(module, rootContainer.getClassToBind());
+    if (aClass == null) {
+      throw new ClassToBindNotFoundException(UIDesignerBundle.message("error.class.to.bind.not.found", rootContainer.getClassToBind()));
+    }
+
     generateSetupCodeForComponent(topComponent,
                                   component2variable,
                                   class2variableIndex,
-                                  id2component, module);
-    generateComponentReferenceProperties(topComponent, component2variable, class2variableIndex, id2component);
-    generateButtonGroups(rootContainer, component2variable, class2variableIndex, id2component);
+                                  id2component, module, aClass);
+    generateComponentReferenceProperties(topComponent, component2variable, class2variableIndex, id2component, aClass);
+    generateButtonGroups(rootContainer, component2variable, class2variableIndex, id2component, aClass);
 
     final String methodText = myBuffer.toString();
 
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
-
-    final PsiClass aClass = FormEditingUtil.findClassToBind(module, rootContainer.getClassToBind());
-    if (aClass == null) {
-      throw new ClassToBindNotFoundException(UIDesignerBundle.message("error.class.to.bind.not.found", rootContainer.getClassToBind()));
-    }
 
     cleanup(aClass);
 
@@ -266,19 +266,18 @@ public final class FormSourceCodeGenerator {
     return false;
   }
 
-  private void generateSetupCodeForComponent(
-    final LwComponent component,
-    final HashMap<LwComponent, String> component2TempVariable,
-    final TObjectIntHashMap<String> class2variableIndex,
-    final HashMap<String, LwComponent> id2component,
-    final Module module
-  ) throws CodeGenerationException{
+  private void generateSetupCodeForComponent(final LwComponent component,
+                                             final HashMap<LwComponent, String> component2TempVariable,
+                                             final TObjectIntHashMap<String> class2variableIndex,
+                                             final HashMap<String, LwComponent> id2component,
+                                             final Module module,
+                                             final PsiClass aClass) throws CodeGenerationException{
     id2component.put(component.getId(), component);
     GlobalSearchScope globalSearchScope = module.getModuleWithDependenciesAndLibrariesScope(false);
 
     final LwContainer parent = component.getParent();
 
-    final String variable = getVariable(component, component2TempVariable, class2variableIndex);
+    final String variable = getVariable(component, component2TempVariable, class2variableIndex, aClass);
     final String componentClass = component instanceof LwNestedForm
                                   ? getNestedFormClass(module, (LwNestedForm) component)
                                   : myLayoutSourceGenerator.mapComponentClass(component.getComponentClassName());
@@ -431,7 +430,7 @@ public final class FormSourceCodeGenerator {
     // add component to parent
     if (!(component.getParent() instanceof LwRootContainer)) {
 
-      final String parentVariable = getVariable(parent, component2TempVariable, class2variableIndex);
+      final String parentVariable = getVariable(parent, component2TempVariable, class2variableIndex, aClass);
       String componentVar = variable;
       if (component instanceof LwNestedForm) {
         componentVar = variable + "." + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME + "()";
@@ -469,7 +468,7 @@ public final class FormSourceCodeGenerator {
 
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
-                                      module);
+                                      module, aClass);
       }
     }
   }
@@ -488,8 +487,9 @@ public final class FormSourceCodeGenerator {
   private void generateComponentReferenceProperties(final LwComponent component,
                                                     final HashMap<LwComponent, String> component2variable,
                                                     final TObjectIntHashMap<String> class2variableIndex,
-                                                    final HashMap<String, LwComponent> id2component) {
-    String variable = getVariable(component, component2variable, class2variableIndex);
+                                                    final HashMap<String, LwComponent> id2component,
+                                                    final PsiClass aClass) {
+    String variable = getVariable(component, component2variable, class2variableIndex, aClass);
     final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
     for (final LwIntrospectedProperty property : introspectedProperties) {
       if (property instanceof LwIntroComponentProperty) {
@@ -497,7 +497,7 @@ public final class FormSourceCodeGenerator {
         if (componentId != null && componentId.length() > 0) {
           LwComponent target = id2component.get(componentId);
           if (target != null) {
-            String targetVariable = getVariable(target, component2variable, class2variableIndex);
+            String targetVariable = getVariable(target, component2variable, class2variableIndex, aClass);
             startMethodCall(variable, property.getWriteMethodName());
             pushVar(targetVariable);
             endMethod();
@@ -509,7 +509,8 @@ public final class FormSourceCodeGenerator {
     if (component instanceof LwContainer) {
       final LwContainer container = (LwContainer)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
-        generateComponentReferenceProperties((LwComponent)container.getComponent(i), component2variable, class2variableIndex, id2component);
+        generateComponentReferenceProperties((LwComponent)container.getComponent(i), component2variable, class2variableIndex, id2component,
+                                             aClass);
       }
     }
   }
@@ -517,7 +518,8 @@ public final class FormSourceCodeGenerator {
   private void generateButtonGroups(final LwRootContainer rootContainer,
                                     final HashMap<LwComponent, String> component2variable,
                                     final TObjectIntHashMap<String> class2variableIndex,
-                                    final HashMap<String, LwComponent> id2component) {
+                                    final HashMap<String, LwComponent> id2component,
+                                    final PsiClass aClass) {
     LwButtonGroup[] groups = rootContainer.getButtonGroups();
     if (groups.length > 0) {
       append("javax.swing.ButtonGroup buttonGroup;");
@@ -528,7 +530,7 @@ public final class FormSourceCodeGenerator {
           for(String id: ids) {
             LwComponent target = id2component.get(id);
             if (target != null) {
-              String targetVariable = getVariable(target, component2variable, class2variableIndex);
+              String targetVariable = getVariable(target, component2variable, class2variableIndex, aClass);
               startMethodCall("buttonGroup", "add");
               pushVar(targetVariable);
               endMethod();
@@ -623,12 +625,11 @@ public final class FormSourceCodeGenerator {
   /**
    * @return variable idx
    */
-  private static String getVariable(
-    final LwComponent component,
-    final HashMap<LwComponent,String> component2variable,
-    final TObjectIntHashMap<String> class2variableIndex
-  ){
-    if (component2variable.containsKey(component)){
+  private static String getVariable(final LwComponent component,
+                                    final HashMap<LwComponent, String> component2variable,
+                                    final TObjectIntHashMap<String> class2variableIndex,
+                                    final PsiClass aClass) {
+    if (component2variable.containsKey(component)) {
       return component2variable.get(component);
     }
 
@@ -636,13 +637,11 @@ public final class FormSourceCodeGenerator {
       return component.getBinding();
     }
 
-    @NonNls final String className = component instanceof LwNestedForm
-                                     ? "nestedForm"
-                                     : component.getComponentClassName();
+    @NonNls final String className = component instanceof LwNestedForm ? "nestedForm" : component.getComponentClassName();
 
     final String shortName;
     if (className.startsWith("javax.swing.J")) {
-      shortName =  className.substring("javax.swing.J".length());
+      shortName = className.substring("javax.swing.J".length());
     }
     else {
       final int idx = className.lastIndexOf('.');
@@ -654,12 +653,14 @@ public final class FormSourceCodeGenerator {
       }
     }
 
-    // todo[anton] check that no generated name is equal to class' field
     if (!class2variableIndex.containsKey(className)) class2variableIndex.put(className, 0);
-    class2variableIndex.increment(className);
-    int newIndex = class2variableIndex.get(className);
+    String result;
+    do {
+      class2variableIndex.increment(className);
+      int newIndex = class2variableIndex.get(className);
 
-    final String result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndex;
+      result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndex;
+    } while(aClass.findFieldByName(result, true) != null);
     component2variable.put(component, result);
 
     return result;

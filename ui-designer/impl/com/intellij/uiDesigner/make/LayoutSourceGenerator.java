@@ -18,6 +18,6 @@ public abstract class LayoutSourceGenerator {
                                                final String parentVariable);
 
   public String mapComponentClass(final String componentClassName) {
-    return componentClassName;
+    return componentClassName.replace("$", ".");
   }
 }
