@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 public class ToggleCaseAction extends EditorAction {
   public ToggleCaseAction() {
@@ -27,12 +28,32 @@ public class ToggleCaseAction extends EditorAction {
       int startOffset = editor.getSelectionModel().getSelectionStart();
       int endOffset = editor.getSelectionModel().getSelectionEnd();
 
-      String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
-      String lowered = text.toLowerCase();
-      if (text.equals(lowered)) lowered = lowered.toUpperCase();
+      StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        final String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
+        toCase(builder, text, true);
+        if (text.equals(builder.toString())) {
+          toCase(builder, text, false);
+        }
+        editor.getDocument().replaceString(startOffset, endOffset, builder.toString());
+        editor.getSelectionModel().setSelection(startOffset, endOffset);
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
 
-      editor.getDocument().replaceString(startOffset, endOffset, lowered);
-      editor.getSelectionModel().setSelection(startOffset, endOffset);
+    private static void toCase(final StringBuilder builder, final String text, final boolean lower ) {
+      builder.setLength(0);
+      boolean prevIsSlash = false;
+      for( int i = 0; i < text.length(); ++i) {
+        char c = text.charAt(i);
+        if( !prevIsSlash ) {
+          c = (lower) ? Character.toLowerCase(c) : Character.toUpperCase(c);
+        }
+        prevIsSlash = c == '\\';
+        builder.append(c);
+      }
     }
   }
 }
