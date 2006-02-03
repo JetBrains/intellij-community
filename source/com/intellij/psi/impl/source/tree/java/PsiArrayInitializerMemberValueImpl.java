@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement implements PsiArrayInitializerMemberValue {
+public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImpl implements PsiArrayInitializerMemberValue {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.java.PsiArrayInitializerMemberValueImpl");
   public PsiArrayInitializerMemberValueImpl() {
-    super(ANNOTATION_ARRAY_INITIALIZER);
+    super(ANNOTATION_ARRAY_INITIALIZER, ANNOTATION_MEMBER_VALUE_BIT_SET);
   }
 
   @NotNull

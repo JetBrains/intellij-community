@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class PsiAnnotationParameterListImpl extends CompositePsiElement implements PsiAnnotationParameterList {
+public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl implements PsiAnnotationParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationParameterListImpl");
   private PsiNameValuePair[] myCachedMembers = null;
 
   public PsiAnnotationParameterListImpl() {
-    super(ANNOTATION_PARAMETER_LIST);
+    super(ANNOTATION_PARAMETER_LIST, NAME_VALUE_PAIR_BIT_SET);
   }
 
   public void clearCaches() {
@@ -77,7 +77,6 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-
     if (first.getElementType() == NAME_VALUE_PAIR && last.getElementType() == NAME_VALUE_PAIR) {
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       ASTNode lparenth = findChildByRole(ChildRole.LPARENTH);
@@ -101,45 +100,8 @@ public class PsiAnnotationParameterListImpl extends CompositePsiElement implemen
           before = Boolean.TRUE;
         }
       }
-
-      final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-
-      for (ASTNode child = ((ASTNode)first).getTreeNext(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == COMMA) break;
-        if (child.getElementType() == NAME_VALUE_PAIR) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, first, Boolean.FALSE);
-          break;
-        }
-      }
-
-      for (ASTNode child = ((ASTNode)first).getTreePrev(); child != null; child = child.getTreePrev()) {
-        if (child.getElementType() == COMMA) break;
-        if (child.getElementType() == NAME_VALUE_PAIR) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, child, Boolean.FALSE);
-          break;
-        }
-      }
-      return firstAdded;
     }
 
     return super.addInternal(first, last, anchor, before);
-  }
-
-  public void deleteChildInternal(ASTNode child) {
-    if (child.getElementType() == NAME_VALUE_PAIR) {
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
-      if (next != null && next.getElementType() == COMMA) {
-        deleteChildInternal(next);
-      }
-      else {
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), WHITE_SPACE_OR_COMMENT_BIT_SET);
-        if (prev != null && prev.getElementType() == COMMA) {
-          deleteChildInternal(prev);
-        }
-      }
-    }
-    super.deleteChildInternal(child);
   }
 }
