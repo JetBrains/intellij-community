@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.IncorrectOperationException;
@@ -107,8 +108,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkInfos);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    myFile.getText(); //to load text
-    myFile.getTextLength(); //to load text
+    
+    ((PsiFileImpl)myFile).calcTreeElement(); //to load text
+
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
