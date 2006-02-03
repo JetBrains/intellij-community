@@ -513,10 +513,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     {
       return false;
     }
+    /*
     if( element.getElementType() instanceof IJspElementType )
     {
       return false;
     }
+    */
     if (getSettings().KEEP_FIRST_COLUMN_COMMENT
         && (element.getElementType() == ElementType.END_OF_LINE_COMMENT || element.getElementType() == ElementType.C_STYLE_COMMENT)
     ) {
