@@ -278,20 +278,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    Class[] componentClasses;
-    synchronized (this) {
-      ArrayList<Class> array = new ArrayList<Class>();
-      for (Class componentClass : myComponentInterfaces) {
-        if (baseInterfaceClass.isAssignableFrom(componentClass)) {
-          array.add(componentClass);
-        }
-      }
-      componentClasses = array.toArray(new Class[array.size()]);
-    }
-    T[] components = (T[])Array.newInstance(baseInterfaceClass, componentClasses.length);
-    for (int i = 0; i < componentClasses.length; i++) {
-      components[i] = (T)getComponent(componentClasses[i]);
-    }
+    final List list = getPicoContainer().getComponentInstancesOfType(baseInterfaceClass);
+    T[] components = (T[])Array.newInstance(baseInterfaceClass, list.size());
+    list.toArray(components);
     return components;
   }
 
