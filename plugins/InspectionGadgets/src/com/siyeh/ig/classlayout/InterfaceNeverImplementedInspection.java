@@ -64,7 +64,7 @@ public class InterfaceNeverImplementedInspection extends ClassInspection {
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.isInterface()) {
+            if (!aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
             if (ignoreInterfacesThatOnlyDeclareConstants &&
