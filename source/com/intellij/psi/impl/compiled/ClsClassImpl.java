@@ -87,13 +87,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public void setRepositoryId(long repositoryId) {
-  synchronized (PsiLock.LOCK) {
-    super.setRepositoryId(repositoryId);
-    if (repositoryId >= 0) {
-      myClassFileData = null;
+    synchronized (PsiLock.LOCK) {
+      super.setRepositoryId(repositoryId);
+      if (repositoryId >= 0) {
+        myClassFileData = null;
+      }
     }
-  ;
-  }
   }
 
   public PsiDirectory getContainingPackage() {
@@ -166,18 +165,17 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiIdentifier getNameIdentifier() {
-  synchronized (PsiLock.LOCK) {
-    if (myNameIdentifier == null) {
-      String qName = getQualifiedName();
-      String name = PsiNameHelper.getShortClassName(qName);
-      if (name.length() == 0) {
-        name = "_";
+    synchronized (PsiLock.LOCK) {
+      if (myNameIdentifier == null) {
+        String qName = getQualifiedName();
+        String name = PsiNameHelper.getShortClassName(qName);
+        if (name.length() == 0) {
+          name = "_";
+        }
+        myNameIdentifier = new ClsIdentifierImpl(this, name);
       }
-      myNameIdentifier = new ClsIdentifierImpl(this, name);
     }
-  ;
-  }
-               return myNameIdentifier;
+    return myNameIdentifier;
   }
 
   public String getName() {
@@ -235,36 +233,35 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public String getQualifiedName() {
-  synchronized (PsiLock.LOCK) {
-    if (myQualifiedName == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 2);
-          ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
-          int tag = ClsUtil.readU1(ptr);
-          if (tag != ClsUtil.CONSTANT_Class) {
-            throw new ClsFormatException();
+    synchronized (PsiLock.LOCK) {
+      if (myQualifiedName == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            ClassFileData classFileData = getClassFileData();
+            BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 2);
+            ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
+            int tag = ClsUtil.readU1(ptr);
+            if (tag != ClsUtil.CONSTANT_Class) {
+              throw new ClsFormatException();
+            }
+            ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
+            String className = ClsUtil.readUtf8Info(ptr, '/', '.');
+            myQualifiedName = ClsUtil.convertClassName(className, false);
           }
-          ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
-          String className = ClsUtil.readUtf8Info(ptr, '/', '.');
-          myQualifiedName = ClsUtil.convertClassName(className, false);
+          catch (ClsFormatException e) {
+            myQualifiedName = "";
+          }
         }
-        catch (ClsFormatException e) {
-          myQualifiedName = "";
-        }
-      }
-      else {
-        myQualifiedName = getRepositoryManager().getClassView().getQualifiedName(repositoryId);
-        if (myQualifiedName == null) {
-          myQualifiedName = "";
+        else {
+          myQualifiedName = getRepositoryManager().getClassView().getQualifiedName(repositoryId);
+          if (myQualifiedName == null) {
+            myQualifiedName = "";
+          }
         }
       }
     }
-  ;
-  }
-               return myQualifiedName;
+    return myQualifiedName;
   }
 
   public PsiModifierList getModifierList() {
@@ -282,39 +279,38 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiReferenceList getExtendsList() {
-  synchronized (PsiLock.LOCK) {
-    if (myExtendsList == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          if (parseViaGenericSignature()) return myExtendsList;
-          if (!isInterface()) {
-            myExtendsList = buildSuperList(PsiKeyword.EXTENDS);
+    synchronized (PsiLock.LOCK) {
+      if (myExtendsList == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            if (parseViaGenericSignature()) return myExtendsList;
+            if (!isInterface()) {
+              myExtendsList = buildSuperList(PsiKeyword.EXTENDS);
+            }
+            else {
+              myExtendsList = buildInterfaceList(PsiKeyword.EXTENDS);
+            }
           }
-          else {
-            myExtendsList = buildInterfaceList(PsiKeyword.EXTENDS);
+          catch (ClsFormatException e) {
+            myExtendsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.EXTENDS);
           }
         }
-        catch (ClsFormatException e) {
-          myExtendsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.EXTENDS);
-        }
-      }
-      else {
-        ClassView classView = getRepositoryManager().getClassView();
-        String[] refTexts = classView.getExtendsList(repositoryId);
-        ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
-        for (int i = 0; i < refTexts.length; i++) {
-          refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
-        }
-        myExtendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
-        for (ClsJavaCodeReferenceElementImpl ref : refs) {
-          ref.setParent(myExtendsList);
+        else {
+          ClassView classView = getRepositoryManager().getClassView();
+          String[] refTexts = classView.getExtendsList(repositoryId);
+          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+          for (int i = 0; i < refTexts.length; i++) {
+            refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
+          }
+          myExtendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
+          for (ClsJavaCodeReferenceElementImpl ref : refs) {
+            ref.setParent(myExtendsList);
+          }
         }
       }
     }
-  ;
-  }
-               return myExtendsList;
+    return myExtendsList;
   }
 
   private boolean parseViaGenericSignature() {
@@ -368,39 +364,38 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiReferenceList getImplementsList() {
-  synchronized (PsiLock.LOCK) {
-    if (myImplementsList == null) {
-      if (!isInterface()) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          try {
-            if (parseViaGenericSignature()) return myImplementsList;
-            myImplementsList = buildInterfaceList(PsiKeyword.IMPLEMENTS);
+    synchronized (PsiLock.LOCK) {
+      if (myImplementsList == null) {
+        if (!isInterface()) {
+          long repositoryId = getRepositoryId();
+          if (repositoryId < 0) {
+            try {
+              if (parseViaGenericSignature()) return myImplementsList;
+              myImplementsList = buildInterfaceList(PsiKeyword.IMPLEMENTS);
+            }
+            catch (ClsFormatException e) {
+              myImplementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
+            }
           }
-          catch (ClsFormatException e) {
-            myImplementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
+          else {
+            ClassView classView = getRepositoryManager().getClassView();
+            String[] refTexts = classView.getImplementsList(repositoryId);
+            ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
+            for (int i = 0; i < refTexts.length; i++) {
+              refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
+            }
+            myImplementsList = new ClsReferenceListImpl(this, refs, PsiKeyword.IMPLEMENTS);
+            for (ClsJavaCodeReferenceElementImpl ref : refs) {
+              ref.setParent(myImplementsList);
+            }
           }
         }
         else {
-          ClassView classView = getRepositoryManager().getClassView();
-          String[] refTexts = classView.getImplementsList(repositoryId);
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[refTexts.length];
-          for (int i = 0; i < refTexts.length; i++) {
-            refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
-          }
-          myImplementsList = new ClsReferenceListImpl(this, refs, PsiKeyword.IMPLEMENTS);
-          for (ClsJavaCodeReferenceElementImpl ref : refs) {
-            ref.setParent(myImplementsList);
-          }
+          myImplementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
         }
       }
-      else {
-        myImplementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
-      }
     }
-  ;
-  }
-               return myImplementsList;
+    return myImplementsList;
   }
 
   @NotNull
@@ -494,53 +489,52 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiField[] getFields() {
-  synchronized (PsiLock.LOCK) {
-    if (myFields == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
-          int count = ClsUtil.readU2(ptr);
-          ptr.offset += count * 2; // skip interfaces
-          count = ClsUtil.readU2(ptr);
-          ArrayList<PsiField> array = new ArrayList<PsiField>();
-          for (int i = 0; i < count; i++) {
-            PsiField field;
-            if (isEnumField(ptr.offset)) {
-              field = new ClsEnumConstantImpl(this, ptr.offset);
+    synchronized (PsiLock.LOCK) {
+      if (myFields == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            ClassFileData classFileData = getClassFileData();
+            BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
+            int count = ClsUtil.readU2(ptr);
+            ptr.offset += count * 2; // skip interfaces
+            count = ClsUtil.readU2(ptr);
+            ArrayList<PsiField> array = new ArrayList<PsiField>();
+            for (int i = 0; i < count; i++) {
+              PsiField field;
+              if (isEnumField(ptr.offset)) {
+                field = new ClsEnumConstantImpl(this, ptr.offset);
+              }
+              else {
+                field = new ClsFieldImpl(this, ptr.offset);
+              }
+              String name = field.getName();
+              //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic fields
+              if (myManager.getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated fields
+                array.add(field);
+              }
+              ptr.offset += 6;
+              ClsUtil.skipAttributes(ptr);
             }
-            else {
-              field = new ClsFieldImpl(this, ptr.offset);
-            }
-            String name = field.getName();
-            //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic fields
-            if (myManager.getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated fields
-              array.add(field);
-            }
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
+            myFields = array.toArray(new PsiField[array.size()]);
           }
-          myFields = array.toArray(new PsiField[array.size()]);
+          catch (ClsFormatException e) {
+            myFields = PsiField.EMPTY_ARRAY;
+          }
         }
-        catch (ClsFormatException e) {
-          myFields = PsiField.EMPTY_ARRAY;
+        else {
+          long[] fieldIds = getRepositoryManager().getClassView().getFields(repositoryId);
+          PsiField[] fields = new PsiField[fieldIds.length];
+          RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
+          for (int i = 0; i < fieldIds.length; i++) {
+            long id = fieldIds[i];
+            fields[i] = (PsiField)repositoryElementsManager.findOrCreatePsiElementById(id);
+          }
+          myFields = fields;
         }
-      }
-      else {
-        long[] fieldIds = getRepositoryManager().getClassView().getFields(repositoryId);
-        PsiField[] fields = new PsiField[fieldIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < fieldIds.length; i++) {
-          long id = fieldIds[i];
-          fields[i] = (PsiField)repositoryElementsManager.findOrCreatePsiElementById(id);
-        }
-        myFields = fields;
       }
     }
-  ;
-  }
-               return myFields;
+    return myFields;
   }
 
   private boolean isEnumField(int ptrOffset) {
@@ -563,55 +557,54 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiMethod[] getMethods() {
-  synchronized (PsiLock.LOCK) {
-    if (myMethods == null) {
-      long repositoryId = getRepositoryId();
+    synchronized (PsiLock.LOCK) {
+      if (myMethods == null) {
+        long repositoryId = getRepositoryId();
 
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
-          int count = ClsUtil.readU2(ptr);
-          ptr.offset += count * 2; // skip interfaces
-          count = ClsUtil.readU2(ptr);
-          for (int i = 0; i < count; i++) { // skip fields
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
-          }
-          count = ClsUtil.readU2(ptr);
-          ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
-          for (int i = 0; i < count; i++) {
-            ClsMethodImpl method = new ClsMethodImpl(this, ptr.offset);
-            String name = method.getName();
-            //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic methods
-            if (!method.isBridge()) { //skip bridge methods
-              if (myManager.getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated methods
-                array.add(method);
-              }
+        if (repositoryId < 0) {
+          try {
+            ClassFileData classFileData = getClassFileData();
+            BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
+            int count = ClsUtil.readU2(ptr);
+            ptr.offset += count * 2; // skip interfaces
+            count = ClsUtil.readU2(ptr);
+            for (int i = 0; i < count; i++) { // skip fields
+              ptr.offset += 6;
+              ClsUtil.skipAttributes(ptr);
             }
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
+            count = ClsUtil.readU2(ptr);
+            ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
+            for (int i = 0; i < count; i++) {
+              ClsMethodImpl method = new ClsMethodImpl(this, ptr.offset);
+              String name = method.getName();
+              //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic methods
+              if (!method.isBridge()) { //skip bridge methods
+                if (myManager.getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated methods
+                  array.add(method);
+                }
+              }
+              ptr.offset += 6;
+              ClsUtil.skipAttributes(ptr);
+            }
+            myMethods = array.toArray(new PsiMethod[array.size()]);
           }
-          myMethods = array.toArray(new PsiMethod[array.size()]);
+          catch (ClsFormatException e) {
+            myMethods = PsiMethod.EMPTY_ARRAY;
+          }
         }
-        catch (ClsFormatException e) {
-          myMethods = PsiMethod.EMPTY_ARRAY;
+        else {
+          long[] methodIds = getRepositoryManager().getClassView().getMethods(repositoryId);
+          PsiMethod[] methods = new PsiMethod[methodIds.length];
+          RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
+          for (int i = 0; i < methodIds.length; i++) {
+            long id = methodIds[i];
+            methods[i] = (PsiMethod)repositoryElementsManager.findOrCreatePsiElementById(id);
+          }
+          myMethods = methods;
         }
-      }
-      else {
-        long[] methodIds = getRepositoryManager().getClassView().getMethods(repositoryId);
-        PsiMethod[] methods = new PsiMethod[methodIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < methodIds.length; i++) {
-          long id = methodIds[i];
-          methods[i] = (PsiMethod)repositoryElementsManager.findOrCreatePsiElementById(id);
-        }
-        myMethods = methods;
       }
     }
-  ;
-  }
-               return myMethods;
+    return myMethods;
   }
 
   @NotNull
@@ -624,43 +617,42 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-  synchronized (PsiLock.LOCK) {
-    if (myInnerClasses == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        VirtualFile vFile = myClassFileData.vFile;
-        VirtualFile parentFile = vFile.getParent();
-        if (parentFile == null) return PsiClass.EMPTY_ARRAY;
-        String name = vFile.getNameWithoutExtension();
-        String prefix = name + "$";
-        ArrayList<PsiClass> array = new ArrayList<PsiClass>();
-        VirtualFile[] children = parentFile.getChildren();
-        for (VirtualFile child : children) {
-          String childName = child.getNameWithoutExtension();
-          if (childName.startsWith(prefix)) {
-            String innerName = childName.substring(prefix.length());
-            if (innerName.indexOf('$') >= 0) continue;
-            if (!myManager.getNameHelper().isIdentifier(innerName)) continue;
-            PsiClass aClass = new ClsClassImpl(myManager, this, child);
-            array.add(aClass);
+    synchronized (PsiLock.LOCK) {
+      if (myInnerClasses == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          VirtualFile vFile = myClassFileData.vFile;
+          VirtualFile parentFile = vFile.getParent();
+          if (parentFile == null) return PsiClass.EMPTY_ARRAY;
+          String name = vFile.getNameWithoutExtension();
+          String prefix = name + "$";
+          ArrayList<PsiClass> array = new ArrayList<PsiClass>();
+          VirtualFile[] children = parentFile.getChildren();
+          for (VirtualFile child : children) {
+            String childName = child.getNameWithoutExtension();
+            if (childName.startsWith(prefix)) {
+              String innerName = childName.substring(prefix.length());
+              if (innerName.indexOf('$') >= 0) continue;
+              if (!myManager.getNameHelper().isIdentifier(innerName)) continue;
+              PsiClass aClass = new ClsClassImpl(myManager, this, child);
+              array.add(aClass);
+            }
           }
+          myInnerClasses = array.toArray(new PsiClass[array.size()]);
         }
-        myInnerClasses = array.toArray(new PsiClass[array.size()]);
-      }
-      else {
-        long[] classIds = getRepositoryManager().getClassView().getInnerClasses(repositoryId);
-        PsiClass[] classes = new PsiClass[classIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < classIds.length; i++) {
-          long id = classIds[i];
-          classes[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
+        else {
+          long[] classIds = getRepositoryManager().getClassView().getInnerClasses(repositoryId);
+          PsiClass[] classes = new PsiClass[classIds.length];
+          RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
+          for (int i = 0; i < classIds.length; i++) {
+            long id = classIds[i];
+            classes[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
+          }
+          myInnerClasses = classes;
         }
-        myInnerClasses = classes;
       }
     }
-  ;
-  }
-               return myInnerClasses;
+    return myInnerClasses;
   }
 
   @NotNull
@@ -763,26 +755,25 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isDeprecated() {
-  synchronized (PsiLock.LOCK) {
-    if (myIsDeprecated == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          boolean isDeprecated = readClassAttribute("Deprecated") != null;
+    synchronized (PsiLock.LOCK) {
+      if (myIsDeprecated == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            boolean isDeprecated = readClassAttribute("Deprecated") != null;
+            myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
+          }
+          catch (ClsFormatException e) {
+            myIsDeprecated = Boolean.FALSE;
+          }
+        }
+        else {
+          boolean isDeprecated = getRepositoryManager().getClassView().isDeprecated(repositoryId);
           myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
         }
-        catch (ClsFormatException e) {
-          myIsDeprecated = Boolean.FALSE;
-        }
-      }
-      else {
-        boolean isDeprecated = getRepositoryManager().getClassView().isDeprecated(repositoryId);
-        myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
       }
     }
-  ;
-  }
-               return myIsDeprecated.booleanValue();
+    return myIsDeprecated.booleanValue();
   }
 
   public String getSourceFileName() {
@@ -855,13 +846,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   public PsiDocComment getDocComment() {
                if (!isDeprecated()) return null;
 
-  synchronized (PsiLock.LOCK) {
-    if (myDocComment == null) {
-      myDocComment = new ClsDocCommentImpl(this);
+    synchronized (PsiLock.LOCK) {
+      if (myDocComment == null) {
+        myDocComment = new ClsDocCommentImpl(this);
+      }
     }
-  ;
-  }
-               return myDocComment;
+    return myDocComment;
   }
 
   public PsiJavaToken getLBrace() {
