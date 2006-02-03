@@ -14,18 +14,18 @@ public interface PropertyEditorListener extends EventListener{
    * is cancelled. PropertyInspector, for example, applies
    * new value and continue editing.
    */
-  public void valueCommited(PropertyEditor source);
+  void valueCommited(PropertyEditor source);
 
   /**
    * This method is invoked when user cancelled editing.
    * Foe example, user pressed "Esc" in the text field.
    */
-  public void editingCanceled(PropertyEditor source);
+  void editingCanceled(PropertyEditor source);
 
   /**
    * Editor can notify listeners that its preferred size changed.
    * In some cases (for example, during inplace editing) it's possible
    * to adjust size of the editor component.
    */
-  public void preferredSizeChanged(PropertyEditor source);
+  void preferredSizeChanged(PropertyEditor source);
 }
