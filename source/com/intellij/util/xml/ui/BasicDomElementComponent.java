@@ -11,6 +11,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.Field;
 
 /**
@@ -25,6 +26,8 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
   }
 
   protected void bindProperties() {
+    if (getDomElement() == null) return;
+
     final java.util.List<DomChildrenDescription> childrenDescriptions = getDomElement().getGenericInfo().getChildrenDescriptions();
     for (DomChildrenDescription description : childrenDescriptions) {
       final JComponent boundComponent = getBoundComponent(description);
@@ -91,5 +94,15 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
 
   protected Project getProject() {
     return getDomElement().getManager().getProject();
+  }
+
+  protected void setEnabled(Component component, boolean enabled) {
+    component.setEnabled(enabled);
+    if (component instanceof Container) {
+      for (Component child : ((Container)component).getComponents()) {
+        setEnabled(child, enabled);
+      }
+    }
+
   }
 }
