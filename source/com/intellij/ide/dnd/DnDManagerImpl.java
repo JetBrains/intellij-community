@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,8 +19,8 @@ import java.awt.event.ActionListener;
 public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDEvent.DropTargetHighlightingType {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
 
-  static final String SOURCE_KEY = "DnD Source";
-  static final String TARGET_KEY = "DnD Target";
+  static final @NonNls String SOURCE_KEY = "DnD Source";
+  static final @NonNls String TARGET_KEY = "DnD Target";
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
@@ -46,9 +47,6 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   private Runnable myHightlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
-
-  public DnDManagerImpl() {
-  }
 
   public void projectOpened() {
   }
@@ -235,7 +233,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     return canGoToParent;
   }
 
-  private Component findAllowedParentComponent(Component aComponentOverDragging) {
+  private static Component findAllowedParentComponent(Component aComponentOverDragging) {
     Component eachParent = aComponentOverDragging;
     while (true) {
       eachParent = eachParent.getParent();
@@ -250,14 +248,14 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     }
   }
 
-  private DnDSource getSource(Component component) {
+  private static DnDSource getSource(Component component) {
     if (component instanceof JComponent) {
       return (DnDSource)((JComponent)component).getClientProperty(SOURCE_KEY);
     }
     return null;
   }
 
-  private DnDTarget getTarget(Component component) {
+  private static DnDTarget getTarget(Component component) {
     if (component instanceof JComponent) {
       DnDTarget target = (DnDTarget)((JComponent)component).getClientProperty(TARGET_KEY);
       if (target != null) return target;
@@ -331,7 +329,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     };
   }
 
-  private boolean isMessageProvided(final DnDEvent aEvent) {
+  private static boolean isMessageProvided(final DnDEvent aEvent) {
     return aEvent.getExpectedDropResult() != null && aEvent.getExpectedDropResult().trim().length() > 0;
   }
 
@@ -348,7 +346,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     }
   }
 
-  private JLayeredPane getLayeredPane(Component aComponent) {
+  private static JLayeredPane getLayeredPane(Component aComponent) {
     if (aComponent == null) return null;
 
     if (aComponent instanceof JLayeredPane) {
@@ -398,7 +396,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     myLastHighlightedRec = aRectangle;
   }
 
-  private void resetCurrentEvent(String s) {
+  private void resetCurrentEvent(@NonNls String s) {
     myCurrentEvent = null;
     LOG.debug("Reset Current Event: " + s);
   }
@@ -424,8 +422,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
           myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
           myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
-          // [spleaner]: no drop cursor by default (jira: FBQ-12864)
-          dge.startDrag(DragSource.DefaultCopyNoDrop, myCurrentEvent, myDragSourceListener);
+          dge.startDrag(DragSource.DefaultCopyDrop, myCurrentEvent, myDragSourceListener);
 
           // check if source is also a target
           //        DnDTarget target = getTarget(dge.getComponent());
@@ -438,7 +435,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
 
   }
 
-  private DnDAction getDnDActionForPlatformAction(int platformAction) {
+  private static DnDAction getDnDActionForPlatformAction(int platformAction) {
     DnDAction action = null;
     switch (platformAction) {
       case DnDConstants.ACTION_COPY :
@@ -493,7 +490,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
-          doDrop(dtde, component);
+          doDrop(component);
 
           if (myCurrentEvent.shouldRemoveHighlightings()) {
             hideCurrentHighlighter();
@@ -513,7 +510,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
       }
     }
 
-    private void doDrop(DropTargetDropEvent dtde, Component component) {
+    private void doDrop(Component component) {
       if (myCurrentEvent.canHandleDrop()) {
         myCurrentEvent.handleDrop();
       }
