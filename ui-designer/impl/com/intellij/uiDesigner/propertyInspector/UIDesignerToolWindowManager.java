@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
         myPropertyInspector= new PropertyInspector(myProject, null, myComponentTree);
         myToolWindowPanel.setFirstComponent(scrollPane);
         myToolWindowPanel.setSecondComponent(myPropertyInspector);
-        myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("UI Designer",
+        myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
                                                                                    myToolWindowPanel,
                                                                                    ToolWindowAnchor.LEFT);
 
@@ -68,7 +69,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
   public void projectClosed() {
     if (myToolWindowPanel != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow("UI Designer");
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"));
       myFileEditorManager.removeFileEditorManagerListener(myListener);
       myToolWindowPanel = null;
       myToolWindow = null;
@@ -97,10 +98,11 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     myComponentTree.setEditor(activeFormEditor);
     myPropertyInspector.setEditor(activeFormEditor);
     if (activeFormEditor == null) {
-      myToolWindow.hide(null);
+      myToolWindow.setAvailable(false, null);
     }
     else {
       myComponentTreeBuilder = new ComponentTreeBuilder(myComponentTree, activeFormEditor);
+      myToolWindow.setAvailable(true, null);
       myToolWindow.show(null);
     }
   }

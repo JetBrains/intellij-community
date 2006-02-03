@@ -5,6 +5,7 @@
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -38,7 +39,7 @@ public class PaletteManager implements ProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myPaletteWindow = new PaletteWindow(myProject);
-        myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette",
+        myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(IdeBundle.message("toolwindow.palette"),
                                                                                           myPaletteWindow,
                                                                                           ToolWindowAnchor.RIGHT);
       }
@@ -47,7 +48,7 @@ public class PaletteManager implements ProjectComponent {
 
   public void projectClosed() {
     if (myPaletteWindow != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow("Palette");
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(IdeBundle.message("toolwindow.palette"));
       myPaletteWindow = null;
     }
     myFileEditorManager.removeFileEditorManagerListener(myListener);
@@ -94,9 +95,10 @@ public class PaletteManager implements ProjectComponent {
   private void processFileEditorChange() {
     myPaletteWindow.refreshPaletteIfChanged();
     if (myPaletteWindow.getActiveGroupCount() == 0) {
-      myPaletteToolWindow.hide(null);
+      myPaletteToolWindow.setAvailable(false, null);
     }
     else {
+      myPaletteToolWindow.setAvailable(true, null);
       myPaletteToolWindow.show(null);
     }
   }
