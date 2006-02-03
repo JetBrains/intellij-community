@@ -206,7 +206,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       DataConstantsEx.PASTE_PROVIDER.equals(dataId) ||
       DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)
     ) {
-      return myEditor.getData(dataId);
+      return myEditor == null ? null : myEditor.getData(dataId);
     }
 
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
