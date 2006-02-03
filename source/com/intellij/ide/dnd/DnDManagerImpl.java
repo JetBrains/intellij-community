@@ -538,13 +538,11 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
 
   private void onDragExit() {
     if (myCurrentDragContext != null) {
-      Cursor cursor = DragSource.DefaultCopyNoDrop;
-      myCurrentDragContext.setCursor(cursor);
+      myCurrentDragContext.setCursor(null);
     }
 
     myLastProcessedTarget.cleanUpOnLeave();
     hideCurrentHighlighter();
-    //FabriqueStatusBar.setStatusText("");
     myHightlighterShowRequest = null;
   }
 
