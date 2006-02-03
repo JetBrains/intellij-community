@@ -4,8 +4,10 @@
 package com.intellij.codeInspection.reference;
 
 /**
- * User: anna
- * Date: 28-Dec-2005
+ * A node in the reference graph corresponding to a project. A single instance of this
+ * node exists in the graph.
+ *
+ * @see RefManager#getRefProject() 
  */
 public interface RefProject extends RefEntity {
   RefPackage getDefaultPackage();

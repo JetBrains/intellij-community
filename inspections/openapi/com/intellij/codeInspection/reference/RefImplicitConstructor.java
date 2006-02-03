@@ -4,8 +4,10 @@
 package com.intellij.codeInspection.reference;
 
 /**
- * User: anna
- * Date: 27-Dec-2005
+ * A node in the reference graph corresponding to the implicit constructor of a Java class.
+ *
+ * @author anna
+ * @since 6.0
  */
 public interface RefImplicitConstructor extends RefMethod {
 }

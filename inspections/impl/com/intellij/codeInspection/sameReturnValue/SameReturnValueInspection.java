@@ -46,9 +46,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
   @Nullable
   private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
     if (refMethod.isConstructor()) return null;
-    if (refMethod.isLibraryOverride()) return null;
-
-    if (!refMethod.getSuperMethods().isEmpty()) return null;
+    if (refMethod.hasSuperMethods()) return null;
 
     String returnValue = refMethod.getReturnValueIfSame();
     if (returnValue != null) {

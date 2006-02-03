@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,7 +88,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     mySuperMethods = new ArrayList<RefMethod>(0);
 
     initializeSuperMethods(method);
-    if (isLibraryOverride()) {
+    if (isExternalOverride()) {
       ((RefClassImpl)getOwnerClass()).addLibraryOverrideMethod(this);
     }
 
@@ -174,10 +175,12 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     myParameters = new RefParameterImpl[0];
   }
 
+  @NotNull
   public Collection<RefMethod> getSuperMethods() {
     return mySuperMethods;
   }
 
+  @NotNull
   public Collection<RefMethod> getDerivedMethods() {
     return myDerivedMethods;
   }
@@ -248,7 +251,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       checkForSuperCall(method);
       setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-      setBodyEmpty(isOnlyCallsSuper() || !isLibraryOverride() && (body == null || body.getStatements().length == 0));
+      setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
 
       final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
       EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
@@ -343,7 +346,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
-  private boolean isEjbException(String qualifiedName) {
+  private static boolean isEjbException(String qualifiedName) {
     return "javax.ejb.CreateException".equals(qualifiedName) ||
            "java.rmi.RemoteException".equals(qualifiedName) ||
            "javax.ejb.FinderException".equals(qualifiedName) ||
@@ -351,7 +354,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   private void collectUncaughtExceptions(PsiMethod method) {
-    if (isLibraryOverride()) return;
+    if (isExternalOverride()) return;
     @NonNls final String name = method.getName();
     if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
 
@@ -383,7 +386,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     visitor.visitMethod(this);
   }
 
-  public boolean isLibraryOverride() {
+  public boolean isExternalOverride() {
     return isLibraryOverride(new HashSet<RefMethod>());
   }
 
@@ -418,6 +421,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     return checkFlag(IS_EJB_IMPLEMENTATION_MASK);
   }
 
+  public boolean hasSuperMethods() {
+    return getSuperMethods().size() > 0 || isLibraryOverride(new HashSet<RefMethod>());
+  }
+
   public boolean isReferenced() {
     // Directly called from somewhere..
     for (RefElement refCaller : getInReferences()) {
@@ -425,7 +432,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
 
     // Library override probably called from library code.
-    return isLibraryOverride();
+    return isExternalOverride();
   }
 
   public boolean hasSuspiciousCallers() {
@@ -435,7 +442,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
 
     // Library override probably called from library code.
-    if (isLibraryOverride()) return true;
+    if (isExternalOverride()) return true;
 
     // Class isn't instantiated. Most probably we have problem with class, not method.
     if (!isStatic() && !isConstructor()) {
@@ -618,7 +625,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   public void updateParameterValues(PsiExpression[] args) {
-    if (isLibraryOverride()) return;
+    if (isExternalOverride()) return;
 
     if (getSuperMethods().size() > 0) {
       for (RefMethod refSuper : getSuperMethods()) {

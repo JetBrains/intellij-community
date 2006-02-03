@@ -399,7 +399,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                   return;
                 }
 
-                if (!refMethod.isLibraryOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
+                if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                   for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
                     myProcessedSuspicious.add(derivedMethod);
                   }

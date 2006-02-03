@@ -254,7 +254,7 @@ public abstract class HTMLComposer {
     buf.append(A_HREF_OPENING);
 
     if (myExporter == null) {
-      buf.append(refElement.getURL());
+      buf.append(((RefElementImpl) refElement).getURL());
     }
     else {
       buf.append(myExporter.getURL(refElement));
@@ -315,7 +315,7 @@ public abstract class HTMLComposer {
     buf.append(A_HREF_OPENING);
 
     if (myExporter == null) {
-      buf.append(refElement.getURL());
+      buf.append(((RefElementImpl) refElement).getURL());
     }
     else {
       buf.append(myExporter.getURL(refElement));

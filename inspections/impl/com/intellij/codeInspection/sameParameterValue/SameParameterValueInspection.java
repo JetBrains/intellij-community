@@ -43,8 +43,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
   }
 
   private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
-    if (refMethod.isLibraryOverride()) return null;
-    if (!refMethod.getSuperMethods().isEmpty()) return null;
+    if (refMethod.hasSuperMethods()) return null;
 
     ArrayList<ProblemDescriptor> problems = null;
     RefParameter[] parameters = refMethod.getParameters();

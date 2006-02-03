@@ -176,7 +176,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
               if (refMethod.isAppMain()) {
                 getFilter().addIgnoreList(refMethod);
               }
-              else if (!refMethod.isLibraryOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
+              else if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                        !(refMethod instanceof RefImplicitConstructor)) {
                 getManager().enqueueDerivedMethodsProcessor(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {

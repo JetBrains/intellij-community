@@ -183,7 +183,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
         final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
         EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
         if (classRole != null) {
-          if (!refMethod.getSuperMethods().isEmpty() || refMethod.isLibraryOverride()) {
+          if (!refMethod.hasSuperMethods()) {
             ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
           }
           EjbMethodRole role = ejbRolesUtil.getEjbRole(method);

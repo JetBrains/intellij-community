@@ -25,8 +25,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * User: anna
- * Date: 28-Dec-2005
+ * Application component which provides utility methods for working with the reference
+ * graph.
+ *
+ * @author anna
+ * @since 6.0
  */
 public abstract class RefUtil implements ApplicationComponent {
   public static RefUtil getInstance(){

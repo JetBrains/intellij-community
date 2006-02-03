@@ -16,9 +16,17 @@
 package com.intellij.codeInspection.reference;
 
 /**
- * User: anna
- * Date: 28-Dec-2005
+ * A node in the reference graph corresponding to a Java package.
+ *
+ * @author anna
+ * @since 6.0
+ * @see RefManager#getPackage
  */
 public interface RefPackage extends RefEntity {
+  /**
+   * Returns the full-qualified name for the package, or an empty string for the default package.
+   *
+   * @return the full-qualified name for the package.
+   */
   String getQualifiedName();
 }

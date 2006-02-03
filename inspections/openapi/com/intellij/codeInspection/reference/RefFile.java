@@ -18,9 +18,16 @@ package com.intellij.codeInspection.reference;
 import com.intellij.psi.PsiFile;
 
 /**
- * User: anna
- * Date: 27-Dec-2005
+ * A node in the reference graph corresponding to a file.
+ *
+ * @author anna
+ * @since 6.0
  */
 public interface RefFile extends RefElement {
+  /**
+   * Returns the file to which the node corresponds.
+   *
+   * @return the file for the node.
+   */
   PsiFile getElement();
 }

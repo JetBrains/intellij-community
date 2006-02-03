@@ -137,7 +137,7 @@ public class DeadHTMLComposer extends HTMLComposer {
 
       public void visitMethod(RefMethod method) {
         RefClass refClass = method.getOwnerClass();
-        if (method.isLibraryOverride()) {
+        if (method.isExternalOverride()) {
           String classOrInterface = getClassOrInterface(refClass, false);
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
         } else if (method.isStatic() || method.isConstructor()) {

@@ -18,16 +18,38 @@ package com.intellij.codeInspection.reference;
 import com.intellij.psi.PsiField;
 
 /**
- * User: anna
- * Date: 27-Dec-2005
+ * A node in the reference graph corresponding to a Java field.
+ *
+ * @author anna
+ * @since 6.0
  */
 public interface RefField extends RefElement {
+  /**
+   * Checks if the field is used for reading.
+   *
+   * @return true if the field has read accesses, false otherwise.
+   */
   boolean isUsedForReading();
 
+  /**
+   * Checks if the field is used for writing.
+   *
+   * @return true if the field has write accesses, false otherwise.
+   */
   boolean isUsedForWriting();
 
+  /**
+   * Checks if the only write access of the field is its initializer.
+   *
+   * @return true if the only write access of the field is its initializer, false otherwise.
+   */
   boolean isOnlyAssignedInInitializer();
 
+  /**
+   * Returns the reference graph node for the class to which the field belongs.
+   *
+   * @return the owner class of the field.
+   */
   RefClass getOwnerClass();
 
   PsiField getElement();

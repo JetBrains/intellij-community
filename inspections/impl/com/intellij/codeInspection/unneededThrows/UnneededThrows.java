@@ -56,8 +56,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
   @Nullable
   private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod) {
-    if (refMethod.isLibraryOverride()) return null;
-    if (refMethod.getSuperMethods().size() > 0) return null;
+    if (refMethod.hasSuperMethods()) return null;
 
     PsiClassType[] unThrown = refMethod.getUnThrownExceptions();
     if (unThrown == null) return null;
