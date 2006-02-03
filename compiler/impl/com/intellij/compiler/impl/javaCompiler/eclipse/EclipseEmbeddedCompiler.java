@@ -150,7 +150,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
         try {
           commandLine.remove("-verbose");
           String[] finalCmds = commandLine.toArray(new String[commandLine.size()]);
-          myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds);
+          myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds,compileContext);
           myExitCode = 0;
           return myExitCode;
         }

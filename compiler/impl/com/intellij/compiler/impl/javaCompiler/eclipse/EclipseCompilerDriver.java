@@ -22,6 +22,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,10 +32,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.*;
 import org.eclipse.jdt.internal.compiler.Compiler;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.batch.FileSystem;
 import org.eclipse.jdt.internal.compiler.batch.Main;
@@ -71,8 +75,7 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     classPath = driver.getLibraryAccess();
   }
 
-  private CompilationUnit[] getCompilationUnits()
-    throws InvalidInputException {
+  private CompilationUnit[] getCompilationUnits() {
     int fileCount = sourceFilePaths.length;
     CompilationUnit[] units = new CompilationUnit[fileCount];
     final String defaultEncoding = null;
@@ -83,9 +86,13 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     return units;
   }
 
-  private ICompilerRequestor getBatchRequestor() {
+  private ICompilerRequestor getBatchRequestor(final CompileContext compileContext) {
     return new ICompilerRequestor() {
       public void acceptResult(CompilationResult compilationResult) {
+        ProgressIndicator progress = compileContext.getProgressIndicator();
+        if (progress != null) {
+          progress.checkCanceled();
+        }
         myCompilationResults.offer(compilationResult);
       }
     };
@@ -118,19 +125,32 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
   }
 
 
-  private void compile() throws InvalidInputException, InterruptedException {
+  private void compile(final CompileContext compileContext) {
     final INameEnvironment environment = getEnvironment();
 
-    Compiler batchCompiler =
+    Compiler compiler =
       new Compiler(
         environment,
         getHandlingPolicy(),
         getCompilerOptions(),
-        getBatchRequestor(),
-        getProblemFactory());
-    batchCompiler.compile(getCompilationUnits());
-    myCompilationResults.offer(END_OF_STREAM);
-    environment.cleanup();
+        getBatchRequestor(compileContext),
+        getProblemFactory()){
+        protected void handleInternalException(Throwable internalException, CompilationUnitDeclaration unit, CompilationResult result) {
+          if (internalException instanceof ProcessCanceledException) throw (ProcessCanceledException)internalException;
+          super.handleInternalException(internalException, unit, result);
+        }
+      };
+    compiler.parseThreshold = 2500;
+    try {
+      compiler.compile(getCompilationUnits());
+    }
+    catch (ProcessCanceledException e) {
+      //compileContext.addMessage(CompilerMessageCategory.ERROR, "Canceled",null,-1,-1);
+    }
+    finally {
+      myCompilationResults.offer(END_OF_STREAM);
+      environment.cleanup();
+    }
   }
 
   public boolean processMessageLine(final OutputParser.Callback callback, final String outputDir, Project project) {
@@ -203,10 +223,10 @@ public class EclipseCompilerDriver implements IEclipseCompilerDriver {
     }).intValue();
   }
 
-  public void parseCommandLineAndCompile(final String[] finalCmds) throws Exception {
+  public void parseCommandLineAndCompile(final String[] finalCmds, final CompileContext compileContext) throws Exception {
     parseCommandLine(finalCmds);
 
-    compile();
+    compile(compileContext);
   }
 
   private static class MyCompilationUnit extends CompilationUnit {

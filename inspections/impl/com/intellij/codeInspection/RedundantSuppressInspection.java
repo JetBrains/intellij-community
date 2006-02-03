@@ -2,7 +2,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -95,6 +97,7 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
       }
     }
 
+    ((RefManagerImpl)((InspectionManagerEx)manager).getRefManager()).inspectionReadActionStarted();
 
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (InspectionTool tool : suppressedTools) {
@@ -133,10 +136,11 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
           PsiElement element = suppressedScope instanceof PsiComment
                                ? PsiTreeUtil.skipSiblingsForward(suppressedScope, PsiWhiteSpace.class)
                                : suppressedScope.getFirstChild();
-          PsiElement suppressedIn = InspectionManagerEx.getElementToolSuppressedIn(element, toolId);
-          if (suppressedIn != null && suppressedIn.isValid()) {
+          PsiElement annotation = InspectionManagerEx.getElementToolSuppressedIn(element, toolId);
+          if (annotation != null && annotation.isValid()) {
             String description = InspectionsBundle.message("inspection.redundant.suppression.description");
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(suppressedIn, description, (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            LocalQuickFix fix = new RemoveSuppressWarningAction(toolId, annotation);
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             result.add(descriptor);
           }
         }
