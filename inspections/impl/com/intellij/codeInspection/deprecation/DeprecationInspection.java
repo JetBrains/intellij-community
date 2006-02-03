@@ -48,58 +48,43 @@ public class DeprecationInspection extends LocalInspectionTool {
     }
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
         checkDeprecated(resolved, reference.getReferenceNameElement(), myHolder);
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
 
-      public void visitNewExpression(PsiNewExpression expression) {
-        super.visitNewExpression(expression);
-        PsiType type = expression.getType();
-        PsiExpressionList list = expression.getArgumentList();
-        if (!(type instanceof PsiClassType)) return;
-        PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
-        PsiClass aClass = typeResult.getElement();
+    public void visitNewExpression(PsiNewExpression expression) {
+      PsiType type = expression.getType();
+      PsiExpressionList list = expression.getArgumentList();
+      if (!(type instanceof PsiClassType)) return;
+      PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
+      PsiClass aClass = typeResult.getElement();
+      if (aClass == null) return;
+      if (aClass instanceof PsiAnonymousClass) {
+        type = ((PsiAnonymousClass)aClass).getBaseClassType();
+        typeResult = ((PsiClassType)type).resolveGenerics();
+        aClass = typeResult.getElement();
         if (aClass == null) return;
-        if (aClass instanceof PsiAnonymousClass) {
-          type = ((PsiAnonymousClass)aClass).getBaseClassType();
-          typeResult = ((PsiClassType)type).resolveGenerics();
-          aClass = typeResult.getElement();
-          if (aClass == null) return;
-        }
-        final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
-        final PsiMethod[] constructors = aClass.getConstructors();
-        if (constructors.length > 0 && list != null) {
-          list.acceptChildren(new PsiElementVisitor() {
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
-              DeprecationElementVisitor.this.visitReferenceElement(expression);
-            }
-          });
-          JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
-          MethodCandidateInfo result = null;
-          if (results.length == 1) result = (MethodCandidateInfo)results[0];
+      }
+      final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
+      final PsiMethod[] constructors = aClass.getConstructors();
+      if (constructors.length > 0 && list != null) {
+        JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
+        MethodCandidateInfo result = null;
+        if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
-          PsiMethod constructor = result == null ? null : result.getElement();
-          if (constructor != null && expression.getClassReference() != null) {
-            checkDeprecated(constructor, expression.getClassReference(), myHolder);
-          }
+        PsiMethod constructor = result == null ? null : result.getElement();
+        if (constructor != null && expression.getClassReference() != null) {
+          checkDeprecated(constructor, expression.getClassReference(), myHolder);
         }
       }
+    }
 
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
-        super.visitMethodCallExpression(methodCall);
-        PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
-        JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
-        PsiElement element = resolveResult.getElement();
-        checkDeprecated(element, referenceToMethod.getReferenceNameElement(), myHolder);
-      }
-
-      public void visitMethod(PsiMethod method){
-        super.visitMethod(method);
+    public void visitMethod(PsiMethod method){
         MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
         if (!method.isConstructor()) {
           List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
