@@ -2,13 +2,16 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -19,6 +22,10 @@ import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.editors.BindingEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BindingRenderer;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.util.Query;
+import com.intellij.util.Processor;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
@@ -57,6 +64,7 @@ public final class BindingProperty extends Property {
     final String newBinding = (String)value;
 
     if (newBinding.length() == 0) {
+      checkRemoveUnusedField(myProject, component);
       component.setBinding(null);
       return;
     }
@@ -129,5 +137,56 @@ public final class BindingProperty extends Property {
 
     final RenameProcessor processor = new RenameProcessor(myProject, oldField, newBinding, true, true);
     processor.run();
+  }
+
+  public static void checkRemoveUnusedField(final Project project, final RadComponent component) {
+    final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+    final String classToBind = root.getClassToBind();
+    if (classToBind != null) {
+      final PsiManager manager = PsiManager.getInstance(project);
+      PsiClass aClass = manager.findClass(classToBind, GlobalSearchScope.allScope(project));
+      if (aClass != null) {
+        final PsiField oldBindingField = aClass.findFieldByName(component.getBinding(), false);
+        if (oldBindingField != null) {
+          final Query<PsiReference> query = ReferencesSearch.search(oldBindingField);
+          boolean unreferenced = query.forEach(new Processor<PsiReference>() {
+            public boolean process(final PsiReference t) {
+              PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
+              if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
+                return true;
+              }
+              return false;
+            }
+          });
+          if (unreferenced) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
+              return;
+            }
+            ApplicationManager.getApplication().runWriteAction(
+              new Runnable() {
+                public void run() {
+                  CommandProcessor.getInstance().executeCommand(
+                    project,
+                    new Runnable() {
+                      public void run() {
+                        try {
+                          oldBindingField.delete();
+                        }
+                        catch (IncorrectOperationException e) {
+                          Messages.showErrorDialog(project, UIDesignerBundle.message("error.cannot.delete.unused.field", e.getMessage()),
+                                                   CommonBundle.getErrorTitle());
+                        }
+                      }
+                    },
+                    UIDesignerBundle.message("command.delete.unused.field"), null
+                  );
+                }
+              }
+            );
+          }
+        }
+      }
+    }
+
   }
 }

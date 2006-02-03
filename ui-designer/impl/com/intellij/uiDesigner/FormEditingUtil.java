@@ -16,6 +16,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.containers.HashSet;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -47,7 +48,7 @@ public final class FormEditingUtil {
    * @param editor the editor in which the selection is deleted.
    */
   public static void deleteSelection(final GuiEditor editor){
-    final ArrayList<RadComponent> selection = getSelectedComponents(editor);
+    final List<RadComponent> selection = getSelectedComponents(editor);
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
       final RadContainer parent = component.getParent();
@@ -59,6 +60,8 @@ public final class FormEditingUtil {
         wasPackedHorz = parent.getWidth() == minSize.width;
         wasPackedVert = parent.getHeight() == minSize.height;
       }
+
+      BindingProperty.checkRemoveUnusedField(editor.getProject(), component);
 
       GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
 
