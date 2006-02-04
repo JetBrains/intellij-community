@@ -1,28 +1,25 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.testFramework.MockVirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.SmartEncodingInputStream;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharSequenceReader;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -102,6 +99,10 @@ public final class LoadTextUtil {
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Reader getReader(final VirtualFile virtualFile, InputStream stream) throws IOException {
+    if (virtualFile instanceof MockVirtualFile) {
+      return new CharSequenceReader(((MockVirtualFile)virtualFile).getContent());
+    }
+
     final Reader reader;
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
@@ -181,7 +182,6 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence loadText(VirtualFile file) {
-    if(file instanceof MockVirtualFile) return ((MockVirtualFile)file).getContent();
     if (file.isDirectory()) return null;
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
 
