@@ -901,7 +901,7 @@ public final class PsiUtil {
   }
 
   @Nullable
-  public static PsiElement findModifierInList(final PsiModifierList modifierList, String modifier) {
+  public static PsiElement findModifierInList(@NotNull final PsiModifierList modifierList, @NonNls String modifier) {
     final PsiElement[] children = modifierList.getChildren();
     for (PsiElement child : children) {
       if (child.getText().equals(modifier)) return child;
