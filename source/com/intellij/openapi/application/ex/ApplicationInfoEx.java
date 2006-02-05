@@ -10,11 +10,9 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 
-import java.awt.*;
-
 public abstract class ApplicationInfoEx extends ApplicationInfo {
 
-  public static final boolean IS_EAP = false;
+  public static final boolean IS_EAP = true;
 
   public static ApplicationInfoEx getInstanceEx() {
     return (ApplicationInfoEx) getInstance();

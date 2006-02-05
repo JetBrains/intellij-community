@@ -30,6 +30,8 @@ public final class LoadTextUtil {
   private static char[] ourSharedBuffer = new char[50000];
   static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
 
+  private LoadTextUtil() {}
+
   public static Pair<CharSequence,String> loadText(byte[] bytes, final VirtualFile virtualFile) {
     try {
       return loadText(getReader(virtualFile, new ByteArrayInputStream(bytes)), bytes.length);
@@ -92,7 +94,7 @@ public final class LoadTextUtil {
       case CR + LF: detectedLineSeparator = "\r\n"; break;
     }
 
-    char chars[] = new char[dst];
+    char[] chars = new char[dst];
     System.arraycopy(buffer, 0, chars, 0, chars.length);
     return new Pair<CharSequence, String>(new CharArrayCharSequence(chars), detectedLineSeparator);
   }
