@@ -626,6 +626,10 @@ public class TypeCookTest extends MultiFileTestCase {
         start();
   }
 
+  public void testT147() throws Exception {
+        start();
+  }
+
   public void start() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

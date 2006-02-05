@@ -6,6 +6,7 @@ import com.intellij.refactoring.typeCook.Util;
 import com.intellij.psi.Bottom;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.psi.PsiTypeVariable;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.openapi.project.Project;
@@ -54,14 +55,14 @@ public class ReductionSystem {
     myCastToOperandType.put(cast, operandType);
   }
 
-  public void addSubtypeConstraint(final PsiType left, final PsiType right) {
+  public void addSubtypeConstraint(PsiType left, PsiType right) {
+    if (left instanceof PsiPrimitiveType) left = ((PsiPrimitiveType)left).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+    if (right instanceof PsiPrimitiveType) right = ((PsiPrimitiveType)right).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     if (left == null || right == null) {
       return;
     }
 
-    if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right)) &&
-        !(left instanceof PsiPrimitiveType ||
-          right instanceof PsiPrimitiveType)
+    if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right))
     ) {
       final Subtype c = new Subtype(left, right);
       if (!myConstraints.contains(c)) {
@@ -70,27 +71,27 @@ public class ReductionSystem {
     }
   }
 
-  private String memberString(final PsiMember member) {
-    return member.getContainingClass().getQualifiedName() + "." + ((PsiNamedElement)member).getName();
+  private static String memberString(final PsiMember member) {
+    return member.getContainingClass().getQualifiedName() + "." + member.getName();
   }
 
-  private String variableString(final PsiLocalVariable var) {
+  private static String variableString(final PsiLocalVariable var) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
 
     return memberString(method) + "#" + var.getName();
   }
 
+  @SuppressWarnings({"StringConcatenationInsideStringBufferAppend"})
   public String toString() {
     @NonNls StringBuffer buffer = new StringBuffer();
 
     buffer.append("Victims:\n");
 
-    for (Iterator<PsiElement> i = myElements.iterator(); i.hasNext();) {
-      final PsiElement element = i.next();
+    for (final PsiElement element : myElements) {
       final PsiType type = myTypes.get(element);
 
       if (type == null) {
-      continue;
+        continue;
       }
 
       if (element instanceof PsiParameter) {
@@ -128,15 +129,15 @@ public class ReductionSystem {
       buffer.append(" not specified\n");
     }
     else {
-      for (Iterator<PsiTypeVariable> i = myBoundVariables.iterator(); i.hasNext();) {
-        buffer.append(i.next().getIndex() + ", ");
+      for (final PsiTypeVariable boundVariable : myBoundVariables) {
+        buffer.append(boundVariable.getIndex() + ", ");
       }
     }
 
     buffer.append("Constraints: " + myConstraints.size() + "\n");
 
-    for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
-      buffer.append("   " + i.next() + "\n");
+    for (final Constraint constraint : myConstraints) {
+      buffer.append("   " + constraint + "\n");
     }
 
     return buffer.toString();
@@ -179,18 +180,16 @@ public class ReductionSystem {
     {
       int j = 0;
 
-      for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-        constraintNodes[j++] = new Node(c.next());
+      for (final Constraint constraint : myConstraints) {
+        constraintNodes[j++] = new Node(constraint);
       }
     }
 
     {
       int l = 0;
 
-      for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
+      for (final Constraint constraint : myConstraints) {
         final HashSet<PsiTypeVariable> boundVars = new HashSet<PsiTypeVariable>();
-
-        final Constraint constraint = i.next();
         final Node constraintNode = constraintNodes[l++];
 
         new Object() {
@@ -209,21 +208,21 @@ public class ReductionSystem {
             else if (t instanceof PsiClassType) {
               final PsiSubstitutor subst = Util.resolveType(t).getSubstitutor();
 
-              for (Iterator<PsiType> j = subst.getSubstitutionMap().values().iterator(); j.hasNext();) {
-                visit(j.next());
+              for (final PsiType type : subst.getSubstitutionMap().values()) {
+                visit(type);
               }
             }
             else if (t instanceof PsiIntersectionType) {
               final PsiType[] conjuncts = ((PsiIntersectionType)t).getConjuncts();
-              for (int j = 0; j < conjuncts.length; j++) {
-                visit(conjuncts[j]);
+              for (PsiType conjunct : conjuncts) {
+                visit(conjunct);
 
               }
             }
-            else if (t instanceof PsiWildcardType){
+            else if (t instanceof PsiWildcardType) {
               final PsiType bound = ((PsiWildcardType)t).getBound();
 
-              if (bound != null){
+              if (bound != null) {
                 visit(bound);
               }
             }
@@ -251,12 +250,11 @@ public class ReductionSystem {
 
     final LinkedList<HashSet<PsiTypeVariable>> clusters = myTypeVariableFactory.getClusters();
 
-    for (final Iterator<HashSet<PsiTypeVariable>> c = clusters.iterator(); c.hasNext();) {
-      final HashSet<PsiTypeVariable> cluster = c.next();
+    for (final HashSet<PsiTypeVariable> cluster : clusters) {
       Node prev = null;
 
-      for (final Iterator<PsiTypeVariable> v = cluster.iterator(); v.hasNext();) {
-        final Node curr = typeVariableNodes[v.next().getIndex()];
+      for (final PsiTypeVariable variable : cluster) {
+        final Node curr = typeVariableNodes[variable.getIndex()];
 
         if (prev != null) {
           prev.addEdge(curr);
@@ -268,9 +266,7 @@ public class ReductionSystem {
 
     int currComponent = 0;
 
-    for (int i = 0; i < typeVariableNodes.length; i++) {
-      final Node node = typeVariableNodes[i];
-
+    for (final Node node : typeVariableNodes) {
       if (node.myComponent == -1) {
         final int component = currComponent;
         new Object() {
@@ -284,9 +280,7 @@ public class ReductionSystem {
 
               curr.myComponent = component;
 
-              for (Iterator<Node> i = curr.myNeighbours.iterator(); i.hasNext();) {
-                final Node p = i.next();
-
+              for (final Node p : curr.myNeighbours) {
                 if (p.myComponent == -1) {
                   frontier.addFirst(p);
                 }
@@ -301,8 +295,7 @@ public class ReductionSystem {
 
     final ReductionSystem[] systems = new ReductionSystem[currComponent];
 
-    for (int i = 0; i < constraintNodes.length; i++) {
-      final Node node = constraintNodes[i];
+    for (final Node node : constraintNodes) {
       final Constraint constraint = node.getConstraint();
       final int index = node.myComponent;
 
@@ -340,8 +333,7 @@ public class ReductionSystem {
 
     int i = 0;
 
-    for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
-      final PsiElement element = e.next();
+    for (final PsiElement element : myElements) {
       data[i++] = Util.getType(element).getCanonicalText() + "\\n" + elementString(element);
     }
 
@@ -363,7 +355,8 @@ public class ReductionSystem {
     return repr.toString();
   }
 
-  private @NonNls String elementString(final PsiElement element) {
+  @NonNls private static
+  String elementString(final PsiElement element) {
     if (element instanceof PsiNewExpression) {
       return "new";
     }
@@ -470,8 +463,8 @@ public class ReductionSystem {
 
     final StringBuffer repr = new StringBuffer();
 
-    for (int j = 0; j < data.length; j++) {
-      repr.append(data[j]);
+    for (String aData : data) {
+      repr.append(aData);
       repr.append("\n");
     }
 
