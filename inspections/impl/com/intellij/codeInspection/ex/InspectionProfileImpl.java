@@ -431,13 +431,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
       Element config = new Element(tempRoot);
       tool.writeExternal(config);
       inspectionTool.readExternal(config);
-      addInspectionTool(inspectionTool);
     }
-  }
-
-  //make public for tests only
-  public void addInspectionTool(InspectionTool inspectionTool){
-    myTools.put(inspectionTool.getShortName(), inspectionTool);
   }
 
   public void cleanup() {

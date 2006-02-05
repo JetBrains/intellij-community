@@ -645,6 +645,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           InspectionResultsView.this.update();
         }
       }
+
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(myInspectionProfile != null);
+      }
+
     });
 
     actions.add(new SuppressInspectionToolbarAction(this));
@@ -704,6 +709,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))){
         InspectionResultsView.this.update();
       }
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myInspectionProfile != null);
     }
   }
 

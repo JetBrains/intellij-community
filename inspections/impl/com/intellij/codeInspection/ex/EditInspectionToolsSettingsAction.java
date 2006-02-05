@@ -90,12 +90,16 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                            }
 
                                                                            public void apply() throws ConfigurationException {
-                                                                             myPanel.apply();
-                                                                             final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
                                                                              if (canChooseDifferentProfile){
+                                                                               myPanel.apply();
+                                                                               final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
                                                                                InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
+                                                                               inspectionProfile.copyFrom(editedProfile);
+                                                                             } else {
+                                                                               final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
+                                                                               inspectionProfile.copyFrom(editedProfile);
+                                                                               myPanel.initDescriptors();
                                                                              }
-                                                                             inspectionProfile.copyFrom(editedProfile);
                                                                            }
 
                                                                            public void reset() {
