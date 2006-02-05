@@ -52,7 +52,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   }
 
   public int getWeight() {
-    return 1;
+    return 0;
   }
 
   public boolean equals(Object o) {
