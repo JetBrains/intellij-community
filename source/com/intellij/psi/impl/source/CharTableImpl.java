@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceHashingStrategy;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.lang.ref.Reference;
@@ -17,7 +18,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class CharTableImpl implements CharTable {
-  private final static CharTableEntryHashingStrategy HASHER = new CharTableEntryHashingStrategy();
+  private final static CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
   private final Map<CharSequence,CharSequence> myEntries = new WeakCharEntryMap();
 
   private char[] myCurrentPage = null;
