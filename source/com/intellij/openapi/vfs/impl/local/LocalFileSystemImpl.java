@@ -38,7 +38,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private WatchRequest[] myCachedNormalizedRequests = null;
   private BidirectionalMap<VirtualFile, String> myFSRootsToPaths = null;
 
-  private ArrayList<VirtualFile> myFilesToWatchManual = new ArrayList<VirtualFile>();
+  private ArrayList<String> myFilePathsToWatchManual = new ArrayList<String>();
   private final HashSet<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final HashSet<String> myDeletedFiles = new HashSet<String>();
 
@@ -511,18 +511,21 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
     else {
       synchronized (LOCK) {
-        for (int i = 0; i < myFilesToWatchManual.size(); i++) {
-          VirtualFile fileToWatch = myFilesToWatchManual.get(i);
-          if (VfsUtil.isAncestor(fileToWatch, file, false)) {
-            ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
-            if (isRoot && !recursive && ((VirtualFileImpl) file).areChildrenCached()) {
-              VirtualFile[] children = file.getChildren();
-              for (int j = 0; j < children.length; j++) {
-                VirtualFile child = children[j];
-                ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
+        if (!myFilePathsToWatchManual.isEmpty()) {
+          final String filePath = file.getPath();
+          for (int i = 0; i < myFilePathsToWatchManual.size(); i++) {
+            String pathToWatchManual = myFilePathsToWatchManual.get(i);
+            if (FileUtil.startsWith(filePath, pathToWatchManual)) {
+              ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
+              if (isRoot && !recursive && ((VirtualFileImpl) file).areChildrenCached()) {
+                VirtualFile[] children = file.getChildren();
+                for (int j = 0; j < children.length; j++) {
+                  VirtualFile child = children[j];
+                  ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
+                }
               }
+              return;
             }
-            return;
           }
         }
       }
@@ -733,14 +736,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               }
               */
 
-              myFilesToWatchManual.clear();
+              myFilePathsToWatchManual.clear();
               for (int i = 0; i < watchManual.size(); i++) {
                 String path = watchManual.elementAt(i);
                 path = path.replace(File.separatorChar, '/');
-                VirtualFile file = findFileByPath(path);
-                if (file != null) {
-                  myFilesToWatchManual.add(file);
-                }
+                myFilePathsToWatchManual.add(path);
               }
             }
           }
