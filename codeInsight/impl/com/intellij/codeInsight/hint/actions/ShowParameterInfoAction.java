@@ -18,7 +18,10 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction{
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode() || file instanceof XmlFile;
+    return file.canContainJavaCode() ||
+           file instanceof XmlFile ||
+           ShowParameterInfoHandler.getHandler(file.getLanguage()) != null
+      ;
   }
 
   protected boolean isValidForLookup() {

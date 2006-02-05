@@ -1,35 +1,29 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.ParameterInfoUIContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SplittingUtil;
 import com.intellij.ui.StrikeoutLabel;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.Arrays;
+
+import org.jetbrains.annotations.NotNull;
 
 class ParameterInfoComponent extends JPanel{
   private Object[] myObjects;
-  private boolean[] myEnabledFlags;
   private int myCurrentParameter;
-  private XmlTag myCurrentXmlTag;
 
-  private PsiMethod myHighlightedMethod = null;
+  private PsiElement myParameterOwner;
+  private PsiElement myHighlighted;
+  private final @NotNull ParameterInfoHandler myHandler;
 
   private OneElementComponent[] myPanels;
 
@@ -40,14 +34,13 @@ class ParameterInfoComponent extends JPanel{
   private static final Color HIGHLIGHTED_BORDER_COLOR = new Color(231, 254, 234);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
-  private static final String NO_PARAMETERS_TEXT = CodeInsightBundle.message("parameter.info.no.parameters");
-  private static final String NO_ATTRIBUTES_TEXT = CodeInsightBundle.message("xml.tag.info.no.attributes");
+
   private static final Border BOTTOM_BORDER = new SideBorder(Color.lightGray, SideBorder.BOTTOM);
   private static final Border BACKGROUND_BORDER = BorderFactory.createLineBorder(BACKGROUND_COLOR);
 
   protected int myWidthLimit;
 
-  public ParameterInfoComponent(Object[] objects, Editor editor) {
+  public ParameterInfoComponent(Object[] objects, Editor editor,@NotNull ParameterInfoHandler handler) {
     super(new GridBagLayout());
 
     JComponent editorComponent = editor.getComponent();
@@ -58,249 +51,100 @@ class ParameterInfoComponent extends JPanel{
     BOLD_FONT = NORMAL_FONT.deriveFont(Font.BOLD);
 
     myObjects = objects;
-    myEnabledFlags = new boolean[myObjects.length];
 
-    this.setLayout(new GridBagLayout());
-    this.setBorder(BorderFactory.createCompoundBorder(LineBorder.createGrayLineBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
-    this.setBackground(BACKGROUND_COLOR);
+    setLayout(new GridBagLayout());
+    setBorder(BorderFactory.createCompoundBorder(LineBorder.createGrayLineBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+    setBackground(BACKGROUND_COLOR);
 
+    myHandler = handler;
     myPanels = new OneElementComponent[myObjects.length];
     for(int i = 0; i < myObjects.length; i++) {
       myPanels[i] = new OneElementComponent();
       add(myPanels[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
-
-      myEnabledFlags[i] = true;
     }
 
     myCurrentParameter = -1;
   }
 
-  public void update(){
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    for(int i = 0; i < myObjects.length; i++) {
-      final Object o = myObjects[i];
-      if (o instanceof CandidateInfo) {
-        CandidateInfo candidateInfo = (CandidateInfo) o;
-        updateMethod((PsiMethod) candidateInfo.getElement(), candidateInfo.getSubstitutor(), i, settings);
-      }
-      else if (o instanceof PsiMethod) {
-        if (o instanceof PsiAnnotationMethod) {
-          updateAnnotationMethod((PsiAnnotationMethod) o, i);
-        }
-        else {
-          updateMethod((PsiMethod) o, null, i, settings);
-        }
-      }
-      else if (o instanceof PsiTypeParameter) {
-        updateTypeParameter((PsiTypeParameter)o, i);
-      }
-      else if (o instanceof XmlElementDescriptor) {
-        updateElementDescriptor((XmlElementDescriptor)o, i);
-      }
+  class MyParameterContext implements ParameterInfoUIContext {
+    private int i;
+    public void setupUIComponentPresentation(String text,
+                                             int highlightStartOffset,
+                                             int highlightEndOffset,
+                                             boolean isDisabled,
+                                             boolean strikeout,
+                                             boolean isDisabledBeforeHighlight,
+                                             Color background) {
+      myPanels[i].setup(text, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
+      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : BOTTOM_BORDER);
     }
+
+    public boolean isUIComponentEnabled() {
+      return isEnabled(i);
+    }
+
+    public void setUIComponentEnabled(boolean enabled) {
+      setEnabled(i, enabled);
+    }
+
+    public boolean isLastParameterOwner() {
+      return i == myPanels.length - 1;
+    }
+
+    public int getCurrentParameterIndex() {
+      return myCurrentParameter;
+    }
+
+    public PsiElement getParameterOwner() {
+      return myParameterOwner;
+    }
+
+    public Color getDefaultParameterColor() {
+      return myObjects[i].equals(myHighlighted) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
+    }
+  }
+
+  public void update(){
+    MyParameterContext context = new MyParameterContext();
+
+    for(int i = 0; i < myObjects.length; i++) {
+      context.i = i;
+      final Object o = myObjects[i];
+
+      myHandler.updateUI(o,context);
+    }
+
     invalidate();
     validate();
     repaint();
-  }
-
-  private void updateTypeParameter(PsiTypeParameter typeParameter, int i) {
-    @NonNls StringBuffer buffer = new StringBuffer();
-    buffer.append(typeParameter.getName());
-    int highlightEndOffset = buffer.length();
-    buffer.append(" extends ");
-    buffer.append(StringUtil.join(
-      Arrays.asList(typeParameter.getSuperTypes()),
-      new Function<PsiClassType, String>() {
-        public String fun(final PsiClassType t) {
-          return t.getPresentableText();
-        }
-      }, ", "));
-
-    Color background = i == myCurrentParameter ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
-    myPanels[i].setup(buffer.toString(), 0, highlightEndOffset, false, false, false, background);
-    myPanels[i].setBorder(i == (myObjects.length - 1) ? BACKGROUND_BORDER : BOTTOM_BORDER);
-  }
-
-  private void updateAnnotationMethod(PsiAnnotationMethod method, int i) {
-    @NonNls StringBuffer buffer = new StringBuffer();
-    int highlightStartOffset;
-    int highlightEndOffset;
-    buffer.append(method.getReturnType().getPresentableText());
-    buffer.append(" ");
-    highlightStartOffset = buffer.length();
-    buffer.append(method.getName());
-    highlightEndOffset = buffer.length();
-    buffer.append("()");
-    if (method.getDefaultValue() != null) {
-      buffer.append(" default ");
-      buffer.append(method.getDefaultValue().getText());
-    }
-    Color background = method.equals(myHighlightedMethod) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
-    myPanels[i].setup(buffer.toString(), highlightStartOffset, highlightEndOffset, false, method.isDeprecated(), false, background);
-    myPanels[i].setBorder(i == (myObjects.length - 1) ? BACKGROUND_BORDER : BOTTOM_BORDER);
-  }
-
-  private void updateMethod(PsiMethod method, PsiSubstitutor substitutor, int i, CodeInsightSettings globalSettings) {
-    OneElementComponent component = myPanels[i];
-
-    if (!method.isValid()){
-      component.setDisabled();
-      return;
-    }
-
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
-
-    StringBuffer buffer = new StringBuffer();
-
-    if (globalSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO){
-      if (!method.isConstructor()){
-        PsiType returnType = method.getReturnType();
-        if (substitutor != null) {
-          returnType = substitutor.substitute((returnType));
-        }
-        buffer.append(returnType.getPresentableText());
-        buffer.append(" ");
-      }
-      buffer.append(method.getName());
-      buffer.append("(");
-    }
-
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    int numParams = parms.length;
-    if (numParams > 0){
-      for(int j = 0; j < numParams; j++) {
-        PsiParameter parm = parms[j];
-
-        int startOffset = buffer.length();
-
-        if (parm.isValid()) {
-          PsiType paramType = parm.getType();
-          if (substitutor != null) {
-            paramType = substitutor.substitute(paramType);
-          }
-          buffer.append(paramType.getPresentableText());
-          String name = parm.getName();
-          if (name != null){
-            buffer.append(" ");
-            buffer.append(name);
-          }
-        }
-
-        int endOffset = buffer.length();
-
-        if (j < numParams - 1){
-          buffer.append(", ");
-        }
-
-        if (isEnabled(i) && (j == myCurrentParameter || (j == numParams - 1 && parm.isVarArgs() && myCurrentParameter >= numParams))) {
-          highlightStartOffset = startOffset;
-          highlightEndOffset = endOffset;
-        }
-      }
-    }
-    else{
-      buffer.append(NO_PARAMETERS_TEXT);
-    }
-
-    if (globalSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO){
-      buffer.append(")");
-    }
-
-    Color background = method.equals(myHighlightedMethod) ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
-    component.setup(buffer.toString(), highlightStartOffset, highlightEndOffset, !isEnabled(i), method.isDeprecated(), false, background);
-    component.setBorder(i == (myObjects.length - 1) ? BACKGROUND_BORDER : BOTTOM_BORDER);
   }
 
   public Object[] getObjects() {
     return myObjects;
   }
 
-  public void setEnabled(int index, boolean enabled){
-    myEnabledFlags[index] = enabled;
+  void setEnabled(int index, boolean enabled){
+    myPanels[index].setEnabled(enabled);
   }
 
-  private boolean isEnabled(int index){
-    return myEnabledFlags[index];
+  boolean isEnabled(int index){
+    return myPanels[index].isEnabled();
   }
 
   public void setCurrentParameter(int currentParameter) {
     myCurrentParameter = currentParameter;
   }
 
-  private void updateElementDescriptor(XmlElementDescriptor descriptor, int i) {
-    final XmlAttributeDescriptor[] attributes = descriptor != null ? descriptor.getAttributesDescriptors() : new XmlAttributeDescriptor[0];
-
-    StringBuffer buffer = new StringBuffer();
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
-
-    if (attributes.length == 0) {
-      buffer.append(NO_ATTRIBUTES_TEXT);
-    }
-    else {
-      StringBuffer text1 = new StringBuffer(" ");
-      StringBuffer text2 = new StringBuffer(" ");
-      StringBuffer text3 = new StringBuffer(" ");
-
-      for (XmlAttributeDescriptor attribute : attributes) {
-        if (myCurrentXmlTag != null && myCurrentXmlTag.getAttributeValue(attribute.getName()) != null) {
-          if (!(text1.toString().equals(" "))) {
-            text1.append(", ");
-          }
-          text1.append(attribute.getName());
-        }
-        else if (attribute.isRequired()) {
-          if (!(text2.toString().equals(" "))) {
-            text2.append(", ");
-          }
-          text2.append(attribute.getName());
-        }
-        else {
-          if (!(text3.toString().equals(" "))) {
-            text3.append(", ");
-          }
-          text3.append(attribute.getName());
-        }
-      }
-
-      if (!text1.toString().equals(" ") && !text2.toString().equals(" ")) {
-        text1.append(", ");
-      }
-
-      if (!text2.toString().equals(" ") && !text3.toString().equals(" ")) {
-        text2.append(", ");
-      }
-
-      if (!text1.toString().equals(" ") && !text3.toString().equals(" ") && text2.toString().equals(" ")) {
-        text1.append(", ");
-      }
-
-      buffer.append(text1);
-      highlightStartOffset = buffer.length();
-      buffer.append(text2);
-      highlightEndOffset = buffer.length();
-      buffer.append(text3);
-    }
-
-    myPanels[i].setup(buffer.toString(), highlightStartOffset, highlightEndOffset, false, false, true, BACKGROUND_COLOR);
-
-    myPanels[i].setBorder(i == (myObjects.length - 1) ? BACKGROUND_BORDER : BOTTOM_BORDER);
+  public void setParameterOwner (PsiElement element) {
+    myParameterOwner = element;
   }
 
-  public void setCurrentItem (PsiElement element) {
-    if (element == null) {
-      myCurrentXmlTag = null;
-    }
-    else if (element instanceof XmlTag)  myCurrentXmlTag = (XmlTag)element;
+  public PsiElement getParameterOwner() {
+    return myParameterOwner;
   }
 
-  public XmlTag getCurrentXmlTag() {
-    return myCurrentXmlTag;
-  }
-
-  public void setHighlightedMethod(PsiMethod method) {
-    myHighlightedMethod = method;
+  public void setHighlightedParameter(PsiElement element) {
+    myHighlighted = element;
   }
 
   private class OneElementComponent extends JPanel {
@@ -353,13 +197,12 @@ class ParameterInfoComponent extends JPanel{
     }
   }
 
-
   private class OneLineComponent extends JPanel {
     StrikeoutLabel myLabel1 = new StrikeoutLabel("", SwingConstants.LEFT);
     StrikeoutLabel myLabel2 = new StrikeoutLabel("", SwingConstants.LEFT);
     StrikeoutLabel myLabel3 = new StrikeoutLabel("", SwingConstants.LEFT);
 
-    public OneLineComponent(){
+    private OneLineComponent(){
       super(new GridBagLayout());
 
       myLabel1.setOpaque(true);
@@ -376,7 +219,7 @@ class ParameterInfoComponent extends JPanel{
       add(myLabel3, new GridBagConstraints(2,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
     }
 
-    public void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, Color background) {
+    private void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, Color background) {
       myLabel1.setBackground(background);
       myLabel2.setBackground(background);
       myLabel3.setBackground(background);
@@ -411,16 +254,15 @@ class ParameterInfoComponent extends JPanel{
       }
     }
 
-    public void setDisabled(){
+    private void setDisabled(){
       myLabel1.setForeground(DISABLED_FOREGROUND_COLOR);
       myLabel2.setForeground(DISABLED_FOREGROUND_COLOR);
       myLabel3.setForeground(DISABLED_FOREGROUND_COLOR);
     }
 
-    public void setDisabledBeforeHighlight(){
+    private void setDisabledBeforeHighlight(){
       myLabel1.setForeground(DISABLED_FOREGROUND_COLOR);
     }
-
 
     public Dimension getPreferredSize(){
       myLabel1.setFont(BOLD_FONT);

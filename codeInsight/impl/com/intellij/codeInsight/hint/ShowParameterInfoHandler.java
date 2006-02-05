@@ -1,29 +1,33 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.api.CreateParameterInfoContext;
+import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.ParameterInfoProvider;
+import com.intellij.codeInsight.hint.api.impls.JavaParameterInfoProvider;
+import com.intellij.codeInsight.hint.api.impls.XmlParameterInfoProvider;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
-import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Map;
 
 public class ShowParameterInfoHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ShowParameterInfoHandler");
-
   public void invoke(Project project, Editor editor, PsiFile file) {
     invoke(project, editor, file, -1, null);
   }
@@ -32,126 +36,63 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiMethod highlightedMethod) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static Map<Language, ParameterInfoProvider> ourHandlers = new HashMap<Language, ParameterInfoProvider>(3);
 
+  static {
+    register(StdLanguages.JAVA,new JavaParameterInfoProvider());
+    register(StdLanguages.XML,new XmlParameterInfoProvider());
+  }
+
+  public static void register(@NotNull Language lang,@NotNull ParameterInfoProvider provider) {
+    ourHandlers.put(lang,provider);
+  }
+
+  public void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset,
+                     PsiElement highlightedElement) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    final int offset = editor.getCaretModel().getOffset();
+    final MyShowParameterInfoContext context = new MyShowParameterInfoContext(
+      editor,
+      project,
+      file,
+      offset,
+      lbraceOffset
+    );
+
+    context.setHighlightedElement(highlightedElement);
+
+    final Language language = file.findElementAt(offset).getLanguage();
+    final ParameterInfoProvider parameterInfoProvider = ourHandlers.get(language);
+    final ParameterInfoHandler[] handlers = parameterInfoProvider != null ? parameterInfoProvider.getHandlers():new ParameterInfoHandler[0];
+
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
+
     if (lookup != null) {
       LookupItem item = lookup.getCurrentItem();
+
       if (item != null) {
-        if (item.getObject() instanceof PsiMethod) {
-          showLookupMethodInfo(project, item, editor);
-        }
-        else if (item.getObject() instanceof XmlElementDescriptor) {
-          showEditorHint(new Object[]{item.getObject()}, editor, project);
-        }
-      }
-      return;
-    }
-
-    int offset = editor.getCaretModel().getOffset();
-    PsiExpressionList list = ParameterInfoController.findArgumentList(file, offset, lbraceOffset);
-    if (list != null) {
-      showMethodInfo(project, editor, list, highlightedMethod);
-    }
-
-    if (file.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      PsiReferenceParameterList refParamList = ParameterInfoController.findParentOfType(file, offset, PsiReferenceParameterList.class);
-      if (refParamList != null) {
-        showTypeParameterInfo(project, editor, refParamList);
-      }
-    }
-
-    PsiAnnotation annotation = ParameterInfoController.findParentOfType(file, offset, PsiAnnotation.class);
-    if (annotation != null) {
-      final PsiJavaCodeReferenceElement nameReference = annotation.getNameReferenceElement();
-      if (nameReference != null) {
-        final PsiElement resolved = nameReference.resolve();
-        if (resolved instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)resolved;
-          if (aClass.isAnnotationType()) {
-            final PsiAnnotationMethod method = ParameterInfoController.findAnnotationMethod(file, offset);
-            showAnnotationMethodsInfo(project, editor, annotation, method, aClass);
+        for(ParameterInfoHandler handler:handlers) {
+          if (handler.couldShowInLookup()) {
+            showLookupEditorHint(handler.getParametersForLookup(item, context), editor, project,handler);
+            return;
           }
         }
       }
-    }
-    final XmlTag tag = ParameterInfoController.findXmlTag(file, offset);
-    if (tag != null) {
-      showTagInfo(project, editor, tag);
-    }
-  }
-
-  private void showTypeParameterInfo(Project project, Editor editor, PsiReferenceParameterList referenceParameterList) {
-    if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement)) return;
-    final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent());
-    final PsiElement psiElement = ref.resolve();
-    if (!(psiElement instanceof PsiTypeParameterListOwner)) return;
-
-    final PsiTypeParameter[] typeParams = ((PsiTypeParameterListOwner)psiElement).getTypeParameters();
-    if (typeParams.length == 0) return;
-    final ParameterInfoComponent component = new ParameterInfoComponent(typeParams, editor);
-    component.update();
-
-    showParameterListHint(component, editor, referenceParameterList, project, ",>");
-  }
-
-  private void showAnnotationMethodsInfo(final Project project,
-                                         final Editor editor,
-                                         PsiAnnotation annotation,
-                                         PsiMethod highlightedMethod,
-                                         final PsiClass annotationInterface) {
-    final PsiMethod[] methods = annotationInterface.getMethods();
-    if (methods.length == 0) return;
-
-    final ParameterInfoComponent component = new ParameterInfoComponent(methods, editor);
-    component.update();
-    component.setHighlightedMethod(highlightedMethod);
-
-    final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-    showParameterListHint(component, editor, parameterList, project, ParameterInfoController.DEFAULT_PARAMETER_CLOSE_CHARS);
-  }
-
-  private void showParameterListHint(final ParameterInfoComponent component,
-                                     final Editor editor,
-                                     final PsiElement parameterList, final Project project, final String parameterClosingChars) {
-    final LightweightHint hint = new LightweightHint(component);
-    final HintManager hintManager = HintManager.getInstance();
-    LogicalPosition pos = editor.offsetToLogicalPosition(parameterList.getTextRange().getEndOffset());
-    final Point p = chooseBestHintPosition(project, editor, pos.line, pos.column, hint);
-    final int offset = parameterList.getTextOffset() + 1;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, p,
-                                   HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                   0, false);
-        new ParameterInfoController(project, editor, offset, hint, 0, parameterClosingChars);
-      }
-    });
-  }
-
-  private void showTagInfo(final Project project, final Editor editor, final XmlTag tag) {
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (descriptor == null) {
-      DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
       return;
     }
 
-    showXmlOrJspEditorHint(tag, editor, descriptor, project);
+    for(ParameterInfoHandler handler:handlers) {
+      Object element = handler.findElementForParameterInfo(context);
+      if (element != null) {
+        handler.showParameterInfo(element,context);
+      }
+    }
   }
 
-  private void showLookupMethodInfo(final Project project, LookupItem item, final Editor editor) {
-    PsiElement[] allElements = LookupManager.getInstance(project).getAllElementsForItem(item);
-    PsiMethod[] allMethods = new PsiMethod[allElements.length];
-    System.arraycopy(allElements, 0, allMethods, 0, allElements.length);
-    showEditorHint(allMethods, editor, project);
-  }
-
-  private void showEditorHint(Object[] descriptors, final Editor editor, final Project project) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor);
+  private static void showLookupEditorHint(Object[] descriptors, final Editor editor, final Project project, ParameterInfoHandler handler) {
+    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler);
     component.update();
 
     final LightweightHint hint = new LightweightHint(component);
@@ -167,20 +108,32 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     });
   }
 
-  private void showXmlOrJspEditorHint(final PsiElement element, final Editor editor, final Object descriptor, final Project project) {
-    final int elementStart = element.getTextRange().getStartOffset() + 1;
+  public static ParameterInfoProvider getHandler(final Language language) {
+    return ourHandlers.get(language);
+  }
+
+  interface BestLocationPointProvider {
+    Point getBestPointPosition(LightweightHint hint);
+  }
+
+  private static void showParameterHint(final PsiElement element, final Editor editor, final Object[] descriptors,
+                                        final Project project, BestLocationPointProvider provider,
+                                        @Nullable PsiElement highlighted,
+                                        final int elementStart, final ParameterInfoHandler handler
+                                        ) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
-    final ParameterInfoComponent component = new ParameterInfoComponent(new Object[]{descriptor}, editor);
-    component.setCurrentItem(element);
+    final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
+    component.setParameterOwner(element);
+    if (highlighted != null) {
+      component.setHighlightedParameter(highlighted);
+    }
+
     component.update(); // to have correct preferred size
 
     final LightweightHint hint = new LightweightHint(component);
     final HintManager hintManager = HintManager.getInstance();
-
-    final int startOffset = element.getTextOffset() + 1;
-    LogicalPosition pos = editor.offsetToLogicalPosition(startOffset);
-    final Point p = chooseBestHintPosition(project, editor, pos.line, pos.column, hint);
+    final Point p = provider.getBestPointPosition(hint);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -189,56 +142,27 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                     editor,
                                     elementStart,
                                     hint,
-                                    ParameterInfoController.TYPE_XML_ATTRS);
+                                    handler
+                                    );
       }
     });
   }
 
-  private void showMethodInfo(final Project project, final Editor editor, PsiExpressionList list, PsiMethod highlightedMethod) {
-    CandidateInfo[] candidates = getMethods(list);
-    if (candidates.length == 0) {
-      DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
-      return;
-    }
-
-    String listText = list.getText();
-    final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
-
-    final int listOffset = list.getTextRange().getStartOffset();
-    if (ParameterInfoController.isAlreadyShown(editor, listOffset)) return;
-    int startOffset = listOffset + 1;
-    final LogicalPosition pos = editor.offsetToLogicalPosition(startOffset);
-    final ParameterInfoComponent component = new ParameterInfoComponent(candidates, editor);
-    if (candidates.length > 1) {
-      component.setHighlightedMethod(highlightedMethod);
-    }
-    component.update(); // to have correct preferred size
-    final LightweightHint hint = new LightweightHint(component);
-    final HintManager hintManager = HintManager.getInstance();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Point p;
-        if (!isMultiline) {
-          p = chooseBestHintPosition(project, editor, pos.line, pos.column, hint);
-        }
-        else {
-          p = hintManager.getHintPosition(hint, editor, pos, HintManager.ABOVE);
-          Dimension hintSize = hint.getComponent().getPreferredSize();
-          JComponent editorComponent = editor.getComponent();
-          JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-          p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
-          p.x = Math.max(p.x, 0);
-        }
-        hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false);
-        new ParameterInfoController(project, editor, listOffset, hint, 0);
-      }
-    });
+  private static void showMethodInfo(final Project project, final Editor editor,
+                                     final PsiElement list,
+                                     PsiElement highlighted,
+                                     Object[] candidates,
+                                     int offset,
+                                     ParameterInfoHandler handler
+                                     ) {
+    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(list, editor, project),
+                      candidates.length > 1 ? highlighted: null,offset, handler);
   }
 
   /**
    * @return Point in layered pane coordinate system
    */
-  private Point chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
+  private static Point chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
     HintManager hintManager = HintManager.getInstance();
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
@@ -278,37 +202,138 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     return aboveSpace > underSpace ? new Point(p2.x, 0) : p1;
   }
 
-  private CandidateInfo[] getMethods(PsiExpressionList argList) {
-    final PsiCall call = ParameterInfoController.getCall(argList);
-    PsiResolveHelper helper = argList.getManager().getResolveHelper();
-    if (call instanceof PsiCallExpression) {
-      ArrayList<CandidateInfo> result;
-      CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
-      result = new ArrayList<CandidateInfo>();
-      if (!(argList.getParent() instanceof PsiAnonymousClass)) {
-        for (CandidateInfo candidate : candidates) {
-          if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
-        }
+  private static class MyShowParameterInfoContext implements CreateParameterInfoContext {
+    private final Editor myEditor;
+    private final PsiFile myFile;
+    private final Project myProject;
+    private final int myOffset;
+    private final int myParameterListStart;
+    private PsiElement myHighlightedElement;
+    private Object[] myItems;
+
+    public MyShowParameterInfoContext(final Editor editor, final Project project,
+                                      final PsiFile file, int offset, int parameterListStart) {
+      myEditor = editor;
+      myProject = project;
+      myFile = file;
+      myParameterListStart = parameterListStart;
+      myOffset = offset;
+    }
+
+    public Project getProject() {
+      return myProject;
+    }
+
+    public PsiFile getFile() {
+      return myFile;
+    }
+
+    public int getOffset() {
+      return myOffset;
+    }
+
+    public int getParameterListStart() {
+      return myParameterListStart;
+    }
+
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    public PsiElement getHighlightedElement() {
+      return myHighlightedElement;
+    }
+
+    public void setHighlightedElement(PsiElement element) {
+      myHighlightedElement = element;
+    }
+
+    public void setItemsToShow(Object[] items) {
+      myItems = items;
+    }
+
+    public Object[] getItemsToShow() {
+      return myItems;
+    }
+
+    public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
+      showMethodInfo(
+        getProject(),
+        getEditor(),
+        element,
+        getHighlightedElement(),
+        getItemsToShow(),
+        offset,
+        handler
+      );
+    }
+  }
+
+  private static class MyBestLocationPointProvider implements BestLocationPointProvider {
+    private final PsiElement myList;
+    private final Editor myEditor;
+    private final Project myProject;
+
+    public MyBestLocationPointProvider(final PsiElement list, final Editor editor, final Project project) {
+      myList = list;
+      myEditor = editor;
+      myProject = project;
+    }
+
+    public Point getBestPointPosition(LightweightHint hint) {
+      String listText = myList.getText();
+      final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
+      int startOffset = myList.getTextRange().getStartOffset() + 1;
+      final LogicalPosition pos = myEditor.offsetToLogicalPosition(startOffset);
+      Point p;
+
+      if (!isMultiline) {
+        p = chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
       }
       else {
-        PsiClass aClass = (PsiAnonymousClass)argList.getParent();
-        for (CandidateInfo candidate : candidates) {
-          if (candidate.isStaticsScopeCorrect() && helper.isAccessible(((PsiMethod)candidate.getElement()), argList, aClass)) {
-            result.add(candidate);
-          }
-        }
+        p = HintManager.getInstance().getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
+        Dimension hintSize = hint.getComponent().getPreferredSize();
+        JComponent editorComponent = myEditor.getComponent();
+        JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+        p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
+        p.x = Math.max(p.x, 0);
       }
-      return result.toArray(new CandidateInfo[result.size()]);
+      return p;
     }
-    else {
-      LOG.assertTrue(call instanceof PsiEnumConstant);
-      //We are inside our own enum, no isAccessible check needed
-      PsiMethod[] constructors = ((PsiEnumConstant)call).getContainingClass().getConstructors();
-      CandidateInfo[] result = new CandidateInfo[constructors.length];
-      for (int i = 0; i < constructors.length; i++) {
-        result[i] = new CandidateInfo(constructors[i], PsiSubstitutor.EMPTY);
-      }
-      return result;
+  }
+
+  private static class MyBestLocationPointProvider2 implements BestLocationPointProvider {
+    private final Editor myEditor;
+    private final PsiElement myParameterList;
+    private final Project myProject;
+
+    public MyBestLocationPointProvider2(final Editor editor, final PsiElement parameterList, final Project project) {
+      myEditor = editor;
+      myParameterList = parameterList;
+      myProject = project;
+    }
+
+    public Point getBestPointPosition(LightweightHint hint) {
+      LogicalPosition pos = myEditor.offsetToLogicalPosition(myParameterList.getTextRange().getEndOffset());
+      return chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
+    }
+  }
+
+  private static class MyBestLocationPointProvider3 implements BestLocationPointProvider {
+    private final PsiElement myElement;
+    private final Editor myEditor;
+    private final Project myProject;
+
+    public MyBestLocationPointProvider3(final PsiElement element, final Editor editor, final Project project) {
+      myElement = element;
+      myEditor = editor;
+      myProject = project;
+    }
+
+    public Point getBestPointPosition(LightweightHint hint) {
+      final int startOffset = myElement.getTextOffset() + 1;
+      LogicalPosition pos = myEditor.offsetToLogicalPosition(startOffset);
+      return chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
     }
   }
 }

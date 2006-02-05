@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
 
 /**
@@ -129,7 +130,7 @@ public class AutoPopupController implements ProjectComponent {
     }
   }
 
-  public void autoPopupParameterInfo(final Editor editor, final PsiMethod highlightedMethod){
+  public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
