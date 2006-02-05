@@ -75,7 +75,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       if (item != null) {
         for(ParameterInfoHandler handler:handlers) {
           if (handler.couldShowInLookup()) {
-            showLookupEditorHint(handler.getParametersForLookup(item, context), editor, project,handler);
+            final Object[] items = handler.getParametersForLookup(item, context);
+            if (items != null && items.length > 0) showLookupEditorHint(items, editor, project,handler);
             return;
           }
         }
