@@ -74,6 +74,10 @@ public class IdeaLogger extends Logger {
     myLogger.debug("", t);
   }
 
+  public void debug(@NonNls String message, Throwable t) {
+    myLogger.debug(message, t);
+  }
+
   public void error(String message, Throwable t, String... details) {
     t.printStackTrace();
     String detailString = "";

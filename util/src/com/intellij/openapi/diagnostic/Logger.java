@@ -42,6 +42,7 @@ public abstract class Logger {
 
   public abstract void debug(@NonNls String message);
   public abstract void debug(Throwable t);
+  public abstract void debug(@NonNls String message, Throwable t);
 
   public void error(@NonNls String message) {
     error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);

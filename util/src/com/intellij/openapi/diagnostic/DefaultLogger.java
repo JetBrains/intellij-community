@@ -32,6 +32,9 @@ public class DefaultLogger extends Logger {
   public void debug(Throwable t) {
   }
 
+  public void debug(@NonNls String message, Throwable t) {
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
   public void error(String message, Throwable t, String... details) {
     System.err.println("ERROR: " + message);
