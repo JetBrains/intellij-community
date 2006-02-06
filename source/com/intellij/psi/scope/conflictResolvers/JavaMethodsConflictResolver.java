@@ -26,10 +26,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     myArgumentsList = list;
   }
 
-  public void setArgumentsList(PsiExpressionList argumentsList){
-    myArgumentsList = argumentsList;
-  }
-
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     int conflictsCount = conflicts.size();
     if (conflictsCount <= 0) return null;
