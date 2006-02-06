@@ -16,15 +16,13 @@ import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleManager;
+import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.CloseAction;
@@ -49,13 +47,16 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
 
-public class DebuggerSessionTab {
+public class DebuggerSessionTab implements LogConsoleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
@@ -100,10 +101,13 @@ public class DebuggerSessionTab {
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
   private static final Key LOG_CONTENTS = Key.create("LogContent");
 
-  private ArrayList<LogConsole> myLogTabs = new ArrayList<LogConsole>();
+  private Map<String, LogConsole> myLogTabs = new HashMap<String, LogConsole>();
+  private Map<String, Content>  myLogContent = new HashMap<String, Content>();
+  private final LogFilesManager myManager;
 
   public DebuggerSessionTab(Project project) {
     myProject = project;
+    myManager = new LogFilesManager(project, this);
     myContentPanel = new JPanel(new BorderLayout());
     if(!ApplicationManager.getApplication().isUnitTestMode()) {
       getContextManager().addListener(new DebuggerContextListener() {
@@ -234,35 +238,7 @@ public class DebuggerSessionTab {
 
 
 
-    ArrayList<Content> logContents = new ArrayList<Content>();
 
-    if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
-      clearLogContents();
-      RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-      final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = base.getLogFiles();
-      final ProcessHandler processHandler = myRunContentDescriptor.getProcessHandler();
-      for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
-        if (logFile.isEnabled()){
-          final LogConsole log = new LogConsole(myProject, new File(logFile.getPath()), logFile.isSkipContent()){
-            public boolean isActive() {
-              final Content selectedContent = myViewsContentManager.getSelectedContent();
-              if (selectedContent == null){
-                stopRunning();
-                return false;
-              }
-              return selectedContent.getComponent() == this;
-            }
-          };
-          myLogTabs.add(log);
-          log.attachStopLogConsoleTrackingListener(processHandler);
-          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(), DebuggerBundle.message(
-            "debugger.session.tab.log.content.name", logFile.getName()), false);
-          //todo icons
-          logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
-          logContents.add(logContent);
-        }
-      }
-    }
     content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), DebuggerBundle.message(
       "debugger.session.tab.console.content.name"), false);
     content.setIcon(CONSOLE_ICON);
@@ -276,8 +252,19 @@ public class DebuggerSessionTab {
       myViewsContentManager.addContent(content1);
     }
 
-    for (final Content logContent1 : logContents) {
-      myViewsContentManager.addContent(logContent1);
+    if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
+      clearLogContents();
+      RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
+      final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
+
+      for (LogFileOptions logFile : logFiles) {
+        if (logFile.isEnabled()) {
+          final Set<String> paths = logFile.getPaths();
+          for (String path : paths) {
+            addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName());
+          }
+        }
+      }
     }
 
     if(myToolBarPanel != null) {
@@ -293,6 +280,33 @@ public class DebuggerSessionTab {
     myContentPanel.add(myToolBarPanel, BorderLayout.WEST);
 
     return myRunContentDescriptor;
+  }
+
+  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name) {
+      final LogConsole log = new LogConsole(project, new File(path), skipContent){
+        public boolean isActive() {
+          final Content selectedContent = myViewsContentManager.getSelectedContent();
+          if (selectedContent == null){
+            stopRunning();
+            return false;
+          }
+          return selectedContent.getComponent() == this;
+        }
+      };
+      myLogTabs.put(path, log);
+      log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
+      Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(),
+                                                                                       DebuggerBundle.message(
+        "debugger.session.tab.log.content.name", name), false);
+      logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
+      myLogContent.put(path, logContent);
+      myViewsContentManager.addContent(logContent);
+  }
+
+  public void removeLogConsole(final String path) {
+    final LogConsole logConsole = myLogTabs.get(path);
+    myViewsContentManager.removeContent(myLogContent.get(path));
+    logConsole.dispose();
   }
 
   private void clearLogContents() {
@@ -394,11 +408,14 @@ public class DebuggerSessionTab {
     myFramePanel.dispose();
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
+    myLogContent.clear();
 
-    for (final LogConsole myLogTab : myLogTabs) {
-      myLogTab.dispose();
+    for (final String path : myLogTabs.keySet()) {
+      myLogTabs.get(path).dispose();
     }
 
+    myManager.unregisterFileMatcher();
+    myLogTabs.clear();
     myConsole = null;
   }
 
@@ -493,6 +510,9 @@ public class DebuggerSessionTab {
     myRunnerSettings = runnerSettings;
     myConfigurationSettings  = configurationPerRunnerSettings;
     myConfiguration = runProfile;
+
+    myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);
+
     myDebuggerSession.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         myStateManager.fireStateChanged(newContext, event);
