@@ -140,7 +140,8 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
           for (Iterator<PsiMethod> iterator = hisMethods.iterator(); iterator.hasNext();) {
             PsiMethod hisMethod = iterator.next();
             final MethodSignature hisSignature = hisMethod.getSignature(substitutor);
-            if (MethodSignatureUtil.findMethodBySignature(inheritor, hisSignature, false) != null) {
+            final PsiMethod derived = MethodSignatureUtil.findMethodBySignature(inheritor, hisSignature, false);
+            if (derived != null && inheritor.getManager().getResolveHelper().isAccessible(hisMethod, derived, null)) {
               iterator.remove();
               overridden.add(hisMethod);
             }
