@@ -15,19 +15,17 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DialogBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
@@ -90,8 +88,7 @@ public class DialogBuilder {
 
   public void setActionDescriptors(ActionDescriptor[] descriptors) {
     removeAllActions();
-    for (int i = 0; i < descriptors.length; i++) {
-      ActionDescriptor descriptor = descriptors[i];
+    for (ActionDescriptor descriptor : descriptors) {
       myActions.add(descriptor);
     }
   }
@@ -159,9 +156,8 @@ public class DialogBuilder {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
 
-  private CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
-    for (Iterator<ActionDescriptor> iterator = actionDescriptors.iterator(); iterator.hasNext();) {
-      ActionDescriptor actionDescriptor = iterator.next();
+  private static CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
+    for (ActionDescriptor actionDescriptor : actionDescriptors) {
       if (actionDescriptor.getClass().isAssignableFrom(aClass)) return ((CustomizableAction)actionDescriptor);
     }
     return null;
@@ -292,8 +288,7 @@ public class DialogBuilder {
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
     protected void dispose() {
-      for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-        Disposable disposable = iterator.next();
+      for (Disposable disposable : myDisposables) {
         disposable.dispose();
       }
       super.dispose();
@@ -356,8 +351,7 @@ public class DialogBuilder {
     protected Action[] createActions() {
       if (myActions == null) return super.createActions();
       ArrayList<Action> actions = new ArrayList<Action>(myActions.size());
-      for (Iterator<ActionDescriptor> iterator = myActions.iterator(); iterator.hasNext();) {
-        ActionDescriptor actionDescriptor = iterator.next();
+      for (ActionDescriptor actionDescriptor : myActions) {
         actions.add(actionDescriptor.getAction(this));
       }
       if (myHelpId != null) actions.add(getHelpAction());
