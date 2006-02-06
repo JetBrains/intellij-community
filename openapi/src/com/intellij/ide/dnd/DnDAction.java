@@ -23,9 +23,14 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 
 public enum DnDAction {
-  ADD("ADD", DnDConstants.ACTION_COPY, DragSource.DefaultCopyDrop, DragSource.DefaultCopyNoDrop),
-  BIND("BIND", DnDConstants.ACTION_LINK, DragSource.DefaultLinkDrop, DragSource.DefaultLinkNoDrop),
+
+  COPY("COPY", DnDConstants.ACTION_COPY, DragSource.DefaultCopyDrop, DragSource.DefaultCopyNoDrop),
+  LINK("LINK", DnDConstants.ACTION_LINK, DragSource.DefaultLinkDrop, DragSource.DefaultLinkNoDrop),
   MOVE("MOVE", DnDConstants.ACTION_MOVE, DragSource.DefaultMoveDrop, DragSource.DefaultMoveNoDrop);
+  
+  //ADD("ADD", DnDConstants.ACTION_COPY, DragSource.DefaultCopyDrop, DragSource.DefaultCopyNoDrop),
+  //BIND("BIND", DnDConstants.ACTION_LINK, DragSource.DefaultLinkDrop, DragSource.DefaultLinkNoDrop),
+  //MOVE("MOVE", DnDConstants.ACTION_MOVE, DragSource.DefaultMoveDrop, DragSource.DefaultMoveNoDrop);
 
 
   String myName;

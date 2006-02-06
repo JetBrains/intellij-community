@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -343,5 +345,11 @@ public class PaletteComponentList extends JList {
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();
     }
+
+    @Nullable
+    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+      return null;
+    }
+
   }
 }

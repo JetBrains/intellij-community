@@ -4,8 +4,12 @@
  */
 package com.intellij.ide.dnd;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
+
+import com.intellij.openapi.util.Pair;
 
 public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
   public static void main(String[] args) {
@@ -23,7 +27,13 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       }
 
       public DnDDragStartBean startDragging(DnDAction action, Point point) {
-        return new DnDDragStartBean(DnDAction.ADD, source.getLastSelectedPathComponent().toString());
+        return new DnDDragStartBean(DnDAction.COPY, source.getLastSelectedPathComponent().toString());
+      }
+
+
+      @Nullable
+      public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+        return null;
       }
     }, source);
 

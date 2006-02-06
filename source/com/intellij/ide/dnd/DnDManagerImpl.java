@@ -6,6 +6,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import org.jetbrains.annotations.NonNls;
@@ -15,6 +16,7 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDEvent.DropTargetHighlightingType {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
@@ -38,6 +40,8 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   private DragSourceListener myDragSourceListener = new MyDragSourceListener();
   private DragGestureListener myDragGestureListener = new MyDragGestureListnener();
   private DropTargetListener myDropTargetListener = new MyDropTargetListener();
+
+  private static final Image EMPTY_IMAGE = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
 
   private Timer myTooltipTimer = new Timer(ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
     public void actionPerformed(ActionEvent e) {
@@ -422,7 +426,12 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
           myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
           myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
-          dge.startDrag(DragSource.DefaultCopyDrop, myCurrentEvent, myDragSourceListener);
+          Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
+          if (pair == null) {
+            pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
+          }
+
+          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, myDragSourceListener);
 
           // check if source is also a target
           //        DnDTarget target = getTarget(dge.getComponent());
@@ -439,13 +448,13 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     DnDAction action = null;
     switch (platformAction) {
       case DnDConstants.ACTION_COPY :
-        action = DnDAction.ADD;
+        action = DnDAction.COPY;
         break;
       case DnDConstants.ACTION_MOVE :
         action = DnDAction.MOVE;
         break;
       case DnDConstants.ACTION_LINK:
-        action = DnDAction.BIND;
+        action = DnDAction.LINK;
         break;
       default:
         break;

@@ -16,10 +16,26 @@
  */
 package com.intellij.ide.dnd;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
+
+import com.intellij.openapi.util.Pair;
 
 public interface DnDSource {
 
   boolean canStartDragging(DnDAction action, Point dragOrigin);
   DnDDragStartBean startDragging(DnDAction action, Point dragOrigin);
+
+  /**
+   * Image to be drawn on screen while dragging and the point of the offset to position cursor
+   * in the proper place
+   *
+   * @param action
+   * @param dragOrigin
+   * @return Pair of image and cursor offset at the image
+   */
+  @Nullable
+  Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin);
+
 }
