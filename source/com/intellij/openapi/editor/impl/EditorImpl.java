@@ -78,7 +78,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
-  private MyScrollBar myHorizontalScrollBar;
 
   private ArrayList<EditorMouseListener> myMouseListeners = new ArrayList<EditorMouseListener>();
   private ArrayList<EditorMouseMotionListener> myMouseMotionListeners = new ArrayList<EditorMouseMotionListener>();
@@ -400,13 +399,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myPanel.setLayout(new BorderLayout());
 
     myVerticalScrollBar = new MyScrollBar(JScrollBar.VERTICAL);
-    myHorizontalScrollBar = new MyScrollBar(JScrollBar.HORIZONTAL);
+    final MyScrollBar horizontalScrollBar = new MyScrollBar(JScrollBar.HORIZONTAL);
 
     myGutterComponent = new EditorGutterComponentImpl(this);
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
-    myScrollPane.setHorizontalScrollBar(myHorizontalScrollBar);
+    myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -479,6 +478,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       });
     }
     catch (TooManyListenersException e) {
+      LOG.error(e);
     }
 
     myPanel.addComponentListener(new ComponentAdapter() {
@@ -1490,25 +1490,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
-    public void addContent(Graphics g, char[] data, int start, int end, int x, int y, Color color) {
+    public void addContent(Graphics g, char[] _data, int _start, int _end, int _x, int _y, Color _color) {
       final int count = myCount;
       if (count > 0) {
         final int lastCount = count - 1;
-        final Color lastColor = this.color[lastCount];
-        if (data == myLastData && start == ends[lastCount] && (color == null || lastColor == null || color == lastColor)) {
-          ends[lastCount] = end;
-          if (lastColor == null) this.color[lastCount] = color;
+        final Color lastColor = color[lastCount];
+        if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color == lastColor)) {
+          ends[lastCount] = _end;
+          if (lastColor == null) color[lastCount] = _color;
           return;
         }
       }
 
-      myLastData = data;
-      this.data[count] = data;
-      this.x[count] = x;
-      this.y[count] = y;
-      this.starts[count] = start;
-      this.ends[count] = end;
-      this.color[count] = color;
+      myLastData = _data;
+      data[count] = _data;
+      x[count] = _x;
+      y[count] = _y;
+      starts[count] = _start;
+      ends[count] = _end;
+      color[count] = _color;
 
       myCount++;
       if (count >= CACHED_CHARS_BUFFER_SIZE - 1) {
@@ -2564,6 +2564,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       myRepaintRunnable = new MyRepaintRunnable();
     }
 
+    @SuppressWarnings({"InnerClassMayBeStatic"})
     private class MyRepaintRunnable implements Runnable {
       public void run() {
         if (myEditor != null) {
@@ -2584,15 +2585,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       isStopped = true;
     }
 
+    @SuppressWarnings({"BusyWait"})
     public void run() {
       while (true) {
         try {
           Thread.sleep(myIsBlinkCaret ? mySleepTime : 1000);
         }
         catch (InterruptedException e) {
+          // ok
         }
 
-        synchronized (this) {
+        synchronized (ourCaretThread) {
           if (isStopped) {
             break;
           }
@@ -2695,6 +2698,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private class CaretCursor {
     private Point myLocation;
     private int myWidth;
+
+    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private boolean isVisible = true;
     private long myStartTime = 0;
 
@@ -2703,10 +2708,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
 
     public void activate() {
+      final boolean blink = mySettings.isBlinkCaret();
+      final int blinkPeriod = mySettings.getCaretBlinkPeriod();
       synchronized (ourCaretThread) {
         ourCaretThread.myEditor = EditorImpl.this;
-        ourCaretThread.setBlinkCaret(mySettings.isBlinkCaret());
-        ourCaretThread.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
+        ourCaretThread.setBlinkCaret(blink);
+        ourCaretThread.setBlinkPeriod(blinkPeriod);
         isVisible = true;
       }
     }
@@ -2909,18 +2916,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
      * value.
      */
     int getDecScrollButtonHeight() {
-      ScrollBarUI ui = getUI();
+      ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
-      if (ui instanceof BasicScrollBarUI) {
+      if (barUI instanceof BasicScrollBarUI) {
         try {
           Field decrButtonField = BasicScrollBarUI.class.getDeclaredField(DECR_BUTTON_FIELD);
           decrButtonField.setAccessible(true);
-          JButton decrButtonValue = (JButton)decrButtonField.get(ui);
+          JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
           LOG.assertTrue(decrButtonValue != null);
           return insets.top + decrButtonValue.getHeight();
         }
         catch (Exception exc) {
-          exc.printStackTrace();
           throw new IllegalStateException(exc.getMessage());
         }
       }
@@ -2936,22 +2942,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
      * value.
      */
     int getIncScrollButtonHeight() {
-      ScrollBarUI ui = getUI();
+      ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
-      if (ui instanceof BasicScrollBarUI) {
+      if (barUI instanceof BasicScrollBarUI) {
         try {
           Field incrButtonField = BasicScrollBarUI.class.getDeclaredField(INCR_BUTTON_FIELD);
           incrButtonField.setAccessible(true);
-          JButton incrButtonValue = (JButton)incrButtonField.get(ui);
+          JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
           LOG.assertTrue(incrButtonValue != null);
           return insets.bottom + incrButtonValue.getHeight();
         }
         catch (Exception exc) {
-          exc.printStackTrace();
           throw new IllegalStateException(exc.getMessage());
         }
       }
-      else if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(ui.getClass().getName())) {
+      else if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {
         return insets.bottom + 30;
       }
       else {
@@ -3439,6 +3444,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
         // committed text insertion
         if (commitCount > 0) {
+          //noinspection ForLoopThatDoesntUseLoopVariable
           for (char c = text.current(); commitCount > 0; c = text.next(), commitCount--) {
             if (c >= 0x20 && c != 0x7F) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
               processKeyTyped(c);
@@ -3902,6 +3908,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                 if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
                 offset++;
                 x = 0;
+                //noinspection AssignmentToForLoopParameter
                 line++;
               }
               else {
