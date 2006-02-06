@@ -115,7 +115,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
 
       final int index = Collections.binarySearch(Collections.list(enumeration), node, new Comparator<DefaultMutableTreeNode>() {
               public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
-                return ((Module)node1.getUserObject()).getName().compareTo(((Module)node2.getUserObject()).getName());
+                return ((Module)node1.getUserObject()).getName().compareToIgnoreCase(((Module)node2.getUserObject()).getName());
               }
             });
       final int insertionPoint = -(index+1);
