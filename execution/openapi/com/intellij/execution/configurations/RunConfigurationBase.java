@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -35,10 +34,6 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
   @NonNls private static final String LOG_FILE = "log_file";
-  @NonNls private static final String PATH = "path";
-  @NonNls private static final String CHECKED = "checked";
-  @NonNls private static final String ALIAS = "alias";
-  @NonNls private static final String SKIPPED = "skipped";
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -90,11 +85,11 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   }
 
   public void addLogFile(String file, String alias, boolean checked){
-    myLogFiles.add(new LogFileOptions(alias, file, checked, true));
+    myLogFiles.add(new LogFileOptions(alias, file, checked, true, false));
   }
 
-  public void addLogFile(String file, String alias, boolean checked, boolean skipContent){
-    myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent));
+  public void addLogFile(String file, String alias, boolean checked, boolean skipContent, final boolean showAll){
+    myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent, showAll));
   }
 
   public void removeAllLogFiles(){
@@ -108,70 +103,18 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   public void readExternal(Element element) throws InvalidDataException {
     myLogFiles.clear();
     for (Iterator<Element> iterator = element.getChildren(LOG_FILE).iterator(); iterator.hasNext();) {
-      Element logFile = iterator.next();
-      String file = logFile.getAttributeValue(PATH);
-      if (file != null){
-        file = FileUtil.toSystemDependentName(file);
-      }
-      Boolean checked = Boolean.valueOf(logFile.getAttributeValue(CHECKED));
-      final String skipped = logFile.getAttributeValue(SKIPPED);
-      Boolean skip = skipped != null ? Boolean.valueOf(skipped) : Boolean.TRUE;
-      String alias = logFile.getAttributeValue(ALIAS);
-      addLogFile(file, alias, checked.booleanValue(), skip.booleanValue());
+      LogFileOptions logFileOptions = new LogFileOptions();
+      logFileOptions.readExternal(iterator.next());
+      myLogFiles.add(logFileOptions);
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (final LogFileOptions options : myLogFiles) {
       Element logFile = new Element(LOG_FILE);
-      logFile.setAttribute(PATH, FileUtil.toSystemIndependentName(options.getPath()));
-      logFile.setAttribute(CHECKED, String.valueOf(options.isEnabled()));
-      logFile.setAttribute(SKIPPED, String.valueOf(options.isSkipContent()));
-      logFile.setAttribute(ALIAS, options.getName());
+      options.writeExternal(logFile);
       element.addContent(logFile);
     }
   }
 
-  /**
-   * The information about a single log file displayed in the console when the configuration
-   * is run.
-   *
-   * @since 5.1
-   */
-  public static class LogFileOptions {
-    private String myName;
-    private String myPath;
-    private boolean myEnabled;
-    private boolean mySkipContent;
-
-    public LogFileOptions(String name,
-                          String path,
-                          boolean enabled,
-                          boolean skipContent) {
-      myName = name;
-      myPath = path;
-      myEnabled = enabled;
-      mySkipContent = skipContent;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public boolean isSkipContent() {
-      return mySkipContent;
-    }
-
-    public void setEnable(boolean enable) {
-      myEnabled = enable;
-    }
-  }
 }

@@ -94,6 +94,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
   private class ReaderThread extends Thread{
     private BufferedReader myFileStream;
     private boolean myRunning = true;
+    @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     public ReaderThread(File file){
       //noinspection HardCodedStringLiteral
       super("Reader Thread");
@@ -113,7 +114,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
       }
     }
 
-    public void run() {
+    public synchronized void run() {
       if (myFileStream == null) return;
       while (myRunning){
         try {

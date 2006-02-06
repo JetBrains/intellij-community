@@ -1,15 +1,12 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.j2ee.extResources.EditLocationDialog;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -44,12 +41,12 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
   private JPanel myButtonsPanel;
 
 
-  private final ColumnInfo<MyFilesTableRowElement, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
-  private final ColumnInfo<MyFilesTableRowElement, Pair<String, String>> FILE = new MyLogFileColumnInfo();
-  private final ColumnInfo<MyFilesTableRowElement, Boolean> IS_SKIP_CONTENT = new MyIsSkippColumnInfo();
+  private final ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
+  private final ColumnInfo<LogFileOptions, LogFileOptions> FILE = new MyLogFileColumnInfo();
+  private final ColumnInfo<LogFileOptions, Boolean> IS_SKIP_CONTENT = new MyIsSkippColumnInfo();
 
   public LogConfigurationPanel() {
-    myModel = new ListTableModel<MyFilesTableRowElement>(new ColumnInfo[]{IS_SHOW, FILE, IS_SKIP_CONTENT});
+    myModel = new ListTableModel<LogFileOptions>(new ColumnInfo[]{IS_SHOW, FILE, IS_SKIP_CONTENT});
     myFilesTable = new TableView(myModel);
     final TableCellRenderer booleanCellRenderer = new TableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value,
@@ -74,10 +71,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myFilesTable.setIntercellSpacing(new Dimension(0, 0));
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ArrayList<MyFilesTableRowElement> newList = new ArrayList<MyFilesTableRowElement>(myModel.getItems());
-        final Pair<String, String> selectedNameLocation = showEditorDialog("", "");
+        ArrayList<LogFileOptions> newList = new ArrayList<LogFileOptions>(myModel.getItems());
+        final LogFileOptions selectedNameLocation = showEditorDialog("", "", false);
         if (selectedNameLocation != null) {
-          newList.add(new MyFilesTableRowElement(selectedNameLocation.first, selectedNameLocation.second, false, true));
+          newList.add(new LogFileOptions(selectedNameLocation.getName(), selectedNameLocation.getPathPattern(), false, true, selectedNameLocation.isShowAll()));
           myModel.setItems(newList);
           int index = myModel.getRowCount() - 1;
           myModel.fireTableRowsInserted(index, index);
@@ -123,10 +120,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
 
   protected void resetEditorFrom(final RunConfigurationBase configuration) {
     clearModel();
-    ArrayList<MyFilesTableRowElement> list = new ArrayList<MyFilesTableRowElement>();
-    final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = configuration.getLogFiles();
-    for (RunConfigurationBase.LogFileOptions setting : logFiles) {
-      list.add(new MyFilesTableRowElement(setting.getPath(), setting.getName(), setting.isEnabled(), setting.isSkipContent()));
+    ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
+    final ArrayList<LogFileOptions> logFiles = configuration.getLogFiles();
+    for (LogFileOptions setting : logFiles) {
+      list.add(new LogFileOptions(setting.getName(), setting.getPathPattern(), setting.isEnabled(), setting.isSkipContent(), setting.isShowAll()));
     }
     myModel.setItems(list);
   }
@@ -135,16 +132,13 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     for (int i = 0; i < myModel.getRowCount(); i++) {
-      Pair pair = (Pair)myModel.getValueAt(i, 1);
-      if (Comparing.equal(pair.first,"")){
+      LogFileOptions pair = (LogFileOptions)myModel.getValueAt(i, 1);
+      if (Comparing.equal(pair.getPathPattern(),"")){
         continue;
-      }
-      if (Comparing.equal(pair.second,"")){
-        pair = Pair.create(pair.first, pair.first);
       }
       final Boolean checked = (Boolean)myModel.getValueAt(i, 0);
       final Boolean skipped = (Boolean)myModel.getValueAt(i, 2);
-      configuration.addLogFile((String)pair.first, (String)pair.second, checked.booleanValue(), skipped.booleanValue());
+      configuration.addLogFile(pair.getPathPattern(), pair.getName(), checked.booleanValue(), skipped.booleanValue(), pair.isShowAll());
     }
   }
 
@@ -160,57 +154,38 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     return getComponent();
   }
 
-  public void addLogFile(String file, String alias, boolean checked, boolean skipContent) {
-    final List<MyFilesTableRowElement> itemsUnmodifiable = myModel.getItems();
-    List<MyFilesTableRowElement> items = new ArrayList<MyFilesTableRowElement>();
+  public void addLogFile(String file, String alias, boolean isShowAll, boolean checked, boolean skipContent) {
+    final List<LogFileOptions> itemsUnmodifiable = myModel.getItems();
+    List<LogFileOptions> items = new ArrayList<LogFileOptions>();
     items.addAll(itemsUnmodifiable);
-    items.add(new MyFilesTableRowElement(file, alias, checked, skipContent));
+    items.add(new LogFileOptions(alias, file, checked, skipContent, isShowAll));
     myModel.setItems(items);
   }
 
   private void clearModel() {
-    myModel.setItems(new ArrayList<MyFilesTableRowElement>());
+    myModel.setItems(new ArrayList<LogFileOptions>());
   }
 
-  private static class MyFilesTableRowElement {
-    private Pair<String, String> myPair;
-    private boolean myEnabled;
-    private boolean mySkipContent;
-
-    public MyFilesTableRowElement(String file, String alias, boolean enabled, boolean skipContent) {
-      myPair = Pair.create(file, alias);
-      myEnabled = enabled;
-      mySkipContent = skipContent;
+ @Nullable
+  private static LogFileOptions showEditorDialog(String name, String location, boolean showAll){
+    EditLogPatternDialog dialog = new EditLogPatternDialog();
+    dialog.init(name, location, showAll);
+    dialog.show();
+    if (dialog.isOK()) {
+      location = dialog.getLogPattern();
+      name = dialog.getName();
+      showAll = dialog.isShowAllFiles();
+      return new LogFileOptions(name, location, false, false, showAll);
     }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-      myEnabled = enabled;
-    }
-
-    public Pair<String, String> getPair() {
-      return myPair;
-    }
-
-    public boolean isSkipContent() {
-      return mySkipContent;
-    }
-
-    public void setSkipContent(final boolean skipContent) {
-      mySkipContent = skipContent;
-    }
-
+    return null;
   }
 
-  private static class MyLogFileColumnInfo extends ColumnInfo<MyFilesTableRowElement, Pair<String, String>> {
+  private static class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
     public MyLogFileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.log.file.column"));
     }
 
-    public TableCellRenderer getRenderer(final MyFilesTableRowElement p0) {
+    public TableCellRenderer getRenderer(final LogFileOptions p0) {
       return new DefaultTableCellRenderer() {
         public Component getTableCellRendererComponent(JTable table,
                                                        Object value,
@@ -219,7 +194,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
                                                        int row,
                                                        int column) {
           final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          setText(((Pair<String, String>)value).second);
+          setText(((LogFileOptions)value).getName());
           setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
           setBorder(null);
           return renderer;
@@ -227,24 +202,28 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       };
     }
 
-    public Pair<String, String> valueOf(final MyFilesTableRowElement object) {
-      return object.getPair();
+    public LogFileOptions valueOf(final LogFileOptions object) {
+      return object;
     }
 
-    public TableCellEditor getEditor(final MyFilesTableRowElement item) {
-      return new LogFileCellEditor(item.getPair());
+    public TableCellEditor getEditor(final LogFileOptions item) {
+      return new LogFileCellEditor(item);
     }
 
-    public void setValue(final MyFilesTableRowElement o, final Pair<String, String> aValue) {
-      o.myPair = aValue;
+    public void setValue(final LogFileOptions o, final LogFileOptions aValue) {
+      if (aValue != null) {
+        o.setName(aValue.getName());
+        o.setLast(!aValue.isShowAll());
+        o.setPathPattern(aValue.getPathPattern());
+      }
     }
 
-    public boolean isCellEditable(final MyFilesTableRowElement o) {
+    public boolean isCellEditable(final LogFileOptions o) {
       return true;
     }
   }
 
-  private static class MyIsActiveColumnInfo extends ColumnInfo<MyFilesTableRowElement, Boolean> {
+  private static class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
     private final static String NAME = DiagnosticBundle.message("log.monitor.is.active.column");
     protected MyIsActiveColumnInfo() {
       super(NAME);
@@ -254,16 +233,16 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       return Boolean.class;
     }
 
-    public Boolean valueOf(final MyFilesTableRowElement object) {
-      return Boolean.valueOf(object.isEnabled());
+    public Boolean valueOf(final LogFileOptions object) {
+      return object.isEnabled();
     }
 
-    public boolean isCellEditable(MyFilesTableRowElement element) {
+    public boolean isCellEditable(LogFileOptions element) {
       return true;
     }
 
-    public void setValue(MyFilesTableRowElement element, Boolean checked){
-      element.setEnabled(checked.booleanValue());
+    public void setValue(LogFileOptions element, Boolean checked){
+      element.setEnable(checked.booleanValue());
     }
 
     public int getWidth(final JTable table) {
@@ -272,7 +251,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
   }
 
-  private static class MyIsSkippColumnInfo extends ColumnInfo<MyFilesTableRowElement, Boolean> {
+  private static class MyIsSkippColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
     private final static String NAME = DiagnosticBundle.message("log.monitor.is.skipped.column");
 
     protected MyIsSkippColumnInfo() {
@@ -283,15 +262,15 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       return Boolean.class;
     }
 
-    public Boolean valueOf(final MyFilesTableRowElement element) {
-      return Boolean.valueOf(element.isSkipContent());
+    public Boolean valueOf(final LogFileOptions element) {
+      return element.isSkipContent();
     }
 
-    public boolean isCellEditable(MyFilesTableRowElement element) {
+    public boolean isCellEditable(LogFileOptions element) {
       return true;
     }
 
-    public void setValue(MyFilesTableRowElement element, Boolean skipped){
+    public void setValue(LogFileOptions element, Boolean skipped){
       element.setSkipContent(skipped.booleanValue());
     }
 
@@ -301,55 +280,30 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
   }
 
-  @Nullable
-  private static Pair<String, String> showEditorDialog(String name, String location){
-    EditLocationDialog dialog = new EditLocationDialog(null, true, DiagnosticBundle.message("log.monitor.edit.aliases.title"),
-                                                       DiagnosticBundle.message("log.monitor.edit.aliases.name"),
-                                                       DiagnosticBundle.message("log.monitor.edit.aliases.location")) {
-      protected FileChooserDescriptor getChooserDescriptor() {
-        return BrowseFilesListener.SINGLE_FILE_DESCRIPTOR;
-      }
-    };
-    dialog.init(name, location);
-    dialog.show();
-    if (dialog.isOK()) {
-      final EditLocationDialog.Pair pair = dialog.getPair();
-      if (pair != null) {
-        name = pair.getName();
-        location = pair.getLocation();
-        if (name == null || name.length() ==0){
-          name = location;
-        }
-      }
-      return Pair.create(location, name);
-    }
-    return null;
-  }
-
   private static class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
-    private Pair<String, String> mySelectedPair;
+    private LogFileOptions myLogFileOptions;
 
-    public LogFileCellEditor(Pair<String, String> pair) {
-      mySelectedPair = pair;
+    public LogFileCellEditor(LogFileOptions options) {
+      myLogFileOptions = options;
       myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setEditable(false);
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final Pair<String, String> newValue = showEditorDialog(mySelectedPair.second, mySelectedPair.first);
+          final LogFileOptions newValue = showEditorDialog(myLogFileOptions.getName(), myLogFileOptions.getPathPattern(), myLogFileOptions.isShowAll());
           if (newValue != null) {
-            mySelectedPair = newValue;
+            myLogFileOptions = newValue;
           }
           JTextField textField = getChildComponent();
-          textField.setText(mySelectedPair.second);
+          textField.setText(myLogFileOptions.getName());
           textField.requestFocus();
         }
       });
     }
 
     public Object getCellEditorValue() {
-      return mySelectedPair;
+      return myLogFileOptions;
     }
 
     private JTextField getChildComponent() {
@@ -357,7 +311,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      getChildComponent().setText(((Pair<String, String>)value).second);
+      getChildComponent().setText(((LogFileOptions)value).getName());
       return myComponent;
     }
   }

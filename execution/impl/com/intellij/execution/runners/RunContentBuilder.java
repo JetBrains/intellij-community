@@ -5,12 +5,11 @@
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.diagnostic.logging.LogConsoleManager;
+import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
@@ -26,11 +25,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author dyoma
  */
-public class RunContentBuilder {
+public class RunContentBuilder implements LogConsoleManager {
   public static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
   private final JavaProgramRunner myRunner;
   private final Project myProject;
@@ -44,9 +46,13 @@ public class RunContentBuilder {
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
+  private Map<String, LogConsole> myLogIndexMap = new HashMap<String, LogConsole>();
+  private final LogFilesManager myManager;
+
   public RunContentBuilder(final Project project, final JavaProgramRunner runner) {
     myProject = project;
     myRunner = runner;
+    myManager = new LogFilesManager(project, this);
   }
 
   public ExecutionResult getExecutionResult() {
@@ -63,6 +69,7 @@ public class RunContentBuilder {
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
+    myManager.registerFileMatcher((RunConfigurationBase)runProfile);
   }
 
   public void addAction(final AnAction action) {
@@ -92,21 +99,16 @@ public class RunContentBuilder {
           } else {
             if (myRunProfile instanceof RunConfigurationBase){
               RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-              final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = base.getLogFiles();
+              final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
               if (!logFiles.isEmpty()){
-                final ProcessHandler processHandler = myExecutionResult.getProcessHandler();
                 myComponent = new JTabbedPane();
                 ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), console.getComponent());
-                for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
+                for (LogFileOptions logFile : logFiles) {
                   if (logFile.isEnabled()) {
-                    final LogConsole log = new LogConsole(myProject, new File(logFile.getPath()), logFile.isSkipContent()){
-                      public boolean isActive() {
-                        return ((JTabbedPane)myComponent).getSelectedComponent() == this;  
-                      }
-                    };
-                    myDisposeables.add(log);
-                    log.attachStopLogConsoleTrackingListener(processHandler);
-                    ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.log.tab", logFile.getName()), log);
+                    final Set<String> paths = logFile.getPaths();
+                    for (String path : paths) {
+                      addLogConsole(path, logFile.isSkipContent(), myProject, logFile.getName());
+                    }
                   }
                 }
               }
@@ -126,6 +128,24 @@ public class RunContentBuilder {
     }
 
     return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+  }
+
+  public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name) {
+    final LogConsole log = new LogConsole(project, new File(path), skipContent){
+      public boolean isActive() {
+        return ((JTabbedPane)myComponent).getSelectedComponent() == this;
+      }
+    };
+    myDisposeables.add(log);
+    log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
+    ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.log.tab", name), log);
+    myLogIndexMap.put(path, log);
+  }
+
+  public void removeLogConsole(final String path) {
+    final LogConsole logConsole = myLogIndexMap.remove(path);
+    logConsole.dispose();
+    myComponent.remove(logConsole);
   }
 
   private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
@@ -167,7 +187,7 @@ public class RunContentBuilder {
     return descriptor;
   }
 
-  private static class MyRunContentDescriptor extends RunContentDescriptor {
+  private class MyRunContentDescriptor extends RunContentDescriptor {
     private final boolean myReuseProhibited;
     private final Disposable[] myAdditionalDisposables;
 
@@ -185,6 +205,8 @@ public class RunContentBuilder {
       for (final Disposable disposable : myAdditionalDisposables) {
         disposable.dispose();
       }
+      myLogIndexMap.clear();
+      myManager.unregisterFileMatcher();
       super.dispose();
     }
   }
