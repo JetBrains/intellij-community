@@ -42,4 +42,8 @@ public class Ref<T> {
   public static <T> Ref<T> create(T value) {
     return new Ref<T>(value);
   }
+
+  public String toString() {
+    return myValue == null ? null : myValue.toString();
+  }
 }

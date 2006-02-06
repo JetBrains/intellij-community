@@ -51,7 +51,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     if (!myEditor.ensureEditable()) {
       return;
     }
-    final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles(project);
+    final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     PropertiesFile aPropertiesFile = null;
     for (PropertiesFile file : propertiesFiles) {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;

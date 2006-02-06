@@ -484,7 +484,7 @@
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
         <separator/>
-        <action id="I18nizeJspTextSelection" class="com.intellij.codeInsight.i18n.I18nizeJSPTextSelectionAction"/>
+        <action id="I18nize" class="com.intellij.codeInsight.i18n.I18nizeAction"/>
       </group>
 
       <!-- Build -->

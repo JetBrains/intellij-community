@@ -4,9 +4,10 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -36,11 +36,11 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
   }
 
   public String getText() {
-    return QuickFixBundle.message("remove.suppression.action.name");
+    return QuickFixBundle.message("remove.suppression.action.name", myID);
   }
 
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("remove.suppression.action.family");
   }
 
   public void applyFix(Project project, ProblemDescriptor descriptor) {
@@ -120,36 +120,30 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
   }
 
   private void removeFromAnnotation(final PsiAnnotation annotation) throws IncorrectOperationException {
-    String text = annotation.getText();
-    if (text.contains("{")) {
-      removeAttribute(annotation);
-    }
-    else {
-      annotation.delete();
-    }
-  }
-
-  private boolean removeAttribute(final PsiAnnotation annotation) throws IncorrectOperationException {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       PsiAnnotationMemberValue value = attribute.getValue();
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
-          if (removeFromValue(initializer)) return true;
+          if (removeFromValue(initializer, initializers.length==1)) return;
         }
       }
-      if (removeFromValue(value)) return true;
+      if (removeFromValue(value, attributes.length==1)) return;
     }
-    return false;
   }
 
-  private boolean removeFromValue(final PsiAnnotationMemberValue value) throws IncorrectOperationException {
+  private boolean removeFromValue(final PsiAnnotationMemberValue value, final boolean removeParent) throws IncorrectOperationException {
     String text = value.getText();
     text = StringUtil.trimStart(text, "\"");
     text = StringUtil.trimEnd(text, "\"");
     if (myID.equals(text)) {
-      value.delete();
+      if (removeParent) {
+        myContext.delete();
+      }
+      else {
+        value.delete();
+      }
       return true;
     }
     return false;

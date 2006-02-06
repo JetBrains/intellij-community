@@ -88,4 +88,7 @@ public class TextRange {
   public boolean intersects(TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) <= Math.min(myEndOffset, textRange.getEndOffset());
   }
+  public boolean intersectsStrict(TextRange textRange) {
+    return Math.max(myStartOffset, textRange.getStartOffset()) < Math.min(myEndOffset, textRange.getEndOffset());
+  }
 }
