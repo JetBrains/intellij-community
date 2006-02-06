@@ -303,7 +303,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling = nextSibling.getNextSibling();
     }
 
-    final PsiElement psiElement = PsiTreeUtil.findCommonParent(nextSibling, element);
+    final PsiElement psiElement = nextSibling == null ? null : PsiTreeUtil.findCommonParent(nextSibling, element);
     if ((nextSibling instanceof OuterLanguageElement ||
          nextSibling instanceof JspExpression ||
          nextSibling instanceof ELExpressionHolder
