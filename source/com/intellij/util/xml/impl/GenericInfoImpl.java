@@ -353,7 +353,8 @@ public class GenericInfoImpl implements DomGenericInfo {
 
           XmlTag lastTag = null;
           int i = 0;
-          for (final XmlTag subTag : tag.getSubTags()) {
+          final XmlTag[] tags = tag.getSubTags();
+          for (final XmlTag subTag : tags) {
             if (i == index) break;
             if (qnames1.contains(subTag.getLocalName())) {
               final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
@@ -367,7 +368,16 @@ public class GenericInfoImpl implements DomGenericInfo {
           final boolean b = manager.setChanging(true);
           try {
             final XmlTag emptyTag = tag.getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
-            final XmlTag newTag = (XmlTag) (lastTag == null ? tag.add(emptyTag) : tag.addAfter(emptyTag, lastTag));
+            final XmlTag newTag;
+            if (lastTag == null) {
+              if (tags.length == 0) {
+                newTag = (XmlTag) tag.add(emptyTag);
+              } else {
+                newTag = (XmlTag) tag.addBefore(emptyTag, tags[0]);
+              }
+            } else {
+              newTag = (XmlTag) tag.addAfter(emptyTag, lastTag);
+            }
             return handler.createCollectionElement(type, newTag);
           }
           finally {
