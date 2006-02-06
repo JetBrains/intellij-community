@@ -23,6 +23,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * This class presents an abstraction of user interface transactional editor provider of some abstract data type.
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
@@ -39,6 +41,7 @@ public abstract class SettingsEditor<Settings> {
   protected abstract void resetEditorFrom(Settings s);
   protected abstract void applyEditorTo(Settings s) throws ConfigurationException;
 
+  @NotNull
   protected abstract JComponent createEditor();
   protected abstract void disposeEditor();
 

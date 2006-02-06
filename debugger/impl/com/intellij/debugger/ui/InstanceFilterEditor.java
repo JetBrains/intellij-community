@@ -1,11 +1,10 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.ClassFilter;
+import com.intellij.util.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 
 /**
  * User: lex

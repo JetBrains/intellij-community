@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
+import com.intellij.util.ClassFilter;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;

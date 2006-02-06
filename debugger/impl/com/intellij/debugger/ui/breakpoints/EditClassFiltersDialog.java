@@ -4,12 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.ui.ClassFilterEditor;
-import com.intellij.debugger.ClassFilter;
+import com.intellij.util.ClassFilter;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;

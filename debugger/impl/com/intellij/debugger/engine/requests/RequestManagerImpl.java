@@ -1,6 +1,6 @@
 package com.intellij.debugger.engine.requests;
 
-import com.intellij.debugger.ClassFilter;
+import com.intellij.util.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;

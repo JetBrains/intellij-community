@@ -3,9 +3,8 @@
  * Date: Sep 11, 2002
  * Time: 5:23:47 PM
  */
-package com.intellij.debugger.ui;
+package com.intellij.ui.classFilter;
 
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -17,7 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +30,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   public ClassFilterEditorAddDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle(DebuggerBundle.message("class.filter.editor.add.dialog.title"));
+    setTitle(UIBundle.message("class.filter.editor.add.dialog.title"));
     init();
   }
 
@@ -40,7 +39,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
 
     JPanel _panel = new JPanel(new BorderLayout());
     myClassName = new TextFieldWithBrowseButton();
-    _panel.add(new JLabel(DebuggerBundle.message("label.class.filter.editor.add.dialog.filter.pattern")), BorderLayout.NORTH);
+    _panel.add(new JLabel(UIBundle.message("label.class.filter.editor.add.dialog.filter.pattern")), BorderLayout.NORTH);
     _panel.add(myClassName, BorderLayout.CENTER);
     box.add(_panel);
 
@@ -58,7 +57,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
-          DebuggerBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), null, null);
+          UIBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), null, null);
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {

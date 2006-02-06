@@ -1,7 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.ClassFilterEditor;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.debugger.DebuggerBundle;

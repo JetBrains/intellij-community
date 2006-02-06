@@ -2,10 +2,9 @@
  * Class ClassFilterEditor
  * @author Jeka
  */
-package com.intellij.debugger.ui;
+package com.intellij.ui.classFilter;
 
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.ui.UIBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -14,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ClassFilter;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -42,9 +42,9 @@ public class ClassFilterEditor extends JPanel {
 
   public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
     super(new GridBagLayout());
-    myAddClassButton = new JButton(DebuggerBundle.message("button.add.class"));
-    myAddPatternButton = new JButton(DebuggerBundle.message("button.add.pattern"));
-    myRemoveButton = new JButton(DebuggerBundle.message("button.remove"));
+    myAddClassButton = new JButton(UIBundle.message("button.add.class"));
+    myAddPatternButton = new JButton(UIBundle.message("button.add.pattern"));
+    myRemoveButton = new JButton(UIBundle.message("button.remove"));
     myTable = new Table();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
@@ -174,7 +174,7 @@ public class ClassFilterEditor extends JPanel {
       return myFilters.indexOf(filter);
     }
 
-    protected void addRow(ClassFilter filter) {
+    public void addRow(ClassFilter filter) {
       myFilters.add(filter);
       int row = myFilters.size() - 1;
       fireTableRowsInserted(row, row);
@@ -292,7 +292,7 @@ public class ClassFilterEditor extends JPanel {
 
   protected void addClassFilter() {
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
-      DebuggerBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
+      UIBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
     chooser.showDialog();
     PsiClass selectedClass = chooser.getSelectedClass();
     if (selectedClass != null) {
@@ -305,6 +305,13 @@ public class ClassFilterEditor extends JPanel {
 
       }
       myTable.requestFocus();
+    }
+  }
+
+  public void addPattern(String pattern) {
+    ClassFilter filter = createFilter(pattern);
+    if (filter != null) {
+      myTableModel.addRow(filter);
     }
   }
 

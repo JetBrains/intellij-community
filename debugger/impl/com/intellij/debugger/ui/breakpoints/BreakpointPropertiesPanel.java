@@ -4,7 +4,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.ClassFilter;
+import com.intellij.util.ClassFilter;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.DebuggerBundle;

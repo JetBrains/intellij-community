@@ -1,7 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.ui.ClassFilterEditor;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;

@@ -43,8 +43,7 @@ public class ParametersList implements Cloneable{
     final ArrayList<String> quoted = quoteParameters(myParameters);
     final StringBuffer buffer = new StringBuffer();
     final String separator = " ";
-    for (Iterator<String> iterator = quoted.iterator(); iterator.hasNext();) {
-      final String param = iterator.next();
+    for (final String param : quoted) {
       buffer.append(separator);
       buffer.append(param);
     }
@@ -53,9 +52,9 @@ public class ParametersList implements Cloneable{
 
   private static ArrayList<String> quoteParameters(final List<String> parameters) {
     final ArrayList<String> result = new ArrayList<String>(parameters.size());
-    for (Iterator iterator = parameters.iterator(); iterator.hasNext();) {
-      String parameter = (String)iterator.next();
-      if(hasWhitespace(parameter) && !(StringUtil.startsWithChar(parameter, '\"') && StringUtil.endsWithChar(parameter, '\"'))) {
+    for (String parameter : parameters) {
+      if (hasWhitespace(parameter) && !(StringUtil.startsWithChar(parameter, '\"') && StringUtil.endsWithChar(parameter, '\"')))
+      {
         parameter = "\"" + parameter + "\"";
       }
       result.add(parameter);
@@ -80,8 +79,8 @@ public class ParametersList implements Cloneable{
   public void addParametersString(final String parameters) {
     if (parameters != null) {
       final String[] parms = parse(parameters);
-      for (int i = 0; i < parms.length; i++) {
-        add(parms[i]);
+      for (String parm : parms) {
+        add(parm);
       }
     }
   }
@@ -166,12 +165,11 @@ public class ParametersList implements Cloneable{
 
   public String expandMacros(String text) {
     final Map<String, String> macroMap = getMacroMap();
-    final Set set = macroMap.keySet();
-    for (Iterator i = set.iterator(); i.hasNext();) {
-      final String from = (String)i.next();
-      final String to = macroMap.get(from);
-      text = StringUtil.replace(text, from, to, true);
-    }
+      final Set<String> set = macroMap.keySet();
+      for (final String from : set) {
+          final String to = macroMap.get(from);
+          text = StringUtil.replace(text, from, to, true);
+      }
     return text;
   }
 
@@ -187,15 +185,13 @@ public class ParametersList implements Cloneable{
           public void run() {
             final PathMacros pathMacros = PathMacros.getInstance();
             final Set<String> names = pathMacros.getAllMacroNames();
-            for (Iterator it = names.iterator(); it.hasNext();) {
-              final String name = (String)it.next();
-              myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
-            }
+              for (String name : names) {
+                  myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+              }
           }
         });
         final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
-        for (Iterator it = env.keySet().iterator(); it.hasNext();) {
-          final String name = (String)it.next();
+        for (String name : env.keySet()) {
           final String key = "${" + name + "}";
           if (!myMacroMap.containsKey(key)) {
             myMacroMap.put(key, env.get(name));
