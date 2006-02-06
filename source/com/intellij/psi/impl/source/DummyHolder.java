@@ -197,6 +197,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
     final FileElement treeClone = (FileElement)calcTreeElement().clone();
     psiFile.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    if(isPhysical()) psiFile.myOriginalFile = this;
+    else psiFile.myOriginalFile = myOriginalFile;
     treeClone.setPsiElement(psiFile);
     return psiFile;
   }

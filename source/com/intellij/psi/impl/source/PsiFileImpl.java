@@ -27,7 +27,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   private final IElementType myElementType;
   protected final IElementType myContentElementType;
 
-  protected PsiFile myOriginalFile = null;
+  public PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
   private final FileViewProvider myViewProvider;
 
