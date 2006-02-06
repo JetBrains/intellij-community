@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -43,6 +45,11 @@ public abstract class FilterComponent extends JPanel {
           filter();
           e.consume();
         }
+      }
+    });
+    myFilter.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        filter();
       }
     });
     myFilter.setEditable(true);

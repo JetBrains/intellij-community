@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.FilterComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,6 +44,13 @@ public abstract class LogConsole extends JPanel implements Disposable{
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private String myPrevType = null;
 
+  private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
+    protected void filter() {
+      LogConsolePreferences.getInstance().updateCustomFilter(getFilter());
+      filterConsoleOutput();
+    }
+  };
+
   private static final long PROCESS_IDLE_TIMEOUT = 200;
   public LogConsole(Project project, File file, boolean skipContents) {
     super(new BorderLayout());
@@ -62,7 +70,11 @@ public abstract class LogConsole extends JPanel implements Disposable{
     group.add(new FilterAction(LogConsolePreferences.WARNING));
     group.add(new FilterAction(LogConsolePreferences.ERROR));
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return actionToolbar.getComponent();
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    myFilter.reset();
+    panel.add(myFilter, BorderLayout.EAST);
+    return panel;
   }
 
   public abstract boolean isActive();

@@ -22,9 +22,11 @@ public class LogConsolePreferences implements ApplicationComponent, JDOMExternal
   public boolean FILTER_ERRORS = false;
   public boolean FILTER_WARNINGS = false;
   public boolean FILTER_INFO = true;
+  public String CUSTOM_FILTER = null;
   @NonNls public static final String ERROR = "ERROR";
   @NonNls public static final String WARNING = "WARNING";
   @NonNls public static final String INFO = "INFO";
+  @NonNls public static final String CUSTOM = "CUSTOM";
 
   public final static Pattern ERROR_PATTERN = Pattern.compile(".*" + ERROR + ".*");
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
@@ -54,7 +56,14 @@ public class LogConsolePreferences implements ApplicationComponent, JDOMExternal
     }
   }
 
+  public void updateCustomFilter(String customFilter) {
+    CUSTOM_FILTER = customFilter;
+  }
+
   public boolean isApplicable(String text, String prevType){
+    if (CUSTOM_FILTER != null) { 
+      if (!Pattern.compile(".*" + CUSTOM_FILTER + ".*").matcher(text).matches()) return false;
+    }
     if (ERROR_PATTERN.matcher(text).matches()) return !FILTER_ERRORS;
     if (WARNING_PATTERN.matcher(text).matches()) return !FILTER_WARNINGS;
     if (INFO_PATTERN.matcher(text).matches()) return !FILTER_INFO;
@@ -111,4 +120,5 @@ public class LogConsolePreferences implements ApplicationComponent, JDOMExternal
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
+
 }
