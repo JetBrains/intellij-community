@@ -42,11 +42,11 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRoot = root;
     myVcs = vcs;
 
-    myMergeText1.setEditable(false);
+    myMergeText1.setEditable(true);
 
     myUrlLabel1.setLabelFor(myMergeText1);
 
-    myMergeText2.setEditable(false);
+    myMergeText2.setEditable(true);
 
     myMergeText1.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

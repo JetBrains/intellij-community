@@ -28,9 +28,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -78,6 +76,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
         try {
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
+          if (info == null) {
+              exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", file.getIOFile()));
+              return;
+          }
           final String url = info.getURL() == null ? null : info.getURL().toString();
           if (indicator != null) {
             indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));

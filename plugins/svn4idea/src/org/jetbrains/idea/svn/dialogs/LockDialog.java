@@ -39,9 +39,9 @@ public class LockDialog extends DialogWrapper {
 
   @NonNls private static final String HELP_ID = "vcs.subversion.lock";
 
-  public LockDialog(Project project, boolean canBeParent) {
+  public LockDialog(Project project, boolean canBeParent, boolean multiple) {
     super(project, canBeParent);
-    setTitle(SvnBundle.message("dialog.title.lock.files"));
+    setTitle(multiple ? SvnBundle.message("dialog.title.lock.files") : SvnBundle.message("dialog.title.lock.file"));
     setResizable(true);
 
     getHelpAction().setEnabled(true);

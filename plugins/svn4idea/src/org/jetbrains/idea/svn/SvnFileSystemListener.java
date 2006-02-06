@@ -89,6 +89,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         mover.undoMove(src, dst);
       }
       else {
+        // if src is not under version control, do usual move.
+        SVNStatus srcStatus = getFileStatus(src);
+        if (srcStatus == null || srcStatus.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
+                srcStatus.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL ||
+                srcStatus.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
+                srcStatus.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
+            return false;
+        }
         mover.doMove(src, dst);
       }
       dst.setLastModified(srcTime);
@@ -127,9 +135,16 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (!SVNWCUtil.isVersionedDirectory(ioFile.getParentFile())) {
       return false;
     }
-    else if (SVNWCUtil.isWorkingCopyRoot(ioFile, true)) {
-      return false;
+    else {
+        try {
+        if (SVNWCUtil.isWorkingCopyRoot(ioFile, true)) {
+          return false;
+        }
+        } catch (SVNException e) {
+            //
+        }
     }
+
     SVNStatus status = getFileStatus(ioFile);
 
     SVNWCClient wcClient = new SVNWCClient(null, null);

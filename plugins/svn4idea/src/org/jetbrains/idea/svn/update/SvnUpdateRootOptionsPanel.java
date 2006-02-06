@@ -47,7 +47,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRoot = root;
     myVcs = vcs;
 
-    myURLText.setEditable(false);
+    myURLText.setEditable(true);
 
 
     myURLText.addActionListener(new ActionListener() {

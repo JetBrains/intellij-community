@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import java.io.File;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
         return new ISVNAuthenticationProvider() {
-            public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+            public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
                 return null;
             }
             public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
@@ -38,7 +39,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     static class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get from key-ring, use realm.
             Map info = SvnApplicationSettings.getInstance().getAuthenticationInfo(realm);
             // convert info to SVNAuthentication.

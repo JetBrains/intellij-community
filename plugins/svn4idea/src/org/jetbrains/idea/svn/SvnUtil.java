@@ -84,7 +84,7 @@ public class SvnUtil {
 
   public static void doLockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles,
                                  AbstractVcsHelper helper) throws VcsException {
-    LockDialog dialog = new LockDialog(project, true);
+    LockDialog dialog = new LockDialog(project, true, ioFiles != null && ioFiles.length > 1);
     dialog.show();
     if (!dialog.isOK()) {
       return;
@@ -99,7 +99,7 @@ public class SvnUtil {
       public void handleEvent(SVNEvent event, double progress) {
         if (event.getAction() == SVNEventAction.LOCK_FAILED) {
           failedLocks.add(event.getErrorMessage() != null ?
-                          event.getErrorMessage() :
+                          event.getErrorMessage().getFullMessage() :
                           event.getFile().getAbsolutePath());
           count[0]--;
         }
@@ -164,7 +164,7 @@ public class SvnUtil {
       public void handleEvent(SVNEvent event, double progress) {
         if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
           failedUnlocks.add(event.getErrorMessage() != null ?
-                            event.getErrorMessage() :
+                            event.getErrorMessage().getFullMessage() :
                             event.getFile().getAbsolutePath());
           count[0]--;
         }

@@ -112,5 +112,4 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       }
     }
   }
-
 }

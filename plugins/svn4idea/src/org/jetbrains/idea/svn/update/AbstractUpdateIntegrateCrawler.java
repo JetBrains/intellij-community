@@ -24,6 +24,8 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -65,8 +67,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       rev = doUpdate(root, client);
 
       if (rev < 0) {
-        throw new SVNException(
-          SvnBundle.message("exception.text.root.was.not.properly.updated", root));
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, SvnBundle.message("exception.text.root.was.not.properly.updated", root)));
       }
     }
     catch (SVNException e) {

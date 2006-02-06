@@ -182,13 +182,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
-    return commitInt(collectPaths(roots), preparedComment, false, true);
+    // files commit, should not be recursive.
+    return commitInt(collectPaths(roots), preparedComment, true, false);
   }
 
 
   private List<VcsException> commitInt(List<String> paths, final String comment, final boolean force, final boolean recursive) {
     final List<VcsException> exception = new ArrayList<VcsException>();
-    final Map<File, Collection<File>> committables = getCommitables(paths);
+    final Collection<File> committables = getCommitables(paths);
 
     final SVNCommitClient committer;
     try {
@@ -246,78 +247,107 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
-  private void doCommit(Map<File, Collection<File>> committables,
+  private void doCommit(Collection<File> committables,
                         ProgressIndicator progress,
                         SVNCommitClient committer,
                         String comment,
                         boolean force,
                         boolean recursive,
                         List<VcsException> exception) {
-    for (final File root : committables.keySet()) {
-      Collection<File> files = committables.get(root);
-      if (files.isEmpty()) {
-        continue;
-      }
-      if (progress != null) {
-        progress.setText(SvnBundle.message("progress.text.committing.changes.below", root.getAbsolutePath()));
-      }
-
-      File[] filesArray = files.toArray(new File[files.size()]);
-      boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
-      try {
-        SVNCommitInfo result = committer.doCommit(filesArray, keepLocks, comment, force, recursive);
-        if (result != SVNCommitInfo.NULL && result.getNewRevision() >= 0) {
-
-          /*
-          final String lastMergedRevision = SvnConfiguration.getInstance(mySvnVcs.getProject()).LAST_MERGED_REVISION;
-          if (force && lastMergedRevision != null) {
-            try {
-              mySvnVcs.createWCClient().doSetRevisionProperty(root, SVNRevision.parse(lastMergedRevision),
-                                                              "idea.last.integrated.revision", "true", true,
-                                                              ISVNPropertyHandler.NULL);
-
-              final SVNWCClient wcClient = mySvnVcs.createWCClient();
-              final SVNPropertyData svnPropertyData =
-                wcClient.doGetProperty(root, "idea.last.integrated.revision", SVNRevision.HEAD, SVNRevision.HEAD, true);
-            }
-            catch (SVNException e) {
-              //ignore
-            }
+    if (committables.isEmpty()) {
+      return;
+    }
+    File[] pathsToCommit = (File[])committables.toArray(new File[committables.size()]);
+    boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
+    SVNCommitPacket[] commitPackets = null;
+    SVNCommitInfo[] results;
+    try {
+      commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, force, recursive, true);
+      results = committer.doCommit(commitPackets, keepLocks, comment);
+      commitPackets = null;
+    }
+    catch (SVNException e) {
+      // exception on collecting commitables.
+      exception.add(new VcsException(e));
+      return;
+    }
+    finally {
+      if (commitPackets != null) {
+        for (int i = 0; i < commitPackets.length; i++) {
+          SVNCommitPacket commitPacket = commitPackets[i];
+          try {
+            commitPacket.dispose();
           }
-          */
-
-          SvnConfiguration.getInstance(mySvnVcs.getProject()).LAST_MERGED_REVISION = null;
-
-          WindowManager.getInstance().getStatusBar(mySvnVcs.getProject())
-            .setInfo(SvnBundle.message("status.text.committed.revision", result.getNewRevision()));
+          catch (SVNException e) {
+            //
+          }
         }
       }
-      catch (SVNException e) {
-        exception.add(new VcsException(e));
+    }
+    StringBuffer committedRevisions = new StringBuffer();
+    for (int i = 0; i < results.length; i++) {
+      SVNCommitInfo result = results[i];
+      if (result.getErrorMessage() != null) {
+        exception.add(new VcsException(result.getErrorMessage().getFullMessage()));
       }
+      else if (result != SVNCommitInfo.NULL && result.getNewRevision() > 0) {
+        if (committedRevisions.length() > 0) {
+          committedRevisions.append(", ");
+        }
+        committedRevisions.append(result.getNewRevision());
+      }
+    }
+    if (committedRevisions.length() > 0) {
+      WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo(
+        SvnBundle.message("status.text.committed.revision", committedRevisions));
     }
   }
 
-  private Map<File, Collection<File>> getCommitables(List<String> paths) {
-    Map<File, Collection<File>> result = new HashMap<File, Collection<File>>();
-    for (String path : paths) {
+  private Collection<File> getCommitables(List<String> paths) {
+    Collection<File> result = new HashSet<File>();
+    SVNStatusClient statusClient = null;
+    try {
+      statusClient = mySvnVcs.createStatusClient();
+    }
+    catch (SVNException e) {
+      //
+    }
+    for (Iterator<String> p = paths.iterator(); p.hasNext();) {
+      String path = p.next();
       File file = new File(path).getAbsoluteFile();
-      File parent = file;
-      if (file.isFile()) {
-        parent = file.getParentFile();
+      result.add(file);
+      if (file.getParentFile() != null) {
+        addParents(statusClient, file.getParentFile(), result);
       }
-      File wcRoot = SVNWCUtil.getWorkingCopyRoot(parent, true);
-      if (!result.containsKey(wcRoot)) {
-        result.put(wcRoot, new ArrayList<File>());
-      }
-      result.get(wcRoot).add(file);
     }
     return result;
+  }
+
+  private void addParents(SVNStatusClient statusClient, File file, Collection<File> files) {
+    SVNStatus status;
+    try {
+      status = statusClient.doStatus(file, false);
+    }
+    catch (SVNException e) {
+      return;
+    }
+    if (status != null &&
+        (status.getContentsStatus() == SVNStatusType.STATUS_ADDED ||
+         status.getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
+      // file should be added
+      files.add(file);
+      file = file.getParentFile();
+      if (file != null) {
+        addParents(statusClient, file, files);
+      }
+    }
   }
 
   private List<String> collectPaths(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
     for (FilePath file : roots) {
+      // if file is scheduled for addition[r] and its parent is also scheduled for additio[r] ->
+      // then add parents till versioned file is met. same for 'copied' files.
       result.add(file.getPath());
     }
     return result;

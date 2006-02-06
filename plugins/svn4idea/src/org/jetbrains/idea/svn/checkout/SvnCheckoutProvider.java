@@ -26,9 +26,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -128,7 +126,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     public void checkCancelled() throws SVNCancelException {
       myIndicator.checkCanceled();
       if (myIndicator.isCanceled()) {
-        throw new SVNCancelException("");
+        throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Operation cancelled"));
       }
     }
   }

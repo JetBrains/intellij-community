@@ -98,7 +98,7 @@ public class RepositoryBrowserComponent extends JPanel {
       RepositoryTreeModel model = (RepositoryTreeModel)myRepositoryTree.getModel();
       String rootURL = model.getRootURL();
       if (rootURL != null) {
-        String path = SVNEncodingUtil.uriEncode(((SVNDirEntry)element).getPath());
+        String path = SVNEncodingUtil.uriEncode(((SVNDirEntry)element).getRelativePath());
         String url = SVNPathUtil.append(rootURL, path);
         if (url != null && url.endsWith("/") && url.length() > 1) {
           url = url.substring(0, url.length() - 1);

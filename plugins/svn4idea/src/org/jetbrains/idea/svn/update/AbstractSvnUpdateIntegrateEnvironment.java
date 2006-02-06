@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.options.Configurable;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -187,7 +188,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     public void checkCancelled() throws SVNCancelException {
       myProgressIndicator.checkCanceled();
       if (myProgressIndicator.isCanceled()) {
-        throw new SVNCancelException(SvnBundle.message("exception.text.update.operation.cancelled"));
+        SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
       }
     }
   }

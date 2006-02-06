@@ -190,7 +190,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
     SVNDirEntry entry = myRepositoryBrowser.getSelectedEntry();
 
     myMkDirButton.setEnabled(entry != null && entry.getKind() == SVNNodeKind.DIR);
-    myDeleteButton.setEnabled(entry != null && !"/".equals(entry.getPath()));
+    myDeleteButton.setEnabled(entry != null && !"/".equals(entry.getRelativePath()));
     myPasteButton.setEnabled(entry != null && myCopiedURL != null && entry.getKind() == SVNNodeKind.DIR);
     myCopyButton.setEnabled(entry != null);
   }

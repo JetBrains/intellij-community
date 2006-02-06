@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
 
@@ -44,7 +45,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   public SVNAuthentication requestClientAuthentication(String kind,
                                                        SVNURL url,
                                                        final String realm,
-                                                       String errorMessage,
+                                                       SVNErrorMessage errorMessage,
                                                        final SVNAuthentication previousAuth,
                                                        final boolean authMayBeStored) {
     final SVNAuthentication[] result = new SVNAuthentication[1];

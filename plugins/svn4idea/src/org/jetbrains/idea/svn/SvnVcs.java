@@ -298,8 +298,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() && value.getFileTimestamp() == vFile.getTimeStamp() &&
-        value.isLocked() == lockFile.exists()) {
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
+        value.getFileTimestamp() == vFile.getTimeStamp() && value.isLocked() == lockFile.exists()) {
       return value;
     }
     return null;
@@ -321,7 +321,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     SVNInfoHolder value = vFile.getUserData(INFO_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() && value.getFileTimestamp() == vFile.getTimeStamp()) {
+    if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
+        value.getFileTimestamp() == vFile.getTimeStamp()) {
       return value;
     }
     return null;
@@ -483,7 +484,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     public InputStream createLogStream(InputStream is) {
       if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
+          //noinspection IOResourceOpenedButNotSafelyClosed
+          //noinspection UseOfArchaicSystemPropertyAccessors
         return new SVNLogInputStream(is, this);
       }
       return is;
@@ -491,7 +493,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     public OutputStream createLogStream(OutputStream os) {
       if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
+          //noinspection IOResourceOpenedButNotSafelyClosed
+          //noinspection UseOfArchaicSystemPropertyAccessors
         return new SVNLogOutputStream(os, this);
       }
       return os;
