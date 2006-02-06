@@ -165,6 +165,15 @@
       <implementation-class>com.intellij.psi.impl.PsiManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.psi.impl.source.jsp.JspFileIncludesIndex</interface-class>
+      <implementation-class>com.intellij.psi.impl.source.jsp.JspFileIncludesIndexImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.psi.impl.source.jsp.JspContextManager</interface-class>
+      <implementation-class>com.intellij.psi.impl.source.jsp.JspContextManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
       <interface-class>com.intellij.psi.impl.source.jsp.JspManager</interface-class>
       <implementation-class>com.intellij.psi.impl.source.jsp.JspManager</implementation-class>
       <skipForDummyProject/>

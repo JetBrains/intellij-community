@@ -23,6 +23,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
 public interface JspFile extends XmlFile {
+  JspFile[] EMPTY_ARRAY = new JspFile[0];
+
   WebDirectoryElement getParentWebDirectory();
   String getWebPath();
 

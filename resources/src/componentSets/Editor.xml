@@ -40,6 +40,10 @@
 
   <project-components>
     <component>
+      <interface-class>com.intellij.openapi.editor.impl.HectorComponentPanelsProvider</interface-class>
+      <implementation-class>com.intellij.jsp.impl.JspContextChooserPanelProvider</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
       <skipForDummyProject/>

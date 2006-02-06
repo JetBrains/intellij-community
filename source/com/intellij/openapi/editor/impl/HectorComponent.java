@@ -29,6 +29,7 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.Hashtable;
+import java.util.ArrayList;
 
 /**
  * User: anna
@@ -36,6 +37,7 @@ import java.util.Hashtable;
  */
 public class HectorComponent extends JPanel {
   private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
+  private ArrayList<HectorComponentPanel> myAdditionalPanels;
   private JSlider[] mySliders;
   private PsiFile myFile;
 
@@ -53,7 +55,7 @@ public class HectorComponent extends JPanel {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = myFile.getContainingFile().getVirtualFile();
     final boolean notInLibrary = (!fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile)) ||
-                                  fileIndex.isInContent(virtualFile);
+                                 fileIndex.isInContent(virtualFile);
     for (int i = 0; i < mySliders.length; i++) {
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
@@ -112,6 +114,18 @@ public class HectorComponent extends JPanel {
     gc.weighty = 1.0;
     gc.fill = GridBagConstraints.BOTH;
     add(panel, gc);
+
+    gc.gridy = GridBagConstraints.RELATIVE;
+    gc.weighty = 0;
+    final HectorComponentPanelsProvider[] componentPanelsProviders = HectorComponentPanelsProvider.getProviders(project);
+    myAdditionalPanels = new ArrayList<HectorComponentPanel>();
+    for (HectorComponentPanelsProvider provider : componentPanelsProviders) {
+      final HectorComponentPanel componentPanel = provider.createPanel(file);
+      if (componentPanel != null) {
+        myAdditionalPanels.add(componentPanel);
+        add(componentPanel.getComponent(), gc);
+      }
+    }
   }
 
   public Dimension getPreferredSize() {
@@ -163,6 +177,9 @@ public class HectorComponent extends JPanel {
 
   private void onClose() {
     if (isModified()) {
+      for (HectorComponentPanel panel : myAdditionalPanels) {
+        panel.onClose();
+      }
       forceDaemonRestart();
       ((StatusBarEx)WindowManager.getInstance().getStatusBar(myFile.getProject())).updateEditorHighlightingStatus(false);
     }
@@ -197,6 +214,12 @@ public class HectorComponent extends JPanel {
         return true;
       }
     }
+    for (HectorComponentPanel panel : myAdditionalPanels) {
+      if (panel.isModified()) {
+        return true;
+      }
+    }
+
     return false;
   }
 

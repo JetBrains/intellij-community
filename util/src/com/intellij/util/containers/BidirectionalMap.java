@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 public class BidirectionalMap<K,V> implements Map<K,V>{
@@ -43,7 +45,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     myValueToKeysMap.clear();
   }
 
-  public List<K> getKeysByValue(V value){
+  public @Nullable List<K> getKeysByValue(V value){
     return myValueToKeysMap.get(value);
   }
 
@@ -78,8 +80,10 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   public V remove(Object key){
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);
-    if(ks.size() > 1) ks.remove(key);
-    else myValueToKeysMap.remove(value);
+    if (ks != null) {
+      if(ks.size() > 1) ks.remove(key);
+      else myValueToKeysMap.remove(value);
+    }
     return value;
   }
 
