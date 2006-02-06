@@ -620,7 +620,10 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (isCollectionChild(tagName)) {
       return getCollectionChildDescription(tagName);
     }
-    return getFixedChildDescription(tagName);
+    if (isFixedChild(tagName)) {
+      return getFixedChildDescription(tagName);
+    }
+    return null;
   }
 
   final boolean isFixedChild(final String qname) {

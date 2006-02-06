@@ -287,12 +287,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     final GenericInfoImpl info = parent.getGenericInfo();
     final String tagName = tag.getName();
-    final DomChildrenDescription childDescription;
-    if (info.isCollectionChild(tagName)) {
-      childDescription = info.getCollectionChildDescription(tagName);
-    } else {
-      childDescription = info.getFixedChildDescription(tagName);
-    }
+    final DomChildrenDescription childDescription = info.getChildDescription(tagName);
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());
