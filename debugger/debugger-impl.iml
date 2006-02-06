@@ -23,6 +23,8 @@
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="web-openapi" />
+    <orderEntry type="module" module-name="resources" />
+    <orderEntry type="module" module-name="resources_eng" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
