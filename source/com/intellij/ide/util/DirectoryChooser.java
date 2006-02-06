@@ -2,6 +2,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -9,15 +10,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiRootPackageType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 public class DirectoryChooser extends DialogWrapper {
@@ -77,7 +76,7 @@ public class DirectoryChooser extends DialogWrapper {
     return "chooseDestDirectoryDialog";
   }
 
-  private String[] splitPath(String path) {
+  private static String[] splitPath(String path) {
     ArrayList<String> list = new ArrayList<String>();
     int index = 0;
     int nextSeparator;
@@ -126,7 +125,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
-  private String concat(String[] strings, int headLimit, int tailLimit) {
+  private static String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
     StringBuffer buffer = new StringBuffer();
     String separator = "";
@@ -138,7 +137,7 @@ public class DirectoryChooser extends DialogWrapper {
     return buffer.toString();
   }
 
-  private PathFragment[] createFragments(String head, String special, String tail) {
+  private static PathFragment[] createFragments(String head, String special, String tail) {
     ArrayList<PathFragment> list = new ArrayList<PathFragment>(3);
     if (head != null) {
       if (special != null || tail != null) list.add(new PathFragment(head + File.separatorChar, true));
@@ -153,13 +152,13 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   private static abstract class FragmentBuilder {
-    private final ArrayList<String[]> myPathes;
+    private final ArrayList<String[]> myPaths;
     private final StringBuffer myBuffer = new StringBuffer();
     private int myIndex;
     protected String mySeparator = "";
 
     public FragmentBuilder(ArrayList<String[]> pathes) {
-      myPathes = pathes;
+      myPaths = pathes;
       myIndex = 0;
     }
 
@@ -180,8 +179,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     private String getCommonFragment(int count) {
       String commonFragment = null;
-      for (Iterator<String[]> iterator = myPathes.iterator(); iterator.hasNext();) {
-        String[] path = iterator.next();
+      for (String[] path : myPaths) {
         int index = getFragmentIndex(path, count);
         if (index == -1) return null;
         if (commonFragment == null) {
@@ -196,7 +194,7 @@ public class DirectoryChooser extends DialogWrapper {
     protected abstract int getFragmentIndex(String[] path, int index);
   }
 
-  public class ItemWrapper {
+  public static class ItemWrapper {
     final PsiDirectory myDirectory;
     private PathFragment[] myFragments;
     private final String myPostfix;
@@ -268,12 +266,15 @@ public class DirectoryChooser extends DialogWrapper {
 
     if (selectionIndex < 0) {
       // find source root corresponding to defaultSelection
-      PsiDirectory[] sourceDirectories = PsiManager.getInstance(project).getRootDirectories(PsiRootPackageType.SOURCE_PATH);
-      for(int i = 0; i < sourceDirectories.length; i++){
-        PsiDirectory directory = sourceDirectories[i];
-        if (isParent(defaultSelection, directory)) {
-          defaultSelection = directory;
-          break;
+      final PsiManager manager = PsiManager.getInstance(project);
+      VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+      for (VirtualFile sourceRoot : sourceRoots) {
+        if (sourceRoot.isDirectory()) {
+          PsiDirectory directory = manager.findDirectory(sourceRoot);
+          if (directory != null && isParent(defaultSelection, directory)) {
+            defaultSelection = directory;
+            break;
+          }
         }
       }
     }
@@ -305,7 +306,7 @@ public class DirectoryChooser extends DialogWrapper {
     myView.getComponent().repaint();
   }
 
-  private boolean isParent(PsiDirectory directory, PsiDirectory parentCandidate) {
+  private static boolean isParent(PsiDirectory directory, PsiDirectory parentCandidate) {
     while (directory != null) {
       if (directory.equals(parentCandidate)) return true;
       directory = directory.getParentDirectory();
