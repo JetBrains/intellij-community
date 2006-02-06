@@ -4,7 +4,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.ClassFilter;
+import com.intellij.ui.classFilter.ClassFilter;
 import org.jdom.Element;
 
 /**

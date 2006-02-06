@@ -13,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ClassFilter;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

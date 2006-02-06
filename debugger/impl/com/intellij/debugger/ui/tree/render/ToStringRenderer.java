@@ -1,6 +1,6 @@
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.util.ClassFilter;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
