@@ -58,6 +58,9 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
       public void cleanUpOnLeave() {
       }
+
+      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+      }
     };
 
     final DnDTarget delegee2 = new DnDTarget() {
@@ -76,6 +79,9 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       }
 
       public void cleanUpOnLeave() {
+      }
+
+      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
@@ -99,6 +105,10 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
       public void cleanUpOnLeave() {
       }
+
+
+      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+      }
     }, delegates);
 
 
@@ -117,6 +127,9 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       }
 
       public void cleanUpOnLeave() {
+      }
+
+      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, xy);
 

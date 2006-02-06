@@ -16,6 +16,8 @@
  */
 package com.intellij.ide.dnd;
 
+import java.awt.*;
+
 public interface DnDTarget {
 
   /**
@@ -28,5 +30,7 @@ public interface DnDTarget {
   void drop(DnDEvent aEvent);
 
   void cleanUpOnLeave();
+
+  void updateDraggedImage(Image image, Point dropPoint, Point imageOffset);
 
 }

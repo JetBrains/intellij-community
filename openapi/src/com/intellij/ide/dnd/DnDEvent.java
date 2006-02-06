@@ -18,6 +18,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.openapi.util.UserDataHolder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +27,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
-public interface DnDEvent extends Transferable {
+public interface DnDEvent extends Transferable, UserDataHolder {
   DnDAction getAction();
 
   void updateAction(DnDAction action);

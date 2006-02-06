@@ -7,6 +7,7 @@ package com.intellij.ide.dnd;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import org.jetbrains.annotations.NonNls;
@@ -23,6 +24,8 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
 
   static final @NonNls String SOURCE_KEY = "DnD Source";
   static final @NonNls String TARGET_KEY = "DnD Target";
+
+  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<Pair<Image, Point>>("draggedImage");
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
@@ -111,6 +114,11 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     DnDTarget target = getTarget(aComponentOverDragging);
     DnDTarget immediateTarget = target;
     Component eachParent = aComponentOverDragging;
+
+    final Pair<Image, Point> pair = myCurrentEvent.getUserData(DRAGGED_IMAGE_KEY);
+    if (pair != null) {
+      target.updateDraggedImage(pair.first, aPoint, pair.second);
+    }
 
     LOG.debug("updateCurrentEvent: action:" + nativeAction);
 
@@ -385,6 +393,9 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
 
     public void cleanUpOnLeave() {
     }
+
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
   }
 
   DnDEvent getCurrentEvent() {
@@ -431,6 +442,12 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
             pair = new Pair<Image, Point>(EMPTY_IMAGE, new Point(0, 0));
           }
 
+          if (!DragSource.isDragImageSupported()) {
+            // not all of the platforms supports image dragging (mswin doesn't, for example).
+            myCurrentEvent.putUserData(DRAGGED_IMAGE_KEY, pair);
+          }
+
+          // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
           dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, myDragSourceListener);
 
           // check if source is also a target

@@ -75,6 +75,9 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       public void cleanUpOnLeave() {
         setBorderPainted(false);
       }
+
+      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+      }
     }, this);
 
     new DropTarget(this, new DropTargetAdapter() {

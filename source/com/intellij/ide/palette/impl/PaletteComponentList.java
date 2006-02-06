@@ -332,6 +332,8 @@ public class PaletteComponentList extends JList {
       return location.y < rc.getCenterY() ? row : row + 1;
     }
 
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
   }
 
   private class MyDnDSource implements DnDSource {
