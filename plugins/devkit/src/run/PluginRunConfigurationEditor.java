@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.run;
 
-import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -89,15 +89,15 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   private void setShow(PluginRunConfiguration prc, boolean show){
-    final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = prc.getLogFiles();
-    for (RunConfigurationBase.LogFileOptions logFile: logFiles) {
+    final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
+    for (LogFileOptions logFile: logFiles) {
       logFile.setEnable(show);      
     }
   }
 
   private boolean isShow(PluginRunConfiguration prc){
-    final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = prc.getLogFiles();
-    for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
+    final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
+    for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) return true;
     }
     return false;
