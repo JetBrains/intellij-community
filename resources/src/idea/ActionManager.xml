@@ -119,12 +119,12 @@
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
     <group id="JavaeeMigrationGroup">
-      <action id="ApplyJavaeeStyle" class="com.intellij.j2ee15.module.view.actions.ApplyJavaeeStyleAction"/>
-      <action id="GeneratePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.GeneratePersistenceUnitAction"/>
+      <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
+      <action id="GeneratePersistenceUnit" class="com.intellij.javaee.persistence.view.GeneratePersistenceUnitAction"/>
     </group>
 
     <group id="J2EEGenerateGroup">
-      <action id="CreatePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.CreatePersistenceUnitAction"/>
+      <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction"/>
 
       <action id="CreateSessionBean" class="com.intellij.j2ee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
       <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.j2ee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
