@@ -346,6 +346,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
+
+    final JspFile jspFile = PsiUtil.getJspFile(file);
+
+    if (jspFile != null) {
+      file = jspFile;
+    }
+
     final PsiElement element = file.findElementAt(offset);
     if (element == null && offset != file.getTextLength()) {
       return offset;
