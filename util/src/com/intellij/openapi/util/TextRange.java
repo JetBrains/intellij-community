@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Nullable;
+
 public class TextRange {
   private final int myStartOffset;
   private final int myEndOffset;
@@ -90,5 +92,11 @@ public class TextRange {
   }
   public boolean intersectsStrict(TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) < Math.min(myEndOffset, textRange.getEndOffset());
+  }
+
+  @Nullable
+  public TextRange intersection(final TextRange range) {
+    if (!intersects(range)) return null;
+    return new TextRange(Math.max(myStartOffset, range.getStartOffset()), Math.min(myEndOffset, range.getEndOffset()));
   }
 }
