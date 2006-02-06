@@ -101,11 +101,11 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         }
 
         private static boolean isInStaticMethod(PsiElement elt) {
-            final PsiMethod method = PsiTreeUtil.getParentOfType(elt, PsiMethod.class);
-            if (method == null) {
+            final PsiMember member = PsiTreeUtil.getParentOfType(elt, PsiMethod.class, PsiClassInitializer.class);
+            if (member == null) {
                 return false;
             }
-            return method.hasModifierProperty(PsiModifier.STATIC);
+            return member.hasModifierProperty(PsiModifier.STATIC);
         }
     }
 }
