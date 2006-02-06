@@ -83,7 +83,7 @@ public interface XmlElementType {
   };
 
 
-  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.XML){
+  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.DTD){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final DTDParser parser = new DTDParser();
