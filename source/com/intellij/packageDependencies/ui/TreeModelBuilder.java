@@ -549,7 +549,9 @@ public class TreeModelBuilder {
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 
     final PsiDirectory directory = psiDirectory.getParentDirectory();
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(directory.getParentDirectory().getVirtualFile());
+    LOG.assertTrue(directory != null);
+    final PsiDirectory parentDirectory = directory.getParentDirectory();
+    final VirtualFile contentRoot = parentDirectory != null ? ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(parentDirectory.getVirtualFile()) : null;
     if (contentRoot != null) {
       DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
       if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages){
