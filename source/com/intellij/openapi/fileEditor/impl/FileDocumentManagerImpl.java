@@ -2,6 +2,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -361,13 +362,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
           }
         }
       };
-      // now can show dialogs in write actions...
-      //if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()){
-      //  LaterInvocator.invokeLater(askReloadRunnable);
-      //}
-      //else{
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()){
+        LaterInvocator.invokeLater(askReloadRunnable);
+      }
+      else{
         askReloadRunnable.run();
-      //}
+      }
     }
     else{
       reloadFromDisk(document);
@@ -407,7 +408,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-// Made protected for Fabrique
   protected boolean askReloadFromDisk(final VirtualFile file, final Document document) {
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
