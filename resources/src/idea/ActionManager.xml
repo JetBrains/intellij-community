@@ -1477,10 +1477,6 @@
       <reference ref="Faces.Navigation.Graph.OpenInEditorAction"/>
 
       <separator/>
-      <reference ref="Faces.Navigation.Graph.ScaleIncreaseAction"/>
-      <reference ref="Faces.Navigation.Graph.ScaleDecreaseAction"/>
-
-      <separator/>
       <reference ref="Faces.Navigation.Graph.HideSelectionAction"/>
       <reference ref="Faces.Navigation.Graph.ShowHiddenCellsAction"/>
       <separator/>
