@@ -62,6 +62,9 @@
     <component>
       <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderWebProjectImportHelper</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.diagnostic.logging.LogConsolePreferences</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

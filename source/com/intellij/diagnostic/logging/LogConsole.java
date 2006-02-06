@@ -1,15 +1,25 @@
 package com.intellij.diagnostic.logging;
 
+import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +37,12 @@ public abstract class LogConsole extends JPanel implements Disposable{
   private ReaderThread myReaderThread;
   private final boolean mySkipContents;
 
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private Document myOriginalDocument = null;
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private String myPrevType = null;
+
   private static final long PROCESS_IDLE_TIMEOUT = 200;
   public LogConsole(Project project, File file, boolean skipContents) {
     super(new BorderLayout());
@@ -36,7 +52,17 @@ public abstract class LogConsole extends JPanel implements Disposable{
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     add(myConsole.getComponent(), BorderLayout.CENTER);
+    add(createToolbar(), BorderLayout.NORTH);
     myReaderThread.start();
+  }
+
+  private JComponent createToolbar(){
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new FilterAction(LogConsolePreferences.INFO));
+    group.add(new FilterAction(LogConsolePreferences.WARNING));
+    group.add(new FilterAction(LogConsolePreferences.ERROR));
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return actionToolbar.getComponent();
   }
 
   public abstract boolean isActive();
@@ -54,8 +80,27 @@ public abstract class LogConsole extends JPanel implements Disposable{
     return this;
   }
 
-  private void addMessage(String text){
-    myProcessHandler.notifyTextAvailable(text + "\n", ProcessOutputTypes.STDOUT);
+  private void addMessage(final String text){
+    final String key = LogConsolePreferences.getType(text);
+    if (LogConsolePreferences.getInstance().isApplicable(text, myPrevType)){
+      myProcessHandler.notifyTextAvailable(text + "\n", key != null ? LogConsolePreferences.getProcessOutputTypes(key) :
+                                                        (myPrevType == LogConsolePreferences.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT));
+    }
+    if (key != null) {
+      myPrevType = key;
+    }
+    myOriginalDocument = getOriginalDocument();
+    if (myOriginalDocument != null){
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              myOriginalDocument.insertString(myOriginalDocument.getTextLength(), text + "\n");
+            }
+          });
+        }
+      }, ModalityState.NON_MMODAL);
+    }
   }
 
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
@@ -67,6 +112,37 @@ public abstract class LogConsole extends JPanel implements Disposable{
         }
       };
       process.addProcessListener(stopListener);
+    }
+  }
+
+  private Document getOriginalDocument(){
+    if (myOriginalDocument == null) {
+      final Editor editor = (Editor)((ConsoleViewImpl)myConsole).getData(DataConstants.EDITOR);
+      if (editor != null){
+        myOriginalDocument = new DocumentImpl(editor.getDocument().getText());
+      }
+    }
+    return myOriginalDocument;
+  }
+
+  private void filterConsoleOutput() {
+    myOriginalDocument = getOriginalDocument();
+    if (myOriginalDocument != null){
+      myConsole.clear();
+      LogConsolePreferences preferences = LogConsolePreferences.getInstance();
+      final int lineCount = myOriginalDocument.getLineCount();
+      for (int line = 0; line < lineCount; line++) {
+        final String text =
+          myOriginalDocument.getCharsSequence().subSequence(myOriginalDocument.getLineStartOffset(line), myOriginalDocument.getLineEndOffset(line)).toString();
+        final String contentType = LogConsolePreferences.getType(text);
+        if (preferences.isApplicable(text, myPrevType)){
+          myConsole.print(text + "\n", contentType != null ? LogConsolePreferences.getContentType(contentType) :
+                                       (myPrevType == LogConsolePreferences.ERROR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT));
+        }
+        if (contentType != null) {
+          myPrevType = contentType;
+        }
+      }
     }
   }
 
@@ -143,7 +219,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
     public synchronized void stopRunning(boolean flush){
       myRunning = false;
       try {
-        if (myFileStream != null){          
+        if (myFileStream != null){
           if (flush) {//flush everything to log on stop
             String line = myFileStream.readLine();
             while (line != null){
@@ -159,7 +235,24 @@ public abstract class LogConsole extends JPanel implements Disposable{
         LOG.error(e);
       }
     }
+  }
 
+  private class FilterAction extends ToggleAction {
+    private String myFilter;
+
+    protected FilterAction(final String filter) {
+      super(DiagnosticBundle.message("log.console.filter.by.type", filter), DiagnosticBundle.message("log.console.filter.by.type", filter), IconLoader.getIcon("/ant/filter.png"));
+      myFilter = filter;
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return LogConsolePreferences.getInstance().isFilter(myFilter);
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      LogConsolePreferences.getInstance().setFilter(myFilter, state);
+      filterConsoleOutput();
+    }
   }
 
 }
