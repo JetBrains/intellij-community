@@ -437,7 +437,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
     public void rootsChanged(ModuleRootEvent event) {
       final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-      refreshScope(holder.getScope(CURRENT_SCOPE), holder, false);
+      refreshScope(CURRENT_SCOPE != null ? holder.getScope(CURRENT_SCOPE) : holder.getProjectScope(), holder, false);
     }
   }
 
