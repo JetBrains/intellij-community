@@ -105,7 +105,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Returns the file containing the PSI element.
    *
-   * @return the file instance.
+   * @return the file instance, or null if the PSI element is not contained in a file (for example,
+   * the element represents a package or directory).
    */
   @Nullable  PsiFile getContainingFile();
 
