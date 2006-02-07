@@ -43,7 +43,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return;
     }
     PsiFile psiFile = event.getFile();
-    if (psiFile == null) return;
+    if (psiFile == null || psiFile.getLanguage() != psiFile.getViewProvider().getBaseLanguage()) return;
     DocumentEx document = getCachedDocument(psiFile);
     if (document == null) return;
 

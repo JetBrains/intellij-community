@@ -184,8 +184,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           for (int i = 0; i < listeners.length; i++) {
             final PomModelListener listener = listeners[i];
             final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-            for (Iterator<PomModelAspect> j = changedAspects.iterator(); j.hasNext();) {
-              PomModelAspect modelAspect = j.next();
+            for (PomModelAspect modelAspect : changedAspects) {
               if (listener.isAspectChangeInteresting(modelAspect)) {
                 listener.modelChanged(event);
                 break;
@@ -209,7 +208,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       while(blocksIterator.hasPrevious()){
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
         if (pomModelAspect == pair.getFirst() && // aspect dependance
-            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) // target scope contain current
+            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) && // target scope contain current
+            getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
         ) {
           return pair;
         }
