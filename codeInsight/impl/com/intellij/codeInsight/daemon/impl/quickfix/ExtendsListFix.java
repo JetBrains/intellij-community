@@ -71,7 +71,7 @@ public class ExtendsListFix implements IntentionAction {
         modifyList(extendsList, myToAdd, -1);
       }
       if (otherList != null) {
-        modifyList(otherList, !myToAdd, -1);
+        modifyList(otherList, false, -1);
       }
     }
     catch (IncorrectOperationException e) {
