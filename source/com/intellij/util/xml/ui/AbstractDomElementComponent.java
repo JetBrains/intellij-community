@@ -8,14 +8,14 @@ import com.intellij.util.xml.DomElement;
  * User: Sergey.Vasiliev
  * Date: Nov 18, 2005
  */
-public abstract class AbstractDomElementComponent extends CompositeCommittable implements CommittablePanel {
-  protected DomElement myDomElement;
+public abstract class AbstractDomElementComponent<T extends DomElement> extends CompositeCommittable implements CommittablePanel {
+  protected T myDomElement;
 
-  protected AbstractDomElementComponent(final DomElement domElement) {
+  protected AbstractDomElementComponent(final T domElement) {
     myDomElement = domElement;
   }
 
-  public DomElement getDomElement() {
+  public T getDomElement() {
     return myDomElement;
   }
 }

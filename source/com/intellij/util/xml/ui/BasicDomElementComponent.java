@@ -18,10 +18,10 @@ import java.lang.reflect.Field;
  * User: Sergey.Vasiliev
  * Date: Nov 17, 2005
  */
-public abstract class BasicDomElementComponent extends AbstractDomElementComponent {
+public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
 
-  public BasicDomElementComponent(DomElement domElement) {
+  public BasicDomElementComponent(T domElement) {
     super(domElement);
   }
 
