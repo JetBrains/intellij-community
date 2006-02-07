@@ -226,7 +226,14 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.toArray(new RadComponent[myComponents.size()]);
   }
 
-  public boolean canDrop(final int x, final int y, final int componentCount){
+  public boolean canDrop(@Nullable Point location, final int componentCount) {
+    if (location == null) {
+      if (isXY() || componentCount > 1) {
+        return false;
+      }
+      return getComponentAtGrid(0, 0) == null;
+    }
+
     if (isXY()) {
       return true;
     }
@@ -237,8 +244,8 @@ public class RadContainer extends RadComponent implements IContainer {
       }
 
       final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
-      final int row = gridLayout.getRowAt(y);
-      final int column = gridLayout.getColumnAt(x);
+      final int row = gridLayout.getRowAt(location.y);
+      final int column = gridLayout.getColumnAt(location.x);
 
       // If target point doesn't belong to any cell and column then do not allow drop. 
       if (row == -1 || column == -1) {
@@ -252,14 +259,6 @@ public class RadContainer extends RadComponent implements IContainer {
       throw new IllegalStateException("unknown layout:" + getLayout());
     }
   }
-
-  public boolean canDrop(int componentCount) {
-    if (isXY() || componentCount > 1) {
-      return false;
-    }
-    return getComponentAtGrid(0, 0) == null;
-  }
-
 
   @Nullable
   public RadComponent getComponentAtGrid(boolean rowFirst, int coord1, int coord2) {
@@ -286,13 +285,19 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   /**
-   * @param x in delegee coordinates
-   * @param y in delegee coordinates
+   * @param location in delegee coordinates
    * @param components components to be dropped; length is always > 0. Location
    * @param dx shift of component relative to x
    * @param dx shift of component relative to y
    */
-  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
+  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy){
+    if (location == null) {
+      assert isGrid() && components.length == 1;
+      assert getComponentAtGrid(0, 0) == null;
+      dropIntoGrid(components, 0, 0);
+      return;
+    }
+
     if (isXY()) {
       int patchX = 0;
       int patchY = 0;
@@ -300,7 +305,7 @@ public class RadContainer extends RadComponent implements IContainer {
       for (int i = 0; i < components.length; i++) {
         final RadComponent c = components[i];
 
-        final Point p = new Point(x + dx[i], y + dy[i]);
+        final Point p = new Point(location.x + dx[i], location.y + dy[i]);
         c.setLocation(p);
 
         patchX = Math.min(patchX, p.x);
@@ -315,7 +320,6 @@ public class RadContainer extends RadComponent implements IContainer {
           component.shift(-patchX, -patchY);
         }
       }
-      return new DropInfo(this, null, null);
     }
     else if (isGrid()) {
 
@@ -324,10 +328,10 @@ public class RadContainer extends RadComponent implements IContainer {
       // then also cancel drop.
 
       final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
-      final int row = gridLayout.getRowAt(y);
-      final int column = gridLayout.getColumnAt(x);
+      final int row = gridLayout.getRowAt(location.y);
+      final int column = gridLayout.getColumnAt(location.x);
 
-      return dropIntoGrid(components, row, column);
+      dropIntoGrid(components, row, column);
     }
     else {
       //noinspection HardCodedStringLiteral
@@ -335,12 +339,11 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public final DropInfo dropIntoGrid(final RadComponent[] components, int row, int column) {
+  public final void dropIntoGrid(final RadComponent[] components, int row, int column) {
     final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
     assert components.length > 0;
     assert column + components.length <= gridLayout.getColumnCount();
 
-    RevalidateInfo info = null;
     for (RadComponent c : components) {
       if (c instanceof RadContainer) {
         final LayoutManager layout = ((RadContainer)c).getLayout();
@@ -357,19 +360,11 @@ public class RadContainer extends RadComponent implements IContainer {
       addComponent(c);
 
       // Fill DropInfo
-      info = c.revalidate();
+      c.revalidate();
       column++;
     }
 
     revalidate();
-    //noinspection ConstantConditions
-    return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
-  }
-
-  public void drop(RadComponent[] components) {
-    assert isGrid() && components.length == 1;
-    assert getComponentAtGrid(0, 0) == null;
-    dropIntoGrid(components, 0, 0);
   }
 
   /**

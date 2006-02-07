@@ -38,7 +38,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private final GuiEditor myEditor;
   private boolean mySticky;
-  private DropInfo myDropInfo;
+  private RadContainer myTargetContainer;
   private RadComponent myInsertedComponent;
   private Point myInitialPoint;
   private Dimension myInitialSize;
@@ -170,7 +170,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   private void processMouseDragged(final MouseEvent e) {
-    if (myDropInfo != null && myDropInfo.myTargetContainer.isXY()) {
+    if (myTargetContainer != null && myTargetContainer.isXY()) {
       final int width = e.getX() - myInitialPoint.x;
       final int height = e.getY() - myInitialPoint.y;
 
@@ -192,8 +192,8 @@ public final class InsertComponentProcessor extends EventProcessor {
       PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
     }
 
-    if (myDropInfo != null) {
-      if (myDropInfo.myTargetContainer.isXY()) {
+    if (myTargetContainer != null) {
+      if (myTargetContainer.isXY()) {
         Dimension newSize = myInsertedComponent.getSize();
         if (newSize.equals(myInitialSize) && myShouldSetPreferredSizeIfNotResized) {
           // if component dropped into XY and was not resized, make it preferred size
@@ -236,11 +236,11 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             if (location.getMode() == GridInsertMode.None) {
-              myDropInfo = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
+              myTargetContainer = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
             }
             else {
-              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
-              if (myDropInfo == null) {
+              myTargetContainer = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
+              if (myTargetContainer == null) {
                 return;
               }
             }
@@ -251,7 +251,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             if (!keepDefaultSize) {
               myInitialSize = null;
               myShouldSetPreferredSizeIfNotResized = true;
-              if (myDropInfo.myTargetContainer.isXY()) {
+              if (myTargetContainer.isXY()) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
                 myInitialSize = myInsertedComponent.getSize();
                 if (myInitialSize.width > 0 && myInitialSize.height > 0) {
@@ -266,7 +266,7 @@ public final class InsertComponentProcessor extends EventProcessor {
               }
             }
             else {
-              if (myDropInfo.myTargetContainer.isXY()) {
+              if (myTargetContainer.isXY()) {
                 Dimension newSize = myInsertedComponent.getPreferredSize(); 
                 Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
                 myInsertedComponent.setSize(newSize);

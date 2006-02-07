@@ -5,10 +5,9 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.DropInfo;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,20 +26,11 @@ public class RadToolBar extends RadContainer {
     return null;
   }
 
-  public boolean canDrop(final int x, final int y, final int componentCount) {
+  public boolean canDrop(@Nullable Point location, final int componentCount) {
     return true;
   }
 
-  public boolean canDrop(int componentCount) {
-    return true;
-  }
-
-  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy) {
-    drop(components);
-    return new DropInfo(this, null, null);
-  }
-
-  public void drop(RadComponent[] components) {
+  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy) {
     for(RadComponent component: components) {
       addComponent(component);
     }

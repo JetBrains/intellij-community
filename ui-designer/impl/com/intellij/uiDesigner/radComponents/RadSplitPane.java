@@ -1,12 +1,9 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.LwSplitPane;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.DropInfo;
-import com.intellij.uiDesigner.XmlWriter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,13 +22,25 @@ public final class RadSplitPane extends RadContainer {
     return null;
   }
 
-  public boolean canDrop(final int x, final int y, final int componentCount) {
+  public boolean canDrop(@Nullable Point location, final int componentCount) {
     if (componentCount != 1) {
       return false;
     }
 
+    /*
+    TODO[yole]: support multi-drop (is it necessary?)
+    if (componentCount == 2) {
+      return isEmptySplitComponent(getSplitPane().getLeftComponent()) &&
+             isEmptySplitComponent(getSplitPane().getRightComponent());
+    }
+    */
+    if (location == null) {
+      return isEmptySplitComponent(getSplitPane().getLeftComponent()) ||
+             isEmptySplitComponent(getSplitPane().getRightComponent());
+    }
+
     final Component component;
-    if (isLeft(x, y)) {
+    if (isLeft(location.x, location.y)) {
       component = getSplitPane().getLeftComponent();
     }
     else {
@@ -43,21 +52,6 @@ public final class RadSplitPane extends RadContainer {
 
   private static boolean isEmptySplitComponent(final Component component) {
     return component == null || ((JComponent)component).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT) == null;
-  }
-
-  public boolean canDrop(int componentCount) {
-    /*
-    TODO[yole]: support multi-drop (is it necessary?)
-    if (componentCount == 2) {
-      return isEmptySplitComponent(getSplitPane().getLeftComponent()) &&
-             isEmptySplitComponent(getSplitPane().getRightComponent());
-    }
-    */
-    if (componentCount == 1) {
-      return isEmptySplitComponent(getSplitPane().getLeftComponent()) ||
-             isEmptySplitComponent(getSplitPane().getRightComponent());
-    }
-    return false;
   }
 
   private boolean isLeft(final int x, final int y) {
@@ -85,16 +79,16 @@ public final class RadSplitPane extends RadContainer {
     return (JSplitPane)getDelegee();
   }
 
-  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy) {
-    components[0].setCustomLayoutConstraints(isLeft(x, y) ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
-    addComponent(components[0]);
-    return new DropInfo(this, null, null);
-  }
+  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy) {
+    boolean dropToLeft;
+    if (location != null) {
+      dropToLeft = isLeft(location.x, location.y);
+    }
+    else {
+      dropToLeft = isEmptySplitComponent(getSplitPane().getLeftComponent());
+    }
 
-  public void drop(RadComponent[] components) {
-    components[0].setCustomLayoutConstraints(isEmptySplitComponent(getSplitPane().getLeftComponent())
-                                             ? LwSplitPane.POSITION_LEFT
-                                             : LwSplitPane.POSITION_RIGHT);
+    components[0].setCustomLayoutConstraints(dropToLeft ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
     addComponent(components[0]);
   }
 

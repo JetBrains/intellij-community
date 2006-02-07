@@ -2,6 +2,9 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -12,11 +15,7 @@ public class RadAtomicComponent extends RadComponent {
     super(module, aClass, id);
   }
 
-  public final boolean canDrop(final int x, final int y, final int componentCount){
-    return false;
-  }
-
-  public final boolean canDrop(int componentCount) {
+  public final boolean canDrop(@Nullable Point location, final int componentCount) {
     return false;
   }
 

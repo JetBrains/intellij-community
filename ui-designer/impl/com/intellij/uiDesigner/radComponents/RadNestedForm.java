@@ -7,15 +7,15 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlReader;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.LoaderFactory;
-import com.intellij.uiDesigner.XmlReader;
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,11 +54,7 @@ public class RadNestedForm extends RadComponent {
     }
   }
 
-  public boolean canDrop(int x, int y, int componentCount) {
-    return false;
-  }
-
-  public boolean canDrop(int componentCount) {
+  public boolean canDrop(@Nullable Point location, int componentCount) {
     return false;
   }
 

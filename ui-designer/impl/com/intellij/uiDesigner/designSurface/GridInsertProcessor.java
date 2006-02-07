@@ -170,9 +170,9 @@ public class GridInsertProcessor {
   }
 
   @Nullable
-  DropInfo processGridInsertOnDrop(final GridInsertLocation location,
-                                   final RadComponent[] insertedComponents,
-                                   final GridConstraints[] constraintsToAdjust) {
+  RadContainer processGridInsertOnDrop(final GridInsertLocation location,
+                                       final RadComponent[] insertedComponents,
+                                       final GridConstraints[] constraintsToAdjust) {
     int row = location.getRow();
     int col = location.getColumn();
     RadContainer container = location.getContainer();
@@ -200,7 +200,8 @@ public class GridInsertProcessor {
         checkAdjustConstraints(constraintsToAdjust, false, col);
         break;
     }
-    return container.dropIntoGrid(insertedComponents, row, col);
+    container.dropIntoGrid(insertedComponents, row, col);
+    return container;
   }
 
   private void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
@@ -227,7 +228,7 @@ public class GridInsertProcessor {
       final RadContainer containerAt = FormEditingUtil.getRadContainerAt(myEditor, x, y, 0);
       if (containerAt != null) {
         final Point targetPoint = SwingUtilities.convertPoint(myEditor.getDragLayer(), x, y, containerAt.getDelegee());
-        if (containerAt.canDrop(targetPoint.x, targetPoint.y, componentCount)) {
+        if (containerAt.canDrop(targetPoint, componentCount)) {
           Rectangle feedbackRect = containerAt.getDropFeedbackRectangle(targetPoint.x, targetPoint.y, componentCount);
           if (feedbackRect != null) {
             final Rectangle rc = SwingUtilities.convertRectangle(containerAt.getDelegee(),

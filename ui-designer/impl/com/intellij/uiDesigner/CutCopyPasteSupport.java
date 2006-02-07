@@ -112,11 +112,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final RadRootContainer rootContainer = myEditor.getRootContainer();
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
 
-    if (selectedComponents.size() == 1 && selectedComponents.get(0).canDrop(selectedComponents.size())) {
+    if (selectedComponents.size() == 1 && selectedComponents.get(0).canDrop(null, selectedComponents.size())) {
       RadComponent component = selectedComponents.get(0);
       if (component instanceof RadContainer) {
         RadContainer container = (RadContainer) component;
-        container.drop(componentsToPaste.toArray(new RadComponent[componentsToPaste.size()]));
+        container.drop(null, componentsToPaste.toArray(new RadComponent[componentsToPaste.size()]), null, null);
       }
     }
     else {

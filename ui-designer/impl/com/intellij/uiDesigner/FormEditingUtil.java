@@ -223,7 +223,7 @@ public final class FormEditingUtil {
     }
 
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, componentAt.getDelegee());
-    return componentAt.canDrop(targetPoint.x, targetPoint.y, componentCount);
+    return componentAt.canDrop(targetPoint, componentCount);
   }
 
   /**
@@ -233,7 +233,7 @@ public final class FormEditingUtil {
    * @param dx shift of component relative to x
    * @param dx shift of component relative to y
    */
-  public static DropInfo drop(final GuiEditor editor, final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
+  public static RadContainer drop(final GuiEditor editor, final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
     if (!canDrop(editor, x, y, components.length)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot drop");
@@ -242,7 +242,8 @@ public final class FormEditingUtil {
     final RadContainer targetContainer = getRadContainerAt(editor, x, y, 0);
     assert targetContainer != null;
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, targetContainer.getDelegee());
-    return targetContainer.drop(targetPoint.x, targetPoint.y, components, dx, dy);
+    targetContainer.drop(targetPoint, components, dx, dy);
+    return targetContainer;
   }
 
   /**

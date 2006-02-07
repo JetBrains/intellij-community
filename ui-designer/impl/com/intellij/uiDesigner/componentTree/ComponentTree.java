@@ -442,7 +442,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
-        if (path != null && targetComponent != null && targetComponent.canDrop(dcl.getComponents().size())) {
+        if (path != null && targetComponent != null && targetComponent.canDrop(null, dcl.getComponents().size())) {
           dropTargetComponent = targetComponent;
           dtde.acceptDrag(dtde.getDropAction());
         }
@@ -473,7 +473,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (targetComponent instanceof RadContainer) {
           RadContainer container = (RadContainer)targetComponent;
           RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-          container.drop(components);
+          container.drop(null, components, null, null);
         }
       }
       myDropTargetComponent = null;

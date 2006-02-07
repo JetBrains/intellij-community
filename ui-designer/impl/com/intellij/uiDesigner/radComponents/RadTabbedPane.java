@@ -2,22 +2,20 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.lw.ITabbedPane;
-import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
@@ -44,21 +42,12 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return null;
   }
 
-  public boolean canDrop(final int x, final int y, final int componentCount){
-    return canDrop(componentCount);
-  }
-
-  public boolean canDrop(int componentCount) {
+  public boolean canDrop(@Nullable Point location, final int componentCount) {
     return componentCount == 1;
   }
 
-  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
+  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy){
     addComponent(components[0]);
-    return new DropInfo(this, null, null);
-  }
-
-  public void drop(RadComponent[] components) {
-    addComponent(components [0]);
   }
 
   @Nullable
