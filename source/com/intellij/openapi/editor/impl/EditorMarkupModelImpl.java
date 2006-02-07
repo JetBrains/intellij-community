@@ -24,8 +24,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
-import com.intellij.openapi.editor.impl.collections50.PriorityQueue;
-import com.intellij.openapi.editor.impl.collections50.Queue;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -41,6 +39,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorMarkupModelImpl");
@@ -201,20 +200,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final List<RangeHighlighter> sortedHighlighters = getSortedHighlighters();
       mySpots = new ArrayList<MarkSpot>();
       if (sortedHighlighters.size() == 0) return;
-      Queue<PositionedRangeHighlighter> startQueue = new PriorityQueue<PositionedRangeHighlighter>(5,
-                                                                                                   new Comparator<PositionedRangeHighlighter>() {
-                                                                                                     public int compare(final PositionedRangeHighlighter o1,
-                                                                                                                        final PositionedRangeHighlighter o2) {
-                                                                                                       return o1.yStart - o2.yStart;
-                                                                                                     }
-                                                                                                   });
-      Queue<PositionedRangeHighlighter> endQueue = new PriorityQueue<PositionedRangeHighlighter>(5,
-                                                                                                 new Comparator<PositionedRangeHighlighter>() {
-                                                                                                   public int compare(final PositionedRangeHighlighter o1,
-                                                                                                                      final PositionedRangeHighlighter o2) {
-                                                                                                     return o1.yEnd - o2.yEnd;
-                                                                                                   }
-                                                                                                 });
+      Queue<PositionedRangeHighlighter> startQueue =
+        new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
+          public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
+            return o1.yStart - o2.yStart;
+          }
+        });
+      Queue<PositionedRangeHighlighter> endQueue =
+        new PriorityQueue<PositionedRangeHighlighter>(5, new Comparator<PositionedRangeHighlighter>() {
+          public int compare(final PositionedRangeHighlighter o1, final PositionedRangeHighlighter o2) {
+            return o1.yEnd - o2.yEnd;
+          }
+        });
       int index = 0;
       MarkSpot currentSpot = null;
       while (!startQueue.isEmpty() || !endQueue.isEmpty() || index != sortedHighlighters.size()) {

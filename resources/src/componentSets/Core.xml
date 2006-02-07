@@ -252,6 +252,9 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
+    </component>
   </project-components>
 
 

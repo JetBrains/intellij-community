@@ -35,6 +35,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileView;
@@ -63,6 +64,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   private JPanel myModuleSettingsPanel;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClassComponent;
   private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
+  private JCheckBox myBuildJarsOnMake;
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsData();
 
   protected BuildJarActionDialog(Project project) {
@@ -101,6 +103,8 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   private void setupControls() {
+    myBuildJarsOnMake.setSelected(BuildJarProjectSettings.getInstance(myProject).isBuildJar());
+
     myJarPath = myJarFilePathComponent.getComponent();
     myMainClass = myMainClassComponent.getComponent();
 
@@ -123,7 +127,7 @@ public class BuildJarActionDialog extends DialogWrapper {
         if (selectedModule != null) {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
           SettingsEditor settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
-          
+
           final BuildJarActionDialog.SettingsEditor oldEditor = mySettings.put(selectedModule, settingsEditor);
           if (oldEditor != null) {
             oldEditor.dispose();
@@ -131,6 +135,9 @@ public class BuildJarActionDialog extends DialogWrapper {
 
           boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedModule);
           GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar, null);
+          TitledBorder titledBorder = (TitledBorder)myModuleSettingsPanel.getBorder();
+          titledBorder.setTitle(IdeBundle.message("jar.build.module.0.jar.settings", selectedModule.getName()));
+          myModuleSettingsPanel.repaint();
         }
         myCurrentModule = selectedModule;
       }
@@ -180,7 +187,8 @@ public class BuildJarActionDialog extends DialogWrapper {
         GlobalSearchScope scope = createMainClassScope();
         PsiClass aClass = PsiManager.getInstance(myProject).findClass(mainClass, scope);
         TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-        final TreeClassChooser dialog = factory.createNoInnerClassesScopeChooser(IdeBundle.message("jar.build.main.class.title"), scope, null, aClass);
+        final TreeClassChooser dialog =
+          factory.createNoInnerClassesScopeChooser(IdeBundle.message("jar.build.main.class.title"), scope, null, aClass);
         dialog.showDialog();
         final PsiClass psiClass = dialog.getSelectedClass();
         if (psiClass != null && psiClass.getQualifiedName() != null) {
@@ -189,13 +197,13 @@ public class BuildJarActionDialog extends DialogWrapper {
       }
     });
 
-    SwingUtilities.invokeLater(new Runnable(){
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         Module element = myElementsChooser.getElementAt(0);
         myElementsChooser.selectElements(Collections.singletonList(element));
       }
     });
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel,true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
   }
 
   private GlobalSearchScope createMainClassScope() {
@@ -260,6 +268,7 @@ public class BuildJarActionDialog extends DialogWrapper {
     if (settingsEditor != null) {
       settingsEditor.apply();
     }
+    BuildJarProjectSettings.getInstance(myProject).setBuildJar(myBuildJarsOnMake.isSelected());
   }
 
   private class SettingsEditor {
