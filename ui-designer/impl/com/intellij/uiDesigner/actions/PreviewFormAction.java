@@ -33,6 +33,7 @@ import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
@@ -183,7 +184,7 @@ public final class PreviewFormAction extends AnAction{
 
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null);
       codeGenerator.patchFile(tempFile);
-      final String[] errors = codeGenerator.getErrors();
+      final FormErrorInfo[] errors = codeGenerator.getErrors();
       if(errors.length != 0){
         Messages.showErrorDialog(
           module.getProject(),

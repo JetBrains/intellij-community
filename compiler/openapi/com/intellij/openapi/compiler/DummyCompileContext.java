@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 public class DummyCompileContext implements CompileContext {
   private DummyCompileContext() {
@@ -34,6 +36,15 @@ public class DummyCompileContext implements CompileContext {
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
+  }
+
+
+  public void addMessage(CompilerMessageCategory category,
+                         String message,
+                         @Nullable String url,
+                         int lineNum,
+                         int columnNum,
+                         Navigatable navigatable) {
   }
 
   public CompilerMessage[] getMessages(CompilerMessageCategory category) {

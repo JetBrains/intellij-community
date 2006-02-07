@@ -348,10 +348,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
             if (shouldRetainView) {
               addMessage(
                 new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                        CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1));
+                                        CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
               addMessage(
                 new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                        CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1));
+                                        CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
               activateMessageView();
               myErrorTreeView.selectFirstMessage();
             }

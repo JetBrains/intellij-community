@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.pom.Navigatable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -72,7 +73,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, url, lineNum, columnNum);
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, url, lineNum, columnNum, null);
+    addMessage(msg);
+  }
+
+  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum,
+                         Navigatable navigatable) {
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, url, lineNum, columnNum, navigatable);
     addMessage(msg);
   }
 

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -75,7 +76,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
             catch (Exception e) {
-              addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
+              addError(context,
+                       new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)),
+                       formFile);
               continue;
             }
 
@@ -86,7 +89,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
               if (scope.belongs(formFile.getUrl())) {
-                addError(context, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind), formFile);
+                addError(context,
+                         new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)),
+                         formFile);
               }
               continue;
             }
@@ -98,8 +103,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               if (inScope) {
                 addError(
                   context,
-                  UIDesignerBundle.message("error.duplicate.bind",
-                                           classToBind, alreadyProcessedForm.getPresentableUrl()),
+                  new FormErrorInfo(null, UIDesignerBundle.message("error.duplicate.bind",
+                                           classToBind, alreadyProcessedForm.getPresentableUrl())),
                   formFile
                 );
               }
@@ -161,8 +166,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               catch (IOException e) {
                 addError(
                   context,
-                  UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
-                                           module.getName(), e.toString()),
+                  new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
+                                           module.getName(), e.toString())),
                   null
                 );
               }
@@ -182,13 +187,13 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
                     public void run() {
                       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
                       generator.generate(formFile);
-                      final ArrayList<String> errors = generator.getErrors();
+                      final ArrayList<FormErrorInfo> errors = generator.getErrors();
                       if (errors.size() == 0) {
                         compiledItems.add(item);
                       }
                       else {
-                        for (final String s : errors) {
-                          addError(context, s, formFile);
+                        for (final FormErrorInfo e: errors) {
+                          addError(context, e, formFile);
                         }
                       }
                       FileDocumentManager.getInstance().saveAllDocuments();
@@ -206,12 +211,15 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
 
-  private static void addError(final CompileContext context, final String message, final VirtualFile formFile) {
+  private void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {
     if (formFile != null) {
-      context.addMessage(CompilerMessageCategory.ERROR, formFile.getPresentableUrl() + ": " + message, formFile.getUrl(), -1, -1);
+      FormElementNavigatable navigatable = new FormElementNavigatable(myProject, formFile, e.getComponentId());
+      context.addMessage(CompilerMessageCategory.ERROR,
+                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(), 
+                         formFile.getUrl(), -1, -1, navigatable);
     }
     else {
-      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      context.addMessage(CompilerMessageCategory.ERROR, e.getErrorMessage(), null, -1, -1);
     }
   }
 

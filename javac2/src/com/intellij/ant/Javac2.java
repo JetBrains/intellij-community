@@ -16,10 +16,7 @@
 package com.intellij.ant;
 
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.NestedFormLoader;
+import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.apache.tools.ant.BuildException;
@@ -153,19 +150,19 @@ public final class Javac2 extends Javac{
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
                                                                   new AntNestedFormLoader(loader));
       codeGenerator.patchFile(classFile);
-      final String[] warnings = codeGenerator.getWarnings();
+      final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
       for (int j = 0; j < warnings.length; j++) {
-        log(formFile.getAbsolutePath() + ": " + warnings[j], Project.MSG_WARN);
+        log(formFile.getAbsolutePath() + ": " + warnings[j].getErrorMessage(), Project.MSG_WARN);
       }
-      final String[] errors = codeGenerator.getErrors();
+      final FormErrorInfo[] errors = codeGenerator.getErrors();
       if (errors.length > 0) {
         StringBuffer message = new StringBuffer();
         for (int j = 0; j < errors.length; j++) {
           if (message.length() > 0) {
             message.append("\n");
           }
-          message.append(formFile.getAbsolutePath()).append(": ").append(errors[j]);
+          message.append(formFile.getAbsolutePath()).append(": ").append(errors[j].getErrorMessage());
         }
         fireError(message.toString());
       }

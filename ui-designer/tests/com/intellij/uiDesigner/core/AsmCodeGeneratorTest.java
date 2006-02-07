@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
@@ -50,16 +51,16 @@ public class AsmCodeGeneratorTest extends TestCase {
     final AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className);
 
     byte[] patchedData = codeGenerator.getPatchedData();
-    String[] errors = codeGenerator.getErrors();
-    String[] warnings = codeGenerator.getWarnings();
+    FormErrorInfo[] errors = codeGenerator.getErrors();
+    FormErrorInfo[] warnings = codeGenerator.getWarnings();
     if (errors.length == 0 && warnings.length == 0) {
       assertNotNull("Class patching failed but no errors or warnings were returned", patchedData);
     }
     else if (errors.length > 0) {
-      assertTrue(errors[0], false);
+      assertTrue(errors[0].getErrorMessage(), false);
     }
     else {
-      assertTrue(warnings[0], false);
+      assertTrue(warnings[0].getErrorMessage(), false);
     }
 
     /*

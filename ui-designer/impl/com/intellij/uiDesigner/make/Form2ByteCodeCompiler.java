@@ -21,6 +21,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
@@ -114,7 +115,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
                 continue;
               }
               catch (Exception e) {
-                addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
+                addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
                 continue;
               }
 
@@ -125,7 +126,8 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
               final VirtualFile classFile = findFile(outputDirectories, classToBind, module);
               if (classFile == null) {
                 if (scope.belongs(formFile.getUrl())) {
-                  addError(context, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind), formFile);
+                  addMessage(context, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind), formFile,
+                             CompilerMessageCategory.ERROR);
                 }
                 continue;
               }
@@ -139,12 +141,11 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
               final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
               if (alreadyProcessedForm != null) {
                 if (inScope) {
-                  addError(
+                  addMessage(
                     context,
                     UIDesignerBundle.message("error.duplicate.bind",
                                              classToBind, alreadyProcessedForm.getPresentableUrl()),
-                    formFile
-                  );
+                    formFile, CompilerMessageCategory.ERROR);
                 }
                 continue;
               }
@@ -267,11 +268,10 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
               }
             }
             catch (IOException e) {
-              addError(
+              addMessage(
                 context,
                 UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime", module.getName(), e.toString()),
-                null
-              );
+                null, CompilerMessageCategory.ERROR);
             }
           }
 
@@ -288,7 +288,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
               rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
             }
             catch (Exception e) {
-              addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
+              addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
               continue;
             }
 
@@ -298,13 +298,13 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
                                                                         new PsiNestedFormLoader(module));
             codeGenerator.patchFile(classFile);
-            final String[] errors = codeGenerator.getErrors();
-            final String[] warnings = codeGenerator.getWarnings();
-            for (String warning : warnings) {
-              addWarning(context, warning, formFile);
+            final FormErrorInfo[] errors = codeGenerator.getErrors();
+            final FormErrorInfo[] warnings = codeGenerator.getWarnings();
+            for (FormErrorInfo warning : warnings) {
+              addMessage(context, warning, formFile, CompilerMessageCategory.WARNING);
             }
-            for (String error : errors) {
-              addError(context, error, formFile);
+            for (FormErrorInfo error : errors) {
+              addMessage(context, error, formFile, CompilerMessageCategory.ERROR);
             }
             if (errors.length == 0) {
               compiledItems.add(item);
@@ -317,23 +317,25 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return compiledItems.toArray(new FileProcessingCompiler.ProcessingItem[compiledItems.size()]);
   }
 
-  private static void addError(final CompileContext context, final String message, final VirtualFile formFile) {
-    if (formFile != null) {
-      context.addMessage(CompilerMessageCategory.ERROR, formFile.getPresentableUrl() + ": " + message,
-                         formFile.getUrl(), -1, -1);
-    }
-    else {
-      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
-    }
+  private void addMessage(final CompileContext context,
+                          final String s,
+                          final VirtualFile formFile,
+                          final CompilerMessageCategory severity) {
+    addMessage(context, new FormErrorInfo(null, s), formFile, severity);
   }
 
-  private static void addWarning(final CompileContext context, final String message, final VirtualFile formFile) {
+  private void addMessage(final CompileContext context,
+                          final FormErrorInfo e,
+                          final VirtualFile formFile,
+                          final CompilerMessageCategory severity) {
     if (formFile != null) {
-      context.addMessage(CompilerMessageCategory.WARNING, formFile.getPresentableUrl() + ": " + message,
-                         formFile.getUrl(), -1, -1);
+      FormElementNavigatable navigatable = new FormElementNavigatable(myProject, formFile, e.getComponentId());
+      context.addMessage(severity,
+                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(),
+                         formFile.getUrl(), -1, -1, navigatable);
     }
     else {
-      context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+      context.addMessage(severity, e.getErrorMessage(), null, -1, -1);
     }
   }
 

@@ -170,7 +170,7 @@ public final class Utils {
   private static void validateNestedFormLoop(final Set usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
     throws CodeGenerationException {
     if (usedFormNames.contains(formName)) {
-      throw new CodeGenerationException("Recursive form nesting is not allowed");
+      throw new CodeGenerationException(null, "Recursive form nesting is not allowed");
     }
     usedFormNames.add(formName);
     final LwRootContainer rootContainer;
@@ -178,7 +178,7 @@ public final class Utils {
       rootContainer = nestedFormLoader.loadForm(formName);
     }
     catch (Exception e) {
-      throw new CodeGenerationException("Error loading nested form: " + e.getMessage());
+      throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage());
     }
     final Set thisFormNestedForms = new HashSet();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
@@ -203,5 +203,25 @@ public final class Utils {
     if (validateExceptions [0] != null) {
       throw validateExceptions [0];
     }
+  }
+
+  public static String findNotEmptyPanelWithXYLayout(final IComponent component) {
+    if (!(component instanceof IContainer)) {
+      return null;
+    }
+    final IContainer container = (IContainer)component;
+    if (container.getComponentCount() == 0){
+      return null;
+    }
+    if (container.isXY()){
+      return container.getId();
+    }
+    for (int i=0; i < container.getComponentCount(); i++){
+      String id = findNotEmptyPanelWithXYLayout(container.getComponent(i));
+      if (id != null) {
+        return id;
+      }
+    }
+    return null;
   }
 }

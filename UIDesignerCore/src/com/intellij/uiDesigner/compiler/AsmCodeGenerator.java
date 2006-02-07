@@ -84,7 +84,7 @@ public class AsmCodeGenerator {
 
   public void patchFile(final File classFile) {
     if (!classFile.exists()) {
-      myErrors.add("Class to bind does not exist: " + myRootContainer.getClassToBind());
+      myErrors.add(new FormErrorInfo(null, "Class to bind does not exist: " + myRootContainer.getClassToBind()));
       return;
     }
 
@@ -111,24 +111,26 @@ public class AsmCodeGenerator {
       }
     }
     catch (IOException e) {
-      myErrors.add("Cannot read or write class file " + classFile.getPath() + ": " + e.toString());
+      myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e.toString()));
     }
   }
 
   public byte[] patchClass(InputStream classStream) {
     myClassToBind = myRootContainer.getClassToBind();
     if (myClassToBind == null){
-      myWarnings.add("No class to bind specified");
+      myWarnings.add(new FormErrorInfo(null, "No class to bind specified"));
       return null;
     }
 
     if (myRootContainer.getComponentCount() != 1) {
-      myErrors.add("There should be only one component at the top level");
+      myErrors.add(new FormErrorInfo(null, "There should be only one component at the top level"));
       return null;
     }
 
-    if (containsNotEmptyPanelsWithXYLayout((LwComponent)myRootContainer.getComponent(0))) {
-      myErrors.add("There are non empty panels with XY layout. Please lay them out in a grid.");
+    String nonEmptyPanel = Utils.findNotEmptyPanelWithXYLayout(myRootContainer.getComponent(0));
+    if (nonEmptyPanel != null) {
+      myErrors.add(new FormErrorInfo(nonEmptyPanel,
+                                     "There are non empty panels with XY layout. Please lay them out in a grid."));
       return null;
     }
 
@@ -144,7 +146,7 @@ public class AsmCodeGenerator {
       reader = new ClassReader(classStream);
     }
     catch (IOException e) {
-      myErrors.add("Error reading class data stream");
+      myErrors.add(new FormErrorInfo(null, "Error reading class data stream"));
       return null;
     }
     ClassWriter cw = new ClassWriter(true);
@@ -153,12 +155,12 @@ public class AsmCodeGenerator {
     return myPatchedData;
   }
 
-  public String[] getErrors() {
-    return (String[])myErrors.toArray(new String[myErrors.size()]);
+  public FormErrorInfo[] getErrors() {
+    return (FormErrorInfo[])myErrors.toArray(new FormErrorInfo[myErrors.size()]);
   }
 
-  public String[] getWarnings() {
-    return (String[])myWarnings.toArray(new String[myWarnings.size()]);
+  public FormErrorInfo[] getWarnings() {
+    return (FormErrorInfo[])myWarnings.toArray(new FormErrorInfo[myWarnings.size()]);
   }
 
   public byte[] getPatchedData() {
@@ -173,31 +175,12 @@ public class AsmCodeGenerator {
     codeGen.generatePushValue(generator, value);
   }
 
-  static boolean containsNotEmptyPanelsWithXYLayout(final LwComponent component) {
-    if (!(component instanceof LwContainer)) {
-      return false;
-    }
-    final LwContainer container = (LwContainer)component;
-    if (container.getComponentCount() == 0){
-      return false;
-    }
-    if (container.isXY()){
-      return true;
-    }
-    for (int i=0; i < container.getComponentCount(); i++){
-      if (containsNotEmptyPanelsWithXYLayout((LwComponent)container.getComponent(i))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   static Class getComponentClass(String className, final ClassLoader classLoader) throws CodeGenerationException{
     try {
       return Class.forName(className, false, classLoader);
     }
     catch (ClassNotFoundException e) {
-      throw new CodeGenerationException("Class not found: " + className);
+      throw new CodeGenerationException(null, "Class not found: " + className);
     }
   }
 
@@ -279,7 +262,7 @@ public class AsmCodeGenerator {
         generateButtonGroups(myRootContainer, generator);
       }
       catch (CodeGenerationException e) {
-        myErrors.add(e.getMessage());
+        myErrors.add(new FormErrorInfo(e.getComponentId(), e.getMessage()));
       }
       generator.returnValue();
       generator.endMethod();
@@ -294,21 +277,21 @@ public class AsmCodeGenerator {
       if (lwComponent instanceof LwNestedForm) {
         // TODO[yole]: remove
         if (myFormLoader == null) {
-          throw new CodeGenerationException("Nested forms not supported in this compile configuration");
+          throw new CodeGenerationException(null, "Nested forms not supported in this compile configuration");
         }
         LwNestedForm nestedForm = (LwNestedForm) lwComponent;
         try {
           nestedFormContainer = myFormLoader.loadForm(nestedForm.getFormFileName());
         }
         catch (Exception e) {
-          throw new CodeGenerationException(e.getMessage());
+          throw new CodeGenerationException(lwComponent.getId(), e.getMessage());
         }
         // if nested form is empty, ignore
         if (nestedFormContainer.getComponentCount() == 0) {
           return;
         }
         if (nestedFormContainer.getComponent(0).getBinding() == null) {
-          throw new CodeGenerationException("No binding on root component of nested form " + nestedForm.getFormFileName());
+          throw new CodeGenerationException(lwComponent.getId(), "No binding on root component of nested form " + nestedForm.getFormFileName());
         }
         Utils.validateNestedFormLoop(nestedForm.getFormFileName(), myFormLoader);
         className = nestedFormContainer.getClassToBind();
@@ -496,10 +479,10 @@ public class AsmCodeGenerator {
       if (binding != null) {
         Integer access = (Integer) myFieldAccessMap.get(binding);
         if ((access.intValue() & Opcodes.ACC_STATIC) != 0) {
-          throw new CodeGenerationException("Cannot bind: field is static: " + myClassToBind + "." + binding);
+          throw new CodeGenerationException(lwComponent.getId(), "Cannot bind: field is static: " + myClassToBind + "." + binding);
         }
         if ((access.intValue() & Opcodes.ACC_FINAL) != 0) {
-          throw new CodeGenerationException("Cannot bind: field is final: " + myClassToBind + "." + binding);
+          throw new CodeGenerationException(lwComponent.getId(), "Cannot bind: field is final: " + myClassToBind + "." + binding);
         }
 
         generator.loadThis();
@@ -514,12 +497,12 @@ public class AsmCodeGenerator {
       if (binding == null) return;
 
       if (!myFieldDescMap.containsKey(binding)) {
-        throw new CodeGenerationException("Cannot bind: field does not exist: " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(component.getId(), "Cannot bind: field does not exist: " + myClassToBind + "." + binding);
       }
 
       final Type fieldType = Type.getType((String)myFieldDescMap.get(binding));
       if (fieldType.getSort() != Type.OBJECT) {
-        throw new CodeGenerationException("Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(component.getId(), "Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
       }
 
       Class fieldClass;
@@ -527,10 +510,10 @@ public class AsmCodeGenerator {
         fieldClass = myLoader.loadClass(fieldType.getClassName());
       }
       catch (ClassNotFoundException e) {
-        throw new CodeGenerationException("Class not found: " + fieldType.getClassName());
+        throw new CodeGenerationException(component.getId(), "Class not found: " + fieldType.getClassName());
       }
       if (!fieldClass.isAssignableFrom(componentClass)) {
-        throw new CodeGenerationException("Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(component.getId(), "Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
       }
     }
 

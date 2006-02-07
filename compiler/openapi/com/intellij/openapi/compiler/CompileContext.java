@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,9 +34,24 @@ public interface CompileContext extends UserDataHolder {
    * @param message   the text of the message.
    * @param url       a url to the file to which the message applies, null if not available.
    * @param lineNum   a line number, -1 if not available.
-   * @param columnNum a columnt number, -1 if not available.
+   * @param columnNum a column number, -1 if not available.
    */
   void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum);
+
+  /**
+   * Allows to add a message to be shown in Compiler message view, with a specified Navigatable
+   * that is used to navigate to the error location.
+   *
+   * @param category    the category of a message (information, error, warning).
+   * @param message     the text of the message.
+   * @param url         a url to the file to which the message applies, null if not available.
+   * @param lineNum     a line number, -1 if not available.
+   * @param columnNum   a column number, -1 if not available.
+   * @param navigatable the navigatable pointing to the error location.
+   * @since 6.0
+   */
+  void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum,
+                  Navigatable navigatable);
 
   /**
    * Returns all messages of the specified category added during the current compile session.

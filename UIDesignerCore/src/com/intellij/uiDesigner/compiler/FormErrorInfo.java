@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.uiDesigner.compiler;
 
-public class CodeGenerationException extends Exception{
+/**
+ * @author yole
+ */
+public class FormErrorInfo {
   private String myComponentId;
+  private String myErrorMessage;
 
-  public CodeGenerationException(final String componentId, final String message) {
-    super(message);
+  public FormErrorInfo(final String componentId, final String errorMessage) {
     myComponentId = componentId;
+    myErrorMessage = errorMessage;
   }
 
   public String getComponentId() {
     return myComponentId;
+  }
+
+  public void setComponentId(final String componentId) {
+    myComponentId = componentId;
+  }
+
+  public String getErrorMessage() {
+    return myErrorMessage;
+  }
+
+  public void setErrorMessage(final String errorMessage) {
+    myErrorMessage = errorMessage;
   }
 }

@@ -136,6 +136,20 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     });
   }
 
+  public void selectComponentById(@NotNull final String id) {
+    FormEditingUtil.clearSelection(myEditor.getRootContainer());
+
+    FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor<RadComponent>() {
+      public boolean visit(final RadComponent component) {
+        if (id.equals(component.getId())) {
+          component.setSelected(true);
+          return false;
+        }
+        return true;
+      }
+    });
+  }
+
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }

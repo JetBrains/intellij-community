@@ -326,7 +326,8 @@ public class CompileDriver {
           public void run() {
             doRebuild(
               callback,
-              new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(), null, -1, -1), false, compileContext.getCompileScope()
+              new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(), null, -1, -1,
+                                      null), false, compileContext.getCompileScope()
             );
           }
         }, ModalityState.NON_MMODAL);

@@ -14,19 +14,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.Nullable;
 
 public final class CompilerMessageImpl implements CompilerMessage {
 
   private Project myProject;
   private final CompilerMessageCategory myCategory;
+  @Nullable private final Navigatable myNavigatable;
   private final String myMessage;
   private VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
 
-  public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message, final String url, int row, int column) {
+  public CompilerMessageImpl(Project project,
+                             CompilerMessageCategory category,
+                             String message,
+                             final String url,
+                             int row,
+                             int column,
+                             @Nullable final Navigatable navigatable) {
     myProject = project;
     myCategory = category;
+    myNavigatable = navigatable;
     myMessage = (message != null)? message : "";
     myRow = row;
     myColumn = column;
@@ -46,6 +55,9 @@ public final class CompilerMessageImpl implements CompilerMessage {
   }
 
   public Navigatable getNavigatable() {
+    if (myNavigatable != null) {
+      return myNavigatable;
+    }
     final VirtualFile virtualFile = getVirtualFile();
     if (virtualFile != null && virtualFile.isValid()) {
       final int line = getLine() - 1; // editor lines are zero-based

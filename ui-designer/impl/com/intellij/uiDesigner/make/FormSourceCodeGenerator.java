@@ -31,7 +31,7 @@ public final class FormSourceCodeGenerator {
   @NonNls private StringBuffer myBuffer;
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
-  private final ArrayList<String> myErrors;
+  private final ArrayList<FormErrorInfo> myErrors;
   private LayoutSourceGenerator myLayoutSourceGenerator = new GridLayoutSourceGenerator();
 
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
@@ -51,7 +51,7 @@ public final class FormSourceCodeGenerator {
 
   public FormSourceCodeGenerator(@NotNull final Project project){
     myProject = project;
-    myErrors = new ArrayList<String>();
+    myErrors = new ArrayList<FormErrorInfo>();
   }
 
   public void generate(final VirtualFile formFile) {
@@ -72,7 +72,7 @@ public final class FormSourceCodeGenerator {
       return;
     }
     catch (Exception e) {
-      myErrors.add(UIDesignerBundle.message("error.cannot.process.form.file", e));
+      myErrors.add(new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.process.form.file", e)));
       return;
     }
 
@@ -88,12 +88,14 @@ public final class FormSourceCodeGenerator {
         public boolean visit(final LwComponent iComponent) {
           final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(iComponent);
           if (errorInfo != null) {
+            String message;
             if (iComponent.getBinding() != null) {
-              myErrors.add(UIDesignerBundle.message("error.for.component", iComponent.getBinding(), errorInfo.myDescription));
+              message = UIDesignerBundle.message("error.for.component", iComponent.getBinding(), errorInfo.myDescription);
             }
             else {
-              myErrors.add(errorInfo.myDescription);
+              message = errorInfo.myDescription;
             }
+            myErrors.add(new FormErrorInfo(iComponent.getId(), message));
           }
           return true;
         }
@@ -119,14 +121,14 @@ public final class FormSourceCodeGenerator {
       return;
     }
     catch (CodeGenerationException e) {
-      myErrors.add(e.getMessage());
+      myErrors.add(new FormErrorInfo(e.getComponentId(), e.getMessage()));
     }
     catch (IncorrectOperationException e) {
-      myErrors.add(e.getMessage());
+      myErrors.add(new FormErrorInfo(null, e.getMessage()));
     }
   }
 
-  public ArrayList<String> getErrors() {
+  public ArrayList<FormErrorInfo> getErrors() {
     return myErrors;
   }
 
@@ -139,11 +141,12 @@ public final class FormSourceCodeGenerator {
     final HashMap<String,LwComponent> id2component = new HashMap<String, LwComponent>();
 
     if (rootContainer.getComponentCount() != 1) {
-      throw new CodeGenerationException(UIDesignerBundle.message("error.one.toplevel.component.required"));
+      throw new CodeGenerationException(null, UIDesignerBundle.message("error.one.toplevel.component.required"));
     }
     final LwComponent topComponent = (LwComponent)rootContainer.getComponent(0);
-    if (containsNotEmptyPanelsWithXYLayout(topComponent)) {
-      throw new CodeGenerationException(UIDesignerBundle.message("error.nonempty.xy.panels.found"));
+    String id = Utils.findNotEmptyPanelWithXYLayout(topComponent);
+    if (id != null) {
+      throw new CodeGenerationException(id, UIDesignerBundle.message("error.nonempty.xy.panels.found"));
     }
 
     final PsiClass aClass = FormEditingUtil.findClassToBind(module, rootContainer.getClassToBind());
@@ -251,25 +254,6 @@ public final class FormSourceCodeGenerator {
     return false;
   }
 
-
-  private static boolean containsNotEmptyPanelsWithXYLayout(final LwComponent component) {
-    if (!(component instanceof LwContainer)) {
-      return false;
-    }
-    final LwContainer container = (LwContainer)component;
-    if (container.getComponentCount() == 0){
-      return false;
-    }
-    if (container.isXY()){
-      return true;
-    }
-    for (int i=0; i < container.getComponentCount(); i++){
-      if (containsNotEmptyPanelsWithXYLayout((LwComponent)container.getComponent(i))) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   private void generateSetupCodeForComponent(final LwComponent component,
                                              final HashMap<LwComponent, String> component2TempVariable,
@@ -485,7 +469,7 @@ public final class FormSourceCodeGenerator {
       return container.getClassToBind();
     }
     catch (Exception e) {
-      throw new CodeGenerationException(e.getMessage());
+      throw new CodeGenerationException(nestedForm.getId(), e.getMessage());
     }
   }
 
