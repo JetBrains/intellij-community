@@ -69,7 +69,9 @@ public class RunContentBuilder implements LogConsoleManager {
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
-    myManager.registerFileMatcher((RunConfigurationBase)runProfile);
+    if (runProfile instanceof RunConfigurationBase) {
+      myManager.registerFileMatcher((RunConfigurationBase)runProfile);
+    }
   }
 
   public void addAction(final AnAction action) {
