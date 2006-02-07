@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner.radComponents;
+package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.Spacer;
 
