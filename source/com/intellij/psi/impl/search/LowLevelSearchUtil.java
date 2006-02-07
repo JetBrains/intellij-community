@@ -38,18 +38,14 @@ public class LowLevelSearchUtil {
     int endOffset = buffer.length;
     final int patternLength = searcher.getPatternLength();
 
-    int prevStartInLeaf = 0;
-    LeafElement prevLeaf = null;
+    final int scopeStartOffset = scope.getStartOffset();
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
       if (i >= 0) {
         LeafElement leafNode = ((TreeElement)scope).findLeafElementAt(i);
         if (leafNode == null) return true;
-        int offsetInLeaf = leafNode == prevLeaf ? prevStartInLeaf + 1 : 0;
-        int start = leafNode.searchWord(offsetInLeaf, searcher);
+        int start = i - leafNode.getStartOffset() + scopeStartOffset;
         LOG.assertTrue(start >= 0);
-        prevStartInLeaf = start;
-        prevLeaf = leafNode;
         boolean contains = leafNode.getTextLength() - start >= patternLength;
         if (contains) {
           if (!processor.execute(leafNode.getPsi(), start)) return false;
