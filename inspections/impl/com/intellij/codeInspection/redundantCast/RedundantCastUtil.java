@@ -10,6 +10,7 @@ package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 
 public class RedundantCastUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
+
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
     PsiElementProcessor<PsiTypeCastExpression> processor = new PsiElementProcessor<PsiTypeCastExpression>() {
@@ -243,8 +246,7 @@ public class RedundantCastUtil {
       if (argumentList == null) return;
       PsiExpression[] args = argumentList.getExpressions();
       for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = args[i];
-        arg = deParenthesize(arg);
+        PsiExpression arg = deParenthesize(args[i]);
         if (arg instanceof PsiTypeCastExpression) {
           if (oldMethod == null){
             oldMethod = expression.resolveMethod();
@@ -275,33 +277,28 @@ public class RedundantCastUtil {
         PsiManager manager = expression.getManager();
         PsiElementFactory factory = manager.getElementFactory();
 
-        JavaResolveResult newResult;
 
         try {
-          PsiCallExpression newCall = (PsiCallExpression)factory.createExpressionFromText(expression.getText(), expression);
-          PsiExpression[] newArgs = newCall.getArgumentList().getExpressions();
-          for (int i = newArgs.length - 1; i >= 0; i--) {
-            if (typeCastCandidates[i]){
+          for (int i = 0; i < args.length; i++) {
+            final PsiExpression arg = deParenthesize(args[i]);
+            if (typeCastCandidates[i]) {
+              PsiCallExpression newCall = (PsiCallExpression)expression.copy();
+              final PsiExpressionList argList = newCall.getArgumentList();
+              LOG.assertTrue(argList != null);
+              PsiExpression[] newArgs = argList.getExpressions();
               PsiTypeCastExpression castExpression = (PsiTypeCastExpression)deParenthesize(newArgs[i]);
               PsiExpression castOperand = castExpression.getOperand();
               if (castOperand == null) return;
               castExpression.replace(castOperand);
+              final JavaResolveResult newResult = newCall.resolveMethodGenerics();
+              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() && Comparing.equal(newCall.getType(), expression.getType())) {
+                addToResults((PsiTypeCastExpression)arg);
+              }
             }
           }
-
-          newResult = newCall.resolveMethodGenerics();
         }
         catch (IncorrectOperationException e) {
           return;
-        }
-
-        if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult()) {
-          for(int i = 0; i < args.length; i++){
-            PsiExpression arg = deParenthesize(args[i]);
-            if (typeCastCandidates[i]){
-              addToResults((PsiTypeCastExpression)arg);
-            }
-          }
         }
       }
 
