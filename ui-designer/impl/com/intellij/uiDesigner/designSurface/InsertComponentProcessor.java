@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -209,10 +210,12 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private void processMousePressed(final MouseEvent e) {
     final ComponentItem item = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
-    processComponentInsert(e.getPoint(), item, false);
+    processComponentInsert(e.getPoint(), null, item, false);
   }
 
-  public void processComponentInsert(final Point point, final ComponentItem item, final boolean keepDefaultSize) {
+  // either point or targetContainer is null
+  public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer,
+                                     final ComponentItem item, final boolean keepDefaultSize) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
@@ -226,8 +229,19 @@ public final class InsertComponentProcessor extends EventProcessor {
 
     myInsertedComponent = createInsertedComponent(myEditor, item);
 
-    final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0);
-    if (FormEditingUtil.canDrop(myEditor, point.x, point.y, 1) || location.getMode() != GridInsertMode.None) {
+    final GridInsertLocation location = (point != null)
+      ? GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0)
+      : new GridInsertLocation(GridInsertMode.None);
+    boolean dropAllowed;
+    if (point != null) {
+      dropAllowed = FormEditingUtil.canDrop(myEditor, point.x, point.y, 1);
+    }
+    else {
+      assert targetContainer != null;
+      dropAllowed = targetContainer.canDrop(null, 1);
+    }
+
+    if (dropAllowed || location.getMode() != GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -236,7 +250,14 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             if (location.getMode() == GridInsertMode.None) {
-              myTargetContainer = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
+              if (point != null) {
+                myTargetContainer = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
+              }
+              else {
+                assert targetContainer != null;
+                myTargetContainer = targetContainer;
+                myTargetContainer.drop(null, components, null, null);
+              }
             }
             else {
               myTargetContainer = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
