@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -159,65 +158,52 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
 
       PsiManager manager = PsiManager.getInstance(project);
-      Set<PsiMember> methodSet = new HashSet<PsiMember>();
-      for (PsiReference ref : ReferencesSearch.search(myField, new LocalSearchScope(myField.getContainingFile()), true)) {
-        if (ref instanceof PsiReferenceExpression) {
-          final PsiMember member = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiMethod.class, PsiClassInitializer.class);
-          if (member != null) {
-            methodSet.add(member);
-          }
-        }
-      }
-
-      PsiElement newCaretPosition = null;
-      for (PsiMember member : methodSet) {
-        final Collection<PsiReference> refs = ReferencesSearch.search(myField, new LocalSearchScope(member), true).findAll();
-        LOG.assertTrue(refs.size() > 0);
-        Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
-        PsiCodeBlock anchorBlock = findAnchorBlock(refs);
-        LOG.assertTrue(anchorBlock != null);
-        final PsiElementFactory elementFactory = manager.getElementFactory();
-        final CodeStyleManager styleManager = manager.getCodeStyleManager();
-        final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
-        String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
-        localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
-        try {
-
-          final PsiElement anchor = getAnchorElement(anchorBlock, refs);
-          final PsiElement newDeclaration;
-          if (anchor instanceof PsiExpressionStatement &&
-              ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression expression = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
-            if (expression.getLExpression() instanceof PsiReferenceExpression &&
-                ((PsiReferenceExpression)expression.getLExpression()).isReferenceTo(myField)) {
-              final PsiExpression initializer = expression.getRExpression();
-              final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
-              newDeclaration = anchor.replace(decl);
-              refsSet.remove(expression.getLExpression());
-              retargetReferences(elementFactory, localName, refsSet);
+      PsiElement newDeclaration = null;
+      final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
+      LOG.assertTrue(refs.size() > 0);
+      Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
+      PsiCodeBlock anchorBlock = findAnchorBlock(refs);
+      LOG.assertTrue(anchorBlock != null);
+      final PsiElementFactory elementFactory = manager.getElementFactory();
+      final CodeStyleManager styleManager = manager.getCodeStyleManager();
+      final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
+      String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
+      localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
+      PsiElement firstElement = getFirstElement(refs);
+      boolean mayBeFinal = mayBeFinal(refsSet, firstElement);
+      try {
+        final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
+        if (anchor instanceof PsiExpressionStatement &&
+            ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression expression = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
+          if (expression.getLExpression() instanceof PsiReferenceExpression &&
+              ((PsiReferenceExpression) expression.getLExpression()).isReferenceTo(myField)) {
+            final PsiExpression initializer = expression.getRExpression();
+            final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
+            if (!mayBeFinal) {
+              ((PsiVariable) decl.getDeclaredElements()[0]).getModifierList().setModifierProperty(PsiModifier.FINAL, false);
             }
-            else {
-              newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
-            }
+            newDeclaration = anchor.replace(decl);
+            refsSet.remove(expression.getLExpression());
+            retargetReferences(elementFactory, localName, refsSet);
           } else {
             newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
           }
-          if (newCaretPosition == null) {
-            newCaretPosition = newDeclaration;
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        } else {
+          newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
         }
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
 
-      if (newCaretPosition != null) {
+      if (newDeclaration != null) {
         final PsiFile psiFile = myField.getContainingFile();
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null && IJSwingUtilities.hasFocus(editor.getComponent())) {
           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           if (file == psiFile) {
-            editor.getCaretModel().moveToOffset(newCaretPosition.getTextOffset());
+            editor.getCaretModel().moveToOffset(newDeclaration.getTextOffset());
             editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           }
         }
@@ -231,6 +217,15 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         LOG.error(e);
       }
 
+    }
+
+    private boolean mayBeFinal(Set<PsiReference> refsSet, PsiElement firstElement) {
+      for (PsiReference ref : refsSet) {
+        PsiElement element = ref.getElement();
+        if (element == firstElement) continue;
+        if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression) element)) return false;
+      }
+      return true;
     }
 
     private static void retargetReferences(final PsiElementFactory elementFactory, final String localName, final Set<PsiReference> refs)
@@ -260,7 +255,16 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       return getName();
     }
 
-    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, final Collection<PsiReference> refs) {
+    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, PsiElement firstElement) {
+      LOG.assertTrue(firstElement != null);
+      while (firstElement.getParent() != anchorBlock) {
+        firstElement = firstElement.getParent();
+      }
+
+      return firstElement;
+    }
+
+    private static PsiElement getFirstElement(Collection<PsiReference> refs) {
       PsiElement firstElement = null;
       for (PsiReference reference : refs) {
         final PsiElement element = reference.getElement();
@@ -268,11 +272,6 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           firstElement = element;
         }
       }
-      LOG.assertTrue(firstElement != null);
-      while (firstElement.getParent() != anchorBlock) {
-        firstElement = firstElement.getParent();
-      }
-
       return firstElement;
     }
 
