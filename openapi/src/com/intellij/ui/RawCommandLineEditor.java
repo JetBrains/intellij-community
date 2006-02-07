@@ -16,9 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -35,21 +34,7 @@ public class RawCommandLineEditor extends JPanel {
     super(new BorderLayout());
     myTextField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        JTextArea textArea = new JTextArea(10, 50);
-        textArea.setWrapStyleWord(true);
-        textArea.setLineWrap(true);
-        textArea.setDocument(myTextField.getTextField().getDocument());
-        InsertPathAction.copyFromTo(myTextField.getTextField(), textArea);
-        DialogBuilder builder = new DialogBuilder(myTextField);
-        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-        builder.setDimensionServiceKey("EditParametersPopupWindow");
-        builder.setCenterPanel(scrollPane);
-        builder.setPreferedFocusComponent(textArea);
-        String rawText = myDialodCaption;
-        if (StringUtil.endsWithChar(rawText, ':')) rawText = rawText.substring(0, rawText.length() - 1);
-        builder.setTitle(rawText);
-        builder.addCloseButton();
-        builder.show();
+        Messages.showTextAreaDialog(myTextField.getTextField(), myDialodCaption, "EditParametersPopupWindow");
       }
     });
     myTextField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);

@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.CommonBundle;
+import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -343,6 +347,29 @@ public class Messages {
    */
   public static void showInfoMessage(String message, String title) {
     showMessageDialog(message, title, getInformationIcon());
+  }
+
+  /**
+   * Shows dialog with text area to edit long strings that don't fit in text field 
+   */
+  public static void showTextAreaDialog(final JTextField textField, final String title, @NonNls final String dimensionServiceKey) {
+    JTextArea textArea = new JTextArea(10, 50);
+    textArea.setWrapStyleWord(true);
+    textArea.setLineWrap(true);
+    textArea.setDocument(textField.getDocument());
+    InsertPathAction.copyFromTo(textField, textArea);
+    DialogBuilder builder = new DialogBuilder(textField);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+    builder.setDimensionServiceKey(dimensionServiceKey);
+    builder.setCenterPanel(scrollPane);
+    builder.setPreferedFocusComponent(textArea);
+    String rawText = title;
+    if (StringUtil.endsWithChar(rawText, ':')) {
+      rawText = rawText.substring(0, rawText.length() - 1);
+    }
+    builder.setTitle(rawText);
+    builder.addCloseButton();
+    builder.show();
   }
 
   private static class MessageDialog extends DialogWrapper {
