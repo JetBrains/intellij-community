@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,9 @@ public class ButtonGroupProperty extends Property {
   }
 
   protected void setValueImpl(RadComponent component, Object value) throws Exception {
-    getRootContainer(component).setGroupForComponent(component, (RadButtonGroup) value);
+    final RadRootContainer radRootContainer = getRootContainer(component);
+    assert radRootContainer != null;
+    radRootContainer.setGroupForComponent(component, (RadButtonGroup) value);
   }
 
   @NotNull public PropertyRenderer getRenderer() {
@@ -77,10 +80,10 @@ public class ButtonGroupProperty extends Property {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           RadButtonGroup group = (RadButtonGroup) value;
           if (value == null) {
-            append("<None>", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(UIDesignerBundle.message("button.group.none"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else if (group == RadButtonGroup.NEW_GROUP) {
-            append("New...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(UIDesignerBundle.message("button.group.new"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
             append(group.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -92,8 +95,10 @@ public class ButtonGroupProperty extends Property {
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED && e.getItem() == RadButtonGroup.NEW_GROUP) {
             String newGroupName = myRootContainer.suggestGroupName();
-            JOptionPane.showInputDialog(myCbx, "Enter the name for the group:", "Create Button Group",
-                                        JOptionPane.QUESTION_MESSAGE, null, null, newGroupName);
+            newGroupName = (String)JOptionPane.showInputDialog(myCbx,
+                                                               UIDesignerBundle.message("button.group.name.prompt"),
+                                                               UIDesignerBundle.message("button.group.name.title"),
+                                                               JOptionPane.QUESTION_MESSAGE, null, null, newGroupName);
             if (newGroupName != null) {
               RadButtonGroup group = myRootContainer.createGroup(newGroupName);
               myRootContainer.setGroupForComponent(myComponent, group);
