@@ -38,9 +38,8 @@ public class MultiValuesMap<Key, Value>{
 
   public Collection<Value> values() {
     Set<Value> result = new HashSet<Value>();
-    Iterator<Collection<Value>> lists = myBaseMap.values().iterator();
-    while (lists.hasNext()) {
-      result.addAll(lists.next());
+    for (final Collection<Value> values : myBaseMap.values()) {
+      result.addAll(values);
     }
 
     return result;
@@ -48,6 +47,14 @@ public class MultiValuesMap<Key, Value>{
 
   public void remove(Key key, Value value) {
     if (!myBaseMap.containsKey(key)) return;
-    myBaseMap.get(key).remove(value);
+    final Collection<Value> values = myBaseMap.get(key);
+    values.remove(value);
+    if (values.isEmpty()) {
+      myBaseMap.remove(key);
+    }
+  }
+
+  public void clear() {
+    myBaseMap.clear();
   }
 }

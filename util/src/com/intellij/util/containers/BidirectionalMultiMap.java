@@ -99,4 +99,8 @@ public class BidirectionalMultiMap<K, V> {
     myKey2Values.clear();
     myValue2Keys.clear();
   }
+
+  public Set<K> getKeys() {
+    return myKey2Values.keySet();
+  }
 }
