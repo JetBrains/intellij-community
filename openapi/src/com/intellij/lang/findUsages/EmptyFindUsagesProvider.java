@@ -18,7 +18,6 @@ package com.intellij.lang.findUsages;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class EmptyFindUsagesProvider implements FindUsagesProvider {
-  public boolean mayHaveReferences(IElementType token, final short searchContext) {
-    return false;
-  }
 
   @Nullable
   public WordsScanner getWordsScanner() {

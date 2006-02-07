@@ -300,10 +300,6 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
                                                                     ElementType.END_OF_LINE_COMMENT);
   }
 
-  public boolean mayHaveReferences(IElementType token, final short searchContext) {
-    return mayHaveReferencesImpl(token, searchContext);
-  }
-
   public WordsScanner getWordsScanner() {
     return null;
   }

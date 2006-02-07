@@ -11,8 +11,6 @@ import com.intellij.lang.xml.XmlFindUsagesProvider;
 import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +39,6 @@ public class DTDLanguage extends Language {
   @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return new XmlFindUsagesProvider() {
-      public boolean mayHaveReferences(IElementType token, final short searchContext) {
-        if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
-        return false;
-      }
     };
   }
 

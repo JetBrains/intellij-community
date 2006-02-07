@@ -17,7 +17,6 @@ package com.intellij.lang.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.lang.Language#getFindUsagesProvider()
  */
 public interface FindUsagesProvider {
-  /**
-   * Checks if tokens of the specified type can contain references when the search
-   * is done with the specified context.
-   *
-   * @param token         the token type to check for references.
-   * @param searchContext represents find usages request,
-   *                      a combination of constants in {@link com.intellij.psi.search.UsageSearchContext}
-   */
-  boolean mayHaveReferences(IElementType token, final short searchContext);
-
   /**
    * Gets the word scanner for building a word index for the specified language.
    *
