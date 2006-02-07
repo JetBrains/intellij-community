@@ -4,9 +4,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.module.Module;
 
 /**
  * @author peter
@@ -24,6 +27,13 @@ public class ConvertContextImpl implements ConvertContext {
     if (name == null) return null;
     final XmlFile file = getFile();
     if (name.indexOf('$')>=0) name = name.replace('$', '.');
+
+    // find module-based classes first, if available
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module != null) {
+      final PsiClass aClass = file.getManager().findClass(name, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      if (aClass != null) return aClass;
+    }
     return file.getManager().findClass(name, file.getResolveScope());
   }
 
