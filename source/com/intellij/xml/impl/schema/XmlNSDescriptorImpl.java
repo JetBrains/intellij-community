@@ -503,6 +503,15 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public boolean processTagsInNamespace(final XmlTag rootTag, String[] tagNames, PsiElementProcessor<XmlTag> processor) {
+    return processTagsInNamespaceInner(rootTag, tagNames, processor, null);
+  }
+
+  private static boolean processTagsInNamespaceInner(final XmlTag rootTag, final String[] tagNames,
+                                                     final PsiElementProcessor<XmlTag> processor, Set<XmlTag> visitedTags) {
+    if (visitedTags == null) visitedTags = new HashSet<XmlTag>(3);
+    else if (visitedTags.contains(rootTag)) return true;
+
+    visitedTags.add(rootTag);
     XmlTag[] tags = rootTag.getSubTags();
 
     NextTag:
@@ -510,17 +519,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       for(String tagName:tagNames) {
         if (equalsToSchemaName(tag, tagName)) {
           final String name = tag.getAttributeValue("name");
-  
+
           if (name != null) {
             if (!processor.execute(tag)) {
               return false;
             }
           }
-          
+
           continue NextTag;
         }
       }
-      
+
       if (equalsToSchemaName(tag, "include")) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
@@ -529,18 +538,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
-          
+
             if (includedDocument != null) {
-              if (!processTagsInNamespace(includedDocument.getRootTag(), tagNames, processor)) return false;
+              if (!processTagsInNamespaceInner(includedDocument.getRootTag(), tagNames, processor, visitedTags)) return false;
             }
           }
         }
       }
     }
-    
+
     return true;
   }
-  
+
   protected static boolean equalsToSchemaName(XmlTag tag, @NonNls String schemaName) {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
