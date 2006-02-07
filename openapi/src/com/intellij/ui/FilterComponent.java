@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -39,17 +37,18 @@ public abstract class FilterComponent extends JPanel {
     myFilter = new TextFieldWithStoredHistory(propertyName);
     myFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          myFilter.addCurrentTextToHistory();
-          filter();
-          e.consume();
-        }
-      }
-    });
-    myFilter.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        filter();
+      public void keyPressed(final KeyEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+              myFilter.addCurrentTextToHistory();
+              filter();
+            } else {
+              onlineFilter();
+            }
+          }
+        });
+        e.consume();
       }
     });
     myFilter.setEditable(true);
@@ -78,5 +77,9 @@ public abstract class FilterComponent extends JPanel {
   }
 
   protected abstract void filter();
+
+  protected void onlineFilter(){
+    filter();
+  }
 
 }

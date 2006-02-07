@@ -29,7 +29,6 @@ public abstract class IntentionSettingsTree {
     protected void filter() {
       final String filter = getFilter();
       IntentionSettingsTree.this.reset(filterModel(filter));
-      myFilter.setSelectedItem(filter);
       if (myTree != null) {
         List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
         ((DefaultTreeModel)myTree.getModel()).reload();
@@ -41,6 +40,12 @@ public abstract class IntentionSettingsTree {
           myTree.requestFocus();
         }
       });
+    }
+
+
+    protected void onlineFilter() {
+      final String filter = getFilter();
+      IntentionSettingsTree.this.reset(filterModel(filter));
     }
   };
 
@@ -88,6 +93,7 @@ public abstract class IntentionSettingsTree {
         myTree.setSelectionRow(0);
       }
     });
+    myFilter.reset();
   }
 
   private ActionToolbar createTreeToolbarPanel() {
@@ -163,8 +169,6 @@ public abstract class IntentionSettingsTree {
     resetCheckMark(root);
     treeModel.setRoot(root);
     treeModel.nodeChanged(root);
-    myFilter.reset();
-    //TreeUtil.expandAll(myTree);
   }
 
   private CheckedTreeNode getRoot() {
