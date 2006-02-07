@@ -639,13 +639,17 @@ public class CompileDriver {
   private void deleteAll(final CompileContext context, Set<File> outputDirectories) {
     context.getProgressIndicator().pushState();
     try {
+      final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
       context.getProgressIndicator().setText(CompilerBundle.message("progress.clearing.output"));
       for (final Compiler compiler : allCompilers) {
         if (compiler instanceof GeneratingCompiler) {
           final StateCache<ValidityState> cache = getGeneratingCompilerCache((GeneratingCompiler)compiler);
           if (!myShouldClearOutputDirectory) {
-            deleteUrls(cache.getUrlsIterator());
+            final Iterator<String> urlIterator = cache.getUrlsIterator();
+            while(urlIterator.hasNext()) {
+              new File(VirtualFileManager.extractPath(urlIterator.next())).delete();
+            }
           }
           cache.wipe();
         }
@@ -656,7 +660,17 @@ public class CompileDriver {
         else if (compiler instanceof TranslatingCompiler) {
           final TranslatingCompilerStateCache cache = getTranslatingCompilerCache((TranslatingCompiler)compiler);
           if (!myShouldClearOutputDirectory) {
-            deleteUrls(cache.getOutputUrlsIterator());
+            final Iterator<String> urlIterator = cache.getOutputUrlsIterator();
+            while(urlIterator.hasNext()) {
+              final String outputPath = urlIterator.next();
+              final String sourceUrl = cache.getSourceUrl(outputPath);
+              if (sourceUrl == null || !FileUtil.pathsEqual(outputPath, VirtualFileManager.extractPath(sourceUrl))) {
+                new File(outputPath).delete();
+                if (isTestMode) {
+                  CompilerManagerImpl.addDeletedPath(outputPath);
+                }
+              }
+            }
           }
           cache.wipe();
         }
@@ -664,18 +678,21 @@ public class CompileDriver {
       if (myShouldClearOutputDirectory) {
         clearOutputDirectories(outputDirectories);
       }
+      else { // refresh is still required
+        CompilerUtil.doRefresh(new Runnable() {
+          public void run() {
+            final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules());
+            for (final VirtualFile outputDirectory : outputDirectories) {
+              outputDirectory.refresh(false, true);
+            }
+          }
+        });
+      }
 
       clearCompilerSystemDirectory(context);
     }
     finally {
       context.getProgressIndicator().popState();
-    }
-  }
-
-  private static void deleteUrls(final Iterator<String> urlIterator) {
-    while(urlIterator.hasNext()) {
-      final String url = urlIterator.next();
-      new File(VirtualFileManager.extractPath(url)).delete();
     }
   }
 
@@ -699,7 +716,9 @@ public class CompileDriver {
     Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size()*2);
     for (File outputDirectory : outputDirectories) {
       File[] files = outputDirectory.listFiles();
-      if (files != null) filesToDelete.addAll(Arrays.asList(files));
+      if (files != null) {
+        filesToDelete.addAll(Arrays.asList(files));
+      }
     }
     FileUtil.asyncDelete(filesToDelete);
 

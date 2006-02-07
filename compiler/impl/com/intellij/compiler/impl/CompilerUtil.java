@@ -8,24 +8,24 @@ import com.intellij.compiler.progress.CompilerProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
 
 public class CompilerUtil {
@@ -128,7 +128,7 @@ public class CompilerUtil {
     });
   }
 
-  private static void doRefresh(final Runnable refreshRunnable) {
+  public static void doRefresh(final Runnable refreshRunnable) {
     final Application applicationEx = ApplicationManager.getApplication();
     if (applicationEx.isDispatchThread()) {
       applicationEx.runWriteAction(refreshRunnable);
