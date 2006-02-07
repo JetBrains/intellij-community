@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
@@ -1082,17 +1083,17 @@ public class SelectWordUtil {
   static class ScriptletSelectioner extends BasicSelectioner {
     @Override
     public boolean canSelect(PsiElement e) {
-      return PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage() instanceof JavaLanguage;
+      return PsiUtil.isInJspFile(e) && e.getLanguage() instanceof JavaLanguage;
     }
 
     @Override
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-      final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
+      final JspFile psiFile = PsiUtil.getJspFile(e);
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
-          PsiFile baseRoot = psiFile.getBaseLanguageRoot();
-          PsiElement elt = baseRoot.findElementAt(cursorOffset);
-          ranges.add(elt.getTextRange());
+        final JspxFileViewProvider viewProvider = psiFile.getViewProvider();
+        PsiElement elt = viewProvider.findElementAt(cursorOffset, viewProvider.getTemplateDataLanguage());
+        ranges.add(elt.getTextRange());
       }
       return ranges;
     }
