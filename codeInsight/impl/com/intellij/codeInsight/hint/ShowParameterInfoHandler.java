@@ -258,12 +258,14 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     }
 
     public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
+      final Object[] itemsToShow = getItemsToShow();
+      if (itemsToShow == null || itemsToShow.length == 0) return;
       showMethodInfo(
         getProject(),
         getEditor(),
         element,
         getHighlightedElement(),
-        getItemsToShow(),
+        itemsToShow,
         offset,
         handler
       );
