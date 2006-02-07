@@ -87,8 +87,13 @@ public final class FormSourceCodeGenerator {
       new FormEditingUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent iComponent) {
           final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(iComponent);
-          if (errorInfo != null){
-            myErrors.add(errorInfo.myDescription);
+          if (errorInfo != null) {
+            if (iComponent.getBinding() != null) {
+              myErrors.add(UIDesignerBundle.message("error.for.component", iComponent.getBinding(), errorInfo.myDescription));
+            }
+            else {
+              myErrors.add(errorInfo.myDescription);
+            }
           }
           return true;
         }

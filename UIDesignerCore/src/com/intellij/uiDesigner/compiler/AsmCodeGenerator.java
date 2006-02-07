@@ -439,12 +439,17 @@ public class AsmCodeGenerator {
         if (property instanceof LwIntroComponentProperty) {
           String targetId = (String) component.getPropertyValue(property);
           if (targetId != null && targetId.length() > 0) {
-            int targetLocal = ((Integer) myIdToLocalMap.get(targetId)).intValue();
-            generator.loadLocal(componentLocal);
-            generator.loadLocal(targetLocal);
-            generator.invokeVirtual(componentType,
-                                    new Method(property.getWriteMethodName(),
-                                               Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
+            // we may have a reference property pointing to a component which is
+            // no longer valid
+            final Integer targetLocalInt = (Integer)myIdToLocalMap.get(targetId);
+            if (targetLocalInt != null) {
+              int targetLocal = targetLocalInt.intValue();
+              generator.loadLocal(componentLocal);
+              generator.loadLocal(targetLocal);
+              generator.invokeVirtual(componentType,
+                                      new Method(property.getWriteMethodName(),
+                                                 Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
+            }
           }
         }
       }

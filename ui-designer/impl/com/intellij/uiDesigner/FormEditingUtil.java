@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.util.containers.HashSet;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -49,6 +50,7 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final List<RadComponent> selection = getSelectedComponents(editor);
+    final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
       final RadContainer parent = component.getParent();
@@ -61,7 +63,15 @@ public final class FormEditingUtil {
         wasPackedVert = parent.getHeight() == minSize.height;
       }
 
-      BindingProperty.checkRemoveUnusedField(editor.getProject(), component);
+      FormEditingUtil.iterate(component, new ComponentVisitor() {
+        public boolean visit(final IComponent c) {
+          RadComponent rc = (RadComponent) c;
+          BindingProperty.checkRemoveUnusedField(editor.getProject(), rc);
+          deletedComponentIds.add(rc.getId());
+          return true;
+        }
+      });
+
 
       GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
 
@@ -94,6 +104,27 @@ public final class FormEditingUtil {
         parent.setSize(newSize);
       }
     }
+
+    FormEditingUtil.iterate(editor.getRootContainer(), new ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        RadComponent rc = (RadComponent) component;
+        for(IProperty p: component.getModifiedProperties()) {
+          if (p instanceof IntroComponentProperty) {
+            IntroComponentProperty icp = (IntroComponentProperty) p;
+            final String value = (String) icp.getValue(rc);
+            if (deletedComponentIds.contains(value)) {
+              try {
+                icp.resetValue(rc);
+              }
+              catch (Exception e) {
+                // ignore
+              }
+            }
+          }
+        }
+        return true;
+      }
+    });
 
     editor.refreshAndSave(true);
   }
