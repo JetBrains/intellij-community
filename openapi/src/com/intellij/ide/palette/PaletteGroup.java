@@ -29,7 +29,12 @@ public interface PaletteGroup {
 
   PaletteItem[] getItems();
 
-  String getName();
+  /**
+   * Returns the text of the group header for the palette group.
+   *
+   * @return the text of the group header for the palette group, or null if no header should be shown.
+   */
+  @Nullable String getName();
 
   String getTabName();
 

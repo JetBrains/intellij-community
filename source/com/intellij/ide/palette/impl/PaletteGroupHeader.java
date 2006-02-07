@@ -31,7 +31,12 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   public PaletteGroupHeader(PaletteWindow paletteWindow, PaletteGroup group) {
     myPaletteWindow = paletteWindow;
     myGroup = group;
-    setText(group.getName());
+    if (group.getName() == null) {
+       setVisible(false);
+    }
+    else {
+      setText(group.getName());
+    }
     setSelected(true);
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

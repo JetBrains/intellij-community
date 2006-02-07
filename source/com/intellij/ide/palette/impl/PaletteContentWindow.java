@@ -60,9 +60,14 @@ public class PaletteContentWindow extends JPanel implements Scrollable {
         if (c instanceof PaletteGroupHeader) {
           PaletteGroupHeader groupHeader = (PaletteGroupHeader) c;
           groupHeader.setLocation(0, height);
-          groupHeader.setSize(width, groupHeader.getPreferredSize().height);
-          height += groupHeader.getPreferredSize().height;
-          if (groupHeader.isSelected()) {
+          if (groupHeader.isVisible()) {
+            groupHeader.setSize(width, groupHeader.getPreferredSize().height);
+            height += groupHeader.getPreferredSize().height;
+          }
+          else {
+            groupHeader.setSize(0, 0);
+          }
+          if (groupHeader.isSelected() || !groupHeader.isVisible()) {
             PaletteComponentList componentList = groupHeader.getComponentList();
             componentList.setSize(width, componentList.getPreferredSize().height);
             componentList.setLocation(0, height);
