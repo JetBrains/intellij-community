@@ -17,7 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,6 +33,7 @@ import java.awt.event.KeyEvent;
  */
 public abstract class FilterComponent extends JPanel {
   private final TextFieldWithStoredHistory myFilter;
+  private final Alarm myUpdateAlarm = new Alarm();
   public FilterComponent(@NonNls String propertyName, int historySize) {
     super(new BorderLayout());
     add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
@@ -38,7 +41,8 @@ public abstract class FilterComponent extends JPanel {
     myFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
       public void keyPressed(final KeyEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
+        myUpdateAlarm.cancelAllRequests();
+        myUpdateAlarm.addRequest(new Runnable(){
           public void run() {
             if (e.getKeyCode() == KeyEvent.VK_ENTER) {
               myFilter.addCurrentTextToHistory();
@@ -47,7 +51,8 @@ public abstract class FilterComponent extends JPanel {
               onlineFilter();
             }
           }
-        });
+        }, 100, ModalityState.stateForComponent(myFilter));
+
         e.consume();
       }
     });
