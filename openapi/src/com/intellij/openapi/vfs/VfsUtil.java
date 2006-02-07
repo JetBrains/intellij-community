@@ -500,6 +500,7 @@ public class VfsUtil {
     return false;
   }
 
+  @Nullable
   public static Module getModuleForFile(Project project, VirtualFile file){
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
   }
