@@ -19,7 +19,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,7 +59,7 @@ public class CodeInsightUtil {
   }
 
   @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
