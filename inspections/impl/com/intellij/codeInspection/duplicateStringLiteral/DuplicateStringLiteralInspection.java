@@ -123,7 +123,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
            offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length, searcher)
         ) {
         PsiElement element = file.findElementAt(offset);
-        if (!(element.getParent() instanceof PsiLiteralExpression)) continue;
+        if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) continue;
         PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
         if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue())) {
           foundExpr.add(expression);
