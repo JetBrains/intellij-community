@@ -71,8 +71,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
         public void run() {
           if (!CodeInsightUtil.prepareFileForWrite(targetMethod.getContainingFile())) return;
           if (processSuperMethods) {
-            for (int i = 0; i < superMethods.length; i++) {
-              PsiMethod superMethod = superMethods[i];
+            for (PsiMethod superMethod : superMethods) {
               if (!CodeInsightUtil.prepareFileForWrite(superMethod.getContainingFile())) return;
             }
           }
@@ -81,8 +80,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
             processMethod(project, targetMethod, unhandledExceptions);
 
             if (processSuperMethods) {
-              for (int i = 0; i < superMethods.length; i++) {
-                PsiMethod superMethod = superMethods[i];
+              for (PsiMethod superMethod : superMethods) {
                 processMethod(project, superMethod, unhandledExceptions);
               }
             }
@@ -97,15 +95,15 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
   private static PsiMethod[] getSuperMethods(PsiMethod targetMethod) {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
-    _collectSuperMethods(targetMethod, result);
+    collectSuperMethods(targetMethod, result);
     return result.toArray(new PsiMethod[result.size()]);
   }
 
-  private static void _collectSuperMethods(PsiMethod method, List<PsiMethod> result) {
+  private static void collectSuperMethods(PsiMethod method, List<PsiMethod> result) {
     PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       result.add(superMethod);
-      _collectSuperMethods(superMethod, result);
+      collectSuperMethods(superMethod, result);
     }
   }
 
@@ -154,7 +152,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return QuickFixBundle.message("add.exception.to.throws.family");
   }
 
-  private PsiElement findElement(PsiElement element, PsiMethod topElement) {
+  private static PsiElement findElement(PsiElement element, PsiMethod topElement) {
     if (element == null) return null;
     PsiClassType[] unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
     unhandledExceptions = filterInProjectExceptions(unhandledExceptions, topElement);
@@ -164,7 +162,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return findElement(element.getParent(), topElement);
   }
 
-  private PsiClassType[] filterInProjectExceptions(PsiClassType[] unhandledExceptions, PsiMethod targetMethod) {
+  private static PsiClassType[] filterInProjectExceptions(PsiClassType[] unhandledExceptions, PsiMethod targetMethod) {
     if (targetMethod == null) return PsiClassType.EMPTY_ARRAY;
 
     Set<PsiClassType> result = new HashSet<PsiClassType>();
