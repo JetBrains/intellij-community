@@ -77,9 +77,8 @@ public class ExceptionFilter implements Filter{
       final PsiManager manager = PsiManager.getInstance(myProject);
       PsiClass aClass = manager.findClass(className1, GlobalSearchScope.allScope(myProject));
       if (aClass == null) return null;
-      aClass = (PsiClass) aClass.getNavigationElement();
-      if (aClass == null) return null;
       final PsiFile file = aClass.getContainingFile();
+      if (file.getNavigationElement() == null) return null;
       final int slashIndex = filePath.lastIndexOf(File.separatorChar);
       final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
       if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
