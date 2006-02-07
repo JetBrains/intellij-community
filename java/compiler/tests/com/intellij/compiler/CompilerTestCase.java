@@ -24,6 +24,7 @@ import org.jdom.Document;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -303,8 +304,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
           File dir = createTempDir("compiler" + testName.toUpperCase() + "_");
           myModuleRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-          mySourceDir = myModuleRoot.createChildDirectory(this, SOURCE);
-          myClassesDir = myModuleRoot.createChildDirectory(this, CLASSES);
+          mySourceDir = createSourcesDir();
+          myClassesDir = createOutputDir();
 
           createTestProjectStructure(myModuleRoot);
           setupMainModuleRootModel();
@@ -332,6 +333,18 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
   }
 
+  protected VirtualFile createOutputDir() throws IOException {
+    return myModuleRoot.createChildDirectory(this, CLASSES);
+  }
+
+  protected VirtualFile createSourcesDir() throws IOException {
+    return myModuleRoot.createChildDirectory(this, SOURCE);
+  }
+
+  protected boolean shouldExcludeOutputFromProject() {
+    return true;
+  }
+  
   protected void setupMainModuleRootModel() {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     rootModel.clear();
@@ -366,7 +379,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     final ContentEntry contentEntry = rootModel.addContentEntry(myModuleRoot);
     contentEntry.addSourceFolder(mySourceDir, false);
     rootModel.setCompilerOutputPath(myClassesDir);
-    rootModel.setExcludeOutput(true);
+    rootModel.setExcludeOutput(shouldExcludeOutputFromProject());
 
     // Mock JDK is used by default. Uncomment in order to use 'real' JDK if needed
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
