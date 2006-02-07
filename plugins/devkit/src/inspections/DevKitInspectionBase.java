@@ -16,11 +16,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
@@ -49,7 +49,13 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
   @Nullable
   protected Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
     final Project project = psiClass.getProject();
-    final Module module = VfsUtil.getModuleForFile(project, psiClass.getContainingFile().getVirtualFile());
+    final PsiFile psiFile = psiClass.getContainingFile();
+
+    assert psiFile != null;
+
+    final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
+
+    if (module == null) return null;
 
     if (PluginModuleType.isOfType(module)) {
       return checkModule(module, psiClass, null, includeActions);
