@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -303,7 +302,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   @Nullable public PsiFile getBoundForm() {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiFile[] boundForms = psiManager.getSearchHelper().findFormsBoundToClass(myClassName.replace('$', '.'));
-    if (boundForms != null) {
+    if (boundForms != null && boundForms.length > 0) {
       return boundForms [0];
     }
     return null;
