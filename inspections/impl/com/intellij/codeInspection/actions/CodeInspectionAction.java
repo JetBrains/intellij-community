@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -24,6 +23,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
+  private JRadioButton myRunWithEditorSettingsButton;
+  private JRadioButton myRunWithChoosenButton;
+  private ComboboxWithBrowseButton myBrowseProfilesCombo;
+  private JPanel myAdditionalPanel;
+
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
@@ -37,12 +41,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final LabeledComponent component = new LabeledComponent();
-    component.setText(InspectionsBundle.message("inspection.action.profile.label"));
-    component.setLabelLocation(BorderLayout.WEST);
-    final ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
-    component.setComponent(comboboxWithBrowseButton);
-    final JComboBox profiles = comboboxWithBrowseButton.getComboBox();
+    final JComboBox profiles = myBrowseProfilesCombo.getComboBox();
     profiles.setRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
@@ -56,7 +55,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
-    comboboxWithBrowseButton.addActionListener(new ActionListener() {
+    myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), true, projectProfileManager){
           protected void init() {
@@ -87,21 +86,24 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
-    final JCheckBox runWithEditorSettings = new JCheckBox(InspectionsBundle.message("run.with.editor.settings.dialog.option"), manager.RUN_WITH_EDITOR_PROFILE);
-    runWithEditorSettings.addActionListener(new ActionListener() {
+
+    myRunWithChoosenButton.setSelected(!manager.RUN_WITH_EDITOR_PROFILE);
+    myRunWithEditorSettingsButton.setSelected(manager.RUN_WITH_EDITOR_PROFILE);
+    myBrowseProfilesCombo.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
+
+    final ActionListener onChoose = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        manager.RUN_WITH_EDITOR_PROFILE = runWithEditorSettings.isSelected();
-        component.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
+        manager.RUN_WITH_EDITOR_PROFILE = myRunWithEditorSettingsButton.isSelected();
+        myBrowseProfilesCombo.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
       }
-    });
-    JPanel panel = new JPanel(new BorderLayout());
-    component.setEnabled(!manager.RUN_WITH_EDITOR_PROFILE);
-    panel.add(component, BorderLayout.NORTH);
-    panel.add(runWithEditorSettings, BorderLayout.SOUTH);
-    return panel;
+    };
+    myRunWithEditorSettingsButton.addActionListener(onChoose);
+    myRunWithChoosenButton.addActionListener(onChoose);
+
+    return myAdditionalPanel;
   }
 
-  private void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfileManager, InspectionProjectProfileManager inspectionProjectProfileManager, InspectionManagerEx inspectionManager){
+  private static void reloadProfiles(JComboBox profiles, InspectionProfileManager inspectionProfileManager, InspectionProjectProfileManager inspectionProjectProfileManager, InspectionManagerEx inspectionManager){
     final InspectionProfile selectedProfile = inspectionManager.getCurrentProfile();
     String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
     final DefaultComboBoxModel model = (DefaultComboBoxModel)profiles.getModel();

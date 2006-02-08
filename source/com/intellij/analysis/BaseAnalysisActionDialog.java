@@ -1,16 +1,19 @@
 package com.intellij.analysis;
 
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.find.FindSettings;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.find.FindSettings;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Enumeration;
 
 /**
  * User: anna
@@ -61,11 +64,17 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
     panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon));
 
+      //include test option
+    myInspectTestSource = new JCheckBox(AnalysisScopeBundle.message("scope.option.include.test.sources"), uiOptions.ANALYZE_TEST_SOURCES);
+    gc.anchor = GridBagConstraints.EAST;
+    panel.add(myInspectTestSource, gc);
+
     ButtonGroup group = new ButtonGroup();
 
     //project scope
     myProjectButton = new JRadioButton(AnalysisScopeBundle.message("scope.option.whole.project"));
     group.add(myProjectButton);
+    gc.anchor = GridBagConstraints.WEST;
     panel.add(myProjectButton, gc);
 
     //module scope if applicable
@@ -97,14 +106,22 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     gc.gridx = 0;
     gc.gridwidth = 2;
 
-    //include test option
-    myInspectTestSource = new JCheckBox(AnalysisScopeBundle.message("scope.option.include.test.sources"), uiOptions.ANALYZE_TEST_SOURCES);
-    gc.insets.left = 15;
-    panel.add(myInspectTestSource, gc);
+
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
     myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM));
+
+    myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
+    final ActionListener customScopeUpdateAction = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
+      }
+    };
+    final Enumeration<AbstractButton> enumeration = group.getElements();
+    while (enumeration.hasMoreElements()) {
+      enumeration.nextElement().addActionListener(customScopeUpdateAction);
+    }
 
     //additional panel - inspection profile chooser
     JPanel wholePanel = new JPanel(new BorderLayout());
