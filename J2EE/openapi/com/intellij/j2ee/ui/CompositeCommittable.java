@@ -26,7 +26,7 @@ import java.util.List;
 public class CompositeCommittable implements Committable {
   private final List<Committable> myComponents = new ArrayList<Committable>();
 
-  public <T extends Committable> T addComponent(T panel) {
+  public final <T extends Committable> T addComponent(T panel) {
     myComponents.add(panel);
     return panel;
   }
