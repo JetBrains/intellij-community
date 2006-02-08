@@ -6,6 +6,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.impl.ui.BigStringControl;
+import com.intellij.util.xml.impl.ui.BigStringComponent;
+import com.intellij.util.xml.impl.ui.DomFixedWrapper;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -35,7 +38,12 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           final java.util.List<GenericDomValue> values = (java.util.List<GenericDomValue>)description.getValues(getDomElement());
           if (values.size() == 1) {
-            final DomUIControl control = DomUIFactory.createControl(values.get(0));
+            DomUIControl control;
+            if (boundComponent instanceof BigStringComponent) {
+              control = new BigStringControl(new DomFixedWrapper(values.get(0)));
+            } else {
+              control = DomUIFactory.createControl(values.get(0));
+            }
 
             doBind(control, boundComponent);
           }
