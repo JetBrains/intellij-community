@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class PsiEquivalenceUtil {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child : children1) {
-      if (!(child instanceof PsiWhiteSpace)) {
+      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment)) {
         array.add(child);
       }
     }
@@ -95,7 +96,7 @@ public class PsiEquivalenceUtil {
             i = j + 1;
             continue NextChild;
           }
-          next = PsiTreeUtil.skipSiblingsForward(next, new Class[]{PsiWhiteSpace.class});
+          next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
         }
         while (true);
 
