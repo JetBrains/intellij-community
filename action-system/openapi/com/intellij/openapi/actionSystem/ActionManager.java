@@ -49,7 +49,7 @@ public abstract class ActionManager {
    *
    * @return An instance of <code>ActionPopupMenu</code>
    */
-  public abstract ActionPopupMenu createActionPopupMenu(String place, ActionGroup group);
+  public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, ActionGroup group);
 
   /**
    * Factory method that creates an <code>ActionToolbar</code> from the

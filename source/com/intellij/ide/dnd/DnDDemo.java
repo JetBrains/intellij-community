@@ -27,7 +27,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       }
 
       public DnDDragStartBean startDragging(DnDAction action, Point point) {
-        return new DnDDragStartBean(DnDAction.COPY, source.getLastSelectedPathComponent().toString());
+        return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
       }
 
 

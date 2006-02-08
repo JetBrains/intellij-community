@@ -2,7 +2,6 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.dnd.DnDDragStartBean;
-import com.intellij.ide.dnd.DnDAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -15,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.uiDesigner.SimpleTransferable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -24,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -282,7 +279,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Nullable public DnDDragStartBean startDragging() {
-    return new DnDDragStartBean(DnDAction.MOVE, this);
+    return new DnDDragStartBean(this);
   }
 
   @Nullable public ActionGroup getPopupActionGroup() {

@@ -23,17 +23,15 @@ import java.awt.*;
  * @author mike
  */
 public class DnDDragStartBean {
-  private final DnDAction myDnDAction;
   private final Object myAttachedObject;
   private final Point myPoint;
 
 
-  public DnDDragStartBean(final DnDAction dnDAction, final Object attachedObject) {
-    this(dnDAction, attachedObject, null);
+  public DnDDragStartBean(final Object attachedObject) {
+    this(attachedObject, null);
   }
 
-  public DnDDragStartBean(final DnDAction dnDAction, final Object attachedObject, final Point point) {
-    myDnDAction = dnDAction;
+  public DnDDragStartBean(final Object attachedObject, final Point point) {
     myAttachedObject = attachedObject;
     myPoint = point;
   }

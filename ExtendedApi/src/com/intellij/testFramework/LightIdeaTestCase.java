@@ -69,7 +69,7 @@ import java.util.*;
   private static Module ourModule;
   private static ProjectJdk ourJDK;
   private static PsiManager ourPsiManager;
-  private boolean myAssertionsInTestDetected;
+  private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
@@ -148,7 +148,7 @@ import java.util.*;
   }
 
 
-  private void initProject() throws Exception {
+  private static void initProject(final ProjectJdk projectJDK) throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         if (ourProject != null) {
@@ -164,7 +164,6 @@ import java.util.*;
 
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-        ProjectJdk projectJDK = getProjectJDK();
         if (projectJDK != null) {
           ourJDK = projectJDK;
           rootModel.setJdk(projectJDK);
@@ -210,7 +209,7 @@ import java.util.*;
     });
   }
 
-  protected Module createMainModule() {
+  protected static Module createMainModule() {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
         return ModuleManager.getInstance(ourProject).newModule("");
@@ -227,14 +226,18 @@ import java.util.*;
 
   protected void setUp() throws Exception {
     super.setUp();
+    doSetup();
+  }
+
+  private void doSetup() throws Exception {
     assertNull("Previous test " + ourTestCase + " haven't called tearDown(). Probably overriden without super call.",
                ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
     initApplication();
 
-    if (ourProject == null || isJDKChanged()) {
-      initProject();
+    if (ourProject == null || isJDKChanged(getProjectJDK())) {
+      initProject(getProjectJDK());
     }
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
@@ -274,7 +277,6 @@ import java.util.*;
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
-
   }
 
   protected Set<String> getAvailableInspections(){
@@ -299,6 +301,11 @@ import java.util.*;
   }
 
   protected void tearDown() throws Exception {
+    super.tearDown();
+    doTearDown();
+  }
+
+  private static void doTearDown() throws Exception {
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
@@ -319,7 +326,7 @@ import java.util.*;
 //    final Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
 //    assertTrue(Arrays.asList(openProjects).contains(ourProject));
     assertFalse(PsiManager.getInstance(getProject()).isDisposed());
-    if (!myAssertionsInTestDetected) {
+    if (!ourAssertionsInTestDetected) {
       if (IdeaLogger.ourErrorsOccurred != null) {
         throw IdeaLogger.ourErrorsOccurred;
       }
@@ -329,7 +336,6 @@ import java.util.*;
     ourApplication.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();
-    super.tearDown();
 
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
@@ -374,9 +380,9 @@ import java.util.*;
   private void startRunAndTear() throws Throwable {
     setUp();
     try {
-      myAssertionsInTestDetected = true;
+      ourAssertionsInTestDetected = true;
       runTest();
-      myAssertionsInTestDetected = false;
+      ourAssertionsInTestDetected = false;
     }
     finally {
       try{
@@ -398,9 +404,8 @@ import java.util.*;
     }
   }
 
-  private boolean isJDKChanged() {
-    ProjectJdk jdk = getProjectJDK();
-    return ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), jdk.getVersionString());
+  private static boolean isJDKChanged(final ProjectJdk newJDK) {
+    return ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), newJDK.getVersionString());
   }
 
   protected ProjectJdk getProjectJDK() {
@@ -417,11 +422,11 @@ import java.util.*;
    * @return dummy psi file.
    * @throws IncorrectOperationException
    */
-  protected PsiFile createFile(String fileName, String text) throws IncorrectOperationException {
+  protected static PsiFile createFile(String fileName, String text) throws IncorrectOperationException {
     return getPsiManager().getElementFactory().createFileFromText(fileName, text);
   }
 
-  protected PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
+  protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
     return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
                                                                   text, LocalTimeCounter.currentTime(), true);
   }
@@ -441,7 +446,7 @@ import java.util.*;
     return name;
   }
 
-  protected void commitDocument(final Document document) {
+  protected static void commitDocument(final Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
 

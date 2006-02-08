@@ -79,7 +79,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       }
     }
     else {
-      if (oldTabNames.length == 1) {
+      if (oldTabNames.length <= 1) {
         remove(myScrollPane);
         add(myTabbedPane);
       }
