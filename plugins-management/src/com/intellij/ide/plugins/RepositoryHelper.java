@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
+import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -36,6 +38,7 @@ public class RepositoryHelper {
   @NonNls public static final String REPOSITORY_LIST_SYSTEM_ID = REPOSITORY_HOST + "/plugin-repository.dtd";
 
   @NonNls private static final String FILENAME = "filename=";
+  @NonNls public static final String extPluginsFile = "availables.xml";
 
   private static class InputStreamGetter implements Runnable {
     private InputStream is;
@@ -59,95 +62,95 @@ public class RepositoryHelper {
     }
   }
 
-  public static CategoryNode makeCategoryTree (String url)
-    throws SAXException, ParserConfigurationException, IOException {
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+  public static class CategoryTreeConstructor implements Runnable{
+    private String listURL;
+    private ProgressIndicator pi;
+    private CategoryNode root = null;
 
-    if (pi.isCanceled())
+    public CategoryTreeConstructor( String url, ProgressIndicator pi )
+    {
+      listURL = url;
+      this.pi = pi;
+    }
+
+    public CategoryNode  getRoot()
+    {
+      return root;
+    }
+
+    public void run()
+    {
+      try {
+        DoJob();
+      }
+      catch (RuntimeException e)
+      {
+        if( e.getCause() == null || !( e.getCause() instanceof InterruptedException))
+          throw e;
+      }
+      catch( Exception e)
+      {
+      }
+    }
+    private void DoJob()
+    throws SAXException, ParserConfigurationException, IOException
+    {
+      RepositoryContentHandler handler = new RepositoryContentHandler();
+      HttpURLConnection connection = (HttpURLConnection) new URL( listURL ).openConnection();
+      if(! pi.isCanceled())
+      {
+        InputStream is;
+        try {
+          is = connection.getInputStream();
+        }
+        catch (IOException e) {
+          is = null;
+        }
+        if( is != null )
+        {
+          File temp = CreateLocalPluginsDescriptions();
+          ReadPluginsStream( temp, is, handler, pi);
+        }
+      }
+    }
+  }
+  /*
+  public static CategoryNode makeCategoryTree (String url, ProgressIndicator pi )
+    throws SAXException, ParserConfigurationException, IOException {
+
+    pi.setText(IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+    HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
+
+    if( pi.isCanceled())
       return null;
 
     RepositoryContentHandler handler = new RepositoryContentHandler();
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
-    try {
-      if (pi.isCanceled())
-        return null;
+    if (pi.isCanceled())
+      return null;
 
+    try {
       pi.setText(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
 
-      InputStreamGetter getter = new InputStreamGetter(connection);
-      //noinspection HardCodedStringLiteral
-      final Thread thread = new Thread (getter, "InputStreamGetter");
-      thread.start();
-
-      while (! pi.isCanceled()) {
-        try {
-          thread.join(50);
-          pi.setFraction(System.currentTimeMillis());
-          if (! thread.isAlive())
-            break;
-        }
-        catch (InterruptedException e) {
-          return null;
-        }
-      }
-
-      InputStream is = getter.getIs();
+      InputStream is = getConnectionInputStream( connection, pi );
       if (is == null)
         return null;
 
       pi.setText(IdeBundle.message("progress.downloading.list.of.plugins"));
-      //noinspection HardCodedStringLiteral
-      File temp = File.createTempFile("temp", "", new File (PathManagerEx.getPluginTempPath()));
-      try {
-        FileOutputStream fos = new FileOutputStream(temp, false);
-        ProgressStream ps = new ProgressStream(is,
-                                               ProgressManager.getInstance().getProgressIndicator());
-        byte [] buffer = new byte [1024];
-        do {
-          int size = ps.read(buffer);
-          if (size == -1)
-            break;
-          fos.write(buffer, 0, size);
-        } while (true);
-        fos.close();
+      File temp = CreateLocalPluginsDescriptions();
+      ReadPluginsStream( temp, is, handler, pi);
 
-        parser.parse(temp, handler);
-      } finally {
-        temp.delete();
-      }
     } catch (RuntimeException e) {
-      if (e.getCause() instanceof InterruptedException) return null;
-      else throw e;
+      if (e.getCause() != null && e.getCause() instanceof InterruptedException)
+        return null;
+      else
+        throw e;
     }
 
     return handler.getRoot();
   }
 
-  private static InputStream getConnectionInputStream (URLConnection connection) {
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-
-    pi.setText(IdeBundle.message("progress.connecting"));
-    InputStreamGetter getter = new InputStreamGetter(connection);
-    //noinspection HardCodedStringLiteral
-    final Thread thread = new Thread (getter, "InputStreamGetter");
-    thread.start();
-
-    while (! pi.isCanceled()) {
-      try {
-        thread.join(50);
-
-        if (! thread.isAlive())
-          break;
-      }
-      catch (InterruptedException e) {
-        return null;
-      }
-    }
-
-    return getter.getIs();
-  }
-
+  */
   public static File downloadPlugin (PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
     ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     String buildNumber = "";
@@ -165,8 +168,9 @@ public class RepositoryHelper {
     try
     {
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      pi.setText(IdeBundle.message("progress.connecting"));
 
-      InputStream is = getConnectionInputStream(connection);
+      InputStream is = getConnectionInputStream(connection, pi);
 
       if (is == null)
         return null;
@@ -208,8 +212,10 @@ public class RepositoryHelper {
 
         cleanFile = false;
       } catch (RuntimeException e) {
-        if (e.getCause() instanceof InterruptedException) return null;
-        else throw e;
+        if (e.getCause() != null && e.getCause() instanceof InterruptedException)
+          return null;
+        else
+          throw e;
       } finally {
         fos.close();
         if (cleanFile)
@@ -222,15 +228,14 @@ public class RepositoryHelper {
       if (contentDisposition == null) {
         // try to find filename in URL
         String usedURL = connection.getURL().toString();
-        final int startPos = usedURL.lastIndexOf("/");
-        final int endPos = usedURL.lastIndexOf("?");
-        fileName = usedURL.substring(startPos + 1, endPos < startPos? usedURL.length() : endPos);
+        int startPos = usedURL.lastIndexOf("/");
+
+        fileName = usedURL.substring(startPos + 1);
         if (fileName.length() == 0) {
           return null;
         }
 
-      }
-      else {
+      } else {
         int startIdx = contentDisposition.indexOf(FILENAME);
         if (startIdx != -1) {
           fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
@@ -259,6 +264,110 @@ public class RepositoryHelper {
     }
     finally {
       connection.disconnect();
+    }
+  }
+
+  public static InputStream getConnectionInputStream (URLConnection connection, ProgressIndicator pi)
+  {
+    InputStreamGetter getter = new InputStreamGetter(connection);
+    //noinspection HardCodedStringLiteral
+    final Thread thread = new Thread (getter, "InputStreamGetter");
+    thread.start();
+
+    while (! pi.isCanceled()) {
+      try {
+        thread.join(50);
+        pi.setFraction(System.currentTimeMillis());
+        if (! thread.isAlive())
+          break;
+      }
+      catch (InterruptedException e) {
+        return null;
+      }
+    }
+
+    return getter.getIs();
+  }
+
+  public static InputStream getConnectionInputStream (URLConnection connection )
+  {
+    try
+    {
+      return connection.getInputStream();
+    }
+    catch( IOException e )
+    {
+      return null;
+    }
+  }
+
+  public static File CreateLocalPluginsDescriptions() throws IOException
+  {
+    File basePath = new File( PathManager.getPluginsPath() );
+    basePath.mkdirs();
+
+    File temp = new File( basePath, extPluginsFile );
+    if( temp.exists() )
+    {
+        FileUtil.delete(temp);
+    }
+    temp.createNewFile();
+    return temp;
+  }
+
+  public static void  ReadPluginsStream( File temp,
+                                         InputStream is,
+                                         RepositoryContentHandler handler,
+                                         ProgressIndicator pi)
+    throws SAXException, IOException, ParserConfigurationException
+  {
+    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(temp, false);
+      ProgressStream ps = new ProgressStream(is, pi);
+      byte [] buffer = new byte [1024];
+      do {
+        int size = ps.read(buffer);
+        if (size == -1)
+          break;
+        fos.write(buffer, 0, size);
+      } while (true);
+      fos.close();
+
+      parser.parse(temp, handler);
+    } finally {
+      if( fos != null ) {
+        fos.close();
+      }
+    }
+  }
+
+  public static void  ReadPluginsStream( File temp, InputStream is, JLabel label,
+                                         RepositoryContentHandler handler )
+    throws SAXException, IOException, ParserConfigurationException
+  {
+    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+    FileOutputStream fos = null;
+    int  total = 0;
+    try {
+      fos = new FileOutputStream(temp, false);
+      byte [] buffer = new byte [1024];
+      do {
+        int size = is.read(buffer);
+        if (size == -1)
+          break;
+        fos.write(buffer, 0, size);
+        total += size;
+      } while (true);
+      fos.close();
+      fos = null;
+
+      parser.parse(temp, handler);
+    } finally {
+      if( fos != null ) {
+        fos.close();
+      }
     }
   }
 }
