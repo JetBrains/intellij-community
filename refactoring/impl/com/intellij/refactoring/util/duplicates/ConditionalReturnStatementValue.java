@@ -3,6 +3,7 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 
 /**
  * @author ven
@@ -15,8 +16,7 @@ public class ConditionalReturnStatementValue implements ReturnValue {
   }
 
   public boolean isEquivalent(ReturnValue other) {
-    return other instanceof ConditionalReturnStatementValue &&
-           Comparing.equal(myReturnValue, ((ConditionalReturnStatementValue)other).myReturnValue);
+    return other instanceof ConditionalReturnStatementValue;
   }
 
   public PsiStatement createReplacement(PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {

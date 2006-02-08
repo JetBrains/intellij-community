@@ -46,9 +46,21 @@ public class DuplicatesFinder {
       IntArrayList exitPoints = new IntArrayList();
       final ArrayList<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
 
+      int startOffset;
+      int i = 0;
+      do {
+        startOffset = controlFlow.getStartOffset(pattern[i++]);
+      } while(startOffset < 0);
+
+      int endOffset;
+      int j = pattern.length - 1;
+      do {
+        endOffset = controlFlow.getEndOffset(pattern[j--]);
+      } while(endOffset < 0);
+
       ControlFlowUtil.findExitPointsAndStatements
-        (controlFlow, controlFlow.getStartOffset(pattern[0]),
-         controlFlow.getEndOffset(pattern[pattern.length - 1]),
+        (controlFlow, startOffset,
+         endOffset,
          exitPoints, exitStatements,
          ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
@@ -263,11 +275,12 @@ public class DuplicatesFinder {
       final PsiExpression returnValue = ((PsiReturnStatement)candidate).getReturnValue();
       if (myMultipleExitPoints) {
         if (!match.registerReturnValue(new ConditionalReturnStatementValue(returnValue))) return false;
+        return true;
       }
       else {
         if (!match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false;
+        return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
       }
-      return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
     }
     else return false;
   }
