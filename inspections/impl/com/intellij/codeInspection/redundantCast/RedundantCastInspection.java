@@ -104,11 +104,11 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   private static void removeCast(PsiTypeCastExpression castExpression) {
     if (castExpression == null) return;
     PsiExpression operand = castExpression.getOperand();
-    if (operand == null) return;
     if (operand instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
       operand = parExpr.getExpression();
     }
+    if (operand == null) return;
 
     PsiElement toBeReplaced = castExpression;
 
