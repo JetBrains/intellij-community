@@ -1,84 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel">
-  <grid id="d0bf1" binding="myPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="true" hgap="-1" vgap="-1">
+  <grid id="d0bf1" binding="myPanel" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="26" y="23" width="490" height="268"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="26" y="23" width="498" height="354"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="f4d25" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="0" width="490" height="86"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="dialog.intention.settings.description.panel.title"/>
-        <children>
-          <scrollpane id="f9e30">
-            <constraints>
-              <xy x="6" y="20" width="478" height="60"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="3f761" class="javax.swing.JEditorPane" binding="myDescriptionBrowser">
-                <constraints/>
-                <properties>
-                  <contentType value="text/html" noi18n="true"/>
-                  <editable value="false"/>
-                </properties>
-              </component>
-            </children>
-          </scrollpane>
-        </children>
-      </grid>
-      <grid id="40abc" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="91" width="490" height="86"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="aa4f3" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="0" y="3" width="490" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="0"/>
-              <horizontalTextPosition value="0"/>
-              <text resource-bundle="messages/CodeInsightBundle" key="dialog.intention.settings.description.usage.example.title"/>
-            </properties>
-          </component>
-          <xy id="fa495" binding="myBeforePanel" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <xy x="0" y="25" width="490" height="61"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </xy>
-        </children>
-      </grid>
       <xy id="a6fdd" binding="myAfterPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="182" width="490" height="86"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <xy x="2" y="243" width="494" height="109"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children/>
       </xy>
+      <xy id="fa495" binding="myBeforePanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="2" y="128" width="494" height="85"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
+      <component id="aa4f3" class="javax.swing.JLabel">
+        <constraints>
+          <xy x="2" y="81" width="494" height="14"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0"/>
+        </constraints>
+        <properties>
+          <horizontalAlignment value="0"/>
+          <horizontalTextPosition value="0"/>
+          <text resource-bundle="messages/CodeInsightBundle" key="dialog.intention.settings.description.usage.example.title"/>
+        </properties>
+      </component>
+      <component id="e4723" class="com.intellij.ui.TextableSeparator" binding="myBeforeSeparator">
+        <constraints>
+          <xy x="2" y="112" width="494" height="2"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="967ce" class="com.intellij.ui.TextableSeparator" binding="myAfterSeparator">
+        <constraints>
+          <xy x="2" y="227" width="494" height="2"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="98bc" class="com.intellij.ui.TextableSeparator">
+        <constraints>
+          <xy x="2" y="5" width="494" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/CodeInsightBundle" key="dialog.intention.settings.description.panel.title"/>
+        </properties>
+      </component>
+      <scrollpane id="f9e30">
+        <constraints>
+          <xy x="2" y="27" width="494" height="46"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="3f761" class="javax.swing.JEditorPane" binding="myDescriptionBrowser">
+            <constraints/>
+            <properties>
+              <contentType value="text/html" noi18n="true"/>
+              <editable value="false"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
     </children>
   </grid>
 </form>

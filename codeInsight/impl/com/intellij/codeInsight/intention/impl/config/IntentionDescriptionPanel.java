@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.ui.TextableSeparator;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -26,6 +27,8 @@ public class IntentionDescriptionPanel {
   private JPanel myAfterPanel;
   private JPanel myBeforePanel;
   private JEditorPane myDescriptionBrowser;
+  private TextableSeparator myBeforeSeparator;
+  private TextableSeparator myAfterSeparator;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
@@ -36,10 +39,9 @@ public class IntentionDescriptionPanel {
       final URL url = actionMetaData.getDescription();
       final String description = url != null ? ResourceUtil.loadText(url) : CodeInsightBundle.message("under.construction.string");
       myDescriptionBrowser.setText(description);
-      myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
-      showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
-      showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
+      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
+      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -52,17 +54,18 @@ public class IntentionDescriptionPanel {
       LOG.error(e);
     }
   }
+
+
   public void reset(String intentionCategory)  {
     try {
       String text = CodeInsightBundle.message("intention.settings.category.text", intentionCategory);
 
       myDescriptionBrowser.setText(text);
-      myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
       URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + BEFORE_TEMPLATE);
-      showUsages(myBeforePanel, myBeforeUsagePanels, new URL[]{beforeURL});
+      showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, new URL[]{beforeURL});
       URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
-      showUsages(myAfterPanel, myAfterUsagePanels, new URL[]{afterURL});
+      showUsages(myAfterPanel, myAfterSeparator, myAfterUsagePanels, new URL[]{afterURL});
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -75,7 +78,10 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  private static void showUsages(final JPanel panel, List<IntentionUsagePanel> usagePanels, URL[] exampleUsages) throws IOException {
+  private static void showUsages(final JPanel panel,
+                                 final TextableSeparator separator,
+                                 List<IntentionUsagePanel> usagePanels,
+                                 URL[] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -114,7 +120,7 @@ public class IntentionDescriptionPanel {
       usagePanel.reset(ResourceUtil.loadText(exampleUsage), fileType);
 
       String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
-      usagePanel.setBorderText(title);
+      separator.setText(title);
       if (!reuse) {
         if (i == exampleUsages.length) {
           gb.gridwidth = GridBagConstraints.REMAINDER;
@@ -139,5 +145,25 @@ public class IntentionDescriptionPanel {
       usagePanel.dispose();
     }
     usagePanels.clear();
+  }
+
+  public void init(final int preferredWidth) {
+    //adjust vertical dimension to be equal for all three panels
+    double height = (myDescriptionBrowser.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
+    final Dimension newd = new Dimension(preferredWidth, (int)height);
+    myDescriptionBrowser.setSize(newd);
+    myDescriptionBrowser.setPreferredSize(newd);
+    myDescriptionBrowser.setMaximumSize(newd);
+    myDescriptionBrowser.setMinimumSize(newd);
+
+    myBeforePanel.setSize(newd);
+    myBeforePanel.setPreferredSize(newd);
+    myBeforePanel.setMaximumSize(newd);
+    myBeforePanel.setMinimumSize(newd);
+
+    myAfterPanel.setSize(newd);
+    myAfterPanel.setPreferredSize(newd);
+    myAfterPanel.setMaximumSize(newd);
+    myAfterPanel.setMinimumSize(newd);
   }
 }

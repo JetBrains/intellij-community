@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class IntentionSettingsPanel {
-  private  JPanel myPanel;
+  private JPanel myPanel;
   private final IntentionSettingsTree myIntentionSettingsTree;
-  private final IntentionDescriptionPanel myIntentionDescriptionPanel;
+  private final IntentionDescriptionPanel myIntentionDescriptionPanel = new IntentionDescriptionPanel();
 
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
@@ -41,8 +41,8 @@ public class IntentionSettingsPanel {
       protected List<IntentionActionMetaData> filterModel(String filter) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        final List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         cacheWordsToDescriptions(filter, list);
+        final List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
           if (isIntentionAccepted(metaData, filter)){
             result.add(metaData);
@@ -54,7 +54,6 @@ public class IntentionSettingsPanel {
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(myIntentionSettingsTree.getComponent(), BorderLayout.CENTER);
 
-    myIntentionDescriptionPanel = new IntentionDescriptionPanel();
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
 
     myDescriptionPanel.setLayout(new BorderLayout());
@@ -72,6 +71,11 @@ public class IntentionSettingsPanel {
   public void reset() {
     List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
     myIntentionSettingsTree.reset(list);
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        myIntentionDescriptionPanel.init(myPanel.getWidth()/2);
+      }
+    });
   }
 
   public void apply() {
@@ -121,11 +125,11 @@ public class IntentionSettingsPanel {
 
   private boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter) {
     filter = filter.toLowerCase();
-    if (metaData.myFamily.toLowerCase().indexOf(filter) > -1) {
+    if (metaData.myFamily.toLowerCase().contains(filter)) {
       return true;
     }
     for (String category : metaData.myCategory) {
-      if (category != null && category.toLowerCase().indexOf(filter) > -1) {
+      if (category != null && category.toLowerCase().contains(filter)) {
         return true;
       }
     }

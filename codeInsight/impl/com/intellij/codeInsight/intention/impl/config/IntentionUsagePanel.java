@@ -3,11 +3,11 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
@@ -150,9 +149,5 @@ class IntentionUsagePanel extends JPanel{
     }
     editor.setHighlighter(HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
     return editor;
-  }
-
-  public void setBorderText(String title) {
-    setBorder(IdeBorderFactory.createTitledBorder(title));
   }
 }
