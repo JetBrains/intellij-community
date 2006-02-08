@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -10,10 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * User: anna
- * Date: Feb 7, 2005
- */
 public class DisableInspectionToolAction implements IntentionAction {
   private final String myToolId;
 
@@ -22,7 +19,7 @@ public class DisableInspectionToolAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Disable inspection";
+    return InspectionsBundle.message("disable.inspection.action.name");
   }
 
   public String getFamilyName() {
@@ -35,7 +32,9 @@ public class DisableInspectionToolAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile((PsiElement)file);
-    inspectionProfile.disableTool(myToolId);
+    InspectionProfile.ModifiableModel model = inspectionProfile.getModifiableModel();
+    model.disableTool(myToolId);
+    model.commit();
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
