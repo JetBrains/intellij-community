@@ -74,7 +74,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
 
   public JComponent createComponent() {
     if (myPluginManagerMain == null) {
-      myPluginManagerMain = new PluginManagerMain(new MyAvailableProvider(), new MyInstalledProvider(), new MyCartProvider());
+      myPluginManagerMain = new PluginManagerMain( new MyInstalledProvider() );
     }
 
     return myPluginManagerMain.getMainPanel();
@@ -98,24 +98,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/pluginManager.png");
-  }
-
-  private class MyAvailableProvider implements SortableProvider {
-    public int getSortOrder() {
-      return AVAILABLE_SORT_COLUMN_ORDER;
-    }
-
-    public int getSortColumn() {
-      return AVAILABLE_SORT_COLUMN;
-    }
-
-    public void setSortOrder(int sortOrder) {
-      AVAILABLE_SORT_COLUMN_ORDER = sortOrder;
-    }
-
-    public void setSortColumn(int sortColumn) {
-      AVAILABLE_SORT_COLUMN = sortColumn;
-    }
   }
 
   private class MyInstalledProvider implements SortableProvider {

@@ -2,7 +2,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -17,8 +16,10 @@ import java.awt.event.MouseEvent;
  * Time: 4:19:20 PM
  * To change this template use Options | File Templates.
  */
-public class PluginTable <T> extends Table {
-  public PluginTable(final PluginTableModel model) {
+//public class PluginTable <T> extends Table {
+public class PluginTable <T> extends JTable {
+  public PluginTable(final PluginTableModel model)
+  {
     super(model);
 
     JTableHeader tableHeader = getTableHeader();
@@ -49,6 +50,21 @@ public class PluginTable <T> extends Table {
       column.setCellRenderer(model.getColumnInfos() [i].getRenderer(null));
       //column.setPreferredWidth(PluginManagerColumnInfo.PREFERRED_WIDTH [i]);
     }
+
+    //  Specify columns widths for particular columns:
+    //  Icon/Status
+    TableColumn column = getColumnModel().getColumn( 0 );
+    column.setMinWidth( 30 );
+    column.setMaxWidth( 30 );
+
+    //  Downloads
+    column = getColumnModel().getColumn( 2 );
+    column.setMinWidth( 70 );
+    column.setMaxWidth( 70 );
+
+    //  Date:
+    column = getColumnModel().getColumn( 3 );
+    column.setMaxWidth( 80 );
 
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setShowGrid(false);

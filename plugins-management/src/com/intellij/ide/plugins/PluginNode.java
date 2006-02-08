@@ -2,11 +2,10 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
+import org.jdom.Element;
 
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -16,284 +15,300 @@ import java.util.List;
  * Time: 10:07:29 PM
  * To change this template use Options | File Templates.
  */
-public class PluginNode implements TreeNode {
-  public static final int STATUS_UNKNOWN = 0;
-  public static final int STATUS_OUT_OF_DATE = 1;
-  public static final int STATUS_MISSING = 2;
-  public static final int STATUS_CURRENT = 3;
-  public static final int STATUS_NEWEST = 4;
-  public static final int STATUS_DOWNLOADED = 5;
-  public static final int STATUS_DELETED = 6;
-  public static final int STATUS_CART = 7;
+public class PluginNode implements IdeaPluginDescriptor
+{
+    public static final int STATUS_UNKNOWN = 0;
+    public static final int STATUS_OUT_OF_DATE = 1;
+    public static final int STATUS_MISSING = 2;
+    public static final int STATUS_CURRENT = 3;
+    public static final int STATUS_NEWEST = 4;
+    public static final int STATUS_DOWNLOADED = 5;
+    public static final int STATUS_DELETED = 6;
+    public static final int STATUS_CART = 7;
 
-  public static final String [] STATUS_NAMES = {
-    IdeBundle.message("plugin.status.unknown"),
-    IdeBundle.message("plugin.status.out.of.date"),
-    IdeBundle.message("plugin.status.not.installed"),
-    IdeBundle.message("plugin.status.installed"),
-    IdeBundle.message("plugin.status.newest"),
-    IdeBundle.message("plugin.status.downloaded"),     // downloaded, but not activated
-    IdeBundle.message("plugin.status.uninstalled"),    // uninstalled, but not activated
-    IdeBundle.message("plugin.status.shopping.cart")   // added to the Shopping Cart
-  };
+    public static final String [] STATUS_NAMES = {
+//        IdeBundle.message("plugin.status.unknown"),
+        "?",
+        IdeBundle.message("plugin.status.out.of.date"),
+//        IdeBundle.message("plugin.status.not.installed"),
+        "-",
+//        IdeBundle.message("plugin.status.installed"),
+        "o",
+//        IdeBundle.message("plugin.status.newest"),
+        "!",
+//        IdeBundle.message("plugin.status.downloaded"),     // downloaded, but not activated
+        "+",     // downloaded, but not activated
+        IdeBundle.message("plugin.status.uninstalled"),    // uninstalled, but not activated
+        IdeBundle.message("plugin.status.shopping.cart")   // added to the Shopping Cart
+    };
 
-  private CategoryNode parent;
+    private CategoryNode parent;
 
-  private PluginId id;
-  private String name;
-  private String version;
-  private String vendor;
-  private String description;
-  private String sinceBuild;
-  private String changeNotes;
-  private String downloads;
-  private String size;
-  private String vendorEmail;
-  private String vendorUrl;
-  private String url;
-  private String date;
-  private List<PluginId> depends;
+    private PluginId id;
+    private String name;
+    private String version;
+    private String vendor;
+    private String description;
+    private String sinceBuild;
+    private String changeNotes;
+    private String downloads;
+    private String size;
+    private String vendorEmail;
+    private String vendorUrl;
+    private String url;
+    private long   date = Long.MAX_VALUE;
+    private List<PluginId> depends;
 
-  private int status = STATUS_UNKNOWN;
-  private boolean loaded = false;
+    private int status = STATUS_UNKNOWN;
+    private boolean loaded = false;
 
-  public PluginNode() {
-  }
-
-  public PluginNode(PluginId id) {
-    this.id = id;
-  }
-
-  public String getChangeNotes() { return changeNotes; }
-
-  public void setChangeNotes(String changeNotes) { this.changeNotes = changeNotes; }
-
-  /**
-   * Returns the child <code>TreeNode</code> at index
-   * <code>childIndex</code>.
-   */
-  public TreeNode getChildAt(int childIndex) {
-    return null;
-  }
-
-  /**
-   * Returns the number of children <code>TreeNode</code>s the receiver
-   * contains.
-   */
-  public int getChildCount() {
-    return 0;
-  }
-
-  /**
-   * Returns the parent <code>TreeNode</code> of the receiver.
-   */
-  public CategoryNode getParent() {
-    return parent;
-  }
-
-  /**
-   * Returns the index of <code>node</code> in the receivers children.
-   * If the receiver does not contain <code>node</code>, -1 will be
-   * returned.
-   */
-  public int getIndex(TreeNode node) {
-    return 0;
-  }
-
-  /**
-   * Returns true if the receiver allows children.
-   */
-  public boolean getAllowsChildren() {
-    return false;
-  }
-
-  /**
-   * Returns true if the receiver is a leaf.
-   */
-  public boolean isLeaf() {
-    return true;
-  }
-
-  /**
-   * @return Returns the children of the receiver as an <code>Enumeration</code>.
-   */
-  public Enumeration<TreeNode> children() {
-    return null;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    if (id == null) {
-      id = PluginId.getId(name);
-    }
-    this.name = name;
-  }
-
-  public void setId(String id) {
-    this.id = PluginId.getId(id);
-  }
-
-  /**
-   * Be carefull when comparing Plugins versions. Use
-   * PluginManagerColumnInfo.compareVersion() for version comparing.
-   *
-   * @return Return plugin version
-   */
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(String version) {
-    this.version = version;
-  }
-
-  public String getVendor() {
-    return vendor;
-  }
-
-  public void setVendor(String vendor) {
-    this.vendor = vendor;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getSinceBuild() {
-    return sinceBuild;
-  }
-
-  public void setSinceBuild(String sinceBuild) {
-    this.sinceBuild = sinceBuild;
-  }
-
-  public void setParent(CategoryNode parent) {
-    this.parent = parent;
-  }
-
-  /**
-   * In complex environment use PluginManagerColumnInfo.getRealNodeState () method instead.
-   * @return Status of plugin
-   */
-  public int getStatus() {
-    return status;
-  }
-
-  public void setStatus(int status) {
-    this.status = status;
-  }
-
-  public String getStatusName () {
-    return STATUS_NAMES [status];
-  }
-
-  public static String getStatusName (int status) {
-    return STATUS_NAMES [status];
-  }
-
-  public String toString() {
-    return getName();
-  }
-
-  public boolean isLoaded() {
-    return loaded;
-  }
-
-  public void setLoaded(boolean loaded) {
-    this.loaded = loaded;
-  }
-
-  public String getDownloads() { return downloads; }
-
-  public void setDownloads(String downloads) { this.downloads = downloads; }
-
-  public String getSize() { return size; }
-
-  public void setSize(String size) { this.size = size; }
-
-  public String getVendorEmail() {
-    return vendorEmail;
-  }
-
-  public void setVendorEmail(String vendorEmail) {
-    this.vendorEmail = vendorEmail;
-  }
-
-  public String getVendorUrl() {
-    return vendorUrl;
-  }
-
-  public void setVendorUrl(String vendorUrl) {
-    this.vendorUrl = vendorUrl;
-  }
-
-  public String getUrl() {
-    return url;
-  }
-
-  public void setUrl(String url) {
-    this.url = url;
-  }
-
-  public String getDate() {
-    return date;
-  }
-
-  public void setDate(String date) {
-    this.date = date;
-  }
-
-  public TreePath getPath() {
-    List nodes = new ArrayList ();
-    nodes.add(this);
-    CategoryNode start = (CategoryNode)getParent();
-
-    while (start != null) {
-      nodes.add(0, start);
-      start = (CategoryNode)start.getParent();
+    public PluginNode()
+    {
     }
 
-    TreePath path = new TreePath(nodes.toArray());
-    return path;
-  }
-
-  public int hashCode() {
-    return name.hashCode();
-  }
-
-  public boolean equals(Object object) {
-    if (object instanceof PluginNode) {
-      return name.equals(((PluginNode)object).getName());
-    }
-    else {
-      return false;
-    }
-  }
-
-  public List<PluginId> getDepends() {
-    return depends;
-  }
-
-  public void setDepends(List<PluginId> depends) {
-    this.depends = depends;
-  }
-
-  public void addDepends (PluginId depends) {
-    if (this.depends == null) {
-      this.depends = new ArrayList<PluginId>();
+    public PluginNode(PluginId id)
+    {
+        this.id = id;
     }
 
-    this.depends.add(depends);
-  }
+    public void setParent(CategoryNode parent)
+    {
+        this.parent = parent;
+    }
 
-  public PluginId getId() {
-    return id;
-  }
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        if (id == null)
+        {
+            id = PluginId.getId(name);
+        }
+        this.name = name;
+    }
+
+    public void setId(String id)
+    {
+        this.id = PluginId.getId(id);
+    }
+
+    public String getCategory()
+    {
+        return parent.getName();
+    }
+
+    /**
+     * Be carefull when comparing Plugins versions. Use
+     * PluginManagerColumnInfo.compareVersion() for version comparing.
+     *
+     * @return Return plugin version
+     */
+    public String getVersion()
+    {
+        return version;
+    }
+
+    public void setVersion(String version)
+    {
+        this.version = version;
+    }
+
+    public String getVendor()
+    {
+        return vendor;
+    }
+
+    public void setVendor(String vendor)
+    {
+        this.vendor = vendor;
+    }
+
+    public String getDescription()
+    {
+        return description;
+    }
+
+    public void setDescription(String description)
+    {
+        this.description = description;
+    }
+
+    public String getChangeNotes()
+    {
+        return changeNotes;
+    }
+
+    public void setChangeNotes(String changeNotes)
+    {
+        this.changeNotes = changeNotes;
+    }
+
+    public String getSinceBuild()
+    {
+        return sinceBuild;
+    }
+
+    public void setSinceBuild(String sinceBuild)
+    {
+        this.sinceBuild = sinceBuild;
+    }
+
+    /**
+     * In complex environment use PluginManagerColumnInfo.getRealNodeState () method instead.
+     *
+     * @return Status of plugin
+     */
+    public int getStatus()
+    {
+        return status;
+    }
+
+    public void setStatus(int status)
+    {
+        this.status = status;
+    }
+
+    public String getStatusName()
+    {
+        return STATUS_NAMES[status];
+    }
+
+    public static String getStatusName(int status)
+    {
+        return STATUS_NAMES[status];
+    }
+
+    public String toString()
+    {
+        return getName();
+    }
+
+    public boolean isLoaded()
+    {
+        return loaded;
+    }
+
+    public void setLoaded(boolean loaded)
+    {
+        this.loaded = loaded;
+    }
+
+    public String getDownloads()
+    {
+        return downloads;
+    }
+
+    public void setDownloads(String downloads)
+    {
+        this.downloads = downloads;
+    }
+
+    public String getSize()
+    {
+        return size;
+    }
+
+    public void setSize(String size)
+    {
+        this.size = size;
+    }
+
+    public String getVendorEmail()
+    {
+        return vendorEmail;
+    }
+
+    public void setVendorEmail(String vendorEmail)
+    {
+        this.vendorEmail = vendorEmail;
+    }
+
+    public String getVendorUrl()
+    {
+        return vendorUrl;
+    }
+
+    public void setVendorUrl(String vendorUrl)
+    {
+        this.vendorUrl = vendorUrl;
+    }
+
+    public String getUrl()
+    {
+        return url;
+    }
+
+    public void setUrl(String url)
+    {
+        this.url = url;
+    }
+
+    public void setDate(String date)
+    {
+        this.date = Long.valueOf( date );
+    }
+
+    public long getDate()
+    {
+        return date;
+    }
+
+    public int hashCode()
+    {
+        return name.hashCode();
+    }
+
+    public boolean equals(Object object)
+    {
+        if (object instanceof PluginNode)
+        {
+            return name.equals(((PluginNode)object).getName());
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public List<PluginId> getDepends()
+    {
+        return depends;
+    }
+
+    public void setDepends(List<PluginId> depends)
+    {
+        this.depends = depends;
+    }
+
+    public void addDepends(PluginId depends)
+    {
+        if (this.depends == null)
+        {
+            this.depends = new ArrayList<PluginId>();
+        }
+
+        this.depends.add(depends);
+    }
+
+    /**
+     *  Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
+     */
+    public PluginId getPluginId()
+    {
+        return id;
+    }
+
+    public ClassLoader getPluginClassLoader() { return null; }
+    public File getPath()  { return null; }
+    public PluginId[] getDependentPluginIds() { return null; }
+    public String getResourceBundleBaseName()  { return null; }
+    public Element getActionsDescriptionElement()  { return null; }
+    public Element getAppComponents()  { return null; }
+    public Element getProjectComponents()  { return null; }
+    public Element getModuleComponents()  { return null; }
+    public HelpSetPath[] getHelpSets()  { return null; }
+    public String getVendorLogoPath()  { return null; }
 }

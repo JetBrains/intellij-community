@@ -49,6 +49,8 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   private List<Element> myExtensions;
   private List<Element> myExtensionsPoints;
   private String myDescriptionChildText;
+  private String myDownloadCounter;
+  private long myDate;
 
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ELEMENT_NAME = "name";
@@ -336,6 +338,43 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
   public PluginId getPluginId() {
     return myId;
+  }
+
+  /*
+     This setter was explicitly defined to be able to set a category for a
+     descriptor outside its loading from the xml file.
+     Problem was that most commonly plugin authors do not publish the plugin's
+     category in its .xml file so to be consistent in plugins representation
+     (e.g. in the Plugins form) we have to set this value outside.
+  */
+  public void setCategory( String category ){
+    myCategory = category;
+  }
+
+  /*
+     This setter was explicitly defined to be able to set downloads count for a
+     descriptor outside its loading from the xml file since this information
+     is available only from the site.
+  */
+  public void setDownloadsCount( String dwnlds ){
+    myDownloadCounter = dwnlds;
+  }
+
+  public String getDownloads(){
+    return myDownloadCounter;
+  }
+
+  /*
+     This setter was explicitly defined to be able to set date for a
+     descriptor outside its loading from the xml file since this information
+     is available only from the site.
+  */
+  public void setDate( long date ){
+    myDate = date;
+  }
+
+  public long getDate(){
+    return myDate;
   }
 
   public ClassLoader getPluginClassLoader() {

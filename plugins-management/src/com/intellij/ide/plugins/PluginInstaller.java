@@ -68,12 +68,9 @@ public class PluginInstaller {
           continue;
         }
 
-        PluginNode depPlugin = new PluginNode();
-        depPlugin.setName(depPluginId.getIdString());
+        PluginNode depPlugin = new PluginNode(depPluginId);
         depPlugin.setSize("-1");
-
         depends.add(depPlugin);
-
       }
 
       if (depends.size() > 0) { // has something to install prior installing the plugin
@@ -86,9 +83,9 @@ public class PluginInstaller {
 
     synchronized (lock) {
       File oldFile = null;
-      if (PluginManager.isPluginInstalled(pluginNode.getId())) {
+      if (PluginManager.isPluginInstalled(pluginNode.getPluginId())) {
         //store old plugins file
-        oldFile = PluginManager.getPlugin(pluginNode.getId()).getPath();
+        oldFile = PluginManager.getPlugin(pluginNode.getPluginId()).getPath();
       }
       // download plugin
       File file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);

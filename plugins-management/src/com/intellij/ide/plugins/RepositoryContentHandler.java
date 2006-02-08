@@ -94,7 +94,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setChangeNotes(currentValue);
     }
     else if (qName.equals(CATEGORY)) {
-      currentCategory = (CategoryNode)currentCategory.getParent();
+      currentCategory = currentCategory.getParent();
     }
     currentValue = "";
   }

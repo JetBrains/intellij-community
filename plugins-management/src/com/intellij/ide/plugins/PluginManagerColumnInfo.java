@@ -10,6 +10,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -21,27 +22,33 @@ import java.util.Date;
  * To change this template use Options | File Templates.
  */
 class PluginManagerColumnInfo extends ColumnInfo {
-  public static final int COLUMN_NAME = 0;
-  public static final int COLUMN_STATUS = 1;
-  public static final int COLUMN_INSTALLED_VERSION = 2;
-  public static final int COLUMN_VERSION = 3;
-  public static final int COLUMN_DATE = 4;
-  public static final int COLUMN_SIZE = 5;
-  public static final int COLUMN_DOWNLOADS = 6;
-  public static final int COLUMN_CATEGORY = 7;
+  public static final int COLUMN_STATUS = 0;
+  public static final int COLUMN_NAME = 1;
+  public static final int COLUMN_DOWNLOADS = 2;
+  public static final int COLUMN_DATE = 3;
+  public static final int COLUMN_CATEGORY = 4;
+  public static final int COLUMN_INSTALLED_VERSION = 5;
+  public static final int COLUMN_SIZE = 6;
+  public static final int COLUMN_VERSION = 7;
   public static final int COLUMN_STATE = 8;
+  private static final float mgByte = 1024.0f * 1024.0f;
+
+  private static final Color RED_COLOR = new Color (255, 231, 227);
+  private static final Color GREEN_COLOR = new Color (232, 243, 221);
+  private static final Color LIGHT_BLUE_COLOR = new Color (212, 222, 255);
+  private static final Color HOTVERSION = new Color (255, 200, 170);
+
+  private static Date yearAgo, weekAgo;
 
   public static final String [] COLUMNS = {
+//      IdeBundle.message("column.plugins.status"),
+    " ",
     IdeBundle.message("column.plugins.name"),
-    IdeBundle.message("column.plugins.status"),
-    IdeBundle.message("column.plugins.installed"),
-    IdeBundle.message("column.plugins.version"),
-    IdeBundle.message("column.plugins.date"),
-    IdeBundle.message("column.plugins.size"),
     IdeBundle.message("column.plugins.downloads"),
-    IdeBundle.message("column.plugins.category"),
-    IdeBundle.message("column.plugins.state")};
-  public static final int [] PREFERRED_WIDTH = {300, 80, 80, 80, 80, 80, 80, 80, 80};
+    IdeBundle.message("column.plugins.date"),
+    IdeBundle.message("column.plugins.category")
+  };
+  public static final int [] PREFERRED_WIDTH = {30, 200, 70, 80, 80, 80, 80, 80, 80};
 
   private int columnIdx;
   private SortableProvider mySortableProvider;
@@ -52,251 +59,172 @@ class PluginManagerColumnInfo extends ColumnInfo {
     mySortableProvider = sortableProvider;
   }
 
-  public Object valueOf(Object o) {
-    if (o instanceof CategoryNode) {
-      switch (columnIdx) {
-        case COLUMN_NAME:
-          return ((CategoryNode)o).getName();
-        default:
-          return "";
-      }
-    } else if (o instanceof PluginNode) {
+  public Object valueOf(Object o)
+  {
+    IdeaPluginDescriptor base = (IdeaPluginDescriptor) o;
+
+    if( columnIdx == COLUMN_NAME )
+      return base.getName();
+    else
+    if( columnIdx == COLUMN_DOWNLOADS )
+    {
+      //  Base class IdeaPluginDescriptor does not declare this field.
+      return (o instanceof PluginNode) ? ((PluginNode)o).getDownloads() :
+                                         ((IdeaPluginDescriptorImpl)o).getDownloads();
+    }
+    if( columnIdx == COLUMN_DATE )
+    {
+      //  Base class IdeaPluginDescriptor does not declare this field.
+      long date = (o instanceof PluginNode) ? ((PluginNode)o).getDate() :
+                                              ((IdeaPluginDescriptorImpl)o).getDate();
+//      if( date != Long.MAX_VALUE )
+      if( date != Long.MIN_VALUE )
+        return DateFormat.getDateInstance(DateFormat.MEDIUM).format( new Date( date ));
+      else
+        return IdeBundle.message("plugin.info.not.available");
+    }
+    else
+    if( columnIdx == COLUMN_CATEGORY )
+      return base.getCategory();
+    else
+      // For COLUMN_STATUS - set of icons show the actual state of installed plugins.
+      return "";
+    /*
+
+    if (o instanceof PluginNode) {
       PluginNode plugin = ((PluginNode)o);
       switch (columnIdx) {
-        case COLUMN_NAME:
-          return plugin.getName();
-        case COLUMN_INSTALLED_VERSION:
-          IdeaPluginDescriptor existing = PluginManager.getPlugin(plugin.getId());
-          if (existing == null)
-            return IdeBundle.message("plugin.info.not.available");
-          else
-            return existing.getVersion();
-        case COLUMN_VERSION:
-          if (plugin.getVersion() == null)
-            return IdeBundle.message("plugin.info.not.available");
-          else
-            return plugin.getVersion();
         case COLUMN_STATUS:
-          return PluginNode.STATUS_NAMES[getRealNodeState(plugin)];
-        case COLUMN_SIZE:
-          final String size = plugin.getSize();
-          if (size.equals("-1")) {
-            return IdeBundle.message("plugin.info.unknown");
-          }
-          return size;
-        case COLUMN_DOWNLOADS:
-          return plugin.getDownloads();
-        case COLUMN_DATE:
-          if (plugin.getDate() != null)
-            return DateFormat.getDateInstance(DateFormat.MEDIUM).format(
-              new Date (Long.valueOf(plugin.getDate()).longValue()));
-          else
-            return IdeBundle.message("plugin.info.not.available");
-        case COLUMN_CATEGORY:
-          return ((CategoryNode)plugin.getParent()).getName();
-        default:
-          return "?";
+          return PluginNode.STATUS_NAMES[ getRealNodeState( plugin ) ];
       }
-    } else if (o instanceof IdeaPluginDescriptorImpl) {
-      switch(columnIdx) {
-        case COLUMN_NAME:
-          return ((IdeaPluginDescriptor) o).getName();
-        case COLUMN_VERSION:
-        case COLUMN_INSTALLED_VERSION:
-          return ((IdeaPluginDescriptor) o).getVersion();
+    }
+    else
+    if (o instanceof IdeaPluginDescriptorImpl)
+    {
+      IdeaPluginDescriptorImpl descr = (IdeaPluginDescriptorImpl) o;
+      switch(columnIdx)
+      {
         case COLUMN_STATE:
-          return ((IdeaPluginDescriptorImpl) o).isDeleted() ?
+          return descr.isDeleted() ?
                  IdeBundle.message("status.plugin.will.be.removed.after.restart") :
                  IdeBundle.message("status.plugin.installed");
+
         default:
           return "?";
       }
     } else
-      return null;
+      return "";
+        */
   }
 
-  public static int compareVersion (String v1, String v2) {
-    if (v1 == null && v2 == null)
-      return 0;
-    else if (v1 == null && v2 != null)
-      return -1;
-    else if (v1 != null && v2 == null)
-      return 1;
+  public Comparator getComparator()
+  {
+    final boolean sortDirection = (mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
 
-    String [] part1 = v1.split("\\.");
-    String [] part2 = v2.split("\\.");
+    switch (columnIdx)
+    {
+      case COLUMN_STATUS:
+        //  Return GetRealNodeEstate as is for availabe plugins and "State" for installed ones.
+        return new Comparator() {
+          public int compare(Object o1, Object o2) {
+            if (o1 instanceof PluginNode && o2 instanceof IdeaPluginDescriptorImpl) {
+              return sortDirection ? -1 : 1;
+            }
+            else
+            if (o2 instanceof PluginNode && o1 instanceof IdeaPluginDescriptorImpl) {
+              return sortDirection ? 1 : -1;
+            }
+            else
+            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
+              PluginNode p1 = (PluginNode)(sortDirection ? o1 : o2);
+              PluginNode p2 = (PluginNode)(sortDirection ? o2 : o1);
 
-    int idx = 0;
-    for (; idx < part1.length && idx < part2.length; idx++) {
-      String p1 = part1[idx];
-      String p2 = part2[idx];
+              int status1 = getRealNodeState( p1 );
+              int status2 = getRealNodeState( p2 );
+              if( status1 == status2 )
+                return 0;
+              else
+                return ( status1 > status2 ) ? 1 : -1;
+            }
+            else
+            {
+                IdeaPluginDescriptorImpl p1 = (IdeaPluginDescriptorImpl)(sortDirection ? o1 : o2);
+                IdeaPluginDescriptorImpl p2 = (IdeaPluginDescriptorImpl)(sortDirection ? o2 : o1);
 
-      int cmp;
-      //noinspection HardCodedStringLiteral
-      if (p1.matches("\\d+") && p2.matches("\\d+")) {
-        cmp = new Integer(p1).compareTo(new Integer(p2));
-      } else {
-        cmp = part1 [idx].compareTo(part2[idx]);
-      }
-      if (cmp != 0)
-        return cmp;
-    }
+                if( p1.isDeleted() && ! p2.isDeleted() )
+                  return -1;
+                else if ( !p1.isDeleted() && p2.isDeleted() )
+                  return 1;
+                else if( PluginsTableModel.hasNewerVersion( p1.getPluginId() ) &&
+                         !PluginsTableModel.hasNewerVersion( p2.getPluginId() ))
+                  return 1;
+                else if( !PluginsTableModel.hasNewerVersion( p1.getPluginId() ) &&
+                         PluginsTableModel.hasNewerVersion( p2.getPluginId() ))
+                  return -1;
+            }
+            return 0;
+          }
+        };
 
-    if (part1.length == part2.length)
-      return 0;
-    else if (part1.length > idx)
-      return 1;
-    else
-      return -1;
-  }
-
-  public Comparator getComparator() {
-    switch (columnIdx) {
       case COLUMN_NAME:
         return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              return p1.getName().compareToIgnoreCase(p2.getName());
-            } else if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
-              IdeaPluginDescriptor p1 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
-              IdeaPluginDescriptor p2 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
-
-              return p1.getName().compareToIgnoreCase(p2.getName());
-            } else
-              return 0;
+          public int compare(Object o1, Object o2)
+          {
+              String name1 = ((IdeaPluginDescriptor)(sortDirection ? o1 : o2)).getName();
+              String name2 = ((IdeaPluginDescriptor)(sortDirection ? o2 : o1)).getName();
+              return compareStrings( name1, name2 );
           }
         };
-      case COLUMN_INSTALLED_VERSION:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
 
-              IdeaPluginDescriptor pd1 = PluginManager.getPlugin(p1.getId());
-              IdeaPluginDescriptor pd2 = PluginManager.getPlugin(p2.getId());
-
-              if (pd1 == null && pd2 == null)
-                return 0;
-              else if (pd1 != null && pd2 == null)
-                return 1;
-              else if (pd1 == null && pd2 != null)
-                return -1;
-              else if (pd1 != null && pd2 != null)
-                return compareVersion(pd1.getVersion(), pd2.getVersion());
-
-              return compareVersion(p1.getVersion(), p2.getVersion());
-            } else
-              return 0;
-          }
-        };
-      case COLUMN_VERSION:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              return compareVersion(p1.getVersion(), p2.getVersion());
-            } else if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
-              IdeaPluginDescriptor p1 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
-              IdeaPluginDescriptor p2 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
-
-              return compareVersion(p1.getVersion(), p2.getVersion());
-            } else
-              return 0;
-          }
-        };
-      case COLUMN_STATUS:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              return PluginNode.getStatusName(PluginManagerColumnInfo.getRealNodeState(p1)).compareTo(
-                PluginNode.getStatusName(PluginManagerColumnInfo.getRealNodeState(p2)));
-            } else
-              return 0;
-          }
-        };
-      case COLUMN_SIZE:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              return new Long (p1.getSize()).compareTo(new Long(p2.getSize()));
-            } else
-              return 0;
-          }
-        };
       case COLUMN_DOWNLOADS:
         return new Comparator() {
           public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              return new Long (p1.getDownloads()).compareTo(new Long (p2.getDownloads()));
-            } else
-              return 0;
+            if( !sortDirection )
+            {
+              Object swap = o2; o2 = o1; o1 = swap;
+            }
+            String count1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDownloads() :
+                                                         ((IdeaPluginDescriptorImpl)o1).getDownloads();
+            String count2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDownloads() :
+                                                         ((IdeaPluginDescriptorImpl)o2).getDownloads();
+            if( count1 != null && count2 != null )
+              return new Long( count1 ).compareTo( new Long ( count2 ));
+            else
+            if( count1 != null )
+              return 1;
+            else
+              return -1;
           }
         };
+
+        case COLUMN_CATEGORY:
+          return new Comparator() {
+            public int compare(Object o1, Object o2) {
+                String cat1 = ((IdeaPluginDescriptor)(sortDirection ? o1 : o2)).getCategory();
+                String cat2 = ((IdeaPluginDescriptor)(sortDirection ? o2 : o1)).getCategory();
+                return compareStrings( cat1, cat2 );
+            }
+          };
+
       case COLUMN_DATE:
         return new Comparator() {
           public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
-
-              if (p1.getDate() != null && p2.getDate() != null)
-                return new Long (p1.getDate()).compareTo(new Long (p2.getDate()));
-              else if (p1.getDate() != null && p2.getDate() == null)
-                return 1;
-              else if (p1.getDate() == null && p2.getDate() != null)
-                return -1;
-              else if (p1.getDate() == null && p2.getDate() == null)
-                return 0;
-              else
-                return 0;
-            } else
-              return 0;
+            if( !sortDirection )
+            {
+              Object swap = o2; o2 = o1; o1 = swap;
+            }
+            long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() :
+                                                      ((IdeaPluginDescriptorImpl)o1).getDate();
+            long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() :
+                                                      ((IdeaPluginDescriptorImpl)o2).getDate();
+            if( date1 > date2 )
+              return 1;
+            else if( date1 < date2 )
+              return -1;
+            return 0;
           }
         };
-      case COLUMN_CATEGORY:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-              PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
-              PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
 
-              return p1.getParent().getName().compareToIgnoreCase(p2.getParent().getName());
-            } else
-              return 0;
-          }
-        };
-      case COLUMN_STATE:
-        return new Comparator() {
-          public int compare(Object o1, Object o2) {
-            if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
-              IdeaPluginDescriptorImpl p1 = (IdeaPluginDescriptorImpl)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
-              IdeaPluginDescriptorImpl p2 = (IdeaPluginDescriptorImpl)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
-
-              if (p1.isDeleted() == p2.isDeleted())
-                return 0;
-              else if (p1.isDeleted() && ! p2.isDeleted())
-                return -1;
-              else
-                return 1;
-            } else
-              return 0;
-          }
-        };
       default:
         return new Comparator () {
           public int compare(Object o, Object o1) {
@@ -306,98 +234,209 @@ class PluginManagerColumnInfo extends ColumnInfo {
     }
   }
 
-  public static int getRealNodeState (PluginNode node) {
-    if (node.getStatus() == PluginNode.STATUS_DOWNLOADED)
-      return PluginNode.STATUS_DOWNLOADED;
-    else if (node.getStatus() == PluginNode.STATUS_DELETED)
-      return PluginNode.STATUS_DELETED;
-    else if (node.getStatus() == PluginNode.STATUS_CART)
-      return PluginNode.STATUS_CART;
+    public static int compareVersion (String v1, String v2) {
+      if (v1 == null && v2 == null)
+        return 0;
+      else if( v1 == null )
+        return -1;
+      else if( v2 == null )
+        return 1;
 
-    IdeaPluginDescriptor existing = PluginManager.getPlugin(node.getId());
+      String [] part1 = v1.split("\\.");
+      String [] part2 = v2.split("\\.");
 
-    if (existing == null)
-      return PluginNode.STATUS_MISSING;
+      int idx = 0;
+      for (; idx < part1.length && idx < part2.length; idx++) {
+        String p1 = part1[idx];
+        String p2 = part2[idx];
 
-    if (existing.getVendor() == null ? true : !existing.getVendor().equals(node.getVendor())){
-      return PluginNode.STATUS_MISSING;
+        int cmp;
+        //noinspection HardCodedStringLiteral
+        if (p1.matches("\\d+") && p2.matches("\\d+")) {
+          cmp = new Integer(p1).compareTo(new Integer(p2));
+        } else {
+          cmp = part1 [idx].compareTo(part2[idx]);
+        }
+        if (cmp != 0)
+          return cmp;
+      }
+
+      if (part1.length == part2.length)
+        return 0;
+      else if (part1.length > idx)
+        return 1;
+      else
+        return -1;
     }
-    
-    int state = compareVersion(node.getVersion(), existing.getVersion());
 
-    if (state == 0)
-      return PluginNode.STATUS_CURRENT;
-    else if (state >= 1)
-      return PluginNode.STATUS_OUT_OF_DATE;
-    else if (state <= -1) {
-      // version of installed plugin is more then version of repository plugin
-      // That status should be appeared on Plugin Developer's IDEA
-      return PluginNode.STATUS_NEWEST;
+    public static int compareStrings (String str1, String str2) {
+      if (str1 == null && str2 == null)
+        return 0;
+      else if (str1 == null )
+        return -1;
+      else if ( str2 == null)
+        return 1;
+       else
+          return str1.compareToIgnoreCase( str2 );
     }
 
-    return PluginNode.STATUS_UNKNOWN;
+  public static String getFormattedSize( String size )
+  {
+    if( size.equals( "-1" )){
+      return IdeBundle.message( "plugin.info.unknown" );
+    }
+    else
+    if( size.length() >= 4 )
+    {
+        if( size.length() < 7 )
+        {
+            size = String.format("%.1f", (float)Integer.parseInt(size) / 1024.0f) + " K";
+        }
+        else
+        {
+            size = String.format("%.1f", (float)Integer.parseInt(size) / mgByte ) + " M";
+        }
+    }
+    return size;
   }
 
-  private static final Color RED_COLOR = new Color (255, 231, 227);
-  private static final Color GREEN_COLOR = new Color (232, 243, 221);
+    public static int getRealNodeState( PluginNode node )
+    {
+        SetDateAnchors();
 
-  public TableCellRenderer getRenderer(Object o) {
-    return new DefaultTableCellRenderer () {
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
+        if (node.getStatus() == PluginNode.STATUS_DOWNLOADED)
+          return PluginNode.STATUS_DOWNLOADED;
 
-        if (column == COLUMN_NAME) {
-          // add icon
-          setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+        Date pluginDate = new Date( node.getDate() );
+
+        if( weekAgo.before( pluginDate ) )
+            return PluginNode.STATUS_NEWEST;
+        /*
+        else if (node.getStatus() == PluginNode.STATUS_DELETED)
+          return PluginNode.STATUS_DELETED;
+        else if (node.getStatus() == PluginNode.STATUS_CART)
+          return PluginNode.STATUS_CART;
+
+
+        IdeaPluginDescriptor existing = PluginManager.getPlugin(node.getPluginId());
+
+        if( existing == null || existing.getVendor() == null ||
+            !existing.getVendor().equals(node.getVendor()) ){
+          return PluginNode.STATUS_MISSING;
         }
 
-        if (! isSelected) {
-          if (table.getModel() instanceof InstalledPluginsTableModel) {
-            IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)((PluginTable<IdeaPluginDescriptor>)table).getObjectAt(row);
-            if (descriptor.isDeleted())
-              setBackground(Color.lightGray);
-            else
-              setBackground(Color.white);
-          } else if (table.getModel() instanceof AvailablePluginsTableModel) {
-            PluginNode node = ((PluginTable<PluginNode>)table).getObjectAt(row);
+        int state = compareVersion(node.getVersion(), existing.getVersion());
 
-            switch (PluginManagerColumnInfo.getRealNodeState(node)) {
-              case PluginNode.STATUS_OUT_OF_DATE:
-                setBackground(RED_COLOR);
-                break;
-              case PluginNode.STATUS_CURRENT:
-                setBackground(GREEN_COLOR);
-                break;
-              default:
-                setBackground(Color.white);
-            }
+        if (state == 0)
+          return PluginNode.STATUS_CURRENT;
+        else if (state >= 1)
+          return PluginNode.STATUS_OUT_OF_DATE;
+        else if (state <= -1) {
+          return PluginNode.STATUS_NEWEST;
+        }
+
+        */
+        return PluginNode.STATUS_MISSING;
+    }
+
+  public TableCellRenderer getRenderer(Object o)
+  {
+      return new PluginTableCellRenderer();
+  }
+
+    public Class getColumnClass()
+    {
+        if( columnIdx == COLUMN_SIZE || columnIdx == COLUMN_DOWNLOADS )
+            return Integer.class;
+        else
+            return String.class;
+    }
+
+    private static class PluginTableCellRenderer extends DefaultTableCellRenderer
+    {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                     boolean hasFocus, int row, int column)
+      {
+        Object descriptor = ((PluginTable<IdeaPluginDescriptor>)table).getObjectAt(row);
+        if (column == 0)
+        {
+          setHorizontalAlignment( SwingConstants.CENTER );
+          if( descriptor instanceof IdeaPluginDescriptorImpl )
+          {
+              if( PluginsTableModel.hasNewerVersion(((IdeaPluginDescriptorImpl)descriptor).getPluginId() ))
+                setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+              else
+                setIcon(IconLoader.getIcon("/nodes/plugin.png"));
           }
+          else
+            setIcon(IconLoader.getIcon("/nodes/pluginnotinstalled.png"));
+        }
+
+        SetDateAnchors();
+        if( !isSelected )
+        {
+              if (column == 2) {
+                setHorizontalAlignment( SwingConstants.RIGHT );
+              }
+              setForeground(Color.black);
+
+              if( descriptor instanceof IdeaPluginDescriptorImpl )
+              {
+                setEnabled( !((IdeaPluginDescriptorImpl)descriptor).isDeleted() );
+                
+                if(((IdeaPluginDescriptorImpl)descriptor).isDeleted())
+                  setForeground(Color.lightGray);
+                else
+                  setBackground(LIGHT_BLUE_COLOR);
+              }
+              else
+              {
+                  PluginNode node = (PluginNode)descriptor;
+                  Date pluginDate = new Date( node.getDate() );
+
+                  switch (PluginManagerColumnInfo.getRealNodeState( node ))
+                  {
+                    case PluginNode.STATUS_OUT_OF_DATE:
+                      setBackground(RED_COLOR);
+                      break;
+                    case PluginNode.STATUS_CURRENT:
+                      setBackground(GREEN_COLOR);
+                      break;
+                    default:
+                      setBackground(Color.white);
+                  }
+
+                  if( yearAgo.after( pluginDate ) )
+                      setForeground(Color.lightGray);
+                  else
+                  if( weekAgo.before( pluginDate ) )
+                      setBackground(HOTVERSION);
+                  else
+                      setBackground(Color.white);
+              }
         }
 
         return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       }
-    };
-  }
-
-  public Class getColumnClass() {
-    switch (columnIdx) {
-      case COLUMN_NAME:
-      case COLUMN_STATUS:
-      case COLUMN_INSTALLED_VERSION:
-      case COLUMN_VERSION:
-      case COLUMN_DATE:
-      case COLUMN_CATEGORY:
-      case COLUMN_STATE:
-        return String.class;
-      case COLUMN_SIZE:
-      case COLUMN_DOWNLOADS:
-        return Integer.class;
-      default:
-        return String.class;
     }
-  }
+
+    private static void  SetDateAnchors()
+    {
+        if( yearAgo == null )
+        {
+            Calendar current = Calendar.getInstance();
+            current.add( Calendar.DAY_OF_MONTH, -365 );
+            yearAgo = current.getTime();
+
+            current = Calendar.getInstance();
+            current.add( Calendar.DAY_OF_MONTH, -30 );
+            weekAgo = current.getTime();
+        }
+    }
+
+    @Override
+    public int getWidth( JTable table )
+    {
+        return ( columnIdx == 0 ) ? 35 : -1;
+    }
 }
