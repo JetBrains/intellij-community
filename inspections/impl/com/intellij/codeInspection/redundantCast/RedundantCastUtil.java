@@ -3,7 +3,7 @@
  * User: max
  * Date: Mar 24, 2002
  * Time: 6:08:14 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.redundantCast;
@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -39,11 +40,11 @@ public class RedundantCastUtil {
   }
 
   public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
-    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
     PsiElement parent = typeCast.getParent();
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
+    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
     parent.accept(visitor);
     return visitor.isRedundant();
   }
@@ -129,8 +130,8 @@ public class RedundantCastUtil {
     }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
-      PsiExpression rExpr = deParenthesize(expression.getLOperand());
-      PsiExpression lExpr = deParenthesize(expression.getROperand());
+      PsiExpression rExpr = PsiUtil.deparenthesizeExpression(expression.getLOperand());
+      PsiExpression lExpr = PsiUtil.deparenthesizeExpression(expression.getROperand());
 
       if (rExpr != null && lExpr != null) {
         final IElementType binaryToken = expression.getOperationSign().getTokenType();
@@ -154,7 +155,7 @@ public class RedundantCastUtil {
     }
 
     private void processPossibleTypeCast(PsiExpression rExpr, PsiType lType) {
-      rExpr = deParenthesize(rExpr);
+      rExpr = PsiUtil.deparenthesizeExpression(rExpr);
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();
         if (castOperand != null) {
@@ -219,9 +220,9 @@ public class RedundantCastUtil {
           qualifier = ((PsiTypeCastExpression) ((PsiParenthesizedExpression) qualifier).getExpression()).getOperand();
         }
         catch (IncorrectOperationException e) {
-          return;
         }
-      } finally {
+      }
+      finally {
         if (qualifier != null) {
           qualifier.accept(this);
         }
@@ -235,18 +236,15 @@ public class RedundantCastUtil {
     public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
     private void processCall(PsiCallExpression expression){
+      PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) return;
+      PsiExpression[] args = argumentList.getExpressions();
       PsiMethod oldMethod = null;
       PsiParameter[] methodParms = null;
       boolean[] typeCastCandidates = null;
       boolean hasCandidate = false;
-
-
-
-      PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) return;
-      PsiExpression[] args = argumentList.getExpressions();
       for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = deParenthesize(args[i]);
+        PsiExpression arg = PsiUtil.deparenthesizeExpression(args[i]);
         if (arg instanceof PsiTypeCastExpression) {
           if (oldMethod == null){
             oldMethod = expression.resolveMethod();
@@ -274,19 +272,15 @@ public class RedundantCastUtil {
       }
 
       if (hasCandidate) {
-        PsiManager manager = expression.getManager();
-        PsiElementFactory factory = manager.getElementFactory();
-
-
         try {
           for (int i = 0; i < args.length; i++) {
-            final PsiExpression arg = deParenthesize(args[i]);
+            final PsiExpression arg = PsiUtil.deparenthesizeExpression(args[i]);
             if (typeCastCandidates[i]) {
               PsiCallExpression newCall = (PsiCallExpression)expression.copy();
               final PsiExpressionList argList = newCall.getArgumentList();
               LOG.assertTrue(argList != null);
               PsiExpression[] newArgs = argList.getExpressions();
-              PsiTypeCastExpression castExpression = (PsiTypeCastExpression)deParenthesize(newArgs[i]);
+              PsiTypeCastExpression castExpression = (PsiTypeCastExpression)PsiUtil.deparenthesizeExpression(newArgs[i]);
               PsiExpression castOperand = castExpression.getOperand();
               if (castOperand == null) return;
               castExpression.replace(castOperand);
@@ -313,31 +307,28 @@ public class RedundantCastUtil {
       }
     }
 
-    private PsiExpression deParenthesize(PsiExpression arg) {
-      while (arg instanceof PsiParenthesizedExpression) arg = ((PsiParenthesizedExpression) arg).getExpression();
-      return arg;
-    }
-
     public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
       PsiExpression operand = typeCast.getOperand();
       if (operand == null) return;
 
-      PsiElement expr = deParenthesize(operand);
+      PsiElement expr = PsiUtil.deparenthesizeExpression(operand);
 
       if (expr instanceof PsiTypeCastExpression) {
-        PsiType castType = ((PsiTypeCastExpression)expr).getCastType().getType();
+        PsiTypeElement typeElement = ((PsiTypeCastExpression)expr).getCastType();
+        if (typeElement == null) return;
+        PsiType castType = typeElement.getType();
         if (!(castType instanceof PsiPrimitiveType)) {
           addToResults((PsiTypeCastExpression)expr);
         }
       }
       else {
-        if (typeCast.getParent() instanceof PsiConditionalExpression) {
+        PsiElement parent = typeCast.getParent();
+        if (parent instanceof PsiConditionalExpression) {
           if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
             //branches need to be of the same type
-            if (!operand.getType().equals(((PsiConditionalExpression)typeCast.getParent()).getType())) return;
+            if (!Comparing.equal(operand.getType(),((PsiConditionalExpression)parent).getType())) return;
           }
         }
-
         processAlreadyHasTypeCast(typeCast);
       }
     }
@@ -349,14 +340,16 @@ public class RedundantCastUtil {
 
       if (isTypeCastSemantical(typeCast)) return;
 
-      PsiType toType = typeCast.getCastType().getType();
+      PsiTypeElement typeElement = typeCast.getCastType();
+      if (typeElement == null) return;
+      PsiType toType = typeElement.getType();
       PsiType fromType = typeCast.getOperand().getType();
       if (fromType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (toType instanceof PsiClassType && fromType instanceof PsiPrimitiveType) return; //explicit boxing
         //Check accessibility
         if (fromType instanceof PsiClassType) {
-          final PsiReferenceExpression refExpression = ((PsiReferenceExpression)parent);
+          final PsiReferenceExpression refExpression = (PsiReferenceExpression)parent;
           PsiElement element = refExpression.resolve();
           if (!(element instanceof PsiMember)) return;
           PsiClass accessClass = ((PsiClassType)fromType).resolve();
@@ -385,7 +378,7 @@ public class RedundantCastUtil {
             final PsiExpression qualifier = copy.getQualifierExpression();
             if (qualifier != null) {
               qualifier.replace(castOperand);
-              result.set(copy.resolve() == resolved);
+              result.set(Boolean.valueOf(copy.resolve() == resolved));
             }
           }
         }
@@ -400,7 +393,9 @@ public class RedundantCastUtil {
     PsiExpression operand = typeCast.getOperand();
     if (operand != null) {
       PsiType opType = operand.getType();
-      PsiType castType = typeCast.getCastType().getType();
+      PsiTypeElement typeElement = typeCast.getCastType();
+      if (typeElement == null) return false;
+      PsiType castType = typeElement.getType();
       if (castType instanceof PsiPrimitiveType) {
         if (opType instanceof PsiPrimitiveType) {
           return !opType.equals(castType); // let's suppose all not equal primitive casts are necessary

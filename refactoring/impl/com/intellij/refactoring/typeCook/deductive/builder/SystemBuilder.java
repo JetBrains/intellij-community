@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -611,7 +612,7 @@ public class SystemBuilder {
       final PsiExpression initializer = ((PsiVariable)element).getInitializer();
 
       if (initializer != null) {
-        final PsiExpression core = deparenthesizeExpression(initializer);
+        final PsiExpression core = PsiUtil.deparenthesizeExpression(initializer);
 
         if (core instanceof PsiArrayInitializerExpression) {
           final PsiExpression[] inits = ((PsiArrayInitializerExpression)core).getInitializers();
@@ -798,14 +799,6 @@ public class SystemBuilder {
       scope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)scope), StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
     }
     return scope;
-  }
-
-  private PsiExpression deparenthesizeExpression(PsiExpression rExpression) {
-    if (rExpression instanceof PsiParenthesizedExpression) {
-      return deparenthesizeExpression(
-        ((PsiParenthesizedExpression)rExpression).getExpression());
-    }
-    return rExpression;
   }
 
   PsiType replaceWildCards(final PsiType type, final ReductionSystem system, final PsiSubstitutor definedSubst) {
