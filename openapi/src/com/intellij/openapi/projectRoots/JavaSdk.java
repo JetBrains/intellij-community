@@ -31,7 +31,11 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(JavaSdk.class);
   }
 
-  public abstract ProjectJdk createJdk(String jdkName, String jdkHome);
+  public final ProjectJdk createJdk(final String jdkName, String jreHome) {
+    return createJdk(jdkName, jreHome, true);
+  }
+
+  public abstract ProjectJdk createJdk(String jdkName, String home, boolean isJre);
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean checkForJdk(File file) {

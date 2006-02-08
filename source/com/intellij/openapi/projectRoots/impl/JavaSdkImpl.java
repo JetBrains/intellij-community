@@ -259,16 +259,16 @@ public class JavaSdkImpl extends JavaSdk {
     return versionString[0];
   }
 
-  public ProjectJdk createJdk(final String jdkName, String jdkHome) {
+  public ProjectJdk createJdk(final String jdkName, final String home, final boolean isJre) {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
-    String path = jdkHome.replace(File.separatorChar, '/');
+    String path = home.replace(File.separatorChar, '/');
     sdkModificator.setHomePath(path);
     jdk.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
 
-    File jdkHomeFile = new File(jdkHome);
-    addClasses(jdkHomeFile, sdkModificator, true, myJarFileSystem);
+    File jdkHomeFile = new File(home);
+    addClasses(jdkHomeFile, sdkModificator, isJre, myJarFileSystem);
     addSources(jdkHomeFile, sdkModificator);
     addDocs(jdkHomeFile, sdkModificator);
     sdkModificator.commitChanges();
