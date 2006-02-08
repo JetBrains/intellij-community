@@ -90,6 +90,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.isLocal();
+    myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
   }
 

@@ -48,9 +48,11 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfileImpl inspectionProfile =
-      InspectionProjectProfileManager.getInstance(file.getProject()).getProfile((PsiElement)file);
-    editToolSettings(project, inspectionProfile, false);
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
+    final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
+    final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
+    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles ? profileManager.getRootProfile() : projectProfileManager.getProfile((PsiElement)file));
+    editToolSettings(project, inspectionProfile, canChooseDifferentProfiles, myShortName, canChooseDifferentProfiles ? profileManager : InspectionProjectProfileManager.getInstance(project));
   }
 
   public boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfiles){
@@ -98,6 +100,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
                                                                              } else {
                                                                                final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
                                                                                inspectionProfile.copyFrom(editedProfile);
+                                                                               inspectionProfile.save();
                                                                                myPanel.initDescriptors();
                                                                              }
                                                                            }
