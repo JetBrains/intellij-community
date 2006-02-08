@@ -163,7 +163,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
             final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
             holder.registerProblem(psiAnchor,
                                    InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(true)),
-                                   localQuickFix);
+                                   localQuickFix==null?null:new LocalQuickFix[]{localQuickFix});
           }
         }
         else if (psiAnchor instanceof PsiSwitchLabelStatement) {
@@ -184,7 +184,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
               holder.registerProblem(psiAnchor,
                                      InspectionsBundle.message("dataflow.message.constant.condition",
                                                                Boolean.toString(trueSet.contains(instruction))),
-                                     localQuickFix);
+                                     localQuickFix==null ? null : new LocalQuickFix[]{localQuickFix});
             }
             reportedAnchors.add(psiAnchor);
           }

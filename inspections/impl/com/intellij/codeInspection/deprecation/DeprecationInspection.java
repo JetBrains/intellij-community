@@ -108,7 +108,7 @@ public class DeprecationInspection extends LocalInspectionTool {
       if (superMethod.isDeprecated()) {
         String description = JavaErrorMessages.message("overrides.deprecated.method",
                                                        HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
-        holder.registerProblem(methodName, description, ProblemHighlightType.LIKE_DEPRECATED, (LocalQuickFix [])null);
+        holder.registerProblem(methodName, description, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }
   }
@@ -122,6 +122,6 @@ public class DeprecationInspection extends LocalInspectionTool {
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
-    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, (LocalQuickFix[])null);
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED);
   }
 }

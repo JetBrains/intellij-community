@@ -43,8 +43,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiExpression expression = getExpressionToSimplify(editor, file);
-    final PsiExpression newExpression = SimplifyBooleanExpressionFix.simplifyExpression(expression);
-    expression.replace(newExpression);
+    SimplifyBooleanExpressionFix.simplifyExpression(expression);
   }
 
   public boolean startInWriteAction() {

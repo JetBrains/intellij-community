@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -53,20 +54,71 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     else {
       PsiExpression constExpression = PsiManager.getInstance(project).getElementFactory()
           .createExpressionFromText(Boolean.toString(mySubExpressionValue.booleanValue()), mySubExpression);
-      LOG.assertTrue(constExpression.isValid());
       expression = (PsiExpression)mySubExpression.replace(constExpression);
     }
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
     }
-    PsiExpression newExpression = simplifyExpression(expression);
-    expression.replace(newExpression);
+    simplifyExpression(expression);
   }
 
-  public static PsiExpression simplifyExpression(PsiExpression expression) {
-    final PsiExpression[] copy = new PsiExpression[]{(PsiExpression)expression.copy()};
+  public static void simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return;
+    if (!(expression instanceof PsiLiteralExpression) || expression.getType() != PsiType.BOOLEAN) return;
+    boolean condition = Boolean.parseBoolean(expression.getText());
+    PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    if (condition) {
+      replaceWithStatements(ifStatement, ifStatement.getThenBranch());
+    }
+    else {
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch == null) {
+        ifStatement.delete();
+      }
+      else {
+        replaceWithStatements(ifStatement, elseBranch);
+      }
+    }
+  }
+
+  private static void replaceWithStatements(final PsiStatement orig, final PsiStatement statement) throws IncorrectOperationException {
+    if (statement == null) {
+      orig.delete();
+      return;
+    }
+    PsiElement parent = orig.getParent();
+    if (parent == null) return;
+    if (statement instanceof PsiBlockStatement) {
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
+      PsiJavaToken lBrace = codeBlock.getLBrace();
+      PsiJavaToken rBrace = codeBlock.getRBrace();
+      if (lBrace == null || rBrace == null) return;
+
+
+      final PsiElement[] children = codeBlock.getChildren();
+      if(children.length > 2){
+          final PsiElement added =
+                  parent.addRangeBefore(
+                          children[1],
+                          children[children.length - 2],
+                          orig);
+          final CodeStyleManager codeStyleManager =
+                  CodeStyleManager.getInstance(orig.getManager());
+          codeStyleManager.reformat(added);
+      }
+    }
+    else {
+      parent.addAfter(statement, orig);
+    }
+    orig.delete();
+  }
+
+  public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
+    final PsiExpression[] result = new PsiExpression[]{(PsiExpression)expression.copy()};
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
-    copy[0].accept(new PsiRecursiveElementVisitor() {
+    final IncorrectOperationException[] exception = new IncorrectOperationException[]{null};
+    result[0].accept(new PsiRecursiveElementVisitor() {
       public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
@@ -74,20 +126,24 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         if (expressionVisitor.resultExpression != null) {
           LOG.assertTrue(expressionVisitor.resultExpression.isValid());
           try {
-            if (expression != copy[0]) {
+            if (expression != result[0]) {
               expression.replace(expressionVisitor.resultExpression);
             }
             else {
-              copy[0] = expressionVisitor.resultExpression;
+              result[0] = expressionVisitor.resultExpression;
             }
           }
           catch (IncorrectOperationException e) {
-            LOG.error(e);
+            exception[0] = e;
           }
         }
       }
     });
-    return copy[0];
+    if (exception[0] != null) {
+      throw exception[0];
+    }
+    PsiExpression newExpression = (PsiExpression)expression.replace(result[0]);
+    simplifyIfStatement(newExpression);
   }
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
@@ -236,6 +292,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
   public static Boolean getConstBoolean(PsiExpression operand) {
     if (operand == null) return null;
+    operand = PsiUtil.deparenthesizeExpression(operand);
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -545,7 +544,6 @@ public class GenericsHighlightUtil {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (final PsiParameter parameter : parameters) {
       final PsiType parameterType = parameter.getType();
-      if (parameterType == null) continue;
       if (parameterType.accept(new PsiTypeVisitor<Boolean>() {
         public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
           return Boolean.FALSE;
