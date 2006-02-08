@@ -15,6 +15,7 @@ class GridInsertLocation {
   private RadContainer myContainer;
   private int myRow;
   private int myColumn;
+  private Point myTargetPoint;
   private Rectangle myCellRect;
   private GridInsertMode myMode;
 
@@ -22,14 +23,23 @@ class GridInsertLocation {
     myMode = mode;
   }
 
+
+  public GridInsertLocation(final RadContainer container, final Point targetPoint, final GridInsertMode mode) {
+    myContainer = container;
+    myTargetPoint = targetPoint;
+    myMode = mode;
+  }
+
   public GridInsertLocation(final RadContainer container,
                             final int row,
                             final int column,
+                            final Point targetPoint,
                             final Rectangle cellRect,
                             final GridInsertMode mode) {
     myContainer = container;
     myRow = row;
     myColumn = column;
+    myTargetPoint = targetPoint;
     myCellRect = cellRect;
     myMode = mode;
   }
@@ -60,5 +70,17 @@ class GridInsertLocation {
 
   public boolean isRowInsert() {
     return getMode() == GridInsertMode.RowAfter || getMode() == GridInsertMode.RowBefore;
+  }
+
+  public boolean isInsert() {
+    return isColumnInsert() || isRowInsert();
+  }
+
+  public Point getTargetPoint() {
+    return myTargetPoint;
+  }
+
+  public void rejectDrop() {
+    myMode = GridInsertMode.NoDrop;
   }
 }

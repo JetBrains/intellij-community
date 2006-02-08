@@ -124,21 +124,45 @@ class DesignDropTargetListener implements DropTargetListener {
       myLastPoint = dtde.getLocation();
       myEditor.getDragLayer().repaint();
 
-      int action = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
-                                                          dtde.getLocation().y,
-                                                          dtde.getDropAction() == DnDConstants.ACTION_COPY,
-                                                          dragSize,
-                                                          dragCol);
-      if (action == DnDConstants.ACTION_NONE) {
+      GridInsertLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
+                                                                           dtde.getLocation().y,
+                                                                           dragSize,
+                                                                           dragCol);
+      if (location.getMode() == GridInsertMode.NoDrop ||
+          (myDraggedComponentList != null && isDropOnChild(myDraggedComponentList, location))) {
         dtde.rejectDrag();
       }
       else {
-        dtde.acceptDrag(action);
+        dtde.acceptDrag(dtde.getDropAction());
       }
     }
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  private static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
+                                final GridInsertLocation location) {
+    if (location.getContainer() == null) {
+      return false;
+    }
+
+    for(RadComponent component: draggedComponentList.getComponents()) {
+      if (isChild(location.getContainer(), component)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
+    while(maybeChild != null) {
+      if (maybeParent == maybeChild) {
+        return true;
+      }
+      maybeChild = maybeChild.getParent();
+    }
+    return false;
   }
 
   public void dropActionChanged(DropTargetDragEvent dtde) {
@@ -153,6 +177,8 @@ class DesignDropTargetListener implements DropTargetListener {
       myUseDragDelta = false;
       if (myDraggedComponentList != null) {
         cancelDrag();
+        setDraggingState(myDraggedComponentList, false);
+        myEditor.getActiveDecorationLayer().removeFeedback();
         myDraggedComponentList = null;
         myEditor.setDesignTimeInsets(2);
       }
@@ -200,17 +226,23 @@ class DesignDropTargetListener implements DropTargetListener {
     final int dropY = dropPoint.y;
     final int componentCount = dcl.getComponents().size();
     GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(
-      myEditor, dropX, dropY, dcl.getDragRelativeColumn());
+      myEditor, dropX, dropY, dcl.getDragRelativeColumn(), componentCount);
+    if (isDropOnChild(dcl, location)) {
+      setDraggingState(dcl, false);
+      return false;
+    }
     if (!myGridInsertProcessor.isDropInsertAllowed(location, componentCount)) {
       location = null;
     }
 
     if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, componentCount) &&
-        (location == null || location.getMode() == GridInsertMode.None)) {
+        (location == null || location.getMode() == GridInsertMode.InCell)) {
+      setDraggingState(dcl, false);
       return false;
     }
 
     if (!myEditor.ensureEditable()) {
+      setDraggingState(dcl, false);
       return false;
     }
 
@@ -244,7 +276,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final RadComponent[] components = droppedComponents.toArray(new RadComponent[componentCount]);
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
 
-    if (location != null && location.getMode() != GridInsertMode.None) {
+    if (location != null && location.getMode() != GridInsertMode.InCell) {
       myGridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
     }
     else {

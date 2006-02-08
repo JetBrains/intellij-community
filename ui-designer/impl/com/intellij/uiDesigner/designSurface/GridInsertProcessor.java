@@ -1,16 +1,16 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.dnd.DnDConstants;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,7 +65,7 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  static GridInsertLocation getGridInsertLocation(final GuiEditor editor, final int x, final int y, final int dragColumnDelta) {
+  static GridInsertLocation getGridInsertLocation(GuiEditor editor, int x, int y, int dragColumnDelta, int componentCount) {
     int EPSILON = 4;
     RadContainer container = FormEditingUtil.getRadContainerAt(editor, x, y, EPSILON);
     // to facilitate initial component adding, increase stickiness if there is one container at top level
@@ -83,12 +83,17 @@ public class GridInsertProcessor {
       }
     }
 
-    if (container == null || !container.isGrid()) {
-      return new GridInsertLocation(GridInsertMode.None);
+    if (container == null) {
+      return new GridInsertLocation(GridInsertMode.NoDrop);
     }
+
+    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, container.getDelegee());
+    if (!container.isGrid()) {
+      GridInsertMode mode = container.canDrop(targetPoint, componentCount) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      return new GridInsertLocation(container, targetPoint, mode);
+    }
+
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(),
-                                                          x, y, container.getDelegee());
     int[] xs = grid.getXs();
     int[] ys = grid.getYs();
     int[] widths = grid.getWidths();
@@ -112,7 +117,7 @@ public class GridInsertProcessor {
       }
     }
 
-    GridInsertMode mode = GridInsertMode.None;
+    GridInsertMode mode = GridInsertMode.InCell;
 
     int dy = (int)(targetPoint.getY() - ys [row]);
     if (dy < EPSILON) {
@@ -132,7 +137,7 @@ public class GridInsertProcessor {
 
     final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
     final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
-    if (mode == GridInsertMode.None) {
+    if (mode == GridInsertMode.InCell) {
       RadComponent component = container.getComponentAtGrid(row, col);
       if (component != null) {
         Rectangle rc = component.getBounds();
@@ -166,7 +171,12 @@ public class GridInsertProcessor {
         col >= dragColumnDelta) {
       col -= dragColumnDelta;
     }
-    return new GridInsertLocation(container, row, col, cellRect, mode);
+
+    if (mode == GridInsertMode.InCell && !container.canDrop(targetPoint, componentCount)) {
+      mode = GridInsertMode.NoDrop;
+    }
+
+    return new GridInsertLocation(container, row, col, targetPoint, cellRect, mode);
   }
 
   @Nullable
@@ -215,56 +225,53 @@ public class GridInsertProcessor {
     }
   }
 
-  public int processDragEvent(int x, int y, final boolean copyOnDrop, int componentCount,
-                              final int dragColumnDelta) {
-    final GridInsertLocation insertLocation = getGridInsertLocation(myEditor, x, y, dragColumnDelta);
-    if (insertLocation.getContainer() != null) {
+  public GridInsertLocation processDragEvent(int x, int y, int componentCount, int dragColumnDelta) {
+    final GridInsertLocation insertLocation = getGridInsertLocation(myEditor, x, y, dragColumnDelta, componentCount);
+    if (insertLocation.isInsert()) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
         placeInsertFeedbackPainter(insertLocation, componentCount);
-        return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
       }
     }
-    if (componentCount > 0) {
-      final RadContainer containerAt = FormEditingUtil.getRadContainerAt(myEditor, x, y, 0);
-      if (containerAt != null) {
-        final Point targetPoint = SwingUtilities.convertPoint(myEditor.getDragLayer(), x, y, containerAt.getDelegee());
-        if (containerAt.canDrop(targetPoint, componentCount)) {
-          Rectangle feedbackRect = containerAt.getDropFeedbackRectangle(targetPoint.x, targetPoint.y, componentCount);
-          if (feedbackRect != null) {
-            final Rectangle rc = SwingUtilities.convertRectangle(containerAt.getDelegee(),
-                                                                 feedbackRect,
-                                                                 myEditor.getActiveDecorationLayer());
-            myEditor.getActiveDecorationLayer().putFeedback(rc);
-          }
-          else {
-            myEditor.getActiveDecorationLayer().removeFeedback();
-          }
-          return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
-        }
-        else {
-          myEditor.getActiveDecorationLayer().removeFeedback();
-        }
+    else if (insertLocation.getMode() == GridInsertMode.InCell) {
+      Point targetPoint = insertLocation.getTargetPoint();
+      Rectangle feedbackRect;
+      if (insertLocation.getContainer().isGrid()) {
+        feedbackRect = getGridFeedbackRect(insertLocation, componentCount);
       }
+      else {
+        feedbackRect = insertLocation.getContainer().getDropFeedbackRectangle(targetPoint.x, targetPoint.y, componentCount);
+      }
+      if (feedbackRect != null) {
+        final Rectangle rc = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
+                                                             feedbackRect,
+                                                             myEditor.getActiveDecorationLayer());
+        myEditor.getActiveDecorationLayer().putFeedback(rc);
+      }
+      else {
+        myEditor.getActiveDecorationLayer().removeFeedback();
+      }
+    }
+    else {
+      myEditor.getActiveDecorationLayer().removeFeedback();
     }
 
-    return DnDConstants.ACTION_NONE;
+    return insertLocation;
   }
 
   public Cursor processMouseMoveEvent(final int x, final int y, final boolean copyOnDrop,
                                       final int componentCount, final int dragColumnDelta) {
-    int operation = processDragEvent(x, y, copyOnDrop, componentCount, dragColumnDelta);
-    switch(operation) {
-      case DnDConstants.ACTION_COPY: return FormEditingUtil.getCopyDropCursor();
-      case DnDConstants.ACTION_MOVE: return FormEditingUtil.getMoveDropCursor();
-      default: return FormEditingUtil.getMoveNoDropCursor();
+    GridInsertLocation location = processDragEvent(x, y, componentCount, dragColumnDelta);
+    if (location.getMode() == GridInsertMode.NoDrop) {
+      return FormEditingUtil.getMoveNoDropCursor();
     }
+    return copyOnDrop ? FormEditingUtil.getCopyDropCursor() : FormEditingUtil.getMoveDropCursor();
   }
 
   public boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
     if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
     }
-    if (insertLocation.getMode() == GridInsertMode.None) {
+    if (insertLocation.getMode() == GridInsertMode.InCell) {
       return componentCount == 1 &&
              insertLocation.getContainer().getComponentAtGrid(insertLocation.getRow(), insertLocation.getColumn()) == null;
     }
@@ -316,19 +323,11 @@ public class GridInsertProcessor {
   }
 
   private void placeInsertFeedbackPainter(final GridInsertLocation insertLocation, final int componentCount) {
-    Rectangle cellRect = insertLocation.getCellRect();
     final int insertCol = insertLocation.getColumn();
     final int insertRow = insertLocation.getRow();
     final GridInsertMode insertMode = insertLocation.getMode();
 
-    if (componentCount > 1) {
-      int lastCol = insertCol + componentCount - 1;
-      final GridLayoutManager layoutManager = (GridLayoutManager) insertLocation.getContainer().getLayout();
-      int[] xs = layoutManager.getXs();
-      int[] widths = layoutManager.getWidths();
-      cellRect.setBounds(xs [insertCol], (int) cellRect.getY(),
-                         xs [lastCol] + widths [lastCol] - xs [insertCol], (int)cellRect.getHeight());
-    }
+    Rectangle cellRect = getGridFeedbackRect(insertLocation, componentCount);
 
     FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
                                insertMode == GridInsertMode.ColumnAfter)
@@ -337,7 +336,7 @@ public class GridInsertProcessor {
     Rectangle rc;
 
     Rectangle rcFeedback = null;
-    if (componentCount == 1 && insertMode != GridInsertMode.None) {
+    if (componentCount == 1 && insertMode != GridInsertMode.InCell) {
       RadComponent component = insertLocation.getContainer().getComponentAtGrid(insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
@@ -405,5 +404,22 @@ public class GridInsertProcessor {
         painter = null;
     }
     myEditor.getActiveDecorationLayer().putFeedback(rc, painter);
+  }
+
+  private static Rectangle getGridFeedbackRect(final GridInsertLocation insertLocation, final int componentCount) {
+    if (componentCount == 0) {
+      return null;
+    }
+    if (componentCount == 1) {
+      return insertLocation.getCellRect();
+    }
+    int insertCol = insertLocation.getColumn();
+    int lastCol = insertCol + componentCount - 1;
+    Rectangle cellRect = insertLocation.getCellRect();
+    final GridLayoutManager layoutManager = (GridLayoutManager) insertLocation.getContainer().getLayout();
+    int[] xs = layoutManager.getXs();
+    int[] widths = layoutManager.getWidths();
+    return new Rectangle(xs [insertCol], cellRect.y,
+                         xs [lastCol] + widths [lastCol] - xs [insertCol], cellRect.height);
   }
 }

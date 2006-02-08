@@ -229,8 +229,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     myInsertedComponent = createInsertedComponent(myEditor, item);
 
     final GridInsertLocation location = (point != null)
-      ? GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0)
-      : new GridInsertLocation(GridInsertMode.None);
+      ? GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0, 1)
+      : new GridInsertLocation(GridInsertMode.InCell);
     boolean dropAllowed;
     if (point != null) {
       dropAllowed = FormEditingUtil.canDrop(myEditor, point.x, point.y, 1);
@@ -240,7 +240,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       dropAllowed = targetContainer.canDrop(null, 1);
     }
 
-    if (dropAllowed || location.getMode() != GridInsertMode.None) {
+    if (dropAllowed || location.getMode() != GridInsertMode.InCell) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -248,7 +248,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            if (location.getMode() == GridInsertMode.None) {
+            if (location.getMode() == GridInsertMode.InCell) {
               if (point != null) {
                 myTargetContainer = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
               }
