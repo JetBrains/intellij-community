@@ -305,7 +305,7 @@ public class FileManagerImpl implements FileManager {
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
           Module ownerModule = entry.getOwnerModule();
-          final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithLibrariesScope(ownerModule);
+          final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
           if (allInclusiveModuleScope == null) {
             allInclusiveModuleScope = moduleScope;
           }
