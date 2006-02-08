@@ -88,27 +88,27 @@ public class AsmCodeGeneratorTest extends TestCase {
 
   public void testNoSuchField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestNoSuchField.form", "BindingTest.class");
-    assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors() [0]);
+    assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testStaticField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestStaticField.form", "BindingTest.class");
-    assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors() [0]);
+    assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testFinalField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestFinalField.form", "BindingTest.class");
-    assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors() [0]);
+    assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testPrimitiveField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestPrimitiveField.form", "BindingTest.class");
-    assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors() [0]);
+    assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testIncompatibleTypeField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest.class");
-    assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0]);
+    assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testGridLayout() throws Exception {
