@@ -1036,8 +1036,8 @@ public class RefactoringUtil {
 
   public static String getInnerClassNameForClassLoader(PsiClass aClass) {
     final String qName = aClass.getQualifiedName();
+    if (qName == null) return null;
     return replaceDotsWithDollars(qName, aClass);
-
   }
 
   public static String replaceDotsWithDollars(final String qName, PsiClass aClass) {

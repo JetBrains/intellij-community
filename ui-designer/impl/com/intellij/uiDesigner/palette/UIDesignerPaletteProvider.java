@@ -106,8 +106,11 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
 
       public void elementRenamed(PsiElement newElement) {
         PsiClass psiClass = (PsiClass) newElement;
-        myItem.setClassName(RefactoringUtil.getInnerClassNameForClassLoader(psiClass));
-        fireGroupsChanged();
+        final String qName = RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+        if (qName != null) {
+          myItem.setClassName(qName);
+          fireGroupsChanged();
+        }
       }
     }
   }
