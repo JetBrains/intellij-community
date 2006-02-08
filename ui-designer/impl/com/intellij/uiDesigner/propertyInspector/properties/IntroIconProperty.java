@@ -83,4 +83,10 @@ public class IntroIconProperty extends IntrospectedProperty {
       }
     }
   }
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
+    super.setValueImpl(component, null);
+    markTopmostModified(component, false);
+  }
 }

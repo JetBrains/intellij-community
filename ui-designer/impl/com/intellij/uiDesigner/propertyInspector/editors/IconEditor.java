@@ -67,6 +67,9 @@ public class IconEditor extends PropertyEditor {
     if (myValue != null) {
       myTextField.setText(myValue.getIconPath());
     }
+    else {
+      myTextField.setText("");
+    }
     return myTextField;
   }
 
