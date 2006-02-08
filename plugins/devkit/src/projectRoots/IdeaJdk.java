@@ -144,23 +144,18 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   @Nullable
   private static ProjectJdk getInternalJavaSdk(final String sdkHome) {
-    final String jreHome = getJreHome(sdkHome);
-    return JavaSdk.getInstance().createJdk("", jreHome);
-  }
-
-  private static String getJreHome(final String sdkHome) {
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       @NonNls String jreHome = sdkHome + File.separator + JRE_DIR_NAME;
       if (new File(jreHome).exists()){
-        return jreHome;
+        return JavaSdk.getInstance().createJdk("", jreHome);
       }
     }
     final String jrePath = System.getProperty(JAVA_HOME_PROPERTY);
     final File parent = new File(jrePath).getParentFile();
     if (JavaSdk.checkForJdk(parent)) {
-      return parent.getPath();
+      return JavaSdk.getInstance().createJdk("", parent.getPath(), false);
     }
-    return jrePath;
+    return JavaSdk.getInstance().createJdk("", jrePath);
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
