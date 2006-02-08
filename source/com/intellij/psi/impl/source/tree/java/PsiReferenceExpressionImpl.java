@@ -105,9 +105,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       IElementType parentType = _ref.getTreeParent() != null ? _ref.getTreeParent().getElementType() : null;
       final JavaResolveResult[] result = _ref._resolve(parentType);
 
-      if (incompleteCode && parentType != REFERENCE_EXPRESSION && result.length == 0) {
+      //do we need it?
+      /*if (incompleteCode && parentType != REFERENCE_EXPRESSION && result.length == 0) {
         return _ref._resolve(REFERENCE_EXPRESSION);
-      }
+      }*/
       return result;
     }
 
