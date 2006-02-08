@@ -6,6 +6,7 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashMap;
@@ -46,7 +47,9 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       MakeUtil.getInstance().copyFile(getFile(), to, context, writtenPaths, fileFilter);
     }
     else {
+      final ProgressIndicator progressIndicator = context.getProgressIndicator();
       for (FileCopyInstructionImpl singleFileCopyInstruction : myChangedSet) {
+        progressIndicator.checkCanceled();
         singleFileCopyInstruction.addFilesToExploded(context, outputDir, writtenPaths, fileFilter);
       }
     }
