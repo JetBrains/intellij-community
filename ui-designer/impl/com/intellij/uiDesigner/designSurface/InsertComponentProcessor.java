@@ -9,11 +9,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
@@ -21,6 +19,7 @@ import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.uiDesigner.radComponents.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -317,11 +316,10 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   private boolean validateNestedFormInsert(final ComponentItem item) {
-    final PsiManager manager = PsiManager.getInstance(myEditor.getProject());
-    PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(item.getClassName());
-    if (boundForms.length > 0) {
+    PsiFile boundForm = item.getBoundForm();
+    if (boundForm != null) {
       try {
-        Utils.validateNestedFormLoop(GuiEditorUtil.buildResourceName(boundForms [0]), new PsiNestedFormLoader(myEditor.getModule()));
+        Utils.validateNestedFormLoop(GuiEditorUtil.buildResourceName(boundForm), new PsiNestedFormLoader(myEditor.getModule()));
       }
       catch(CodeGenerationException ex) {
         Messages.showErrorDialog(myEditor, ex.getMessage(), CommonBundle.getErrorTitle());
@@ -358,11 +356,10 @@ public final class InsertComponentProcessor extends EventProcessor {
         result = new RadToolBar(editor.getModule(), id);
       }
       else {
-        final PsiManager manager = PsiManager.getInstance(editor.getProject());
-        PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(item.getClassName());
-        if (boundForms.length > 0) {
+        PsiFile boundForm = item.getBoundForm();
+        if (boundForm != null) {
           try {
-            result = new RadNestedForm(editor.getModule(), GuiEditorUtil.buildResourceName(boundForms [0]), id);
+            result = new RadNestedForm(editor.getModule(), GuiEditorUtil.buildResourceName(boundForm), id);
           }
           catch(Exception ex) {
             result = RadErrorComponent.create(

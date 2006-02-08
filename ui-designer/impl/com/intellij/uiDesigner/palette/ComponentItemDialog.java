@@ -68,11 +68,10 @@ public final class ComponentItemDialog extends DialogWrapper{
     myEditorTextField.setFontInheritedFromLAF(true);
     myTfClassName = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, new MyChooseClassActionListener(project));
 
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    PsiFile[] boundForms = manager.getSearchHelper().findFormsBoundToClass(itemToBeEdited.getClassName());
-    if (boundForms.length > 0) {
+    PsiFile boundForm = itemToBeEdited.getBoundForm();
+    if (boundForm != null) {
       myNestedFormRadioButton.setSelected(true);
-      myTfNestedForm.setText(GuiEditorUtil.buildResourceName(boundForms [0]));
+      myTfNestedForm.setText(GuiEditorUtil.buildResourceName(boundForm));
     }
     else {
       myClassRadioButton.setSelected(true);
@@ -192,7 +191,14 @@ public final class ComponentItemDialog extends DialogWrapper{
                                CommonBundle.getErrorTitle());
       return false;
     }
-    myItemToBeEdited.setClassName(lwRootContainer.getClassToBind());
+    PsiClass psiClass = PsiManager.getInstance(myProject).findClass(lwRootContainer.getClassToBind(),
+                                                                    GlobalSearchScope.projectScope(myProject));
+    if (psiClass != null) {
+      myItemToBeEdited.setClassName(getClassOrInnerName(psiClass));
+    }
+    else {
+      myItemToBeEdited.setClassName(lwRootContainer.getClassToBind());
+    }
     return true;
   }
 
@@ -213,7 +219,7 @@ public final class ComponentItemDialog extends DialogWrapper{
     myTfNestedForm.setEnabled(myNestedFormRadioButton.isSelected());
   }
 
-  private String getClassOrInnerName(final PsiClass aClass) {
+  private static String getClassOrInnerName(final PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if(parentClass != null) {
       return getClassOrInnerName(parentClass) + "$" + aClass.getName();

@@ -1,7 +1,8 @@
 package com.intellij.uiDesigner.palette;
 
-import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -10,6 +11,7 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -294,6 +296,15 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     }
     if (dataId.equals(getClass().getName())) {
       return this;
+    }
+    return null;
+  }
+
+  @Nullable public PsiFile getBoundForm() {
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    PsiFile[] boundForms = psiManager.getSearchHelper().findFormsBoundToClass(myClassName.replace('$', '.'));
+    if (boundForms != null) {
+      return boundForms [0];
     }
     return null;
   }

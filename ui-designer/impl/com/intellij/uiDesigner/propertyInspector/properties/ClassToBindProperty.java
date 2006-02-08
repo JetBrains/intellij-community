@@ -139,7 +139,7 @@ public final class ClassToBindProperty extends Property {
 
         final Project project = myModule.getProject();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createNoInnerClassesScopeChooser(
+        final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
           new TreeClassChooser.ClassFilter() { // we need show classes from the sources roots only
