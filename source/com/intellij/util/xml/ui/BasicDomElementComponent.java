@@ -29,14 +29,18 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
   }
 
   protected void bindProperties() {
-    if (getDomElement() == null) return;
+      bindProperties(getDomElement());
+  }
 
-    final java.util.List<DomChildrenDescription> childrenDescriptions = getDomElement().getGenericInfo().getChildrenDescriptions();
+  protected void bindProperties(final DomElement domElement) {
+    if (domElement == null) return;
+
+    final java.util.List<DomChildrenDescription> childrenDescriptions = domElement.getGenericInfo().getChildrenDescriptions();
     for (DomChildrenDescription description : childrenDescriptions) {
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
-          final java.util.List<GenericDomValue> values = (java.util.List<GenericDomValue>)description.getValues(getDomElement());
+          final java.util.List<GenericDomValue> values = (java.util.List<GenericDomValue>)description.getValues(domElement);
           if (values.size() == 1) {
             DomUIControl control;
             if (boundComponent instanceof BigStringComponent) {
@@ -55,7 +59,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
           }
         }
         else if (description instanceof DomCollectionChildDescription) {
-          DomUIControl control = DomUIFactory.createCollectionControl(getDomElement(), (DomCollectionChildDescription)description);
+          DomUIControl control = DomUIFactory.createCollectionControl(domElement, (DomCollectionChildDescription)description);
           doBind(control, boundComponent);
         }
       }
