@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
-import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -343,13 +342,12 @@ public class RepositoryHelper {
     }
   }
 
-  public static void  ReadPluginsStream( File temp, InputStream is, JLabel label,
+  public static void  ReadPluginsStream( File temp, InputStream is,
                                          RepositoryContentHandler handler )
     throws SAXException, IOException, ParserConfigurationException
   {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     FileOutputStream fos = null;
-    int  total = 0;
     try {
       fos = new FileOutputStream(temp, false);
       byte [] buffer = new byte [1024];
@@ -358,7 +356,6 @@ public class RepositoryHelper {
         if (size == -1)
           break;
         fos.write(buffer, 0, size);
-        total += size;
       } while (true);
       fos.close();
       fos = null;
