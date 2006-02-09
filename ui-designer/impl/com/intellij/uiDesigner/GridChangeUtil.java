@@ -130,7 +130,7 @@ public final class GridChangeUtil {
    * @param mustBeEmpty
    * @return true if specified row/column can be deleted
    */
-  private static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean mustBeEmpty) {
+ public static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean mustBeEmpty) {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column

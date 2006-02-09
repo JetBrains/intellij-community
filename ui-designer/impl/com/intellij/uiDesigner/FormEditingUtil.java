@@ -50,6 +50,11 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final List<RadComponent> selection = getSelectedComponents(editor);
+    deleteComponents(editor, selection, true);
+    editor.refreshAndSave(true);
+  }
+
+  public static void deleteComponents(final GuiEditor editor, final List<RadComponent> selection, final boolean deleteEmptyCells) {
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
@@ -88,7 +93,7 @@ public final class FormEditingUtil {
           parent.setSelected(true);
         }
       }
-      if (delConstraints != null) {
+      if (delConstraints != null && deleteEmptyCells) {
         deleteEmptyGridCells(parent, delConstraints);
       }
 
@@ -125,8 +130,6 @@ public final class FormEditingUtil {
         return true;
       }
     });
-
-    editor.refreshAndSave(true);
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
