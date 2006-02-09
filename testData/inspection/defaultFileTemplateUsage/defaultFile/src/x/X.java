@@ -32,10 +32,29 @@ public class X implements Runnable{
     }
         
     public String toString() {
-        return super.toString();    //To change body of overridden methods use File | Settings | File Templates.
+     return super.toString();            //To change body of overridden methods use File | Settings | File Templates.
     }
 
     public void run() {
         //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    private void method() {
+        // hello
+    }
+    private int geti() {
+        return 0;
+    }
+    private void cat() {
+      try {
+      }
+      catch (Exception e) {
+       e.printStackTrace(); // hey
+      }
+    }
+     protected void finalize() throws Throwable {
+            super.finalize();    
+     }
+
 }
+
