@@ -227,20 +227,27 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
+    PsiFileSystemItem fileSystemItem = (PsiFileSystemItem) element;
+    VirtualFile dstVFile = null;
+    if (fileSystemItem instanceof PsiFile) dstVFile = ((PsiFile)fileSystemItem).getVirtualFile();
+    else if (fileSystemItem instanceof PsiDirectory) dstVFile = ((PsiDirectory)fileSystemItem).getVirtualFile();
 
     final PsiFile file = getElement().getContainingFile();
     final String newName;
     if (WebUtil.getWebModuleProperties(file) != null) {
       newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
+      if (newName == null) {
+        LOG.assertTrue(dstVFile != null); //for web directories path is never null
+        throw new IncorrectOperationException("Cannot find deployment path for " + dstVFile.getPresentableUrl());
+      }
     } else {
-      final VirtualFile dst = element.getContainingFile().getVirtualFile();
-      if (dst == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+      if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
       final VirtualFile currentFile = file.getVirtualFile();
       LOG.assertTrue(currentFile != null);
-      newName = VfsUtil.getPath(currentFile, dst, '/');
+      newName = VfsUtil.getPath(currentFile, dstVFile, '/');
       if (newName == null) {
         throw new IncorrectOperationException("Cannot find path between files; src = " +
-                                              currentFile.getPresentableUrl() + "; dst = " + dst.getPresentableUrl());
+                                              currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
       }
     }
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
