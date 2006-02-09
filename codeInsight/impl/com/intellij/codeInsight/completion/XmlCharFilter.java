@@ -18,8 +18,8 @@ public class XmlCharFilter implements CharFilter {
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){
       case ':':
-        return CharFilter.ADD_TO_PREFIX;
       case '.':
+        return CharFilter.ADD_TO_PREFIX;
       case ',':
       case ';':
       case '=':

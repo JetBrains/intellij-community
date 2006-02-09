@@ -10,19 +10,40 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.lang.StdLanguages;
 
 public class DefaultCharFilter implements CharFilter {
   private final PsiFile myFile;
+  private boolean myWithinLiteral;
   private CharFilter myDelegate = null;
 
-  public DefaultCharFilter(PsiFile file) {
+  public DefaultCharFilter(PsiFile file, int offset) {
     myFile = file;
 
+    final PsiElement psiElement = file.findElementAt(offset);
+
     if (myFile instanceof XmlFile) {
-      myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter() : new XmlCharFilter();
+      boolean inJavaContext = false;
+
+      if (psiElement != null) {
+        if (StdLanguages.JAVA.equals(psiElement.getLanguage())) {
+          inJavaContext = true;
+        }
+      }
+      
+      if (!inJavaContext) {
+        myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter() : new XmlCharFilter();
+      }
+    } else {
+
+      if (psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression) {
+        myWithinLiteral = true;
+      }
     }
   }
 
@@ -31,7 +52,7 @@ public class DefaultCharFilter implements CharFilter {
 
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){
-      case '.':
+      case '.': if (myWithinLiteral) return CharFilter.ADD_TO_PREFIX;
       case ',':
       case ';':
       case '=':

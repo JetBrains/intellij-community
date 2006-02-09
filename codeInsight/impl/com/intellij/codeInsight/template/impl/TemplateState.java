@@ -350,7 +350,7 @@ public class TemplateState implements Disposable {
     int currentSegmentNumber = getCurrentSegmentNumber();
     if (currentSegmentNumber < 0) return;
     int start = mySegments.getSegmentStart(currentSegmentNumber);
-    int end = mySegments.getSegmentEnd(currentSegmentNumber);
+    final int end = mySegments.getSegmentEnd(currentSegmentNumber);
     myEditor.getCaretModel().moveToOffset(end);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
@@ -385,7 +385,7 @@ public class TemplateState implements Disposable {
           final LookupManager lookupManager = LookupManager.getInstance(myProject);
           if (lookupManager.isDisposed()) return;
           final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, "", preferencePolicy,
-                                                         new DefaultCharFilter(psiFile));
+                                                         new DefaultCharFilter(psiFile, end));
           lookup
             .setCurrentItem(
               lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
