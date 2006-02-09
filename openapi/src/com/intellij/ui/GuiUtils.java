@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -181,14 +182,13 @@ public class GuiUtils {
   }
 
   public static int getDisplayedMnemonicIndex(String text) {
-    int mnemonicIndex = text.indexOf("&");
-    return mnemonicIndex;
+    return text.indexOf("&");
   }
 
   public static void packParentDialog(Component component) {
     while (component != null) {
       if (component instanceof JDialog) {
-        ((JDialog)component).show();
+        component.setVisible(true);
         break;
       }
       component = component.getParent();
@@ -256,15 +256,41 @@ public class GuiUtils {
     }
   }
 
-  public static void enableChildren(Component container, boolean enabled, JComponent[] excludeComponents) {
+  public static void iterateChildren(Component container, Consumer<Component> consumer, JComponent... excludeComponents) {
     if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) return;
-    enableComponent(container, enabled);
+    consumer.consume(container);
     if (container instanceof Container) {
       final Component[] components = ((Container)container).getComponents();
       for (Component child : components) {
-        enableChildren(child, enabled, excludeComponents);
+        iterateChildren(child, consumer, excludeComponents);
       }
     }
+  }
+
+  public static void iterateChildren(Consumer<Component> consumer, Component... components) {
+    for (final Component component : components) {
+      iterateChildren(component, consumer);
+    }
+  }
+
+  public static void enableChildren(final boolean enabled, Component... components) {
+    for (final Component component : components) {
+      enableChildren(component, enabled);
+    }
+  }
+
+  public static void showComponents(final boolean visible, Component... components) {
+    for (final Component component : components) {
+      component.setVisible(visible);
+    }
+  }
+
+  public static void enableChildren(Component container, final boolean enabled, JComponent... excludeComponents) {
+    iterateChildren(container, new Consumer<Component>() {
+      public void consume(final Component t) {
+        enableComponent(t, enabled);
+      }
+    }, excludeComponents);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -303,4 +329,5 @@ public class GuiUtils {
       }
     }
   }
+
 }
