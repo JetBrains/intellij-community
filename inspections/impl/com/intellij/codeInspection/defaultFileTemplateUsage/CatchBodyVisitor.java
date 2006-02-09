@@ -82,7 +82,7 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
         if (o1 == parameter && o2 == templateParameter) return 0;
         return -1;
       }
-    })) {
+    }, true)) {
       return;
     }
     Pair<? extends PsiElement, ? extends PsiElement> range = DefaultFileTemplateUsageInspection.getInteriorRange(catchBlock);

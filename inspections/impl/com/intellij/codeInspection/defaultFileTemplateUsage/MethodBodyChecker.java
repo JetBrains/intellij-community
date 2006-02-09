@@ -77,7 +77,7 @@ public class MethodBodyChecker {
         if (element1 == superMethod && (element2 == templateMethod || element2 == null)) return 0;
         return 1;
       }
-    })) {
+    }, true)) {
       Pair<? extends PsiElement, ? extends PsiElement> range = DefaultFileTemplateUsageInspection.getInteriorRange(body);
       final String description = InspectionsBundle.message("default.file.template.description");
       ProblemDescriptor problem = manager.createProblemDescriptor(range.first, range.second, description,

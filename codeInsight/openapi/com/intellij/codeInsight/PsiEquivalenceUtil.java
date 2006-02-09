@@ -22,20 +22,23 @@ import java.util.Comparator;
 public class PsiEquivalenceUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.PsiEquivalenceUtil");
 
-  public static boolean areElementsEquivalent(@NotNull PsiElement element1, @NotNull PsiElement element2, @Nullable Comparator<PsiElement> resolvedElementsComparator) {
+  public static boolean areElementsEquivalent(@NotNull PsiElement element1,
+                                              @NotNull PsiElement element2,
+                                              @Nullable Comparator<PsiElement> resolvedElementsComparator,
+                                              boolean areCommentsSignificant) {
     ASTNode node1 = element1.getNode();
     ASTNode node2 = element2.getNode();
     if (node1 == null || node2 == null) return false;
     if (node1.getElementType() != node2.getElementType()) return false;
 
-    PsiElement[] children1 = getFilteredChildren(element1);
-    PsiElement[] children2 = getFilteredChildren(element2);
+    PsiElement[] children1 = getFilteredChildren(element1, areCommentsSignificant);
+    PsiElement[] children2 = getFilteredChildren(element2, areCommentsSignificant);
     if (children1.length != children2.length) return false;
 
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator)) return false;
+      if (!areElementsEquivalent(child1, child2, resolvedElementsComparator, areCommentsSignificant)) return false;
     }
 
     if (children1.length == 0) {
@@ -55,14 +58,14 @@ public class PsiEquivalenceUtil {
 
   }
   public static boolean areElementsEquivalent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
-    return areElementsEquivalent(element1, element2, null);
+    return areElementsEquivalent(element1, element2, null, false);
   }
 
-  private static PsiElement[] getFilteredChildren(PsiElement element1) {
+  private static PsiElement[] getFilteredChildren(PsiElement element1, boolean areCommentsSignificant) {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child : children1) {
-      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment)) {
+      if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment))) {
         array.add(child);
       }
     }
@@ -81,7 +84,7 @@ public class PsiEquivalenceUtil {
                                          final PsiElement first,
                                          final PsiElement last,
                                          final List<Pair<PsiElement, PsiElement>> result) {
-    final PsiElement[] children = getFilteredChildren(scope);
+    final PsiElement[] children = getFilteredChildren(scope, true);
     NextChild:
     for (int i = 0; i < children.length;) {
       PsiElement child = children[i];
