@@ -79,8 +79,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
       //  Base class IdeaPluginDescriptor does not declare this field.
       long date = (o instanceof PluginNode) ? ((PluginNode)o).getDate() :
                                               ((IdeaPluginDescriptorImpl)o).getDate();
-//      if( date != Long.MAX_VALUE )
-      if( date != Long.MIN_VALUE )
+      if( date != 0 )
         return DateFormat.getDateInstance(DateFormat.MEDIUM).format( new Date( date ));
       else
         return IdeBundle.message("plugin.info.not.available");
