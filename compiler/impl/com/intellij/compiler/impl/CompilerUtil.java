@@ -197,8 +197,11 @@ public class CompilerUtil {
       commandLine.add("1.4");
     }
     else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
-      commandLine.add("-source");
-      commandLine.add("1.3");
+      if (isOfVersion(versionString, "1.4") || isOfVersion(versionString, "1.5")) {
+        //noinspection HardCodedStringLiteral
+        commandLine.add("-source");
+        commandLine.add("1.3");
+      }
     }
   }
 
