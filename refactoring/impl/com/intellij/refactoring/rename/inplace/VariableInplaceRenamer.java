@@ -68,6 +68,7 @@ public class VariableInplaceRenamer {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            int offset = editor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             assert scope != null;
             TextRange range = scope.getTextRange();
@@ -87,6 +88,9 @@ public class VariableInplaceRenamer {
                     }
                   }
                 });
+
+            //move to old offset
+            editor.getCaretModel().moveToOffset(offset);
           }
 
         });
