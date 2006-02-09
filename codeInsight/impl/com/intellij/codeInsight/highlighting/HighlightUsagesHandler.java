@@ -10,6 +10,7 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -25,8 +26,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,10 +38,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class HighlightUsagesHandler extends HighlightHandlerBase {
-  /*
-  private static final Object HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("HighlightUsagesHandler.HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
-  private static final Object MARKERS_IN_EDITOR_VIEW_KEY = Key.create("HighlightUsagesHandler.MARKERS_IN_EDITOR_VIEW_KEY");
-  */
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -59,6 +58,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
       selectionModel.selectWordAtCaret(false);
       String selection = selectionModel.getSelectedText();
+      LOG.assertTrue(selection != null);
       for (int i = 0; i < selection.length(); i++) {
         if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
           selectionModel.removeSelection();
@@ -109,7 +109,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     while (true) {
       result = findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
-      if (result == null || !result.isStringFound()) break;
+      if (!result.isStringFound()) break;
       highlightManager.addRangeHighlight(editor, result.getStartOffset(), result.getEndOffset(), attributes, false, highlighters);
       offset = result.getEndOffset();
       count++;
@@ -148,13 +148,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   private static class DoHighlightRunnable implements Runnable {
-    private PsiReference[] myRefs;
+    private Collection<PsiReference> myRefs;
     private Project myProject;
     private PsiElement myTarget;
     private Editor myEditor;
     private PsiFile myFile;
 
-    public DoHighlightRunnable(PsiReference[] refs, Project project, PsiElement target, Editor editor, PsiFile file) {
+    public DoHighlightRunnable(Collection<PsiReference> refs, Project project, PsiElement target, Editor editor, PsiFile file) {
       myRefs = refs;
       myProject = project;
       myTarget = target;
@@ -165,7 +165,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     public void run() {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile);
 
-      setStatusText(myTarget, myRefs.length, myProject);
+      setStatusText(myTarget, myRefs.size(), myProject);
 
       FindUsagesOptions options = new FindUsagesOptions(myProject);
       options.isUsages = true;
@@ -209,7 +209,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (myExceptionClasses.length == 1) {
         ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
         findExceptionThrownPlaces(refs, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
-        new DoHighlightRunnable(refs.toArray(new PsiReference[refs.size()]), myProject, myTarget,
+        new DoHighlightRunnable(refs, myProject, myTarget,
                                 myEditor, myFile).run();
       }
       else if (myExceptionClasses.length > 0) {
@@ -247,8 +247,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
             }
 
 
-            new DoHighlightRunnable(refs.toArray(new PsiReference[refs.size()]), myProject, myTarget,
-                                    myEditor, myFile).run();
+            new DoHighlightRunnable(refs, myProject, myTarget, myEditor, myFile).run();
           }
         };
 
@@ -365,14 +364,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
 
-    PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
     SearchScope searchScope = new LocalSearchScope(file);
-    PsiReference[] refs;
+    Collection<PsiReference> refs;
     if (target instanceof PsiMethod) {
-      refs = helper.findReferencesIncludingOverriding((PsiMethod)target, searchScope, true);
+      refs = MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
     }
     else {
-      refs = helper.findReferences(target, searchScope, false);
+      refs = ReferencesSearch.search(target, searchScope, false).findAll();
     }
 
     return new DoHighlightRunnable(refs, project, target, editor, file);
@@ -413,8 +411,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           if (exceptionTypes != null) {
             for (final PsiClassType actualType : exceptionTypes) {
               if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
-                if (!(statement.getException() instanceof PsiNewExpression)) continue;
-                PsiJavaCodeReferenceElement ref = ((PsiNewExpression) statement.getException()).getClassReference();
+                PsiExpression psiExpression = statement.getException();
+                if (!(psiExpression instanceof PsiNewExpression)) continue;
+                PsiJavaCodeReferenceElement ref = ((PsiNewExpression) psiExpression).getClassReference();
                 if (refs.contains(ref)) continue;
                 refs.add(ref);
               }
@@ -449,7 +448,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void highlightReferences(Project project,
                                    PsiElement element,
-                                   PsiReference[] refs,
+                                   Collection<PsiReference> refs,
                                    Editor editor,
                                    PsiFile file) {
 
@@ -472,8 +471,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           readRefs.add(ref);
         }
       }
-      doHighlightRefs(highlightManager, editor, readRefs.toArray(new PsiReference[readRefs.size()]), attributes);
-      doHighlightRefs(highlightManager, editor, writeRefs.toArray(new PsiReference[writeRefs.size()]), writeAttributes);
+      doHighlightRefs(highlightManager, editor, readRefs, attributes);
+      doHighlightRefs(highlightManager, editor, writeRefs, writeAttributes);
     }
     else {
       doHighlightRefs(highlightManager, editor, refs, attributes);
@@ -510,15 +509,16 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void doHighlightRefs(HighlightManager highlightManager,
                                Editor editor,
-                               PsiReference[] refs,
+                               Collection<PsiReference> refs,
                                TextAttributes attributes) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     Document document = editor.getDocument();
-    highlightManager.addOccurrenceHighlights(editor, refs, attributes, false, highlighters);
+    PsiReference[] refArray = refs.toArray(new PsiReference[refs.size()]);
+    highlightManager.addOccurrenceHighlights(editor, refArray, attributes, false, highlighters);
     int idx = 0;
     for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext(); idx++) {
       RangeHighlighter highlighter = iterator.next();
-      int offset = refs[idx].getElement().getTextRange().getStartOffset() + refs[idx].getRangeInElement().getStartOffset();
+      int offset = refArray[idx].getElement().getTextRange().getStartOffset() + refArray[idx].getRangeInElement().getStartOffset();
       setLineTextErrorStripeTooltip(document, offset, highlighter);
     }
   }
