@@ -195,8 +195,9 @@ public class HighlightMethodUtil {
   //@top
   public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                             List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                            boolean includeRealPositionInfo) {
+                                                            boolean includeRealPositionInfo, PsiClass analyzedClass) {
     PsiMethod method = methodSignature.getMethod();
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(method.getContainingClass(), analyzedClass, PsiSubstitutor.EMPTY);
     PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
@@ -223,7 +224,7 @@ public class HighlightMethodUtil {
     }
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions);
+      int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions, superSubstitutor);
       if (index != -1) {
         PsiClassType exception = checkedExceptions.get(index);
         String message = JavaErrorMessages.message("overridden.method.does.not.throw",
@@ -249,23 +250,24 @@ public class HighlightMethodUtil {
   // return number of exception  which was not declared in super method or -1
   private static int getExtraExceptionNum(final MethodSignature methodSignature,
                                           final MethodSignatureBackedByPsiMethod superSignature,
-                                          List<PsiClassType> checkedExceptions) {
+                                          List<PsiClassType> checkedExceptions, PsiSubstitutor substitutorForDerivedClass) {
     PsiMethod superMethod = superSignature.getMethod();
-    PsiSubstitutor superSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
-    if (superSubstitutor == null) return -1;
+    PsiSubstitutor substitutorForMethod = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
+    if (substitutorForMethod == null) return -1;
     for (int i = 0; i < checkedExceptions.size(); i++) {
-      PsiType exception = superSubstitutor.substitute(checkedExceptions.get(i));
-      if (!isMethodThrows(superMethod, superSubstitutor, exception)) {
+      PsiType exception = substitutorForDerivedClass.substitute(substitutorForMethod.substitute(checkedExceptions.get(i)));
+      if (!isMethodThrows(superMethod, substitutorForMethod, exception, substitutorForDerivedClass)) {
         return i;
       }
     }
     return -1;
   }
 
-  private static boolean isMethodThrows(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiType exception) {
+  private static boolean isMethodThrows(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiType exception, PsiSubstitutor substitutorForDerivedClass) {
     PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
     for (PsiClassType thrownException1 : thrownExceptions) {
       PsiType thrownException = substitutorForMethod.substitute(thrownException1);
+      thrownException = substitutorForDerivedClass.substitute(thrownException);
       if (TypeConversionUtil.isAssignable(thrownException, exception)) return true;
     }
     return false;
@@ -929,7 +931,7 @@ public class HighlightMethodUtil {
       }
 
       if (errorDescription == null) {
-        highlightInfo = checkMethodIncompatibleThrows(signature, superSignatures, false);
+        highlightInfo = checkMethodIncompatibleThrows(signature, superSignatures, false, aClass);
         if (highlightInfo != null) errorDescription = highlightInfo.description;
       }
 

@@ -70,12 +70,12 @@ public class PsiSuperMethodImplUtil {
                                            PsiSubstitutor substitutor,
                                            Set<PsiClass> visited,
                                            Map<MethodSignature, HierarchicalMethodSignatureImpl> signatures,
-                                           Map<MethodSignature, HierarchicalMethodSignatureImpl> result,
-                                           final Map<MethodSignature, HierarchicalMethodSignatureImpl> toRestore) {
+                                           Map<MethodSignature, HierarchicalMethodSignatureImpl> result
+  ) {
     if (visited.contains(aClass)) return;
     visited.add(aClass);
     final PsiMethod[] methods = aClass.getMethods();
-    Map<MethodSignature, HierarchicalMethodSignatureImpl> ownToRestore = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>();
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> toRestore = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>();
     for (PsiMethod method : methods) {
       final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor);
       final HierarchicalMethodSignatureImpl signatureHierarchical = new HierarchicalMethodSignatureImpl(signature);
@@ -84,11 +84,10 @@ public class PsiSuperMethodImplUtil {
           !existing.getMethod().isConstructor() &&
           !aClass.equals(existing.getMethod().getContainingClass())) {
         existing.addSuperSignature(signatureHierarchical);
-        ownToRestore.put(signature, existing);
+        toRestore.put(signature, existing);
       }
       else {
         result.put(signature, signatureHierarchical);
-        toRestore.put(signature, existing);
       }
       signatures.put(signature, signatureHierarchical);
     }
@@ -99,10 +98,10 @@ public class PsiSuperMethodImplUtil {
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
-      buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result, superClass.isInterface() ? ownToRestore : toRestore);
+      buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result);
     }
 
-    signatures.putAll(ownToRestore);
+    signatures.putAll(toRestore);
   }
 
   public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {
@@ -147,8 +146,8 @@ public class PsiSuperMethodImplUtil {
       final Map<MethodSignature, HierarchicalMethodSignatureImpl> map =
         new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
       Map<MethodSignature, HierarchicalMethodSignatureImpl> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignatureImpl>();
-      buildMethodHierarchy(myClass, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), map, result,
-                           new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>());
+      buildMethodHierarchy(myClass, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), map, result
+      );
       return new Result<Map<MethodSignature, HierarchicalMethodSignatureImpl>>
         (result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
