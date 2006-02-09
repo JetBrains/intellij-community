@@ -17,6 +17,8 @@ package com.intellij.j2ee.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -28,16 +30,16 @@ public interface BuildInstruction {
   String getOutputRelativePath();
   Module getModule();
 
-  void addFilesToJar(CompileContext context,
-                     File jarFile,
-                     JarOutputStream outputStream,
+  void addFilesToJar(@NotNull CompileContext context,
+                     @NotNull File jarFile,
+                     @NotNull JarOutputStream outputStream,
                      BuildRecipe dependencies,
-                     Set<String> writtenRelativePaths,
-                     FileFilter fileFilter) throws IOException;
-  void addFilesToExploded(CompileContext context,
-                          File outputDir,
-                          Set<String> writtenPaths,
-                          FileFilter fileFilter) throws IOException;
+                     @Nullable Set<String> writtenRelativePaths,
+                     @Nullable FileFilter fileFilter) throws IOException;
+  void addFilesToExploded(@NotNull CompileContext context,
+                          @NotNull File outputDir,
+                          @Nullable Set<String> writtenPaths,
+                          @Nullable FileFilter fileFilter) throws IOException;
   boolean accept(BuildInstructionVisitor visitor) throws Exception;
 
   boolean isExternalDependencyInstruction();

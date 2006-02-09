@@ -16,6 +16,8 @@
 package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -26,9 +28,10 @@ public interface BuildRecipe {
   boolean visitInstructions(BuildInstructionVisitor visitor, boolean reverseOrder);
   boolean visitInstructionsWithExceptions(BuildInstructionVisitor visitor, boolean reverseOrder) throws Exception;
 
-  void addAll(BuildRecipe buildRecipe);
-  void addFileCopyInstruction(File file,
-                              boolean isDirectory, Module module,
+  void addAll(@NotNull BuildRecipe buildRecipe);
+  void addFileCopyInstruction(@NotNull File file,
+                              boolean isDirectory,
+                              @NotNull Module module,
                               String outputRelativePath,
-                              FileFilter fileFilter);
+                              @Nullable FileFilter fileFilter);
 }

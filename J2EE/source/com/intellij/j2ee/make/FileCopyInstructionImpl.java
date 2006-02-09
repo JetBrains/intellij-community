@@ -36,10 +36,10 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     setFile(source, isDirectory);
   }
 
-  public void addFilesToExploded(CompileContext context,
-                                 File outputDir,
-                                 Set<String> writtenPaths,
-                                 FileFilter fileFilter) throws IOException {
+  public void addFilesToExploded(@NotNull CompileContext context,
+                                 @NotNull File outputDir,
+                                 @Nullable Set<String> writtenPaths,
+                                 @Nullable FileFilter fileFilter) throws IOException {
     if (myChangedSet == null) {
       final File to = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
       // todo check for recursive copying
@@ -82,12 +82,12 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     return file.exists() ? file : null;
   }
 
-  public void addFilesToJar(CompileContext context,
-                            File jarFile,
-                            JarOutputStream outputStream,
+  public void addFilesToJar(@NotNull CompileContext context,
+                            @NotNull File jarFile,
+                            @NotNull JarOutputStream outputStream,
                             BuildRecipe dependencies,
-                            Set<String> writtenRelativePaths,
-                            FileFilter fileFilter) throws IOException {
+                            @Nullable Set<String> writtenRelativePaths,
+                            @Nullable FileFilter fileFilter) throws IOException {
     final String outputRelativePath = getOutputRelativePath();
 
     File file = getFile();

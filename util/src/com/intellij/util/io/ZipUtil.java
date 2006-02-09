@@ -21,6 +21,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Enumeration;
@@ -40,11 +42,11 @@ public class ZipUtil {
   /*
    * Adds a new file entry to the ZIP output stream.
    */
-  public static boolean addFileToZip(ZipOutputStream zos,
-                                     File file,
-                                     String relativeName,
-                                     Set<String> writtenItemRelativePaths,
-                                     FileFilter fileFilter) throws IOException {
+  public static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter) throws IOException {
     while (relativeName.length() != 0 && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
@@ -82,12 +84,12 @@ public class ZipUtil {
     return true;
   }
 
-  public static boolean addFileOrDirRecursively(final ZipOutputStream jarOutputStream,
-                                                File jarFile,
-                                                File file,
-                                                String relativePath,
-                                                FileFilter fileFilter,
-                                                Set<String> writtenItemRelativePaths) throws IOException {
+  public static boolean addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream,
+                                                @NotNull File jarFile,
+                                                @NotNull File file,
+                                                @NotNull String relativePath,
+                                                @Nullable FileFilter fileFilter,
+                                                @Nullable Set<String> writtenItemRelativePaths) throws IOException {
     if (file.isDirectory()) {
       return addDirToZipRecursively(jarOutputStream, jarFile, file, relativePath, fileFilter, writtenItemRelativePaths);
     }
@@ -95,11 +97,12 @@ public class ZipUtil {
     return true;
   }
 
-  public static boolean addDirToZipRecursively(ZipOutputStream outputStream,
-                                               File jarFile, File dir,
-                                               String relativePath,
-                                               FileFilter fileFilter,
-                                               Set<String> writtenItemRelativePaths) throws IOException {
+  public static boolean addDirToZipRecursively(@NotNull ZipOutputStream outputStream,
+                                               @NotNull File jarFile,
+                                               @NotNull File dir,
+                                               @NotNull String relativePath,
+                                               @Nullable FileFilter fileFilter,
+                                               @Nullable Set<String> writtenItemRelativePaths) throws IOException {
     if (FileUtil.isAncestor(dir, jarFile, false)) {
       return false;
     }
@@ -194,10 +197,10 @@ public class ZipUtil {
   public static void update(InputStream in, OutputStream out, Map<String, File> relpathToFile) throws IOException {
     ZipInputStream zis = new ZipInputStream(in);
     ZipOutputStream zos = new ZipOutputStream(out);
-    ZipEntry e;
 
     try {
       // put the old entries first, replace if necessary
+      ZipEntry e;
       while ((e = zis.getNextEntry()) != null) {
         String name = e.getName();
 

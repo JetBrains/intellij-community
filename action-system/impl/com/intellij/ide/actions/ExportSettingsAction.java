@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +12,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -19,8 +20,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.jar.JarOutputStream;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ExportSettingsAction extends AnAction {
   @NonNls static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
@@ -37,9 +36,8 @@ public class ExportSettingsAction extends AnAction {
     Set<ExportableApplicationComponent> markedComponents = dialog.getExportableComponents();
     if (markedComponents.size() == 0) return;
     Set<File> exportFiles = new HashSet<File>();
-    for (Iterator iterator = markedComponents.iterator(); iterator.hasNext();) {
-      ExportableApplicationComponent component = (ExportableApplicationComponent)iterator.next();
-      final File[] files = component.getExportFiles();
+    for (final ExportableApplicationComponent markedComponent : markedComponents) {
+      final File[] files = markedComponent.getExportFiles();
       exportFiles.addAll(Arrays.asList(files));
     }
 
@@ -56,8 +54,7 @@ public class ExportSettingsAction extends AnAction {
       final JarOutputStream output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
       final File configPath = new File(PathManager.getConfigPath());
       final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
-      for (Iterator<File> iterator = exportFiles.iterator(); iterator.hasNext();) {
-        File file = iterator.next();
+      for (File file : exportFiles) {
         final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, file));
         if (file.exists()) {
           ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
@@ -79,15 +76,13 @@ public class ExportSettingsAction extends AnAction {
   public static Map<File, Set<ExportableApplicationComponent>> getRegisteredComponentsAndFiles(List<ExportableApplicationComponent> exportableComponents) {
     final Class[] interfaces = ApplicationManager.getApplication().getComponentInterfaces();
     Map<File,Set<ExportableApplicationComponent>> fileToComponents = new HashMap<File, Set<ExportableApplicationComponent>>();
-    for (int i = 0; i < interfaces.length; i++) {
-      final Class anInterface = interfaces[i];
+    for (final Class anInterface : interfaces) {
       final Object component = ApplicationManager.getApplication().getComponent(anInterface);
       if (component instanceof ExportableApplicationComponent) {
         ExportableApplicationComponent exportable = (ExportableApplicationComponent)component;
         exportableComponents.add(exportable);
         final File[] exportFiles = exportable.getExportFiles();
-        for (int j = 0; j < exportFiles.length; j++) {
-          File exportFile = exportFiles[j];
+        for (File exportFile : exportFiles) {
           Set<ExportableApplicationComponent> componentsTied = fileToComponents.get(exportFile);
           if (componentsTied == null) {
             componentsTied = new HashSet<ExportableApplicationComponent>();

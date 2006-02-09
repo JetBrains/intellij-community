@@ -18,11 +18,13 @@
  */
 package com.intellij.j2ee.make;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 
 public interface FileCopyInstruction extends BuildInstruction {
   File getFile();
-  void setFile(File file, boolean isDirectory);
+  void setFile(@NotNull File file, boolean isDirectory);
 
   boolean isDirectory();
 }

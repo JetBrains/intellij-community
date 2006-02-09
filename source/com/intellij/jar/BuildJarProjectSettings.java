@@ -99,7 +99,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
         if (buildJarSettings == null || !buildJarSettings.isBuildJar()) continue;
         String presentableJarPath = "'"+buildJarSettings.getJarPath()+"'";
         progressIndicator.setText(IdeBundle.message("jar.build.progress", presentableJarPath));
-        buildJar(module, buildJarSettings);
+        buildJar(module, buildJarSettings,progressIndicator);
         WindowManager.getInstance().getStatusBar(myProject).setInfo(IdeBundle.message("jar.build.success.message", presentableJarPath));
       }
     }
@@ -111,7 +111,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     }
   }
 
-  private static void buildJar(final Module module, final BuildJarSettings buildJarSettings) throws IOException {
+  private static void buildJar(final Module module, final BuildJarSettings buildJarSettings, final ProgressIndicator progressIndicator) throws IOException {
     ModuleContainer moduleContainer = buildJarSettings.getModuleContainer();
     String jarPath = buildJarSettings.getJarPath();
     final File jarFile = new File(jarPath);
@@ -140,15 +140,6 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
     final BuildRecipe dependencies = MakeUtil.getInstance().createBuildRecipe();
-    final FileFilter allFilesFilter = new FileFilter() {
-      public boolean accept(File f) {
-        return true;
-      }
-
-      public String getDescription() {
-        return IdeBundle.message("filter.all.file.types");
-      }
-    };
     try {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
@@ -158,10 +149,9 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
             File file = fileCopyInstruction.getFile();
             if (file == null || !file.exists()) return true;
             String presentablePath = FileUtil.toSystemDependentName(file.getPath());
-            ProgressManager.getInstance().getProgressIndicator().setText2(
-              IdeBundle.message("jar.build.processing.file.progress", presentablePath));
+            progressIndicator.setText2(IdeBundle.message("jar.build.processing.file.progress", presentablePath));
           }
-          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, allFilesFilter);
+          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
           return true;
         }
       }, false);

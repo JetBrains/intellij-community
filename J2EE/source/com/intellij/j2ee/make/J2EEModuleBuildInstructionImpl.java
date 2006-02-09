@@ -12,6 +12,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collection;
@@ -71,12 +73,12 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     return visitor.visitJ2EEModuleBuildInstruction(this);
   }
 
-  public void addFilesToJar(final CompileContext context,
-                            final File jarFile,
-                            final JarOutputStream outputStream,
+  public void addFilesToJar(@NotNull final CompileContext context,
+                            @NotNull final File jarFile,
+                            @NotNull final JarOutputStream outputStream,
                             BuildRecipe dependencies,
-                            final Set<String> writtenRelativePaths,
-                            final FileFilter fileFilter) throws IOException {
+                            @Nullable final Set<String> writtenRelativePaths,
+                            @Nullable final FileFilter fileFilter) throws IOException {
     // create temp jars, and add these into upper level jar
     // todo optimization: cache created jars
     final File tempFile;

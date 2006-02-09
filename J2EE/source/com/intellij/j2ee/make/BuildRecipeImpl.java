@@ -3,8 +3,10 @@
  */
 package com.intellij.j2ee.make;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.j2ee.J2EEBundle;
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -47,7 +49,7 @@ public class BuildRecipeImpl implements BuildRecipe {
     return true;
   }
 
-  public void addAll(BuildRecipe buildRecipe) {
+  public void addAll(@NotNull BuildRecipe buildRecipe) {
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
       public boolean visitInstruction(BuildInstruction instruction) throws RuntimeException {
         addInstruction(instruction);
@@ -56,10 +58,11 @@ public class BuildRecipeImpl implements BuildRecipe {
     }, false);
   }
 
-  public void addFileCopyInstruction(File file,
-                                     boolean isDirectory, Module module,
+  public void addFileCopyInstruction(@NotNull File file,
+                                     boolean isDirectory,
+                                     @NotNull Module module,
                                      String outputRelativePath,
-                                     FileFilter fileFilter) {
+                                     @Nullable FileFilter fileFilter) {
     if (fileFilter == null || fileFilter.accept(file)) {
       addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, MakeUtil.trimForwardSlashes(outputRelativePath),fileFilter));
     }

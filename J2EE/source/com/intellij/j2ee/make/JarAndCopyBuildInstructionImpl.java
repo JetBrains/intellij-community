@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Set;
@@ -42,12 +44,12 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     writtenPaths.add(myJarFile.getPath());
   }
 
-  public void addFilesToJar(CompileContext context,
-                            File jarFile,
-                            JarOutputStream outputStream,
+  public void addFilesToJar(@NotNull CompileContext context,
+                            @NotNull File jarFile,
+                            @NotNull JarOutputStream outputStream,
                             BuildRecipe dependencies,
-                            Set<String> writtenRelativePaths,
-                            FileFilter fileFilter) throws IOException {
+                            @Nullable Set<String> writtenRelativePaths,
+                            @Nullable FileFilter fileFilter) throws IOException {
     // create temp jars, and add these into upper level jar
     // todo optimization: cache created jars
     @NonNls final String moduleName = getModule() == null ? "jar" : ModuleUtil.getModuleNameInReadAction(getModule());
@@ -68,7 +70,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     }
   }
 
-  public void makeJar(CompileContext context, File jarFile, FileFilter fileFilter) throws IOException {
+  public void makeJar(@NotNull CompileContext context, @NotNull File jarFile, @Nullable FileFilter fileFilter) throws IOException {
     if (jarFile.equals(myJarFile)) return;
     if (myJarFile != null && myJarFile.exists()) {
       // optimization: file already jarred, copy it over
