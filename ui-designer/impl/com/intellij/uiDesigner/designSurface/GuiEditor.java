@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
@@ -19,10 +20,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -34,8 +31,11 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,6 +161,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private DesignDropTargetListener myDropTargetListener;
   private JLabel myFormInvalidLabel;
   private QuickFixManagerImpl myQuickFixManager;
+  private GridCaptionPanel myHorzCaptionPanel;
+  private GridCaptionPanel myVertCaptionPanel;
 
   /**
    * @param file file to be edited
@@ -236,7 +238,31 @@ public final class GuiEditor extends JPanel implements DataProvider {
     // Read form from file
     readFromFile(false);
 
-    myValidCard.add(new JScrollPane(myLayeredPane), BorderLayout.CENTER);
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBackground(Color.LIGHT_GRAY);
+
+    myHorzCaptionPanel = new GridCaptionPanel(this, false);
+    myVertCaptionPanel = new GridCaptionPanel(this, true);
+
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    gbc.weightx = 0.0;
+    gbc.weighty = 0.0;
+    gbc.fill = GridBagConstraints.BOTH;
+    panel.add(myVertCaptionPanel, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 0;
+    panel.add(myHorzCaptionPanel, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 1;
+    gbc.weightx = 1.0;
+    gbc.weighty = 1.0;
+    panel.add(myLayeredPane, gbc);
+
+    myValidCard.add(new JScrollPane(panel), BorderLayout.CENTER);
 
     final CancelCurrentOperationAction cancelCurrentOperationAction = new CancelCurrentOperationAction();
     cancelCurrentOperationAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
@@ -542,7 +568,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   public void refreshIntentionHint() {
-    myQuickFixManager.refreshIntentionHint();
+    //myQuickFixManager.refreshIntentionHint();
   }
 
   public static final class ReplaceInfo {

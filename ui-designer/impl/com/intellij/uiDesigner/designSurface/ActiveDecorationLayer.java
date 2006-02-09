@@ -264,9 +264,11 @@ final class ActiveDecorationLayer extends JComponent{
 
   public void paint(final Graphics g){
     // Active spots
+    /*
     layoutHorizontalSpots();
     layoutVerticalSpots();
     LOG.assertTrue(myVerticalSpots.size() == myHorizontalSpots.size());
+    */
 
     // Paint active decorators
     paintChildren(g);

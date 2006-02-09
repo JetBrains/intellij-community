@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.radComponents.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -189,6 +190,7 @@ public final class XmlReader {
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
       radRootContainer.setLayoutManager(lwRootContainer.getLayoutManager());
       radRootContainer.setButtonGroups(lwRootContainer.getButtonGroups());
+      radRootContainer.getDelegee().setBackground(Color.WHITE );
     }
 
     return component;
