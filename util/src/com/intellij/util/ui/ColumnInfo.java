@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -94,4 +95,10 @@ public abstract class ColumnInfo <Item, Aspect> {
   public void setName(String s) {
     myName = s;
   }
+
+  @Nullable
+  public String getTooltipText() {
+    return null;
+  }
+
 }
