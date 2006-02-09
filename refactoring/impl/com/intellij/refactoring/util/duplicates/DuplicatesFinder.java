@@ -4,6 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -11,9 +13,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.IntArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -64,9 +64,37 @@ public class DuplicatesFinder {
          exitPoints, exitStatements,
          ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
+
+      if (myMultipleExitPoints) {
+        removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
+      }
     }
     catch (AnalysisCanceledException e) {
     }
+  }
+
+  private void removeParametersUsedInExitsOnly(PsiElement codeFragment, ArrayList<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset) {
+    LocalSearchScope scope = new LocalSearchScope(codeFragment);
+    Variables:
+    for (Iterator<? extends PsiVariable> iterator = myParameters.iterator(); iterator.hasNext();) {
+      PsiVariable variable = iterator.next();
+      Collection<PsiReference> refs = ReferencesSearch.search(variable, scope).findAll();
+      for (PsiReference ref : refs) {
+        PsiElement element = ref.getElement();
+        int elementOffset = controlFlow.getStartOffset(element);
+        if (elementOffset >= startOffset && elementOffset <= endOffset) {
+          if (!isInExitStatements(element, exitStatements)) continue Variables;
+        }
+      }
+      iterator.remove();
+    }
+  }
+
+  private boolean isInExitStatements(PsiElement element, ArrayList<PsiStatement> exitStatements) {
+    for (PsiStatement exitStatement : exitStatements) {
+      if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
+    }
+    return false;
   }
 
 

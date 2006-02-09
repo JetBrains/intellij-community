@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -222,7 +223,11 @@ public class ExtractMethodProcessor implements MatchProvider {
                              ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
     }
 
-    myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
+    List<PsiVariable> inputVariables = new ArrayList<PsiVariable>(Arrays.asList(ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd)));
+    if (myGenerateConditionalExit) {
+      removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariables);
+    }
+    myInputVariables = inputVariables.toArray(new PsiVariable[inputVariables.size()]);
 
     //varargs variables go last
     Arrays.sort(myInputVariables, new Comparator<PsiVariable>() {
@@ -312,6 +317,30 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return true;
+  }
+
+  private void removeParametersUsedInExitsOnly(PsiElement codeFragment, List<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset, List<PsiVariable> inputVariables) {
+    LocalSearchScope scope = new LocalSearchScope(codeFragment);
+    Variables:
+    for (Iterator<? extends PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
+      PsiVariable variable = iterator.next();
+      Collection<PsiReference> refs = ReferencesSearch.search(variable, scope).findAll();
+      for (PsiReference ref : refs) {
+        PsiElement element = ref.getElement();
+        int elementOffset = controlFlow.getStartOffset(element);
+        if (elementOffset >= startOffset && elementOffset <= endOffset) {
+          if (!isInExitStatements(element, exitStatements)) continue Variables;
+        }
+      }
+      iterator.remove();
+    }
+  }
+
+  private boolean isInExitStatements(PsiElement element, List<PsiStatement> exitStatements) {
+    for (PsiStatement exitStatement : exitStatements) {
+      if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
+    }
+    return false;
   }
 
   private boolean shouldBeStatic() {
