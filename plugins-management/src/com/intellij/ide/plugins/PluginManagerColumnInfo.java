@@ -32,13 +32,15 @@ class PluginManagerColumnInfo extends ColumnInfo {
   public static final int COLUMN_VERSION = 7;
   public static final int COLUMN_STATE = 8;
   private static final float mgByte = 1024.0f * 1024.0f;
+  private static final float kByte = 1024.0f;
 
   private static final Color RED_COLOR = new Color (255, 231, 227);
   private static final Color GREEN_COLOR = new Color (232, 243, 221);
   private static final Color LIGHT_BLUE_COLOR = new Color (212, 222, 255);
   private static final Color HOTVERSION = new Color (255, 200, 170);
 
-  private static Date yearAgo, weekAgo;
+  private static Date yearAgo;
+  private static Date weekAgo;
 
   public static final String [] COLUMNS = {
 //      IdeBundle.message("column.plugins.status"),
@@ -89,32 +91,6 @@ class PluginManagerColumnInfo extends ColumnInfo {
     else
       // For COLUMN_STATUS - set of icons show the actual state of installed plugins.
       return "";
-    /*
-
-    if (o instanceof PluginNode) {
-      PluginNode plugin = ((PluginNode)o);
-      switch (columnIdx) {
-        case COLUMN_STATUS:
-          return PluginNode.STATUS_NAMES[ getRealNodeState( plugin ) ];
-      }
-    }
-    else
-    if (o instanceof IdeaPluginDescriptorImpl)
-    {
-      IdeaPluginDescriptorImpl descr = (IdeaPluginDescriptorImpl) o;
-      switch(columnIdx)
-      {
-        case COLUMN_STATE:
-          return descr.isDeleted() ?
-                 IdeBundle.message("status.plugin.will.be.removed.after.restart") :
-                 IdeBundle.message("status.plugin.installed");
-
-        default:
-          return "?";
-      }
-    } else
-      return "";
-        */
   }
 
   public Comparator getComparator()
@@ -280,6 +256,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
           return str1.compareToIgnoreCase( str2 );
     }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getFormattedSize( String size )
   {
     if( size.equals( "-1" )){
@@ -290,7 +267,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
     {
         if( size.length() < 7 )
         {
-            size = String.format("%.1f", (float)Integer.parseInt(size) / 1024.0f) + " K";
+            size = String.format("%.1f", (float)Integer.parseInt(size) / kByte) + " K";
         }
         else
         {
@@ -311,31 +288,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
 
         if( weekAgo.before( pluginDate ) )
             return PluginNode.STATUS_NEWEST;
-        /*
-        else if (node.getStatus() == PluginNode.STATUS_DELETED)
-          return PluginNode.STATUS_DELETED;
-        else if (node.getStatus() == PluginNode.STATUS_CART)
-          return PluginNode.STATUS_CART;
 
-
-        IdeaPluginDescriptor existing = PluginManager.getPlugin(node.getPluginId());
-
-        if( existing == null || existing.getVendor() == null ||
-            !existing.getVendor().equals(node.getVendor()) ){
-          return PluginNode.STATUS_MISSING;
-        }
-
-        int state = compareVersion(node.getVersion(), existing.getVersion());
-
-        if (state == 0)
-          return PluginNode.STATUS_CURRENT;
-        else if (state >= 1)
-          return PluginNode.STATUS_OUT_OF_DATE;
-        else if (state <= -1) {
-          return PluginNode.STATUS_NEWEST;
-        }
-
-        */
         return PluginNode.STATUS_MISSING;
     }
 

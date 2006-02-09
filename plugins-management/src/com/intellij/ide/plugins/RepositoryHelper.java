@@ -61,103 +61,9 @@ public class RepositoryHelper {
     }
   }
 
-  public static class CategoryTreeConstructor implements Runnable{
-    private String listURL;
-    private ProgressIndicator pi;
-    private CategoryNode root = null;
-
-    public CategoryTreeConstructor( String url, ProgressIndicator pi )
-    {
-      listURL = url;
-      this.pi = pi;
-    }
-
-    public CategoryNode  getRoot()
-    {
-      return root;
-    }
-
-    public void run()
-    {
-      try {
-        DoJob();
-      }
-      catch (RuntimeException e)
-      {
-        if( e.getCause() == null || !( e.getCause() instanceof InterruptedException))
-          throw e;
-      }
-      catch( Exception e)
-      {
-      }
-    }
-    private void DoJob()
-    throws SAXException, ParserConfigurationException, IOException
-    {
-      RepositoryContentHandler handler = new RepositoryContentHandler();
-      HttpURLConnection connection = (HttpURLConnection) new URL( listURL ).openConnection();
-      if(! pi.isCanceled())
-      {
-        InputStream is;
-        try {
-          is = connection.getInputStream();
-        }
-        catch (IOException e) {
-          is = null;
-        }
-        if( is != null )
-        {
-          File temp = CreateLocalPluginsDescriptions();
-          ReadPluginsStream( temp, is, handler, pi);
-        }
-      }
-    }
-  }
-  /*
-  public static CategoryNode makeCategoryTree (String url, ProgressIndicator pi )
-    throws SAXException, ParserConfigurationException, IOException {
-
-    pi.setText(IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
-    HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
-
-    if( pi.isCanceled())
-      return null;
-
-    RepositoryContentHandler handler = new RepositoryContentHandler();
-    HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
-    if (pi.isCanceled())
-      return null;
-
-    try {
-      pi.setText(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
-
-      InputStream is = getConnectionInputStream( connection, pi );
-      if (is == null)
-        return null;
-
-      pi.setText(IdeBundle.message("progress.downloading.list.of.plugins"));
-      File temp = CreateLocalPluginsDescriptions();
-      ReadPluginsStream( temp, is, handler, pi);
-
-    } catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof InterruptedException)
-        return null;
-      else
-        throw e;
-    }
-
-    return handler.getRoot();
-  }
-
-  */
-  public static File downloadPlugin (PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
-    ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-    String buildNumber = "";
-    try {
-      buildNumber = Integer.valueOf(ideInfo.getBuildNumber()).toString();
-    } catch (NumberFormatException e) {
-      buildNumber = "3000";
-    }
+  public static File downloadPlugin (PluginNode pluginNode, boolean packet, long count, long available) throws IOException
+  {
+    String buildNumber = ExtractBuildNumber();
 
     //noinspection HardCodedStringLiteral
     String url = DOWNLOAD_URL +
@@ -366,5 +272,18 @@ public class RepositoryHelper {
         fos.close();
       }
     }
+  }
+
+  public static String  ExtractBuildNumber()
+  {
+    String build;
+    ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    try {
+      build = Integer.valueOf(ideInfo.getBuildNumber()).toString();
+    }
+    catch (NumberFormatException e) {
+      build = "3000";
+    }
+    return build;
   }
 }

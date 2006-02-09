@@ -234,6 +234,7 @@ public class PluginManagerMain
       return handler.getRoot();
     }
 
+    /*
     private static CategoryNode LoadPluginsFromHostFore()
     {
       final StatusProcess statusProcess = new StatusProcess();
@@ -261,7 +262,7 @@ public class PluginManagerMain
         while (true);
         return statusProcess.getRoot();
     }
-
+    */
   private void  LoadPluginsFromHostInBackground()
   {
     SetDownloadStatus( true );
@@ -283,7 +284,6 @@ public class PluginManagerMain
 
   private void  StopLoadingPlugins( CategoryNode root )
   {
-    mySynchStatus.setText("Synching data...");
     ModifyPluginsList( root );
     SetDownloadStatus( false );
   }
