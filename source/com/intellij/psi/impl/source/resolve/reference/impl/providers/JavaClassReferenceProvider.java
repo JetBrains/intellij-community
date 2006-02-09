@@ -134,6 +134,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     myOptions = options;
   }
 
+  @Nullable
+  public Map<CustomizationKey, Object> getOptions() {
+    return myOptions;
+  }
+
   protected class ReferenceSet{
     private final @Nullable Map<CustomizationKey, Object> options = myOptions;
     private JavaReference[] myReferences;

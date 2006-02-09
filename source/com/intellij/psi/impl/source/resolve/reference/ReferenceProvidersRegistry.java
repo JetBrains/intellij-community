@@ -6,10 +6,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
@@ -24,6 +21,8 @@ import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.util.Function;
+import com.intellij.javaee.web.WebUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -346,11 +345,29 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
+    final PsiReferenceProvider pathReferenceProvider = getProviderByType(PATH_REFERENCES_PROVIDER);
+    final CustomizingReferenceProvider webXmlPathReferenceProvider = new CustomizingReferenceProvider(
+      (CustomizableReferenceProvider)pathReferenceProvider
+    );
+
+    webXmlPathReferenceProvider.addCustomization(
+      FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
+      new Function<PsiFile, PsiElement>() {
+        public PsiElement fun(final PsiFile file) {
+          return FileReferenceSet.getAbsoluteTopLevelDirLocation(
+            WebUtil.getWebModuleProperties(file),
+            file.getProject(),
+            file
+          );
+        }
+      }
+    );
+
     registerXmlTagReferenceProvider(
       new String[]{"welcome-file","location","taglib-location"},
       new NamespaceFilter(XmlUtil.WEB_XML_URIS),
       true,
-      getProviderByType(PATH_REFERENCES_PROVIDER)
+      webXmlPathReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(

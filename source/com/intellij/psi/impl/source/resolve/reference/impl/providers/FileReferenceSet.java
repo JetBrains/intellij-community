@@ -7,21 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,6 +39,13 @@ public class FileReferenceSet {
   private boolean myCaseSensitive;
   private String myPathString;
   private final boolean myAllowEmptyFileReferenceAtEnd;
+
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile,PsiElement>>
+    DEFAULT_PATH_EVALUATOR_OPTION = new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile,PsiElement>>(
+    PsiBundle.message("default.path.evaluator.option")
+  );
+
+  private final @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   public FileReferenceSet(String str,
                           PsiElement element,
@@ -67,6 +70,7 @@ public class FileReferenceSet {
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
     myAllowEmptyFileReferenceAtEnd = allowEmptyFileReferenceAtEnd;
+    myOptions = (provider instanceof CustomizableReferenceProvider) ? ((CustomizableReferenceProvider)provider).getOptions() : null;
 
     reparse(str);
   }
@@ -153,23 +157,22 @@ public class FileReferenceSet {
 
     if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return Collections.emptyList();
-    final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
+    if (myOptions != null) {
+      final Function<PsiFile,PsiElement> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
+
+      if (value != null) {
+        final PsiElement result = value.fun(file);
+        return result == null ?
+           Collections.<PsiElement>emptyList() :
+           Collections.singleton(result);
+      }
+    }
+
+    final WebModuleProperties properties = WebUtil.getWebModuleProperties(file);
 
     PsiElement result = null;
     if (myPathString.startsWith(SEPARATOR_STRING)) {
-      if (properties != null) {
-        result = JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
-      }
-      else {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null) {
-          final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
-            .getContentRootForFile(virtualFile);
-          if (contentRootForFile != null) {
-            result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
-          }
-        }
-      }
+      result = getAbsoluteTopLevelDirLocation(properties, project, file);
     }
     else {
       final PsiDirectory dir = file.getContainingDirectory();
@@ -187,6 +190,27 @@ public class FileReferenceSet {
     return result == null ?
            Collections.<PsiElement>emptyList() :
            Collections.singleton(result);
+  }
+
+  public static PsiElement getAbsoluteTopLevelDirLocation(final WebModuleProperties properties,
+                                                           final Project project,
+                                                           final PsiFile file) {
+    PsiElement result = null;
+
+    if (properties != null) {
+      result = JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
+    }
+    else {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
+          .getContentRootForFile(virtualFile);
+        if (contentRootForFile != null) {
+          result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
+        }
+      }
+    }
+    return result;
   }
 
   protected PsiScopeProcessor createProcessor(final List result, ReferenceType type) throws ProcessorRegistry.IncompatibleReferenceTypeException {

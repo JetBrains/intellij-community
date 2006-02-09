@@ -34,4 +34,5 @@ public interface CustomizableReferenceProvider extends PsiReferenceProvider {
   }
 
   void setOptions(@Nullable Map<CustomizationKey,Object> options);
+  @Nullable Map<CustomizationKey,Object> getOptions();
 }

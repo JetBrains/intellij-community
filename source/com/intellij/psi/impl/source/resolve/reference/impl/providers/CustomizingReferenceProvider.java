@@ -66,4 +66,9 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
     myOptions = options;  // merge ?
   }
+
+  @Nullable
+  public Map<CustomizationKey, Object> getOptions() {
+    return myOptions;
+  }
 }
