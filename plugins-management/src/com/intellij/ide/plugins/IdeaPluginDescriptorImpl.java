@@ -377,6 +377,23 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     return myDate;
   }
 
+  public void setVendor( final String val )
+  {
+    myVendor = val;
+  }
+  public void setVendorEmail( final String val )
+  {
+    myVendorEmail = val;
+  }
+  public void setVendorUrl( final String val )
+  {
+    myVendorUrl = val;
+  }
+  public void setUrl( final String val )
+  {
+    url = val;
+  }
+
   public ClassLoader getPluginClassLoader() {
     return myLoader != null ? myLoader : getClass().getClassLoader();
   }

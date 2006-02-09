@@ -200,10 +200,10 @@ public class PluginManagerMain
   private void  ModifyPluginsList( CategoryNode tempRoot )
   {
     if (root == null) {
-      genericModel.AddData(tempRoot);
+      genericModel.addData(tempRoot);
     }
     else {
-      genericModel.ModifyData(tempRoot);
+      genericModel.modifyData(tempRoot);
     }
 
     root = tempRoot;

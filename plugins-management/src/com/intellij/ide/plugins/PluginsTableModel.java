@@ -32,7 +32,7 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public void AddData( CategoryNode root )
+    public void addData( CategoryNode root )
     {
         ArrayList<IdeaPluginDescriptor> newList = new ArrayList<IdeaPluginDescriptor>();
         constructList( root, newList );
@@ -50,27 +50,13 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
             }
             else
             {
-              //  Almost all plugins do not set "category" tag in their "META-INF/plugin.xml"
-              //  descriptors. So while we are going neither to modify all descriptors nor to
-              //  insist that developers do we just set the category mentioned in overall list
-              //  to the existin descriptor if it is not set yet.
-              int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), existing.getVersion());
-              if( state > 0 )
-              {
-                  NewVersions2Plugins.put( existing.getPluginId(), Integer.valueOf(1) );
-              }
-              final String pluginCategory = descr.getCategory();
-              if( pluginCategory != null )
-              {
-                ((IdeaPluginDescriptorImpl)existing).setCategory( pluginCategory );
-              }
-              ((IdeaPluginDescriptorImpl)existing).setDownloadsCount( ((PluginNode)descr).getDownloads() );
+              updateExistingPluginInfo( (PluginNode)descr, existing );
             }
         }
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public void ModifyData( CategoryNode root )
+    public void  modifyData( CategoryNode root )
     {
         ArrayList<IdeaPluginDescriptor> newList = new ArrayList<IdeaPluginDescriptor>();
         constructList( root, newList );
@@ -106,33 +92,62 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
             }
             else
             {
+              updateExistingPluginInfo( (PluginNode) descr, existing );
+              /*
               int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), existing.getVersion());
               if( state > 0 )
               {
                   NewVersions2Plugins.put( existing.getPluginId(), Integer.valueOf(1) );
               }
               ((IdeaPluginDescriptorImpl)existing).setDownloadsCount( ((PluginNode)descr).getDownloads() );
+              */
             }
         }
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public static boolean hasNewerVersion( PluginId descr )
+  private static void  updateExistingPluginInfo( PluginNode descr, IdeaPluginDescriptor existing )
+  {
+    int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), existing.getVersion());
+    if( state > 0 )
     {
-      return NewVersions2Plugins.containsKey( descr );
+        NewVersions2Plugins.put( existing.getPluginId(), 1 );
     }
 
-      private static void constructList(CategoryNode start, ArrayList<IdeaPluginDescriptor> newList ) {
-        if (start.getPlugins() != null && start.getPlugins().size() > 0)
-        {
-            newList.addAll( start.getPlugins() );
-        }
+    //  Almost all plugins do not set "category" tag in their "META-INF/plugin.xml"
+    //  descriptors. So while we are going neither to modify all descriptors nor to
+    //  insist that developers do that, we just set the category mentioned in
+    //  overall list to the existin descriptor if it is not set yet.
 
-        if (start.getChildren() != null && start.getChildren().size() > 0)
-          for (int i = 0; i < start.getChildren().size(); i++)
-          {
-            CategoryNode categoryNode = start.getChildren().get(i);
-            constructList( categoryNode, newList );
-          }
+    final String pluginCategory = descr.getCategory();
+    final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
+    if( pluginCategory != null )
+    {
+      plugin.setCategory( pluginCategory );
+    }
+    plugin.setDownloadsCount( descr.getDownloads() );
+    plugin.setVendor( descr.getVendor() );
+    plugin.setVendorEmail( descr.getVendorEmail() );
+    plugin.setVendorUrl( descr.getVendorUrl() );
+    plugin.setUrl( descr.getUrl() );
+  }
+
+  public static boolean hasNewerVersion( PluginId descr )
+  {
+    return NewVersions2Plugins.containsKey( descr );
+  }
+
+  private static void constructList(CategoryNode start, ArrayList<IdeaPluginDescriptor> newList ) {
+    if (start.getPlugins() != null && start.getPlugins().size() > 0)
+    {
+        newList.addAll( start.getPlugins() );
+    }
+
+    if (start.getChildren() != null && start.getChildren().size() > 0)
+      for (int i = 0; i < start.getChildren().size(); i++)
+      {
+        CategoryNode categoryNode = start.getChildren().get(i);
+        constructList( categoryNode, newList );
       }
+  }
 }
