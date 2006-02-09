@@ -26,11 +26,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 21, 2004
- * Time: 7:56:45 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class HighlightManager {
   public static HighlightManager getInstance(Project project) {
