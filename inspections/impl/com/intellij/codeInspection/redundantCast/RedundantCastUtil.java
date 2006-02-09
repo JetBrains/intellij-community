@@ -9,15 +9,14 @@
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -47,6 +46,11 @@ public class RedundantCastUtil {
     MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
     parent.accept(visitor);
     return visitor.isRedundant();
+  }
+
+  private static PsiExpression deparenthesizeExpression(PsiExpression arg) {
+    while (arg instanceof PsiParenthesizedExpression) arg = ((PsiParenthesizedExpression) arg).getExpression();
+    return arg;
   }
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
@@ -130,8 +134,8 @@ public class RedundantCastUtil {
     }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
-      PsiExpression rExpr = PsiUtil.deparenthesizeExpression(expression.getLOperand());
-      PsiExpression lExpr = PsiUtil.deparenthesizeExpression(expression.getROperand());
+      PsiExpression rExpr = deparenthesizeExpression(expression.getLOperand());
+      PsiExpression lExpr = deparenthesizeExpression(expression.getROperand());
 
       if (rExpr != null && lExpr != null) {
         final IElementType binaryToken = expression.getOperationSign().getTokenType();
@@ -155,7 +159,7 @@ public class RedundantCastUtil {
     }
 
     private void processPossibleTypeCast(PsiExpression rExpr, PsiType lType) {
-      rExpr = PsiUtil.deparenthesizeExpression(rExpr);
+      rExpr = deparenthesizeExpression(rExpr);
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();
         if (castOperand != null) {
@@ -244,7 +248,7 @@ public class RedundantCastUtil {
       boolean[] typeCastCandidates = null;
       boolean hasCandidate = false;
       for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = PsiUtil.deparenthesizeExpression(args[i]);
+        PsiExpression arg = deparenthesizeExpression(args[i]);
         if (arg instanceof PsiTypeCastExpression) {
           if (oldMethod == null){
             oldMethod = expression.resolveMethod();
@@ -274,13 +278,13 @@ public class RedundantCastUtil {
       if (hasCandidate) {
         try {
           for (int i = 0; i < args.length; i++) {
-            final PsiExpression arg = PsiUtil.deparenthesizeExpression(args[i]);
+            final PsiExpression arg = deparenthesizeExpression(args[i]);
             if (typeCastCandidates[i]) {
               PsiCallExpression newCall = (PsiCallExpression)expression.copy();
               final PsiExpressionList argList = newCall.getArgumentList();
               LOG.assertTrue(argList != null);
               PsiExpression[] newArgs = argList.getExpressions();
-              PsiTypeCastExpression castExpression = (PsiTypeCastExpression)PsiUtil.deparenthesizeExpression(newArgs[i]);
+              PsiTypeCastExpression castExpression = (PsiTypeCastExpression)deparenthesizeExpression(newArgs[i]);
               PsiExpression castOperand = castExpression.getOperand();
               if (castOperand == null) return;
               castExpression.replace(castOperand);
@@ -311,7 +315,7 @@ public class RedundantCastUtil {
       PsiExpression operand = typeCast.getOperand();
       if (operand == null) return;
 
-      PsiElement expr = PsiUtil.deparenthesizeExpression(operand);
+      PsiElement expr = deparenthesizeExpression(operand);
 
       if (expr instanceof PsiTypeCastExpression) {
         PsiTypeElement typeElement = ((PsiTypeCastExpression)expr).getCastType();
