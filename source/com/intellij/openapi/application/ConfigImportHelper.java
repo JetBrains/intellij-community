@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
+import java.util.PropertyResourceBundle;
 
 /**
  * @author max
@@ -101,8 +102,7 @@ public class ConfigImportHelper {
     File[] launchFileCandidates = getLaunchFilesCandidates(oldInstallHome);
     for (File file : launchFileCandidates) {
       if (file.exists()) {
-        String parseString = getContent(file);
-        String configDir = PathManager.substituteVars(getConfigFromLaxFile(parseString), oldInstallHome.getPath());
+        String configDir = PathManager.substituteVars(getConfigFromLaxFile(file), oldInstallHome.getPath());
         if (configDir != null) {
           File probableConfig = new File(configDir);
           if (probableConfig.exists()) return probableConfig;
@@ -129,45 +129,55 @@ public class ConfigImportHelper {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static String getConfigFromLaxFile(String fileContent) {
-    String configParam = "idea.config.path=";
-    int idx = fileContent.indexOf(configParam);
-    if (idx == -1) {
-      configParam = "<key>idea.config.path</key>";
-      idx = fileContent.indexOf(configParam);
-      if (idx == -1) return null;
-      idx = fileContent.indexOf("<string>", idx);
-      if (idx == -1) return null;
-      idx += "<string>".length();
-      return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)), true);
-    }
-    else {
-      String configDir = "";
-      idx += configParam.length();
-      if (fileContent.length() > idx) {
-        if (fileContent.charAt(idx) == '"') {
-          idx++;
-          while ((fileContent.length() > idx) && (fileContent.charAt(idx) != '"') && (fileContent.charAt(idx) != '\n') &&
-                 (fileContent.charAt(idx) != '\r')) {
-            configDir += fileContent.charAt(idx);
-            idx++;
+  public static String getConfigFromLaxFile(File file) {
+      if (file.getName().endsWith(".properties")) {
+          try {
+              InputStream fis = new BufferedInputStream(new FileInputStream(file));
+              PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
+              fis.close();
+              return bundle.getString("idea.config.path");
+          } catch (IOException e) {
+              return null;
           }
-        }
-        else {
-          while ((fileContent.length() > idx) && (!Character.isSpaceChar(fileContent.charAt(idx))) &&
-                 (fileContent.charAt(idx) != '\n') &&
-                 (fileContent.charAt(idx) != '\r')) {
-            configDir += fileContent.charAt(idx);
-            idx++;
+      }
+
+      String fileContent = getContent(file);
+      String configParam = "idea.config.path=";
+      int idx = fileContent.indexOf(configParam);
+      if (idx == -1) {
+          configParam = "<key>idea.config.path</key>";
+          idx = fileContent.indexOf(configParam);
+          if (idx == -1) return null;
+          idx = fileContent.indexOf("<string>", idx);
+          if (idx == -1) return null;
+          idx += "<string>".length();
+          return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)), true);
+      } else {
+          String configDir = "";
+          idx += configParam.length();
+          if (fileContent.length() > idx) {
+              if (fileContent.charAt(idx) == '"') {
+                  idx++;
+                  while ((fileContent.length() > idx) && (fileContent.charAt(idx) != '"') && (fileContent.charAt(idx) != '\n') &&
+                          (fileContent.charAt(idx) != '\r')) {
+                      configDir += fileContent.charAt(idx);
+                      idx++;
+                  }
+              } else {
+                  while ((fileContent.length() > idx) && (!Character.isSpaceChar(fileContent.charAt(idx))) &&
+                          (fileContent.charAt(idx) != '\n') &&
+                          (fileContent.charAt(idx) != '\r')) {
+                      configDir += fileContent.charAt(idx);
+                      idx++;
+                  }
+              }
           }
-        }
+          configDir = fixDirName(configDir, true);
+          if (configDir.length() > 0) {
+              configDir = (new File(configDir)).getPath();
+          }
+          return configDir;
       }
-      configDir = fixDirName(configDir, true);
-      if (configDir.length() > 0) {
-        configDir = (new File(configDir)).getPath();
-      }
-      return configDir;
-    }
   }
 
   @Nullable
