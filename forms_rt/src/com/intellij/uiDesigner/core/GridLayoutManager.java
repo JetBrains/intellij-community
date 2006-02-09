@@ -551,6 +551,14 @@ public final class GridLayoutManager extends AbstractLayout {
     return myHeights;
   }
 
+  public int[] getCoords(boolean isRow) {
+    return isRow ? myYs : myXs;
+  }
+
+  public int[] getSizes(boolean isRow) {
+    return isRow ? myHeights : myWidths;
+  }
+
   /**
    * @return index of the row that contains point with <code>y</code> coordinate.
    *         If <code>y</code> doesn't belong to any row then the method returns <code>-1</code>.
