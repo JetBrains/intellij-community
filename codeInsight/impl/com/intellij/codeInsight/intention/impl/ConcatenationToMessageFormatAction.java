@@ -31,7 +31,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    PsiBinaryExpression concatenation = getEnclosingConcatenation(file, editor);
+    PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(file, editor);
     PsiManager manager = concatenation.getManager();
     StringBuffer formatString = new StringBuffer();
     List<PsiExpression> args = new ArrayList<PsiExpression>();
@@ -170,26 +170,28 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (PsiManager.getInstance(project).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) < 0) return false;
-    return getEnclosingConcatenation(file, editor) != null;
+    return getEnclosingLiteralConcatenation(file, editor) != null;
   }
 
-  private PsiBinaryExpression getEnclosingConcatenation(PsiFile file, Editor editor) {
+  public static PsiBinaryExpression getEnclosingLiteralConcatenation(PsiFile file, Editor editor) {
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    return getEnclosingConcatenation(elementAt);
+    return getEnclosingLiteralConcatenation(elementAt);
   }
 
-  public static PsiBinaryExpression getEnclosingConcatenation(final PsiElement psiElement) {
-    PsiBinaryExpression concatenation = null;
-    final PsiLiteralExpression literal = PsiTreeUtil.getParentOfType(psiElement, PsiLiteralExpression.class, false);
-    if (literal != null && literal.getValue() instanceof String) {
-      PsiElement run = literal;
-      while (run.getParent() instanceof PsiBinaryExpression &&
-             ((PsiBinaryExpression) run.getParent()).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
-        concatenation = (PsiBinaryExpression) run.getParent();
-        run = concatenation;
-      }
+  public static PsiBinaryExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+    PsiBinaryExpression parent = PsiTreeUtil.getParentOfType(psiElement, PsiBinaryExpression.class, false, PsiMember.class);
+    if (parent == null) return null;
+    PsiBinaryExpression concatenation=null;
+    while (true) {
+      if (!(parent.getLOperand() instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent.getLOperand()).getValue() instanceof String)
+       && !(parent.getROperand() instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent.getROperand()).getValue() instanceof String)) return concatenation;
+      if (parent.getOperationSign().getTokenType() != JavaTokenType.PLUS) return concatenation;
+
+      concatenation = parent;
+      PsiElement element= concatenation.getParent();
+      if (!(element instanceof PsiBinaryExpression)) return concatenation;
+      parent = (PsiBinaryExpression) element;
     }
-    return concatenation;
   }
 
   public boolean startInWriteAction() {
