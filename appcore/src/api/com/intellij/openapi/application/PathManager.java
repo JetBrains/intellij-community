@@ -336,6 +336,7 @@ public class PathManager {
   }
 
   public static String substituteVars(String s, final String ideaHomePath) {
+    if (s == null) return null;
     if (s.startsWith("..")) s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
     s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
     final Properties props = System.getProperties();
