@@ -293,6 +293,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   public static Boolean getConstBoolean(PsiExpression operand) {
     if (operand == null) return null;
     operand = PsiUtil.deparenthesizeExpression(operand);
+    if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }

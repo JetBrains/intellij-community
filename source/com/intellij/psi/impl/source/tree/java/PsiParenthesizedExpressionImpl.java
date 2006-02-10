@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiParenthesizedExpressionImpl extends CompositePsiElement implements PsiParenthesizedExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiParenthesizedExpressionImpl");
@@ -16,6 +17,7 @@ public class PsiParenthesizedExpressionImpl extends CompositePsiElement implemen
     super(PARENTH_EXPRESSION);
   }
 
+  @Nullable
   public PsiExpression getExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.EXPRESSION);
   }
