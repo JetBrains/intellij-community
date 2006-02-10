@@ -34,7 +34,6 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls private static final String SIZE = "size";
   @NonNls private static final String DATE = "date";
 
-//  private CategoryNode currentCategory;
   private PluginNode currentPlugin;
   private String currentValue;
   private ArrayList<IdeaPluginDescriptor> plugins;
@@ -43,11 +42,6 @@ class RepositoryContentHandler extends DefaultHandler {
 
   public void startDocument() throws SAXException
   {
-    /*
-    currentCategory = new CategoryNode();
-    currentCategory .setName("");
-    */
-
     plugins = new ArrayList<IdeaPluginDescriptor>();
     categoriesStack = new Stack<String>();
   }
@@ -55,29 +49,20 @@ class RepositoryContentHandler extends DefaultHandler {
   public void startElement(String namespaceURI, String localName,
                            String qName, Attributes atts)
     throws SAXException {
-    if (qName.equals(CATEGORY)) {
-      /*
-      CategoryNode categoryNode = new CategoryNode();
-      categoryNode.setName (atts.getValue(NAME));
-      categoryNode.setParent(currentCategory);
-
-      currentCategory.addChild(categoryNode);
-      currentCategory = categoryNode;
-      */
+    if (qName.equals(CATEGORY))
+    {
       categoriesStack.push( atts.getValue(NAME) );
     } else
     if (qName.equals(IDEA_PLUGIN))
     {
       String categoryName = constructCategoryTree();
       currentPlugin = new PluginNode();
-//      currentPlugin.setCategory(currentCategory.getName());
       currentPlugin.setCategory( categoryName );
       currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
       currentPlugin.setSize(atts.getValue(SIZE));
       currentPlugin.setUrl (atts.getValue(URL));
       currentPlugin.setDate (atts.getValue(DATE));
 
-//      currentCategory.addPlugin(currentPlugin);
       plugins.add( currentPlugin );
     }
     else if (qName.equals(IDEA_VERSION)) {
@@ -131,7 +116,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   private String constructCategoryTree()
   {
-    StringBuffer category = new StringBuffer("");
+    StringBuffer category = new StringBuffer( "" );
     for( int i = 0; i < categoriesStack.size(); i++ )
     {
       String str = categoriesStack.get( i );

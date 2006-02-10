@@ -1,6 +1,5 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -75,10 +74,6 @@ public class PluginManagerMain
   private JButton btnCancel;
   private JLabel mySynchStatus;
 
-  // actions
-  private AnAction installPluginAction;
-  private AnAction uninstallPluginAction;
-
   private PluginTable<IdeaPluginDescriptor> pluginTable;
   private ArrayList<IdeaPluginDescriptor> pluginsList;
 
@@ -128,7 +123,8 @@ public class PluginManagerMain
           IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
-              LaunchStringAction( pluginDescriptor.getVendorEmail(), "mailto:" );
+            //noinspection HardCodedStringLiteral
+            LaunchStringAction( pluginDescriptor.getVendorEmail(), "mailto:" );
           }
       }
       });
@@ -175,22 +171,29 @@ public class PluginManagerMain
 
     private void loadAvailablePlugins( boolean checkLocal )
     {
+      ArrayList<IdeaPluginDescriptor> list = null;
       try
       {
-          ArrayList<IdeaPluginDescriptor> plugins = loadPluginList( checkLocal );
-          if( plugins == null )
-          {
-              Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
-                                                       IdeBundle.message("title.plugins"));
-              return;
-          }
-          ModifyPluginsList( plugins );
+        //  If we already have a file with downloaded plugins from the last time,
+        //  then read it, load into the list and start the updating process.
+        //  Otherwise just start the process of loading the list and save it
+        //  into the persistent config file for later reading.
+        File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
+        if( file.exists() && checkLocal )
+        {
+          RepositoryContentHandler handler = new RepositoryContentHandler();
+          SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+          parser.parse( file, handler );
+          list = handler.getPluginsList();
+          ModifyPluginsList( list );
+        }
       }
       catch( Exception ex )
       {
-        Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.available.plugins.list.is.not.loaded"),
-                                 CommonBundle.getErrorTitle());
+        //  Nothing to do, just ignore - if nothing can be read from the local
+        //  file just start downloading of plugins' list from the site.
       }
+      LoadPluginsFromHostInBackground();
     }
 
   private void  ModifyPluginsList( ArrayList<IdeaPluginDescriptor> list )
@@ -205,26 +208,10 @@ public class PluginManagerMain
     pluginsList = list;
   }
 
-  private ArrayList<IdeaPluginDescriptor> loadPluginList( boolean checkLocal ) throws Exception
-  {
-    //  If we already have a file with downloaded plugins from the last time,
-    //  then read it, load into the list and start the updating process.
-    //  Otherwise just start the process of loading the list and save it
-    //  into the persistent config file for later reading.
-    ArrayList<IdeaPluginDescriptor> list = null;
-    File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
-    if( file.exists() && checkLocal )
-    {
-      RepositoryContentHandler handler = new RepositoryContentHandler();
-      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse( file, handler );
-      list = handler.getPluginsList();
-    }
-    LoadPluginsFromHostInBackground();
-
-    return list;
-  }
-
+  /**
+   * Start a new thread which downloads new list of plugins from the site in
+   * the background and updates a list of plugins in the table.
+   */
   private void  LoadPluginsFromHostInBackground()
   {
     SetDownloadStatus( true );
@@ -233,12 +220,23 @@ public class PluginManagerMain
       ArrayList<IdeaPluginDescriptor> list = null;
       public Object construct()
       {
-        list = StatusProcess.Process( mySynchStatus );
+        try
+        {
+          list = StatusProcess.Process( mySynchStatus );
+        }
+        catch( Exception e )
+        {
+          Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
+                                                   IdeBundle.message("title.plugins"));
+        }
         return list;
       }
 
       public void finished() {
-        ModifyPluginsList( list );
+        if( list != null )
+        {
+          ModifyPluginsList( list );
+        }
         SetDownloadStatus( false );
       }
     };
@@ -262,7 +260,8 @@ public class PluginManagerMain
 
         final String installTitle = IdeBundle.message("action.download.and.install.plugin");
         final String updateMessage = IdeBundle.message("action.update.plugin");
-        installPluginAction = new AnAction( installTitle, installTitle, IconLoader.getIcon("/actions/install.png"))
+
+        AnAction installPluginAction = new AnAction( installTitle, installTitle, IconLoader.getIcon("/actions/install.png"))
         {
           public void update(AnActionEvent e)
           {
@@ -281,7 +280,8 @@ public class PluginManagerMain
               {
                 presentation.setText(updateMessage);
                 presentation.setDescription(updateMessage);
-                enabled = PluginsTableModel.NewVersions2Plugins.containsKey( ((IdeaPluginDescriptorImpl)pluginObject).getPluginId() );
+                PluginId id = ((IdeaPluginDescriptorImpl)pluginObject).getPluginId();
+                enabled = PluginsTableModel.hasNewerVersion( id );
               }
 
             presentation.setEnabled(enabled);
@@ -306,11 +306,6 @@ public class PluginManagerMain
                   pluginNode.setName(pluginDescriptor.getName());
                   pluginNode.setDepends(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
                   pluginNode.setSize("-1");
-                  if( !PluginsTableModel.hasNewerVersion( pluginDescriptor.getPluginId() ) )
-                  {
-                    Messages.showMessageDialog(main, IdeBundle.message("message.nothing.to.update"), IdeBundle.message("title.plugin.manager"), Messages.getInformationIcon());
-                    return;
-                  }
                 }
 
                 final String message = isUpdate ? updateMessage : installTitle;
@@ -340,9 +335,9 @@ public class PluginManagerMain
         };
         actionGroup.add(installPluginAction);
 
-        uninstallPluginAction = new AnAction(IdeBundle.message("action.uninstall.plugin"),
-                                             IdeBundle.message("action.uninstall.plugin"),
-                                             IconLoader.getIcon("/actions/uninstall.png")) {
+        AnAction  uninstallPluginAction = new AnAction(IdeBundle.message("action.uninstall.plugin"),
+                                                       IdeBundle.message("action.uninstall.plugin"),
+                                                       IconLoader.getIcon("/actions/uninstall.png")) {
           public void update(AnActionEvent e)
           {
             Presentation presentation = e.getPresentation();
@@ -373,7 +368,6 @@ public class PluginManagerMain
                 PluginInstaller.prepareToUninstall(pluginId);
 
                 requireShutdown = true;
-
                 pluginTable.updateUI();
 
                 /*
