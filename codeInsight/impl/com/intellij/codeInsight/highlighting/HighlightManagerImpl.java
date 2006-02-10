@@ -22,7 +22,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
 
@@ -173,7 +176,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
-  protected void addOccurrenceHighlight(Editor editor,
+  public void addOccurrenceHighlight(Editor editor,
                                         int start,
                                         int end,
                                         TextAttributes attributes,
@@ -184,7 +187,9 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (highlightersVector != null) {
       highlightersVector.add(highlighter);
     }
-    highlighter.setErrorStripeMarkColor(scrollmarkColor);
+    if (scrollmarkColor != null) {
+      highlighter.setErrorStripeMarkColor(scrollmarkColor);
+    }
   }
 
   public void addRangeHighlight(Editor editor,

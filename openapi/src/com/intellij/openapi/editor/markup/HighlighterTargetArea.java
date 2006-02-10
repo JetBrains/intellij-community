@@ -15,18 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import org.jetbrains.annotations.NonNls;
-
-public class HighlighterTargetArea {
-  public static final HighlighterTargetArea EXACT_RANGE = new HighlighterTargetArea("EXACT_RANGE");
-  public static final HighlighterTargetArea LINES_IN_RANGE = new HighlighterTargetArea("LINES_IN_RANGE");
-  private String myDebugName;
-
-  private HighlighterTargetArea(@NonNls String debugName) {
-    myDebugName = debugName;
-  }
-
-  public String toString() {
-    return myDebugName;
-  }
+public enum HighlighterTargetArea {
+  EXACT_RANGE,
+  LINES_IN_RANGE
 }

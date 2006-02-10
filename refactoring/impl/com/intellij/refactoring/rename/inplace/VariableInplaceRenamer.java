@@ -3,6 +3,7 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -11,6 +12,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -18,15 +23,18 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -44,15 +52,17 @@ public class VariableInplaceRenamer {
   public void performInplaceRename(@NotNull final Editor editor) {
 
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<TextRange, TextAttributes>();
+    //it is crucial to highlight AFTER the template is started, so we collect ranges first
+    collectRangesToHighlight(rangesToHighlight, refs);
+
+    final HighlightManager highlightManager = HighlightManager.getInstance(VariableInplaceRenamer.this.myElementToRename.getProject());
     myElementToRename.getContainingFile();
-    ResolveSnapshot snapshot = null;
     final PsiElement scope = myElementToRename instanceof PsiParameter ?
         ((PsiParameter) myElementToRename).getDeclarationScope() :
         PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
-    if (scope != null) {
-      snapshot = ResolveSnapshot.createSnapshot(scope);
-    }
-
+    final ResolveSnapshot snapshot = scope == null ? null : ResolveSnapshot.createSnapshot(scope);
     final TemplateBuilder builder = new TemplateBuilder(scope);
 
     final Project project = myElementToRename.getProject();
@@ -63,7 +73,6 @@ public class VariableInplaceRenamer {
     for (PsiReference ref : refs) {
       addVariable(ref.getElement(), selectedElement, builder);
     }
-    final ResolveSnapshot snapshot1 = snapshot;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -77,12 +86,16 @@ public class VariableInplaceRenamer {
             TemplateManager.getInstance(project).startTemplate(editor, template,
                 new TemplateStateListener() {
                   public void templateFinished(Template template) {
-                    if (snapshot1 != null) {
+                    for (RangeHighlighter highlighter : highlighters) {
+                      highlightManager.removeSegmentHighlighter(editor, highlighter);
+                    }
+
+                    if (snapshot != null) {
                       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
                       if (templateState != null) {
                         String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
                         if (PsiManager.getInstance(project).getNameHelper().isIdentifier(newName)) {
-                          snapshot1.apply(newName);
+                          snapshot.apply(newName);
                         }
                       }
                     }
@@ -91,13 +104,47 @@ public class VariableInplaceRenamer {
 
             //move to old offset
             editor.getCaretModel().moveToOffset(offset);
+
+            //add highlights
+            addHighlights(rangesToHighlight, editor, highlighters, highlightManager);
           }
 
         });
       }
+
     }, RefactoringBundle.message("rename.title"), null);
 
 
+  }
+
+  private void collectRangesToHighlight(Map<TextRange,TextAttributes> rangesToHighlight, Collection<PsiReference> refs) {
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    PsiIdentifier nameId = myElementToRename.getNameIdentifier();
+    LOG.assertTrue(nameId != null);
+    rangesToHighlight.put(nameId.getTextRange(), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
+    for (PsiReference ref : refs) {
+      PsiElement element = ref.getElement();
+      TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
+      boolean isForWrite = element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
+      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(isForWrite ?
+                                                                                EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES :
+                                                                                EditorColors.SEARCH_RESULT_ATTRIBUTES);
+
+      rangesToHighlight.put(range, attributes);
+    }
+  }
+
+  private void addHighlights(Map<TextRange,TextAttributes> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters, HighlightManager highlightManager) {
+    for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
+      TextRange range = entry.getKey();
+      TextAttributes attributes = entry.getValue();
+      highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
+    }
+
+    for (RangeHighlighter highlighter : highlighters) {
+      highlighter.setGreedyToLeft(true);
+      highlighter.setGreedyToRight(true);
+    }
   }
 
   private PsiElement getSelectedInEditorElement(final PsiIdentifier nameIdentifier, final Collection<PsiReference> refs, final int offset) {
