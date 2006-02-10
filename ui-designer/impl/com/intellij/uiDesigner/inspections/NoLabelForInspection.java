@@ -92,6 +92,9 @@ public class NoLabelForInspection extends BaseFormInspection {
     }
 
     public void run() {
+      if (!myEditor.ensureEditable()) {
+        return;
+      }
       final Palette palette = Palette.getInstance(myEditor.getProject());
       IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel.getComponentClass());
       for(IntrospectedProperty prop: props) {
