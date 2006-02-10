@@ -217,7 +217,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }, ModalityState.NON_MMODAL);
 
     waitFor();
-    checkResults(name);
+    checkResults();
   }
 
   protected void copyTestProjectFiles(VirtualFileFilter filter) throws Exception {
@@ -238,7 +238,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     CompilerManager.getInstance(myProject).make(notification);
   }
 
-  private void checkResults(final String testName) {
+  private void checkResults() {
 
     final String[] deleted = myData.getDeletedByMake();
     final String deletedPathsString = buildPathsMessage(myDeletedPaths);
@@ -264,7 +264,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     //assertEquals(recompiled.length, getRecompiledCount());
   }
 
-  private String buildPathsMessage(final Collection<String> pathsSet) {
+  private static String buildPathsMessage(final Collection<String> pathsSet) {
     final StringBuffer message = new StringBuffer();
     for (String p : pathsSet) {
       message.append(" | \"").append(p).append("\"");
