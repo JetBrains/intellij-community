@@ -15,6 +15,7 @@ import java.util.ArrayList;
  */
 public class ComponentEditor extends ComboBoxPropertyEditor {
   private Class myPropertyType;
+  private String myOldValue;
 
   public ComponentEditor(final Class propertyType) {
     myPropertyType = propertyType;
@@ -25,8 +26,8 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
     RadComponent[] components = collectFocusableComponents(component);
     // components [0] = null (<none>)
     myCbx.setModel(new DefaultComboBoxModel(components));
-    String valueId = (String) value;
-    if (value == null || valueId.length() == 0) {
+    myOldValue = (String) value;
+    if (value == null || myOldValue.length() == 0) {
       myCbx.setSelectedIndex(0);
     }
     else {
@@ -69,6 +70,9 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
   @Override
   public Object getValue() throws Exception {
     final RadComponent selection = (RadComponent)myCbx.getSelectedItem();
-    return selection == null ? "" : selection.getId();
+    if (selection == null) {
+      return myOldValue == null ? null : "";
+    }
+    return selection.getId();
   }
 }
