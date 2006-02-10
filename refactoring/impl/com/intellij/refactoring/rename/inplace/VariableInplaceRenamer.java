@@ -211,9 +211,13 @@ public class VariableInplaceRenamer {
       VariableKind variableKind = codeStyleManager.getVariableKind(myElementToRename);
       String propertyName = codeStyleManager.variableNameToPropertyName(myElementToRename.getName(), variableKind);
       SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, myElementToRename.getType());
-      myLookupItems = new LookupItem[nameInfo.names.length];
+      List<String> names = new ArrayList<String>();
+      for (String suggestedName : nameInfo.names) {
+        if (!suggestedName.equals(myName)) names.add(suggestedName);
+      }
+      myLookupItems = new LookupItem[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
-        String suggestedName = nameInfo.names[i];
+        String suggestedName = names.get(i);
         myLookupItems[i] = new LookupItem(suggestedName, suggestedName);
       }
     }
