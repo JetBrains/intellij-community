@@ -32,7 +32,9 @@ import java.util.List;
 public class MetaRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
-  public static final String[] TAGLIB_URIS = new String[]{
+  public static final @NonNls String[] TAGLIB_URIS = new String[]{
+    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN",
+    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN",
     XmlUtil.TAGLIB_1_1_URI, 
     XmlUtil.TAGLIB_1_2_a_URI, 
     XmlUtil.TAGLIB_1_2_URI, 
