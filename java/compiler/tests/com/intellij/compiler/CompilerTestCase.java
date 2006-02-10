@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -118,7 +119,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           setup(name);
           up();
           doCompile(new CompileStatusNotification() {
-            public void finished(boolean aborted, int errors, int warnings) {
+            public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
                 assertTrue("Code compiled with errors or did not compile!", !aborted && errors == 0);
               } finally{
@@ -162,7 +163,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           }
           up();
           doCompile(new CompileStatusNotification() {
-            public void finished(boolean aborted, int errors, int warnings) {
+            public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
                 String prefix = myModuleRoot.getPath();
                 if (!StringUtil.endsWithChar(prefix, '/')) {
