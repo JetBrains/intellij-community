@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -210,7 +209,7 @@ public class TemplateState implements Disposable {
       new UndoableAction() {
         public void undo() throws UnexpectedUndoException {
           if (myDocument != null) {
-            setCurrentVariableNumber(-1);
+            finishTemplateEditing();
           }
         }
 
