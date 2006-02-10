@@ -11,11 +11,9 @@ import com.intellij.refactoring.util.ConflictsUtil;
  */
 public class ClassHidesUnqualifiableClassUsageInfo extends UnresolvableCollisionUsageInfo {
   private final PsiClass myHiddenClass;
-  private PsiClass myRenamedClass;
 
   public ClassHidesUnqualifiableClassUsageInfo(PsiJavaCodeReferenceElement element, PsiClass renamedClass, PsiClass hiddenClass) {
     super(element, renamedClass);
-    myRenamedClass = renamedClass;
     myHiddenClass = hiddenClass;
   }
 
