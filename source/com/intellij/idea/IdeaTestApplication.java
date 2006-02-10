@@ -35,6 +35,8 @@ public class IdeaTestApplication extends CommandLineApplication {
     return myDataContext == null ? null : myDataContext.getData(dataId);
   }
 
+
+
   public synchronized static IdeaTestApplication getInstance() throws IOException, InvalidDataException {
     if (ourInstance == null) {
       new IdeaTestApplication();

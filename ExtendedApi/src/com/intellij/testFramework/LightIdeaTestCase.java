@@ -51,7 +51,10 @@ import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A testcase that provides IDEA application and project. Note both are reused for each test run in the session so
@@ -86,23 +89,23 @@ import java.util.*;
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
-  protected static Module getModule() {
+  public static Module getModule() {
     return ourModule;
   }
 
   /**
    * Shortcut to PsiManager.getInstance(getProject())
    */
-  protected static PsiManager getPsiManager() {
+  public static PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(ourProject);
     }
     return ourPsiManager;
   }
 
-  private void initApplication() throws Exception {
+  static void initApplication(final DataProvider dataProvider) throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
-    ourApplication.setDataProvider(this);
+    ourApplication.setDataProvider(dataProvider);
   }
 
   private void cleanupApplicationCaches() {
@@ -150,10 +153,12 @@ import java.util.*;
 
   private static void initProject(final ProjectJdk projectJDK) throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       public void run() {
         if (ourProject != null) {
           ProjectUtil.closeProject(ourProject);
         }
+
         ourProject = ProjectManagerEx.getInstanceEx().newProject("LightIdeaTestCaseProject", false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
@@ -226,45 +231,47 @@ import java.util.*;
 
   protected void setUp() throws Exception {
     super.setUp();
-    doSetup();
+    doSetup(getProjectJDK(), configureLocalInspectionTools(), this, this.myAvailableTools);
   }
 
-  private void doSetup() throws Exception {
+  static void doSetup(final ProjectJdk projectJDK,
+                              final LocalInspectionTool[] localInspectionTools,
+                              final DataProvider dataProvider,
+                              final Map<String, LocalInspectionTool> availableToolsMap) throws Exception {
     assertNull("Previous test " + ourTestCase + " haven't called tearDown(). Probably overriden without super call.",
                ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
-    initApplication();
+    initApplication(dataProvider);
 
-    if (ourProject == null || isJDKChanged(getProjectJDK())) {
-      initProject(getProjectJDK());
+    if (ourProject == null || isJDKChanged(projectJDK)) {
+      initProject(projectJDK);
     }
 
-    final LocalInspectionTool[] tools = configureLocalInspectionTools();
-    for (LocalInspectionTool tool : tools) {
-      enableInspectionTool(tool);
+    for (LocalInspectionTool tool : localInspectionTools) {
+      _enableInspectionTool(tool, availableToolsMap);
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
       public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
+        final Collection<LocalInspectionTool> tools = availableToolsMap.values();
         return tools.toArray(new LocalInspectionTool[tools.size()]);
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
         if (key == null) return false;
-        return myAvailableTools.containsKey(key.toString()) || isNonInspectionHighlighting(key);
+        return availableToolsMap.containsKey(key.toString()) || isNonInspectionHighlighting(key);
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
-        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
+        final LocalInspectionTool localInspectionTool = availableToolsMap.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
 
       public InspectionTool getInspectionTool(String shortName) {
-        if (myAvailableTools.containsKey(shortName)) {
-          return new LocalInspectionToolWrapper(myAvailableTools.get(shortName));
+        if (availableToolsMap.containsKey(shortName)) {
+          return new LocalInspectionToolWrapper(availableToolsMap.get(shortName));
         }
         return null;
       }
@@ -279,21 +286,17 @@ import java.util.*;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
   }
 
-  protected Set<String> getAvailableInspections(){
-    return myAvailableTools.keySet();
+  protected void enableInspectionTool(LocalInspectionTool tool){
+    _enableInspectionTool(tool, myAvailableTools);
   }
 
-  protected void enableInspectionTool(LocalInspectionTool tool){
+  private static void _enableInspectionTool(final LocalInspectionTool tool, final Map<String, LocalInspectionTool> availableToolsMap) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
     }
-    myAvailableTools.put(shortName, tool);
-  }
-
-  protected void disableInspectionTool(String shortName){
-    myAvailableTools.remove(shortName);
+    availableToolsMap.put(shortName, tool);
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
@@ -305,7 +308,7 @@ import java.util.*;
     doTearDown();
   }
 
-  private static void doTearDown() throws Exception {
+  static void doTearDown() throws Exception {
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());

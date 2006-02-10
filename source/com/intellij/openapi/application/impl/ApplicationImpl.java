@@ -708,6 +708,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertReadAccessAllowed() {
+    if (myTestModeFlag) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
@@ -771,28 +772,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     */
   }
 
-  /**
-   * Overriden in Visual Fabrique
-   */
   protected void assertCanRunWriteAction() {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
-    /*
-    if (!isDispatchThread()) {
-      LOG.error();
-    }
-    else{
-      if (!IdeEventQueue.getInstance().isInInputEvent() && !LaterInvocator.isInMyRunnable()) {
-        LOG.error("Write actions are allowed only inside input event processing or LaterInvocator.invokeLater");
-      }
-    }
-    */
   }
 
   public void assertIsDispatchThread() {
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private static void assertIsDispatchThread(String message) {
+  private void assertIsDispatchThread(String message) {
+    if (myTestModeFlag) return;
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 
