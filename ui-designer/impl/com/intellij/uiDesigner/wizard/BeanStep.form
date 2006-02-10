@@ -4,15 +4,15 @@
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="120" y="88" width="383" height="210"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="bdf40" class="javax.swing.JRadioButton" binding="myRbBindToNewBean">
         <constraints>
-          <xy x="0" y="0" width="110" height="22"/>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <xy x="2" y="2" width="110" height="22"/>
+          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="radio.create.new.bean"/>
@@ -20,8 +20,8 @@
       </component>
       <component id="d00f2" class="javax.swing.JLabel">
         <constraints>
-          <xy x="20" y="30" width="33" height="14"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="22" y="32" width="33" height="14"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="editbox.class"/>
@@ -29,8 +29,8 @@
       </component>
       <component id="9326f" class="javax.swing.JTextField" binding="myTfShortClassName">
         <constraints>
-          <xy x="78" y="27" width="305" height="20"/>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
+          <xy x="80" y="29" width="301" height="20"/>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0"/>
         </constraints>
         <properties>
           <columns value="25"/>
@@ -38,8 +38,8 @@
       </component>
       <component id="370ca" class="javax.swing.JLabel">
         <constraints>
-          <xy x="20" y="55" width="48" height="14"/>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="22" y="57" width="48" height="14"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <inheritsPopupMenu value="true"/>
@@ -48,22 +48,22 @@
       </component>
       <hspacer id="c7908">
         <constraints>
-          <xy x="0" y="31" width="20" height="11"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
+          <xy x="2" y="33" width="20" height="11"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0">
             <preferred-size width="20" height="-1"/>
           </grid>
         </constraints>
       </hspacer>
       <hspacer id="50aef">
         <constraints>
-          <xy x="0" y="128" width="20" height="11"/>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1"/>
+          <xy x="2" y="130" width="20" height="11"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0"/>
         </constraints>
       </hspacer>
       <component id="412f8" class="javax.swing.JRadioButton" binding="myRbBindToExistingBean">
         <constraints>
-          <xy x="0" y="97" width="127" height="22"/>
-          <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <xy x="2" y="99" width="127" height="22"/>
+          <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="radio.bind.to.existing.bean"/>
@@ -71,8 +71,8 @@
       </component>
       <component id="cc4af" class="javax.swing.JLabel">
         <constraints>
-          <xy x="20" y="127" width="33" height="14"/>
-          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+          <xy x="22" y="129" width="33" height="14"/>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/UIDesignerBundle" key="editbox.class.2"/>
@@ -80,29 +80,29 @@
       </component>
       <component id="9b7be" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfWitgBtnChooseClass">
         <constraints>
-          <xy x="78" y="124" width="305" height="20"/>
-          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+          <xy x="80" y="126" width="301" height="20"/>
+          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0"/>
         </constraints>
         <properties/>
       </component>
       <vspacer id="3b24c">
         <constraints>
-          <xy x="38" y="144" width="11" height="66"/>
-          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="40" y="146" width="11" height="62"/>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
         </constraints>
       </vspacer>
       <vspacer id="6822f">
         <constraints>
-          <xy x="38" y="77" width="11" height="20"/>
-          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2">
+          <xy x="40" y="79" width="11" height="20"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0">
             <preferred-size width="-1" height="20"/>
           </grid>
         </constraints>
       </vspacer>
       <component id="45bb6" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfWithBtnChoosePackage">
         <constraints>
-          <xy x="78" y="52" width="305" height="20"/>
-          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+          <xy x="80" y="54" width="301" height="20"/>
+          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0"/>
         </constraints>
         <properties/>
       </component>
