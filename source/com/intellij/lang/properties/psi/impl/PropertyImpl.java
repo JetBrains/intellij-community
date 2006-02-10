@@ -7,19 +7,18 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 30, 2005
- * Time: 9:15:02 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertyImpl extends PropertiesElementImpl implements Property {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
+
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -31,7 +30,8 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name,"xxx");
     ASTNode keyNode = getKeyNode();
-    @NotNull ASTNode newKeyNode = property.getKeyNode();
+    ASTNode newKeyNode = property.getKeyNode();
+    LOG.assertTrue(newKeyNode != null);
     if (keyNode == null) {
       getNode().addChild(newKeyNode);
     }
