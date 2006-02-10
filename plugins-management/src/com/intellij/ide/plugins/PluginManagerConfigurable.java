@@ -87,7 +87,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
         ApplicationManagerEx.getApplicationEx().exit(true);        
       }
       else {
-        myPluginManagerMain.ignoreChages ();
+        myPluginManagerMain.ignoreChanges ();
       }
     }
   }

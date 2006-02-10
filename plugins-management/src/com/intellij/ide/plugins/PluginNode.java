@@ -24,7 +24,6 @@ public class PluginNode implements IdeaPluginDescriptor
     public static final int STATUS_NEWEST = 4;
     public static final int STATUS_DOWNLOADED = 5;
     public static final int STATUS_DELETED = 6;
-    public static final int STATUS_CART = 7;
 
     public static final String [] STATUS_NAMES = {
 //        IdeBundle.message("plugin.status.unknown"),
@@ -33,16 +32,13 @@ public class PluginNode implements IdeaPluginDescriptor
 //        IdeBundle.message("plugin.status.not.installed"),
         "-",
 //        IdeBundle.message("plugin.status.installed"),
-        "o",
+        "*",
 //        IdeBundle.message("plugin.status.newest"),
         "!",
-//        IdeBundle.message("plugin.status.downloaded"),     // downloaded, but not activated
+//        IdeBundle.message("plugin.status.downloaded"),  // downloaded, but not activated
         "+",     // downloaded, but not activated
-        IdeBundle.message("plugin.status.uninstalled"),    // uninstalled, but not activated
-        IdeBundle.message("plugin.status.shopping.cart")   // added to the Shopping Cart
+        IdeBundle.message("plugin.status.uninstalled")    // uninstalled, but not activated
     };
-
-    private CategoryNode parent;
 
     private PluginId id;
     private String name;
@@ -52,6 +48,7 @@ public class PluginNode implements IdeaPluginDescriptor
     private String sinceBuild;
     private String changeNotes;
     private String downloads;
+    private String category;
     private String size;
     private String vendorEmail;
     private String vendorUrl;
@@ -71,9 +68,9 @@ public class PluginNode implements IdeaPluginDescriptor
         this.id = id;
     }
 
-    public void setParent(CategoryNode parent)
+    public void setCategory( String category )
     {
-        this.parent = parent;
+        this.category = category;
     }
 
     public String getName()
@@ -97,7 +94,7 @@ public class PluginNode implements IdeaPluginDescriptor
 
     public String getCategory()
     {
-        return parent.getName();
+      return category;
     }
 
     /**
@@ -248,7 +245,7 @@ public class PluginNode implements IdeaPluginDescriptor
 
     public void setDate(String date)
     {
-        this.date = Long.valueOf( date );
+        this.date = Long.valueOf(date).longValue();
     }
 
     public long getDate()
@@ -267,10 +264,7 @@ public class PluginNode implements IdeaPluginDescriptor
         {
             return name.equals(((PluginNode)object).getName());
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     public List<PluginId> getDepends()

@@ -79,38 +79,34 @@ public class PluginManagerMain
   private AnAction installPluginAction;
   private AnAction uninstallPluginAction;
 
-  private PluginTable<IdeaPluginDescriptor> installedPluginTable;
-
-  private ActionToolbar toolbar;
-  private CategoryNode root;
+  private PluginTable<IdeaPluginDescriptor> pluginTable;
+  private ArrayList<IdeaPluginDescriptor> pluginsList;
 
   private boolean requireShutdown = false;
 
+  private ActionToolbar toolbar;
   private DefaultActionGroup actionGroup;
-  private final SortableProvider myInstalledProvider;
   private PluginsTableModel genericModel;
 
   public PluginManagerMain(SortableProvider installedProvider )
   {
-    myInstalledProvider = installedProvider;
-
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
-    genericModel = new PluginsTableModel(myInstalledProvider);
-    installedPluginTable = new PluginTable<IdeaPluginDescriptor>( genericModel );
+    genericModel = new PluginsTableModel(installedProvider);
+    pluginTable = new PluginTable<IdeaPluginDescriptor>( genericModel );
 
-    installedScrollPane.getViewport().setBackground(installedPluginTable.getBackground());
-    installedScrollPane.getViewport().setView(installedPluginTable);
-    installedPluginTable.getSelectionModel().addListSelectionListener(
+    installedScrollPane.getViewport().setBackground(pluginTable.getBackground());
+    installedScrollPane.getViewport().setView(pluginTable);
+    pluginTable.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e)
         {
-          pluginInfoUpdate(installedPluginTable.getSelectedObject());
+          pluginInfoUpdate(pluginTable.getSelectedObject());
           toolbar.updateActionsImmediately();
         }
     });
-    PopupHandler.installUnknownPopupHandler(installedPluginTable, getActionGroup(), ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(), ActionManager.getInstance());
 
     myToolbarPanel.setLayout(new BorderLayout());
     toolbar = ActionManagerEx.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
@@ -129,7 +125,7 @@ public class PluginManagerMain
     myVendorEmailLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e)
       {
-          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
               LaunchStringAction( pluginDescriptor.getVendorEmail(), "mailto:" );
@@ -141,7 +137,7 @@ public class PluginManagerMain
     myVendorUrlLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e)
       {
-          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
               LaunchStringAction( pluginDescriptor.getVendorEmail(), "" );
@@ -153,7 +149,7 @@ public class PluginManagerMain
     myPluginUrlLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e)
       {
-          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
           if( pluginDescriptor != null )
           {
               LaunchStringAction( pluginDescriptor.getVendorEmail(), "" );
@@ -161,16 +157,16 @@ public class PluginManagerMain
       }
     });
 
-    new MySpeedSearchBar( installedPluginTable );
+    new MySpeedSearchBar( pluginTable );
 
     //  Due to the problem that SwingWorker must invoke "finished" in the
     //  appropriate modality state (and at this point modality state differs
     //  from that in which dialog will be updated) we have to wait until
     //  the components (any) is shown - this is the guarantee that modality
     //  state is set to the needed one.
-    installedPluginTable.addHierarchyListener(new HierarchyListener() {
+    pluginTable.addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0 && installedPluginTable.isShowing()) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0 && pluginTable.isShowing()) {
           loadAvailablePlugins(true);
         }
       }
@@ -181,14 +177,14 @@ public class PluginManagerMain
     {
       try
       {
-          CategoryNode tempRoot = loadPluginList( checkLocal );
-          if( tempRoot == null )
+          ArrayList<IdeaPluginDescriptor> plugins = loadPluginList( checkLocal );
+          if( plugins == null )
           {
               Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
                                                        IdeBundle.message("title.plugins"));
               return;
           }
-          ModifyPluginsList( tempRoot );
+          ModifyPluginsList( plugins );
       }
       catch( Exception ex )
       {
@@ -197,95 +193,56 @@ public class PluginManagerMain
       }
     }
 
-  private void  ModifyPluginsList( CategoryNode tempRoot )
+  private void  ModifyPluginsList( ArrayList<IdeaPluginDescriptor> list )
   {
-    if (root == null) {
-      genericModel.addData(tempRoot);
+    if (pluginsList == null) {
+      genericModel.addData( list );
     }
     else {
-      genericModel.modifyData(tempRoot);
+      genericModel.modifyData( list );
     }
 
-    root = tempRoot;
+    pluginsList = list;
   }
 
-    private CategoryNode loadPluginList( boolean checkLocal ) throws Exception
-    {
-      //  If we already have a file with downloaded plugins from the last time,
-      //  then read it, load into the list and start the updating process.
-      //  Otherwise just start the process of loading the list and save it
-      //  into the persistent config file for later reading.
-      CategoryNode newRoot = null;
-      File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
-      if( file.exists() && checkLocal )
-      {
-        newRoot = LoadPluginsFromFile( file );
-      }
-      LoadPluginsFromHostInBackground();
-
-      return newRoot;
-    }
-
-    private static CategoryNode LoadPluginsFromFile( final File file ) throws Exception
+  private ArrayList<IdeaPluginDescriptor> loadPluginList( boolean checkLocal ) throws Exception
+  {
+    //  If we already have a file with downloaded plugins from the last time,
+    //  then read it, load into the list and start the updating process.
+    //  Otherwise just start the process of loading the list and save it
+    //  into the persistent config file for later reading.
+    ArrayList<IdeaPluginDescriptor> list = null;
+    File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
+    if( file.exists() && checkLocal )
     {
       RepositoryContentHandler handler = new RepositoryContentHandler();
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse( file, handler );
-      return handler.getRoot();
+      list = handler.getPluginsList();
     }
+    LoadPluginsFromHostInBackground();
 
-    /*
-    private static CategoryNode LoadPluginsFromHostFore()
-    {
-      final StatusProcess statusProcess = new StatusProcess();
-        do {
-            boolean canceled = ProgressManager.getInstance()
-              .runProcessWithProgressSynchronously(statusProcess, IdeBundle.message("progress.downloading.list.of.plugins"), true, null);
-            if (canceled && statusProcess.getException() != null)
-            {
-              if (statusProcess.getException() instanceof IOException) {
-                if (! IOExceptionDialog.showErrorDialog((IOException)statusProcess.getException(),
-                                                        IdeBundle.message("title.plugin.manager"),
-                                                        IdeBundle.message("error.could.not.download.list.of.plugins"))) {
-                  break;
-                }
-              }
-              else {
-                throw new RuntimeException(statusProcess.getException());
-              }
-            }
-            else{
-              break;
-            }
-            statusProcess.removeOldException();
-        }
-        while (true);
-        return statusProcess.getRoot();
-    }
-    */
+    return list;
+  }
+
   private void  LoadPluginsFromHostInBackground()
   {
     SetDownloadStatus( true );
 
     final SwingWorker worker = new SwingWorker() {
-      CategoryNode root;
+      ArrayList<IdeaPluginDescriptor> list = null;
       public Object construct()
       {
-        root = StatusProcess.Process( mySynchStatus );
-        return root;
+        list = StatusProcess.Process( mySynchStatus );
+        return list;
       }
 
       public void finished() {
-        StopLoadingPlugins(root);
+        ModifyPluginsList( list );
+        SetDownloadStatus( false );
       }
     };
     worker.start();
-  }
-
-  private void  StopLoadingPlugins( CategoryNode root )
-  {
-    ModifyPluginsList( root );
-    SetDownloadStatus( false );
   }
 
   private void  SetDownloadStatus( boolean what)
@@ -297,7 +254,8 @@ public class PluginManagerMain
     myProgressBar.setIndeterminate( what );
   }
 
-    private ActionGroup getActionGroup () {
+    private ActionGroup getActionGroup ()
+    {
       if (actionGroup == null)
       {
         actionGroup = new DefaultActionGroup();
@@ -310,7 +268,7 @@ public class PluginManagerMain
           {
               Presentation presentation = e.getPresentation();
               boolean enabled = false;
-              Object pluginObject = installedPluginTable.getSelectedObject();
+              Object pluginObject = pluginTable.getSelectedObject();
 
               if (pluginObject instanceof PluginNode)
               {
@@ -332,7 +290,7 @@ public class PluginManagerMain
           public void actionPerformed(AnActionEvent e) {
             do {
               try {
-                final Object selectedObject = installedPluginTable.getSelectedObject();
+                final Object selectedObject = pluginTable.getSelectedObject();
                 final boolean isUpdate = (selectedObject instanceof IdeaPluginDescriptorImpl);
 
                 PluginNode pluginNode = null;
@@ -348,22 +306,10 @@ public class PluginManagerMain
                   pluginNode.setName(pluginDescriptor.getName());
                   pluginNode.setDepends(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
                   pluginNode.setSize("-1");
-                  boolean smthFoundToUpdate = false;
-                  ArrayList<PluginNode> toUpdate = new ArrayList<PluginNode>();
-                  try {
-                    checkForUpdate(toUpdate, root);
-                    for (PluginNode node : toUpdate) {
-                      if (node.getPluginId().equals(pluginDescriptor.getPluginId())){
-                        smthFoundToUpdate = true;
-                      }
-                    }
-                    if (!smthFoundToUpdate){
-                      Messages.showMessageDialog(main, IdeBundle.message("message.nothing.to.update"), IdeBundle.message("title.plugin.manager"), Messages.getInformationIcon());
-                      return;
-                    }
-                  }
-                  catch (IOException e1) {
-                    LOG.error(e1);
+                  if( !PluginsTableModel.hasNewerVersion( pluginDescriptor.getPluginId() ) )
+                  {
+                    Messages.showMessageDialog(main, IdeBundle.message("message.nothing.to.update"), IdeBundle.message("title.plugin.manager"), Messages.getInformationIcon());
+                    return;
                   }
                 }
 
@@ -375,7 +321,7 @@ public class PluginManagerMain
                                              Messages.getQuestionIcon()) == 0) {
                   if (downloadPlugin(pluginNode)) {
                     requireShutdown = true;
-                    installedPluginTable.updateUI();
+                    pluginTable.updateUI();
                   }
                 }
                 break;
@@ -402,9 +348,9 @@ public class PluginManagerMain
             Presentation presentation = e.getPresentation();
             boolean enabled = false;
 
-            if( installedPluginTable != null )
+            if( pluginTable != null )
             {
-                Object descr = installedPluginTable.getSelectedObject();
+                Object descr = pluginTable.getSelectedObject();
                 enabled = (descr instanceof IdeaPluginDescriptorImpl) && !((IdeaPluginDescriptorImpl)descr).isDeleted();
             }
             presentation.setEnabled(enabled);
@@ -414,7 +360,7 @@ public class PluginManagerMain
           {
             PluginId pluginId = null;
 
-            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginTable.getSelectedObject();
+            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)pluginTable.getSelectedObject();
             if (Messages.showYesNoDialog(main, IdeBundle.message("prompt.uninstall.plugin", pluginDescriptor.getName()),
                                          IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == 0) {
               pluginId = pluginDescriptor.getPluginId();
@@ -428,7 +374,7 @@ public class PluginManagerMain
 
                 requireShutdown = true;
 
-                installedPluginTable.updateUI();
+                pluginTable.updateUI();
 
                 /*
                 Messages.showMessageDialog(main,
@@ -453,40 +399,6 @@ public class PluginManagerMain
 
     public JPanel getMainPanel() {
       return main;
-    }
-
-    private static class MyHyperlinkListener implements HyperlinkListener {
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          JEditorPane pane = (JEditorPane)e.getSource();
-          if (e instanceof HTMLFrameHyperlinkEvent) {
-            HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
-            HTMLDocument doc = (HTMLDocument)pane.getDocument();
-            doc.processHTMLFrameHyperlinkEvent(evt);
-          }
-          else {
-            BrowserUtil.launchBrowser(e.getURL().toString());
-          }
-
-        }
-      }
-    }
-
-    private static void checkForUpdate(List<PluginNode> updateList, CategoryNode categoryNode)
-      throws IOException {
-      for (int i = 0; i < categoryNode.getPlugins().size(); i++) {
-        PluginNode pluginNode = categoryNode.getPlugins().get(i);
-        if (PluginManagerColumnInfo.getRealNodeState(pluginNode) == PluginNode.STATUS_OUT_OF_DATE) {
-          updateList.add(pluginNode);
-        }
-      }
-
-      if (categoryNode.getChildCount() > 0) {
-        for (int i = 0; i < categoryNode.getChildren().size(); i++) {
-          CategoryNode node = categoryNode.getChildren().get(i);
-          checkForUpdate(updateList, node);
-        }
-      }
     }
 
     private static boolean downloadPlugins (final List <PluginNode> plugins) throws IOException {
@@ -548,7 +460,7 @@ public class PluginManagerMain
       return requireShutdown;
     }
 
-    public void ignoreChages() {
+    public void ignoreChanges() {
       requireShutdown = false;
     }
 
@@ -658,7 +570,23 @@ public class PluginManagerMain
         }
     }
 
-  private class MySpeedSearchBar extends SpeedSearchBase<PluginTable<IdeaPluginDescriptor>>
+  private static class MyHyperlinkListener implements HyperlinkListener {
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        JEditorPane pane = (JEditorPane)e.getSource();
+        if (e instanceof HTMLFrameHyperlinkEvent) {
+          HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
+          HTMLDocument doc = (HTMLDocument)pane.getDocument();
+          doc.processHTMLFrameHyperlinkEvent(evt);
+        }
+        else {
+          BrowserUtil.launchBrowser(e.getURL().toString());
+        }
+      }
+    }
+  }
+
+  private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable<IdeaPluginDescriptor>>
   {
     public MySpeedSearchBar( PluginTable<IdeaPluginDescriptor> cmp ){ super( cmp );  }
 

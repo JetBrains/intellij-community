@@ -6,6 +6,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.util.ArrayList;
+import java.util.Stack;
+
 /**
  * Created by IntelliJ IDEA.
  * User: stathik
@@ -31,46 +34,63 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls private static final String SIZE = "size";
   @NonNls private static final String DATE = "date";
 
-  private CategoryNode currentCategory;
+//  private CategoryNode currentCategory;
   private PluginNode currentPlugin;
   private String currentValue;
+  private ArrayList<IdeaPluginDescriptor> plugins;
+  private Stack<String> categoriesStack;
 
 
-  public void startDocument()
-    throws SAXException {
+  public void startDocument() throws SAXException
+  {
+    /*
     currentCategory = new CategoryNode();
     currentCategory .setName("");
+    */
+
+    plugins = new ArrayList<IdeaPluginDescriptor>();
+    categoriesStack = new Stack<String>();
   }
 
   public void startElement(String namespaceURI, String localName,
                            String qName, Attributes atts)
     throws SAXException {
     if (qName.equals(CATEGORY)) {
+      /*
       CategoryNode categoryNode = new CategoryNode();
       categoryNode.setName (atts.getValue(NAME));
       categoryNode.setParent(currentCategory);
 
       currentCategory.addChild(categoryNode);
       currentCategory = categoryNode;
-    } else if (qName.equals(IDEA_PLUGIN)) {
+      */
+      categoriesStack.push( atts.getValue(NAME) );
+    } else
+    if (qName.equals(IDEA_PLUGIN))
+    {
+      String categoryName = constructCategoryTree();
       currentPlugin = new PluginNode();
-      currentPlugin.setParent(currentCategory);
+//      currentPlugin.setCategory(currentCategory.getName());
+      currentPlugin.setCategory( categoryName );
       currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
       currentPlugin.setSize(atts.getValue(SIZE));
       currentPlugin.setUrl (atts.getValue(URL));
       currentPlugin.setDate (atts.getValue(DATE));
-      currentCategory.addPlugin(currentPlugin);
-    } else if (qName.equals(IDEA_VERSION)) {
+
+//      currentCategory.addPlugin(currentPlugin);
+      plugins.add( currentPlugin );
+    }
+    else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(atts.getValue(SINCE_BUILD));
-    } else if (qName.equals(VENDOR)) {
+    }
+    else if (qName.equals(VENDOR)) {
       currentPlugin.setVendorEmail(atts.getValue(EMAIL));
       currentPlugin.setVendorUrl(atts.getValue(URL));
     }
     currentValue = "";
   }
 
-  public void endElement(String namespaceURI, String localName,
-                         String qName)
+  public void endElement(String namespaceURI, String localName, String qName)
     throws SAXException {
     if (qName.equals(ID)) {
       currentPlugin.setId(currentValue);
@@ -93,8 +113,8 @@ class RepositoryContentHandler extends DefaultHandler {
     else if (qName.equals(CHNAGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValue);
     }
-    else if (qName.equals(CATEGORY)) {
-      currentCategory = currentCategory.getParent();
+    else if (qName.equals(CATEGORY)){
+      categoriesStack.pop();
     }
     currentValue = "";
   }
@@ -104,7 +124,24 @@ class RepositoryContentHandler extends DefaultHandler {
     currentValue += new String (ch, start, length);
   }
 
-  public CategoryNode getRoot() {
-    return currentCategory;
+  public ArrayList<IdeaPluginDescriptor> getPluginsList()
+  {
+    return plugins;
+  }
+
+  private String constructCategoryTree()
+  {
+    StringBuffer category = new StringBuffer("");
+    for( int i = 0; i < categoriesStack.size(); i++ )
+    {
+      String str = categoriesStack.get( i );
+      if( str.length() > 0 )
+      {
+        if( i > 0 )
+          category.append( "/" );
+        category.append( str );
+      }
+    }
+    return category.toString();
   }
 }

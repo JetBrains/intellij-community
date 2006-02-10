@@ -15,8 +15,8 @@ import java.util.Hashtable;
  */
 public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
 {
-    public static Hashtable NewVersions2Plugins = new Hashtable();
-    private static Hashtable UpdateVersions = new Hashtable();
+    public static Hashtable<PluginId, Object> NewVersions2Plugins = new Hashtable<PluginId, Object>();
+    private static Hashtable<PluginId, String> UpdateVersions = new Hashtable<PluginId, String>();
 
     public PluginsTableModel(SortableProvider sortableProvider)
     {
@@ -32,15 +32,12 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public void addData( CategoryNode root )
+    public void addData( ArrayList<IdeaPluginDescriptor> list )
     {
-        ArrayList<IdeaPluginDescriptor> newList = new ArrayList<IdeaPluginDescriptor>();
-        constructList( root, newList );
-
         //  For each downloadable plugin we need to know whether its counterpart
         //  is already installed, and if yes compare the difference in versions:
         //  availability of newer versions will be indicated separately.
-        for( IdeaPluginDescriptor descr : newList )
+        for( IdeaPluginDescriptor descr : list )
         {
             IdeaPluginDescriptor existing = PluginManager.getPlugin( descr.getPluginId());
             if( existing == null )
@@ -56,15 +53,12 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public void  modifyData( CategoryNode root )
+    public void  modifyData( ArrayList<IdeaPluginDescriptor> list )
     {
-        ArrayList<IdeaPluginDescriptor> newList = new ArrayList<IdeaPluginDescriptor>();
-        constructList( root, newList );
-
         //  For each downloadable plugin we need to know whether its counterpart
         //  is already installed, and if yes compare the difference in versions:
         //  availability of newer versions will be indicated separately.
-        for( IdeaPluginDescriptor descr : newList )
+        for( IdeaPluginDescriptor descr : list )
         {
             PluginId descrId = descr.getPluginId();
             IdeaPluginDescriptor existing = PluginManager.getPlugin( descrId );
@@ -72,7 +66,7 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
             {
                 if( UpdateVersions.containsKey( descrId ) )
                 {
-                    String currVersion = (String) UpdateVersions.get( descrId );
+                    String currVersion = UpdateVersions.get( descrId );
                     int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), currVersion );
                     if( state > 0 )
                     {
@@ -93,14 +87,6 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
             else
             {
               updateExistingPluginInfo( (PluginNode) descr, existing );
-              /*
-              int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), existing.getVersion());
-              if( state > 0 )
-              {
-                  NewVersions2Plugins.put( existing.getPluginId(), Integer.valueOf(1) );
-              }
-              ((IdeaPluginDescriptorImpl)existing).setDownloadsCount( ((PluginNode)descr).getDownloads() );
-              */
             }
         }
         sortByColumn(sortableProvider.getSortColumn());
@@ -135,19 +121,5 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
   public static boolean hasNewerVersion( PluginId descr )
   {
     return NewVersions2Plugins.containsKey( descr );
-  }
-
-  private static void constructList(CategoryNode start, ArrayList<IdeaPluginDescriptor> newList ) {
-    if (start.getPlugins() != null && start.getPlugins().size() > 0)
-    {
-        newList.addAll( start.getPlugins() );
-    }
-
-    if (start.getChildren() != null && start.getChildren().size() > 0)
-      for (int i = 0; i < start.getChildren().size(); i++)
-      {
-        CategoryNode categoryNode = start.getChildren().get(i);
-        constructList( categoryNode, newList );
-      }
   }
 }
