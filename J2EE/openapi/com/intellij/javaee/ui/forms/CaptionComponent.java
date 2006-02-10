@@ -1,4 +1,4 @@
-package com.intellij.jsf.ui.forms;
+package com.intellij.javaee.ui.forms;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +16,11 @@ public class CaptionComponent extends JPanel {
     updateBorder();
     setLayout(new BorderLayout());
     add(myRootPanel, BorderLayout.CENTER);
+  }
+
+  public CaptionComponent(String text) {
+    this();
+    setText(text);  
   }
 
   private void updateBorder() {
