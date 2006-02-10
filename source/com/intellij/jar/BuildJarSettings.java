@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   private final ModuleContainer myModuleContainer;
-  private String myJarPath = "";
+  private String myJarUrl = "";
   private boolean myBuildJar;
   private String myMainClass = "";
   @NonNls private static final String ELEMENT_CONTAINERINFO = "containerInfo";
@@ -41,7 +41,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     if (settings != null) {
       myModuleContainer.readExternal(settings);
     }
-    myJarPath = JDOMExternalizer.readString(element, "jarPath");
+    myJarUrl = JDOMExternalizer.readString(element, "jarUrl");
     myBuildJar = JDOMExternalizer.readBoolean(element, "buildJar");
     myMainClass = JDOMExternalizer.readString(element, "mainClass");
   }
@@ -51,7 +51,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     Element settings = new Element(ELEMENT_CONTAINERINFO);
     element.addContent(settings);
     myModuleContainer.writeExternal(settings);
-    JDOMExternalizer.write(element, "jarPath", myJarPath);
+    JDOMExternalizer.write(element, "jarUrl", myJarUrl);
     JDOMExternalizer.write(element, "buildJar", myBuildJar);
     JDOMExternalizer.write(element, "mainClass", myMainClass);
   }
@@ -60,12 +60,12 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
     return myModuleContainer;
   }
 
-  public String getJarPath() {
-    return myJarPath;
+  public String getJarUrl() {
+    return myJarUrl;
   }
 
-  public void setJarPath(final String jarPath) {
-    myJarPath = jarPath;
+  public void setJarUrl(final String jarUrl) {
+    myJarUrl = jarUrl;
   }
   public void projectOpened() {
 

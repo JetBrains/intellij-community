@@ -6,7 +6,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.jar.BuildJarProjectSettings;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -463,7 +462,6 @@ public class CompileDriver {
           return myExitStatus;
         }
 
-        buildJars(context);
       }
       finally {
         // drop in case it has not been dropped yet.
@@ -490,17 +488,6 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
-    }
-  }
-
-  private void buildJars(final CompileContextImpl context) {
-    final BuildJarProjectSettings jarProjectSettings = BuildJarProjectSettings.getInstance(myProject);
-    if (jarProjectSettings.isBuildJar()) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          jarProjectSettings.buildJars(context.getProgressIndicator());
-        }
-      });
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.j2ee.module.LibraryLink;
 import com.intellij.j2ee.module.ModuleContainer;
 import com.intellij.j2ee.module.ModuleLink;
 import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +62,10 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
   }
 
   public void projectOpened() {
-
+    if (BUILD_JARS_ON_MAKE) {
+      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      compilerManager.addCompiler(JarCompiler.getInstance());
+    }
   }
 
   public void projectClosed() {
@@ -81,6 +86,15 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
   }
 
   public void setBuildJar(final boolean buildJar) {
+    if (buildJar != BUILD_JARS_ON_MAKE) {
+      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      if (buildJar) {
+        compilerManager.addCompiler(JarCompiler.getInstance());
+      }
+      else {
+        compilerManager.removeCompiler(JarCompiler.getInstance());
+      }
+    }
     BUILD_JARS_ON_MAKE = buildJar;
   }
 
@@ -97,7 +111,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
       for (Module module : modules) {
         BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
         if (buildJarSettings == null || !buildJarSettings.isBuildJar()) continue;
-        String presentableJarPath = "'"+buildJarSettings.getJarPath()+"'";
+        String presentableJarPath = "'" + FileUtil.toSystemDependentName(VfsUtil.urlToPath(buildJarSettings.getJarUrl() + "'"));
         progressIndicator.setText(IdeBundle.message("jar.build.progress", presentableJarPath));
         buildJar(module, buildJarSettings,progressIndicator);
         WindowManager.getInstance().getStatusBar(myProject).setInfo(IdeBundle.message("jar.build.success.message", presentableJarPath));
@@ -111,21 +125,13 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     }
   }
 
-  private static void buildJar(final Module module, final BuildJarSettings buildJarSettings, final ProgressIndicator progressIndicator) throws IOException {
-    ModuleContainer moduleContainer = buildJarSettings.getModuleContainer();
-    String jarPath = buildJarSettings.getJarPath();
-    final File jarFile = new File(jarPath);
+  static void buildJar(final Module module, final BuildJarSettings buildJarSettings, final ProgressIndicator progressIndicator) throws IOException {
+    String jarPath = buildJarSettings.getJarUrl();
+    final File jarFile = new File(VfsUtil.urlToPath(jarPath));
     jarFile.delete();
 
     FileUtil.createParentDirs(jarFile);
-    BuildRecipe buildRecipe = MakeUtil.getInstance().createBuildRecipe();
-    LibraryLink[] libraries = moduleContainer.getContainingLibraries();
-    final DummyCompileContext compileContext = DummyCompileContext.getInstance();
-    for (LibraryLink libraryLink : libraries) {
-      MakeUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
-    }
-    ModuleLink[] modules = moduleContainer.getContainingModules();
-    MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
+    BuildRecipe buildRecipe = getBuildRecipe(module, buildJarSettings);
     Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     String mainClass = buildJarSettings.getMainClass();
     if (manifest != null && !Comparing.strEqual(mainClass, null)) {
@@ -151,7 +157,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
             String presentablePath = FileUtil.toSystemDependentName(file.getPath());
             progressIndicator.setText2(IdeBundle.message("jar.build.processing.file.progress", presentablePath));
           }
-          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
+          instruction.addFilesToJar(DummyCompileContext.getInstance(), tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
           return true;
         }
       }, false);
@@ -173,5 +179,18 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
         Messages.showErrorDialog(module.getProject(), message, IdeBundle.message("jar.build.error.title"));
       }
     }
+  }
+
+  static BuildRecipe getBuildRecipe(final Module module, final BuildJarSettings buildJarSettings) {
+    final DummyCompileContext compileContext = DummyCompileContext.getInstance();
+    ModuleContainer moduleContainer = buildJarSettings.getModuleContainer();
+    BuildRecipe buildRecipe = MakeUtil.getInstance().createBuildRecipe();
+    LibraryLink[] libraries = moduleContainer.getContainingLibraries();
+    for (LibraryLink libraryLink : libraries) {
+      MakeUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
+    }
+    ModuleLink[] modules = moduleContainer.getContainingModules();
+    MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
+    return buildRecipe;
   }
 }

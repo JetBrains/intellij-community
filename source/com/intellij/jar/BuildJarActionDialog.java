@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -153,7 +154,7 @@ public class BuildJarActionDialog extends DialogWrapper {
     myJarPath.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         String lastFilePath = myJarPath.getText();
-        String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
+        String path = lastFilePath == null ? RecentProjectsManager.getInstance().getLastProjectPath() : lastFilePath;
         File file = new File(path);
         if (!file.exists()) {
           path = file.getParent();
@@ -290,7 +291,7 @@ public class BuildJarActionDialog extends DialogWrapper {
       myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
       myEditorPanel.revalidate();
 
-      myJarPath.setText(buildJarSettings.getJarPath());
+      myJarPath.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(buildJarSettings.getJarUrl())));
       myMainClass.setText(buildJarSettings.getMainClass());
     }
 
@@ -306,7 +307,8 @@ public class BuildJarActionDialog extends DialogWrapper {
       catch (ConfigurationException e1) {
         //ignore
       }
-      myModifiedBuildJarSettings.setJarPath(myJarPath.getText());
+      String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(myJarPath.getText()));
+      myModifiedBuildJarSettings.setJarUrl(url);
       boolean isBuildJar = myElementsChooser.getMarkedElements().contains(myModule);
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
       myModifiedBuildJarSettings.setMainClass(myMainClass.getText());
