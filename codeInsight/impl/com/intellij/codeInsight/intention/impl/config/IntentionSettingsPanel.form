@@ -49,7 +49,7 @@
                 <border type="none"/>
                 <children/>
               </xy>
-              <component id="6ba53" class="com.intellij.ui.TextableSeparator">
+              <component id="6ba53" class="com.intellij.ui.TitledSeparator">
                 <constraints>
                   <xy x="7" y="10" width="549" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>

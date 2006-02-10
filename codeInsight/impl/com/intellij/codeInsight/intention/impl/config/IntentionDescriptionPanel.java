@@ -9,7 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
-import com.intellij.ui.TextableSeparator;
+import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -27,8 +27,8 @@ public class IntentionDescriptionPanel {
   private JPanel myAfterPanel;
   private JPanel myBeforePanel;
   private JEditorPane myDescriptionBrowser;
-  private TextableSeparator myBeforeSeparator;
-  private TextableSeparator myAfterSeparator;
+  private TitledSeparator myBeforeSeparator;
+  private TitledSeparator myAfterSeparator;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
@@ -79,7 +79,7 @@ public class IntentionDescriptionPanel {
   }
 
   private static void showUsages(final JPanel panel,
-                                 final TextableSeparator separator,
+                                 final TitledSeparator separator,
                                  List<IntentionUsagePanel> usagePanels,
                                  URL[] exampleUsages) throws IOException {
     GridBagConstraints gb = null;

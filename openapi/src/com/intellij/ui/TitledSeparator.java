@@ -6,10 +6,10 @@ import java.awt.*;
 /**
  * @author cdr
  */
-public class TextableSeparator extends JPanel {
+public class TitledSeparator extends JPanel {
   private final JLabel myLabel;
 
-  public TextableSeparator() {
+  public TitledSeparator() {
     setLayout(new GridBagLayout());
     myLabel = new JLabel();
     add(myLabel, new GridBagConstraints(0,0,1,0,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,5,0,5), 0,0));

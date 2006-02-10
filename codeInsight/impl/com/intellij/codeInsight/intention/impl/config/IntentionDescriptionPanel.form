@@ -40,21 +40,21 @@
           <text resource-bundle="messages/CodeInsightBundle" key="dialog.intention.settings.description.usage.example.title"/>
         </properties>
       </component>
-      <component id="e4723" class="com.intellij.ui.TextableSeparator" binding="myBeforeSeparator">
+      <component id="e4723" class="com.intellij.ui.TitledSeparator" binding="myBeforeSeparator">
         <constraints>
           <xy x="7" y="91" width="484" height="2"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
         </constraints>
         <properties/>
       </component>
-      <component id="967ce" class="com.intellij.ui.TextableSeparator" binding="myAfterSeparator">
+      <component id="967ce" class="com.intellij.ui.TitledSeparator" binding="myAfterSeparator">
         <constraints>
           <xy x="7" y="214" width="484" height="2"/>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
         </constraints>
         <properties/>
       </component>
-      <component id="98bc" class="com.intellij.ui.TextableSeparator">
+      <component id="98bc" class="com.intellij.ui.TitledSeparator">
         <constraints>
           <xy x="7" y="5" width="484" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0"/>
