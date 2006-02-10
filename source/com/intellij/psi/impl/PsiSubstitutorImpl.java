@@ -36,19 +36,19 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   public PsiType substitute(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalSubstitutionVisitor);
-    return correctExternalSubstitution(substituted, type, myInternalSubstitutionVisitor);
+    return correctExternalSubstitution(substituted, type);
   }
 
   public PsiType substituteAndCapture(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalCapturingSubstitutionVisitor);
-    return correctExternalSubstitution(substituted, type, myInternalCapturingSubstitutionVisitor);
+    return correctExternalSubstitution(substituted, type);
   }
 
   public PsiType substituteAndFullCapture(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalFullCapturingSubstitutionVisitor);
-    return correctExternalSubstitution(substituted, type, myInternalFullCapturingSubstitutionVisitor);
+    return correctExternalSubstitution(substituted, type);
   }
 
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
@@ -207,7 +207,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
   }
 
-  private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original, final InternalSubstitutionVisitor visitor) {
+  private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original) {
     if (original == null) return null;
 
     if (substituted == null) {
