@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -113,7 +114,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     if (modulesToCompile == null) modulesToCompile = Module.EMPTY_ARRAY;
     if (getConfig().isCompileBeforeRunning() && modulesToCompile.length > 0) {
       final CompileStatusNotification callback = new CompileStatusNotification() {
-        public void finished(final boolean aborted, final int errors, final int warnings) {
+        public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
           if (errors == 0 && !aborted) {
             ApplicationManager.getApplication().invokeLater(antAwareRunnable);
           }

@@ -412,7 +412,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
         final CompilerManager compilerManager = CompilerManager.getInstance(project);
         compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
-          public void compilationFinished(boolean aborted, int errors, int warnings) {
+          public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             compilerManager.removeCompilationStatusListener(this);
             if (ProjectManagerEx.getInstanceEx().closeProject(project))
               ((ProjectEx)project).dispose();

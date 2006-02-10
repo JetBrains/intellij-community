@@ -16,6 +16,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -231,7 +232,7 @@ public final class PreviewFormAction extends AnAction{
                                                           modules.toArray(new Module[] {}));
 
       CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
-        public void finished(boolean aborted, int errors, int warnings) {
+        public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
           if (!aborted && errors == 0) {
             runPreviewProcess(tempPath, sources, module, formFile, dataContext);
           }

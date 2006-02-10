@@ -212,10 +212,10 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
       myDelegate = delegate;
     }
 
-    public void finished(boolean aborted, int errors, int warnings) {
-      myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings);
+    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+      myEventDispatcher.getMulticaster().compilationFinished(aborted, errors, warnings, compileContext);
       if (myDelegate != null) {
-        myDelegate.finished(aborted, errors, warnings);
+        myDelegate.finished(aborted, errors, warnings, compileContext);
       }
     }
   }

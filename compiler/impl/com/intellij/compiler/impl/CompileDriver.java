@@ -348,7 +348,7 @@ public class CompileDriver {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
             }
             if (callback != null) {
-              callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount);
+              callback.finished(_status == ExitStatus.CANCELLED, errorCount, warningCount, compileContext);
             }
 
             ProfilingUtil.operationFinished("make");

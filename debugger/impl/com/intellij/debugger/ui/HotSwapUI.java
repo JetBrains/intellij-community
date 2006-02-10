@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,7 @@ public class HotSwapUI implements ProjectComponent{
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
   private final CompilationStatusListener myListener = new CompilationStatusListener() {
-    public void compilationFinished(boolean aborted, int errors, int warnings) {
+    public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
       if (errors == 0 && !aborted) {
         final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
         Collection<DebuggerSession> debuggerSessions = (DebuggerManagerEx.getInstanceEx(myProject)).getSessions();

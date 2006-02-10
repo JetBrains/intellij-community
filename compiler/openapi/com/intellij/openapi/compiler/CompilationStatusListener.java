@@ -29,6 +29,7 @@ public interface CompilationStatusListener extends EventListener {
    * @param aborted  true if compilatioin has been cancelled
    * @param errors   error count
    * @param warnings warning count
+   * @param compileContext context for the finished compilation
    */
-  void compilationFinished(boolean aborted, int errors, int warnings);
+  void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext);
 }

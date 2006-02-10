@@ -28,6 +28,7 @@ public interface CompileStatusNotification {
    * @param aborted  true if compilation has been cancelled.
    * @param errors   error count
    * @param warnings warning count
+   * @param compileContext context for the finished compilation
    */
-  void finished(boolean aborted, int errors, int warnings);
+  void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext);
 }
