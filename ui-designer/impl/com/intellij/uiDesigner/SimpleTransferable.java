@@ -17,16 +17,24 @@ public final class SimpleTransferable<T> implements Transferable {
 
   private final T myDataProxy;
   private Class<T> myDataClass;
+  private DataFlavor myDataFlavor;
 
   public SimpleTransferable(final T data, final Class<T> dataClass) {
     myDataProxy = data;
     myDataClass = dataClass;
+    myDataFlavor = getDataFlavor(myDataClass);
+  }
+
+  public SimpleTransferable(final T data, final Class<T> dataClass, DataFlavor flavor) {
+    myDataProxy = data;
+    myDataClass = dataClass;
+    myDataFlavor = flavor;
   }
 
   @Nullable
   public Object getTransferData(final DataFlavor flavor) {
     try {
-      if (!getDataFlavor(myDataClass).equals(flavor)) {
+      if (!myDataFlavor.equals(flavor)) {
         return null;
       }
       return myDataProxy;
@@ -54,7 +62,7 @@ public final class SimpleTransferable<T> implements Transferable {
 
   public DataFlavor[] getTransferDataFlavors() {
     try {
-      return new DataFlavor[]{ getDataFlavor(myDataClass) };
+      return new DataFlavor[]{ myDataFlavor };
     }
     catch(Exception ex) {
       LOG.error(ex);
@@ -64,7 +72,7 @@ public final class SimpleTransferable<T> implements Transferable {
 
   public boolean isDataFlavorSupported(final DataFlavor flavor) {
     try {
-      return flavor.equals(getDataFlavor(myDataClass));
+      return flavor.equals(myDataFlavor);
     }
     catch(Exception ex) {
       LOG.error(ex);

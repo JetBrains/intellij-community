@@ -59,7 +59,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private boolean doCopy() {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final MyData data = new MyData(serializeForCopy(myEditor, selectedComponents));
-    final SimpleTransferable transferable = new SimpleTransferable<MyData>(data, MyData.class);
+    final SimpleTransferable transferable = new SimpleTransferable<MyData>(data, MyData.class, ourDataFlavor);
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(transferable, new MyClipboardOwner());
