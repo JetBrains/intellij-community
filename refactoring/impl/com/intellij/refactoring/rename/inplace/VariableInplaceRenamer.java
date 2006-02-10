@@ -19,6 +19,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -57,7 +60,7 @@ public class VariableInplaceRenamer {
     //it is crucial to highlight AFTER the template is started, so we collect ranges first
     collectRangesToHighlight(rangesToHighlight, refs);
 
-    final HighlightManager highlightManager = HighlightManager.getInstance(VariableInplaceRenamer.this.myElementToRename.getProject());
+    final HighlightManager highlightManager = HighlightManager.getInstance(myElementToRename.getProject());
     myElementToRename.getContainingFile();
     final PsiElement scope = myElementToRename instanceof PsiParameter ?
         ((PsiParameter) myElementToRename).getDeclarationScope() :
@@ -198,15 +201,25 @@ public class VariableInplaceRenamer {
     return usages.size() == 0;
   }
 
-  private static class MyExpression implements Expression {
+  private class MyExpression implements Expression {
     private final String myName;
+    private final LookupItem[] myLookupItems;
 
     public MyExpression(String name) {
       myName = name;
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myElementToRename.getManager());
+      VariableKind variableKind = codeStyleManager.getVariableKind(myElementToRename);
+      String propertyName = codeStyleManager.variableNameToPropertyName(myElementToRename.getName(), variableKind);
+      SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, myElementToRename.getType());
+      myLookupItems = new LookupItem[nameInfo.names.length];
+      for (int i = 0; i < myLookupItems.length; i++) {
+        String suggestedName = nameInfo.names[i];
+        myLookupItems[i] = new LookupItem(suggestedName, suggestedName);
+      }
     }
 
     public LookupItem[] calculateLookupItems(ExpressionContext context) {
-      return new LookupItem[0];
+      return myLookupItems;
     }
 
     public Result calculateQuickResult(ExpressionContext context) {

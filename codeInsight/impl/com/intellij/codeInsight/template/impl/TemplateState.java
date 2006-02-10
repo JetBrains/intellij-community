@@ -402,36 +402,38 @@ public class TemplateState implements Disposable {
 
                 final LookupItem item = event.getItem();
 
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                if (item != null) {
+                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-                Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
-                if (bracketCount != null) {
-                  StringBuffer tail = new StringBuffer();
-                  for (int i = 0; i < bracketCount.intValue(); i++) {
-                    tail.append("[]");
+                  Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+                  if (bracketCount != null) {
+                    StringBuffer tail = new StringBuffer();
+                    for (int i = 0; i < bracketCount.intValue(); i++) {
+                      tail.append("[]");
+                    }
+                    EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+                    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
                   }
-                  EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-                  PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-                }
 
-                updateTypeBindings(item.getObject(), psiFile, context);
+                  updateTypeBindings(item.getObject(), psiFile, context);
 
-                char c = event.getCompletionChar();
-                if (c == '.') {
-                  EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                  return;
-                }
+                  char c = event.getCompletionChar();
+                  if (c == '.') {
+                    EditorModificationUtil.insertStringAtCaret(myEditor, ".");
+                    AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                    return;
+                  }
 
-                if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                  return;
-                }
+                  if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
+                    AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                    return;
+                  }
 
-                if (!isFinished()) {
-                  toProcessChangedUpdate = false;
-                  calcResults(true);
-                  toProcessChangedUpdate = true;
+                  if (!isFinished()) {
+                    toProcessChangedUpdate = false;
+                    calcResults(true);
+                    toProcessChangedUpdate = true;
+                  }
                 }
 
                 nextTab();

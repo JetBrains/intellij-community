@@ -106,10 +106,11 @@ public abstract class BaseCompleteMacro implements Macro {
     }
 
     public void itemSelected(LookupEvent event) {
+      LookupItem item = event.getItem();
+      if (item == null) return;
       final Project project = myContext.getProject();
       final LookupManager lookupManager = LookupManager.getInstance(project);
 
-      LookupItem item = event.getItem();
 
       if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -122,7 +123,7 @@ public abstract class BaseCompleteMacro implements Macro {
 
       final PsiElement[] elements = lookupManager.getAllElementsForItem(item);
 
-      boolean goNextTab = false;
+      boolean goNextTab;
 
       if (elements == null) {
         goNextTab = true;

@@ -268,12 +268,14 @@ public class LookupImpl extends LightweightHint implements Lookup {
   public void finishLookup(final char completionChar){
     final LookupItem item = (LookupItem)myList.getSelectedValue();
     if (item == null){
+      fireItemSelected(null, completionChar);
       hide();
       return;
     }
 
     if(item.getObject() instanceof DeferredUserLookupValue) {
       if(!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item,myProject)) {
+        fireItemSelected(null, completionChar);
         hide();
         return;
       }
@@ -282,6 +284,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     final String s = item.getLookupString();
     final int prefixLength = myPrefix.length();
     if (item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
+      fireItemSelected(null, completionChar);
       hide();
       return;
     }
@@ -407,7 +410,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private void fireItemSelected(final LookupItem item, char completionChar){
     PsiDocumentManager.getInstance(myProject).commitAllDocuments(); //[Mike] todo: remove? Valentin thinks it's a major performance hit.
 
-    if (myItemPreferencePolicy != null){
+    if (item != null && myItemPreferencePolicy != null){
       myItemPreferencePolicy.itemSelected(item);
     }
 

@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @see #notifyAll()
  */
@@ -188,14 +190,17 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               int shift = startOffsetMarker.getStartOffset() - startOffset;
               context.shiftOffsets(shift);
               context.startOffset += shift;
-              lookupItemSelected(
-                  context,
-                  startOffsetMarker.getStartOffset(),
-                  data,
-                  event.getItem(),
-                  settings.SHOW_SIGNATURES_IN_LOOKUPS || event.getItem().getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                  event.getCompletionChar()
-              );
+              LookupItem item = event.getItem();
+              if (item != null) {
+                lookupItemSelected(
+                    context,
+                    startOffsetMarker.getStartOffset(),
+                    data,
+                    item,
+                    settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
+                    event.getCompletionChar()
+                );
+              }
             }
           }
         );
@@ -248,7 +253,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
   final private void complete(CompletionContext context, PsiElement lastElement,
-                             CompletionData completionData, Set<LookupItem> lookupSet){
+                              CompletionData completionData, Set<LookupItem> lookupSet){
     if(lastElement == null)
       return;
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
@@ -394,9 +399,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private void lookupItemSelected(final CompletionContext context,
-                                  final int startOffset, final LookupData data, final LookupItem item,
-                                  final boolean signatureSelected, final char completionChar) {
-
+                                  final int startOffset,
+                                  final LookupData data,
+                                  @NotNull final LookupItem item,
+                                  final boolean signatureSelected,
+                                  final char completionChar) {
     final InsertHandler handler = item.getInsertHandler() != null ? item.getInsertHandler() : new DefaultInsertHandler();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
