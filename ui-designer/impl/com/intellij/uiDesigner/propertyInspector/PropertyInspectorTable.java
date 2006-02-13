@@ -77,7 +77,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * This is property exists in this map then it's expanded.
    * It means that its children is visible.
    */
-  private final HashSet<Property> myExpandedProperties;
+  private final HashSet<String> myExpandedProperties;
   /**
    * Component to be edited
    */
@@ -143,7 +143,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myLafManagerListener = new MyLafManagerListener();
     myComponentTree=componentTree;
     myProperties = new ArrayList<Property>();
-    myExpandedProperties = new HashSet<Property>();
+    myExpandedProperties = new HashSet<String>();
     myModel = new MyModel();
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -372,7 +372,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       myComponent = newSelectedComponent;
       myProperties.clear();
       collectProperties(myComponent, myProperties);
-      myExpandedProperties.clear();
       myModel.fireTableDataChanged();
 
       // Try to restore selection
@@ -431,8 +430,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   private void collectProperties(final RadComponent component, final ArrayList<Property> result) {
     if (component instanceof RadRootContainer){
-      result.add(myClassToBindProperty);
-      result.add(myLayoutManagerProperty);      
+      addProperty(result, myClassToBindProperty);
+      addProperty(result, myLayoutManagerProperty);
     }
     else {
       final boolean isVSpacer = component instanceof RadVSpacer;
@@ -440,56 +439,56 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final boolean isSpacer = isVSpacer || isHSpacer;
 
       if (!isSpacer){
-        result.add(myBindingProperty);
+        addProperty(result, myBindingProperty);
       }
 
       final RadContainer parent = component.getParent();
       final boolean inGrid = parent != null && parent.isGrid();
 
       if(component instanceof RadContainer){
-        result.add(myBorderProperty);
+        addProperty(result, myBorderProperty);
       }
       if (component instanceof RadContainer && ((RadContainer)component).isGrid()) {
-        result.add(myMarginProperty);
+        addProperty(result, myMarginProperty);
       }
 
       if (component instanceof RadContainer && ((RadContainer)component).getLayout() instanceof AbstractLayout){
-        result.add(myHGapProperty);
-        result.add(myVGapProperty);
+        addProperty(result, myHGapProperty);
+        addProperty(result, myVGapProperty);
       }
 
       if (component instanceof RadContainer && ((RadContainer)component).isGrid()) {
-        result.add(mySameSizeHorizontallyProperty);
-        result.add(mySameSizeVerticallyProperty);
+        addProperty(result, mySameSizeHorizontallyProperty);
+        addProperty(result, mySameSizeVerticallyProperty);
       }
 
       if (inGrid) {
         if (!isVSpacer){
-          result.add(myHSizePolicyProperty);
+          addProperty(result, myHSizePolicyProperty);
         }
         if (!isHSpacer){
-          result.add(myVSizePolicyProperty);
+          addProperty(result, myVSizePolicyProperty);
         }
         if (!isSpacer){
-          result.add(myFillProperty);
-          result.add(myAnchorProperty);
+          addProperty(result, myFillProperty);
+          addProperty(result, myAnchorProperty);
         }
         if (myRowSpanProperty.appliesTo(component)){
-          result.add(myRowSpanProperty);
+          addProperty(result, myRowSpanProperty);
         }
         if (myColumnSpanProperty.appliesTo(component)){
-          result.add(myColumnSpanProperty);
+          addProperty(result, myColumnSpanProperty);
         }
         if (myIndentProperty.appliesTo(component)) {
-          result.add(myIndentProperty);
+          addProperty(result, myIndentProperty);
         }
-        result.add(myMinimumSizeProperty);
-        result.add(myPreferredSizeProperty);
-        result.add(myMaximumSizeProperty);
+        addProperty(result, myMinimumSizeProperty);
+        addProperty(result, myPreferredSizeProperty);
+        addProperty(result, myMaximumSizeProperty);
       }
       if (component.getDelegee() instanceof AbstractButton &&
         !(component.getDelegee() instanceof JButton)) {
-        result.add(myButtonGroupProperty);
+        addProperty(result, myButtonGroupProperty);
       }
 
       if (component.hasIntrospectedProperties()) {
@@ -501,8 +500,17 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           if (!myShowExpertProperties && properties.isExpertProperty(componentClass, property.getName())) {
             continue;
           }
-          result.add(property);
+          addProperty(result, property);
         }
+      }
+    }
+  }
+
+  private void addProperty(final ArrayList<Property> result, final Property property) {
+    result.add(property);
+    if (myExpandedProperties.contains(property.getName())) {
+      for(Property child: property.getChildren()) {
+        addProperty(result, child);
       }
     }
   }
@@ -593,7 +601,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     // Expand property
     final Property property=myProperties.get(index);
     LOG.assertTrue(!myExpandedProperties.contains(property));
-    myExpandedProperties.add(property);
+    myExpandedProperties.add(property.getName());
 
     final Property[] children=property.getChildren();
     for (int i = 0; i < children.length; i++) {
@@ -616,8 +624,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     // Expand property
     final Property property=myProperties.get(index);
-    LOG.assertTrue(myExpandedProperties.contains(property));
-    myExpandedProperties.remove(property);
+    LOG.assertTrue(myExpandedProperties.contains(property.getName()));
+    myExpandedProperties.remove(property.getName());
 
     final Property[] children=property.getChildren();
     for (int i=0; i<children.length; i++){
@@ -838,7 +846,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         // 2. Icon
         if(property.getChildren().length>0){
           // This is composite property and we have to show +/- sign
-          if(myExpandedProperties.contains(property)){
+          if(myExpandedProperties.contains(property.getName())){
             myPropertyNameRenderer.setIcon(myCollapseIcon);
           }else{
             myPropertyNameRenderer.setIcon(myExpandIcon);
@@ -937,7 +945,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return;
       }
 
-      if (myExpandedProperties.contains(property)) {
+      if (myExpandedProperties.contains(property.getName())) {
         collapseProperty(row);
       }
       else {
@@ -1035,7 +1043,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       final Property property=myProperties.get(selectedRow);
       if(property.getChildren().length>0){
-        if(myExpandedProperties.contains(property)){
+        if(myExpandedProperties.contains(property.getName())){
           collapseProperty(selectedRow);
         }else{
           expandProperty(selectedRow);
@@ -1061,12 +1069,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=myProperties.get(selectedRow);
       if(property.getChildren().length>0) {
         if (myExpand) {
-          if (!myExpandedProperties.contains(property)) {
+          if (!myExpandedProperties.contains(property.getName())) {
             expandProperty(selectedRow);
           }
         }
         else {
-          if (myExpandedProperties.contains(property)) {
+          if (myExpandedProperties.contains(property.getName())) {
             collapseProperty(selectedRow);
           }
         }
