@@ -398,7 +398,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         }
       }
     }
-    result.init(item);
+    result.init(editor, item);
     return result;
   }
 

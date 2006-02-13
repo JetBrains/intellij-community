@@ -189,7 +189,7 @@ public class GridBuildUtil {
       final ComponentItem panelItem = Palette.getInstance(editor.getProject()).getPanelItem();
       final RadContainer newContainer = new RadContainer(module, editor.generateId());
       newContainer.setLayout(gridLayoutManager);
-      newContainer.init(panelItem);
+      newContainer.init(editor, panelItem);
 
       for (RadComponent componentToConvert : componentsToConvert) {
         newContainer.addComponent(componentToConvert);

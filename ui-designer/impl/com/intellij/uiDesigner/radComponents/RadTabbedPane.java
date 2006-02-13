@@ -2,12 +2,19 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -60,6 +67,15 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
     // approximate
     return new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
+  }
+
+
+  @Override public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
+    super.init(editor, item);
+    // add one tab by default
+    Palette palette = Palette.getInstance(editor.getProject());
+    RadComponent panel = InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
+    addComponent(panel);
   }
 
   @NotNull
