@@ -568,7 +568,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   public void refreshIntentionHint() {
-    //myQuickFixManager.refreshIntentionHint();
+    myQuickFixManager.refreshIntentionHint();
   }
 
   public static final class ReplaceInfo {
