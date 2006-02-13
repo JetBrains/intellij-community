@@ -231,18 +231,16 @@ import java.util.Map;
 
   protected void setUp() throws Exception {
     super.setUp();
-    doSetup(getProjectJDK(), configureLocalInspectionTools(), this, this.myAvailableTools);
+    initApplication(this);
+    doSetup(getProjectJDK(), configureLocalInspectionTools(), this.myAvailableTools);
   }
 
   static void doSetup(final ProjectJdk projectJDK,
-                              final LocalInspectionTool[] localInspectionTools,
-                              final DataProvider dataProvider,
-                              final Map<String, LocalInspectionTool> availableToolsMap) throws Exception {
+                      final LocalInspectionTool[] localInspectionTools,
+                      final Map<String, LocalInspectionTool> availableToolsMap) throws Exception {
     assertNull("Previous test " + ourTestCase + " haven't called tearDown(). Probably overriden without super call.",
                ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
-
-    initApplication(dataProvider);
 
     if (ourProject == null || isJDKChanged(projectJDK)) {
       initProject(projectJDK);
