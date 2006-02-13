@@ -254,6 +254,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
+      <skipForDummyProject/>
     </component>
   </project-components>
 
