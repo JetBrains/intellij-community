@@ -6,6 +6,8 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -32,7 +34,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     for(RadComponent c: selection) {
       final int row = c.getConstraints().getRow();
       int rowSpan = c.getConstraints().getRowSpan();
-      if (!insertedRows.contains(row)) {
+
+      if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
         insertedRows.add(row);
         for(int i=0; i<rowSpan; i++) {
           GridChangeUtil.insertRowAfter(parent, row+rowSpan-1);
@@ -47,6 +50,24 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.setSelected(true);
       }
     }
+  }
+
+  private static boolean isSpaceBelowEmpty(final RadComponent component) {
+    GridLayoutManager layout = (GridLayoutManager) component.getParent().getLayout();
+    final GridConstraints constraints = component.getConstraints();
+    int startRow = constraints.getRow() + constraints.getRowSpan();
+    int endRow = constraints.getRow() + constraints.getRowSpan()*2;
+    if (endRow > layout.getRowCount()) {
+      return false;
+    }
+    for(int row=startRow; row < endRow; row++) {
+      for(int col=constraints.getColumn(); col < constraints.getColumn() + constraints.getColSpan(); col++) {
+        if (component.getParent().getComponentAtGrid(row, col) != null) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
