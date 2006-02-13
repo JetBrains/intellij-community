@@ -178,32 +178,49 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   private boolean initializeSchema(final String namespace, final String fileLocation) {
     if(myNSDescriptorsMap == null) myNSDescriptorsMap = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
-    final XmlFile file = XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),
-                                             ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
-    final PsiMetaOwner owner;
+    final XmlFile file = retrieveFile(fileLocation);
+    final PsiMetaOwner owner = retrieveOwner(file, namespace);
 
+    if (owner != null){
+      myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
+        public CachedValueProvider.Result<XmlNSDescriptor> compute() {
+          PsiMetaOwner currentOwner = owner;
+          XmlFile currentFile = file;
+
+          if (!((PsiElement)currentOwner).isValid()) {
+            currentFile = retrieveFile(fileLocation);
+            if (currentFile == null) return new Result<XmlNSDescriptor>(null, this);
+            currentOwner = retrieveOwner(currentFile, namespace);
+          }
+
+          return new Result<XmlNSDescriptor>(
+            (XmlNSDescriptor)currentOwner.getMetaData(),
+            currentFile
+          );
+        }
+      }, false));
+    }
+    return true;
+  }
+
+  private XmlFile retrieveFile(final String fileLocation) {
+    return XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),
+                               ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
+  }
+
+  private PsiMetaOwner retrieveOwner(final XmlFile file, final String namespace) {
+    final PsiMetaOwner owner;
     if (file == null) {
       final String attributeValue = getAttributeValue("targetNamespace");
       if (namespace.equals(attributeValue)) {
-        owner = this; 
+        owner = this;
       } else {
         owner = null;
       }
     } else {
       owner = file.getDocument();
     }
-
-    if (owner != null){
-      myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
-        public CachedValueProvider.Result<XmlNSDescriptor> compute() {
-          return new Result<XmlNSDescriptor>(
-            (XmlNSDescriptor)owner.getMetaData(),
-            new Object[]{file}
-          );
-        }
-      }, false));
-    }
-    return true;
+    return owner;
   }
 
   public PsiReference getReference() {
