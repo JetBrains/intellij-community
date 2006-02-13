@@ -9,6 +9,8 @@ import java.awt.*;
 public class CaptionComponent extends JPanel {
   private JPanel myRootPanel;
   private JLabel myCaptionLabel;
+  private JLabel myDescriptionLabel;
+  private JLabel myIconLabel;
 
   private boolean myBordered = true;
 
@@ -25,7 +27,7 @@ public class CaptionComponent extends JPanel {
 
   private void updateBorder() {
     if (myBordered) {
-      myRootPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+      myRootPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
     }
     else {
       myRootPanel.setBorder(BorderFactory.createEmptyBorder());
@@ -40,8 +42,27 @@ public class CaptionComponent extends JPanel {
     return myCaptionLabel.getText();
   }
 
+  public void setIcon(final Icon icon) {
+    myCaptionLabel.setIcon(icon);
+  }
+
+  public Icon getIcon() {
+    return myIconLabel.getIcon();
+  }
+
   public boolean isBordered() {
     return myBordered;
+  }
+
+
+  public String getDescriptionText() {
+    return myDescriptionLabel.getText();
+  }
+
+  public void setDescriptionText(final String text) {
+    myDescriptionLabel.setVisible(text != null && text.trim().length() > 0);
+
+    myDescriptionLabel.setText(text);
   }
 
   public void setBordered(final boolean bordered) {
