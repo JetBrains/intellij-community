@@ -3,12 +3,13 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class IntentionSettingsConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private IntentionSettingsPanel myPanel;
 
   public IntentionSettingsConfigurable() {
@@ -19,6 +20,10 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements A
     JPanel component = myPanel.getComponent();
     component.setPreferredSize(new Dimension(800, 600));
     return component;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myPanel.getIntentionTree();
   }
 
   public void projectOpened() {
@@ -66,5 +71,18 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements A
     return "IntentionSettingsOptions";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
+
+  public Runnable showOption(String option) {
+    return myPanel.showOption(this, option);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myPanel.clearSearch();
+  }
 }

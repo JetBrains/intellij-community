@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package com.intellij.openapi.actionSystem;
 
-public interface ActionButtonComponent {
-  int NORMAL = 0;
-  int POPPED = 1;
-  int PUSHED = -1;
-  int SELECTED = 2;
+package com.intellij.openapi.options;
 
-  int getPopState();
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-  int getWidth();
-
-  int getHeight();
+/**
+ * User: anna
+ * Date: 08-Feb-2006
+ */
+public interface SearchableConfigurable extends Configurable {
+  @Nullable Runnable showOption(String option);
+  @NonNls String getId();
+  void clearSearch();  
 }

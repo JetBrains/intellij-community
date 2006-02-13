@@ -1,14 +1,18 @@
 package com.intellij.application.options;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.ApplicationBundle;
 
 import javax.swing.*;
 
-public class CodeCompletionOptions extends BaseConfigurable implements ApplicationComponent {
+public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private CodeCompletionPanel myPanel;
+  private GlassPanel myGlassPanel;
 
   public boolean isModified() {
     return myPanel.isModified();
@@ -16,6 +20,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Applicati
 
   public JComponent createComponent() {
     myPanel = new CodeCompletionPanel();
+    myGlassPanel = new GlassPanel(myPanel.myPanel);
     return myPanel.myPanel;
   }
 
@@ -28,6 +33,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Applicati
   }
 
   public void reset() {
+    myPanel.myPanel.getRootPane().setGlassPane(myGlassPanel);
     myPanel.reset();
   }
 
@@ -43,12 +49,25 @@ public class CodeCompletionOptions extends BaseConfigurable implements Applicati
     return "preferences.codeCompletion";
   }
 
-  public String getComponentName(){
+  public String getComponentName() {
     return "CodeCompletionOptions";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
-  public void disposeComponent(){
+  public void disposeComponent() {
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel.myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.ide;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
@@ -8,6 +9,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -24,17 +27,20 @@ import java.nio.charset.Charset;
 import java.util.SortedMap;
 import java.util.Vector;
 
-public class GeneralSettingsConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private DiffOptionsForm myDiffOptions;
   private MyComponent myComponent;
+  private GlassPanel myGlassPanel;
 
   public static GeneralSettingsConfigurable getInstance() {
     return ApplicationManager.getApplication().getComponent(GeneralSettingsConfigurable.class);
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
-  public void disposeComponent() { }
+  public void disposeComponent() {
+  }
 
   public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -48,7 +54,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     settings.setSearchInBackground(myComponent.mySearchInBackground.isSelected());
-    
+
     try {
       settings.setCyclicBufferSize(Integer.parseInt(myComponent.myCyclicBufferSize.getText()) * 1024);
     }
@@ -85,8 +91,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     editorSettings.setNative2AsciiForPropertiesFiles(myComponent.myCbNative2Ascii.isSelected());
     String charsetName = (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem();
-    if (charsetName == null)
-      charsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
+    if (charsetName == null) charsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
     editorSettings.setDefaultPropertiesCharsetName(charsetName);
   }
 
@@ -102,7 +107,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
     isModified |= settings.isUseCyclicBuffer() != myComponent.myUseCyclicBuffer.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
-    isModified |= !Comparing.strEqual(settings.getCyclicBufferSize()/1024 + "", myComponent.myCyclicBufferSize.getText());
+    isModified |= !Comparing.strEqual(settings.getCyclicBufferSize() / 1024 + "", myComponent.myCyclicBufferSize.getText());
 
     int inactiveTimeout = -1;
     try {
@@ -119,7 +124,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     isModified |= isModified(myComponent.myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
-    isModified |= !Comparing.strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem());
+    isModified |= !Comparing
+      .strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem());
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     return isModified || getDiffOptions().isModified();
@@ -129,7 +135,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     return checkBox.isSelected() != value;
   }
 
-//----------------------------------------------
   public JComponent createComponent() {
 
 //    optionGroup.add(getDiffOptions().getPanel());
@@ -156,6 +161,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myIgnoreFilesField.setText("##### ##############");
     setupCharsetComboModel(myComponent.myCharsetNameCombo);
 
+    myGlassPanel = new GlassPanel(myComponent.myPanel);
     return myComponent.myPanel;
   }
 
@@ -173,7 +179,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
     charsetNameCombo.setModel(new DefaultComboBoxModel(charsets));
   }
-//--------------------------------------------------------
+
   public String getDisplayName() {
     return IdeBundle.message("title.general");
   }
@@ -183,6 +189,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
   }
 
   public void reset() {
+    myComponent.myPanel.getRootPane().setGlassPane(myGlassPanel);
     GeneralSettings settings = GeneralSettings.getInstance();
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     myComponent.myBrowserPathField.setText(settings.getBrowserPath());
@@ -196,7 +203,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myUseCyclicBuffer.setSelected(settings.isUseCyclicBuffer());
     myComponent.myCyclicBufferSize.setEditable(settings.isUseCyclicBuffer());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
-    myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize()/1024+"");
+    myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize() / 1024 + "");
 
     myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
     myComponent.myCharsetNameCombo.setSelectedItem(settings.getCharsetName());
@@ -217,8 +224,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     if (myComponent.myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
       myComponent.myDefaultPropertiesFilesCharset.setSelectedIndex(0);
     }
-    
-    myComponent.mySearchInBackground.setSelected( settings.isSearchInBackground() );
+
+    myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
   }
 
   public void disposeUIResources() {
@@ -300,10 +307,20 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     }
   }
 
-
   private DiffOptionsForm getDiffOptions() {
     if (myDiffOptions == null) myDiffOptions = new DiffOptionsForm();
     return myDiffOptions;
   }
 
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myComponent.myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }

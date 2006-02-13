@@ -1,6 +1,10 @@
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +29,7 @@ public class IntentionSettingsPanel {
   private HashMap<String, ArrayList<String>> myWords2DescriptorsMap;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionSettingsPanel");
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+  private GlassPanel myGlassPanel;
 
   public IntentionSettingsPanel() {
     myIntentionSettingsTree = new IntentionSettingsTree() {
@@ -41,7 +46,7 @@ public class IntentionSettingsPanel {
       protected List<IntentionActionMetaData> filterModel(String filter) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        cacheWordsToDescriptions(filter, list);
+        cacheWordsToDescriptions(list);
         final List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
           if (isIntentionAccepted(metaData, filter)){
@@ -58,6 +63,8 @@ public class IntentionSettingsPanel {
 
     myDescriptionPanel.setLayout(new BorderLayout());
     myDescriptionPanel.add(myIntentionDescriptionPanel.getComponent(), BorderLayout.CENTER);
+
+    myGlassPanel = new GlassPanel(myPanel);
   }
 
   private void intentionSelected(IntentionActionMetaData actionMetaData) {
@@ -69,6 +76,8 @@ public class IntentionSettingsPanel {
   }
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
+
     List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
     myIntentionSettingsTree.reset(list);
     SwingUtilities.invokeLater(new Runnable(){
@@ -86,6 +95,10 @@ public class IntentionSettingsPanel {
     return myPanel;
   }
 
+  public JTree getIntentionTree(){
+    return myIntentionSettingsTree.getTree();
+  }
+
   public boolean isModified() {
     return myIntentionSettingsTree.isModified();
   }
@@ -95,8 +108,8 @@ public class IntentionSettingsPanel {
     myIntentionDescriptionPanel.dispose();
   }
 
-  private void cacheWordsToDescriptions(String filter, List<IntentionActionMetaData> list){
-    if (myWords2DescriptorsMap == null && filter != null && filter.length() > 0) {
+  private void cacheWordsToDescriptions(List<IntentionActionMetaData> list){
+    if (myWords2DescriptorsMap == null) {
       myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
       try {
         for (IntentionActionMetaData metaData : list) {
@@ -140,5 +153,22 @@ public class IntentionSettingsPanel {
       if (descriptors == null || !descriptors.contains(metaData.myFamily)) return false;
     }
     return true;
+  }
+
+  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
+    final Runnable runnable = SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+    final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
+    if (path == null) return runnable;
+    return new Runnable() {
+      public void run() {
+        cacheWordsToDescriptions(IntentionManagerSettings.getInstance().getMetaData());
+        myIntentionSettingsTree.selectIntentions(myWords2DescriptorsMap.get(option));
+        runnable.run();
+      }
+    };
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

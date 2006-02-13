@@ -1,11 +1,14 @@
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ide.IdeBundle;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -20,32 +23,34 @@ import java.util.Hashtable;
 /**
  * @author Eugene Belyaev
  */
-public class AppearanceConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private MyComponent myComponent;
+  private GlassPanel myGlassPanel;
 
-  public AppearanceConfigurable() { }
+  public AppearanceConfigurable() {
+  }
 
-  public void disposeComponent() { }
+  public void disposeComponent() {
+  }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public String getDisplayName() {
     return IdeBundle.message("title.appearance");
   }
-//----------------------------------------------------
+
   public JComponent createComponent() {
     myComponent = new MyComponent();
     DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
 
-    myComponent.myFontSizeCombo.setModel(
-      new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
+    myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
 
     myComponent.myFontSizeCombo.setEditable(true);
 //    myComponent.myLafComboBox=new JComboBox(LafManager.getInstance().getInstalledLookAndFeels());
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer());
-
 
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
@@ -58,7 +63,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
 
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
-    Dictionary<Integer,JLabel> dictionary = new Hashtable<Integer, JLabel>();
+    Dictionary<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));
@@ -76,6 +81,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     });
 
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
+
+    myGlassPanel = new GlassPanel(myComponent.myPanel);
 
     return myComponent.myPanel;
   }
@@ -133,9 +140,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
 
     boolean shouldRepaintUI = false;
-    if (
-      settings.ANTIALIASING_IN_EDITOR != myComponent.myAntialiasingInEditorCheckBox.isSelected()
-    ) {
+    if (settings.ANTIALIASING_IN_EDITOR != myComponent.myAntialiasingInEditorCheckBox.isSelected()) {
       settings.ANTIALIASING_IN_EDITOR = myComponent.myAntialiasingInEditorCheckBox.isSelected();
       update = shouldRepaintUI = true;
     }
@@ -161,11 +166,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       catch (NumberFormatException ignored) {
       }
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
-      if (
-        myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE ||
-        delay != -1 && delay != settings.ALPHA_MODE_DELAY ||
-        ratio != settings.ALPHA_MODE_RATIO
-      ) {
+      if (myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE ||
+          delay != -1 && delay != settings.ALPHA_MODE_DELAY || ratio != settings.ALPHA_MODE_RATIO) {
         update = true;
         settings.ENABLE_ALPHA_MODE = myComponent.myEnableAlphaModeCheckBox.isSelected();
         settings.ALPHA_MODE_DELAY = delay;
@@ -181,6 +183,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
   }
 
   public void reset() {
+    myComponent.myPanel.getRootPane().setGlassPane(myGlassPanel);
     UISettings settings = UISettings.getInstance();
 
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
@@ -236,8 +239,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
 
     isModified |= myComponent.myAntialiasingInEditorCheckBox.isSelected() != settings.ANTIALIASING_IN_EDITOR;
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
-    isModified |=
-    !myComponent.myLafComboBox.getSelectedItem().equals(LafManager.getInstance().getCurrentLookAndFeel());
+    isModified |= !myComponent.myLafComboBox.getSelectedItem().equals(LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE;
       int delay = -1;
@@ -261,7 +263,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       int fieldValue = Integer.parseInt(textField.getText().trim());
       return fieldValue != value;
     }
-    catch(NumberFormatException e) {
+    catch (NumberFormatException e) {
       return false;
     }
   }
@@ -275,7 +277,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent = null;
   }
 
-
   public String getHelpTopic() {
     return "preferences.lookFeel";
   }
@@ -285,17 +286,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
   }
 
   private static final class MyLafComboBoxRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       UIManager.LookAndFeelInfo laf = (UIManager.LookAndFeelInfo)value;
       return super.getListCellRendererComponent(list, laf.getName(), index, isSelected, cellHasFocus);
     }
   }
-
-
 
   private static class MyComponent {
     JPanel myPanel;
@@ -324,7 +319,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JCheckBox myHideIconsInQuickNavigation;
 
 
-
     public MyComponent() {
       ActionListener updater = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -333,8 +327,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       };
       myLafComboBox.addActionListener(updater);
       myOverrideLAFFonts.addActionListener(updater);
-      myIDEALafFont.setPreferredSize(new Dimension(myIDEALafFont.getPreferredSize().width,
-                                                   myOverrideLAFFonts.getPreferredSize().height));
+      myIDEALafFont.setPreferredSize(new Dimension(myIDEALafFont.getPreferredSize().width, myOverrideLAFFonts.getPreferredSize().height));
 
     }
 
@@ -352,5 +345,17 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       myFontNameLabel.setEnabled(enableChooser);
       myFontSizeLabel.setEnabled(enableChooser);
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myComponent.myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

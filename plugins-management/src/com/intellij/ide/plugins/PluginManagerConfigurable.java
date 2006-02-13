@@ -1,12 +1,15 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
@@ -21,7 +24,7 @@ import javax.swing.*;
  * Time: 9:30:44 PM
  * To change this template use Options | File Templates.
  */
-public class PluginManagerConfigurable extends BaseConfigurable implements JDOMExternalizable, ApplicationComponent {
+public class PluginManagerConfigurable extends BaseConfigurable implements JDOMExternalizable, SearchableConfigurable, ApplicationComponent {
   public int AVAILABLE_SORT_COLUMN = 0;
   public int INSTALLED_SORT_COLUMN = 0;
   public int CART_SORT_COLUMN = 0;
@@ -34,6 +37,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   public boolean TREE_VIEW = false;
 
   private PluginManagerMain myPluginManagerMain;
+  private GlassPanel myGlassPanel;
 
   public static PluginManagerConfigurable getInstance() {
     return ApplicationManager.getApplication().getComponent(PluginManagerConfigurable.class);
@@ -61,7 +65,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public void reset() {
-    //To change body of implemented methods use Options | File Templates.
+    myPluginManagerMain.getMainPanel().getRootPane().setGlassPane(myGlassPanel);
   }
 
   public String getHelpTopic() {
@@ -75,6 +79,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   public JComponent createComponent() {
     if (myPluginManagerMain == null) {
       myPluginManagerMain = new PluginManagerMain( new MyInstalledProvider() );
+      myGlassPanel = new GlassPanel(myPluginManagerMain.getMainPanel());
     }
 
     return myPluginManagerMain.getMainPanel();
@@ -84,7 +89,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
     if (myPluginManagerMain.isRequireShutdown()) {
       if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
                                    IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
-        ApplicationManagerEx.getApplicationEx().exit(true);        
+        ApplicationManagerEx.getApplicationEx().exit(true);
       }
       else {
         myPluginManagerMain.ignoreChanges ();
@@ -134,5 +139,17 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
     public void setSortColumn(int sortColumn) {
       CART_SORT_COLUMN = sortColumn;
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPluginManagerMain.getMainPanel(), option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

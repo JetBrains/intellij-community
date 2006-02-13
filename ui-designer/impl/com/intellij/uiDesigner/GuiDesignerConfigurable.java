@@ -1,10 +1,12 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
@@ -22,28 +24,34 @@ import javax.swing.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiDesignerConfigurable implements Configurable, ProjectComponent {
+public final class GuiDesignerConfigurable implements SearchableConfigurable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiDesignerConfigurable");
-
   private final Project myProject;
   private MyGeneralUI myGeneralUI;
+  private GlassPanel myGlassPanel;
 
-  /** Invoked by reflection */
+  /**
+   * Invoked by reflection
+   */
   public GuiDesignerConfigurable(final Project project) {
     myProject = project;
   }
 
-  public void projectOpened() {}
+  public void projectOpened() {
+  }
 
-  public void projectClosed() {}
+  public void projectClosed() {
+  }
 
   public String getComponentName() {
     return "uidesigner-configurable";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
   public String getDisplayName() {
     return UIDesignerBundle.message("title.gui.designer");
@@ -62,6 +70,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
 
     myGeneralUI = new MyGeneralUI();
 
+    myGlassPanel = new GlassPanel(myGeneralUI.myPanel);
     return myGeneralUI.myPanel;
   }
 
@@ -93,10 +102,12 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     // We have to store value of the radio button here because myGeneralUI will be cleared
     // just after apply is invoked (applyImpl is invoked later)
     final boolean instrumentClasses = myGeneralUI.myRbInstrumentClasses.isSelected();
-    ApplicationManager.getApplication().invokeLater(new MyApplyRunnable(progressWindow, instrumentClasses), progressWindow.getModalityState());
+    ApplicationManager.getApplication()
+      .invokeLater(new MyApplyRunnable(progressWindow, instrumentClasses), progressWindow.getModalityState());
   }
 
   public void reset() {
+    myGeneralUI.myPanel.getRootPane().setGlassPane(myGlassPanel);
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
 
     /*general*/
@@ -112,9 +123,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
 
   public void disposeUIResources() {
     myGeneralUI = null;
-  }
+  } /*UI for "General" tab*/
 
-  /*UI for "General" tab*/
   private static final class MyGeneralUI {
     public JPanel myPanel;
     public JRadioButton myRbInstrumentClasses;
@@ -143,8 +153,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
      */
     private void vanishGeneratedSources() {
       final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
-      final PsiMethod[] methods = cache.getMethodsByName(FormSourceCodeGenerator.METHOD_NAME,
-                                                         GlobalSearchScope.projectScope(myProject));
+      final PsiMethod[] methods = cache.getMethodsByName(FormSourceCodeGenerator.METHOD_NAME, GlobalSearchScope.projectScope(myProject));
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];
@@ -174,35 +183,37 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
       configuration.INSTRUMENT_CLASSES = instrumentClasses;
 
       if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
-        CommandProcessor.getInstance().executeCommand(
-          myProject,
-          new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(
-                new Runnable() {
-                  public void run() {
-                    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                    vanishGeneratedSources();
-                  }
-                }
-              );
-            }
-          },
-          "",
-          null
-        );
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                vanishGeneratedSources();
+              }
+            });
+          }
+        }, "", null);
       }
     }
 
     public void run() {
-      ProgressManager.getInstance().runProcess(
-        new Runnable() {
-          public void run() {
-            applyImpl(myInstrumentClasses);
-          }
-        },
-        myProgressWindow
-      );
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        public void run() {
+          applyImpl(myInstrumentClasses);
+        }
+      }, myProgressWindow);
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myGeneralUI.myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

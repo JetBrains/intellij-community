@@ -1,12 +1,15 @@
 package com.intellij.ide.todo.configurable;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.TodoAttributes;
@@ -34,7 +37,7 @@ import java.util.List;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   /*
    * UI resources
    */
@@ -47,11 +50,11 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
   private JButton myAddFilterButton;
   private JButton myEditFilterButton;
   private JButton myRemoveFilterButton;
-
   private List<TodoPattern> myPatterns;
   private PatternsTableModel myPatternsModel;
   private List<TodoFilter> myFilters;
   private FiltersTableModel myFiltersModel;
+  private GlassPanel myGlassPanel;
 
   /**
    * Invoked by reflection
@@ -112,13 +115,15 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
     }
   }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
   public String getComponentName() {
     return "TodoConfigurable";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
   public void disposeUIResources() {
     myPanel = null;
@@ -157,9 +162,8 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
 
         // Column "Icon"
 
-        JComboBox todoTypeCombo = new JComboBox(
-          new Icon[]{TodoAttributes.DEFAULT_ICON, TodoAttributes.QUESTION_ICON, TodoAttributes.IMPORTANT_ICON}
-        );
+        JComboBox todoTypeCombo =
+          new JComboBox(new Icon[]{TodoAttributes.DEFAULT_ICON, TodoAttributes.QUESTION_ICON, TodoAttributes.IMPORTANT_ICON});
         todoTypeCombo.setRenderer(new TodoTypeListCellRenderer());
         TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
         DefaultCellEditor todoTypeEditor = new DefaultCellEditor(todoTypeCombo);
@@ -168,9 +172,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
         TodoTypeTableCellRenderer todoTypeRenderer = new TodoTypeTableCellRenderer();
         typeColumn.setCellRenderer(todoTypeRenderer);
 
-        int width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(
-          myPatternsTable.getColumnName(0)) +
-                    10;
+        int width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(0)) + 10;
         typeColumn.setPreferredWidth(width);
         typeColumn.setMaxWidth(width);
         typeColumn.setMinWidth(width);
@@ -178,8 +180,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
         // Column "Case Sensitive"
 
         TableColumn todoCaseSensitiveColumn = myPatternsTable.getColumnModel().getColumn(1);
-        width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(1)) +
-                10;
+        width = myPatternsTable.getFontMetrics(myPatternsTable.getFont()).stringWidth(myPatternsTable.getColumnName(1)) + 10;
         todoCaseSensitiveColumn.setPreferredWidth(width);
         todoCaseSensitiveColumn.setMaxWidth(width);
         todoCaseSensitiveColumn.setMinWidth(width);
@@ -201,56 +202,50 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
 
       protected JButton[] createButtons() {
         myAddPatternButton = new JButton(IdeBundle.message("button.add"));
-        myAddPatternButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              stopEditing();
-              TodoPattern pattern = new TodoPattern();
-              PatternDialog dialog = new PatternDialog(myPanel, pattern);
-              dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
-              dialog.show();
-              if (!dialog.isOK()) {
-                return;
-              }
-              myPatterns.add(pattern);
-              int index = myPatterns.size() - 1;
-              myPatternsModel.fireTableRowsInserted(index, index);
-              myPatternsTable.getSelectionModel().setSelectionInterval(index, index);
-              myPatternsTable.scrollRectToVisible(myPatternsTable.getCellRect(index, 0, true));
+        myAddPatternButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            stopEditing();
+            TodoPattern pattern = new TodoPattern();
+            PatternDialog dialog = new PatternDialog(myPanel, pattern);
+            dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
+            dialog.show();
+            if (!dialog.isOK()) {
+              return;
             }
+            myPatterns.add(pattern);
+            int index = myPatterns.size() - 1;
+            myPatternsModel.fireTableRowsInserted(index, index);
+            myPatternsTable.getSelectionModel().setSelectionInterval(index, index);
+            myPatternsTable.scrollRectToVisible(myPatternsTable.getCellRect(index, 0, true));
           }
-        );
+        });
 
         myEditPatternButton = new JButton(IdeBundle.message("button.edit"));
-        myEditPatternButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              editSelectedPattern();
-            }
+        myEditPatternButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            editSelectedPattern();
           }
-        );
+        });
 
         myRemovePatternButton = new JButton(IdeBundle.message("button.remove"));
-        myRemovePatternButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              stopEditing();
-              int selectedIndex = myPatternsTable.getSelectedRow();
-              if (selectedIndex < 0 || selectedIndex >= myPatternsModel.getRowCount()) {
-                return;
-              }
-              TodoPattern patternToBeRemoved = myPatterns.get(selectedIndex);
-              TableUtil.removeSelectedItems(myPatternsTable);
-              for (int i = 0; i < myFilters.size(); i++) {
-                TodoFilter filter = myFilters.get(i);
-                if (filter.contains(patternToBeRemoved)) {
-                  filter.removeTodoPattern(patternToBeRemoved);
-                  myFiltersModel.fireTableRowsUpdated(i, i);
-                }
+        myRemovePatternButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            stopEditing();
+            int selectedIndex = myPatternsTable.getSelectedRow();
+            if (selectedIndex < 0 || selectedIndex >= myPatternsModel.getRowCount()) {
+              return;
+            }
+            TodoPattern patternToBeRemoved = myPatterns.get(selectedIndex);
+            TableUtil.removeSelectedItems(myPatternsTable);
+            for (int i = 0; i < myFilters.size(); i++) {
+              TodoFilter filter = myFilters.get(i);
+              if (filter.contains(patternToBeRemoved)) {
+                filter.removeTodoPattern(patternToBeRemoved);
+                myFiltersModel.fireTableRowsUpdated(i, i);
               }
             }
           }
-        );
+        });
 
         return new JButton[]{myAddPatternButton, myEditPatternButton, myRemovePatternButton};
       }
@@ -258,29 +253,24 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
 
     // double click in "Patterns" table should also start editing of selected pattern
 
-    myPatternsTable.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            editSelectedPattern();
-          }
+    myPatternsTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          editSelectedPattern();
         }
       }
-    );
+    });
 
     // synchonizes selection in the "Patterns" table with buttons states
 
-    myPatternsTable.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-          if (e.getValueIsAdjusting()) {
-            return;
-          }
-          updateButtonsState();
+    myPatternsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          return;
         }
+        updateButtonsState();
       }
-    );
-
+    });
 
     // Panel with filters
 
@@ -303,9 +293,8 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
         // Column "Name"
 
         TableColumn nameColumn = myFiltersTable.getColumnModel().getColumn(0);
-        int width =
-          myPatternsTable.getColumnModel().getColumn(0).getPreferredWidth()/*typeColumn*/ +
-          myPatternsTable.getColumnModel().getColumn(1).getPreferredWidth()/*todoCaseSensitiveColumn*/;
+        int width = myPatternsTable.getColumnModel().getColumn(0).getPreferredWidth()/*typeColumn*/ +
+                    myPatternsTable.getColumnModel().getColumn(1).getPreferredWidth()/*todoCaseSensitiveColumn*/;
         nameColumn.setPreferredWidth(width);
         nameColumn.setMaxWidth(width);
         nameColumn.setMinWidth(width);
@@ -316,49 +305,42 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
 
       protected JButton[] createButtons() {
         myAddFilterButton = new JButton(IdeBundle.message("button.add.d"));
-        myAddFilterButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              stopEditing();
-              TodoFilter filter = new TodoFilter();
-              FilterDialog dialog = new FilterDialog(myPanel, filter, -1, myFilters, myPatterns);
-              dialog.setTitle(IdeBundle.message("title.add.todo.filter"));
-              dialog.show();
-              int exitCode = dialog.getExitCode();
-              if (DialogWrapper.OK_EXIT_CODE == exitCode) {
-                myFilters.add(filter);
-                int index = myFilters.size() - 1;
-                myFiltersModel.fireTableRowsInserted(index, index);
-                myFiltersTable.getSelectionModel().setSelectionInterval(index, index);
-                myFiltersTable.scrollRectToVisible(myFiltersTable.getCellRect(index, 0, true));
-              }
+        myAddFilterButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            stopEditing();
+            TodoFilter filter = new TodoFilter();
+            FilterDialog dialog = new FilterDialog(myPanel, filter, -1, myFilters, myPatterns);
+            dialog.setTitle(IdeBundle.message("title.add.todo.filter"));
+            dialog.show();
+            int exitCode = dialog.getExitCode();
+            if (DialogWrapper.OK_EXIT_CODE == exitCode) {
+              myFilters.add(filter);
+              int index = myFilters.size() - 1;
+              myFiltersModel.fireTableRowsInserted(index, index);
+              myFiltersTable.getSelectionModel().setSelectionInterval(index, index);
+              myFiltersTable.scrollRectToVisible(myFiltersTable.getCellRect(index, 0, true));
             }
           }
-        );
+        });
 
         myEditFilterButton = new JButton(IdeBundle.message("button.edit.t"));
-        myEditFilterButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              editSelectedFilter();
-            }
+        myEditFilterButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            editSelectedFilter();
           }
-        );
+        });
 
         myRemoveFilterButton = new JButton(IdeBundle.message("button.remove.m"));
-        myRemoveFilterButton.addActionListener(
-          new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              stopEditing();
-              TableUtil.removeSelectedItems(myFiltersTable);
-            }
+        myRemoveFilterButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            stopEditing();
+            TableUtil.removeSelectedItems(myFiltersTable);
           }
-        );
+        });
 
         return new JButton[]{myAddFilterButton, myEditFilterButton, myRemoveFilterButton};
       }
     };
-
 
     // double click in "Filters" table should also start editing of selected filter
 
@@ -387,19 +369,13 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
 
     //
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.add(patternsPanel,
-                new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                       new Insets(5, 2, 4, 2), 0, 0));
-    myPanel.add(filtersPanel,
-                new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                       new Insets(5, 2, 4, 2), 0, 0));
+    myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                                      new Insets(5, 2, 4, 2), 0, 0));
+    myPanel.add(filtersPanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                                     new Insets(5, 2, 4, 2), 0, 0));
 
-    myPanel.setPreferredSize(
-      new Dimension(
-        Math.max(700, myPanel.getPreferredSize().width),
-        myPanel.getPreferredSize().height
-      )
-    );
+    myPanel.setPreferredSize(new Dimension(Math.max(700, myPanel.getPreferredSize().width), myPanel.getPreferredSize().height));
+    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -488,6 +464,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
     // Patterns
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
@@ -512,14 +489,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {
-    public Component getTableCellRendererComponent(
-      JTable table,
-      Object value,
-      boolean isSelected,
-      boolean hasFocus,
-      int row,
-      int column
-      ) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       TodoFilter filter = myFilters.get(row);
       if (isSelected) {
@@ -535,5 +505,17 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       }
       return this;
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

@@ -1,20 +1,25 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class LiveTemplatesConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private TemplateListPanel myPanel;
+  private GlassPanel myGlassPanel;
 
   public String getComponentName() {
     return "LiveTemplatesConfigurable";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void disposeComponent() {
   }
@@ -28,6 +33,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Appli
 
   public JComponent createComponent() {
     myPanel = new TemplateListPanel();
+    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -40,6 +46,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Appli
   }
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
     myPanel.reset();
   }
 
@@ -56,5 +63,17 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Appli
 
   public String getHelpTopic() {
     return "editing.templates";
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

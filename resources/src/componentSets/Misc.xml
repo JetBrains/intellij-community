@@ -65,6 +65,9 @@
     <component>
       <implementation-class>com.intellij.diagnostic.logging.LogConsolePreferences</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.ui.search.SearchableOptionsRegistrar</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -115,6 +118,9 @@
       <skipForDummyProject/>
     </component>
 
+  <!--  <component>
+      <implementation-class>com.intellij.ide.ui.search.DefaultApplicationSearchableOptionsProvider</implementation-class>
+    </component>-->
   </project-components>
 
   <module-components>

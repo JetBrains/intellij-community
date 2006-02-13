@@ -1,0 +1,920 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options>
+  <configurable id="preferences.colorsFonts" configurable_name="Colors &amp; Fonts">
+    <option name="3" path="9" />
+    <option name="a" />
+    <option name="background" path="0" />
+    <option name="based" path="11" />
+    <option name="bold" path="0" />
+    <option name="change" path="9" />
+    <option name="color" path="9" />
+    <option name="conflict" path="9" />
+    <option name="custom" path="5" />
+    <option name="debugger" path="7" />
+    <option name="delete" />
+    <option name="diff" path="9" />
+    <option name="editor" />
+    <option name="effect" path="8" />
+    <option name="error" path="2" />
+    <option name="file" path="10" />
+    <option name="font" path="2" />
+    <option name="foreground" path="0" />
+    <option name="general" path="0" />
+    <option name="html" path="2" />
+    <option name="italic" path="7" />
+    <option name="java" path="8" />
+    <option name="jsp" path="4" />
+    <option name="line" />
+    <option name="mark" path="6" />
+    <option name="name" />
+    <option name="one" path="9" />
+    <option name="property" path="6" />
+    <option name="save" />
+    <option name="scheme" />
+    <option name="scope" path="11" />
+    <option name="script" path="8" />
+    <option name="size" />
+    <option name="spacing" />
+    <option name="statu" path="10" />
+    <option name="stripe" path="3" />
+    <option name="type" path="0" />
+    <option name="xml" path="3" />
+  </configurable>
+  <configurable id="preferences.keymap" configurable_name="Keymap">
+    <option name="a" />
+    <option name="action" />
+    <option name="active" />
+    <option name="add" />
+    <option name="copy" />
+    <option name="dd" />
+    <option name="de" />
+    <option name="description" />
+    <option name="disable" />
+    <option name="edit" />
+    <option name="in" />
+    <option name="keyboard" />
+    <option name="keymap" />
+    <option name="lete" />
+    <option name="list" />
+    <option name="menu" />
+    <option name="mnemonic" />
+    <option name="mouse" />
+    <option name="name" />
+    <option name="parent" />
+    <option name="quick" />
+    <option name="remo" />
+    <option name="remove" />
+    <option name="set" />
+    <option name="setting" />
+    <option name="shortc" />
+    <option name="shortcut" />
+    <option name="ut" />
+    <option name="ve" />
+  </configurable>
+  <configurable id="preferences.intentionPowerPack" configurable_name="Intention Settings">
+    <option name="b" />
+    <option name="body" />
+    <option name="center" />
+    <option name="description" />
+    <option name="example" />
+    <option name="filter" />
+    <option name="html" />
+    <option name="intention" />
+    <option name="list" />
+    <option name="usage" />
+  </configurable>
+  <configurable id="preferences.fileTypes" configurable_name="File Types">
+    <option name="add" />
+    <option name="edit" />
+    <option name="extension" />
+    <option name="file" />
+    <option name="recognized" />
+    <option name="registered" />
+    <option name="remove" />
+    <option name="type" />
+  </configurable>
+  <configurable id="project.propGUI" configurable_name="GUI Designer">
+    <option name="automatically" />
+    <option name="class" />
+    <option name="copy" />
+    <option name="directory" />
+    <option name="form" />
+    <option name="generate" />
+    <option name="gui" />
+    <option name="into" />
+    <option name="irida-compatible" />
+    <option name="layout" />
+    <option name="mode" />
+    <option name="output" />
+    <option name="runtime" />
+    <option name="the" />
+    <option name="to" />
+  </configurable>
+  <configurable id="preferences.jdkGlobalLibs" configurable_name="JDK &amp;&#10;Global Libraries">
+    <option name="add" path="1" />
+    <option name="attach" path="1" />
+    <option name="class" path="1" />
+    <option name="classpath" path="0.0" />
+    <option name="create" path="1" />
+    <option name="global" path="1" />
+    <option name="home" path="0" />
+    <option name="javadoc" path="1" />
+    <option name="jdk" path="0" />
+    <option name="jsdk" path="0" />
+    <option name="library" path="1" />
+    <option name="name" path="0" />
+    <option name="path" path="0.2" />
+    <option name="remove" path="1" />
+    <option name="rename" path="1" />
+    <option name="source" path="1" />
+    <option name="sourcepath" path="0.1" />
+    <option name="specify" path="1" />
+    <option name="url" path="2" />
+  </configurable>
+  <configurable id="project.propVCSSupport" configurable_name="Version Control">
+    <option name="add" path="1" />
+    <option name="are" path="1" />
+    <option name="check" path="1" />
+    <option name="checkin" path="1" />
+    <option name="checkout" path="1" />
+    <option name="clear" path="1" />
+    <option name="command" path="1" />
+    <option name="comment" path="1" />
+    <option name="configure" path="0" />
+    <option name="control" path="0" />
+    <option name="created" path="1" />
+    <option name="creation" path="1" />
+    <option name="default" path="0" />
+    <option name="deleted" path="1" />
+    <option name="deletion" path="1" />
+    <option name="dialog" path="1" />
+    <option name="display" path="1" />
+    <option name="edit" path="1" />
+    <option name="file" path="1" />
+    <option name="focu" path="1" />
+    <option name="force" path="1" />
+    <option name="general" path="1" />
+    <option name="idea" path="1" />
+    <option name="in" path="1" />
+    <option name="into" path="1" />
+    <option name="invoked" path="1" />
+    <option name="last" path="1" />
+    <option name="message" path="1" />
+    <option name="module" path="0" />
+    <option name="non-empty" path="1" />
+    <option name="option" path="1" />
+    <option name="put" path="1" />
+    <option name="read-only" path="1" />
+    <option name="remove" path="1" />
+    <option name="reuse" path="1" />
+    <option name="setting" path="1" />
+    <option name="show" path="1" />
+    <option name="statu" path="1" />
+    <option name="these" path="1" />
+    <option name="update" path="1" />
+    <option name="version" path="0" />
+    <option name="when" path="1" />
+    <option name="with" path="1" />
+  </configurable>
+  <configurable id="preferences.codeStyle" configurable_name="Global&#10;Code Style">
+    <option name="a" />
+    <option name="delete" />
+    <option name="loading" />
+    <option name="name" />
+    <option name="page" />
+    <option name="please" />
+    <option name="save" />
+    <option name="scheme" />
+    <option name="wait" />
+  </configurable>
+  <configurable id="fileTemplates" configurable_name="File Templates">
+    <option name="according" />
+    <option name="code" path="2" />
+    <option name="description" />
+    <option name="extension" />
+    <option name="include" path="1" />
+    <option name="j2ee" path="3" />
+    <option name="name" />
+    <option name="reformat" />
+    <option name="style" />
+    <option name="template" path="0" />
+    <option name="to" />
+  </configurable>
+  <configurable id="project.propLocalVCS" configurable_name="Local History">
+    <option name="active" />
+    <option name="compilation" />
+    <option name="day" />
+    <option name="debugging" />
+    <option name="enable" />
+    <option name="failed" />
+    <option name="file" />
+    <option name="for" />
+    <option name="history" />
+    <option name="keep" />
+    <option name="local" />
+    <option name="make" />
+    <option name="opening" />
+    <option name="package" />
+    <option name="passed" />
+    <option name="project" />
+    <option name="running" />
+    <option name="test" />
+    <option name="unit" />
+    <option name="working" />
+  </configurable>
+  <configurable id="preferences.editor" configurable_name="Editor">
+    <option name="0" path="0" />
+    <option name="5" path="0" />
+    <option name="accessor" path="1" />
+    <option name="action" path="0" />
+    <option name="active" path="1" />
+    <option name="add" path="0" />
+    <option name="advanced" path="0" />
+    <option name="after" path="0" />
+    <option name="allow" path="0" />
+    <option name="anonymou" path="1" />
+    <option name="appearance" path="1" />
+    <option name="asterisk" path="1" />
+    <option name="at" path="0" />
+    <option name="autoreparse" path="0" />
+    <option name="behavior" path="0" />
+    <option name="blank" path="0" />
+    <option name="blinking" path="1" />
+    <option name="block" path="1" />
+    <option name="body" path="1" />
+    <option name="bottom" path="0" />
+    <option name="br" path="0" />
+    <option name="brace" path="0" />
+    <option name="bracket" path="0" />
+    <option name="by" path="1" />
+    <option name="camelhump" path="0" />
+    <option name="caret" path="0" />
+    <option name="change" path="0" />
+    <option name="class" path="1" />
+    <option name="click" path="0" />
+    <option name="clipboard" path="0" />
+    <option name="closing" path="1" />
+    <option name="code" path="1" />
+    <option name="collapse" path="1" />
+    <option name="comment" path="1" />
+    <option name="configured" path="1" />
+    <option name="content" path="0" />
+    <option name="ctrl" path="0" />
+    <option name="current" path="0" />
+    <option name="default" path="1" />
+    <option name="delay" path="0" />
+    <option name="display" path="1" />
+    <option name="double" path="0" />
+    <option name="drag" path="0" />
+    <option name="drop" path="0" />
+    <option name="editor" path="1" />
+    <option name="enable" path="0" />
+    <option name="end" path="0" />
+    <option name="enter" path="0" />
+    <option name="error" path="0" />
+    <option name="exceed" path="1" />
+    <option name="extension" path="1" />
+    <option name="file" path="0" />
+    <option name="first" path="0" />
+    <option name="fly" path="0" />
+    <option name="folding" path="1" />
+    <option name="font" path="0" />
+    <option name="for" path="0" />
+    <option name="functionality" path="0" />
+    <option name="goe" path="0" />
+    <option name="header" path="1" />
+    <option name="height" path="0" />
+    <option name="hide" path="1" />
+    <option name="highlight" path="0" />
+    <option name="highlighting" path="0" />
+    <option name="home" path="0" />
+    <option name="honor" path="0" />
+    <option name="html" path="1" />
+    <option name="import" path="0" />
+    <option name="in" path="1" />
+    <option name="indent" path="0" />
+    <option name="inner" path="1" />
+    <option name="inplace" path="0" />
+    <option name="insert" path="0" />
+    <option name="inside" path="0" />
+    <option name="javadoc" path="0" />
+    <option name="jsp" path="0" />
+    <option name="keep" path="0" />
+    <option name="key" path="0" />
+    <option name="limit" path="1" />
+    <option name="line" path="1" />
+    <option name="local" path="0" />
+    <option name="m" path="0" />
+    <option name="margin" path="1" />
+    <option name="mark" path="0" />
+    <option name="matched" path="0" />
+    <option name="maximum" path="0" />
+    <option name="method" path="1" />
+    <option name="min" path="0" />
+    <option name="modified" path="1" />
+    <option name="mouse" path="0" />
+    <option name="mousewheel" path="0" />
+    <option name="n" path="0" />
+    <option name="next" path="0" />
+    <option name="number" path="0" />
+    <option name="of" path="1" />
+    <option name="on" path="0" />
+    <option name="only" path="0" />
+    <option name="opened" path="1" />
+    <option name="optimize" path="0" />
+    <option name="option" path="1" />
+    <option name="outline" path="1" />
+    <option name="pair" path="0" />
+    <option name="paste" path="0" />
+    <option name="pixel" path="0" />
+    <option name="placement" path="0" />
+    <option name="policy" path="1" />
+    <option name="popup" path="0" />
+    <option name="property" path="1" />
+    <option name="quote" path="0" />
+    <option name="recent" path="0" />
+    <option name="reformat" path="0" />
+    <option name="rename" path="0" />
+    <option name="right" path="1" />
+    <option name="row" path="1" />
+    <option name="save" path="0" />
+    <option name="scope" path="0" />
+    <option name="scrolling" path="1" />
+    <option name="selecting" path="0" />
+    <option name="separator" path="1" />
+    <option name="setting" path="0" />
+    <option name="show" path="1" />
+    <option name="simple" path="1" />
+    <option name="single" path="1" />
+    <option name="size" path="0" />
+    <option name="smart" path="0" />
+    <option name="smooth" path="1" />
+    <option name="space" path="0" />
+    <option name="strip" path="0" />
+    <option name="stripe" path="0" />
+    <option name="stub" path="0" />
+    <option name="style" path="1" />
+    <option name="suppres" path="0" />
+    <option name="suppresswarning" path="0" />
+    <option name="tab" path="1" />
+    <option name="tag" path="1" />
+    <option name="the" path="0" />
+    <option name="to" path="0" />
+    <option name="trailing" path="0" />
+    <option name="unambiguou" path="0" />
+    <option name="usage" path="0" />
+    <option name="use" path="1" />
+    <option name="variable" path="0" />
+    <option name="virtual" path="0" />
+    <option name="when" path="0" />
+    <option name="whitespace" path="1" />
+    <option name="with" path="0" />
+    <option name="word" path="0" />
+    <option name="xml" path="1" />
+  </configurable>
+  <configurable id="preferences.toDoOptions" configurable_name="TODO">
+    <option name="a" />
+    <option name="add" />
+    <option name="dd" />
+    <option name="edi" />
+    <option name="edit" />
+    <option name="filter" />
+    <option name="move" />
+    <option name="pattern" />
+    <option name="re" />
+    <option name="remove" />
+    <option name="t" />
+  </configurable>
+  <configurable id="preferences.externalTools" configurable_name="External Tools">
+    <option name="add" />
+    <option name="copy" />
+    <option name="down" />
+    <option name="edit" />
+    <option name="move" />
+    <option name="remove" />
+    <option name="tool" />
+    <option name="up" />
+  </configurable>
+  <configurable id="preferences.codeStyle" configurable_name="Project&#10;Code Style">
+    <option name="above" />
+    <option name="absolute" path="0" />
+    <option name="add" path="6" />
+    <option name="after" path="4" />
+    <option name="align" path="9" />
+    <option name="alignment" path="2" />
+    <option name="all" path="0" />
+    <option name="alway" path="10" />
+    <option name="and" path="0" />
+    <option name="argument" path="2" />
+    <option name="around" path="10" />
+    <option name="array" path="2" />
+    <option name="assignment" path="2" />
+    <option name="at" path="1" />
+    <option name="attribute" path="9" />
+    <option name="be" />
+    <option name="bean" path="8" />
+    <option name="before" path="10" />
+    <option name="binary" path="2" />
+    <option name="blank" path="10" />
+    <option name="block" path="2" />
+    <option name="body" />
+    <option name="boo" path="6" />
+    <option name="br" />
+    <option name="brace" path="2" />
+    <option name="break" path="10" />
+    <option name="call" path="2" />
+    <option name="can" />
+    <option name="case" path="2" />
+    <option name="catch" path="2" />
+    <option name="character" path="0" />
+    <option name="check" />
+    <option name="child" path="10" />
+    <option name="clas" path="6" />
+    <option name="class" path="6" />
+    <option name="code" path="1" />
+    <option name="column" path="0" />
+    <option name="com" path="6" />
+    <option name="comment" path="1" />
+    <option name="company" path="6" />
+    <option name="configuration" />
+    <option name="configured" />
+    <option name="continuation" path="2" />
+    <option name="control" path="2" />
+    <option name="count" path="6" />
+    <option name="declaration" path="4" />
+    <option name="default" path="8" />
+    <option name="do" path="0" />
+    <option name="down" path="1" />
+    <option name="driven" path="8" />
+    <option name="edit" />
+    <option name="ejb" path="8" />
+    <option name="ejb-name" path="8" />
+    <option name="element" path="10" />
+    <option name="else" path="2" />
+    <option name="emove" path="6" />
+    <option name="empty" path="9" />
+    <option name="enable" path="7" />
+    <option name="entity" path="8" />
+    <option name="export" />
+    <option name="expression" path="2" />
+    <option name="extend" path="2" />
+    <option name="far" path="6" />
+    <option name="field" path="1" />
+    <option name="file" path="0" />
+    <option name="filter" path="8" />
+    <option name="filter-name" path="8" />
+    <option name="final" path="1" />
+    <option name="finally" path="2" />
+    <option name="first" path="2" />
+    <option name="for" />
+    <option name="force" path="2" />
+    <option name="formatting" path="7" />
+    <option name="from" path="2" />
+    <option name="fully" path="6" />
+    <option name="ge" path="6" />
+    <option name="general" path="0" />
+    <option name="generated" path="1" />
+    <option name="generation" path="1" />
+    <option name="global" />
+    <option name="header" path="4" />
+    <option name="home" path="8" />
+    <option name="html" />
+    <option name="ide" />
+    <option name="if" path="2" />
+    <option name="import" path="6" />
+    <option name="in" path="6" />
+    <option name="indent" path="1" />
+    <option name="initializer" path="2" />
+    <option name="inner" path="6" />
+    <option name="insert" path="6" />
+    <option name="inside" path="10" />
+    <option name="interface" path="8" />
+    <option name="j2ee" path="8" />
+    <option name="java" path="0.0" />
+    <option name="javadoc" path="7" />
+    <option name="jsp" path="0.1" />
+    <option name="keep" path="4" />
+    <option name="label" path="0" />
+    <option name="layout" path="6" />
+    <option name="level" path="0" />
+    <option name="line" path="9" />
+    <option name="list" path="2" />
+    <option name="listener" path="8" />
+    <option name="local" path="8" />
+    <option name="longer" path="1" />
+    <option name="make" path="1" />
+    <option name="margin" path="0" />
+    <option name="member" path="1" />
+    <option name="message" path="8" />
+    <option name="method" path="2" />
+    <option name="modifier" path="1" />
+    <option name="more" path="10" />
+    <option name="move" path="1" />
+    <option name="multiline" path="2" />
+    <option name="name" path="6" />
+    <option name="naming" path="1" />
+    <option name="new" path="10" />
+    <option name="not" path="10" />
+    <option name="object" path="8" />
+    <option name="of" path="10" />
+    <option name="on" path="2" />
+    <option name="one" path="2" />
+    <option name="operation" path="2" />
+    <option name="option" />
+    <option name="or" path="10" />
+    <option name="order" path="1" />
+    <option name="other" path="0.3" />
+    <option name="packa" path="6" />
+    <option name="package" path="6" />
+    <option name="page" path="6" />
+    <option name="parameter" path="2" />
+    <option name="parenthesized" path="2" />
+    <option name="per-project" />
+    <option name="pk" path="8" />
+    <option name="place" path="2" />
+    <option name="placement" path="2" />
+    <option name="prefer" path="1" />
+    <option name="prefix" path="8" />
+    <option name="preview" path="9" />
+    <option name="qualified" path="6" />
+    <option name="r" path="6" />
+    <option name="reformatting" path="2" />
+    <option name="remote" path="8" />
+    <option name="remove" path="10" />
+    <option name="right" path="0" />
+    <option name="same" path="0" />
+    <option name="separator" path="0" />
+    <option name="servlet" path="8" />
+    <option name="servlet-name" path="8" />
+    <option name="session" path="8" />
+    <option name="setting" />
+    <option name="simple" path="2" />
+    <option name="single" path="6" />
+    <option name="size" path="10" />
+    <option name="smart" path="2" />
+    <option name="space" path="5" />
+    <option name="special" path="2" />
+    <option name="statement" path="4" />
+    <option name="static" path="1" />
+    <option name="style" />
+    <option name="suffix" path="8" />
+    <option name="switch" path="2" />
+    <option name="tab" path="3" />
+    <option name="tag" path="10" />
+    <option name="ternary" path="2" />
+    <option name="text" path="10" />
+    <option name="than" path="10" />
+    <option name="throw" path="2" />
+    <option name="to" path="6" />
+    <option name="top" path="0" />
+    <option name="transfer" path="8" />
+    <option name="treatment" path="2" />
+    <option name="type" path="0" />
+    <option name="up" path="6" />
+    <option name="use" path="1" />
+    <option name="variable" path="1" />
+    <option name="when" path="2" />
+    <option name="while" path="2" />
+    <option name="white" path="10" />
+    <option name="with" path="6" />
+    <option name="wrap" path="10" />
+    <option name="wrapping" path="3" />
+    <option name="xml" path="0.2" />
+  </configurable>
+  <configurable id="preferences.general" configurable_name="General">
+    <option name="a" />
+    <option name="activation" />
+    <option name="and" />
+    <option name="application" />
+    <option name="authentication" />
+    <option name="automatically" />
+    <option name="background" />
+    <option name="body" />
+    <option name="br" />
+    <option name="browser" />
+    <option name="compare" />
+    <option name="confirm" />
+    <option name="console" />
+    <option name="conversion" />
+    <option name="deactivation" />
+    <option name="debug" />
+    <option name="default" />
+    <option name="detected" />
+    <option name="diff" />
+    <option name="effective" />
+    <option name="encoded" />
+    <option name="encoding" />
+    <option name="exit" />
+    <option name="external" />
+    <option name="file" />
+    <option name="folder" />
+    <option name="for" />
+    <option name="frame" />
+    <option name="general" />
+    <option name="host" />
+    <option name="html" />
+    <option name="http" />
+    <option name="i" />
+    <option name="idle" />
+    <option name="if" />
+    <option name="ignore" />
+    <option name="in" />
+    <option name="kb" />
+    <option name="last" />
+    <option name="limit" />
+    <option name="load" />
+    <option name="login" />
+    <option name="name" />
+    <option name="native-to-ascii" />
+    <option name="number" />
+    <option name="of" />
+    <option name="on" />
+    <option name="option" />
+    <option name="output" />
+    <option name="password" />
+    <option name="port" />
+    <option name="project" />
+    <option name="property" />
+    <option name="proxy" />
+    <option name="remember" />
+    <option name="reopen" />
+    <option name="restart" />
+    <option name="run" />
+    <option name="save" />
+    <option name="search" />
+    <option name="sec" />
+    <option name="startup" />
+    <option name="synchronize" />
+    <option name="the" />
+    <option name="to" />
+    <option name="tool" />
+    <option name="transparent" />
+    <option name="use" />
+    <option name="utf" />
+    <option name="utf-family" />
+    <option name="web" />
+  </configurable>
+  <configurable id="preferences.pathVariables" configurable_name="Path Variables">
+    <option name="add" />
+    <option name="edit" />
+    <option name="remove" />
+  </configurable>
+  <configurable id="preferences.pluginManager" configurable_name="Plugins">
+    <option name="cancel" />
+    <option name="change" />
+    <option name="description" />
+    <option name="e-mail" />
+    <option name="home" />
+    <option name="http" />
+    <option name="name" />
+    <option name="not" />
+    <option name="note" />
+    <option name="page" />
+    <option name="plugin" />
+    <option name="proxy" />
+    <option name="setting" />
+    <option name="size" />
+    <option name="specified" />
+    <option name="vendor" />
+    <option name="version" />
+  </configurable>
+  <configurable id="preferences.lookFeel" configurable_name="Appearance">
+    <option name="and" />
+    <option name="animate" />
+    <option name="antialiased" />
+    <option name="automatically" />
+    <option name="bar" />
+    <option name="br" />
+    <option name="button" />
+    <option name="by" />
+    <option name="cursor" />
+    <option name="cyclic" />
+    <option name="default" />
+    <option name="delay" />
+    <option name="disabled" />
+    <option name="editor" />
+    <option name="feel" />
+    <option name="floating" />
+    <option name="font" />
+    <option name="for" />
+    <option name="html" />
+    <option name="icon" />
+    <option name="in" />
+    <option name="indicator" />
+    <option name="list" />
+    <option name="look" />
+    <option name="m" />
+    <option name="memory" />
+    <option name="mnemonic" />
+    <option name="mode" />
+    <option name="mouse" />
+    <option name="name" />
+    <option name="navigation" />
+    <option name="not" />
+    <option name="on" />
+    <option name="option" />
+    <option name="override" />
+    <option name="position" />
+    <option name="quick" />
+    <option name="ratio" />
+    <option name="recommended" />
+    <option name="scrolling" />
+    <option name="show" />
+    <option name="size" />
+    <option name="tool" />
+    <option name="transparency" />
+    <option name="transparent" />
+    <option name="ui" />
+    <option name="use" />
+    <option name="window" />
+  </configurable>
+  <configurable id="preferences.externalResources" configurable_name="Resources">
+    <option name="add" />
+    <option name="configure" />
+    <option name="edit" />
+    <option name="external" />
+    <option name="ignored" />
+    <option name="remove" />
+    <option name="resource" />
+  </configurable>
+  <configurable id="project.propCompiler" configurable_name="Compiler">
+    <option name="add" />
+    <option name="additional" path="1" />
+    <option name="after" />
+    <option name="application" />
+    <option name="assertion" />
+    <option name="background" />
+    <option name="clear" />
+    <option name="close" />
+    <option name="command" />
+    <option name="compilation" />
+    <option name="compile" />
+    <option name="compiler" path="1" />
+    <option name="debugging" path="0" />
+    <option name="dependency" />
+    <option name="deploy" />
+    <option name="deprecated" path="0" />
+    <option name="directory" />
+    <option name="eclipse" path="0" />
+    <option name="enable" path="1" />
+    <option name="error" />
+    <option name="executable" path="0" />
+    <option name="feature" path="0" />
+    <option name="generate" path="1" />
+    <option name="generation" path="1" />
+    <option name="heap" path="0" />
+    <option name="honor" />
+    <option name="if" />
+    <option name="iiop" path="1" />
+    <option name="in" />
+    <option name="info" path="0" />
+    <option name="java" path="0" />
+    <option name="javac" path="0" />
+    <option name="jike" path="0" />
+    <option name="line" path="1" />
+    <option name="maximum" path="0" />
+    <option name="mb" path="0" />
+    <option name="message" />
+    <option name="no" />
+    <option name="notnull" />
+    <option name="occurred" />
+    <option name="of" path="0" />
+    <option name="on" />
+    <option name="option" path="0" />
+    <option name="output" />
+    <option name="parameter" path="0" />
+    <option name="path" path="0" />
+    <option name="pattern" />
+    <option name="rebuild" />
+    <option name="remove" />
+    <option name="report" path="0" />
+    <option name="resource" />
+    <option name="rmi" path="1" />
+    <option name="server" />
+    <option name="size" path="0" />
+    <option name="stub" path="1" />
+    <option name="to" path="0" />
+    <option name="use" path="0" />
+    <option name="view" />
+    <option name="warning" path="0" />
+    <option name="web" />
+  </configurable>
+  <configurable id="preferences.codeCompletion" configurable_name="Code Completion">
+    <option name="after" />
+    <option name="alphabetically" />
+    <option name="argument" />
+    <option name="autocomplete" />
+    <option name="autopopup" />
+    <option name="basic" />
+    <option name="bracket" />
+    <option name="case" />
+    <option name="choice" />
+    <option name="clas" />
+    <option name="code" />
+    <option name="common" />
+    <option name="completion" />
+    <option name="dot" />
+    <option name="full" />
+    <option name="height" />
+    <option name="in" />
+    <option name="info" />
+    <option name="insert" />
+    <option name="instance" />
+    <option name="item" />
+    <option name="javadoc" />
+    <option name="list" />
+    <option name="lookup" />
+    <option name="m" />
+    <option name="member" />
+    <option name="name" />
+    <option name="no" />
+    <option name="one" />
+    <option name="only" />
+    <option name="parameter" />
+    <option name="prefix" />
+    <option name="qualifier" />
+    <option name="sensitive" />
+    <option name="show" />
+    <option name="signature" />
+    <option name="smart" />
+    <option name="sort" />
+    <option name="static" />
+    <option name="type" />
+    <option name="when" />
+    <option name="xml" />
+  </configurable>
+  <configurable id="preferences.customizations" configurable_name="Customizations">
+    <option name="action" />
+    <option name="add" />
+    <option name="after" />
+    <option name="description" />
+    <option name="down" />
+    <option name="edit" />
+    <option name="icon" />
+    <option name="move" />
+    <option name="name" />
+    <option name="remove" />
+    <option name="schema" />
+    <option name="separator" />
+    <option name="up" />
+  </configurable>
+  <configurable id="preferences.updates" configurable_name="Updates">
+    <option name="01" />
+    <option name="05" />
+    <option name="2005" />
+    <option name="__build_number__" />
+    <option name="able" />
+    <option name="active" />
+    <option name="and" />
+    <option name="automatically" />
+    <option name="build" />
+    <option name="check" />
+    <option name="checked" />
+    <option name="connection" />
+    <option name="current" />
+    <option name="demetra" />
+    <option name="for" />
+    <option name="i" />
+    <option name="idea" />
+    <option name="intellij" />
+    <option name="internet" />
+    <option name="itself" />
+    <option name="last" />
+    <option name="new" />
+    <option name="now" />
+    <option name="number" />
+    <option name="of" />
+    <option name="to" />
+    <option name="update" />
+    <option name="updated" />
+    <option name="using" />
+    <option name="version" />
+    <option name="when" />
+    <option name="your" />
+  </configurable>
+  <configurable id="editing.templates" configurable_name="Live Templates">
+    <option name="add" />
+    <option name="by" />
+    <option name="copy" />
+    <option name="default" />
+    <option name="edit" />
+    <option name="expand" />
+    <option name="remove" />
+    <option name="with" />
+  </configurable>
+  <configurable id="errors" configurable_name="Errors">
+    <option name="add" />
+    <option name="assignment" />
+    <option name="browse" />
+    <option name="default" />
+    <option name="down" />
+    <option name="emove" />
+    <option name="inspection" />
+    <option name="move" />
+    <option name="profile" />
+    <option name="project" />
+    <option name="r" />
+    <option name="up" />
+  </configurable>
+</options>
+

@@ -1,27 +1,31 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,6 +47,10 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   private int mySelectedColumn = 0;
   private int mySelectedGroup = 0;
 
+  private Set<Configurable> myOptionContainers = null;
+  private JTextField mySearchField = new JTextField();
+  private GlassPanel myGlassPanel;
+
   public ControlPanelSettingsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     super(project, true);
     myProject = project;
@@ -54,6 +62,8 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       selectConfigurable(preselectedConfigurable);
       editConfigurable(preselectedConfigurable);
     }
+    myGlassPanel = new GlassPanel(myPanel);
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
   }
 
   protected String getDimensionServiceKey() {
@@ -274,13 +284,69 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       actualConfigurable = new ProjectConfigurableWrapper(myProject, configurable);
     }
 
-    new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable)).show();
+    final SingleConfigurableEditor configurableEditor =
+      new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
+    if (configurable instanceof SearchableConfigurable){
+      @NonNls final String filter = mySearchField.getText();
+      if (filter != null && filter.length() > 0 ){
+        final String[] options = filter.split("[\\W]");
+        for (String option : options) {
+          final String unpluralized = StringUtil.unpluralize(option);
+          final Runnable runnable = ((SearchableConfigurable)configurable).showOption(unpluralized != null ? unpluralized : option);
+          if (runnable != null){
+            runnable.run();
+          }
+        }
+      }
+    }
+    configurableEditor.show();
   }
 
   private static String createDimensionKey(Configurable configurable) {
     String displayName = configurable.getDisplayName();
     displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
     return "#" + displayName;
+  }
+
+
+  protected JComponent createNorthPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+        final @NonNls String searchPattern = mySearchField.getText();
+        if (searchPattern != null && searchPattern.length() > 0) {
+          final String[] searchOptions = searchPattern.split("[\\W]");
+          Set<Configurable> configurables = null;
+          for (String option : searchOptions) {
+            if (option != null && option.length() > 0){
+              final Set<Configurable> optionConfigurables = optionsRegistrar.getConfigurables(myGroups, option);
+              if (configurables == null){
+                configurables = optionConfigurables;
+              } else {
+                configurables.retainAll(optionConfigurables);
+              }
+            }
+          }
+          myOptionContainers = configurables;
+          myGlassPanel.clear();
+          myPanel.repaint();
+        }
+      }
+    });
+    final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+    panel.add(Box.createHorizontalBox(), gc);
+
+    gc.gridx++;
+    gc.weightx = 0;
+    gc.fill = GridBagConstraints.NONE;
+    panel.add(new JLabel(IdeBundle.message("search.textfield.title")), gc);
+
+    gc.gridx++;
+    final int height = mySearchField.getPreferredSize().height;
+    mySearchField.setPreferredSize(new Dimension(100, height));
+    panel.add(mySearchField, gc);
+    return panel;
   }
 
   private class MyActionButton extends JComponent implements ActionButtonComponent {
@@ -328,6 +394,9 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       look.paintBackground(g, this);
       look.paintIcon(g, this, myIcon);
       look.paintBorder(g, this);
+      if (myOptionContainers != null && myOptionContainers.contains(myConfigurable)) {
+        myGlassPanel.addSpotlight(this);
+      }
     }
 
     public int getPopState() {

@@ -1,9 +1,12 @@
 package com.intellij.j2ee.extResources;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.j2ee.J2EEBundle;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
@@ -14,12 +17,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private JPanel myPanel;
   private List<EditLocationDialog.Pair> myPairs;
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<EditLocationDialog.Pair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
+  private GlassPanel myGlassPanel;
 
   public ExternalResourceConfigurable() {
   }
@@ -27,20 +31,22 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public String getDisplayName() {
     return J2EEBundle.message("display.name.edit.external.resource");
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new GridBagLayout()){
+    myPanel = new JPanel(new GridBagLayout()) {
       public Dimension getPreferredSize() {
         return new Dimension(700, 400);
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<EditLocationDialog.Pair>(J2EEBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
+    myExtPanel = new AddEditRemovePanel<EditLocationDialog.Pair>(
+      J2EEBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
       protected EditLocationDialog.Pair addItem() {
         return addExtLocation();
       }
@@ -54,22 +60,23 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
         return editExtLocation(o);
       }
 
-      protected char getAddMnemonic(){
+      protected char getAddMnemonic() {
         return 'A';
       }
 
-      protected char getEditMnemonic(){
+      protected char getEditMnemonic() {
         return 'E';
       }
 
-      protected char getRemoveMnemonic(){
+      protected char getRemoveMnemonic() {
         return 'R';
       }
     };
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
-    myIgnorePanel = new AddEditRemovePanel<String>(J2EEBundle.message("label.edit.external.resource.configure.ignored.resources"), new IgnoredUrlsModel(), myIgnoredUrls) {
+    myIgnorePanel = new AddEditRemovePanel<String>(J2EEBundle.message("label.edit.external.resource.configure.ignored.resources"),
+                                                   new IgnoredUrlsModel(), myIgnoredUrls) {
       protected String addItem() {
         return addIgnoreLocation();
       }
@@ -83,21 +90,25 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
         return editIgnoreLocation(o);
       }
 
-      protected char getAddMnemonic(){
+      protected char getAddMnemonic() {
         return 'd';
       }
 
-      protected char getEditMnemonic(){
+      protected char getEditMnemonic() {
         return 't';
       }
 
-      protected char getRemoveMnemonic(){
+      protected char getRemoveMnemonic() {
         return 'm';
       }
     };
 
-    myPanel.add(myExtPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
-    myPanel.add(myIgnorePanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
+    myPanel.add(myExtPanel,
+                new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
+    myPanel.add(myIgnorePanel,
+                new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
+
+    myGlassPanel = new GlassPanel(myPanel);
 
     return myPanel;
   }
@@ -122,6 +133,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
+
     myPairs = new ArrayList<EditLocationDialog.Pair>();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
@@ -199,7 +212,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   public void selectResource(final String uri) {
-    myExtPanel.setSelected(new EditLocationDialog.Pair(uri,null));
+    myExtPanel.setSelected(new EditLocationDialog.Pair(uri, null));
   }
 
   private class PathRenderer extends DefaultTableCellRenderer {
@@ -228,7 +241,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   private class ExtUrlsTableModel implements AddEditRemovePanel.TableModel {
-    final String[] myNames = {J2EEBundle.message("column.name.edit.external.resource.uri"), J2EEBundle.message("column.name.edit.external.resource.location")};
+    final String[] myNames =
+      {J2EEBundle.message("column.name.edit.external.resource.uri"), J2EEBundle.message("column.name.edit.external.resource.location")};
 
     public int getColumnCount() {
       return myNames.length;
@@ -249,5 +263,17 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     public String getColumnName(int column) {
       return myNames[column];
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

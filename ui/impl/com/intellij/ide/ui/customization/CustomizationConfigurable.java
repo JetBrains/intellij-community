@@ -1,10 +1,13 @@
 package com.intellij.ide.ui.customization;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
@@ -12,8 +15,9 @@ import javax.swing.*;
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizationConfigurable extends BaseConfigurable implements ApplicationComponent{
+public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private CustomizableActionsPanel myPanel;
+  private GlassPanel myGlassPanel;
 
   public CustomizationConfigurable() {
 
@@ -21,6 +25,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Appli
 
   public JComponent createComponent() {
     myPanel = new CustomizableActionsPanel();
+    myGlassPanel = new GlassPanel(myPanel.getPanel());
     return myPanel.getPanel();
   }
 
@@ -36,12 +41,12 @@ public class CustomizationConfigurable extends BaseConfigurable implements Appli
     return "preferences.customizations";
   }
 
-
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
   public void reset() {
+    myPanel.getPanel().getRootPane().setGlassPane(myGlassPanel);
     myPanel.reset();
   }
 
@@ -49,13 +54,28 @@ public class CustomizationConfigurable extends BaseConfigurable implements Appli
     return myPanel.isModified();
   }
 
-  public void disposeUIResources() {}
+  public void disposeUIResources() {
+  }
 
   public String getComponentName() {
     return "com.intellij.ide.ui.customization.CustomizationConfigurable";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel.getPanel(), option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }

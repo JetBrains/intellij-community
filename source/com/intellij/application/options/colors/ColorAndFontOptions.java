@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -36,7 +37,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 
-public class ColorAndFontOptions extends BaseConfigurable implements ApplicationComponent {
+public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
@@ -196,8 +197,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
   }
 
-  private static void initPluggedDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions,
-                                              MyColorScheme scheme) {
+  private static void initPluggedDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
@@ -587,5 +587,17 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     public EditorColorsScheme getOriginalScheme() {
       return myParentScheme;
     }
+  }
+
+  public Runnable showOption(String option) {
+    return myPanel.showOption(this, option);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myPanel.clearSearch();
   }
 }

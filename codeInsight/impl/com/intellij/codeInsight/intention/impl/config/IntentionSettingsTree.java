@@ -16,10 +16,9 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 
 public abstract class IntentionSettingsTree {
@@ -51,6 +50,10 @@ public abstract class IntentionSettingsTree {
 
   protected IntentionSettingsTree() {
     initTree();
+  }
+
+  public JTree getTree(){
+    return myTree;
   }
 
   public JComponent getComponent() {
@@ -279,6 +282,29 @@ public abstract class IntentionSettingsTree {
   }
 
   public void dispose() {
+  }
+
+  public void selectIntentions(final ArrayList<String> options) {
+    final Set<TreeNode> nodesToSelect = new HashSet<TreeNode>();
+    TreeUtil.traverseDepth((MutableTreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+      public boolean accept(final Object node) {
+        if (node instanceof DefaultMutableTreeNode) {
+          final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)node);
+          final Object userObject = treeNode.getUserObject();
+          if (userObject instanceof IntentionActionMetaData) {
+            final IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
+            if (options.contains(metaData.myFamily)) {
+              nodesToSelect.add(treeNode);
+              return true;
+            }
+          }
+        }
+        return true;
+      }
+    });
+    for (TreeNode treeNode : nodesToSelect) {
+      TreeUtil.selectNode(myTree, treeNode);
+    }
   }
 
   interface CheckedNodeVisitor {

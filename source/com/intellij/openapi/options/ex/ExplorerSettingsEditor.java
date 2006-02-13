@@ -1,6 +1,9 @@
 package com.intellij.openapi.options.ex;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,24 +15,25 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HorizontalLabeledIcon;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.CommonBundle;
+import com.intellij.util.ui.EmptyIcon;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 public class ExplorerSettingsEditor extends DialogWrapper {
   /** When you visit the same editor next time you see the same selected configurable. */
@@ -50,9 +54,11 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private final Map<Configurable, JComponent> myInitializedConfigurables2Component;
   private final Dimension myPreferredSize;
   private final Map<Configurable, Dimension> myConfigurable2PrefSize;
-  private TabbedPaneWrapper myGroupTabs;
   private JButton myHelpButton;
   private JPanel myComponentPanel;
+  private JTextField mySearchField = new JTextField();
+  private Set<Configurable> myOptionContainers = null;
+  private JPanel myLeftPane;
 
   public ExplorerSettingsEditor(Project project, ConfigurableGroup[] group) {
     super(project, true);
@@ -102,7 +108,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     ourLastGroup = mySelectedGroup.getShortName();
     Configurable[] configurables = mySelectedGroup.getConfigurables();
     Configurable toSelect = configurables[indexToSelect];
-    myGroupTabs.setSelectedIndex(groupIdx);
 
     selectConfigurable(toSelect, indexToSelect);
 
@@ -158,10 +163,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   protected final void dispose() {
     rememberLastUsedPage();
 
-    for (int i = 0; i < myGroups.length; i++) {
-      Configurable[] configurables = myGroups[i].getConfigurables();
-      for (int j = 0; j < configurables.length; j++) {
-        Configurable configurable = configurables[j];
+    for (ConfigurableGroup myGroup : myGroups) {
+      Configurable[] configurables = myGroup.getConfigurables();
+      for (Configurable configurable : configurables) {
         configurable.disposeUIResources();
       }
     }
@@ -182,8 +186,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myOptionsPanel = new JPanel(new BorderLayout()) {
       public void updateUI() {
         super.updateUI();
-        for (Iterator<Configurable> i = myInitializedConfigurables2Component.keySet().iterator(); i.hasNext();) {
-          Configurable configurable = i.next();
+        for (Configurable configurable : myInitializedConfigurables2Component.keySet()) {
           if (configurable.equals(mySelectedConfigurable)) { // don't update visible component (optimization)
             continue;
           }
@@ -193,28 +196,10 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       }
     };
 
-    JPanel compoundToolbarPanel = new JPanel(new BorderLayout());
-
-    myGroupTabs = new TabbedPaneWrapper();
-
-    for (int i = 0; i < myGroups.length; i++) {
-      final ConfigurableGroup group = myGroups[i];
-      JComponent toolbar = createGroupToolbar(group, i == 0 ? '1' : 'A');
-      myGroupTabs.addTab(group.getShortName(), toolbar);
-    }
-    myGroupTabs.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        int selectedIndex = myGroupTabs.getSelectedIndex();
-        if (selectedIndex >= 0) {
-          selectGroup(selectedIndex);
-        }
-      }
-    });
-
-    compoundToolbarPanel.add(myGroupTabs.getComponent(), BorderLayout.CENTER);
-
-    myComponentPanel.setBorder(BorderFactory.createRaisedBevelBorder());
-    myComponentPanel.add(compoundToolbarPanel, BorderLayout.WEST);
+    myLeftPane = new JPanel(new BorderLayout());
+    initToolbar();
+    myLeftPane.setBorder(BorderFactory.createRaisedBevelBorder());
+    myComponentPanel.add(myLeftPane, BorderLayout.WEST);
 
     myOptionsPanel.setBorder(BorderFactory.createEmptyBorder(15, 5, 2, 5));
     myComponentPanel.add(myOptionsPanel, BorderLayout.CENTER);
@@ -263,17 +248,74 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     return myComponentPanel;
   }
 
+  protected JComponent createNorthPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+        final @NonNls String searchPattern = mySearchField.getText();
+        if (searchPattern != null && searchPattern.length() > 0) {
+          final String[] searchOptions = searchPattern.split("[\\W]");
+          Set<Configurable> configurables = null;
+          for (String option : searchOptions) {
+            if (option != null && option.length() > 0){
+              final Set<Configurable> optionConfigurables = optionsRegistrar.getConfigurables(myGroups, option);
+              if (configurables == null){
+                configurables = optionConfigurables;
+              } else {
+                configurables.retainAll(optionConfigurables);
+              }
+            }
+          }
+          myOptionContainers = configurables;
+        } else {
+          myOptionContainers = null;
+        }
+        initToolbar();
+        if (mySelectedConfigurable instanceof SearchableConfigurable){
+          selectOption((SearchableConfigurable)mySelectedConfigurable);
+        }
+        myComponentPanel.revalidate();
+        myComponentPanel.repaint();
+      }
+    });
+    final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+    panel.add(Box.createHorizontalBox(), gc);
+
+    gc.gridx++;
+    gc.weightx = 0;
+    gc.fill = GridBagConstraints.NONE;
+    panel.add(new JLabel(IdeBundle.message("search.textfield.title")), gc);
+
+    gc.gridx++;
+    final int height = mySearchField.getPreferredSize().height;
+    mySearchField.setPreferredSize(new Dimension(100, height));
+    panel.add(mySearchField, gc);
+
+    return panel;
+  }
 
   private void requestFocusForMainPanel() {
     myComponentPanel.requestFocus();
   }
 
-  private JComponent createGroupToolbar(ConfigurableGroup group, char mnemonicStartChar) {
-    final Configurable[] configurables = group.getConfigurables();
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (int i = 0; i < configurables.length; i++) {
-      Configurable configurable = configurables[i];
-      actionGroup.add(new MySelectConfigurableAction(configurable, i, (char)(mnemonicStartChar + i)));
+  private void initToolbar() {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    char mnemonicStartChar = '1';
+    for (ConfigurableGroup group : myGroups) {
+      boolean firstActionInGroup = true;
+      final Configurable[] configurables = group.getConfigurables();
+      for (int i = 0; i < configurables.length; i++) {
+        Configurable configurable = configurables[i];
+        if (myOptionContainers == null || myOptionContainers.contains(configurable)){
+          if (firstActionInGroup){
+            actionGroup.add(new MyHorizontalSeparator(group));
+            firstActionInGroup = false;
+          }
+          actionGroup.add(new MySelectConfigurableAction(configurable, i, (char)(mnemonicStartChar + i)));
+        }
+      }
+      mnemonicStartChar = 'A';
     }
 
     final ActionToolbarEx toolbar = (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(
@@ -287,20 +329,19 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     JPanel toolbarPanel = new JPanel(new BorderLayout(2, 0));
     toolbarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    final JScrollPane scrollPane =
+      new JScrollPane(toolbarPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
+        public Dimension getPreferredSize() {
+          return actionGroup.getChildrenCount() > 2 ? new Dimension(toolbar.getComponent().getPreferredSize().width + getVerticalScrollBar().getPreferredSize().width + 5, 5) : new Dimension(150, -1);
+        }
 
-    JScrollPane scrollPane = new JScrollPane(toolbarPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
-      public Dimension getPreferredSize() {
-        return new Dimension(
-          toolbar.getComponent().getPreferredSize().width + getVerticalScrollBar().getPreferredSize().width + 5, 5);
-      }
-
-      public Dimension getMinimumSize() {
-        return getPreferredSize();
-      }
-    };
+        public Dimension getMinimumSize() {
+          return getPreferredSize();
+        }
+      };
+    myLeftPane.removeAll();
     scrollPane.getVerticalScrollBar().setUnitIncrement(toolbar.getMaxButtonHeight());
-    return scrollPane;
+    myLeftPane.add(scrollPane, BorderLayout.CENTER);
   }
 
   private final Alarm myAlarm = new Alarm();
@@ -399,6 +440,25 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     requestFocusForMainPanel();
     myComponentPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    if (configurable instanceof SearchableConfigurable){
+      selectOption((SearchableConfigurable)configurable);
+    }
+  }
+
+  private void selectOption(final SearchableConfigurable searchableConfigurable) {
+    searchableConfigurable.clearSearch();
+    if (myOptionContainers == null || myOptionContainers.isEmpty()) return; //do not highlight current editor when nothing can be selected
+    @NonNls final String filter = mySearchField.getText();
+    if (filter != null && filter.length() > 0 ){
+      final String[] options = filter.split("[\\W]");
+      for (String option : options) {
+        final String unpluralized = StringUtil.unpluralize(option);
+        final Runnable runnable = searchableConfigurable.showOption(unpluralized != null ? unpluralized : option);
+        if (runnable != null){
+          runnable.run();
+        }
+      }
+    }
   }
 
   protected final Action[] createActions() {
@@ -528,6 +588,24 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     public void paintBackground(Graphics g, JComponent component, int state) {
       myDelegate.paintBackground(g, component, state);
+    }
+  }
+
+  private static class MyHorizontalSeparator extends AnAction {
+
+    public MyHorizontalSeparator(ConfigurableGroup group) {
+     Presentation presentation = getTemplatePresentation();
+      String displayName = group.getDisplayName();
+      Icon labeledIcon = new HorizontalLabeledIcon(new EmptyIcon(16,16), displayName, "");
+      presentation.setIcon(labeledIcon);
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(false);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      //do nothing
     }
   }
 }

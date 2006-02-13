@@ -1,13 +1,13 @@
 package com.intellij.application.options;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class EditorOptions implements Configurable, ApplicationComponent {
+public class EditorOptions implements SearchableConfigurable, ApplicationComponent {
   private EditorOptionsPanel myPanel;
 
   public void disposeComponent() {
@@ -50,5 +50,17 @@ public class EditorOptions implements Configurable, ApplicationComponent {
 
   public String getComponentName() {
     return "EditorOptions";
+  }
+
+  public Runnable showOption(String option) {
+    return myPanel.showOption(this, option);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myPanel.clearSearch();
   }
 }

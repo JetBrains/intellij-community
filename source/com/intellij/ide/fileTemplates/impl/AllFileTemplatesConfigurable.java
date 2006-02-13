@@ -2,6 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.j2ee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +10,9 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -35,12 +37,10 @@ import java.util.Map;
  * Time: 12:44:56 PM
  */
 
-public class AllFileTemplatesConfigurable implements Configurable, ApplicationComponent {
+public class AllFileTemplatesConfigurable implements SearchableConfigurable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
-
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
-
   private FileTemplateTab myTemplatesList;
   private FileTemplateTab myPatternsList;
   private FileTemplateTab myCodeTemplatesList;
@@ -50,25 +50,23 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   private FileTemplateConfigurable myEditor;
   private boolean myModified = false;
   protected JComponent myEditorComponent;
-
   private final static int TEMPLATE_ID = 0;
   private final static int PATTERN_ID = 1;
   private final static int CODE_ID = 2;
   private final static int J2EE_ID = 3;
-
-
   private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
-
   private FileTemplateTab[] myTabs;
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+  private GlassPanel myGlassPanel;
 
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public Icon getIcon() {
     return ourIcon;
@@ -336,6 +334,8 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
 
     myMainPanel.setMinimumSize(new Dimension(400, 300));
     myMainPanel.setPreferredSize(new Dimension(700, 500));
+
+    myGlassPanel = new GlassPanel(myMainPanel);
     return myMainPanel;
   }
 
@@ -694,6 +694,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   }
 
   public void reset() {
+    myMainPanel.getRootPane().setGlassPane(myGlassPanel);
     myEditor.reset();
     initLists();
     myModified = false;
@@ -716,5 +717,15 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     createTemplate(preferredName, extension, text);
   }
 
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(this, option, myMainPanel, myTabbedPane, myGlassPanel);
+  }
 
+  public String getId() {
+    return "fileTemplates";
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }

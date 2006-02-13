@@ -2,23 +2,24 @@ package com.intellij.application.options;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,9 +28,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
-public class CodeStyleSchemesConfigurable implements Configurable, ApplicationComponent {
+public class CodeStyleSchemesConfigurable implements SearchableConfigurable, ApplicationComponent {
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
   private JPanel myPanel;
@@ -440,5 +439,16 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
 
   public void selectPage(Class pageToSelect) {
     getActivePanel().selectTab(pageToSelect);
+  }
+
+  public Runnable showOption(String option) {
+    return null;
+  }
+
+  public String getId() {
+    return "preferences.codeStyle";
+  }
+
+  public void clearSearch() {
   }
 }

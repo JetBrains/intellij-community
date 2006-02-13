@@ -1,10 +1,13 @@
 package com.intellij.openapi.localVcs.impl;
 
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
+import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -19,8 +22,7 @@ import java.awt.*;
 /**
  * author: lesya
  */
-public class LvcsConfigurable extends BaseConfigurable implements ApplicationComponent {
-
+public class LvcsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private JCheckBox myCbEnabled;
   private JTextField myFieldHistoryLength;
   private JCheckBox myCbProjectOpen;
@@ -32,9 +34,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   private JCheckBox myCbUnitTestsFailed;
   private JLabel myHistoryLengthLabel;
   private JPanel myPanel;
-
   private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
-
+  private GlassPanel myGlassPanel;
 
   public LvcsConfigurable() {
   }
@@ -53,7 +54,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
 
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                   GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
     myCbEnabled = createCheckBox();
     myCbEnabled.setText(LocalVcsBundle.message("checkbox.lvcs.properties.enable.local.history"));
@@ -79,6 +81,7 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
     gc.fill = GridBagConstraints.BOTH;
     myPanel.add(Box.createHorizontalBox(), gc);
 
+    myGlassPanel = new GlassPanel(myPanel);
     return myPanel;
   }
 
@@ -89,7 +92,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
 
     myHistoryLengthLabel = new JLabel(LocalVcsBundle.message("label.lvcs.properties.keep.local.history.count"));
     myHistoryLengthLabel.setLabelFor(myFieldHistoryLength);
-    GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,5), 0, 0);
+    GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                                   GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
     historyPanel.add(myHistoryLengthLabel, gc);
 
     final Dimension size = new Dimension(30, myFieldHistoryLength.getPreferredSize().height);
@@ -106,7 +110,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   private void createLabelsPanel(GridBagConstraints wholePanelGC) {
     JPanel labelsPanel = createPanel(LocalVcsBundle.message("border.lvcs.properties.automatic.labeling.group"));
 
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,1.0,0.0,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                   GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 
     myCbProjectOpen = createCheckBox();
     myCbProjectOpen.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.opening"));
@@ -144,10 +149,7 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   private JPanel createPanel(String panelTitle) {
     JPanel labelsPanel = new JPanel(new GridBagLayout());
     labelsPanel.setBorder(
-      BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(panelTitle),
-        BorderFactory.createEmptyBorder(2, 2, 2, 2)
-      ));
+      BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(panelTitle), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
     return labelsPanel;
   }
 
@@ -171,6 +173,8 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
+
     LvcsConfiguration c = LvcsConfiguration.getInstance();
     myCbEnabled.setSelected(c.LOCAL_VCS_ENABLED);
 
@@ -198,7 +202,9 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
     return "LvcsConfigurable";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
+
   public void disposeComponent() {
   }
 
@@ -251,4 +257,15 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
     }
   }
 
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }

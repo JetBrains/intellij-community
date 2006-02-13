@@ -3,9 +3,12 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.RmicSettings;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -36,6 +39,9 @@ public class CompilerUIConfigurable implements Configurable {
   private JRadioButton myShowDialog;
   private JCheckBox myCbAssertNotNull;
 
+  private final TabbedPaneWrapper myTabbedPane;
+  private GlassPanel myGlassPanel;
+
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
 
@@ -49,11 +55,12 @@ public class CompilerUIConfigurable implements Configurable {
     myTabbedPanePanel.setLayout(new BorderLayout());
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     myJavaCompilersTab = new JavaCompilersTab(project,compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler());
-    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
-    tabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
+
+    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
     myRmicConfigurable = new RmicConfigurable(RmicSettings.getInstance(project));
-    tabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
-    myTabbedPanePanel.add(tabbedPane.getComponent(), BorderLayout.CENTER);
+    myTabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
+    myTabbedPanePanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
 
     ButtonGroup deployGroup = new ButtonGroup();
@@ -61,10 +68,13 @@ public class CompilerUIConfigurable implements Configurable {
     deployGroup.add(myDeploy);
     deployGroup.add(myDoNotDeploy);
 
+    myGlassPanel = new GlassPanel(myPanel);
   }
 
 
   public void reset() {
+    myPanel.getRootPane().setGlassPane(myGlassPanel);
+
     myExcludeFromCompilePanel.reset();
 
     myJavaCompilersTab.reset();
@@ -207,4 +217,11 @@ public class CompilerUIConfigurable implements Configurable {
   public void disposeUIResources() {
   }
 
+  public Runnable showOption(final SearchableConfigurable configurable, final String option) {
+    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }

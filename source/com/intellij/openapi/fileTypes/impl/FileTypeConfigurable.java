@@ -2,12 +2,15 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
@@ -29,7 +32,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public class FileTypeConfigurable extends BaseConfigurable implements ApplicationComponent {
+public class FileTypeConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private RecognizedFileTypes myRecognizedFileType;
   private ExtensionsPanel myExtensions;
   private FileTypePanel myFileTypePanel;
@@ -37,6 +40,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   private FileTypeManagerImpl myManager;
   private Map<String, FileType> myTempExtension2TypeMap;
   private Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<UserFileType, UserFileType>();
+  private GlassPanel myGlassPanel;
 
   public FileTypeConfigurable(FileTypeManager fileTypeManager) {
     myManager = (FileTypeManagerImpl)fileTypeManager;
@@ -63,6 +67,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
       }
     });
     myExtensions.attachActions(this);
+    myGlassPanel = new GlassPanel(myFileTypePanel.getComponent());
     return myFileTypePanel.getComponent();
   }
 
@@ -107,6 +112,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   }
 
   public void reset() {
+    myFileTypePanel.getComponent().getRootPane().setGlassPane(myGlassPanel);
+
     myTempExtension2TypeMap = new HashMap<String, FileType>(myManager.getExtensionMap());
     myTempFileTypes = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
     myOriginalToEditedMap.clear();
@@ -117,8 +124,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
 
   public boolean isModified() {
     HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
-    return !myTempExtension2TypeMap.equals(myManager.getExtensionMap()) ||
-           !myTempFileTypes.equals(types) ||
+    return !myTempExtension2TypeMap.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
            !myOriginalToEditedMap.isEmpty();
   }
 
@@ -152,7 +158,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     }
 
     myExtensions.clearList();
-    Collections.sort(extensions);    
+    Collections.sort(extensions);
     for (String extension : extensions) {
       myExtensions.addExtension(extension);
     }
@@ -165,8 +171,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
     if (ftToEdit.getEditor() == null) return;
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit,
-                                       FileTypesBundle.message("filetype.edit.existing.title"));
+    TypeEditor editor =
+      new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     editor.show();
     if (editor.isOK()) {
       myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
@@ -199,8 +205,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   private void addFileType() {
     //TODO: support adding binary file types...
     CustomFileType type = new CustomFileType(new SyntaxTable());
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type,
-                                       FileTypesBundle.message("filetype.edit.new.title"));
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -222,8 +227,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     if (registeredFileType != null) {
       Messages.showMessageDialog(myExtensions.myAddButton,
                                  FileTypesBundle.message("filetype.edit.add.extension.exists.error", registeredFileType.getDescription()),
-                                 FileTypesBundle.message("filetype.edit.add.extension.exists.title"),
-                                 Messages.getErrorIcon());
+                                 FileTypesBundle.message("filetype.edit.add.extension.exists.title"), Messages.getErrorIcon());
     }
   }
 
@@ -464,5 +468,17 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
       }
       super.doOKAction();
     }
+  }
+
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myFileTypePanel.getComponent(), option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
   }
 }

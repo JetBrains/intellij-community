@@ -2,12 +2,18 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CheckForUpdateAction;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -16,9 +22,9 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,17 +34,15 @@ import java.util.Date;
  * To change this template use File | Settings | File Templates.
  */
 
-public class UpdateSettingsConfigurable extends BaseConfigurable implements ApplicationComponent, JDOMExternalizable {
-
+public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;
-
   @NonNls public static final String ON_START_UP = "On every start";
   @NonNls public static final String DAILY = "Daily";
   @NonNls public static final String WEEKLY = "Weekly";
   @NonNls public static final String MONTHLY = "Monthly";
-
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
+
   static {
     PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
     PERIOD_VALUE_MAP.put(DAILY, IdeBundle.message("updates.check.period.daily"));
@@ -49,9 +53,11 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = WEEKLY;
   public long LAST_TIME_CHECKED = 0;
+  private GlassPanel myGlassPanel;
 
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
+    myGlassPanel = new GlassPanel(myUpdatesSettingsPanel.myPanel);
     return myUpdatesSettingsPanel.myPanel;
   }
 
@@ -75,7 +81,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     return ApplicationManager.getApplication().getComponent(UpdateSettingsConfigurable.class);
   }
 
-  public void setCheckNowEnabled (boolean enabled) {
+  public void setCheckNowEnabled(boolean enabled) {
     myCheckNowEnabled = enabled;
   }
 
@@ -85,6 +91,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   }
 
   public void reset() {
+    myUpdatesSettingsPanel.myPanel.getRootPane().setGlassPane(myGlassPanel);
     myUpdatesSettingsPanel.myCbCheckForUpdates.setSelected(CHECK_NEEDED);
     myUpdatesSettingsPanel.myPeriodCombo.setSelectedItem(CHECK_PERIOD);
     myUpdatesSettingsPanel.myPeriodCombo.setEnabled(myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected());
@@ -92,8 +99,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   }
 
   public boolean isModified() {
-      return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
-             !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
+    return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
+           !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -145,7 +152,9 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
         }
       }
       myVersionNumber.setText(ApplicationInfo.getInstance().getVersionName() + " " + versionNumber);
-      String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null) ? IdeBundle.message("updates.current.build.unknown") : ApplicationInfo.getInstance().getBuildNumber();
+      String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null)
+                            ? IdeBundle.message("updates.current.build.unknown")
+                            : ApplicationInfo.getInstance().getBuildNumber();
       myBuildNumber.setText(currentBuild);
 
       myCbCheckForUpdates.addActionListener(new ActionListener() {
@@ -167,9 +176,20 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
 
     private void updateLastCheckedLabel() {
       final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
-      myLastCheckedDate.setText(LAST_TIME_CHECKED == 0 ? IdeBundle.message("updates.last.check.never") :
-                                dateFormat.format(new Date(LAST_TIME_CHECKED)));
+      myLastCheckedDate
+        .setText(LAST_TIME_CHECKED == 0 ? IdeBundle.message("updates.last.check.never") : dateFormat.format(new Date(LAST_TIME_CHECKED)));
     }
   }
 
+  public Runnable showOption(String option) {
+    return SearchUtil.lightOptions(myUpdatesSettingsPanel.myPanel, option, myGlassPanel);
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public void clearSearch() {
+    myGlassPanel.clear();
+  }
 }
