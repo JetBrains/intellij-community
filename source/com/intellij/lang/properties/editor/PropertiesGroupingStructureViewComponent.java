@@ -58,7 +58,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       presentation.setText(separator);
       presentation.setEnabled(isGroupActive);
       if (myPanel != null) {
-        GuiUtils.enableChildren(myPanel, isGroupActive, null);
+        GuiUtils.enableChildren(myPanel, isGroupActive);
       }
     }
 

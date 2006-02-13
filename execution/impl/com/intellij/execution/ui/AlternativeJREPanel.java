@@ -46,7 +46,7 @@ public class AlternativeJREPanel extends JPanel{
 
   private void enabledChanged() {
     final boolean pathEnabled = isPathEnabled();
-    GuiUtils.enableChildren(myPathField, pathEnabled, null);
+    GuiUtils.enableChildren(myPathField, pathEnabled);
   }
 
   public String getPath() {

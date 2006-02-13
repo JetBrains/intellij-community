@@ -64,7 +64,7 @@ public class UnscrambleDialog extends DialogWrapper{
     myUnscrambleChooser.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         UnscrambleSupport unscrambleSupport = getSelectedUnscrambler();
-        GuiUtils.enableChildren(myLogFileChooserPanel, unscrambleSupport != null, null);
+        GuiUtils.enableChildren(myLogFileChooserPanel, unscrambleSupport != null);
       }
     });
     myUseUnscrambler.addActionListener(new ActionListener() {

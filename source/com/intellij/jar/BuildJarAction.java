@@ -19,13 +19,13 @@ public class BuildJarAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    Collection<Module> modulesToJar = BuildJarActionDialog.getModulesToJar(project);
+    Collection<Module> modulesToJar = BuildJarDialog.getModulesToJar(project);
     if (modulesToJar.size() == 0) {
       Messages.showErrorDialog(project, IdeBundle.message("jar.no.java.modules.in.project.error"),
                                IdeBundle.message("jar.no.java.modules.in.project.title"));
       return;
     }
-    BuildJarActionDialog dialog = new BuildJarActionDialog(project);
+    BuildJarDialog dialog = new BuildJarDialog(project);
     dialog.show();
     if (dialog.isOK()) {
       BuildJarProjectSettings.getInstance(project).buildJarsWithProgress();

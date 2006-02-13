@@ -49,7 +49,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     myProject = project;
   }
 
-  public boolean isBuildJar() {
+  public boolean isBuildJarOnMake() {
     return BUILD_JARS_ON_MAKE;
   }
 
@@ -85,7 +85,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
 
   }
 
-  public void setBuildJar(final boolean buildJar) {
+  public void setBuildJarOnMake(final boolean buildJar) {
     if (buildJar != BUILD_JARS_ON_MAKE) {
       CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       if (buildJar) {

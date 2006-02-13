@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.ex;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -8,18 +9,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.CommonBundle;
+import com.intellij.ui.TitledSeparator;
 
 import javax.swing.*;
-import javax.swing.plaf.LabelUI;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -205,17 +205,11 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   private JComponent createGroupComponent(ConfigurableGroup group, int groupIdx) {
     JPanel panel = new JPanel(new VerticalFlowLayout());
-    JLabel label = new JLabel(group.getDisplayName()) {
-      public void setUI(LabelUI ui) {
-        super.setUI(ui);
-        setFont(new JLabel().getFont().deriveFont(20.0f));
-      }
-    };
 
-    label.setFont(label.getFont().deriveFont(20.0f));
-    panel.add(label);
-
-    panel.add(new JSeparator(JSeparator.HORIZONTAL));
+    final TitledSeparator separator = new TitledSeparator();
+    separator.setText(group.getDisplayName());
+    separator.setTitleFont(new JLabel().getFont().deriveFont(20.0f));
+    panel.add(separator);
 
     Configurable[] allConfigurables = group.getConfigurables();
     int count = allConfigurables.length;

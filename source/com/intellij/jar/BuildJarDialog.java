@@ -24,8 +24,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -34,6 +34,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.FileTypeFilter;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -49,8 +50,8 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class BuildJarActionDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.jar.BuildJarActionDialog");
+public class BuildJarDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.jar.BuildJarDialog");
 
   private final Project myProject;
   private JPanel myModulesPanel;
@@ -58,7 +59,6 @@ public class BuildJarActionDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myJarPath;
   private TextFieldWithBrowseButton myMainClass;
   private JPanel myPanel;
-  private PackagingSettingsEditor myEditor;
   private final Map<Module, SettingsEditor> mySettings = new THashMap<Module, SettingsEditor>();
   private Module myCurrentModule;
   private ElementsChooser<Module> myElementsChooser;
@@ -68,16 +68,17 @@ public class BuildJarActionDialog extends DialogWrapper {
   private JCheckBox myBuildJarsOnMake;
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsData();
 
-  protected BuildJarActionDialog(Project project) {
+  protected BuildJarDialog(Project project) {
     super(true);
     myProject = project;
 
     setupControls();
 
     setTitle(IdeBundle.message("jar.build.dialog.title"));
-    init();
     mySplitterProportionsData.externalizeFromDimensionService(getDimensionKey());
     mySplitterProportionsData.restoreSplitterProportions(myPanel);
+    getOKAction().putValue(Action.NAME, IdeBundle.message("jar.build.button"));
+    init();
   }
 
   protected void doHelpAction() {
@@ -104,7 +105,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   private void setupControls() {
-    myBuildJarsOnMake.setSelected(BuildJarProjectSettings.getInstance(myProject).isBuildJar());
+    myBuildJarsOnMake.setSelected(BuildJarProjectSettings.getInstance(myProject).isBuildJarOnMake());
 
     myJarPath = myJarFilePathComponent.getComponent();
     myMainClass = myMainClassComponent.getComponent();
@@ -122,20 +123,20 @@ public class BuildJarActionDialog extends DialogWrapper {
     myElementsChooser.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (myCurrentModule != null) {
-          applyEditor(myCurrentModule);
+          saveEditor(myCurrentModule);
         }
+
         Module selectedModule = myElementsChooser.getSelectedElement();
         if (selectedModule != null) {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
-          SettingsEditor settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
-
-          final BuildJarActionDialog.SettingsEditor oldEditor = mySettings.put(selectedModule, settingsEditor);
-          if (oldEditor != null) {
-            oldEditor.dispose();
+          BuildJarDialog.SettingsEditor settingsEditor = mySettings.get(selectedModule);
+          if (settingsEditor == null) {
+            settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
+            mySettings.put(selectedModule, settingsEditor);
           }
-
+          settingsEditor.refreshControls();
           boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedModule);
-          GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar, null);
+          GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar);
           TitledBorder titledBorder = (TitledBorder)myModuleSettingsPanel.getBorder();
           titledBorder.setTitle(IdeBundle.message("jar.build.module.0.jar.settings", selectedModule.getName()));
           myModuleSettingsPanel.repaint();
@@ -145,7 +146,7 @@ public class BuildJarActionDialog extends DialogWrapper {
     });
     myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<Module>() {
       public void elementMarkChanged(final Module element, final boolean isMarked) {
-        GuiUtils.enableChildren(myModuleSettingsPanel, isMarked, null);
+        GuiUtils.enableChildren(myModuleSettingsPanel, isMarked);
         if (isMarked) {
           setDefaultJarPath();
         }
@@ -244,7 +245,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   protected String getDimensionServiceKey() {
-    return "#com.intellij.j2ee.jar.BuildJarActionDialog";
+    return "#com.intellij.j2ee.jar.BuildJarDialog";
   }
 
   protected void dispose() {
@@ -257,25 +258,28 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    final Module selectedModule = myElementsChooser.getSelectedElement();
-    if (selectedModule != null) {
-      applyEditor(selectedModule);
+    if (myCurrentModule != null) {
+      saveEditor(myCurrentModule);
     }
+    for (SettingsEditor editor : mySettings.values()) {
+      editor.apply();
+    }
+    BuildJarProjectSettings.getInstance(myProject).setBuildJarOnMake(myBuildJarsOnMake.isSelected());
     super.doOKAction();
   }
 
-  private void applyEditor(final Module module) {
+  private void saveEditor(final Module module) {
     SettingsEditor settingsEditor = mySettings.get(module);
     if (settingsEditor != null) {
-      settingsEditor.apply();
+      settingsEditor.saveUI();
     }
-    BuildJarProjectSettings.getInstance(myProject).setBuildJar(myBuildJarsOnMake.isSelected());
   }
 
   private class SettingsEditor {
     private final Module myModule;
     private final BuildJarSettings myBuildJarSettings;
     private final BuildJarSettings myModifiedBuildJarSettings;
+    private PackagingSettingsEditor myEditor;
 
     public SettingsEditor(Module module, BuildJarSettings buildJarSettings) {
       myModule = module;
@@ -285,14 +289,16 @@ public class BuildJarActionDialog extends DialogWrapper {
       copySettings(buildJarSettings, myModifiedBuildJarSettings);
 
       myEditor = new PackagingSettingsEditor(module, myModifiedBuildJarSettings.getModuleContainer());
+    }
 
+    private void refreshControls() {
       myEditorPanel.removeAll();
       myEditorPanel.setLayout(new BorderLayout());
       myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
       myEditorPanel.revalidate();
 
-      myJarPath.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(buildJarSettings.getJarUrl())));
-      myMainClass.setText(buildJarSettings.getMainClass());
+      myJarPath.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(myModifiedBuildJarSettings.getJarUrl())));
+      myMainClass.setText(myModifiedBuildJarSettings.getMainClass());
     }
 
     public void dispose() {
@@ -300,25 +306,27 @@ public class BuildJarActionDialog extends DialogWrapper {
     }
 
     public void apply() {
-      myEditor.saveData();
       try {
         myEditor.apply();
       }
       catch (ConfigurationException e1) {
         //ignore
       }
+      copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
+    }
+
+    public void saveUI() {
+      myEditor.saveData();
       String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(myJarPath.getText()));
       myModifiedBuildJarSettings.setJarUrl(url);
       boolean isBuildJar = myElementsChooser.getMarkedElements().contains(myModule);
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
       myModifiedBuildJarSettings.setMainClass(myMainClass.getText());
-      copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
     }
   }
 
   private static void copySettings(BuildJarSettings from, BuildJarSettings to) {
-    //noinspection HardCodedStringLiteral
-    Element element = new Element("dummy");
+    @NonNls Element element = new Element("dummy");
     try {
       from.writeExternal(element);
     }
