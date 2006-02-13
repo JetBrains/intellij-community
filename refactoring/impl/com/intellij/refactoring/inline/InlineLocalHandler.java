@@ -73,13 +73,12 @@ class InlineLocalHandler {
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
-    final PsiElement lastUsage = (toInlines.get(toInlines.size() - 1)).getElement();
+    final PsiElement lastUsage = toInlines.get(toInlines.size() - 1).getElement();
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(local);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    ControlFlow controlFlow;
     try {
-      controlFlow = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false).buildControlFlow();
+      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
       PsiElement commonParent = PsiTreeUtil.findCommonParent(local, lastUsage);
       PsiElement anchor = lastUsage;
       while (!commonParent.equals(anchor.getParent())) {
@@ -170,7 +169,7 @@ class InlineLocalHandler {
 //            PsiReference firstWriteUsage = refs[toInlines.size()];
             ControlFlow controlFlow;
             try {
-              controlFlow = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false).buildControlFlow();
+              controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
             }
             catch (AnalysisCanceledException e) {
               controlFlow = ControlFlow.EMPTY;
@@ -244,7 +243,7 @@ class InlineLocalHandler {
     return firstWriteUsage;
   }
 
-  private PsiDeclarationStatement createDeclarationStatement(PsiLocalVariable local, PsiAssignmentExpression assignment) {
+  private static PsiDeclarationStatement createDeclarationStatement(PsiLocalVariable local, PsiAssignmentExpression assignment) {
     PsiDeclarationStatement declaration = (PsiDeclarationStatement)local.getParent();
     try {
       if (assignment == null || !declaration.getParent().equals(assignment.getParent().getParent())) {

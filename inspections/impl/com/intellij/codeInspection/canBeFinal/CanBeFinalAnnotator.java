@@ -103,10 +103,9 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           PsiCodeBlock body = initializer.getBody();
           hasInitializers = true;
-          ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
           ControlFlow flow;
           try {
-            flow = analyzer.buildControlFlow();
+            flow = ControlFlowFactory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
           }
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
@@ -137,10 +136,9 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
             PsiCodeBlock body = psiMethod.getBody();
             if (body != null) {
               hasInitializers = true;
-              ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
               ControlFlow flow;
               try {
-                flow = analyzer.buildControlFlow();
+                flow = ControlFlowFactory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
               }
               catch (AnalysisCanceledException e) {
                 flow = ControlFlow.EMPTY;

@@ -83,9 +83,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     myAssignmentTargetsAreElements = assignmentTargetsAreElements;
   }
 
-
-  public ControlFlow buildControlFlow() throws AnalysisCanceledException {
-
+  // use ControlFlowFactory.getControlFlow()
+  ControlFlow buildControlFlow() throws AnalysisCanceledException {
     // push guard outer statement offsets in case when nested expression is incorrect
     myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
     myEndJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);

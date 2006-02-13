@@ -36,7 +36,7 @@ public class RemoveRedundantElseAction implements IntentionAction {
       PsiElement block = PsiTreeUtil.getParentOfType(ifStatement, PsiCodeBlock.class);
       if (block != null) {
         try {
-          ControlFlow controlFlow = new ControlFlowAnalyzer(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), true, false).buildControlFlow();
+          ControlFlow controlFlow = ControlFlowFactory.getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
           int startOffset = controlFlow.getStartOffset(ifStatement.getThenBranch());
           int endOffset = controlFlow.getEndOffset(ifStatement.getThenBranch());
           return !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset,endOffset);

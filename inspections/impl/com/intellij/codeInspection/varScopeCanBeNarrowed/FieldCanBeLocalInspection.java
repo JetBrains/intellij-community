@@ -45,10 +45,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
   public ProblemDescriptor[] checkClass(final PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     if (aClass.isInterface()) return null;
-    final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
     if (topLevelClass == null) return null;
     final PsiField[] fields = aClass.getFields();
+    final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
         candidates.add(field);
@@ -108,7 +108,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           final PsiVariable[] usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
           for (PsiVariable usedVariable : usedVars) {
             if (usedVariable instanceof PsiField) {
-              final PsiField usedField = ((PsiField)usedVariable);
+              final PsiField usedField = (PsiField)usedVariable;
               if (usedFields.contains(usedField)) {
                 candidates.remove(usedField); //used in more than one code block
               } else {
@@ -158,7 +158,6 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
 
       PsiManager manager = PsiManager.getInstance(project);
-      PsiElement newDeclaration = null;
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
       LOG.assertTrue(refs.size() > 0);
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
@@ -171,6 +170,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
       PsiElement firstElement = getFirstElement(refs);
       boolean mayBeFinal = mayBeFinal(refsSet, firstElement);
+      PsiElement newDeclaration = null;
       try {
         final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
         if (anchor instanceof PsiExpressionStatement &&
@@ -219,7 +219,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
-    private boolean mayBeFinal(Set<PsiReference> refsSet, PsiElement firstElement) {
+    private static boolean mayBeFinal(Set<PsiReference> refsSet, PsiElement firstElement) {
       for (PsiReference ref : refsSet) {
         PsiElement element = ref.getElement();
         if (element == firstElement) continue;
@@ -243,9 +243,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
                                                                              final PsiCodeBlock anchorBlock, final PsiElement anchor,
                                                                              final Set<PsiReference> refs)
       throws IncorrectOperationException {
-      final PsiElement newDeclaration;
       final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
-      newDeclaration = anchorBlock.addBefore(decl, anchor);
+      final PsiElement newDeclaration = anchorBlock.addBefore(decl, anchor);
 
       retargetReferences(elementFactory, localName, refs);
       return newDeclaration;

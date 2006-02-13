@@ -47,7 +47,7 @@ public class ControlFlowFactory {
       if (currentFlow.policy == policy && isValid(currentFlow, modificationCount)) {
         // optimization: when no constant condition were computed, both control flows are the same
         if (currentFlow.evaluateConstantIfCondition == evaluateConstantIfCondition || !currentFlow.flow.isConstantConditionOccurred()) {
-          if (currentFlow.evaluateConstantIfCondition != evaluateConstantIfCondition) {
+          if (currentFlow.evaluateConstantIfCondition != evaluateConstantIfCondition && LOG.isDebugEnabled()) {
             LOG.debug("CF constant cond optimization works for "+element+"("+(element.getText().length() > 40 ? element.getText().substring(0,40) : element.getText())+")");
           }
           flow = currentFlow.flow;
@@ -60,7 +60,7 @@ public class ControlFlowFactory {
       flow = new ControlFlowAnalyzer(element, policy, true, evaluateConstantIfCondition).buildControlFlow();
       registerControlFlow(element, flow, evaluateConstantIfCondition, policy);
     }
-    if (flow instanceof ControlFlowSubRange) {
+    if (flow instanceof ControlFlowSubRange && LOG.isDebugEnabled()) {
       LOG.debug("CF optimization subrange works for "+element+"("+(element.getText().length() > 40 ? element.getText().substring(0,40) : element.getText())+")");
     }
     return flow;

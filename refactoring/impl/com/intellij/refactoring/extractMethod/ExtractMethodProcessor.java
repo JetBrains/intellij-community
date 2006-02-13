@@ -173,9 +173,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
     myCodeFragementMember = codeFragment.getParent();
 
-    ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
     try {
-      myControlFlow = analyzer.buildControlFlow();
+      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"),

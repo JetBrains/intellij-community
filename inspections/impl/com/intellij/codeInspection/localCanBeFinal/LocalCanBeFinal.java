@@ -42,8 +42,8 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> allProblems = null;
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (int i = 0; i < initializers.length; i++) {
-      final ProblemDescriptor[] problems = checkCodeBlock(initializers[i].getBody(), manager, isOnTheFly);
+    for (PsiClassInitializer initializer : initializers) {
+      final ProblemDescriptor[] problems = checkCodeBlock(initializer.getBody(), manager, isOnTheFly);
       if (problems != null) {
         if (allProblems == null) {
           allProblems = new ArrayList<ProblemDescriptor>(1);
@@ -59,7 +59,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     if (body == null) return null;
     final ControlFlow flow;
     try {
-      flow = new ControlFlowAnalyzer(body, new ControlFlowPolicy() {
+      ControlFlowPolicy policy = new ControlFlowPolicy() {
         public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
           if (refExpr.isQualified()) return null;
 
@@ -81,10 +81,10 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         }
 
         private boolean isVariableDeclaredInMethod(PsiVariable psiVariable) {
-          return PsiTreeUtil.getParentOfType(psiVariable, PsiClass.class)
-                 == PsiTreeUtil.getParentOfType(body, PsiClass.class);
+          return PsiTreeUtil.getParentOfType(psiVariable, PsiClass.class) == PsiTreeUtil.getParentOfType(body, PsiClass.class);
         }
-      }).buildControlFlow();
+      };
+      flow = ControlFlowFactory.getControlFlow(body, policy, false);
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -106,8 +106,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         int end = flow.getEndOffset(anchor);
         PsiVariable[] ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
         HashSet<PsiElement> declared = getDeclaredVariables(block);
-        for (int i = 0; i < ssa.length; i++) {
-          PsiVariable psiVariable = ssa[i];
+        for (PsiVariable psiVariable : ssa) {
           if (declared.contains(psiVariable)) {
             ssaVarsSet.add(psiVariable);
           }
@@ -117,8 +116,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       private HashSet<PsiElement> getDeclaredVariables(PsiCodeBlock block) {
         final HashSet<PsiElement> result = new HashSet<PsiElement>();
         PsiElement[] children = block.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
+        for (PsiElement child : children) {
           child.accept(new PsiElementVisitor() {
             public void visitReferenceExpression(PsiReferenceExpression expression) {
               visitReferenceElement(expression);
@@ -126,8 +124,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
 
             public void visitDeclarationStatement(PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
-              for (int i = 0; i < declaredElements.length; i++) {
-                PsiElement declaredElement = declaredElements[i];
+              for (PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) result.add(declaredElement);
               }
             }
@@ -146,17 +143,14 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     if (body.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)body.getParent();
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter parameter = parameters[i];
+      for (PsiParameter parameter : parameters) {
         if (!result.contains(parameter)) result.add(parameter);
       }
     }
 
     PsiVariable[] psiVariables = result.toArray(new PsiVariable[result.size()]);
-    for (int i = 0; i < psiVariables.length; i++) {
-      PsiVariable psiVariable = psiVariables[i];
-      if (!isReportParameters() && psiVariable instanceof PsiParameter ||
-          !isReportVariables() && psiVariable instanceof PsiLocalVariable ||
+    for (PsiVariable psiVariable : psiVariables) {
+      if (!isReportParameters() && psiVariable instanceof PsiParameter || !isReportVariables() && psiVariable instanceof PsiLocalVariable ||
           psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
         result.remove(psiVariable);
       }
@@ -169,8 +163,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       }
     }
 
-    for (int i = 0; i < writtenVariables.length; i++) {
-      PsiVariable writtenVariable = writtenVariables[i];
+    for (PsiVariable writtenVariable : writtenVariables) {
       if (writtenVariable instanceof PsiParameter) {
         result.remove(writtenVariable);
       }
@@ -266,8 +259,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       myReportVariablesCheckbox.setSelected(REPORT_VARIABLES);
       myReportVariablesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myReportVariablesCheckbox.isSelected();
-          REPORT_VARIABLES = selected;
+          REPORT_VARIABLES = myReportVariablesCheckbox.isSelected();
         }
       });
       gc.gridy = 0;
@@ -277,8 +269,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       myReportParametersCheckbox.setSelected(REPORT_PARAMETERS);
       myReportParametersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
-          boolean selected = myReportParametersCheckbox.isSelected();
-          REPORT_PARAMETERS = selected;
+          REPORT_PARAMETERS = myReportParametersCheckbox.isSelected();
         }
       });
 
