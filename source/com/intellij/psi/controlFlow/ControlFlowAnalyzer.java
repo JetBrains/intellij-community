@@ -14,7 +14,7 @@ import gnu.trove.TIntArrayList;
 
 import java.util.*;
 
-public class ControlFlowAnalyzer extends PsiElementVisitor {
+class ControlFlowAnalyzer extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowAnalyzer");
 
   private final PsiElement myCodeFragment;
@@ -55,23 +55,24 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   private Map<PsiElement,TIntArrayList> offsetsAddElementEnd = new THashMap<PsiElement, TIntArrayList>();
 
 
-  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy) {
+  // use ControlFlowFactory.getControlFlow()
+  ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy) {
     this(codeFragment, policy, true);
   }
 
-  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy, boolean enabledShortCircuit) {
+  ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy, boolean enabledShortCircuit) {
     // by default, do not evaluate constant conditions inside if
     this(codeFragment, policy, enabledShortCircuit, false);
   }
 
-  public ControlFlowAnalyzer(PsiElement codeFragment,
+  ControlFlowAnalyzer(PsiElement codeFragment,
                              ControlFlowPolicy policy,
                              boolean enabledShortCircuit,
                              boolean evaluateConstantIfConfition) {
     this (codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
   }
 
-  public ControlFlowAnalyzer(PsiElement codeFragment,
+  ControlFlowAnalyzer(PsiElement codeFragment,
                              ControlFlowPolicy policy,
                              boolean enabledShortCircuit,
                              boolean evaluateConstantIfConfition,
@@ -83,7 +84,6 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     myAssignmentTargetsAreElements = assignmentTargetsAreElements;
   }
 
-  // use ControlFlowFactory.getControlFlow()
   ControlFlow buildControlFlow() throws AnalysisCanceledException {
     // push guard outer statement offsets in case when nested expression is incorrect
     myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
@@ -932,7 +932,6 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     for (int i = myCatchParameters.size() - 1; i >= 0; i--) {
       PsiParameter parameter = myCatchParameters.get(i);
       final PsiType type = parameter.getType();
-      if (type == null) continue;
       PsiClass catchedClass = PsiUtil.resolveClassInType(type);
       if (catchedClass == null) continue;
       if (type.isAssignableFrom(throwType)) {
