@@ -21,160 +21,190 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspection {
+import javax.swing.JComponent;
 
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
+public class UtilityClassWithoutPrivateConstructorInspection
+        extends ClassInspection {
 
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    final PsiClass aClass = (PsiClass)location.getParent();
-    if (hasNullArgConstructor(aClass)) {
-      return new MakeConstructorPrivateFix();
-    }
-    else {
-      return new CreateEmptyPrivateConstructor();
-    }
-  }
+    /** @noinspection PublicField for externalization*/
+    public boolean ignoreClassesWithOnlyMain = false;
 
-  private static class CreateEmptyPrivateConstructor
-    extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "utility.class.without.private.constructor.display.name");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    }
 
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
-      final PsiClass aClass = (PsiClass)classNameIdentifier
-        .getParent();
-      assert aClass != null;
-      if (hasNullArgConstructor(aClass)) {
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "utility.class.without.private.constructor.problem.descriptor");
+    }
 
-        final PsiMethod[] methods = aClass.getMethods();
-        for (final PsiMethod method : methods) {
-          if (method.isConstructor()) {
-            final PsiParameterList params = method
-              .getParameterList();
-            if (params != null
-                && params.getParameters().length == 0) {
-              final PsiModifierList modifiers = aClass
-                .getModifierList();
-              modifiers
-                .setModifierProperty(PsiModifier.PUBLIC,
-                                     true);
-              modifiers
-                .setModifierProperty(PsiModifier.PROTECTED,
-                                     true);
-              modifiers
-                .setModifierProperty(PsiModifier.PRIVATE,
-                                     true);
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "utility.class.without.private.constructor.option"), this,
+                "ignoreClassesWithOnlyMain");
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        final PsiClass aClass = (PsiClass)location.getParent();
+        if (hasNullArgConstructor(aClass)) {
+            return new MakeConstructorPrivateFix();
+        } else {
+            return new CreateEmptyPrivateConstructor();
+        }
+    }
+
+    private static class CreateEmptyPrivateConstructor
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "utility.class.without.private.constructor.create.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement classNameIdentifier = descriptor.getPsiElement();
+            final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
+            if (aClass == null) {
+                return;
             }
-          }
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory factory = psiManager.getElementFactory();
+            final PsiMethod constructor = factory.createConstructor();
+            final PsiModifierList modifierList = constructor.getModifierList();
+            modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+            aClass.add(constructor);
+            final CodeStyleManager styleManager =
+                    psiManager.getCodeStyleManager();
+            styleManager.reformat(constructor);
         }
-      }
-      else {
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final PsiElementFactory factory = psiManager
-          .getElementFactory();
-        final PsiMethod constructor = factory.createConstructor();
-        final PsiModifierList modifierList = constructor
-          .getModifierList();
-        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-        aClass.add(constructor);
-        final CodeStyleManager styleManager = psiManager
-          .getCodeStyleManager();
-        styleManager.reformat(constructor);
-      }
-    }
-  }
-
-  private static class MakeConstructorPrivateFix
-    extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    private static class MakeConstructorPrivateFix
+            extends InspectionGadgetsFix {
 
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
-      final PsiClass aClass = (PsiClass)classNameIdentifier
-        .getParent();
-      assert aClass != null;
-
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
-        if (method.isConstructor()) {
-          final PsiParameterList params = method
-            .getParameterList();
-          if (params != null
-              && params.getParameters().length == 0) {
-            final PsiModifierList modifiers =
-              method.getModifierList();
-            modifiers.setModifierProperty(PsiModifier.PUBLIC,
-                                          true);
-            modifiers.setModifierProperty(PsiModifier.PROTECTED,
-                                          true);
-            modifiers.setModifierProperty(PsiModifier.PRIVATE,
-                                          true);
-          }
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "utility.class.without.private.constructor.make.quickfix");
         }
-      }
-    }
-  }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new StaticClassWithoutPrivateConstructorVisitor();
-  }
-
-  private static class StaticClassWithoutPrivateConstructorVisitor
-    extends BaseInspectionVisitor {
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (!UtilityClassUtil.isUtilityClass(aClass)) {
-        return;
-      }
-
-      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (hasPrivateConstructor(aClass)) {
-        return;
-      }
-      registerClassError(aClass);
-    }
-  }
-
-  private static boolean hasPrivateConstructor(PsiClass aClass) {
-    final PsiMethod[] methods = aClass.getMethods();
-    for (final PsiMethod method : methods) {
-      if (method.isConstructor() && method
-        .hasModifierProperty(PsiModifier.PRIVATE)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasNullArgConstructor(PsiClass aClass) {
-    final PsiMethod[] methods = aClass.getMethods();
-    for (final PsiMethod method : methods) {
-      if (method.isConstructor()) {
-        final PsiParameterList params = method.getParameterList();
-        if (params != null && params.getParameters().length == 0) {
-          return true;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement classNameIdentifier = descriptor.getPsiElement();
+            final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
+            if (aClass == null) {
+                return;
+            }
+            final PsiMethod[] constructurs = aClass.getConstructors();
+            for (final PsiMethod constructor : constructurs) {
+                final PsiParameterList params = constructor.getParameterList();
+                if (params.getParameters().length == 0) {
+                    final PsiModifierList modifiers =
+                            constructor.getModifierList();
+                    modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
+                    modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
+                    modifiers.setModifierProperty(PsiModifier.PRIVATE, true);
+                }
+            }
         }
-      }
     }
-    return false;
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticClassWithoutPrivateConstructorVisitor();
+    }
+
+    private class StaticClassWithoutPrivateConstructorVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
+            if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (!UtilityClassUtil.isUtilityClass(aClass)) {
+                return;
+            }
+            if (ignoreClassesWithOnlyMain && hasOnlyMain(aClass)) {
+                return;
+            }
+            if (hasPrivateConstructor(aClass)) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+
+        private boolean hasOnlyMain(PsiClass aClass) {
+            final PsiMethod[] methods = aClass.getMethods();
+            if (methods.length == 0) {
+                return false;
+            }
+            for (PsiMethod method : methods) {
+                if (method.isConstructor()) {
+                    continue;
+                }
+                final String name = method.getName();
+                if (!name.equals(HardcodedMethodConstants.MAIN)) {
+                    return false;
+                }
+                if (!method.hasModifierProperty(PsiModifier.PUBLIC) ||
+                        !method.hasModifierProperty(PsiModifier.STATIC)) {
+                    return false;
+                }
+                final PsiType returnType = method.getReturnType();
+                if (!PsiType.VOID.equals(returnType)) {
+                    return false;
+                }
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                final PsiParameter[] parameters = parameterList.getParameters();
+                if (parameters.length != 1) {
+                    return false;
+                }
+                final PsiParameter parameter = parameters[0];
+                final PsiType type = parameter.getType();
+                if (!type.equalsToText("java.lang.String[]")) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    static boolean hasPrivateConstructor(PsiClass aClass) {
+        final PsiMethod[] constructors = aClass.getConstructors();
+        for (final PsiMethod constructor : constructors) {
+            if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean hasNullArgConstructor(PsiClass aClass) {
+        final PsiMethod[] constructors = aClass.getConstructors();
+        for (final PsiMethod constructor : constructors) {
+            final PsiParameterList params = constructor.getParameterList();
+            if (params.getParameters().length == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
