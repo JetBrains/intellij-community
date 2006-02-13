@@ -1,14 +1,15 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.CutCopyPasteSupport;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.CutCopyPasteSupport;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -226,28 +227,29 @@ public final class ResizeProcessor extends EventProcessor {
     }
   }
 
+  @Nullable
   static Rectangle getGridSpanGridRect(final GridLayoutManager grid,
                                        final GridConstraints originalConstraints,
                                        final Point point,
                                        final int resizeMask) {
-    int horzGridLine = (resizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0
-                       ? grid.getHorizontalGridLineNear(point.y, EPSILON)
-                       : -1;
-    int vertGridLine = (resizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0
-                       ? grid.getVerticalGridLineNear(point.x, EPSILON)
-                       : -1;
-    if (horzGridLine != -1 || vertGridLine != -1) {
+    int rowAtMouse = (resizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0
+                     ? grid.getRowAt(point.y)
+                     : -1;
+    int colAtMouse = (resizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0
+                     ? grid.getColumnAt(point.x)
+                     : -1;
+    if (rowAtMouse != -1 || colAtMouse != -1) {
       final int origStartCol = originalConstraints.getColumn();
       final int origEndCol = originalConstraints.getColumn() + originalConstraints.getColSpan() - 1;
       int startCol = origStartCol;
       int endCol = origEndCol;
-      if (vertGridLine >= 0) {
-        if ((resizeMask & Painter.WEST_MASK) != 0 && vertGridLine <= endCol) {
+      if (colAtMouse >= 0) {
+        if ((resizeMask & Painter.WEST_MASK) != 0 && colAtMouse <= endCol) {
           // resize to left
-          startCol = vertGridLine;
+          startCol = colAtMouse;
         }
-        else if ((resizeMask & Painter.EAST_MASK) != 0 && vertGridLine > startCol) {
-          endCol = vertGridLine-1;
+        else if ((resizeMask & Painter.EAST_MASK) != 0 && colAtMouse >= startCol) {
+          endCol = colAtMouse;
         }
       }
 
@@ -255,12 +257,12 @@ public final class ResizeProcessor extends EventProcessor {
       final int origEndRow = originalConstraints.getRow() + originalConstraints.getRowSpan() - 1;
       int startRow = origStartRow;
       int endRow = origEndRow;
-      if (horzGridLine >= 0) {
-        if ((resizeMask & Painter.NORTH_MASK) != 0 && horzGridLine <= endRow) {
-          startRow = horzGridLine;
+      if (rowAtMouse >= 0) {
+        if ((resizeMask & Painter.NORTH_MASK) != 0 && rowAtMouse <= endRow) {
+          startRow = rowAtMouse;
         }
-        else if ((resizeMask & Painter.SOUTH_MASK) != 0 && horzGridLine > startRow) {
-          endRow = horzGridLine-1;
+        else if ((resizeMask & Painter.SOUTH_MASK) != 0 && rowAtMouse >= startRow) {
+          endRow = rowAtMouse;
         }
       }
 
