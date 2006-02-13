@@ -94,6 +94,13 @@ public class GridInsertProcessor {
     }
 
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
+      container.getComponentAtGrid(0, 0) == null) {
+      GridInsertMode mode = container.canDrop(targetPoint, componentCount) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
+      return new GridInsertLocation(container, 0, 0, targetPoint, rc, mode);
+    }
+
     int[] xs = grid.getXs();
     int[] ys = grid.getYs();
     int[] widths = grid.getWidths();
@@ -180,9 +187,9 @@ public class GridInsertProcessor {
   }
 
   @Nullable
-  RadContainer processGridInsertOnDrop(final GridInsertLocation location,
-                                       final RadComponent[] insertedComponents,
-                                       final GridConstraints[] constraintsToAdjust) {
+  static RadContainer processGridInsertOnDrop(final GridInsertLocation location,
+                                              final RadComponent[] insertedComponents,
+                                              final GridConstraints[] constraintsToAdjust) {
     int row = location.getRow();
     int col = location.getColumn();
     RadContainer container = location.getContainer();
@@ -214,10 +221,9 @@ public class GridInsertProcessor {
     return container;
   }
 
-  private void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
-                                      final boolean isRow,
-                                      final int index
-  ) {
+  private static void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
+                                             final boolean isRow,
+                                             final int index) {
     if (constraintsToAdjust != null) {
       for(GridConstraints constraints: constraintsToAdjust) {
         GridChangeUtil.adjustConstraintsOnInsert(constraints, isRow, index);
@@ -267,7 +273,7 @@ public class GridInsertProcessor {
     return copyOnDrop ? FormEditingUtil.getCopyDropCursor() : FormEditingUtil.getMoveDropCursor();
   }
 
-  public boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
+  public static boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
     if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
     }
@@ -286,7 +292,7 @@ public class GridInsertProcessor {
     return insertLocation.getColumn() + componentCount - 1 < grid.getColumnCount();
   }
 
-  private boolean isInsertInsideComponent(final GridInsertLocation insertLocation) {
+  private static boolean isInsertInsideComponent(final GridInsertLocation insertLocation) {
     if (insertLocation.isColumnInsert()) {
       int endColumn = (insertLocation.getMode() == GridInsertMode.ColumnAfter)
                       ? insertLocation.getColumn()+1 : insertLocation.getColumn();
