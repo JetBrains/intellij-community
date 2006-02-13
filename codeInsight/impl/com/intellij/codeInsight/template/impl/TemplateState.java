@@ -209,8 +209,17 @@ public class TemplateState implements Disposable {
       new UndoableAction() {
         public void undo() throws UnexpectedUndoException {
           if (myDocument != null) {
-            setCurrentVariableNumber(-1);
             fireTemplateCancelled();
+            //hack to close lookup if any: TODO lookup API for closing active lookup
+            final int segmentNumber = getCurrentSegmentNumber();
+            if (segmentNumber >= 0) {
+              int offsetToMove = myTemplate.getSegmentOffset(segmentNumber) - 1;
+              if (offsetToMove < 0) offsetToMove = myDocument.getTextLength();
+              final int oldOffset = myEditor.getCaretModel().getOffset();
+              myEditor.getCaretModel().moveToOffset(offsetToMove);
+              myEditor.getCaretModel().moveToOffset(oldOffset);
+            }
+            setCurrentVariableNumber(-1);
           }
         }
 
