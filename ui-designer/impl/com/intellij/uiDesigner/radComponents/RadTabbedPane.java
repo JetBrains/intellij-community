@@ -140,6 +140,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   @Override @Nullable
   public Property getDefaultInplaceProperty() {
+    final int index = getTabbedPane().getSelectedIndex();
+    if (index >= 0) {
+      return new MyTitleProperty(index);
+    }
     return null;
   }
 
@@ -150,6 +154,17 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     final int index = ui.tabForCoordinate(tabbedPane, x, y);
     LOG.assertTrue(index != -1);
     return ui.getTabBounds(tabbedPane, index);
+  }
+
+
+  @Override @Nullable
+  public Rectangle getDefaultInplaceEditorBounds() {
+    final JTabbedPane tabbedPane = getTabbedPane();
+    final int index = tabbedPane.getSelectedIndex();
+    if (index >= 0) {
+      return tabbedPane.getUI().getTabBounds(tabbedPane, index);
+    }
+    return null;
   }
 
   @Nullable
