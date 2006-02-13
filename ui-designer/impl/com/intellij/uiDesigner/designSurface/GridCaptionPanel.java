@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.actions.GridChangeActionGroup;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -55,7 +56,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Override public Dimension getPreferredSize() {
-    return new Dimension(15, 15);
+    return new Dimension(12, 12);
   }
 
   @Override public void paintComponent(Graphics g) {
@@ -80,7 +81,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
                      ? new Rectangle(bounds.x, pnt.y, bounds.width-1, sizes [i])
                      : new Rectangle(pnt.x, bounds.y, sizes [i], bounds.height-1);
 
-      g.setColor(mySelectionModel.isSelectedIndex(i) ? LightColors.BLUE : LightColors.GREEN);
+      g.setColor(getCaptionColor(i));
       g.fillRect(rc.x, rc.y, rc.width, rc.height);
       g.setColor(Color.DARK_GRAY);
       g.drawRect(rc.x, rc.y, rc.width, rc.height);
@@ -94,6 +95,16 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       g.drawLine(0, bounds.height-1, bounds.width, bounds.height-1);
     }
 
+  }
+
+  private Color getCaptionColor(final int i) {
+    if (mySelectionModel.isSelectedIndex(i)) {
+      return LightColors.BLUE;
+    }
+    if (GridChangeUtil.canDeleteCell(mySelectedContainer, i, myIsRow, false)) {
+      return Color.PINK;
+    }
+    return LightColors.GREEN;
   }
 
   @Nullable private RadContainer getSelectedGridContainer() {
