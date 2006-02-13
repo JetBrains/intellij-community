@@ -61,7 +61,7 @@ public class FilePathImpl implements FilePath {
   }
 
   public String getPath() {
-    if (myVirtualFile != null) {
+    if (myVirtualFile != null && myVirtualFile.isValid()) {
       return myVirtualFile.getPath();
     }
     else {

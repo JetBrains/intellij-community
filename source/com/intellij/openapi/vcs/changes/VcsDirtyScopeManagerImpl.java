@@ -22,18 +22,14 @@ import java.util.Map;
 /**
  * @author max
  */
-public class VcsDirtyScopeManager implements ProjectComponent {
+public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
   private final ProjectFileIndex myIndex;
   private final Map<VirtualFile, VcsDirtyScope> myScopes = new HashMap<VirtualFile, VcsDirtyScope>();
-  private final VcsDirtyScopeManager.MyVfsListener myVfsListener;
+  private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
 
-  public static VcsDirtyScopeManager getInstance(Project project) {
-    return project.getComponent(VcsDirtyScopeManager.class);
-  }
-
-  public VcsDirtyScopeManager(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
+  public VcsDirtyScopeManagerImpl(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
     myProject = project;
     myChangeListManager = changeListManager;
     myIndex = rootManager.getFileIndex();
@@ -45,16 +41,20 @@ public class VcsDirtyScopeManager implements ProjectComponent {
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        for (Module module : modules) {
-          final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-          VirtualFile[] roots = rootManager.getContentRoots();
-          for (VirtualFile root : roots) {
-            fileDirtyRecursively(root);
-          }
-        }
+        markEverythingDirty();
       }
     });
+  }
+
+  public void markEverythingDirty() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      VirtualFile[] roots = rootManager.getContentRoots();
+      for (VirtualFile root : roots) {
+        dirDirtyRecursively(root);
+      }
+    }
   }
 
   public void projectClosed() {
@@ -70,13 +70,17 @@ public class VcsDirtyScopeManager implements ProjectComponent {
   public void disposeComponent() {}
 
   public void fileDirty(VirtualFile file) {
-    final VirtualFile root = myIndex.getContentRootForFile(file);
-    FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
-    getScope(root).addDirtyFile(path);
+    fileDirty(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
+  }
+
+  public void fileDirty(FilePath file) {
+    VirtualFile parent = file.getVirtualFileParent();
+    final VirtualFile root = myIndex.getContentRootForFile(parent);
+    getScope(root).addDirtyFile(file);
     myChangeListManager.scheduleUpdate();
   }
 
-  private void fileDirtyRecursively(final VirtualFile dir) {
+  public void dirDirtyRecursively(final VirtualFile dir) {
     final VirtualFile root = myIndex.getContentRootForFile(dir);
     FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
     getScope(root).addDirtyDirRecursively(path);

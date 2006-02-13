@@ -1,9 +1,11 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -13,6 +15,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,7 +23,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangeListManager implements ProjectComponent {
+public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent {
   private Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = "Changes";
@@ -35,11 +38,7 @@ public class ChangeListManager implements ProjectComponent {
   private ChangeList myDefaultChangelist;
   private ChangesListView myView;
 
-  public static ChangeListManager getInstance(Project project) {
-    return project.getComponent(ChangeListManager.class);
-  }
-
-  public ChangeListManager(final Project project, ProjectLevelVcsManager vcsManager) {
+  public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
     myDefaultChangelist = new ChangeList("Default");
@@ -78,7 +77,15 @@ public class ChangeListManager implements ProjectComponent {
   }
 
   private JComponent createChangeViewComponent() {
-    return new JScrollPane(myView);
+    DefaultActionGroup group = new DefaultActionGroup();
+    final RefreshAction action = new RefreshAction();
+    JPanel panel = new JPanel(new BorderLayout());
+    action.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
+    group.add(action);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
+    panel.add(toolbar.getComponent(), BorderLayout.WEST);
+    panel.add(new JScrollPane(myView), BorderLayout.CENTER);
+    return panel;
   }
 
   public void scheduleUpdate() {
@@ -91,7 +98,7 @@ public class ChangeListManager implements ProjectComponent {
           return;
         }
 
-        final List<VcsDirtyScope> scopes = VcsDirtyScopeManager.getInstance(myProject).retreiveScopes();
+        final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
         for (VcsDirtyScope scope : scopes) {
           final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
           if (vcs != null) {
@@ -144,6 +151,16 @@ public class ChangeListManager implements ProjectComponent {
   public List<ChangeList> getChangeLists() {
     synchronized (myChangeLists) {
       return myChangeLists;
+    }
+  }
+
+  public class RefreshAction extends AnAction {
+    public RefreshAction() {
+      super("Refresh", "Refresh VCS changes", IconLoader.getIcon("/actions/sync.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
   }
 }

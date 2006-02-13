@@ -68,12 +68,14 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManager</implementation-class>
+      <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</implementation-class>
+      <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
