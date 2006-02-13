@@ -77,7 +77,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
           };
       }
 
-      collector.addError(prop,
+      collector.addError(getID(), prop,
                          CodeInsightBundle.message("inspection.i18n.message.in.form",
                                                    JDOMUtil.escapeText(descriptor.getValue())),
                          provider);

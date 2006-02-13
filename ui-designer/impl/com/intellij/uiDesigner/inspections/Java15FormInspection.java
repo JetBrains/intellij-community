@@ -36,7 +36,7 @@ public class Java15FormInspection extends BaseFormInspection {
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
       if (Java15APIUsageInspection.isJava15APIUsage(getter)) {
-        collector.addError(prop,
+        collector.addError(getID(), prop,
                            InspectionsBundle.message("inspection.1.5.problem.descriptor", "@since 1.5"),
                            new EditorQuickFixProvider() {
                              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {

@@ -70,7 +70,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         }
       });
       if (!found.get().booleanValue()) {
-        collector.addError(null, UIDesignerBundle.message("inspection.no.label.for.error"),
+        collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.label.for.error"),
                            candidateLabel.isNull() ? null : new EditorQuickFixProvider() {
                              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                                return new MyQuickFix(editor, component, candidateLabel.get());

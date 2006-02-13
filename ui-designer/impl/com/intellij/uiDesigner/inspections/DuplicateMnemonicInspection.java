@@ -78,7 +78,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     if (myMnemonicToComponentMap.containsKey(new Character(twm.getMnemonicChar()))) {
       IProperty prop = findProperty(component, SwingProperties.TEXT);
       IComponent oldComponent = myMnemonicToComponentMap.get(new Character(twm.getMnemonicChar()));
-      collector.addError(prop,
+      collector.addError(getID(), prop,
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
                                                   getText(module, oldComponent),
                                                   getText(module, component)),

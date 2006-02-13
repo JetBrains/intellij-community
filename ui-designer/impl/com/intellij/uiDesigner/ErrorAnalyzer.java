@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -67,7 +68,7 @@ public final class ErrorAnalyzer {
       if(psiClass == null){
         final QuickFix[] fixes = editor != null ? new QuickFix[]{new CreateClassToBindFix(editor, classToBind)} : QuickFix.EMPTY_ARRAY;
         final ErrorInfo errorInfo = new ErrorInfo(null, UIDesignerBundle.message("error.class.does.not.exist", classToBind),
-                                                  fixes);
+                                                  HighlightDisplayLevel.ERROR, fixes);
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, errorInfo);
       }
       else{
@@ -114,6 +115,7 @@ public final class ErrorAnalyzer {
                CLIENT_PROP_BINDING_ERROR,
                new ErrorInfo(
                  null, UIDesignerBundle.message("error.no.field.in.class", binding, classToBind),
+                 HighlightDisplayLevel.ERROR,
                  fixes
                )
               );
@@ -124,6 +126,7 @@ public final class ErrorAnalyzer {
                 CLIENT_PROP_BINDING_ERROR,
                 new ErrorInfo(
                   null, UIDesignerBundle.message("error.cant.bind.to.static", binding),
+                  HighlightDisplayLevel.ERROR,
                   QuickFix.EMPTY_ARRAY
                 )
               );
@@ -152,6 +155,7 @@ public final class ErrorAnalyzer {
                   CLIENT_PROP_BINDING_ERROR,
                   new ErrorInfo(
                     null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
+                    HighlightDisplayLevel.ERROR,
                     fixes
                   )
                 );
@@ -168,6 +172,7 @@ public final class ErrorAnalyzer {
               CLIENT_PROP_BINDING_ERROR,
               new ErrorInfo(
                 null, UIDesignerBundle.message("error.binding.already.exists", binding),
+                HighlightDisplayLevel.ERROR,
                 QuickFix.EMPTY_ARRAY
               )
             );
@@ -203,6 +208,7 @@ public final class ErrorAnalyzer {
               // TODO[vova] implement
               putError(component, new ErrorInfo(
                 null, UIDesignerBundle.message("error.multiple.toplevel.components"),
+                HighlightDisplayLevel.ERROR,
                 QuickFix.EMPTY_ARRAY
               ));
             }
@@ -211,6 +217,7 @@ public final class ErrorAnalyzer {
             // TODO[vova] implement
             putError(component, new ErrorInfo(
                 null, UIDesignerBundle.message("error.panel.not.laid.out"),
+                HighlightDisplayLevel.ERROR,
                 QuickFix.EMPTY_ARRAY
               )
             );
@@ -327,5 +334,15 @@ public final class ErrorAnalyzer {
       result.addAll(errorInfos);
     }
     return result.toArray(new ErrorInfo[result.size()]);
+  }
+
+  @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final RadComponent component) {
+    HighlightDisplayLevel displayLevel = null;
+    for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
+      if (displayLevel == null || errInfo.getHighlightDisplayLevel() == HighlightDisplayLevel.ERROR) {
+        displayLevel = errInfo.getHighlightDisplayLevel();
+      }
+    }
+    return displayLevel;
   }
 }

@@ -104,7 +104,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     }
   }
 
-  public String getProfile(PsiFile psiFile) {
+  public String getProfileName(PsiFile psiFile) {
     final NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(myProject);
     for (NamedScope scope : myScopeToProfileMap.keySet()) {
       if (scope.getValue().contains(psiFile, scopeManager)) {

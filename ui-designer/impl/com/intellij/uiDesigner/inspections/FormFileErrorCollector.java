@@ -22,7 +22,9 @@ public class FormFileErrorCollector extends FormErrorCollector {
     myFile = file;
   }
 
-  public void addError(@Nullable IProperty prop, @NotNull String errorMessage,
+  public void addError(final String inspectionId,
+                       @Nullable IProperty prop,
+                       @NotNull String errorMessage,
                        @Nullable EditorQuickFixProvider editorQuickFixProvider) {
     myProblems.add(myManager.createProblemDescriptor(myFile, errorMessage,
                                                      (LocalQuickFix)null,

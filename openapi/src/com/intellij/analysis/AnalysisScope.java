@@ -30,7 +30,6 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
@@ -480,7 +479,7 @@ public class AnalysisScope {
     } else if (myType == FILE || myType == DIRECTORY){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
-      result.add(profileManager.getProfile((PsiFile)myElement));
+      result.add(profileManager.getProfileName((PsiFile)myElement));
     } else if (myType == PACKAGE){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
@@ -496,7 +495,7 @@ public class AnalysisScope {
     for (PsiDirectory directory : psiDirectories) {
       final PsiFile[] psiFiles = directory.getFiles();
       for (PsiFile file : psiFiles) {
-        result.add(profileManager.getProfile(file));
+        result.add(profileManager.getProfileName(file));
       }
       processDirectories(directory.getSubdirectories(), result, profileManager);
     }

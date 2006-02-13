@@ -8,6 +8,8 @@ import com.intellij.uiDesigner.lw.IProperty;
  * @author yole
  */
 public abstract class FormErrorCollector {
-  public abstract void addError(@Nullable IProperty prop, @NotNull String errorMessage,
+  public abstract void addError(final String inspectionId,
+                                @Nullable IProperty prop,
+                                @NotNull String errorMessage,
                                 @Nullable EditorQuickFixProvider editorQuickFixProvider);
 }

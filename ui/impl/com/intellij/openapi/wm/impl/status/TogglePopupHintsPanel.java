@@ -96,7 +96,7 @@ public class TogglePopupHintsPanel extends JPanel {
     if (!isClear && isStateChangeable(file)) {
       if (HighlightUtil.isRootInspected(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
-        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile(file);
+        String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
         if (text != null){
           final Font font = getFont();
           if (font != null) {

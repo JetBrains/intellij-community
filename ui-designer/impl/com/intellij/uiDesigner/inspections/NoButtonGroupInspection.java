@@ -48,7 +48,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
             final GridConstraints c2 = child.getConstraints();
             if ((c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
                 (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1)) {
-              collector.addError(null, UIDesignerBundle.message("inspection.no.button.group.error"),
+              collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.button.group.error"),
                                  new EditorQuickFixProvider() {
                                    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                                      return new MyQuickFix(editor, component, c1.getColumn() == c2.getColumn());

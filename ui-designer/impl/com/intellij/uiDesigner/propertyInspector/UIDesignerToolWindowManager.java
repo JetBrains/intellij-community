@@ -53,7 +53,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myToolWindowPanel = new Splitter(true, 0.33f);
-        myComponentTree = new ComponentTree(null);
+        myComponentTree = new ComponentTree();
         final JScrollPane scrollPane = new JScrollPane(myComponentTree);
         scrollPane.setPreferredSize(new Dimension(250, -1));
         myPropertyInspector= new PropertyInspector(myProject, null, myComponentTree);

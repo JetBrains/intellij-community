@@ -38,7 +38,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
-  public String getProfile(PsiFile psiFile) {
+  public String getProfileName(PsiFile psiFile) {
     return getProfile((PsiElement)psiFile).getName();
   }
 
@@ -46,7 +46,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 
-    final String profile = super.getProfile(psiFile);
+    final String profile = super.getProfileName(psiFile);
     if (profile != null) return (InspectionProfileImpl)getProfile(profile);
     return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
   }

@@ -31,6 +31,7 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,15 +63,15 @@ public final class ComponentTree extends Tree implements DataProvider {
   private SimpleTextAttributes myTitleAttributes; // exists only for performance reason
 
   private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2errAttr; // exists only for performance reason
+  private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2WarningAttr; // exists only for performance reason
 
   private GuiEditor myEditor;
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
 
-  public ComponentTree(/*@NotNull*/ final GuiEditor editor) {
+  public ComponentTree() {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myEditor = editor;
 
     setCellRenderer(new MyTreeCellRenderer());
     setRootVisible(false);
@@ -86,7 +87,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeToolTipHandler.install(this);
 
     // Install light bulb
-    myQuickFixManager = new QuickFixManagerImpl(editor, this);
+    myQuickFixManager = new QuickFixManagerImpl(null, this);
 
     // Popup menu
     PopupHandler.installPopupHandler(
@@ -95,7 +96,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
 
     // F2 should start inplace editing
-    myStartInplaceEditingAction = new StartInplaceEditingAction(editor);
+    myStartInplaceEditingAction = new StartInplaceEditingAction(null);
     myStartInplaceEditingAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)),
       this
@@ -249,10 +250,22 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs, final boolean error) {
-    if (!error) {
+  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,
+                                            @Nullable HighlightDisplayLevel level) {
+    if (level == null) {
       return attrs;
     }
+    if (level == HighlightDisplayLevel.WARNING) {
+      SimpleTextAttributes result = myAttr2WarningAttr.get(attrs);
+      if (result == null) {
+        result = new SimpleTextAttributes(attrs.getStyle() | SimpleTextAttributes.STYLE_WAVED,
+                                          attrs.getFgColor(),
+                                          Color.ORANGE);
+        myAttr2WarningAttr.put(attrs, result);
+      }
+      return result;
+    }
+
     SimpleTextAttributes result = myAttr2errAttr.get(attrs);
     if (result == null) {
       result = new SimpleTextAttributes(attrs.getStyle() | SimpleTextAttributes.STYLE_WAVED,
@@ -269,6 +282,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     // [vova] we cannot create this hash in constructor and just clear it here. The
     // problem is that setUI is invoked by constructor of superclass.
     myAttr2errAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+    myAttr2WarningAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes attributes = globalScheme.getAttributes(HighlighterColors.JAVA_STRING);
@@ -358,21 +372,21 @@ public final class ComponentTree extends Tree implements DataProvider {
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);
 
-        final boolean error = ErrorAnalyzer.getErrorForComponent(component) != null;
+        final HighlightDisplayLevel level = ErrorAnalyzer.getHighlightDisplayLevel(component);
 
         // Text
         boolean hasText = false;
         final String binding = component.getBinding();
         if (binding != null) {
-          append(binding, getAttribute(myBindingAttributes, error));
-          append(" : ", getAttribute(myClassAttributes, error));
+          append(binding, getAttribute(myBindingAttributes, level));
+          append(" : ", getAttribute(myClassAttributes, level));
           hasText = true;
         }
         else {
           String componentTitle = getComponentTitle(component);
           if (componentTitle != null) {
-            append(componentTitle, getAttribute(myTitleAttributes, error));
-            append(" : ", getAttribute(myClassAttributes, error));
+            append(componentTitle, getAttribute(myTitleAttributes, level));
+            append(" : ", getAttribute(myClassAttributes, level));
             hasText = true;
           }
         }
@@ -381,26 +395,26 @@ public final class ComponentTree extends Tree implements DataProvider {
         final String componentClassName = component.getComponentClassName();
 
         if (component instanceof RadVSpacer) {
-          append(UIDesignerBundle.message("component.vertical.spacer"), getAttribute(myClassAttributes, error));
+          append(UIDesignerBundle.message("component.vertical.spacer"), getAttribute(myClassAttributes, level));
         }
         else if (component instanceof RadHSpacer) {
-          append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, error));
+          append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, level));
         }
         else if (component instanceof RadErrorComponent) {
           final RadErrorComponent c = (RadErrorComponent)component;
-          append(c.getErrorDescription(), getAttribute(myUnknownAttributes, error));
+          append(c.getErrorDescription(), getAttribute(myUnknownAttributes, level));
         }
         else if (component instanceof RadRootContainer) {
-          append(UIDesignerBundle.message("component.form"), getAttribute(myClassAttributes, error));
-          append("(", getAttribute(myPackageAttributes, error));
+          append(UIDesignerBundle.message("component.form"), getAttribute(myClassAttributes, level));
+          append("(", getAttribute(myPackageAttributes, level));
           final String classToBind = ((RadRootContainer)component).getClassToBind();
           if (classToBind != null) {
-            append(classToBind, getAttribute(myPackageAttributes, error));
+            append(classToBind, getAttribute(myPackageAttributes, level));
           }
           else {
-            append(UIDesignerBundle.message("component.no.binding"), getAttribute(myPackageAttributes, error));
+            append(UIDesignerBundle.message("component.no.binding"), getAttribute(myPackageAttributes, level));
           }
-          append(")", getAttribute(myPackageAttributes, error));
+          append(")", getAttribute(myPackageAttributes, level));
         }
         else {
           String packageName = null;
@@ -413,15 +427,15 @@ public final class ComponentTree extends Tree implements DataProvider {
 
           if (packageName != null) {
             append(componentClassName.substring(packageName.length() + 1).replace('$', '.'),
-                   getAttribute(classAttributes, error));
+                   getAttribute(classAttributes, level));
             if (!packageName.equals(SWING_PACKAGE)) {
-              append(" (", getAttribute(myPackageAttributes, error));
-              append(packageName, getAttribute(myPackageAttributes, error));
-              append(")", getAttribute(myPackageAttributes, error));
+              append(" (", getAttribute(myPackageAttributes, level));
+              append(packageName, getAttribute(myPackageAttributes, level));
+              append(")", getAttribute(myPackageAttributes, level));
             }
           }
           else {
-            append(componentClassName.replace('$', '.'), getAttribute(classAttributes, error));
+            append(componentClassName.replace('$', '.'), getAttribute(classAttributes, level));
           }
         }
 
