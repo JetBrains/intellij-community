@@ -70,6 +70,12 @@ public class SearchUtil {
       if (checkBoxTitle != null) {
         processUILabel(checkBoxTitle, configurableOptions, path);
       }
+    }
+    else if (component instanceof JRadioButton) {
+      @NonNls final String radioButtonTitle = ((JRadioButton)component).getText();
+      if (radioButtonTitle != null) {
+        processUILabel(radioButtonTitle, configurableOptions, path);
+      }
     } else if (component instanceof JButton){
       @NonNls final String buttonTitle = ((JButton)component).getText();
       if (buttonTitle != null) {
@@ -110,7 +116,7 @@ public class SearchUtil {
   public static Runnable switchTab(final SearchableConfigurable configurable, final String option, final TabbedPaneWrapper tabbedPane, final GlassPanel glassPanel){
     return new Runnable() {
       public void run() {
-        final String tabIndex = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
+        final String tabIndex = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
         LOG.assertTrue(tabIndex != null);
         tabbedPane.setSelectedIndex(new Integer(tabIndex).intValue());
         for(int i = 0; i < tabbedPane.getTabCount(); i++){
@@ -134,7 +140,7 @@ public class SearchUtil {
                                       final TabbedPaneWrapper tabbedPane,
                                       final GlassPanel glassPanel){
     final Runnable runnable = SearchUtil.lightOptions(component, option, glassPanel);
-    final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
+    final String path = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
     if (path != null){
       return new Runnable() {
         public void run() {
@@ -170,6 +176,12 @@ public class SearchUtil {
       final JCheckBox checkBox = ((JCheckBox)rootComponent);
       if (checkBox.getText().toLowerCase().indexOf(option) != -1){
         glassPanel.addSpotlight(checkBox);
+      }
+    }
+    else if (rootComponent instanceof JRadioButton) {
+      final JRadioButton radioButton = ((JRadioButton)rootComponent);
+      if (radioButton.getText().toLowerCase().indexOf(option) != -1){
+        glassPanel.addSpotlight(radioButton);
       }
     } else if (rootComponent instanceof JLabel){
       final JLabel label = ((JLabel)rootComponent);
