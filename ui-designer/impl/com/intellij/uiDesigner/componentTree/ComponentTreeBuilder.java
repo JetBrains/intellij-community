@@ -8,7 +8,6 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -244,9 +243,11 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
             final RadComponent component=ptr.getComponent();
             LOG.assertTrue(component!=null);
             if (!hasComponentInTab) {
-              hasComponentInTab = selectComponentTab(component);
+              hasComponentInTab = GuiEditorUtil.selectComponent(component);
             }
-            component.setSelected(true);
+            else {
+              component.setSelected(true);
+            }
           }
         }
 
@@ -255,20 +256,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
       }finally{
         myInsideChange--;
       }
-    }
-
-    private boolean selectComponentTab(final RadComponent component) {
-      boolean hasTab = false;
-      RadContainer parent = component.getParent();
-      while(parent != null) {
-        if (parent.getParent() instanceof RadTabbedPane) {
-          RadTabbedPane tabbedPane = (RadTabbedPane) parent.getParent();
-          tabbedPane.selectTab(parent);
-          hasTab = true;
-        }
-        parent = parent.getParent();
-      }
-      return hasTab;
     }
   }
 }

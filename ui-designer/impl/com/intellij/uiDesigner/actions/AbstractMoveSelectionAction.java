@@ -97,7 +97,8 @@ abstract class AbstractMoveSelectionAction extends AnAction{
 
     LOG.assertTrue(nextSelectedIndex != -1);
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
-    components.get(nextSelectedIndex).setSelected(true);
+    final RadComponent component = components.get(nextSelectedIndex);
+    GuiEditorUtil.selectComponent(component);
   }
 
   private void moveToFirstComponent(final JComponent rootContainerDelegee) {
@@ -126,7 +127,7 @@ abstract class AbstractMoveSelectionAction extends AnAction{
       }
     );
     if(!componentToBeSelected.isNull()){
-      componentToBeSelected.get().setSelected(true);
+      GuiEditorUtil.selectComponent(componentToBeSelected.get());
     }
   }
 
