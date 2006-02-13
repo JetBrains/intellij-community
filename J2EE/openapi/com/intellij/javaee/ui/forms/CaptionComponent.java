@@ -53,7 +53,7 @@ public class CaptionComponent extends JPanel {
   public boolean isBordered() {
     return myBordered;
   }
-
+                        
 
   public String getDescriptionText() {
     return myDescriptionLabel.getText();
