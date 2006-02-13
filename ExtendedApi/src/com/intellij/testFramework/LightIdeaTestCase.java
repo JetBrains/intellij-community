@@ -363,7 +363,12 @@ import java.util.Map;
         }
         finally {
           ourTestThread = null;
-          cleanupApplicationCaches();
+          try {
+            cleanupApplicationCaches();
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
         }
       }
     });
