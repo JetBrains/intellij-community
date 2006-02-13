@@ -1329,6 +1329,7 @@
       <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction"/>
       <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
       <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
+      <action id="GuiDesigner.AddTab" class="com.intellij.uiDesigner.actions.AddTabAction"/>
       <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
         use-shortcut-of="EditorDuplicate"/>
       <separator/>
@@ -1351,6 +1352,7 @@
       <reference ref="$Paste"/>
       <separator/>
       <reference ref="GuiDesigner.SurroundPopup"/>
+      <reference ref="GuiDesigner.AddTab"/>
     </group>
 
     <group id="GuiDesigner.PropertyInspectorPopupMenu">
