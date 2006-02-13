@@ -24,6 +24,9 @@ import java.util.Set;
 public class DefUseUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
 
+  private DefUseUtil() {
+  }
+
   public static class Info {
     private final PsiVariable myVariable;
     private final PsiElement myContext;
@@ -52,6 +55,7 @@ public class DefUseUtil {
     private Set<PsiVariable> myVariablesUseArmed;
     private final int myInstructionIdx;
     private final IntArrayList myBackwardTraces;
+    private boolean myIsVisited = false;
 
     public InstructionState(int instructionIdx) {
       myInstructionIdx = instructionIdx;
@@ -101,6 +105,14 @@ public class DefUseUtil {
       touch();
       myVariablesUseArmed.addAll(state.myVariablesUseArmed);
     }
+
+    public void markVisited() {
+      myIsVisited = true;
+    }
+
+    public boolean isVisited() {
+      return myIsVisited;
+    }
   }
 
   public static List<Info> getUnusedDefs(PsiCodeBlock body, Set<PsiVariable> outUsedVariables) {
@@ -108,11 +120,10 @@ public class DefUseUtil {
       return null;
     }
     List<Info> unusedDefs = new ArrayList<Info>();
-    IntArrayList exitPoints = new IntArrayList();
 
     ControlFlow flow;
     try {
-      flow = new ControlFlowAnalyzer(body, ourPolicy).buildControlFlow();
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy);
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -148,54 +159,49 @@ public class DefUseUtil {
 
     List<InstructionState> queue = new ArrayList<InstructionState>();
 
-    InstructionState startupState = states[instructions.length];
-    startupState.touch();
+    for (int i = states.length - 1; i >= 0; i--) {
+      final InstructionState outerState = states[i];
+      if (outerState.isVisited()) continue;
+      outerState.touch();
 
-    for (PsiVariable psiVariable : assignedVariables) {
-      if (psiVariable instanceof PsiField) {
-        startupState.mergeUseArmed(psiVariable);
-      }
-    }
-
-    ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize() - 1, exitPoints, new ArrayList<PsiStatement>(),
-                                                ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
-
-    if (exitPoints.isEmpty()) return null;
-    for (int i = 0; i < exitPoints.size(); i++) {
-      startupState.addBackwardTrace(exitPoints.get(i));
-    }
-
-    queue.add(startupState);
-
-    while (!queue.isEmpty()) {
-      ProgressManager.getInstance().checkCanceled();
-      InstructionState state = queue.remove(0);
-
-      int idx = state.getInstructionIdx();
-      if (idx < instructions.length) {
-        Instruction instruction = instructions[idx];
-
-        if (instruction instanceof WriteVariableInstruction) {
-          WriteVariableInstruction writeInstruction = (WriteVariableInstruction) instruction;
-          PsiVariable psiVariable = writeInstruction.variable;
-          outUsedVariables.add(psiVariable);
-          if (state.mergeUseDisarmed(psiVariable)) {
-            defsArmed[idx] = true;
-          }
-        } else if (instruction instanceof ReadVariableInstruction) {
-          ReadVariableInstruction readInstruction = (ReadVariableInstruction)instruction;
-          state.mergeUseArmed(readInstruction.variable);
-          outUsedVariables.add(readInstruction.variable);
-        } else {
-          state.touch();
+      for (PsiVariable psiVariable : assignedVariables) {
+        if (psiVariable instanceof PsiField) {
+          outerState.mergeUseArmed(psiVariable);
         }
       }
+      queue.add(outerState);
 
-      for (int i = 0; i < state.getBackwardTraces().size(); i++) {
-        int prevIdx = state.getBackwardTraces().get(i);
-        if (!state.equals(states[prevIdx])) {
-          states[prevIdx].merge(state);
-          queue.add(states[prevIdx]);
+      while (!queue.isEmpty()) {
+        ProgressManager.getInstance().checkCanceled();
+        InstructionState state = queue.remove(0);
+        state.markVisited();
+
+        int idx = state.getInstructionIdx();
+        if (idx < instructions.length) {
+          Instruction instruction = instructions[idx];
+
+          if (instruction instanceof WriteVariableInstruction) {
+            WriteVariableInstruction writeInstruction = (WriteVariableInstruction) instruction;
+            PsiVariable psiVariable = writeInstruction.variable;
+            outUsedVariables.add(psiVariable);
+            if (state.mergeUseDisarmed(psiVariable)) {
+              defsArmed[idx] = true;
+            }
+          } else if (instruction instanceof ReadVariableInstruction) {
+            ReadVariableInstruction readInstruction = (ReadVariableInstruction)instruction;
+            state.mergeUseArmed(readInstruction.variable);
+            outUsedVariables.add(readInstruction.variable);
+          } else {
+            state.touch();
+          }
+        }
+
+        for (int j = 0; j < state.getBackwardTraces().size(); j++) {
+          int prevIdx = state.getBackwardTraces().get(j);
+          if (!state.equals(states[prevIdx])) {
+            states[prevIdx].merge(state);
+            queue.add(states[prevIdx]);
+          }
         }
       }
     }
@@ -321,7 +327,7 @@ public class DefUseUtil {
 
     protected RefsDefs(PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = new ControlFlowAnalyzer(body, ourPolicy, false, false, true).buildControlFlow();
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy);
       instructions = flow.getInstructions();
     }
 
@@ -404,8 +410,8 @@ public class DefUseUtil {
   }
 
 
-    private static InstructionState[] getStates(final Instruction[] instructions) {
-    final InstructionState[] states = new InstructionState[instructions.length + 1];
+  private static InstructionState[] getStates(final Instruction[] instructions) {
+    final InstructionState[] states = new InstructionState[instructions.length];
     for (int i = 0; i < states.length; i++) {
       states[i] = new InstructionState(i);
     }
@@ -413,7 +419,10 @@ public class DefUseUtil {
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
       for (int j = 0; j != instruction.nNext(); ++ j) {
-        states [instruction.getNext(i, j)].addBackwardTrace(i);
+        final int next = instruction.getNext(i, j);
+        if (next < states.length) {
+          states[next].addBackwardTrace(i);
+        }
       }
     }
     return states;
