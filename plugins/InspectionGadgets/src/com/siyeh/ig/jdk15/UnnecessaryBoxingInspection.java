@@ -120,14 +120,13 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         private static final String VALUE_OF = "valueOf";
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
             final PsiManager manager = expression.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
-            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
+            super.visitNewExpression(expression);
             final PsiType constructorType = expression.getType();
             if (constructorType == null) {
                 return;
@@ -158,16 +157,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             if (!boxableConstructorType.equals(argumentTypeText)) {
                 return;
             }
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiExpressionStatement ||
-                    parent instanceof PsiReferenceExpression) {
-                return;
-            }
-            final PsiMethodCallExpression containingMethodCallExpression =
-                    getParentMethodCallExpression(expression);
-            if (containingMethodCallExpression != null &&
-                    !isSameMethodCalledWithoutBoxing(containingMethodCallExpression,
-                            expression)) {
+            if (!canBeUnboxed(expression)) {
                 return;
             }
             registerError(expression);
@@ -175,6 +165,12 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
 
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
+            final PsiManager manager = expression.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return;
+            }
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] expressions = argumentList.getExpressions();
@@ -201,14 +197,23 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             if (s_boxingArgs.get(canonicalText) == null) {
                 return;
             }
-            final PsiMethodCallExpression containingMethodCallExpression =
-                    getParentMethodCallExpression(expression);
-            if (containingMethodCallExpression != null &&
-                    !isSameMethodCalledWithoutBoxing(containingMethodCallExpression,
-                            expression)) {
+            if (!canBeUnboxed(expression)) {
                 return;
             }
             registerError(expression);
+        }
+
+        private static boolean canBeUnboxed(PsiExpression expression) {
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiExpressionStatement ||
+                    parent instanceof PsiReferenceExpression) {
+                return false;
+            }
+            final PsiMethodCallExpression containingMethodCallExpression =
+                    getParentMethodCallExpression(expression);
+            return !(containingMethodCallExpression != null &&
+                    !isSameMethodCalledWithoutBoxing(
+                            containingMethodCallExpression, expression));
         }
 
         @Nullable
