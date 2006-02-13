@@ -287,9 +287,10 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     final SingleConfigurableEditor configurableEditor =
       new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
     if (configurable instanceof SearchableConfigurable){
+      ((SearchableConfigurable)configurable).clearSearch();
       @NonNls final String filter = mySearchField.getText();
       if (filter != null && filter.length() > 0 ){
-        final String[] options = filter.split("[\\W]");
+        final String[] options = filter.split("[\\W&&[^_-]]");
         for (String option : options) {
           final String unpluralized = StringUtil.unpluralize(option);
           final Runnable runnable = ((SearchableConfigurable)configurable).showOption(unpluralized != null ? unpluralized : option);
@@ -313,10 +314,11 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
+        myGlassPanel.clear();
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
         final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
-          final String[] searchOptions = searchPattern.split("[\\W]");
+          final String[] searchOptions = searchPattern.split("[\\W&&[^_-]]");
           Set<Configurable> configurables = null;
           for (String option : searchOptions) {
             if (option != null && option.length() > 0){
@@ -329,9 +331,10 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
             }
           }
           myOptionContainers = configurables;
-          myGlassPanel.clear();
-          myPanel.repaint();
+        } else {
+          myOptionContainers = null;
         }
+        myPanel.repaint();
       }
     });
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);

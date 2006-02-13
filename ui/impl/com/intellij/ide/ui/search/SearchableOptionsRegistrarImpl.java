@@ -24,19 +24,16 @@ import java.util.*;
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchableOptionsRegistrar implements ApplicationComponent {
+public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
   private Map<String, Set<String>> myOption2HelpId = new HashMap<String, Set<String>>();
   private Map<Pair<String,String>, String> myHelpIdWithOption2Path = new HashMap<Pair<String, String>, String>();
 
-  public static SearchableOptionsRegistrar getInstance(){
-    return ApplicationManager.getApplication().getComponent(SearchableOptionsRegistrar.class);
-  }
 
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public SearchableOptionsRegistrar() {
+  public SearchableOptionsRegistrarImpl() {
     try {
-      final Document document = JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/", "searchableOptions.xml"));
+      final Document document = JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/", "searchableOptions.xml"));
       final Element root = document.getRootElement();
       final List configurables = root.getChildren("configurable");
       for (final Object o : configurables) {
@@ -86,10 +83,20 @@ public class SearchableOptionsRegistrar implements ApplicationComponent {
     return myHelpIdWithOption2Path.get(Pair.create(configurable.getId(), option));
   }
 
-  @NonNls
-  public String getComponentName() {
-    return "SearchableOptionsRegistrar";
+  public void addOption(SearchableConfigurable configurable, String option, String path) {
+    myHelpIdWithOption2Path.put(Pair.create(configurable.getId(), option), path);
+    Set<String> helpIds = myOption2HelpId.get(option);
+    if (helpIds == null){
+      helpIds = new HashSet<String>();
+      myOption2HelpId.put(option, helpIds);
+    }
+    helpIds.add(configurable.getId());
   }
+
+  @NonNls
+ public String getComponentName() {
+   return "SearchableOptionsRegistrar";
+ }
 
   public void initComponent() {
   }

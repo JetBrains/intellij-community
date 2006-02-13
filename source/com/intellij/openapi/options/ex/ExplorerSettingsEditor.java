@@ -255,7 +255,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
         final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
-          final String[] searchOptions = searchPattern.split("[\\W]");
+          final String[] searchOptions = searchPattern.split("[\\W&&[^_-]]");
           Set<Configurable> configurables = null;
           for (String option : searchOptions) {
             if (option != null && option.length() > 0){
