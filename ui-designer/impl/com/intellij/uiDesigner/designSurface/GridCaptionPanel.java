@@ -4,9 +4,8 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -18,6 +17,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.ide.DeleteProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 /**
  * @author yole
  */
-public class GridCaptionPanel extends JPanel implements ComponentSelectionListener {
+public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
   private GuiEditor myEditor;
   private boolean myIsRow;
   private RadContainer mySelectedContainer;
@@ -38,6 +38,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   private int myResizeLine = -1;
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private LineFeedbackPainter myFeedbackPainter = new LineFeedbackPainter();
+  private DeleteProvider myDeleteProvider = new MyDeleteProvider();
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
 
   public GridCaptionPanel(final GuiEditor editor, final boolean isRow) {
@@ -50,6 +51,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     final MyMouseListener listener = new MyMouseListener();
     addMouseListener(listener);
     addMouseMotionListener(listener);
+    setFocusable(true);
   }
 
   @Override public Dimension getPreferredSize() {
@@ -121,6 +123,17 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     repaint();
   }
 
+  @Nullable public Object getData(String dataId) {
+    if (dataId.equals(DataConstantsEx.DELETE_ELEMENT_PROVIDER)) {
+      return myDeleteProvider;
+    }
+    return myEditor.getData(dataId);
+  }
+
+  private int getOrientation() {
+    return myIsRow ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL;
+  }
+
   private class MyMouseListener extends MouseAdapter implements MouseMotionListener {
     private static final int MINIMUM_RESIZED_SIZE = 8;
 
@@ -130,12 +143,13 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Override public void mousePressed(MouseEvent e) {
       if (mySelectedContainer == null) return;
+      requestFocus();
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
       myResizeLine = myIsRow
-        ? layout.getHorizontalGridLineNear(pnt.y, 4)
-        : layout.getVerticalGridLineNear(pnt.x, 4);
+                     ? layout.getHorizontalGridLineNear(pnt.y, 4)
+                     : layout.getVerticalGridLineNear(pnt.x, 4);
     }
 
     @Override public void mouseClicked(MouseEvent e) {
@@ -183,8 +197,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
-        GridChangeActionGroup group = new GridChangeActionGroup(myEditor, mySelectedContainer, cell,
-                                                                myIsRow ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
+        GridChangeActionGroup group = new GridChangeActionGroup(myEditor, mySelectedContainer, cell, getOrientation());
         final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
         popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
       }
@@ -289,6 +302,27 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       else {
         g.drawLine(rc.x, rc.y, rc.x+rc.width, rc.y);
       }
+    }
+  }
+
+  private class MyDeleteProvider implements DeleteProvider {
+
+    public void deleteElement(DataContext dataContext) {
+      int selectedIndex = mySelectionModel.getMinSelectionIndex();
+      if (selectedIndex >= 0) {
+        FormEditingUtil.deleteRowOrColumn(myEditor, mySelectedContainer, selectedIndex, getOrientation());
+      }
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
+        return false;
+      }
+      GridLayoutManager layout = (GridLayoutManager) mySelectedContainer.getLayout();
+      if (myIsRow) {
+        return layout.getRowCount() > 1;
+      }
+      return layout.getColumnCount() > 1;
     }
   }
 }

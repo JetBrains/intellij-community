@@ -3,6 +3,8 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -479,6 +481,47 @@ public final class FormEditingUtil {
       }
     }
     return locales.toArray(new Locale[locales.size()]);
+  }
+
+  public static void deleteRowOrColumn(final GuiEditor editor, final RadContainer container,
+                                        final int cell, final int orientation) {
+    if (!editor.ensureEditable()) {
+      return;
+    }
+
+    boolean isRow = (orientation == SwingConstants.VERTICAL);
+    if (!GridChangeUtil.canDeleteCell(container, cell, isRow, false)) {
+      ArrayList<RadComponent> componentsInColumn = new ArrayList<RadComponent>();
+      for(RadComponent component: container.getComponents()) {
+        GridConstraints c = component.getConstraints();
+        if (c.contains(isRow, cell)) {
+          componentsInColumn.add(component);
+        }
+      }
+
+      if (componentsInColumn.size() > 0) {
+        String message = isRow
+                         ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size())
+                         : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size());
+
+        final int rc = Messages.showYesNoDialog(editor, message,
+                                                isRow ? UIDesignerBundle.message("delete.row.title")
+                                                : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
+        if (rc != DialogWrapper.OK_EXIT_CODE) {
+          return;
+        }
+
+        deleteComponents(editor, componentsInColumn, false);
+      }
+    }
+
+    if(SwingConstants.HORIZONTAL == orientation){
+      GridChangeUtil.deleteColumn(container, cell);
+    }
+    else{
+      GridChangeUtil.deleteRow(container, cell);
+    }
+    editor.refreshAndSave(true);
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {
