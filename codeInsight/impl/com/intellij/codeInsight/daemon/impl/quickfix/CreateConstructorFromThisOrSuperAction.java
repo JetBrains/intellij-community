@@ -3,14 +3,14 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +75,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
-      startTemplate(editor, template, project, new TemplateStateListener() {
+      startTemplate(editor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

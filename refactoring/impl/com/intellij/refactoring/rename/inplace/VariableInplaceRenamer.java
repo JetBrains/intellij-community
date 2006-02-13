@@ -87,11 +87,18 @@ public class VariableInplaceRenamer {
             assert range != null;
             editor.getCaretModel().moveToOffset(range.getStartOffset());
             TemplateManager.getInstance(project).startTemplate(editor, template,
-                new TemplateStateListener() {
-                  public void templateFinished(Template template) {
+                new TemplateEditingListener() {
+                  private void removeHighlighters(final ArrayList<RangeHighlighter> highlighters,
+                                                  final HighlightManager highlightManager,
+                                                  final Editor editor) {
                     for (RangeHighlighter highlighter : highlighters) {
                       highlightManager.removeSegmentHighlighter(editor, highlighter);
                     }
+                  }
+
+
+                  public void templateFinished(Template template) {
+                    removeHighlighters(highlighters, highlightManager, editor);
 
                     if (snapshot != null) {
                       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
@@ -102,6 +109,10 @@ public class VariableInplaceRenamer {
                         }
                       }
                     }
+                  }
+
+                  public void templateCancelled(Template template) {
+                    removeHighlighters(highlighters, highlightManager, editor);
                   }
                 });
 
@@ -137,7 +148,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private void addHighlights(Map<TextRange,TextAttributes> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters, HighlightManager highlightManager) {
+  private static void addHighlights(Map<TextRange,TextAttributes> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters, HighlightManager highlightManager) {
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
@@ -150,7 +161,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private PsiElement getSelectedInEditorElement(final PsiIdentifier nameIdentifier, final Collection<PsiReference> refs, final int offset) {
+  private static PsiElement getSelectedInEditorElement(final PsiIdentifier nameIdentifier, final Collection<PsiReference> refs, final int offset) {
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange();
       if (contains(range, offset)) return nameIdentifier;
@@ -166,7 +177,7 @@ public class VariableInplaceRenamer {
     return null;
   }
 
-  private boolean contains(final TextRange range, final int offset) {
+  private static boolean contains(final TextRange range, final int offset) {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 

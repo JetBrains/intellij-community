@@ -15,7 +15,7 @@ public abstract class TemplateManager {
 
   public abstract void startTemplate(Editor editor, String selectionString, Template template);
 
-  public abstract void startTemplate(Editor editor, Template template, TemplateStateListener listener);
+  public abstract void startTemplate(Editor editor, Template template, TemplateEditingListener listener);
 
   public abstract boolean startTemplate(Editor editor, char shortcutChar);
 

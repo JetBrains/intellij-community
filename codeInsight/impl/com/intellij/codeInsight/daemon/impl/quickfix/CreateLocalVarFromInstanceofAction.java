@@ -149,7 +149,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       TextRange range = localVariable.getNameIdentifier().getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
-      CreateFromUsageBaseAction.startTemplate(newEditor, template, project, new TemplateStateListener() {
+      CreateFromUsageBaseAction.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

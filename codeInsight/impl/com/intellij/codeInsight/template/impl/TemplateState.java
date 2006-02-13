@@ -56,7 +56,7 @@ public class TemplateState implements Disposable {
 
   private CommandAdapter myCommandListener;
 
-  private List<TemplateStateListener> myListeners = new ArrayList<TemplateStateListener>();
+  private List<TemplateEditingListener> myListeners = new ArrayList<TemplateEditingListener>();
   private DocumentAdapter myEditorDocumentListener;
   private Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
@@ -209,7 +209,8 @@ public class TemplateState implements Disposable {
       new UndoableAction() {
         public void undo() throws UnexpectedUndoException {
           if (myDocument != null) {
-            finishTemplateEditing();
+            setCurrentVariableNumber(-1);
+            fireTemplateCancelled();
           }
         }
 
@@ -246,6 +247,13 @@ public class TemplateState implements Disposable {
     myTemplateRange.setGreedyToRight(true);
 
     processAllExpressions(template);
+  }
+
+  private void fireTemplateCancelled() {
+    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
+    for (TemplateEditingListener listener : listeners) {
+      listener.templateCancelled(myTemplate);
+    }
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset) {
@@ -955,13 +963,13 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void addTemplateStateListener(TemplateStateListener listener) {
+  public void addTemplateStateListener(TemplateEditingListener listener) {
     myListeners.add(listener);
   }
 
   private void fireTemplateFinished() {
-    TemplateStateListener[] listeners = myListeners.toArray(new TemplateStateListener[myListeners.size()]);
-    for (TemplateStateListener listener : listeners) {
+    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
+    for (TemplateEditingListener listener : listeners) {
       listener.templateFinished(myTemplate);
     }
   }
@@ -1013,6 +1021,6 @@ public class TemplateState implements Disposable {
   }
 
   void reset() {
-    myListeners = new ArrayList<TemplateStateListener>();
+    myListeners = new ArrayList<TemplateEditingListener>();
   }
 }

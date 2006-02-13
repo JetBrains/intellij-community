@@ -8,8 +8,8 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.TemplateStateListener;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -458,7 +458,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     TemplateManager.getInstance(myProject).startTemplate(
       context.editor,
       template,
-      new TemplateStateListener() {
+      new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           myLookupItem.setAttribute(EXPANDED_TEMPLATE_ATTR, Boolean.TRUE);
 

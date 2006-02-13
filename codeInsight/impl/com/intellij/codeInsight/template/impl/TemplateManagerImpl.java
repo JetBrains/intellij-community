@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
@@ -105,7 +105,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     startTemplate(editor, selectionString, template, null);
   }
 
-  private void startTemplate(final Editor editor, final String selectionString, final Template template, TemplateStateListener listener) {
+  private void startTemplate(final Editor editor, final String selectionString, final Template template, TemplateEditingListener listener) {
     final TemplateState templateState = initTemplateState(editor);
 
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
@@ -136,7 +136,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
-  public void startTemplate(final Editor editor, final Template template, TemplateStateListener listener) {
+  public void startTemplate(final Editor editor, final Template template, TemplateEditingListener listener) {
     startTemplate(editor, null, template, listener);
   }
 

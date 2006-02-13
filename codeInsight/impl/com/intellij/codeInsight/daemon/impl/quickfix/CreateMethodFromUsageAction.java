@@ -4,7 +4,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,7 +122,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       final PsiFile file = method.getContainingFile();
 
       if (!targetClass.isInterface()) {
-        startTemplate(newEditor, template, project, new TemplateStateListener() {
+        startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
           public void templateFinished(Template template) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {

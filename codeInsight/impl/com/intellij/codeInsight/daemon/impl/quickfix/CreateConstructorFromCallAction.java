@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +45,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
-      startTemplate(editor, template, project, new TemplateStateListener() {
+      startTemplate(editor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

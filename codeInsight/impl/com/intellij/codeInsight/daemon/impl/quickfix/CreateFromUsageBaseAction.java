@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -297,7 +297,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     }
   }
 
-  protected static void startTemplate (final Editor editor, final Template template, final Project project, final TemplateStateListener listener) {
+  protected static void startTemplate (final Editor editor, final Template template, final Project project, final TemplateEditingListener listener) {
     Runnable runnable = new Runnable() {
       public void run() {
         TemplateManager.getInstance(project).startTemplate(editor, template, listener);

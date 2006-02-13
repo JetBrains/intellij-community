@@ -206,7 +206,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
       final boolean isStatic1 = isStatic;
-      startTemplate(editor, template, project, new TemplateStateListener() {
+      startTemplate(editor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
