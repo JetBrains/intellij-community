@@ -169,32 +169,32 @@ public class PluginManagerMain
     });
   }
 
-    private void loadAvailablePlugins( boolean checkLocal )
+  private void loadAvailablePlugins( boolean checkLocal )
+  {
+    ArrayList<IdeaPluginDescriptor> list = null;
+    try
     {
-      ArrayList<IdeaPluginDescriptor> list = null;
-      try
+      //  If we already have a file with downloaded plugins from the last time,
+      //  then read it, load into the list and start the updating process.
+      //  Otherwise just start the process of loading the list and save it
+      //  into the persistent config file for later reading.
+      File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
+      if( file.exists() && checkLocal )
       {
-        //  If we already have a file with downloaded plugins from the last time,
-        //  then read it, load into the list and start the updating process.
-        //  Otherwise just start the process of loading the list and save it
-        //  into the persistent config file for later reading.
-        File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
-        if( file.exists() && checkLocal )
-        {
-          RepositoryContentHandler handler = new RepositoryContentHandler();
-          SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-          parser.parse( file, handler );
-          list = handler.getPluginsList();
-          ModifyPluginsList( list );
-        }
+        RepositoryContentHandler handler = new RepositoryContentHandler();
+        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        parser.parse( file, handler );
+        list = handler.getPluginsList();
+        ModifyPluginsList( list );
       }
-      catch( Exception ex )
-      {
-        //  Nothing to do, just ignore - if nothing can be read from the local
-        //  file just start downloading of plugins' list from the site.
-      }
-      LoadPluginsFromHostInBackground();
     }
+    catch( Exception ex )
+    {
+      //  Nothing to do, just ignore - if nothing can be read from the local
+      //  file just start downloading of plugins' list from the site.
+    }
+    LoadPluginsFromHostInBackground();
+  }
 
   private void  ModifyPluginsList( ArrayList<IdeaPluginDescriptor> list )
   {
