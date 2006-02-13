@@ -112,7 +112,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   public void reset() {
-    myFileTypePanel.getComponent().getRootPane().setGlassPane(myGlassPanel);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myFileTypePanel.getComponent().getRootPane().setGlassPane(myGlassPanel);
+    }
 
     myTempExtension2TypeMap = new HashMap<String, FileType>(myManager.getExtensionMap());
     myTempFileTypes = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
