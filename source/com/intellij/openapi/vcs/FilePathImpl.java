@@ -1,14 +1,17 @@
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class FilePathImpl implements FilePath {
@@ -72,6 +75,19 @@ public class FilePathImpl implements FilePath {
     }
     else {
       return myVirtualFile.isDirectory();
+    }
+  }
+
+  public boolean isUnder(FilePath parent, boolean strict) {
+    if (myVirtualFile != null && parent.getVirtualFile() != null) {
+      return VfsUtil.isAncestor(parent.getVirtualFile(), myVirtualFile, strict);
+    }
+
+    try {
+      return FileUtil.isAncestor(parent.getIOFile(), getIOFile(), strict);
+    }
+    catch (IOException e) {
+      return false;
     }
   }
 

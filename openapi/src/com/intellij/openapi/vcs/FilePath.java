@@ -42,4 +42,6 @@ public interface FilePath {
   String getPath();
 
   boolean isDirectory();
+
+  boolean isUnder(FilePath parent, boolean strict);
 }

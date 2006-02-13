@@ -67,6 +67,16 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManager</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>

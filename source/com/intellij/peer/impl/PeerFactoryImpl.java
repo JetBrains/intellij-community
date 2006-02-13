@@ -12,6 +12,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatusFactory;
@@ -232,16 +234,28 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
         return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
       }
 
-      public FilePath createFilePathOn(VirtualFile virtualFile) {
-        return new FilePathImpl(virtualFile);
+      public FilePath createFilePathOn(final VirtualFile virtualFile) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
+          public FilePath compute() {
+            return new FilePathImpl(virtualFile);
+          }
+        });
       }
 
-      public FilePath createFilePathOn(File file) {
-        return FilePathImpl.create(file);
+      public FilePath createFilePathOn(final File file) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
+          public FilePath compute() {
+            return FilePathImpl.create(file);
+          }
+        });
       }
 
-      public FilePath createFilePathOn(VirtualFile parent, String name) {
-        return new FilePathImpl(parent, name);
+      public FilePath createFilePathOn(final VirtualFile parent, final String name) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
+          public FilePath compute() {
+            return new FilePathImpl(parent, name);
+          }
+        });
       }
     };
   }
