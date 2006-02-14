@@ -352,6 +352,13 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
+  public void setDropTargetComponent(final RadComponent dropTargetComponent) {
+    if (dropTargetComponent != myDropTargetComponent) {
+      myDropTargetComponent = dropTargetComponent;
+      repaint();
+    }
+  }
+
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @NonNls private static final String SWING_PACKAGE = "javax.swing";
 
@@ -470,15 +477,11 @@ public final class ComponentTree extends Tree implements DataProvider {
       else {
         dtde.rejectDrag();
       }
-      if (dropTargetComponent != myDropTargetComponent) {
-        myDropTargetComponent = dropTargetComponent;
-        repaint();
-      }
+      setDropTargetComponent(dropTargetComponent);
     }
 
     public void dragExit(DropTargetEvent dte) {
-      myDropTargetComponent = null;
-      repaint();
+      setDropTargetComponent(null);
     }
 
     public void drop(DropTargetDropEvent dtde) {
@@ -499,8 +502,7 @@ public final class ComponentTree extends Tree implements DataProvider {
           }
         }
       }
-      myDropTargetComponent = null;
-      repaint();
+      setDropTargetComponent(null);
     }
   }
 }

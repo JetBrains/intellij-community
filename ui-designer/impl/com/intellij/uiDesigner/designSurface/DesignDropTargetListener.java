@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SimpleTransferable;
+import com.intellij.uiDesigner.componentTree.ComponentTree;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -28,10 +30,12 @@ class DesignDropTargetListener implements DropTargetListener {
   private final GuiEditor myEditor;
   private final GridInsertProcessor myGridInsertProcessor;
   private boolean myUseDragDelta = false;
+  private ComponentTree myComponentTree;
 
   public DesignDropTargetListener(final GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
+    myComponentTree = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTree();
   }
 
   public void dragEnter(DropTargetDragEvent dtde) {
@@ -130,9 +134,11 @@ class DesignDropTargetListener implements DropTargetListener {
                                                                            dragCol);
       if (location.getMode() == GridInsertMode.NoDrop ||
           (myDraggedComponentList != null && isDropOnChild(myDraggedComponentList, location))) {
+        myComponentTree.setDropTargetComponent(null);
         dtde.rejectDrag();
       }
       else {
+        myComponentTree.setDropTargetComponent(location.getContainer());
         dtde.acceptDrag(dtde.getDropAction());
       }
     }
@@ -174,6 +180,7 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void dragExit(DropTargetEvent dte) {
     try {
+      myComponentTree.setDropTargetComponent(null);
       myUseDragDelta = false;
       if (myDraggedComponentList != null) {
         cancelDrag();
@@ -191,6 +198,7 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void drop(DropTargetDropEvent dtde) {
     try {
+      myComponentTree.setDropTargetComponent(null);
       DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
@@ -232,7 +240,7 @@ class DesignDropTargetListener implements DropTargetListener {
       setDraggingState(dcl, false);
       return false;
     }
-    if (!myGridInsertProcessor.isDropInsertAllowed(location, componentCount)) {
+    if (!GridInsertProcessor.isDropInsertAllowed(location, componentCount)) {
       location = null;
     }
 
@@ -278,7 +286,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
 
     if (location != null && location.getMode() != GridInsertMode.InCell) {
-      myGridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
+      GridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
     }
     else {
       FormEditingUtil.drop(
