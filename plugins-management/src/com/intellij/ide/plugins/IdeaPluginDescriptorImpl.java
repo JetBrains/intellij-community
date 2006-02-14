@@ -256,6 +256,9 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
               result.add(f);
             }
           }
+          else {
+            result.add(f);
+          }
         }
       }
 

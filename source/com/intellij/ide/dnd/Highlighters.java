@@ -191,7 +191,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   private static class ErrorTextHighlighter extends BaseTextHighlighter {
     public ErrorTextHighlighter() {
       super();
-      myLabel.setIcon(IconLoader.getIcon("/icons/ide/error.png"));
+      myLabel.setIcon(IconLoader.getIcon("/ide/dnd/error.png"));
     }
 
     public int getMask() {

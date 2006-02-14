@@ -37,6 +37,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -49,6 +50,8 @@ public class PluginManager {
   private static Logger ourLogger = null;
   @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
   @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
+  @NonNls private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
+  private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -297,6 +300,8 @@ public class PluginManager {
     loadDescriptors(PathManager.getPluginsPath(), result);
     loadDescriptors(PathManager.getPreinstalledPluginsPath(), result);
 
+    loadDescriptorsFromProperty(result);
+
     if (Boolean.valueOf(System.getProperty(IdeaApplication.IDEA_IS_INTERNAL_PROPERTY)).booleanValue()) {
       loadDescriptorsFromClassPath(result);
     }
@@ -315,6 +320,19 @@ public class PluginManager {
       JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
     }
     return pluginDescriptors;
+  }
+
+  private static void loadDescriptorsFromProperty(final List<IdeaPluginDescriptorImpl> result) {
+    final String pathProperty = System.getProperty(PROPERTY_PLUGIN_PATH);
+    if (pathProperty == null) return;
+
+    for (java.util.StringTokenizer t = new java.util.StringTokenizer(pathProperty, File.pathSeparator); t.hasMoreTokens();) {
+      String s = t.nextToken();
+      final IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s));
+      if (ideaPluginDescriptor != null) {
+        result.add(ideaPluginDescriptor);
+      }
+    }
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
@@ -414,50 +432,65 @@ public class PluginManager {
     IdeaPluginDescriptorImpl descriptor = null;
 
     if (file.isDirectory()) {
-      File descriptorFile = new File(file, "META-INF" + File.separator + "plugin.xml");
-      if (descriptorFile.exists()) {
-        descriptor = new IdeaPluginDescriptorImpl(file);
+      descriptor = loadDescriptorFromDir(file);
 
-        try {
-          descriptor.readExternal(JDOMUtil.loadDocument(descriptorFile).getRootElement());
-        }
-        catch (Exception e) {
-          System.err.println("Cannot load: " + descriptorFile.getAbsolutePath());
-          e.printStackTrace();
-        }
-      }
-      else {
-        File libDir = new File(file, "lib");
-        if (!libDir.isDirectory()) {
-          return null;
-        }
-        final File[] files = libDir.listFiles();
-        if (files == null || files.length == 0) {
-          return null;
-        }
-        for (final File f : files) {
-          if (!f.isFile()) {
-            continue;
-          }
-          final String lowercasedName = f.getName().toLowerCase();
-          if (lowercasedName.endsWith(".jar") || lowercasedName.endsWith(".zip")) {
-            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromJar(f);
-            if (descriptor1 != null) {
-              if (descriptor != null) {
-                getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
-                return null;
-              }
-              descriptor = descriptor1;
-              descriptor.setPath(file);
-            }
-          }
-        }
-      }
+      if (descriptor == null) {
+       File libDir = new File(file, "lib");
+       if (!libDir.isDirectory()) {
+         return null;
+       }
+       final File[] files = libDir.listFiles();
+       if (files == null || files.length == 0) {
+         return null;
+       }
+       for (final File f : files) {
+         final String lowercasedName = f.getName().toLowerCase();
+         if (lowercasedName.endsWith(".jar") || lowercasedName.endsWith(".zip") && f.isFile()) {
+           IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromJar(f);
+           if (descriptor1 != null) {
+             if (descriptor != null) {
+               getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
+               return null;
+             }
+             descriptor = descriptor1;
+             descriptor.setPath(file);
+           }
+         }
+         else if (f.isDirectory()) {
+           IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromDir(f);
+           if (descriptor1 != null) {
+             if (descriptor != null) {
+               getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
+               return null;
+             }
+             descriptor = descriptor1;
+             descriptor.setPath(file);
+           }
+         }
+       }
+     }
     }
     else if (file.getName().endsWith(".jar")) {
       descriptor = loadDescriptorFromJar(file);
     }
 
+    return descriptor;
+  }
+
+  private static IdeaPluginDescriptorImpl loadDescriptorFromDir(final File file) {
+    IdeaPluginDescriptorImpl descriptor = null;
+    File descriptorFile = new File(file, "META-INF" + File.separator + "plugin.xml");
+    if (descriptorFile.exists()) {
+      descriptor = new IdeaPluginDescriptorImpl(file);
+
+      try {
+        descriptor.readExternal(JDOMUtil.loadDocument(descriptorFile).getRootElement());
+      }
+      catch (Exception e) {
+        System.err.println("Cannot load: " + descriptorFile.getAbsolutePath());
+        e.printStackTrace();
+      }
+    }
     return descriptor;
   }
 
@@ -539,6 +572,8 @@ public class PluginManager {
       System.exit(1);
     }
 
+    filterClassPath(classpathElements);
+
     IdeaClassLoader newClassLoader = null;
     try {
       newClassLoader = new IdeaClassLoader(classpathElements, null);
@@ -562,6 +597,21 @@ public class PluginManager {
       }
     }
     return newClassLoader;
+  }
+
+  private static void filterClassPath(final List<URL> classpathElements) {
+    final String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
+    if (ignoreProperty == null) return;
+
+    final Pattern pattern = Pattern.compile(ignoreProperty);
+
+    for (Iterator<URL> i = classpathElements.iterator(); i.hasNext();) {
+      URL url = i.next();
+      final String u = url.toExternalForm();
+      if (pattern.matcher(u).matches()) {
+        i.remove();
+      }
+    }
   }
 
   private static IdeaClassLoader createPluginClassLoader(final File[] classPath,

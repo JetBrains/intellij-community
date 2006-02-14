@@ -12,7 +12,6 @@ import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.framework.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,6 +91,7 @@ public class TestCaseLoader {
         shouldAdd = true;
       }
     }
+
     return shouldAdd;
   }
 
