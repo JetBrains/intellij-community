@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -22,6 +23,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    if (LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(project).getEffectiveLanguageLevel()) > 0) return false;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();

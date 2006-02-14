@@ -1,17 +1,14 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +18,11 @@ import java.util.List;
  */
 public class IntentionManagerImpl extends IntentionManager {
   private List<IntentionAction> myActions = new ArrayList<IntentionAction>();
-  private Project myProject;
   private IntentionManagerSettings mySettings;
 
-  public IntentionManagerImpl(Project project, IntentionManagerSettings intentionManagerSettings) {
-    myProject = project;
+
+
+  public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
     addAction(new QuickFixAction());
@@ -49,6 +46,12 @@ public class IntentionManagerImpl extends IntentionManager {
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
     registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), CodeInsightBundle.message("intentions.category.i18n"));
+
+    registerIntentionAndMetaData(new MakeTypeGeneric(), CodeInsightBundle.message("intentions.category.declaration"));
+    registerIntentionAndMetaData(new AddOverrideAnnotationAction(), CodeInsightBundle.message("intentions.category.declaration"));
+
+    registerIntentionAndMetaData(new AddOnDemandStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
+    registerIntentionAndMetaData(new AddSingleMemberStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
@@ -88,13 +91,6 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   public void projectOpened(){
-    if (LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(myProject).getEffectiveLanguageLevel()) <= 0) {
-      registerIntentionAndMetaData(new MakeTypeGeneric(), CodeInsightBundle.message("intentions.category.declaration"));
-      registerIntentionAndMetaData(new AddOverrideAnnotationAction(), CodeInsightBundle.message("intentions.category.declaration"));
-
-      registerIntentionAndMetaData(new AddOnDemandStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
-      registerIntentionAndMetaData(new AddSingleMemberStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
-    }
   }
 
   public void projectClosed(){
@@ -107,4 +103,5 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionAction[] getIntentionActions() {
     return myActions.toArray(new IntentionAction[myActions.size()]);
   }
+
 }

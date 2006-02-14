@@ -9,16 +9,21 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class IntentionManagerSettings implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
@@ -29,6 +34,9 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static final @NonNls String IGNORE_ACTION_TAG = "ignoreAction";
   private static final @NonNls String NAME_ATT = "name";
 
+  private HashMap<String, ArrayList<String>> myWords2DescriptorsMap;
+
+  static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
   public String getExternalFileName() {
     return "intentionSettings";
@@ -36,6 +44,18 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public static IntentionManagerSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(IntentionManagerSettings.class);
+  }
+
+  public IntentionManagerSettings() {
+    ApplicationManager.getApplication().invokeLater(new Runnable(){
+      public void run() {
+        new Thread(){
+          public void run() {
+            buildIndex();
+          }
+        }.start();
+      }
+    });
   }
 
   public String getComponentName() {
@@ -100,6 +120,62 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public void registerMetaData(IntentionActionMetaData metaData) {
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
+    if (!myMetaData.containsKey(metaData.myFamily) && isIndexBuild()){
+      try {
+        processMetaData(metaData);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
     myMetaData.put(metaData.myFamily, metaData);
+  }
+
+  public boolean isIndexBuild(){
+    return myWords2DescriptorsMap != null && !myWords2DescriptorsMap.isEmpty();
+  }
+
+  public synchronized void buildIndex(){
+    if (myWords2DescriptorsMap == null) {
+      myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
+      try {
+        final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
+        for (IntentionActionMetaData metaData : list) {
+          processMetaData(metaData);
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private void processMetaData(final IntentionActionMetaData metaData) throws IOException {
+    final URL description = metaData.getDescription();
+    if (description != null) {
+      @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
+      descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
+      final Set<String> words = SearchUtil.getProcessedWords(descriptionText);
+      for (String word : words) {
+        ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);
+        if (descriptors == null) {
+          descriptors = new ArrayList<String>();
+          myWords2DescriptorsMap.put(word, descriptors);
+        }
+        descriptors.add(metaData.myFamily);
+      }
+    }
+  }
+
+  public ArrayList<String> getIntentionNames(final String filtString) {
+    return myWords2DescriptorsMap.get(filtString);
+  }
+
+  public Set<String> getIntentionWords() {
+    return myWords2DescriptorsMap.keySet();
+  }
+
+  public List<String> getFilteredIntentionNames(final String word) {
+    return myWords2DescriptorsMap.get(word);
   }
 }

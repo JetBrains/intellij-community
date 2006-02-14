@@ -2,21 +2,16 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 public class IntentionSettingsPanel {
   private JPanel myPanel;
@@ -25,10 +20,6 @@ public class IntentionSettingsPanel {
 
   private JPanel myTreePanel;
   private JPanel myDescriptionPanel;
-
-  private HashMap<String, ArrayList<String>> myWords2DescriptorsMap;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionSettingsPanel");
-  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private GlassPanel myGlassPanel;
 
   public IntentionSettingsPanel() {
@@ -43,14 +34,19 @@ public class IntentionSettingsPanel {
         }
       }
 
-      protected List<IntentionActionMetaData> filterModel(String filter) {
+      protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        cacheWordsToDescriptions(list);
         final List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter)){
+          if (isIntentionAccepted(metaData, filter, true)){
             result.add(metaData);
+          }
+        }
+        final Set<String> filters = SearchUtil.getProcessedWords(filter);
+        if (force && result.isEmpty()){
+          if (filters.size() > 1){
+            filterModel(filter, false);
           }
         }
         return result;
@@ -108,35 +104,7 @@ public class IntentionSettingsPanel {
     myIntentionDescriptionPanel.dispose();
   }
 
-  private void cacheWordsToDescriptions(List<IntentionActionMetaData> list){
-    if (myWords2DescriptorsMap == null) {
-      myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
-      try {
-        for (IntentionActionMetaData metaData : list) {
-          final URL description = metaData.getDescription();
-          if (description != null) {
-            @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
-            descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-            final String[] words = descriptionText.split("[\\W]");
-            for (String word : words) {
-              if (word == null || word.length() == 0) continue;
-              ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);
-              if (descriptors == null) {
-                descriptors = new ArrayList<String>();
-                myWords2DescriptorsMap.put(word, descriptors);
-              }
-              descriptors.add(metaData.myFamily);
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  private boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter) {
+  private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean force) {
     filter = filter.toLowerCase();
     if (metaData.myFamily.toLowerCase().contains(filter)) {
       return true;
@@ -147,12 +115,18 @@ public class IntentionSettingsPanel {
       }
     }
 
-    final String[] filters = filter.split("[\\W]");
+    boolean highlight = false;
+
+    final Set<String> filters = SearchUtil.getProcessedWords(filter);
     for (String filtString : filters) {
-      final ArrayList<String> descriptors = myWords2DescriptorsMap.get(filtString);
-      if (descriptors == null || !descriptors.contains(metaData.myFamily)) return false;
+      final ArrayList<String> descriptors = IntentionManagerSettings.getInstance().getIntentionNames(filtString);
+      if (descriptors != null && descriptors.contains(metaData.myFamily)){
+        highlight = true;
+      } else {
+        if (force) return false;
+      }
     }
-    return true;
+    return highlight;
   }
 
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {
@@ -161,8 +135,8 @@ public class IntentionSettingsPanel {
     if (path == null) return runnable;
     return new Runnable() {
       public void run() {
-        cacheWordsToDescriptions(IntentionManagerSettings.getInstance().getMetaData());
-        myIntentionSettingsTree.selectIntentions(myWords2DescriptorsMap.get(option));
+        myIntentionSettingsTree.reset(myIntentionSettingsTree.filterModel(option, true));
+        myIntentionSettingsTree.setFilter(option);
         runnable.run();
       }
     };

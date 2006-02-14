@@ -5,6 +5,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationStarter;
@@ -111,7 +112,23 @@ public class TraverseUIStarter implements ApplicationStarter {
   }
 
   private void processIntentions(final Element configurableElement) {
-
+    final IntentionManagerSettings intentionManagerSettings = IntentionManagerSettings.getInstance();
+    intentionManagerSettings.buildIndex();
+     while (!intentionManagerSettings.isIndexBuild()){//wait for index build
+      synchronized (this) {
+        try {
+          wait(100);
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    final TreeSet<String> words = new TreeSet<String>(intentionManagerSettings.getIntentionWords());
+    for (String word : words) {
+      final List<String> mentionedIntentions = intentionManagerSettings.getFilteredIntentionNames(word);
+      appendToolsToPath(mentionedIntentions, word, configurableElement);
+    }
   }
 
   private void processInspectionTools(final Element configurableElement) {
@@ -129,14 +146,18 @@ public class TraverseUIStarter implements ApplicationStarter {
     final TreeSet<String> words = new TreeSet<String>(InspectionToolRegistrar.getToolWords());
     for (String word : words) {
       final List<String> mentionedInspections = InspectionToolRegistrar.getFilteredToolNames(word);
-      StringBuffer allInspections = new StringBuffer();
-      for (String inspection : mentionedInspections) {
-        allInspections.append(allInspections.length() > 0 ? ";" : "").append(inspection);
-      }
-      Element optionElement = new Element("option");
-      optionElement.setAttribute("name", word);
-      optionElement.setAttribute("path", allInspections.toString());
-      configurableElement.addContent(optionElement);
+      appendToolsToPath(mentionedInspections, word, configurableElement);
     }
+  }
+
+  private static void appendToolsToPath(final List<String> mentionedInspections, final String word, final Element configurableElement) {
+    StringBuffer allInspections = new StringBuffer();
+    for (String inspection : mentionedInspections) {
+      allInspections.append(allInspections.length() > 0 ? ";" : "").append(inspection);
+    }
+    Element optionElement = new Element("option");
+    optionElement.setAttribute("name", word);
+    optionElement.setAttribute("path", allInspections.toString());
+    configurableElement.addContent(optionElement);
   }
 }

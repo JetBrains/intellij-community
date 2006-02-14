@@ -16,9 +16,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.Enumeration;
 import java.util.List;
 
 public abstract class IntentionSettingsTree {
@@ -27,7 +28,7 @@ public abstract class IntentionSettingsTree {
   private FilterComponent myFilter = new FilterComponent("INTENTION_FILTER_HISTORY", 10){
     protected void filter() {
       final String filter = getFilter();
-      IntentionSettingsTree.this.reset(filterModel(filter));
+      IntentionSettingsTree.this.reset(filterModel(filter, true));
       if (myTree != null) {
         List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
         ((DefaultTreeModel)myTree.getModel()).reload();
@@ -44,7 +45,7 @@ public abstract class IntentionSettingsTree {
 
     protected void onlineFilter() {
       final String filter = getFilter();
-      IntentionSettingsTree.this.reset(filterModel(filter));
+      IntentionSettingsTree.this.reset(filterModel(filter, true));
     }
   };
 
@@ -148,7 +149,7 @@ public abstract class IntentionSettingsTree {
   }
 
   protected abstract void selectionChanged(Object selected);
-  protected abstract List<IntentionActionMetaData> filterModel(String filter);
+  protected abstract List<IntentionActionMetaData> filterModel(String filter, final boolean force);
 
   public void reset(List<IntentionActionMetaData> intentionsToShow) {
     CheckedTreeNode root = new CheckedTreeNode(null);
@@ -284,27 +285,8 @@ public abstract class IntentionSettingsTree {
   public void dispose() {
   }
 
-  public void selectIntentions(final ArrayList<String> options) {
-    final Set<TreeNode> nodesToSelect = new HashSet<TreeNode>();
-    TreeUtil.traverseDepth((MutableTreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-      public boolean accept(final Object node) {
-        if (node instanceof DefaultMutableTreeNode) {
-          final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)node);
-          final Object userObject = treeNode.getUserObject();
-          if (userObject instanceof IntentionActionMetaData) {
-            final IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
-            if (options.contains(metaData.myFamily)) {
-              nodesToSelect.add(treeNode);
-              return true;
-            }
-          }
-        }
-        return true;
-      }
-    });
-    for (TreeNode treeNode : nodesToSelect) {
-      TreeUtil.selectNode(myTree, treeNode);
-    }
+  public void setFilter(String filter){
+    myFilter.setFilter(filter);
   }
 
   interface CheckedNodeVisitor {
