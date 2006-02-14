@@ -38,6 +38,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -197,6 +198,8 @@ public abstract class BasicAction extends AnAction {
       });
 
       FileStatusManager.getInstance(project).fileStatusChanged(file);
+      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+
 
 /*        final VirtualFile[] children = file.getChildren();
         for (int i = 0; i < children.length; i++) {
@@ -212,6 +215,7 @@ public abstract class BasicAction extends AnAction {
         }
       });
       FileStatusManager.getInstance(project).fileStatusChanged(file);
+      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }
   }
 
@@ -231,6 +235,7 @@ public abstract class BasicAction extends AnAction {
 
     for (int i = 0; file != null && i < file.length; i++) {
       FileStatusManager.getInstance(project).fileStatusChanged(file[i]);
+      VcsDirtyScopeManager.getInstance(project).fileDirty(file[i]);
     }
   }
 

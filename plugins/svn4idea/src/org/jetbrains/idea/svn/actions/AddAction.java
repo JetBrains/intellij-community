@@ -39,10 +39,11 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -137,6 +138,7 @@ public class AddAction extends BasicAction {
         VirtualFile vfile = VirtualFileManager.getInstance()
           .findFileByUrl("file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/'));
         if (vfile != null) {
+          VcsDirtyScopeManager.getInstance(myProject).fileDirty(vfile);
           FileStatusManager.getInstance(myProject).fileStatusChanged(vfile);
         }
       }
