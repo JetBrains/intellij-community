@@ -81,6 +81,10 @@ public abstract class FilterComponent extends JPanel {
     myFilter.setSelectedItem(filter);
   }
 
+  public void setFilter(final String filter){
+    myFilter.setText(filter);
+  }
+
   protected abstract void filter();
 
   protected void onlineFilter(){
