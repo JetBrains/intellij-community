@@ -25,7 +25,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
   }
 
   protected String getPropertyName() {
-    return getDomElement().getCommonPresentableName();
+    return getDomElement().getPresentation().getTypeName();
   }
 
 }

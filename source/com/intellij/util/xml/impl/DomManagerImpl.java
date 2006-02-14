@@ -37,6 +37,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
+  private final List<DomElementPresentationFactory> myPresentationFactories = new ArrayList<DomElementPresentationFactory>();
+
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
@@ -177,6 +179,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
     }
     return null;
+  }
+
+
+  public void registerPresentationFactory(DomElementPresentationFactory factory) {
+    myPresentationFactories.add(factory);
+  }
+
+  @Nullable
+  public DomElementPresentation getDomElementPresentation(final DomElement element) {
+    for (DomElementPresentationFactory presentationFactory : myPresentationFactories) {
+      if (presentationFactory.canCreatePresentation(element)) return presentationFactory.createDomElementPresentation(element);
+    }
+
+    return new BasicDomElementPresentation(element);
   }
 
   public Project getProject() {

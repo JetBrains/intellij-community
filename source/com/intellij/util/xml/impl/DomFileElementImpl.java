@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.Type;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -128,8 +129,22 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return getRootHandler().getNameStrategy();
   }
 
-  public String getCommonPresentableName() {
-    return "<ROOT>";
+  @Nullable
+  public DomElementPresentation getPresentation() {
+    return new DomElementPresentation() {
+
+      public String getPresentationName() {
+        return "<ROOT>";
+      }
+
+      public String getTypeName() {
+        return "<ROOT>";
+      }
+
+      public Icon getIcon() {
+        return null;
+      }
+    };
   }
 
   public GlobalSearchScope getResolveScope() {

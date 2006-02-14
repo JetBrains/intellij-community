@@ -250,8 +250,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
-  public final String getCommonPresentableName() {
-    return StringUtil.capitalizeWords(getNameStrategy().splitIntoWords(getXmlElementName()), true);
+  @Nullable
+  public DomElementPresentation getPresentation() {
+    return getManager().getDomElementPresentation(getProxy());
   }
 
   public final GlobalSearchScope getResolveScope() {

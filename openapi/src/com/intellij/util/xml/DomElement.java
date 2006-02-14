@@ -42,7 +42,8 @@ public interface DomElement {
 
   DomNameStrategy getNameStrategy();
 
-  String getCommonPresentableName();
+  @Nullable
+  DomElementPresentation getPresentation();
 
   GlobalSearchScope getResolveScope();
 

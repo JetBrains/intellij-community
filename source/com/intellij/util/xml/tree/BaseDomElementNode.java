@@ -7,7 +7,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.ui.DomElementsPresentation;
+import com.intellij.util.xml.DomElementPresentation;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import java.util.ArrayList;
@@ -99,9 +99,9 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
-    final DomElementsPresentation presentation = myDomElement.getRoot().getUserData(DomElementsPresentation.DOM_ELEMENTS_PRESENTATION);
-    if (presentation != null && presentation.getPresentationName(myDomElement) != null) {
-      return presentation.getPresentationName(myDomElement);
+    final DomElementPresentation presentation = myDomElement.getPresentation();
+    if (presentation != null && presentation.getPresentationName() != null) {
+      return presentation.getPresentationName();
     }
     return getPropertyName();
   }
