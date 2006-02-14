@@ -233,8 +233,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myLeft = IconLoader.getIcon("/icons/ide/dnd/left.png");
-    private Icon myRight = IconLoader.getIcon("/icons/ide/dnd/right.png");
+    private Icon myLeft = IconLoader.getIcon("/ide/dnd/left.png");
+    private Icon myRight = IconLoader.getIcon("/ide/dnd/right.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x - myLeft.getIconWidth(), aRectangle.y - myLeft.getIconHeight(), aRectangle.width + myLeft.getIconWidth() + myRight.getIconWidth(), aRectangle.height + myLeft.getIconHeight());
@@ -252,8 +252,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myTop = IconLoader.getIcon("/icons/ide/dnd/top.png");
-    private Icon myBottom = IconLoader.getIcon("/icons/ide/dnd/bottom.png");
+    private Icon myTop = IconLoader.getIcon("/ide/dnd/top.png");
+    private Icon myBottom = IconLoader.getIcon("/ide/dnd/bottom.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - myTop.getIconHeight(), aRectangle.width, aRectangle.height + myTop.getIconHeight() + myBottom.getIconHeight());
