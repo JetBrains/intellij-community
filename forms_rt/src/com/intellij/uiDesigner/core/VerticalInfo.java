@@ -32,6 +32,10 @@ final class VerticalInfo extends DimensionInfo {
     return myLayoutState.getConstraints(componentIndex).getVSizePolicy();
   }
 
+  int getChildLayoutCellCount(final GridLayoutManager childLayout) {
+    return childLayout.getRowCount();
+  }
+
   public int getMinimumWidth(final int componentIndex){
     return getMinimumSize(componentIndex).height;
   }

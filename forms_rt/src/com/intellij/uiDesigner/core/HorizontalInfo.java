@@ -32,6 +32,10 @@ final class HorizontalInfo extends DimensionInfo{
     return myLayoutState.getConstraints(componentIndex).getHSizePolicy();
   }
 
+  int getChildLayoutCellCount(final GridLayoutManager childLayout) {
+    return childLayout.getColumnCount();
+  }
+
   public int getMinimumWidth(final int componentIndex){
     return getMinimumSize(componentIndex).width;
   }

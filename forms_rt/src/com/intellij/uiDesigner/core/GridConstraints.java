@@ -119,6 +119,12 @@ public final class GridConstraints implements Cloneable {
    */
   private int myIndent;
 
+  /**
+   * If true, a component with grid layout embedded in a parent with grid layout uses the parent's
+   * column sizes.
+   */
+  private boolean myUseParentLayout;
+
   public GridConstraints(){
     myRowSpan = 1;
     myColSpan = 1;
@@ -171,18 +177,26 @@ public final class GridConstraints implements Cloneable {
     final Dimension preferredSize,
     final Dimension maximumSize,
     final int indent){
-    myRow = row;
-    myColumn = column;
-    myRowSpan = rowSpan;
-    myColSpan = colSpan;
-    myAnchor = anchor;
-    myFill = fill;
-    myHSizePolicy = HSizePolicy;
-    myVSizePolicy = VSizePolicy;
-    myMinimumSize = minimumSize != null ? new Dimension(minimumSize) : new Dimension(-1,-1);
-    myPreferredSize = preferredSize != null ? new Dimension(preferredSize) : new Dimension(-1,-1);
-    myMaximumSize = maximumSize != null ? new Dimension(maximumSize) : new Dimension(-1,-1);
+    this(row, column, rowSpan, colSpan, anchor, fill, HSizePolicy, VSizePolicy, minimumSize, preferredSize, maximumSize);
     myIndent = indent;
+  }
+
+  public GridConstraints(
+    final int row,
+    final int column,
+    final int rowSpan,
+    final int colSpan,
+    final int anchor,
+    final int fill,
+    final int HSizePolicy,
+    final int VSizePolicy,
+    final Dimension minimumSize,
+    final Dimension preferredSize,
+    final Dimension maximumSize,
+    final int indent,
+    final boolean useParentLayout){
+    this(row, column, rowSpan, colSpan, anchor, fill, HSizePolicy, VSizePolicy, minimumSize, preferredSize, maximumSize, indent);
+    myUseParentLayout = useParentLayout;
   }
 
   /**
@@ -191,7 +205,7 @@ public final class GridConstraints implements Cloneable {
   public Object clone() {
     return new GridConstraints(
       getRow(), getColumn(), getRowSpan(), getColSpan(), getAnchor(), getFill(), getHSizePolicy(), getVSizePolicy(),
-      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMinimumSize), 0
+      new Dimension(myMinimumSize), new Dimension(myPreferredSize), new Dimension(myMinimumSize), getIndent(), isUseParentLayout()
     );
   }
 
@@ -296,6 +310,14 @@ public final class GridConstraints implements Cloneable {
     myIndent = indent;
   }
 
+  public boolean isUseParentLayout() {
+    return myUseParentLayout;
+  }
+
+  public void setUseParentLayout(final boolean useParentLayout) {
+    myUseParentLayout = useParentLayout;
+  }
+
   public GridConstraints store() {
     final GridConstraints copy = new GridConstraints();
 
@@ -308,6 +330,7 @@ public final class GridConstraints implements Cloneable {
     copy.setFill(myFill);
     copy.setAnchor(myAnchor);
     copy.setIndent(myIndent);
+    copy.setUseParentLayout(myUseParentLayout);
 
     copy.myMinimumSize.setSize(myMinimumSize);
     copy.myPreferredSize.setSize(myPreferredSize);
@@ -326,6 +349,7 @@ public final class GridConstraints implements Cloneable {
     myFill = constraints.myFill;
     myAnchor = constraints.myAnchor;
     myIndent = constraints.myIndent;
+    myUseParentLayout = constraints.myUseParentLayout;
 
     // Restore sizes
     myMinimumSize.setSize(constraints.myMinimumSize);
@@ -351,6 +375,7 @@ public final class GridConstraints implements Cloneable {
     if (myMinimumSize != null ? !myMinimumSize.equals(gridConstraints.myMinimumSize) : gridConstraints.myMinimumSize != null) return false;
     if (myPreferredSize != null ? !myPreferredSize.equals(gridConstraints.myPreferredSize) : gridConstraints.myPreferredSize != null) return false;
     if (myIndent != gridConstraints.myIndent) return false;
+    if (myUseParentLayout != gridConstraints.myUseParentLayout) return false;
 
     return true;
   }
@@ -369,6 +394,7 @@ public final class GridConstraints implements Cloneable {
     result = 29 * result + (myPreferredSize != null ? myPreferredSize.hashCode() : 0);
     result = 29 * result + (myMaximumSize != null ? myMaximumSize.hashCode() : 0);
     result = 29 * result + myIndent;
+    result = 29 * result + (myUseParentLayout ? 1 : 0);
     return result;
   }
 

@@ -72,7 +72,7 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.endMethod();
   }
 
-  private void addNewGridConstraints(final FormSourceCodeGenerator generator, final LwComponent component){
+  private static void addNewGridConstraints(final FormSourceCodeGenerator generator, final LwComponent component) {
     final GridConstraints constraints = component.getConstraints();
 
     generator.startConstructor(GridConstraints.class.getName());
@@ -88,14 +88,15 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.newDimensionOrNull(constraints.myPreferredSize);
     generator.newDimensionOrNull(constraints.myMaximumSize);
     generator.push(constraints.getIndent());
+    generator.push(constraints.isUseParentLayout());
     generator.endConstructor();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void pushSizePolicy(final FormSourceCodeGenerator generator, final int value) {
+  private static void pushSizePolicy(final FormSourceCodeGenerator generator, final int value) {
     final String className = GridConstraints.class.getName();
 
-    String presentation;
+    //noinspection NonConstantStringShouldBeStringBuffer
+    @NonNls String presentation;
     if (GridConstraints.SIZEPOLICY_FIXED == value) {
       presentation = className + ".SIZEPOLICY_FIXED";
     }

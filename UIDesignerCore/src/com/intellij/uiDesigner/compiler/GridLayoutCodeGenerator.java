@@ -30,6 +30,7 @@ import org.objectweb.asm.commons.Method;
 public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)");
   private static final Method myInitConstraintsIndentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
+  private static final Method myInitConstraintsIndentParentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int,boolean)");
   private static final Method ourGridLayoutManagerConstructor = Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)");
   private static final Type myGridLayoutManagerType = Type.getType(GridLayoutManager.class);
   private static final Type myGridConstraintsType = Type.getType(GridConstraints.class);
@@ -87,7 +88,12 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
     newDimensionOrNull(generator, constraints.myPreferredSize);
     newDimensionOrNull(generator, constraints.myMaximumSize);
 
-    if (constraints.getIndent() != 0) {
+    if (constraints.isUseParentLayout()) {
+      generator.push(constraints.getIndent());
+      generator.push(constraints.isUseParentLayout());
+      generator.invokeConstructor(myGridConstraintsType, myInitConstraintsIndentParentMethod);
+    }
+    else if (constraints.getIndent() != 0) {
       generator.push(constraints.getIndent());
       generator.invokeConstructor(myGridConstraintsType, myInitConstraintsIndentMethod);
     }

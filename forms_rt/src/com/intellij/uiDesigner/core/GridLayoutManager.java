@@ -74,6 +74,9 @@ public final class GridLayoutManager extends AbstractLayout {
    */
   public static Object DESIGN_TIME_INSETS = new Object();
 
+  private static final int SKIP_ROW = 1;
+  private static final int SKIP_COL = 1;
+
   public GridLayoutManager(final int rowCount, final int columnCount) {
     if (columnCount < 1) {
       throw new IllegalArgumentException("wrong columnCount: " + columnCount);
@@ -388,6 +391,10 @@ public final class GridLayoutManager extends AbstractLayout {
     final DimensionInfo horizontalInfo = myHorizontalInfo;
     final DimensionInfo verticalInfo = myVerticalInfo;
 
+    Insets insets = getInsets(container);
+
+    int skipLayout = checkSetSizesFromParent(container, insets);
+
     final Dimension gap = getTotalGap(container, horizontalInfo, verticalInfo);
 
     final Dimension size = container.getSize();
@@ -403,58 +410,60 @@ public final class GridLayoutManager extends AbstractLayout {
     minSize.height -= gap.height;
 
     // Calculate rows' heights
-    final int[] heights;
-    if (mySameSizeVertically) {
-      heights = getSameSizes(verticalInfo, Math.max(size.height, minSize.height));
-    }
-    else {
-      if (size.height < prefSize.height) {
-        heights = getMinSizes(verticalInfo);
-        new_doIt(heights, 0, verticalInfo.getCellCount(), size.height, verticalInfo, true);
+    if ((skipLayout & SKIP_ROW) == 0) {
+      final int[] heights;
+      if (mySameSizeVertically) {
+        heights = getSameSizes(verticalInfo, Math.max(size.height, minSize.height));
       }
       else {
-        heights = getPrefSizes(verticalInfo);
-        new_doIt(heights, 0, verticalInfo.getCellCount(), size.height, verticalInfo, false);
+        if (size.height < prefSize.height) {
+          heights = getMinSizes(verticalInfo);
+          new_doIt(heights, 0, verticalInfo.getCellCount(), size.height, verticalInfo, true);
+        }
+        else {
+          heights = getPrefSizes(verticalInfo);
+          new_doIt(heights, 0, verticalInfo.getCellCount(), size.height, verticalInfo, false);
+        }
+      }
+
+      // Calculate rows' bounds
+      int y = insets.top + myMargin.top;
+      for (int i = 0; i < heights.length; i++) {
+        myYs[i] = y;
+        myHeights[i] = heights[i];
+        y += heights[i];
+        if (shouldAddGapAfterCell(verticalInfo, i)) {
+          y += verticalInfo.getGap();
+        }
       }
     }
 
-    final Insets insets = getInsets(container);
-
-    // Calculate rows' bounds
-    int y = insets.top + myMargin.top;
-    for (int i = 0; i < heights.length; i++) {
-      myYs[i] = y;
-      myHeights[i] = heights[i];
-      y += heights[i];
-      if (shouldAddGapAfterCell(verticalInfo, i)) {
-        y += verticalInfo.getGap();
-      }
-    }
-
-    // Calculate rows' widths
-    final int[] widths;
-    if (mySameSizeHorizontally) {
-      widths = getSameSizes(horizontalInfo, Math.max(size.width, minSize.width));
-    }
-    else {
-      if (size.width < prefSize.width) {
-        widths = getMinSizes(horizontalInfo);
-        new_doIt(widths, 0, horizontalInfo.getCellCount(), size.width, horizontalInfo, true);
+    if ((skipLayout & SKIP_COL) == 0) {
+      // Calculate columns' widths
+      final int[] widths;
+      if (mySameSizeHorizontally) {
+        widths = getSameSizes(horizontalInfo, Math.max(size.width, minSize.width));
       }
       else {
-        widths = getPrefSizes(horizontalInfo);
-        new_doIt(widths, 0, horizontalInfo.getCellCount(), size.width, horizontalInfo, false);
+        if (size.width < prefSize.width) {
+          widths = getMinSizes(horizontalInfo);
+          new_doIt(widths, 0, horizontalInfo.getCellCount(), size.width, horizontalInfo, true);
+        }
+        else {
+          widths = getPrefSizes(horizontalInfo);
+          new_doIt(widths, 0, horizontalInfo.getCellCount(), size.width, horizontalInfo, false);
+        }
       }
-    }
 
-    // Calculate columns' bounds
-    int x = insets.left + myMargin.left;
-    for (int i = 0; i < widths.length; i++) {
-      myXs[i] = x;
-      myWidths[i] = widths[i];
-      x += widths[i];
-      if (shouldAddGapAfterCell(horizontalInfo, i)) {
-        x += horizontalInfo.getGap();
+      // Calculate columns' bounds
+      int x = insets.left + myMargin.left;
+      for (int i = 0; i < widths.length; i++) {
+        myXs[i] = x;
+        myWidths[i] = widths[i];
+        x += widths[i];
+        if (shouldAddGapAfterCell(horizontalInfo, i)) {
+          x += horizontalInfo.getGap();
+        }
       }
     }
 
@@ -506,6 +515,55 @@ public final class GridLayoutManager extends AbstractLayout {
 
       component.setBounds(myXs[column] + dx, myYs[row] + dy, componentSize.width, componentSize.height);
     }
+  }
+
+  private int checkSetSizesFromParent(final Container container, final Insets insets) {
+    int skipLayout = 0;
+
+    GridLayoutManager parentGridLayout = null;
+    GridConstraints parentGridConstraints = null;
+    // "use parent layout" also needs to work in cases where a grid is the only control in a non-grid panel
+    // which is contained in a grid
+    Container parent = container.getParent();
+    if (parent != null) {
+      if (parent.getLayout() instanceof GridLayoutManager) {
+        parentGridLayout = (GridLayoutManager) parent.getLayout();
+        parentGridConstraints = parentGridLayout.getConstraintsForComponent(container);
+      }
+      else {
+        Container parent2 = parent.getParent();
+        if (parent2 != null && parent2.getLayout() instanceof GridLayoutManager) {
+          parentGridLayout = (GridLayoutManager) parent2.getLayout();
+          parentGridConstraints = parentGridLayout.getConstraintsForComponent(parent);
+        }
+      }
+    }
+
+    if (parentGridLayout != null && parentGridConstraints.isUseParentLayout()) {
+      if (myRowStretches.length == parentGridConstraints.getRowSpan()) {
+        int row = parentGridConstraints.getRow();
+        myYs[0] = insets.top + myMargin.top;
+        myHeights[0] = parentGridLayout.myHeights[row] - myYs[0];
+        for (int i = 1; i < myRowStretches.length; i++) {
+          myYs[i] = parentGridLayout.myYs[i + row] - parentGridLayout.myYs[row];
+          myHeights[i] = parentGridLayout.myHeights[i + row];
+        }
+        myHeights[myRowStretches.length - 1] -= insets.bottom + myMargin.bottom;
+        skipLayout |= SKIP_ROW;
+      }
+      if (myColumnStretches.length == parentGridConstraints.getColSpan()) {
+        int col = parentGridConstraints.getColumn();
+        myXs[0] = insets.left + myMargin.left;
+        myWidths[0] = parentGridLayout.myWidths[col] - myXs[0];
+        for (int i = 1; i < myColumnStretches.length; i++) {
+          myXs[i] = parentGridLayout.myXs[i + col] - parentGridLayout.myXs[col];
+          myWidths[i] = parentGridLayout.myWidths[i + col];
+        }
+        myWidths[myColumnStretches.length - 1] -= insets.right + myMargin.right;
+        skipLayout |= SKIP_COL;
+      }
+    }
+    return skipLayout;
   }
 
   public void invalidateLayout(final Container container) {
@@ -613,6 +671,9 @@ public final class GridLayoutManager extends AbstractLayout {
       widths[info.getCell(i)] = Math.max(widths[info.getCell(i)], size);
     }
 
+    // components inheriting layout from us
+    updateSizesFromChildren(info, min, widths);
+
     // multispanned components
 
     final boolean[] toProcess = new boolean[info.getCellCount()];
@@ -645,6 +706,46 @@ public final class GridLayoutManager extends AbstractLayout {
     }
 
     return widths;
+  }
+
+  private static void updateSizesFromChildren(final DimensionInfo info, final boolean min, final int[] widths) {
+    for(int i=info.getComponentCount() - 1; i >= 0; i--) {
+      Component child = info.getComponent(i);
+      GridConstraints c = info.getConstraints(i);
+      if (c.isUseParentLayout() && child instanceof Container) {
+        Container container = (Container) child;
+        if (container.getLayout() instanceof GridLayoutManager) {
+          updateSizesFromChild(info, min, widths, container, i);
+        }
+        else if (container.getComponentCount() == 1 && container.getComponent(0) instanceof Container) {
+          // "use parent layout" also needs to work in cases where a grid is the only control in a non-grid panel
+          // which is contained in a grid
+          Container childContainer = (Container) container.getComponent(0);
+          if (childContainer.getLayout() instanceof GridLayoutManager) {
+            updateSizesFromChild(info, min, widths, childContainer, i);
+          }
+        }
+      }
+    }
+  }
+
+  private static void updateSizesFromChild(final DimensionInfo info,
+                                           final boolean min,
+                                           final int[] widths,
+                                           final Container container,
+                                           final int childIndex) {
+    GridLayoutManager childLayout = (GridLayoutManager) container.getLayout();
+    if (info.getSpan(childIndex) == info.getChildLayoutCellCount(childLayout)) {
+      childLayout.validateInfos(container);
+      DimensionInfo childInfo = (info instanceof HorizontalInfo)
+                                ? childLayout.myHorizontalInfo
+                                : childLayout.myVerticalInfo;
+      int[] sizes = childLayout.getMinOrPrefSizes(childInfo, min);
+      int cell = info.getCell(childIndex);
+      for(int j=0; j<sizes.length; j++) {
+        widths [cell+j] = Math.max(widths [cell+j], sizes [j]);
+      }
+    }
   }
 
 

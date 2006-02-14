@@ -20,7 +20,8 @@ import java.util.ArrayList;
 
 /**
  * public for test purposes
- */ 
+ * @noinspection AbstractMethodCallInConstructor,RedundantCast
+ */
 public abstract class DimensionInfo {
   private final int[] myCell;
   private final int[] mySpan;
@@ -73,6 +74,10 @@ public abstract class DimensionInfo {
     return myLayoutState.getComponent(componentIndex);
   }
 
+  public final GridConstraints getConstraints(int componentIndex) {
+    return myLayoutState.getConstraints(componentIndex);
+  }
+
   public abstract int getCellCount();
 
   public abstract int getPreferredWidth(int componentIndex);
@@ -94,6 +99,8 @@ public abstract class DimensionInfo {
   protected abstract int getOriginalSpan(GridConstraints constraints);
   
   abstract int getSizePolicy(int componentIndex);
+
+  abstract int getChildLayoutCellCount(final GridLayoutManager childLayout);
 
   public final int getGap(){
     return myGap;
@@ -175,5 +182,4 @@ public abstract class DimensionInfo {
     }
     return size;
   }
-
 }

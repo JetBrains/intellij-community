@@ -201,6 +201,7 @@ public class LwContainer extends LwComponent implements IContainer{
       constraints.setAnchor(LwXmlReader.getRequiredInt(gridElement, "anchor"));
       constraints.setFill(LwXmlReader.getRequiredInt(gridElement, "fill"));
       constraints.setIndent(LwXmlReader.getOptionalInt(gridElement, UIFormXmlConstants.ATTRIBUTE_INDENT, 0));
+      constraints.setUseParentLayout(LwXmlReader.getOptionalBoolean(gridElement, UIFormXmlConstants.ATTRIBUTE_USE_PARENT_LAYOUT, false));
 
       // minimum size
       final Element minSizeElement = LwXmlReader.getChild(gridElement, "minimum-size");

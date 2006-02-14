@@ -203,6 +203,15 @@ public abstract class AbstractLayout implements LayoutManager2 {
     myConstraints = newConstraints;
   }
 
+  public GridConstraints getConstraintsForComponent(Component comp) {
+    final int i = getComponentIndex(comp);
+    if (i == -1) {
+      throw new IllegalArgumentException("component was not added: " + comp);
+    }
+    
+    return myConstraints[i];
+  }
+
   private int getComponentIndex(final Component comp){
     for (int i = 0; i < myComponents.length; i++) {
       final Component component = myComponents[i];

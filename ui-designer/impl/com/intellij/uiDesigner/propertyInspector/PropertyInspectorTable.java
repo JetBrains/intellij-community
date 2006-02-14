@@ -103,6 +103,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final RowSpanProperty myRowSpanProperty;
   private final ColumnSpanProperty myColumnSpanProperty;
   private final IndentProperty myIndentProperty = new IndentProperty();
+  private final UseParentLayoutProperty myUseParentLayoutProperty = new UseParentLayoutProperty();
   private final MinimumSizeProperty myMinimumSizeProperty;
   private final PreferredSizeProperty myPreferredSizeProperty;
   private final MaximumSizeProperty myMaximumSizeProperty;
@@ -489,6 +490,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
         if (myIndentProperty.appliesTo(component)) {
           addProperty(result, myIndentProperty);
+        }
+        if (myUseParentLayoutProperty.appliesTo(component)) {
+          addProperty(result, myUseParentLayoutProperty);
         }
         addProperty(result, myMinimumSizeProperty);
         addProperty(result, myPreferredSizeProperty);
@@ -1134,6 +1138,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myRowSpanProperty);
       updateUI(myColumnSpanProperty);
       updateUI(myIndentProperty);
+      updateUI(myUseParentLayoutProperty);
       updateUI(myMinimumSizeProperty);
       updateUI(myPreferredSizeProperty);
       updateUI(myMaximumSizeProperty);
