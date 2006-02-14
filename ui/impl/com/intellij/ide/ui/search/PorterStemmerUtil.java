@@ -37,19 +37,12 @@ public class PorterStemmerUtil {
       return null;
     }
     str = step1a(str);
-    if (str.length() == 0) return null;
     str = step1b(str);
-    if (str.length() == 0) return null;
     str = step1c(str);
-    if (str.length() == 0) return null;
     str = step2(str);
-    if (str.length() == 0) return null;
     str = step3(str);
-    if (str.length() == 0) return null;
     str = step4(str);
-    if (str.length() == 0) return null;
     str = step5a(str);
-    if (str.length() == 0) return null;
     str = step5b(str);
     return str;
   }
@@ -321,12 +314,11 @@ public class PorterStemmerUtil {
 
   private static String step5a(String str) {
     // (m > 1) E ->
-    if ((stringMeasure(str.substring(0, str.length() - 1)) > 1) && str.endsWith("e")) {
+    if (str.endsWith("e")&& stringMeasure(str.substring(0, str.length() - 1)) > 1) {
       return str.substring(0, str.length() - 1);
     }
     // (m = 1 and not *0) E ->
-    else if ((stringMeasure(str.substring(0, str.length() - 1)) == 1) && (!endsWithCVC(str.substring(0, str.length() - 1))) &&
-             (str.endsWith("e"))) {
+    else if (str.endsWith("e") && stringMeasure(str.substring(0, str.length() - 1)) == 1 && !endsWithCVC(str.substring(0, str.length() - 1))) {
       return str.substring(0, str.length() - 1);
     }
     else {
@@ -337,7 +329,7 @@ public class PorterStemmerUtil {
 
   private static String step5b(String str) {
     // (m > 1 and *d and *L) ->
-    if (str.endsWith("l") && endsWithDoubleConsonent(str) && (stringMeasure(str.substring(0, str.length() - 1)) > 1)) {
+    if (str.endsWith("l") && stringMeasure(str.substring(0, str.length() - 1)) > 1 && endsWithDoubleConsonent(str)) {
       return str.substring(0, str.length() - 1);
     }
     else {
