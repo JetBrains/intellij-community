@@ -371,7 +371,7 @@ public class PorterStemmerUtil {
 
   private static boolean endsWithDoubleConsonent(String str) {
     char c = str.charAt(str.length() - 1);
-    if (c == str.charAt(str.length() - 2)) {
+    if (str.length() > 1 && c == str.charAt(str.length() - 2)) {
       if (!containsVowel(str.substring(str.length() - 2))) {
         return true;
       }
