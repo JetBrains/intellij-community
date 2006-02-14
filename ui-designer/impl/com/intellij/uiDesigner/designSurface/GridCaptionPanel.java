@@ -22,6 +22,8 @@ import com.intellij.ide.DeleteProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -143,6 +145,14 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private int getOrientation() {
     return myIsRow ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL;
+  }
+
+  public void attachToScrollPane(final JScrollPane scrollPane) {
+    scrollPane.getViewport().addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        repaint();
+      }
+    });
   }
 
   private class MyMouseListener extends MouseAdapter implements MouseMotionListener {

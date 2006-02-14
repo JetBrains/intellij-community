@@ -260,9 +260,12 @@ public final class GuiEditor extends JPanel implements DataProvider {
     gbc.gridy = 1;
     gbc.weightx = 1.0;
     gbc.weighty = 1.0;
-    panel.add(myLayeredPane, gbc);
+    final JScrollPane scrollPane = new JScrollPane(myLayeredPane);
+    panel.add(scrollPane, gbc);
+    myHorzCaptionPanel.attachToScrollPane(scrollPane);
+    myVertCaptionPanel.attachToScrollPane(scrollPane);
 
-    myValidCard.add(new JScrollPane(panel), BorderLayout.CENTER);
+    myValidCard.add(panel, BorderLayout.CENTER);
 
     final CancelCurrentOperationAction cancelCurrentOperationAction = new CancelCurrentOperationAction();
     cancelCurrentOperationAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
