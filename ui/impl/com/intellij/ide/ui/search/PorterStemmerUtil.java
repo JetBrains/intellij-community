@@ -37,12 +37,19 @@ public class PorterStemmerUtil {
       return null;
     }
     str = step1a(str);
+    if (str.length() == 0) return null;
     str = step1b(str);
+    if (str.length() == 0) return null;
     str = step1c(str);
+    if (str.length() == 0) return null;
     str = step2(str);
+    if (str.length() == 0) return null;
     str = step3(str);
+    if (str.length() == 0) return null;
     str = step4(str);
+    if (str.length() == 0) return null;
     str = step5a(str);
+    if (str.length() == 0) return null;
     str = step5b(str);
     return str;
   }
