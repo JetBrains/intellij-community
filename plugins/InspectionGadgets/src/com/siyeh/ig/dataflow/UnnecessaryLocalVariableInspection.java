@@ -18,22 +18,25 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableAssignedVisitor;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreImmediatelyReturnedVariables = false;
+
+    /** @noinspection PublicField*/
+    public boolean m_ignoreAnnotatedVariables = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -45,10 +48,15 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message(
-                  "redundant.local.variable.ignore.option"),
-                this, "m_ignoreImmediatelyReturnedVariables");
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "redundant.local.variable.ignore.option"),
+                "m_ignoreImmediatelyReturnedVariables");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "redundant.local.variable.annotation.option"),
+                "m_ignoreAnnotatedVariables");
+        return optionsPanel;
     }
 
     public boolean isEnabledByDefault() {
@@ -77,6 +85,14 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
+            final PsiModifierList modifierList = variable.getModifierList();
+            if (m_ignoreAnnotatedVariables) {
+                final PsiAnnotation[] annotations =
+                        modifierList.getAnnotations();
+                if (annotations.length > 0) {
+                    return;
+                }
+            }
             if (isCopyVariable(variable)) {
                 registerVariableError(variable);
             } else if (!m_ignoreImmediatelyReturnedVariables &&
@@ -100,7 +116,9 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             if (!(initializer instanceof PsiReferenceExpression)) {
                 return false;
             }
-            final PsiElement referent = ((PsiReference) initializer).resolve();
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression)initializer;
+            final PsiElement referent = reference.resolve();
             if (referent == null) {
                 return false;
             }
