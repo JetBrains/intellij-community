@@ -26,11 +26,14 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.jsp.impl.TldDescriptor;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class TagNameReference implements PsiReference {
+public class TagNameReference implements PsiReference, QuickFixProvider {
   private final boolean myStartTagFlag;
   private final ASTNode myNameElement;
   @NonNls protected static final String TAG_EXTENSION = ".tag";
@@ -220,5 +223,9 @@ public class TagNameReference implements PsiReference {
 
   public boolean isSoft() {
     return false;
+  }
+
+  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    TagFileQuickFixProvider.registerTagFileReferenceQuickFix(info, (TagNameReference)reference);
   }
 }

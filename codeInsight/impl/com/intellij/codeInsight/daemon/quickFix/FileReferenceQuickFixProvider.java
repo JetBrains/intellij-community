@@ -7,19 +7,28 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.UnknownFileType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,12 +66,12 @@ public class FileReferenceQuickFixProvider {
     } else {
       final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
       final PsiElement psiElement = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
-      
+
       if (psiElement instanceof PsiDirectory) {
         directory = (PsiDirectory)psiElement;
       } else if (psiElement instanceof WebDirectoryElement) {
         final VirtualFile originalFile = ((WebDirectoryElement)psiElement).getOriginalVirtualFile();
-        
+
         if (originalFile != null && originalFile.isDirectory()) {
           directory = reference.getElement().getManager().findDirectory(originalFile);
           if (directory == null) return;
@@ -129,35 +138,7 @@ public class FileReferenceQuickFixProvider {
 
     QuickFixAction.registerQuickFixAction(
       info,
-      new IntentionAction() {
-        public String getText() {
-          return isdirectory ?
-                 QuickFixBundle.message("create.directory.text", newFileName) :
-                 QuickFixBundle.message("create.file.text", newFileName);
-        }
-
-        public String getFamilyName() {
-          return QuickFixBundle.message("create.file.family");
-        }
-
-        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-          return true;
-        }
-
-        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          if (isdirectory) {
-            directory.createSubdirectory(newFileName);
-          }
-          else {
-            PsiFile newfile = directory.createFile(newFileName);
-            FileEditorManager.getInstance(directory.getProject()).openFile(newfile.getVirtualFile(), true);
-          }
-        }
-
-        public boolean startInWriteAction() {
-          return true;
-        }
-      }
+      new CreateFileIntentionAction(isdirectory, newFileName, directory)
     );
   }
 
@@ -185,6 +166,84 @@ public class FileReferenceQuickFixProvider {
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
       myFileReference.handleElementRename(myExistingElementName);
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+
+  static class CreateFileIntentionAction implements IntentionAction {
+    private final boolean myIsdirectory;
+    private final String myNewFileName;
+    private final PsiDirectory myDirectory;
+    private final @Nullable String myText;
+    private @NotNull String myKey;
+
+    public CreateFileIntentionAction(final boolean isdirectory,
+                                     final String newFileName,
+                                     final PsiDirectory directory,
+                                     @Nullable String text,
+                                     @NotNull String key) {
+      myIsdirectory = isdirectory;
+      myNewFileName = newFileName;
+      myDirectory = directory;
+      myText = text;
+      myKey = key;
+    }
+
+    public CreateFileIntentionAction(final boolean isdirectory,
+                                     final String newFileName,
+                                     final PsiDirectory directory) {
+      this(isdirectory,newFileName,directory,null,isdirectory ? "create.directory.text":"create.file.text" );
+    }
+
+    public String getText() {
+      return QuickFixBundle.message(myKey, myNewFileName);
+    }
+
+    public String getFamilyName() {
+      return QuickFixBundle.message("create.file.family");
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (myIsdirectory) {
+        myDirectory.createSubdirectory(myNewFileName);
+      }
+      else {
+        final PsiFile newfile = myDirectory.createFile(myNewFileName);
+        String text = null;
+
+        if (myText != null) {
+          final PsiManager psiManager = file.getManager();
+          final PsiFile psiFile = psiManager.getElementFactory().createFileFromText("_" + myNewFileName, myText);
+          final PsiElement psiElement = CodeStyleManager.getInstance(file.getProject()).reformat(psiFile);
+
+          text = psiElement.getText();
+        }
+
+        final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
+        final FileEditor[] fileEditors = editorManager.openFile(newfile.getVirtualFile(), true);
+
+        if (text != null) {
+          for(FileEditor feditor:fileEditors) {
+            if (feditor instanceof TextEditor) { // JSP is not save to edit via Psi
+              final Document document = ((TextEditor)feditor).getEditor().getDocument();
+              document.setText(text);
+
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                FileDocumentManager.getInstance().saveDocument(document);
+              }
+              PsiDocumentManager.getInstance(project).commitDocument(document);
+              break;
+            }
+          }
+        }
+      }
     }
 
     public boolean startInWriteAction() {
