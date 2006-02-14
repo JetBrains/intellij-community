@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -96,6 +97,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     group.add(newChangeListAction);
     group.add(removeChangeListAction);
     group.add(new SetDefaultChangeListAction());
+    group.add(new MoveChangesToAnotherListAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
@@ -280,6 +282,39 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       if (rc == DialogWrapper.OK_EXIT_CODE) {
         removeChangeList(list);
+      }
+    }
+  }
+
+  public class MoveChangesToAnotherListAction extends AnAction {
+    public MoveChangesToAnotherListAction() {
+      super("Move to another list", "Move selected changes to another changelist", IconLoader.getIcon("/actions/fileStatus.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(changes != null && changes.length > 0);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      if (changes == null) return;
+
+      ChangeListChooser chooser = new ChangeListChooser(myProject, getChangeLists(), null);
+      chooser.show();
+      ChangeList resultList = chooser.getSelectedList();
+      if (resultList != null) {
+        for (ChangeList list : getChangeLists()) {
+          for (Change change : changes) {
+            list.removeChange(change);
+          }
+        }
+
+        for (Change change : changes) {
+          resultList.addChange(change);
+        }
+
+        scheduleRefresh();
       }
     }
   }
