@@ -17,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -62,64 +63,105 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   public static boolean editToolSettings(final Project project, final InspectionProfileImpl inspectionProfile, final boolean canChooseDifferentProfile, final String selectedToolShortName, final ProfileManager manager) {
     final boolean isOK = ShowSettingsUtil.getInstance().editConfigurable(project,
                                                                          "#com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction",
-                                                                         new Configurable(){
-                                                                           private InspectionToolsPanel myPanel = new InspectionToolsPanel(inspectionProfile.getName(),
-                                                                                                                                           project,
-                                                                                                                                           canChooseDifferentProfile,
-                                                                                                                                           manager);
-                                                                           public String getDisplayName() {
-                                                                             final String title = ApplicationBundle.message("title.errors");
-                                                                             return canChooseDifferentProfile ? title : (title + ": \'" + inspectionProfile.getName() + "\' inspection profile");
-                                                                           }
-
-                                                                           public Icon getIcon() {
-                                                                             return IconLoader.getIcon("/general/configurableErrorHighlighting.png");
-                                                                           }
-
-                                                                           public String getHelpTopic() {
-                                                                             return "preferences.errorHighlight";
-                                                                           }
-
-                                                                           public JComponent createComponent() {
-                                                                             if (selectedToolShortName != null) {
-                                                                               myPanel.selectInspectionTool(selectedToolShortName);
-                                                                             }
-                                                                             return myPanel;
-                                                                           }
-
-                                                                           public boolean isModified() {
-                                                                             return myPanel.isModified();
-                                                                           }
-
-                                                                           public void apply() throws ConfigurationException {
-                                                                             if (canChooseDifferentProfile){
-                                                                               myPanel.apply();
-                                                                               final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
-                                                                               InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
-                                                                               inspectionProfile.copyFrom(editedProfile);
-                                                                             } else {
-                                                                               final InspectionProfileImpl editedProfile = (InspectionProfileImpl) myPanel.getSelectedProfile();
-                                                                               inspectionProfile.copyFrom(editedProfile);
-                                                                               inspectionProfile.save();
-                                                                               myPanel.initDescriptors();
-                                                                             }
-                                                                           }
-
-                                                                           public void reset() {
-                                                                             myPanel.reset();
-                                                                           }
-
-                                                                           public void disposeUIResources() {
-                                                                             if (myPanel != null) {
-                                                                               myPanel.saveVisibleState();
-                                                                               myPanel = null;
-                                                                             }
-                                                                           }
-                                                                         });
+                                                                         new InspectionToolsConfigurable(project, canChooseDifferentProfile, manager, inspectionProfile, selectedToolShortName));
     return isOK;
   }
 
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static boolean filterToolSettings(final Project project,
+                                           final InspectionProfileImpl inspectionProfile,
+                                           final boolean canChooseDifferentProfile,
+                                           @NotNull final String filter,
+                                           final ProfileManager profileManager) {
+    final InspectionToolsConfigurable inspectionToolsConfigurable =
+      new InspectionToolsConfigurable(project, canChooseDifferentProfile, profileManager, inspectionProfile, null){
+        public JComponent createComponent() {
+          final InspectionToolsPanel toolsPanel = getPanel();
+          toolsPanel.filterTree(filter);
+          return toolsPanel;
+        }
+
+        public void reset() {
+          getPanel().setFilter(filter);
+        }
+      };
+    final boolean isOK = ShowSettingsUtil.getInstance()
+      .editConfigurable(project, "#com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction", inspectionToolsConfigurable);
+    return isOK;
+  }
+
+  public static class InspectionToolsConfigurable implements Configurable {
+    private boolean myChooseDifferentProfile;
+    private InspectionProfileImpl myInspectionProfile;
+    private String mySelectedTool;
+    private InspectionToolsPanel myPanel;
+
+    public InspectionToolsConfigurable(final Project project,
+                                       final boolean chooseDifferentProfile,
+                                       final ProfileManager profileManager,
+                                       final InspectionProfileImpl inspectionProfile,
+                                       final String selectedTool) {
+      myChooseDifferentProfile = chooseDifferentProfile;
+      myInspectionProfile = inspectionProfile;
+      mySelectedTool = selectedTool;
+      myPanel =  new InspectionToolsPanel(myInspectionProfile.getName(), project, myChooseDifferentProfile, profileManager);
+    }
+
+    public String getDisplayName() {
+      final String title = ApplicationBundle.message("title.errors");
+      return myChooseDifferentProfile ? title : (title + ": \'" + myInspectionProfile.getName() + "\' inspection profile");
+    }
+
+    public Icon getIcon() {
+      return IconLoader.getIcon("/general/configurableErrorHighlighting.png");
+    }
+
+    public String getHelpTopic() {
+      return "preferences.errorHighlight";
+    }
+
+    public JComponent createComponent() {
+      if (mySelectedTool != null) {
+        myPanel.selectInspectionTool(mySelectedTool);
+      }
+      return myPanel;
+    }
+
+    public boolean isModified() {
+      return myPanel.isModified();
+    }
+
+    public void apply() throws ConfigurationException {
+      if (myChooseDifferentProfile) {
+        myPanel.apply();
+        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile();
+        InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
+        myInspectionProfile.copyFrom(editedProfile);
+      }
+      else {
+        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile();
+        myInspectionProfile.copyFrom(editedProfile);
+        myInspectionProfile.save();
+        myPanel.initDescriptors();
+      }
+    }
+
+    public void reset() {
+      myPanel.reset();
+    }
+
+    public void disposeUIResources() {
+      if (myPanel != null) {
+        myPanel.saveVisibleState();
+        myPanel = null;
+      }
+    }
+
+    public InspectionToolsPanel getPanel(){
+      return myPanel;
+    }
   }
 }

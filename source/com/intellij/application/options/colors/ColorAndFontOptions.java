@@ -600,4 +600,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
   public void clearSearch() {
     myPanel.clearSearch();
   }
+
+  public Map<String, String> processListOptions(){
+    return myPanel.processListOptions();
+  }
 }

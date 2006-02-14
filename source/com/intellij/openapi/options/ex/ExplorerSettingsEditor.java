@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HorizontalLabeledIcon;
@@ -452,8 +451,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     if (filter != null && filter.length() > 0 ){
       final String[] options = filter.split("[\\W]");
       for (String option : options) {
-        final String unpluralized = StringUtil.unpluralize(option);
-        final Runnable runnable = searchableConfigurable.showOption(unpluralized != null ? unpluralized : option);
+        final Runnable runnable = searchableConfigurable.showOption(option);
         if (runnable != null){
           runnable.run();
         }

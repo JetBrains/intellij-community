@@ -40,4 +40,6 @@ public abstract class SearchableOptionsRegistrar implements ApplicationComponent
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
   public abstract void addOption(SearchableConfigurable configurable, String option, String path);
+
+  public abstract boolean isStopWord(String word);
 }

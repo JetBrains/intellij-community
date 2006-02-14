@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -292,8 +291,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       if (filter != null && filter.length() > 0 ){
         final String[] options = filter.split("[\\W&&[^_-]]");
         for (String option : options) {
-          final String unpluralized = StringUtil.unpluralize(option);
-          final Runnable runnable = ((SearchableConfigurable)configurable).showOption(unpluralized != null ? unpluralized : option);
+          final Runnable runnable = ((SearchableConfigurable)configurable).showOption(option);
           if (runnable != null){
             runnable.run();
           }

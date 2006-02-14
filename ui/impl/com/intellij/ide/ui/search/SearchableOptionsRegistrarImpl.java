@@ -4,14 +4,11 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -24,16 +21,18 @@ import java.util.*;
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
+public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private Map<String, Set<String>> myOption2HelpId = new HashMap<String, Set<String>>();
-  private Map<Pair<String,String>, String> myHelpIdWithOption2Path = new HashMap<Pair<String, String>, String>();
-
+  private Map<Pair<String, String>, String> myHelpIdWithOption2Path = new HashMap<Pair<String, String>, String>();
+  private Set<String> myStopWords = new HashSet<String>();
 
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
     try {
-      final Document document = JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/", "searchableOptions.xml"));
+      //index
+      final Document document =
+        JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "searchableOptions.xml"));
       final Element root = document.getRootElement();
       final List configurables = root.getChildren("configurable");
       for (final Object o : configurables) {
@@ -45,7 +44,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
           final String option = optionElement.getAttributeValue("name");
           final String path = optionElement.getAttributeValue("path");
           Set<String> helpIds = myOption2HelpId.get(option);
-          if (helpIds == null){
+          if (helpIds == null) {
             helpIds = new HashSet<String>();
             myOption2HelpId.put(option, helpIds);
           }
@@ -54,17 +53,21 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
           myHelpIdWithOption2Path.put(Pair.create(id, option), path);
         }
       }
+      //stop words
+      final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
+      final String[] words = text.split("[\\W]");
+      myStopWords.addAll(Arrays.asList(words));
     }
     catch (Exception e) {
       //do nothing
     }
-   }
+  }
 
   @NotNull
-  public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option){
+  public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option) {
     Set<Configurable> result = new HashSet<Configurable>();
-    final String unpluralizedOption = StringUtil.unpluralize(option);
-    final Set<String> helpIds = myOption2HelpId.get(unpluralizedOption != null ? unpluralizedOption : option);
+    if (myStopWords.contains(option)) return result;
+    final Set<String> helpIds = myOption2HelpId.get(PorterStemmerUtil.stem(option));
     if (helpIds != null) {
       for (ConfigurableGroup configurable : configurables) {
         final Configurable[] groupConfigurables = configurable.getConfigurables();
@@ -79,14 +82,19 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
   }
 
 
-  public String getInnerPath(SearchableConfigurable configurable, String option){
+  public String getInnerPath(SearchableConfigurable configurable, String option) {
+    option = PorterStemmerUtil.stem(option);
     return myHelpIdWithOption2Path.get(Pair.create(configurable.getId(), option));
+  }
+
+  public boolean isStopWord(String word){
+    return myStopWords.contains(word);
   }
 
   public void addOption(SearchableConfigurable configurable, String option, String path) {
     myHelpIdWithOption2Path.put(Pair.create(configurable.getId(), option), path);
     Set<String> helpIds = myOption2HelpId.get(option);
-    if (helpIds == null){
+    if (helpIds == null) {
       helpIds = new HashSet<String>();
       myOption2HelpId.put(option, helpIds);
     }
@@ -94,9 +102,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar{
   }
 
   @NonNls
- public String getComponentName() {
-   return "SearchableOptionsRegistrar";
- }
+  public String getComponentName() {
+    return "SearchableOptionsRegistrar";
+  }
 
   public void initComponent() {
   }

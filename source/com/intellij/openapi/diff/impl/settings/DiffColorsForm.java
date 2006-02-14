@@ -254,6 +254,10 @@ public class DiffColorsForm {
       ListScrollingUtil.ensureSelectionExists(myOptionsList);
     }
 
+    public JList getOptionsList() {
+      return myOptionsList;
+    }
+
     public void processListValueChanged() {
       updatePreview();
     }

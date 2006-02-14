@@ -1,7 +1,7 @@
 package com.intellij.openapi.diff.impl.util;
 
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -64,5 +64,9 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   public Color getTextBackground(Editor editor) {
     TextAttributes attributes = getTextAttributes(editor);
     return attributes != null ? attributes.getBackgroundColor() : null;
+  }
+
+  public String toString(){
+    return myDisplayName;
   }
 }

@@ -4,6 +4,8 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ui.InspectCodePanel;
+import com.intellij.ide.ui.search.PorterStemmerUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +26,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -185,6 +188,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     final String[] words = descriptionText.split("[\\W]");
     for (String word : words) {
       if (word == null || word.length() == 0) continue;
+      if (SearchableOptionsRegistrar.getInstance().isStopWord(word)) continue;
+      word = PorterStemmerUtil.stem(word);
       ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
       if (descriptors == null) {
         descriptors = new ArrayList<String>();
@@ -200,6 +205,10 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
 
   public static List<String> getFilteredToolNames(String filter){
     return myWords2InspectionToolNameMap.get(filter);
+  }
+
+  public static Set<String> getToolWords(){
+    return myWords2InspectionToolNameMap.keySet();
   }
 
   public static URL getDescriptionUrl(InspectionTool tool, String descriptionFileName) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NonNls;
@@ -51,45 +52,47 @@ public class SearchUtil {
   }
 
   private static void processComponent(final JComponent component, final Set<Pair<String,String>> configurableOptions, @NonNls String path) {
+    SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
       final String title = titledBorder.getTitle();
       if (title != null) {
-        processUILabel(title, configurableOptions, path);
+        processUILabel(title, configurableOptions, path, registrar);
       }
     }
     if (component instanceof JLabel) {
       final String label = ((JLabel)component).getText();
       if (label != null) {
-        processUILabel(label, configurableOptions, path);
+        processUILabel(label, configurableOptions, path, registrar);
       }
     }
     else if (component instanceof JCheckBox) {
       @NonNls final String checkBoxTitle = ((JCheckBox)component).getText();
       if (checkBoxTitle != null) {
-        processUILabel(checkBoxTitle, configurableOptions, path);
+        processUILabel(checkBoxTitle, configurableOptions, path, registrar);
       }
     }
     else if (component instanceof JRadioButton) {
       @NonNls final String radioButtonTitle = ((JRadioButton)component).getText();
       if (radioButtonTitle != null) {
-        processUILabel(radioButtonTitle, configurableOptions, path);
+        processUILabel(radioButtonTitle, configurableOptions, path, registrar);
       }
     } else if (component instanceof JButton){
       @NonNls final String buttonTitle = ((JButton)component).getText();
       if (buttonTitle != null) {
-        processUILabel(buttonTitle, configurableOptions, path);
+        processUILabel(buttonTitle, configurableOptions, path, registrar);
       }
     }
     if (component instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)component;
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
-        processUILabel(tabbedPane.getTitleAt(i), configurableOptions, path != null ? path + "." + String.valueOf(i) : String.valueOf(i));
+        final String title = tabbedPane.getTitleAt(i);
+        processUILabel(title, configurableOptions, path != null ? path + "." + title : title, registrar);
         final Component tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent instanceof JComponent){
-          processComponent((JComponent)tabComponent, configurableOptions, String.valueOf(i));
+          processComponent((JComponent)tabComponent, configurableOptions, title);
         }
       }
     } else {
@@ -104,11 +107,17 @@ public class SearchUtil {
     }
   }
 
-  private static void processUILabel(@NonNls final String checkBoxTitle, final Set<Pair<String,String>> configurableOptions, String path) {
-    final String[] options = checkBoxTitle.split("[\\W&&[^_-]]");
+  private static void processUILabel(@NonNls final String title,
+                                     final Set<Pair<String, String>> configurableOptions,
+                                     String path,
+                                     final SearchableOptionsRegistrar registrar) {
+    @NonNls final String text = title.toLowerCase();
+    final String[] options = text.split("[\\W&&[^_-]]");
     for (String option : options) {
       if (option != null) {
-        configurableOptions.add(Pair.create(option,path));
+        if (!registrar.isStopWord(option)) {
+          configurableOptions.add(Pair.create(PorterStemmerUtil.stem(option), path));
+        }
       }
     }
   }
@@ -144,7 +153,7 @@ public class SearchUtil {
     if (path != null){
       return new Runnable() {
         public void run() {
-          tabbedPane.setSelectedIndex(SearchUtil.getSelection(path));
+          tabbedPane.setSelectedIndex(SearchUtil.getSelection(path, tabbedPane));
           runnable.run();
         }
       };
@@ -154,7 +163,7 @@ public class SearchUtil {
 
   public static Runnable switchTab(String tabName, final TabbedPaneWrapper tabbedPane) {
     if (tabName == null) return null;
-    final int selection = getSelection(tabName);
+    final int selection = getSelection(tabName, tabbedPane);
     return selection != -1 ? new Runnable() {
       public void run() {
         tabbedPane.setSelectedIndex(selection);
@@ -162,35 +171,33 @@ public class SearchUtil {
     } : null;
   }
 
-  public static int getSelection(String tabIdx) {
-    try {
-      return new Integer(tabIdx).intValue();
+  public static int getSelection(String tabIdx, final TabbedPaneWrapper tabbedPane) {
+    for (int i = 0; i < tabbedPane.getTabCount(); i ++) {
+      if (tabIdx.compareTo(tabbedPane.getTitleAt(i)) == 0) return i;
     }
-    catch (NumberFormatException e) {
-      return -1;
-    }
+    return -1;
   }
 
   public static void traverseComponentsTree(GlassPanel glassPanel, JComponent rootComponent, String option){
     if (rootComponent instanceof JCheckBox){
       final JCheckBox checkBox = ((JCheckBox)rootComponent);
-      if (checkBox.getText().toLowerCase().indexOf(option) != -1){
+      if (isComponentHighlighted(checkBox.getText(), option)){
         glassPanel.addSpotlight(checkBox);
       }
     }
     else if (rootComponent instanceof JRadioButton) {
       final JRadioButton radioButton = ((JRadioButton)rootComponent);
-      if (radioButton.getText().toLowerCase().indexOf(option) != -1){
+      if (isComponentHighlighted(radioButton.getText(), option)){
         glassPanel.addSpotlight(radioButton);
       }
     } else if (rootComponent instanceof JLabel){
       final JLabel label = ((JLabel)rootComponent);
-      if (label.getText().toLowerCase().indexOf(option) != -1){
+      if (isComponentHighlighted(label.getText(), option)){
         glassPanel.addSpotlight(label);
       }
     } else if (rootComponent instanceof JButton){
       final JButton button = ((JButton)rootComponent);
-      if (button.getText().toLowerCase().indexOf(option) != -1){
+      if (isComponentHighlighted(button.getText(), option)){
         glassPanel.addSpotlight(button);
       }
     }
@@ -200,5 +207,37 @@ public class SearchUtil {
         traverseComponentsTree(glassPanel, (JComponent)component, option);
       }
     }
+  }
+
+  private static boolean isComponentHighlighted(String text, String option){
+    SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+    option = PorterStemmerUtil.stem(option);
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    if (options != null) {
+      for (String opt : options) {
+        if (registrar.isStopWord(opt)) continue;
+        if (Comparing.strEqual(PorterStemmerUtil.stem(opt), option)){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static Set<String> getProcessedWords(String text){
+    Set<String> result = new HashSet<String>();
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    if (options != null) {
+      final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+      for (String opt : options) {
+        if (registrar.isStopWord(opt)) continue;
+        opt = PorterStemmerUtil.stem(opt);
+        if (opt == null) continue;
+        result.add(opt);
+      }
+    }
+    return result;
   }
 }
