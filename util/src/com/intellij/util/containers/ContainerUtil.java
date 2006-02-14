@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 
 import java.util.*;
 import java.lang.reflect.Array;
@@ -131,6 +132,15 @@ public class ContainerUtil {
       if (condition.value(element)) return element;
     }
     return null;
+  }
+
+  public static <T> boolean process(Iterable<? extends T> iterable, Processor<T> processor) {
+    for (final T t : iterable) {
+      if (!processor.process(t)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static <T> T find(Iterable<? extends T> iterable, Condition<T> condition) {

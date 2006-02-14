@@ -20,4 +20,9 @@ public interface DomUIControl extends CommittablePanel {
   JComponent getFocusedComponent();
 
   void bind(JComponent component);
+
+  void addCommitListener(CommitListener listener);
+
+  void removeCommitListener(CommitListener listener);
+
 }
