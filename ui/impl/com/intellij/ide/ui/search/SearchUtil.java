@@ -117,7 +117,9 @@ public class SearchUtil {
   public static Runnable lightOptions(final JComponent component, final String option, final GlassPanel glassPanel){
     return new Runnable() {
       public void run() {
-        SearchUtil.traverseComponentsTree(glassPanel, component, option);
+        if (!SearchUtil.traverseComponentsTree(glassPanel, component, option, true)){
+          SearchUtil.traverseComponentsTree(glassPanel, component, option, false);
+        }
       }
     };
   }
@@ -157,42 +159,57 @@ public class SearchUtil {
     return -1;
   }
 
-  public static void traverseComponentsTree(GlassPanel glassPanel, JComponent rootComponent, String option){
+  private static boolean traverseComponentsTree(GlassPanel glassPanel, JComponent rootComponent, String option, boolean force){
+    boolean highlight = false;
     if (rootComponent instanceof JCheckBox){
       final JCheckBox checkBox = ((JCheckBox)rootComponent);
-      if (isComponentHighlighted(checkBox.getText(), option)){
+      if (isComponentHighlighted(checkBox.getText(), option, force)){
+        highlight = true;
         glassPanel.addSpotlight(checkBox);
       }
     }
     else if (rootComponent instanceof JRadioButton) {
       final JRadioButton radioButton = ((JRadioButton)rootComponent);
-      if (isComponentHighlighted(radioButton.getText(), option)){
+      if (isComponentHighlighted(radioButton.getText(), option, force)){
+        highlight = true;
         glassPanel.addSpotlight(radioButton);
       }
     } else if (rootComponent instanceof JLabel){
       final JLabel label = ((JLabel)rootComponent);
-      if (isComponentHighlighted(label.getText(), option)){
+      if (isComponentHighlighted(label.getText(), option, force)){
+        highlight = true;
         glassPanel.addSpotlight(label);
       }
     } else if (rootComponent instanceof JButton){
       final JButton button = ((JButton)rootComponent);
-      if (isComponentHighlighted(button.getText(), option)){
+      if (isComponentHighlighted(button.getText(), option, force)){
+        highlight = true;
         glassPanel.addSpotlight(button);
       }
     }
     final Component[] components = rootComponent.getComponents();
     for (Component component : components) {
       if (component instanceof JComponent) {
-        traverseComponentsTree(glassPanel, (JComponent)component, option);
+        final boolean innerHighlight = traverseComponentsTree(glassPanel, (JComponent)component, option, force);
+        if (innerHighlight){
+          highlight = true;
+        }
       }
     }
+    return highlight;
   }
 
-  public static boolean isComponentHighlighted(String text, String option){
+  public static boolean isComponentHighlighted(String text, String option, final boolean force){
     final Set<String> options = getProcessedWords(option);
     final Set<String> tokens = getProcessedWords(text);
-    options.removeAll(tokens);
-    return options.isEmpty();
+    if (!force) {
+      options.retainAll(tokens);
+      return !options.isEmpty();
+    }
+    else {
+      options.removeAll(tokens);
+      return options.isEmpty();
+    }
   }
 
   public static Set<String> getProcessedWords(String text){
@@ -209,5 +226,16 @@ public class SearchUtil {
       }
     }
     return result;
+  }
+
+  public static Runnable lightOptions(final JComponent component,
+                                      final String option,
+                                      final GlassPanel glassPanel,
+                                      final boolean forceSelect) {
+    return new Runnable() {
+      public void run() {
+        SearchUtil.traverseComponentsTree(glassPanel, component, option, forceSelect);
+      }
+    };
   }
 }
