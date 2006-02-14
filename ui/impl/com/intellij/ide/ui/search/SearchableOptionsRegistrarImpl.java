@@ -4,6 +4,8 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.application.options.CodeStyleSchemesConfigurable;
+import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -61,10 +63,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     catch (Exception e) {
       //do nothing
     }
-  }                                                                              
+  }
 
   @NotNull
-  public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option) {
+  public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option, boolean showProjectCodeStyle) {
     Set<String> options = SearchUtil.getProcessedWords(option);
     Set<Configurable> result = new HashSet<Configurable>();
     Set<String> helpIds = null;
@@ -77,11 +79,13 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       helpIds.retainAll(optionIds);
     }
     if (helpIds != null) {
-      for (ConfigurableGroup configurable : configurables) {
-        final Configurable[] groupConfigurables = configurable.getConfigurables();
-        for (Configurable groupConfigurable : groupConfigurables) {
-          if (groupConfigurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)groupConfigurable).getId())){
-            result.add(groupConfigurable);
+      for (ConfigurableGroup configurableGroup : configurables) {
+        final Configurable[] groupConfigurables = configurableGroup.getConfigurables();
+        for (Configurable configurable : groupConfigurables) {
+          if (configurable instanceof ProjectCodeStyleConfigurable && !showProjectCodeStyle) continue;
+          if (configurable instanceof CodeStyleSchemesConfigurable && showProjectCodeStyle) continue;
+          if (configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId())){
+            result.add(configurable);
           }
         }
       }

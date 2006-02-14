@@ -35,7 +35,7 @@ public abstract class SearchableOptionsRegistrar implements ApplicationComponent
   }
 
   @NotNull
-  public abstract Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option);
+  public abstract Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option, final boolean showProjectCodeStyle);
 
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 

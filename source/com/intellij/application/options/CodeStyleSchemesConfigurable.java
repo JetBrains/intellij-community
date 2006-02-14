@@ -5,14 +5,17 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -36,6 +39,11 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
   private JButton mySaveAsButton;
   private JButton myDeleteButton;
   private SettingsStack mySettingsStack;
+  private JPanel myRootPanel;
+  private GlassPanel myGlassPanel;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSchemesConfigurable");
+  private String myOption = null;
+
 
   private static class SettingsStack extends JPanel {
     private CardLayout myLayout;
@@ -181,6 +189,13 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
 
   public boolean isModified() {
     if (myPanel == null) return false; // Disposed
+    if (myPanel.getRootPane() != null) {
+      myPanel.getRootPane().setGlassPane(myGlassPanel);
+      if (myOption != null){
+        getActivePanel().showOption(this, myOption, myGlassPanel).run();
+        myOption = null;
+      }
+    }
     if (getSelectedScheme() != CodeStyleSchemes.getInstance().getCurrentScheme()) return true;
     Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getCurrentSchemes());
     Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(CodeStyleSchemes.getInstance().getSchemes()));
@@ -246,13 +261,16 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
 
     myPanel.setPreferredSize(new Dimension(800, 650));
 
+    myGlassPanel = new GlassPanel(myPanel);
+
     final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
     if (project == null || !CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS) return myPanel;
 
     final CardLayout cards = new CardLayout();
-    final JPanel rootPanel = new JPanel(cards);
 
-    rootPanel.add(ApplicationBundle.message("title.settings"), myPanel);
+    myRootPanel = new JPanel(cards);
+
+    myRootPanel.add(ApplicationBundle.message("title.settings"), myPanel);
 
     final JPanel warningPanel =  new JPanel(new VerticalFlowLayout(VerticalFlowLayout.CENTER));
     final JLabel label = new JLabel(ApplicationBundle.message("html.project.uses.own.code.style"));
@@ -268,14 +286,14 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
 
     editGlobal.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        cards.show(rootPanel, ApplicationBundle.message("title.settings"));
+        cards.show(myRootPanel, ApplicationBundle.message("title.settings"));
       }
     });
 
-    rootPanel.add(ApplicationBundle.message("title.warning"), warningPanel);
-    cards.show(rootPanel, ApplicationBundle.message("title.warning"));
+    myRootPanel.add(ApplicationBundle.message("title.warning"), warningPanel);
+    cards.show(myRootPanel, ApplicationBundle.message("title.warning"));
 
-    return rootPanel;
+    return myRootPanel;
   }
 
   public String getDisplayName() {
@@ -291,6 +309,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     return mySettingsStack.getSettingsPanel(currentScheme);
   }
 
+  @SuppressWarnings({"SynchronizeOnThis"})
   public void reset() {
     mySettingsStack.removeAllSchemes();
     initCombobox();
@@ -441,14 +460,20 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     getActivePanel().selectTab(pageToSelect);
   }
 
-  public Runnable showOption(String option) {
+  public Runnable showOption(final String option) {
+    myOption = option;
     return null;
   }
 
   public String getId() {
-    return "preferences.codeStyle";
+    return "preferences.sourceCode";
   }
 
   public void clearSearch() {
+    myGlassPanel.clear();
+  }
+
+  public HashSet<Pair<String,String>> processOptions() {
+    return getActivePanel().processOptions();
   }
 }

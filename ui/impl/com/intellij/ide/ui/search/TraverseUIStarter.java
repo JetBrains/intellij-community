@@ -4,6 +4,7 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
@@ -25,9 +26,16 @@ import java.util.*;
  * User: anna
  * Date: 13-Feb-2006
  */
-@SuppressWarnings({"CallToPrintStackTrace", "HardCodedStringLiteral"})
+@SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
 public class TraverseUIStarter implements ApplicationStarter {
   private String OUTPUT_PATH;
+  @NonNls private static final String OPTIONS = "options";
+  @NonNls private static final String CONFIGURABLE = "configurable";
+  @NonNls private static final String ID = "id";
+  @NonNls private static final String CONFIGURABLE_NAME = "configurable_name";
+  @NonNls private static final String OPTION = "option";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String PATH = "path";
 
   @NonNls
   public String getCommandName() {
@@ -36,7 +44,6 @@ public class TraverseUIStarter implements ApplicationStarter {
 
 
   public void premain(String[] args) {
-    System.setProperty("idea.load.plugins.category", "traverseUI");
     OUTPUT_PATH = args[1];
   }
 
@@ -53,13 +60,13 @@ public class TraverseUIStarter implements ApplicationStarter {
     final HashMap<SearchableConfigurable, Set<Pair<String, String>>> options =
       new HashMap<SearchableConfigurable, Set<Pair<String, String>>>();
     SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
-    Element root = new Element("options");
+    Element root = new Element(OPTIONS);
     for (SearchableConfigurable configurable : options.keySet()) {
-      Element configurableElement = new Element("configurable");
+      Element configurableElement = new Element(CONFIGURABLE);
       final String id = configurable.getId();
       if (id == null) continue;
-      configurableElement.setAttribute("id", id);
-      configurableElement.setAttribute("configurable_name", configurable.getDisplayName());
+      configurableElement.setAttribute(ID, id);
+      configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
       TreeSet<Pair<String, String>> sortedOptions = new TreeSet<Pair<String, String>>(new Comparator<Pair<String, String>>() {
         public int compare(final Pair<String, String> o1, final Pair<String, String> o2) {
           return o1.first.compareTo(o2.first);
@@ -71,10 +78,10 @@ public class TraverseUIStarter implements ApplicationStarter {
         sortedOptions.add(Pair.create(option.first, option.second));
       }
       for (Pair<String,String> option : sortedOptions) {
-        Element optionElement = new Element("option");
-        optionElement.setAttribute("name", option.first);
+        Element optionElement = new Element(OPTION);
+        optionElement.setAttribute(NAME, option.first);
         if (option.second != null) {
-          optionElement.setAttribute("path", option.second);
+          optionElement.setAttribute(PATH, option.second);
         }
         configurableElement.addContent(optionElement);
       }
@@ -84,10 +91,29 @@ public class TraverseUIStarter implements ApplicationStarter {
         processIntentions(configurableElement);
       } else if (configurable instanceof ColorAndFontOptions){
         processColorAndFontsSettings((ColorAndFontOptions)configurable, configurableElement);
+      } else if (configurable instanceof CodeStyleSchemesConfigurable){
+        processCodeStyleConfigurable((CodeStyleSchemesConfigurable)configurable, configurableElement);
       }
       root.addContent(configurableElement);
     }
     JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
+  }
+
+  private static void processCodeStyleConfigurable(final CodeStyleSchemesConfigurable configurable, final Element configurableElement) {
+    final TreeSet<Pair<String, String>> options = new TreeSet<Pair<String, String>>(new Comparator<Pair<String, String>>() {
+      public int compare(final Pair<String, String> o1, final Pair<String, String> o2) {
+        return o1.first.compareTo(o2.first);
+      }
+    });
+    options.addAll(configurable.processOptions());
+    for (Pair<String, String> pair : options) {
+      Element optionElement = new Element(OPTION);
+      optionElement.setAttribute(NAME, pair.first);
+      if (pair.second != null) {
+        optionElement.setAttribute(PATH, pair.second);
+      }
+      configurableElement.addContent(optionElement);
+    }
   }
 
   private static void processColorAndFontsSettings(final ColorAndFontOptions configurable, final Element configurableElement) {
@@ -104,9 +130,9 @@ public class TraverseUIStarter implements ApplicationStarter {
     }
     for (String option : result.keySet()) {
       final String path = result.get(option);
-      Element optionElement = new Element("option");
-      optionElement.setAttribute("name", option);
-      optionElement.setAttribute("path", path);
+      Element optionElement = new Element(OPTION);
+      optionElement.setAttribute(NAME, option);
+      optionElement.setAttribute(PATH, path);
       configurableElement.addContent(optionElement);
     }
   }
@@ -155,9 +181,9 @@ public class TraverseUIStarter implements ApplicationStarter {
     for (String inspection : mentionedInspections) {
       allInspections.append(allInspections.length() > 0 ? ";" : "").append(inspection);
     }
-    Element optionElement = new Element("option");
-    optionElement.setAttribute("name", word);
-    optionElement.setAttribute("path", allInspections.toString());
+    Element optionElement = new Element(OPTION);
+    optionElement.setAttribute(NAME, word);
+    optionElement.setAttribute(PATH, allInspections.toString());
     configurableElement.addContent(optionElement);
   }
 }

@@ -50,7 +50,7 @@ public class SearchUtil {
     }
   }
 
-  private static void processComponent(final JComponent component, final Set<Pair<String,String>> configurableOptions, @NonNls String path) {
+  public static void processComponent(final JComponent component, final Set<Pair<String,String>> configurableOptions, @NonNls String path) {
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
@@ -86,8 +86,8 @@ public class SearchUtil {
       final JTabbedPane tabbedPane = (JTabbedPane)component;
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
-        final String title = tabbedPane.getTitleAt(i);
-        processUILabel(title, configurableOptions, path != null ? path + "." + title : title);
+        final String title = path != null ? path + '.' + tabbedPane.getTitleAt(i) : tabbedPane.getTitleAt(i);
+        processUILabel(title, configurableOptions, title);
         final Component tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent instanceof JComponent){
           processComponent((JComponent)tabComponent, configurableOptions, title);
@@ -154,7 +154,11 @@ public class SearchUtil {
 
   public static int getSelection(String tabIdx, final TabbedPaneWrapper tabbedPane) {
     for (int i = 0; i < tabbedPane.getTabCount(); i ++) {
-      if (tabIdx.compareTo(tabbedPane.getTitleAt(i)) == 0) return i;
+      final Set<String> pathWords = getProcessedWords(tabIdx);
+      final String title = tabbedPane.getTitleAt(i);
+      final Set<String> titleWords = getProcessedWords(title);
+      pathWords.removeAll(titleWords);
+      if (pathWords.isEmpty()) return i;
     }
     return -1;
   }
