@@ -17,96 +17,196 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.swing.JComponent;
 
 public class ForLoopWithMissingComponentInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CONTROL_FLOW_GROUP_NAME;
-  }
+    /** @noinspection PublicField*/
+    public boolean ignoreCollectionLoops = false;
 
-  public String buildErrorString(PsiElement location) {
-    final PsiJavaToken forToken = (PsiJavaToken)location;
-    final PsiForStatement forStatement = (PsiForStatement)forToken.getParent();
-    boolean hasInitializer = false;
-    boolean hasCondition = false;
-    boolean hasUpdate = false;
-    int count = 0;
-    if (!hasInitializer(forStatement)) {
-      hasInitializer = true;
-      count++;
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "for.loop.with.missing.component.display.name");
     }
-    if (!hasCondition(forStatement)) {
-      hasCondition = true;
-      count++;
+
+    public String getGroupDisplayName() {
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
-    if (!hasUpdate(forStatement)) {
-      hasUpdate = true;
-      count++;
-    }
-    if (count == 1) {
-      if (hasInitializer){
-        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor1");
-      } else if (hasCondition){
-        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor2");
-      } else {
-        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor3");
-      }
-    }
-    else if (count == 2) {
-      if (hasInitializer){
-        if (hasCondition){
-          return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor4");
-        } else {
-          return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor5");
+
+    public String buildErrorString(PsiElement location) {
+        final PsiJavaToken forToken = (PsiJavaToken)location;
+        final PsiForStatement forStatement =
+                (PsiForStatement)forToken.getParent();
+        boolean hasInitializer = false;
+        int count = 0;
+        if (!hasInitializer(forStatement)) {
+            hasInitializer = true;
+            count++;
         }
-      } else {
-        return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor6");
-      }
+        boolean hasCondition = false;
+        if (!hasCondition(forStatement)) {
+            hasCondition = true;
+            count++;
+        }
+        if (!hasUpdate(forStatement)) {
+            count++;
+        }
+        if (count == 1) {
+            if (hasInitializer){
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor1");
+            } else if (hasCondition){
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor2");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor3");
+            }
+        } else if (count == 2) {
+            if (hasInitializer){
+                if (hasCondition){
+                    return InspectionGadgetsBundle.message(
+                            "for.loop.with.missing.component.problem.descriptor4");
+                } else {
+                    return InspectionGadgetsBundle.message(
+                            "for.loop.with.missing.component.problem.descriptor5");
+                }
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "for.loop.with.missing.component.problem.descriptor6");
+            }
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "for.loop.with.missing.component.problem.descriptor7");
+        }
     }
-    else {
-      return InspectionGadgetsBundle.message("for.loop.with.missing.component.problem.descriptor7");
+
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "for.loop.with.missing.component.collection.loop.option"),
+                this, "ignoreCollectionLoops");
     }
 
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ForLoopWithMissingComponentVisitor();
-  }
-
-  private static class ForLoopWithMissingComponentVisitor extends StatementInspectionVisitor {
-
-    public void visitForStatement(@NotNull PsiForStatement statement) {
-      super.visitForStatement(statement);
-
-      if (hasCondition(statement)
-          && hasInitializer(statement)
-          && hasUpdate(statement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ForLoopWithMissingComponentVisitor();
     }
-  }
 
-  private static boolean hasCondition(PsiForStatement statement) {
-    return statement.getCondition() != null;
-  }
+    private class ForLoopWithMissingComponentVisitor
+            extends StatementInspectionVisitor {
 
-  private static boolean hasInitializer(PsiForStatement statement) {
-    final PsiStatement initialization = statement.getInitialization();
-    return initialization != null && !(initialization instanceof PsiEmptyStatement);
-  }
+        public void visitForStatement(@NotNull PsiForStatement statement) {
+            super.visitForStatement(statement);
 
-  private static boolean hasUpdate(PsiForStatement statement) {
-    final PsiStatement update = statement.getUpdate();
-    return update != null && !(update instanceof PsiEmptyStatement);
-  }
+            if (hasCondition(statement) && hasInitializer(statement)
+                    && hasUpdate(statement)) {
+                return;
+            }
+            if (ignoreCollectionLoops && isCollectionLoopStatement(statement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
+
+    static boolean hasCondition(PsiForStatement statement) {
+        return statement.getCondition() != null;
+    }
+
+    static boolean hasInitializer(PsiForStatement statement) {
+        final PsiStatement initialization = statement.getInitialization();
+        return initialization != null &&
+                !(initialization instanceof PsiEmptyStatement);
+    }
+
+    static boolean hasUpdate(PsiForStatement statement) {
+        final PsiStatement update = statement.getUpdate();
+        return update != null && !(update instanceof PsiEmptyStatement);
+    }
+
+    static boolean isCollectionLoopStatement(
+            PsiForStatement forStatement){
+        final PsiStatement initialization = forStatement.getInitialization();
+        if(!(initialization instanceof PsiDeclarationStatement)){
+            return false;
+        }
+        final PsiDeclarationStatement declaration =
+                (PsiDeclarationStatement) initialization;
+        if(declaration.getDeclaredElements().length != 1){
+            return false;
+        }
+        final PsiLocalVariable declaredVar =
+                (PsiLocalVariable) declaration.getDeclaredElements()[0];
+        if(declaredVar == null){
+            return false;
+        }
+        final PsiType declaredVarType = declaredVar.getType();
+        if(!(declaredVarType instanceof PsiClassType)){
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) declaredVarType;
+        final PsiClass declaredClass = classType.resolve();
+        if(declaredClass == null){
+            return false;
+        }
+        if(!ClassUtils.isSubclass(declaredClass, "java.util.Iterator")){
+            return false;
+        }
+        final PsiExpression initialValue = declaredVar.getInitializer();
+        if(initialValue == null){
+            return false;
+        }
+        if(!(initialValue instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        final PsiMethodCallExpression initialCall =
+                (PsiMethodCallExpression) initialValue;
+        final PsiReferenceExpression initialMethodExpression =
+                initialCall.getMethodExpression();
+        final String initialCallName =
+                initialMethodExpression.getReferenceName();
+        if(!HardcodedMethodConstants.ITERATOR.equals(initialCallName)){
+            return false;
+        }
+        final String iteratorName = declaredVar.getName();
+        final PsiExpression condition = forStatement.getCondition();
+        return isHasNext(condition, iteratorName);
+    }
+
+    private static boolean isHasNext(PsiExpression condition, String iterator){
+        if(!(condition instanceof PsiMethodCallExpression)){
+            return false;
+        }
+        final PsiMethodCallExpression call =
+                (PsiMethodCallExpression) condition;
+        final PsiExpressionList argumentList = call.getArgumentList();
+        final PsiExpression[] args = argumentList.getExpressions();
+        if(args.length != 0){
+            return false;
+        }
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
+        final String methodName = methodExpression.getReferenceName();
+        if(!HardcodedMethodConstants.HAS_NEXT.equals(methodName)){
+            return false;
+        }
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
+        if(qualifier == null){
+            return true;
+        }
+        final String target = qualifier.getText();
+        return iterator.equals(target);
+    }
 }
