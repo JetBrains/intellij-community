@@ -483,8 +483,8 @@ public class RadContainer extends RadComponent implements IContainer {
         writer.addAttribute("row-count", _layout.getRowCount());
         writer.addAttribute("column-count", _layout.getColumnCount());
 
-        writer.addAttribute("same-size-horizontally", _layout.isSameSizeHorizontally());
-        writer.addAttribute("same-size-vertically", _layout.isSameSizeVertically());
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_HORIZONTALLY, _layout.isSameSizeHorizontally());
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_VERTICALLY, _layout.isSameSizeVertically());
       }
       // It has sense to save hpap and vgap even for XY layout. The reason is
       // that XY was previously GRID with non default gaps, so when the user

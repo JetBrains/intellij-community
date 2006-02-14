@@ -39,6 +39,10 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_INDENT = "indent";
   public static final String ATTRIBUTE_ID = "id";
   public static final String ATTRIBUTE_FORM_FILE = "form-file";
+  public static final String ATTRIBUTE_SAME_SIZE_HORIZONTALLY = "same-size-horizontally";
+  public static final String ATTRIBUTE_SAME_SIZE_VERTICALLY = "same-size-vertically";
+  public static final String ATTRIBUTE_USE_PARENT_LAYOUT = "use-parent-layout";
+  
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
   public static final String ELEMENT_MEMBER = "member";

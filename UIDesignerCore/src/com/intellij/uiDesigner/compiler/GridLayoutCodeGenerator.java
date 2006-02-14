@@ -31,6 +31,8 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)");
   private static final Method myInitConstraintsIndentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
   private static final Method ourGridLayoutManagerConstructor = Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)");
+  private static final Type myGridLayoutManagerType = Type.getType(GridLayoutManager.class);
+  private static final Type myGridConstraintsType = Type.getType(GridConstraints.class);
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
@@ -42,8 +44,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
         // arg 1: layout
         final GridLayoutManager layout = (GridLayoutManager)container.getLayout();
 
-        final Type gridLayoutManagerType = Type.getType(GridLayoutManager.class);
-        generator.newInstance(gridLayoutManagerType);
+        generator.newInstance(myGridLayoutManagerType);
         generator.dup();
         generator.push(layout.getRowCount());
         generator.push(layout.getColumnCount());
@@ -52,7 +53,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
         generator.push(layout.getVGap());
         generator.push(layout.isSameSizeHorizontally());
         generator.push(layout.isSameSizeVertically());
-        generator.invokeConstructor(gridLayoutManagerType, ourGridLayoutManagerConstructor);
+        generator.invokeConstructor(myGridLayoutManagerType, ourGridLayoutManagerConstructor);
 
         generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
       }
@@ -72,8 +73,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private void addNewGridConstraints(final GeneratorAdapter generator, final LwComponent lwComponent) {
     final GridConstraints constraints = lwComponent.getConstraints();
 
-    final Type gridConstraintsType = Type.getType(GridConstraints.class);
-    generator.newInstance(gridConstraintsType);
+    generator.newInstance(myGridConstraintsType);
     generator.dup();
     generator.push(constraints.getRow());
     generator.push(constraints.getColumn());
@@ -89,10 +89,10 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
 
     if (constraints.getIndent() != 0) {
       generator.push(constraints.getIndent());
-      generator.invokeConstructor(gridConstraintsType, myInitConstraintsIndentMethod);
+      generator.invokeConstructor(myGridConstraintsType, myInitConstraintsIndentMethod);
     }
     else {
-      generator.invokeConstructor(gridConstraintsType, myInitConstraintsMethod);
+      generator.invokeConstructor(myGridConstraintsType, myInitConstraintsMethod);
     }
   }
 }

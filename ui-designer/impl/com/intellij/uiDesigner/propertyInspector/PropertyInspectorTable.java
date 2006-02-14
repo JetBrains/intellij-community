@@ -94,8 +94,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final MarginProperty myMarginProperty;
   private final HGapProperty myHGapProperty;
   private final VGapProperty myVGapProperty;
-  private final SameSizeHorizontallyProperty mySameSizeHorizontallyProperty;
-  private final SameSizeVerticallyProperty mySameSizeVerticallyProperty;
+  private final SameSizeHorizontallyProperty mySameSizeHorizontallyProperty = new SameSizeHorizontallyProperty();
+  private final SameSizeVerticallyProperty mySameSizeVerticallyProperty = new SameSizeVerticallyProperty();
   private final HSizePolicyProperty myHSizePolicyProperty;
   private final VSizePolicyProperty myVSizePolicyProperty;
   private final FillProperty myFillProperty;
@@ -128,8 +128,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myMarginProperty = new MarginProperty();
     myHGapProperty = new HGapProperty();
     myVGapProperty = new VGapProperty();
-    mySameSizeHorizontallyProperty = new SameSizeHorizontallyProperty();
-    mySameSizeVerticallyProperty = new SameSizeVerticallyProperty();
     myHSizePolicyProperty = new HSizePolicyProperty();
     myVSizePolicyProperty = new VSizePolicyProperty();
     myFillProperty = new FillProperty();
@@ -1140,6 +1138,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(myPreferredSizeProperty);
       updateUI(myMaximumSizeProperty);
       updateUI(myButtonGroupProperty);
+      updateUI(mySameSizeHorizontallyProperty);
+      updateUI(mySameSizeVerticallyProperty);
     }
   }
 

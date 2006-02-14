@@ -31,6 +31,7 @@ import java.util.Iterator;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @noinspection unchecked
  */
 public class LwContainer extends LwComponent implements IContainer{
   // PLEASE DO NOT USE GENERICS IN THIS FILE AS IT IS USED IN JAVAC2 ANT TASK THAT SHOULD BE RUNNABLE WITH JDK 1.3
@@ -307,8 +308,8 @@ public class LwContainer extends LwComponent implements IContainer{
       final int vGap = LwXmlReader.getRequiredInt(element, "vgap");
 
       // attribute is optional for compatibility with IDEA 4.0 forms
-      final boolean sameSizeHorizontally = LwXmlReader.getOptionalBoolean(element, "same-size-horizontally", false);
-      final boolean sameSizeVertically = LwXmlReader.getOptionalBoolean(element, "same-size-vertically", false);
+      final boolean sameSizeHorizontally = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_HORIZONTALLY, false);
+      final boolean sameSizeVertically = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_VERTICALLY, false);
 
       final Element marginElement = LwXmlReader.getRequiredChild(element, "margin");
       final Insets margin = new Insets(
