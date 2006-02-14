@@ -32,14 +32,14 @@
     <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="codeInsight-openapi" exported="" />
     <orderEntry type="module" module-name="inspections-openapi" exported="" />
-    <orderEntry type="module" module-name="refactoring-openapi" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="refactoring-openapi" exported="" />
+    <orderEntry type="module" module-name="compiler-openapi" exported="" />
+    <orderEntry type="module" module-name="execution-openapi" exported="" />
+    <orderEntry type="module" module-name="action-system-openapi" exported="" />
     <orderEntry type="module" module-name="ui-openapi" exported="" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
+    <orderEntry type="module" module-name="j2ee-openapi" exported="" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
