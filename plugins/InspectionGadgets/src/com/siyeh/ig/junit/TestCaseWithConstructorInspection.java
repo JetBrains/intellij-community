@@ -54,7 +54,8 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
         return new TestCaseWithConstructorVisitor();
     }
 
-    private static class TestCaseWithConstructorVisitor extends BaseInspectionVisitor {
+    private static class TestCaseWithConstructorVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

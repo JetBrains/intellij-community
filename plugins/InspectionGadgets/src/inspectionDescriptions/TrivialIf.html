@@ -4,18 +4,18 @@
 This inspection reports instances of <b><font color="#000080">if</font></b> statements which can be simplified to single assignment or
 <b><font color="#000080">return</font></b> statements.  For example:
 <pre>
-    if(foo())
+    <b><font color="#000080">if</font></b>(foo())
     {
-       return true;
+       <b><font color="#000080">return true</font></b>;
     }
-    else
+    <b><font color="#000080">else</font></b>
     {
-       return false;
+       <b><font color="#000080">return false</font></b>;
     }
 </pre>
 can be simplified to
 <pre>
-    return foo();
+    <b><font color="#000080">return</font></b> foo();
 </pre>
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

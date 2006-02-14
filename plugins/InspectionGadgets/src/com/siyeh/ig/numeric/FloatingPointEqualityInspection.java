@@ -17,7 +17,6 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,42 +26,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class FloatingPointEqualityInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.NUMERIC_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new FloatingPointEqualityComparisonVisitor();
-  }
-
-  private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
-
-    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      if (!(expression.getROperand() != null)) {
-        return;
-      }
-      if (!ComparisonUtils.isEqualityComparison(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
-      if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
-        return;
-      }
-      registerError(expression);
+    public String getGroupDisplayName() {
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
-    private static boolean isFloatingPointType(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
-
+    public BaseInspectionVisitor buildVisitor() {
+        return new FloatingPointEqualityComparisonVisitor();
     }
-  }
+
+    private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
+
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+            super.visitBinaryExpression(expression);
+            if (!(expression.getROperand() != null)) {
+                return;
+            }
+            if (!ComparisonUtils.isEqualityComparison(expression)) {
+                return;
+            }
+            final PsiExpression lhs = expression.getLOperand();
+            final PsiExpression rhs = expression.getROperand();
+            if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
+                return;
+            }
+            registerError(expression);
+        }
+
+        private static boolean isFloatingPointType(PsiExpression expression) {
+            if (expression == null) {
+                return false;
+            }
+            final PsiType type = expression.getType();
+            if (type == null) {
+                return false;
+            }
+            return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
+        }
+    }
 }

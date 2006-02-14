@@ -179,7 +179,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
             } else {
                 if (collection instanceof PsiReferenceExpression) {
                     final PsiJavaCodeReferenceElement referenceElement
-                            = (PsiReferenceExpression) collection;
+                            = (PsiJavaCodeReferenceElement)collection;
                     final String collectionName =
                             referenceElement.getReferenceName();
                     contentVariableName = createNewVarName(

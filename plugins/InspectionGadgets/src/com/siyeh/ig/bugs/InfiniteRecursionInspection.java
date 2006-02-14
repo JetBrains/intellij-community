@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class InfiniteRecursionInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("infinite.recursion.display.name");
+        return InspectionGadgetsBundle.message(
+                "infinite.recursion.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,16 +39,18 @@ public class InfiniteRecursionInspection extends MethodInspection {
     public boolean isEnabledByDefault(){
         return true;
     }
+
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("infinite.recursion.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "infinite.recursion.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new InfiniteRecursionVisitor();
     }
 
-    private static class InfiniteRecursionVisitor extends BaseInspectionVisitor {
-  
+    private static class InfiniteRecursionVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
@@ -57,12 +60,10 @@ public class InfiniteRecursionInspection extends MethodInspection {
             if (!RecursionUtils.methodMayRecurse(method)) {
                 return;
             }
-            if (!RecursionUtils.methodMustRecurseBeforeReturning(method)) {
+            if (!RecursionUtils.methodDefinitelyRecurses(method)) {
                 return;
             }
             registerMethodError(method);
         }
-
     }
-
 }

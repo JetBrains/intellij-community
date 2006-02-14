@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class JDBCResourceInspection extends ExpressionInspection{
+
     private static final String[] creationMethodClassName =
             new String[]{
                 "java.sql.Driver",
@@ -54,8 +55,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<String> creationMethodNameSet = new HashSet<String>(
-            8);
+    private static final Set<String> creationMethodNameSet =
+            new HashSet<String>(8);
 
     static {
         for(String aCreationMethodName : creationMethodName){
@@ -68,7 +69,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "jdbc.resource.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -79,7 +81,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "jdbc.resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -87,6 +90,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
     }
 
     private static class JDBCResourceVisitor extends BaseInspectionVisitor{
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
@@ -119,9 +123,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
                     registerError(expression);
                     return;
                 }
-                if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)){
+                if(resourceIsOpenedInTryAndClosedInFinally(
+                        tryStatement, expression, boundVariable)) {
                     return;
                 }
                 currentContext = tryStatement;
@@ -153,6 +156,39 @@ public class JDBCResourceInspection extends ExpressionInspection{
             finallyBlock.accept(visitor);
             return visitor.containsResourceClose();
         }
+
+        private static boolean isJDBCResourceCreation(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String name = methodExpression.getReferenceName();
+            if(name == null){
+                return false;
+            }
+            if(!creationMethodNameSet.contains(name)){
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null){
+                return false;
+            }
+            for(int i = 0; i < creationMethodName.length; i++){
+                if(name.equals(creationMethodName[i])){
+                    final PsiClass containingClass = method.getContainingClass();
+                    if(containingClass == null){
+                        return false;
+                    }
+                    final String className = containingClass.getQualifiedName();
+                    if(className == null){
+                        return false;
+                    }
+                    if(className.equals(creationMethodClassName[i])){
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     private static class ResourceCloseVisitor
@@ -179,9 +215,6 @@ public class JDBCResourceInspection extends ExpressionInspection{
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
               return;
@@ -204,41 +237,5 @@ public class JDBCResourceInspection extends ExpressionInspection{
         public boolean containsResourceClose(){
             return containsResourceClose;
         }
-    }
-
-    private static boolean isJDBCResourceCreation(
-            PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        final String name = methodExpression.getReferenceName();
-        if(name == null){
-            return false;
-        }
-        if(!creationMethodNameSet.contains(name)){
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null){
-            return false;
-        }
-        for(int i = 0; i < creationMethodName.length; i++){
-            if(name.equals(creationMethodName[i])){
-                final PsiClass containingClass = method.getContainingClass();
-                if(containingClass == null){
-                    return false;
-                }
-                final String className = containingClass.getQualifiedName();
-                if(className == null){
-                    return false;
-                }
-                if(className.equals(creationMethodClassName[i])){
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

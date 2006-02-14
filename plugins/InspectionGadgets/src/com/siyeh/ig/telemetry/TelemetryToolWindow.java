@@ -16,16 +16,17 @@
 package com.siyeh.ig.telemetry;
 
 import org.jetbrains.annotations.NonNls;
-
+import com.intellij.openapi.project.Project;
 
 public interface TelemetryToolWindow{
-    @NonNls String CYCLE_TOOL_WINDOW_ID = "IG Telemetry";
 
-    void register();
+    @NonNls String TOOL_WINDOW_ID = "IG Telemetry";
+
+    void register(Project project);
 
     void show();
 
     void close();
 
-    void unregister();
+    void unregister(Project project);
 }

@@ -16,7 +16,6 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,27 +25,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassLoader2InstantiationInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ClassLoaderInstantiationVisitor();
-  }
-
-  private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
-
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      if (!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader", expression)) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement reference = expression.getClassReference();
-      if (reference == null) {
-        return;
-      }
-      registerError(reference);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassLoaderInstantiationVisitor();
+    }
+
+    private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
+
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+            if (!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader", expression)) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement reference = expression.getClassReference();
+            if (reference == null) {
+                return;
+            }
+            registerError(reference);
+        }
+    }
 }

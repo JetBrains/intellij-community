@@ -24,9 +24,11 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
-                                                                       extends ExpressionInspection{
+        extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("non.final.static.variable.initialization.display.name");
+        return InspectionGadgetsBundle.message(
+                "non.final.static.variable.initialization.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -34,7 +36,8 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("non.final.static.variable.initialization.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "non.final.static.variable.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -43,6 +46,7 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
 
     private static class NonFinalStaticVariableUsedInClassInitializationVisitor
             extends BaseInspectionVisitor{
+
         public void visitReferenceExpression(PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             if(!isInClassInitialization(expression)){
@@ -62,7 +66,8 @@ public class NonFinalStaticVariableUsedInClassInitializationInspection
             registerError(expression);
         }
 
-        private static boolean isInClassInitialization(PsiExpression expression){
+        private static boolean isInClassInitialization(
+                PsiExpression expression){
             final PsiClassInitializer initializer =
                     PsiTreeUtil.getParentOfType(expression,
                                                 PsiClassInitializer.class);

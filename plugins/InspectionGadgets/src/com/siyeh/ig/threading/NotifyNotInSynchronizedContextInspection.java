@@ -17,53 +17,62 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class NotifyNotInSynchronizedContextInspection extends ExpressionInspection {
+public class NotifyNotInSynchronizedContextInspection
+        extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new WaitNotInSynchronizedContextVisitor();
-  }
-
-  private static class WaitNotInSynchronizedContextVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      @NonNls final String notify = "notify";
-      @NonNls final String notifyAll = "notifyAll";
-      if (!notify.equals(methodName) && !notifyAll.equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList paramList = method.getParameterList();
-      final PsiParameter[] parameters = paramList.getParameters();
-      final int numParams = parameters.length;
-      if (numParams != 0) {
-        return;
-      }
-      if (isInSynchronizedContext(expression)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "notify.not.in.synchronized.context.display.name");
     }
 
-    private static boolean isInSynchronizedContext(PsiElement element) {
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
-      if (context instanceof PsiSynchronizedStatement) return true;
-      if (context != null && ((PsiMethod)context).hasModifierProperty(PsiModifier.SYNCHRONIZED)) return true;
-      return false;
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "notify.not.in.synchronized.context.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new WaitNotInSynchronizedContextVisitor();
+    }
+
+    private static class WaitNotInSynchronizedContextVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
+                !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiParameterList paramList = method.getParameterList();
+            final PsiParameter[] parameters = paramList.getParameters();
+            final int numParams = parameters.length;
+            if (numParams != 0) {
+                return;
+            }
+            if (SynchronizationUtil.isInSynchronizedContext(expression)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

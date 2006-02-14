@@ -27,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class CloneableImplementsCloneInspection extends ClassInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreCloneableDueToInheritance = false;
 
-    public String getID(){
+    public String getID() {
         return "CloneableClassWithoutClone";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("cloneable.class.without.clone.display.name");
     }
@@ -56,7 +58,6 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
 
     private class CloneableDefinesCloneVisitor extends BaseInspectionVisitor {
 
-
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface()  || aClass.isAnnotationType()
@@ -71,20 +72,16 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
                 if (!CloneUtils.isDirectlyCloneable(aClass)) {
                     return;
                 }
-            } else {
-                if (!CloneUtils.isCloneable(aClass)) {
-                    return;
-                }
+            } else if (!CloneUtils.isCloneable(aClass)) {
+                return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for(final PsiMethod method : methods){
-                if(CloneUtils.isClone(method)){
+            for(final PsiMethod method : methods) {
+                if(CloneUtils.isClone(method)) {
                     return;
                 }
             }
             registerClassError(aClass);
         }
-
     }
-
 }

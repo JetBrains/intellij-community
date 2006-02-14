@@ -25,10 +25,10 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends MethodInspection {
-    private static final String COMPARE_TO_METHOD_NAME = HardcodedMethodConstants.COMPARE_TO;
 
   public String getDisplayName() {
-        return InspectionGadgetsBundle.message("covariant.compareto.display.name");
+        return InspectionGadgetsBundle.message(
+                "covariant.compareto.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -36,19 +36,21 @@ public class CovariantCompareToInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("covariant.compareto.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "covariant.compareto.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new CovariantCompareToVisitor();
     }
 
-    private static class CovariantCompareToVisitor extends BaseInspectionVisitor {
+    private static class CovariantCompareToVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String name = method.getName();
-            if (!COMPARE_TO_METHOD_NAME.equals(name)) {
+            if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {
                 return;
             }
             if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -73,11 +75,14 @@ public class CovariantCompareToInspection extends MethodInspection {
                     return;
                 }
             }
-            final PsiClassType[] implementsListTypes = aClass.getImplementsListTypes();
+            final PsiClassType[] implementsListTypes =
+                    aClass.getImplementsListTypes();
             for(final PsiClassType implementedType : implementsListTypes){
               if(implementedType.hasParameters()) {
                 final PsiClass resolved = implementedType.resolve();
-                if (resolved != null && "java.lang.Comparable".equals(resolved.getQualifiedName())) {
+                    if (resolved != null &&
+                            "java.lang.Comparable".equals(
+                                    resolved.getQualifiedName())) {
                   return;
                 }
               }
@@ -87,7 +92,7 @@ public class CovariantCompareToInspection extends MethodInspection {
 
         private static boolean isNonVariantCompareTo(PsiMethod method) {
             final String methodName = method.getName();
-            if (!COMPARE_TO_METHOD_NAME.equals(methodName)) {
+            if (!HardcodedMethodConstants.COMPARE_TO.equals(methodName)) {
                 return false;
             }
             final PsiParameterList paramList = method.getParameterList();

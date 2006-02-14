@@ -32,88 +32,88 @@ import java.util.Set;
 
 public class NonReproducibleMathCallInspection extends ExpressionInspection {
 
-  @SuppressWarnings("StaticCollection")
-  @NonNls private static final Set<String> nonReproducibleMethods = new HashSet<String>(20);
+    @SuppressWarnings("StaticCollection")
+    @NonNls private static final Set<String> nonReproducibleMethods =
+            new HashSet<String>(20);
 
-  static {
-    nonReproducibleMethods.add("sin");
-    nonReproducibleMethods.add("cos");
-    nonReproducibleMethods.add("tan");
-    nonReproducibleMethods.add("asin");
-    nonReproducibleMethods.add("acos");
-    nonReproducibleMethods.add("atan");
-    nonReproducibleMethods.add("exp");
-    nonReproducibleMethods.add("log");
-    nonReproducibleMethods.add("log10");
-    nonReproducibleMethods.add("cbrt");
-    nonReproducibleMethods.add("sinh");
-    nonReproducibleMethods.add("cosh");
-    nonReproducibleMethods.add("tanh");
-    nonReproducibleMethods.add("expm1");
-    nonReproducibleMethods.add("log1p");
-    nonReproducibleMethods.add("atan2");
-    nonReproducibleMethods.add("pow");
-    nonReproducibleMethods.add("hypot");
-  }
-
-  private final MakeStrictFix fix = new MakeStrictFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.NUMERIC_GROUP_NAME;
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class MakeStrictFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("non.reproducible.math.call.replace.quickfix");
+    static {
+        nonReproducibleMethods.add("acos");
+        nonReproducibleMethods.add("asin");
+        nonReproducibleMethods.add("atan");
+        nonReproducibleMethods.add("atan2");
+        nonReproducibleMethods.add("cbrt");
+        nonReproducibleMethods.add("cos");
+        nonReproducibleMethods.add("cosh");
+        nonReproducibleMethods.add("exp");
+        nonReproducibleMethods.add("expm1");
+        nonReproducibleMethods.add("hypot");
+        nonReproducibleMethods.add("log");
+        nonReproducibleMethods.add("log10");
+        nonReproducibleMethods.add("log1p");
+        nonReproducibleMethods.add("pow");
+        nonReproducibleMethods.add("sin");
+        nonReproducibleMethods.add("sinh");
+        nonReproducibleMethods.add("tan");
+        nonReproducibleMethods.add("tanh");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier nameIdentifier =
-        (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)nameIdentifier.getParent();
-      assert reference != null;
-      final String name = reference.getReferenceName();
-      replaceExpression(reference, "StrictMath." + name);
-    }
-  }
+    private final MakeStrictFix fix = new MakeStrictFix();
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new BigDecimalEqualsVisitor();
-  }
-
-  private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodName = methodExpression.getReferenceName();
-      if (!nonReproducibleMethods.contains(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass referencedClass = method.getContainingClass();
-      if (referencedClass == null) {
-        return;
-      }
-      final String className = referencedClass.getQualifiedName();
-      if (!"java.lang.Math".equals(className)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getGroupDisplayName() {
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
-  }
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
+    }
+
+    private static class MakeStrictFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "non.reproducible.math.call.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiIdentifier nameIdentifier =
+                    (PsiIdentifier)descriptor.getPsiElement();
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression)nameIdentifier.getParent();
+            assert reference != null;
+            final String name = reference.getReferenceName();
+            replaceExpression(reference, "StrictMath." + name);
+        }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new BigDecimalEqualsVisitor();
+    }
+
+    private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!nonReproducibleMethods.contains(methodName)) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass referencedClass = method.getContainingClass();
+            if (referencedClass == null) {
+                return;
+            }
+            final String className = referencedClass.getQualifiedName();
+            if (!"java.lang.Math".equals(className)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

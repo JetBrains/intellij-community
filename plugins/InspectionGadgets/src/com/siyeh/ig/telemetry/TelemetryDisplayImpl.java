@@ -15,18 +15,23 @@
  */
 package com.siyeh.ig.telemetry;
 
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.JTableHeader;
 
 public class TelemetryDisplayImpl implements TelemetryDisplay{
+
     private JTable table;
     private JScrollPane scrollPane;
-    private final TelemetryTableModel model;
+    private final TableSorter model;
 
     public TelemetryDisplayImpl(InspectionGadgetsTelemetry telemetry){
         super();
-        model = new TelemetryTableModel(telemetry);
+        model = new TableSorter(new TelemetryTableModel(telemetry));
         table.setModel(model);
+		final JTableHeader tableHeader = table.getTableHeader();
+		model.setTableHeader(tableHeader);
     }
 
     public JComponent getContentPane(){
@@ -34,10 +39,7 @@ public class TelemetryDisplayImpl implements TelemetryDisplay{
     }
 
     public void update(){
-        table.tableChanged(new TableModelEvent(model,
-                                                    TableModelEvent.HEADER_ROW));
-        table.tableChanged(new TableModelEvent(model));
+        table.setModel(model);
         table.repaint();
     }
-
 }

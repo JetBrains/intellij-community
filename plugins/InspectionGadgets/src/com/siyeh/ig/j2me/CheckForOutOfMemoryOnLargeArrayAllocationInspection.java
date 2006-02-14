@@ -29,13 +29,15 @@ import javax.swing.*;
 
 public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
         extends ExpressionInspection{
+
     /**
      * @noinspection PublicField
      */
     public int m_limit = 64;
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.display.name");
+        return InspectionGadgetsBundle.message(
+                "large.array.allocation.no.outofmemoryerror.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -43,12 +45,15 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "large.array.allocation.no.outofmemoryerror.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("large.array.allocation.no.outofmemoryerror.maximum.number.of.elements.option"),
-                                                  this, "m_limit");
+        return new SingleIntegerFieldOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "large.array.allocation.no.outofmemoryerror.maximum.number.of.elements.option"),
+                this, "m_limit");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -68,50 +73,49 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
             final PsiExpression[] dimensions = expression.getArrayDimensions();
             for(final PsiExpression dimension : dimensions){
                 final Integer intValue =
-                        (Integer) ConstantExpressionUtil.computeCastTo(dimension,
-                                                                       PsiType.INT);
-                if(intValue != null){
-                    size *= (intValue);
+                        (Integer) ConstantExpressionUtil.computeCastTo(
+                                dimension, PsiType.INT);
+                if (intValue != null) {
+                    size *= intValue.intValue();
                 }
             }
             if(size <= m_limit){
                 return;
             }
-            if(OOMECaught(expression)){
+            if(outOfMemoryExceptionCaught(expression)){
                 return;
             }
             registerError(expression);
         }
-    }
 
-    private boolean OOMECaught(PsiElement element){
-        PsiElement currentElement = element;
-        while(true){
-            final PsiTryStatement containingTryStatement =
-                    PsiTreeUtil.getParentOfType(currentElement,
-                                                PsiTryStatement.class);
-            if(containingTryStatement == null){
-                return false;
-            }
-            if(catchesOOME(containingTryStatement)){
-                return true;
-            }
-            currentElement = containingTryStatement;
-        }
-    }
-
-    private static boolean catchesOOME(PsiTryStatement statement){
-        final PsiCatchSection[] sections = statement.getCatchSections();
-        for(final PsiCatchSection section : sections){
-            final PsiType catchType = section.getCatchType();
-            if(catchType != null){
-                final String typeText = catchType.getCanonicalText();
-                if("java.lang.OutOfMemoryError".equals(typeText)){
+        private boolean outOfMemoryExceptionCaught(PsiElement element){
+            PsiElement currentElement = element;
+            while(true){
+                final PsiTryStatement containingTryStatement =
+                        PsiTreeUtil.getParentOfType(currentElement,
+                                PsiTryStatement.class);
+                if(containingTryStatement == null){
+                    return false;
+                }
+                if(catchesOutOfMemoryException(containingTryStatement)){
                     return true;
                 }
+                currentElement = containingTryStatement;
             }
         }
-        return false;
-    }
 
+        private boolean catchesOutOfMemoryException(PsiTryStatement statement){
+            final PsiCatchSection[] sections = statement.getCatchSections();
+            for(final PsiCatchSection section : sections){
+                final PsiType catchType = section.getCatchType();
+                if(catchType != null){
+                    final String typeText = catchType.getCanonicalText();
+                    if("java.lang.OutOfMemoryError".equals(typeText)){
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
 }

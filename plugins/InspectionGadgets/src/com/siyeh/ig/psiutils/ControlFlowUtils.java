@@ -17,10 +17,12 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowUtils{
+
     private ControlFlowUtils(){
         super();
     }
@@ -125,14 +127,18 @@ public class ControlFlowUtils{
         boolean hasDefaultCase = false;
         for(PsiStatement statement : statements){
             if(statement instanceof PsiSwitchLabelStatement){
-                if(((PsiSwitchLabelStatement) statement).isDefaultCase()){
+                final PsiSwitchLabelStatement switchLabelStatement =
+                        (PsiSwitchLabelStatement)statement;
+                if(switchLabelStatement.isDefaultCase()){
                     hasDefaultCase = true;
                 }
             }
-            if(statement instanceof PsiBreakStatement &&
-                    ((PsiBreakStatement) statement).getLabelIdentifier()
-                            == null){
-                return true;
+            if(statement instanceof PsiBreakStatement) {
+                final PsiBreakStatement breakStatement =
+                        (PsiBreakStatement)statement;
+                if(breakStatement.getLabelIdentifier() == null) {
+                    return true;
+                }
             }
             numCases++;
         }
@@ -142,8 +148,17 @@ public class ControlFlowUtils{
         }
         if(!hasDefaultCase && isEnum){
             final PsiExpression expression = switchStatement.getExpression();
+            if(expression == null){
+                return true;
+            }
             final PsiClassType type = (PsiClassType) expression.getType();
+            if(type == null){
+                return true;
+            }
             final PsiClass aClass = type.resolve();
+            if(aClass == null){
+                return true;
+            }
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
             for(final PsiField field : fields){
@@ -213,6 +228,9 @@ public class ControlFlowUtils{
     private static boolean labeledStatementMayCompleteNormally(
             @NotNull PsiLabeledStatement labeledStatement){
         final PsiStatement statement = labeledStatement.getStatement();
+        if (statement == null) {
+            return false;
+        }
         return statementMayCompleteNormally(statement) ||
                 statementIsBreakTarget(statement);
     }
@@ -312,6 +330,9 @@ public class ControlFlowUtils{
             return false;
         }
         final PsiStatement body = whileStatement.getBody();
+        if (body == null) {
+            return false;
+        }
         return PsiTreeUtil.isAncestor(body, element, true);
     }
 
@@ -324,6 +345,9 @@ public class ControlFlowUtils{
             return false;
         }
         final PsiStatement body = doWhileStatement.getBody();
+        if (body == null) {
+            return false;
+        }
         return PsiTreeUtil.isAncestor(body, element, true);
     }
 
@@ -335,6 +359,9 @@ public class ControlFlowUtils{
             return false;
         }
         final PsiStatement body = forStatement.getBody();
+        if (body == null) {
+            return false;
+        }
         return PsiTreeUtil.isAncestor(body, element, true);
     }
 
@@ -347,6 +374,9 @@ public class ControlFlowUtils{
             return false;
         }
         final PsiStatement body = foreachStatement.getBody();
+        if (body == null) {
+            return false;
+        }
         return PsiTreeUtil.isAncestor(body, element, true);
     }
 
@@ -384,7 +414,7 @@ public class ControlFlowUtils{
                     return false;
                 }
             }
-            if(isLoop(container)){
+            if(container instanceof PsiLoopStatement){
                 return false;
             }
             statementToCheck = container;
@@ -404,7 +434,7 @@ public class ControlFlowUtils{
             if(container == null){
                 return false;
             }
-            if(isLoop(container)){
+            if(container instanceof PsiLoopStatement){
                 return false;
             }
             if(container instanceof PsiCodeBlock){
@@ -422,13 +452,6 @@ public class ControlFlowUtils{
                 statementToCheck = container;
             }
         }
-    }
-
-    private static boolean isLoop(@NotNull PsiElement element){
-        return element instanceof PsiWhileStatement ||
-                element instanceof PsiDoWhileStatement ||
-                element instanceof PsiForeachStatement ||
-                element instanceof PsiForStatement;
     }
 
     @Nullable

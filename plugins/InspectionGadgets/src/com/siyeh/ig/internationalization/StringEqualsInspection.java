@@ -20,16 +20,18 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsInspection extends ExpressionInspection {
-    public String getID(){
+
+    public String getID() {
         return "CallToStringEquals";
     }
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("string.equals.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.equals.call.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,7 +39,8 @@ public class StringEqualsInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("string.equals.call.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "string.equals.call.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -46,12 +49,11 @@ public class StringEqualsInspection extends ExpressionInspection {
 
     private static class StringEqualsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
-              return;
+            if (!MethodCallUtils.isEqualsCall(expression)) {
+                return;
             }
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
@@ -59,16 +61,12 @@ public class StringEqualsInspection extends ExpressionInspection {
             }
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 1) {
-                return;
-            }
             final PsiType parameterType = parameters[0].getType();
             if (!TypeUtils.isJavaLangObject(parameterType)) {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return;
             }
             final String className = aClass.getQualifiedName();
@@ -78,5 +76,4 @@ public class StringEqualsInspection extends ExpressionInspection {
             registerMethodCallError(expression);
         }
     }
-
 }

@@ -21,15 +21,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
-import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
-    private final CloneDeclaresCloneNotSupportedInspectionFix fix = new CloneDeclaresCloneNotSupportedInspectionFix();
+
+    private final CloneDeclaresCloneNotSupportedInspectionFix fix =
+            new CloneDeclaresCloneNotSupportedInspectionFix();
 
     public String getID(){
         return "CloneDoesntDeclareCloneNotSupportedException";
@@ -56,16 +58,17 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
     }
 
     private static class CloneDeclaresCloneNotSupportedInspectionFix
-                                                                     extends InspectionGadgetsFix{
+            extends InspectionGadgetsFix{
+
         public String getName(){
             return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-            final PsiMethod method = (PsiMethod) methodNameIdentifier.getParent();
+            final PsiMethod method =
+                    (PsiMethod) methodNameIdentifier.getParent();
             PsiUtil.addException(method,
                                  "java.lang.CloneNotSupportedException");
         }
@@ -76,50 +79,47 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection{
     }
 
     private static class CloneDeclaresCloneNotSupportedExceptionVisitor
-                                                                        extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
-            final String methodName = method.getName();
-            if(!HardcodedMethodConstants.CLONE.equals(methodName)) {
-              return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null || parameters.length != 0){
+            if(!CloneUtils.isClone(method)){
                 return;
             }
             if(method.hasModifierProperty(PsiModifier.FINAL)){
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null){
                 return;
             }
             if(containingClass.hasModifierProperty(PsiModifier.FINAL)){
                 return;
             }
-            final PsiReferenceList throwsList = method.getThrowsList();
-            if(throwsList == null){
-                registerMethodError(method);
+            if(hasThrowsCloneNotSupportedException(method)){
                 return;
             }
-            final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
-            for(final PsiJavaCodeReferenceElement referenceElement : referenceElements){
-                final PsiElement referencedElement = referenceElement.resolve();
-              if (referencedElement instanceof PsiClass) {
-                final PsiClass aClass = (PsiClass)referencedElement;
-                final String className = aClass.getQualifiedName();
-                if ("java.lang.CloneNotSupportedException".equals(className)) {
-                  return;
-                }
-              }
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            if (superMethods.length < 1){
+                return;
             }
-
+            if(!hasThrowsCloneNotSupportedException(superMethods[0])){
+                return;
+            }
             registerMethodError(method);
+        }
+
+        public static boolean hasThrowsCloneNotSupportedException(
+                @NotNull PsiMethod method){
+            final PsiReferenceList throwsList = method.getThrowsList();
+            final PsiClassType[] thrownTypes = throwsList.getReferencedTypes();
+            for(final PsiClassType thrownType : thrownTypes){
+                if (thrownType.equalsToText(
+                        "java.lang.CloneNotSupportedException")){
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

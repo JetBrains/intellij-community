@@ -27,12 +27,18 @@ import org.jetbrains.annotations.NotNull;
 public class NonThreadSafeLazyInitializationInspection
         extends ExpressionInspection{
 
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "non.thread.safe.lazy.initialization.display.name");
+    }
+
     public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("non.thread.safe.lazy.initialization.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "non.thread.safe.lazy.initialization.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -49,7 +55,8 @@ public class NonThreadSafeLazyInitializationInspection
             if(!(lhs instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiElement referent = ((PsiReference) lhs).resolve();
+            final PsiReference reference = (PsiReference)lhs;
+            final PsiElement referent = reference.resolve();
             if(!(referent instanceof PsiField)){
                 return;
             }

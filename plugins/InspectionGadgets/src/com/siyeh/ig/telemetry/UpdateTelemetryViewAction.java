@@ -23,13 +23,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import javax.swing.*;
 
 class UpdateTelemetryViewAction extends AnAction{
+
     private final TelemetryDisplay telemetryDisplay;
 
     private static final Icon refreshIcon =
             IconHelper.getIcon("/actions/sync.png");
 
-    public UpdateTelemetryViewAction(TelemetryDisplay telemetryDisplay){
-        super(CommonBundle.message("action.refresh"), InspectionGadgetsBundle.message("action.telemetry.refresh.description"), refreshIcon);
+    UpdateTelemetryViewAction(TelemetryDisplay telemetryDisplay){
+        super(CommonBundle.message("action.refresh"),
+                InspectionGadgetsBundle.message(
+                        "action.telemetry.refresh.description"), refreshIcon);
         this.telemetryDisplay = telemetryDisplay;
     }
 

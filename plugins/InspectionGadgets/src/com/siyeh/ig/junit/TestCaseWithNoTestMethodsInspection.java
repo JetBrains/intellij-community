@@ -19,9 +19,9 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
 
@@ -37,11 +37,10 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
     return new TestCaseWithNoTestMethodsVisitor();
   }
 
-  private static class TestCaseWithNoTestMethodsVisitor extends BaseInspectionVisitor {
-
+    private static class TestCaseWithNoTestMethodsVisitor
+            extends BaseInspectionVisitor {
 
     public void visitClass(@NotNull PsiClass aClass) {
-      super.visitClass(aClass);
       if (aClass.isInterface()
           || aClass.isEnum()
           || aClass.isAnnotationType()
@@ -52,39 +51,16 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
           aClass instanceof PsiAnonymousClass) {
         return;
       }
+            if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
+                return;
+            }
       final PsiMethod[] methods = aClass.getMethods();
       for (final PsiMethod method : methods) {
-        if (isTest(method)) {
+                if (TestUtils.isJUnitTestMethod(method)) {
           return;
         }
       }
-      if (!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")) {
-        return;
-      }
       registerClassError(aClass);
     }
-
-    private boolean isTest(PsiMethod method) {
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return false;
-      }
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
-      }
-
-      final PsiType returnType = method.getReturnType();
-      if (!PsiType.VOID.equals(returnType)) {
-        return false;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (parameters.length != 0) {
-        return false;
-      }
-      @NonNls final String name = method.getName();
-      return name.startsWith("test");
-
-    }
-
   }
 }

@@ -50,9 +50,8 @@ public class EnumAsNameInspection extends BaseInspection{
         return new RenameFix();
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly){
+    public ProblemDescriptor[] doCheckClass(
+            PsiClass aClass, InspectionManager manager, boolean isOnTheFly){
         if(aClass instanceof PsiAnonymousClass){
             return super.doCheckClass(aClass, manager, isOnTheFly);
         }
@@ -62,9 +61,8 @@ public class EnumAsNameInspection extends BaseInspection{
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                             InspectionManager manager,
-                                             boolean isOnTheFly){
+    public ProblemDescriptor[] doCheckMethod(
+            PsiMethod method, InspectionManager manager, boolean isOnTheFly){
         final PsiClass containingClass = method.getContainingClass();
         if(containingClass == null){
             return super.doCheckMethod(method, manager, isOnTheFly);
@@ -82,9 +80,8 @@ public class EnumAsNameInspection extends BaseInspection{
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckField(PsiField field,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly){
+    public ProblemDescriptor[] doCheckField(
+            PsiField field, InspectionManager manager, boolean isOnTheFly){
         final PsiClass containingClass = field.getContainingClass();
         if(containingClass == null){
             return super.doCheckField(field, manager, isOnTheFly);
@@ -107,6 +104,7 @@ public class EnumAsNameInspection extends BaseInspection{
     }
 
     private static class EnumAsNameVisitor extends BaseInspectionVisitor{
+        
         public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final String variableName = variable.getName();

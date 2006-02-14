@@ -22,70 +22,92 @@ import java.text.NumberFormat;
 
 import com.siyeh.InspectionGadgetsBundle;
 
-class TelemetryTableModel extends DefaultTableModel{
+class TelemetryTableModel extends DefaultTableModel {
+
     private final InspectionGadgetsTelemetry telemetry;
     private final NumberFormat format = NumberFormat.getNumberInstance();
-    {
+
+    TelemetryTableModel(InspectionGadgetsTelemetry telemetry) {
+        super();
+        this.telemetry = telemetry;
         format.setMaximumFractionDigits(2);
         format.setMinimumFractionDigits(2);
     }
 
-    public TelemetryTableModel(InspectionGadgetsTelemetry telemetry){
-        super();
-        this.telemetry = telemetry;
-    }
-
-    public int getColumnCount(){
+    public int getColumnCount() {
         return 4;
     }
 
-    public int getRowCount(){
-        if(telemetry== null)
-        {
+    @Nullable
+    public Class getColumnClass(int column) {
+        switch (column) {
+            case 0:
+                return String.class;
+            case 1:
+                return Long.class;
+            case 2:
+                return String.class;
+            case 3:
+                return Integer.class;
+            default:
+                return null;
+        }
+    }
+
+    public int getRowCount() {
+        if (telemetry == null) {
             return 0;
         }
         return telemetry.getInspections().length;
     }
 
-    public @Nullable Object getValueAt(int row, int column){
-        if(telemetry == null)
-        {
+    @Nullable
+    public Object getValueAt(int row, int column) {
+        if (telemetry == null) {
             return null;
         }
         final String[] inspections = telemetry.getInspections();
         final String inspection = inspections[row];
-        switch(column){
+        switch (column) {
             case 0:
                 return inspection;
             case 1:
-                final long totalRunTime = telemetry.getRunTimeForInspection(inspection);
-                return Long.toString(totalRunTime);
+                final long totalRunTime =
+                        telemetry.getRunTimeForInspection(inspection);
+                return Long.valueOf(totalRunTime);
             case 2:
-                final double averageRunTime = telemetry.getAverageRunTimeForInspection(inspection);
+                final double averageRunTime =
+                        telemetry.getAverageRunTimeForInspection(inspection);
                 return format.format(averageRunTime);
             case 3:
-                final int runCount = telemetry.getRunCountForInspection(inspection);
-                return Integer.toString(runCount);
+                final int runCount =
+                        telemetry.getRunCountForInspection(inspection);
+                return Integer.valueOf(runCount);
             default:
                 return null;
         }
     }
 
     public void setValueAt(Object object, int i,
-                           int i1){
+                           int i1) {
         //don't do anything
     }
 
-    public @Nullable String getColumnName(int column){
-        switch(column){
+    @Nullable
+    public String getColumnName(int column) {
+        switch (column) {
             case 0:
-                return InspectionGadgetsBundle.message("telemetry.table.column.inspection.name");
+                return InspectionGadgetsBundle.message(
+                        "telemetry.table.column.inspection.name");
             case 1:
-                return InspectionGadgetsBundle.message("telemetry.table.column.total.time");
+                return InspectionGadgetsBundle.message(
+                        "telemetry.table.column.total.time");
             case 2:
-                return InspectionGadgetsBundle.message("telemetry.table.column.average.time");
+                return InspectionGadgetsBundle.message(
+                        "telemetry.table.column.average.time");
             case 3:
-                return InspectionGadgetsBundle.message("telemetry.table.column.run.count");
+                return InspectionGadgetsBundle.message(
+                        "telemetry.table.column.run.count");
             default:
                 return null;
         }

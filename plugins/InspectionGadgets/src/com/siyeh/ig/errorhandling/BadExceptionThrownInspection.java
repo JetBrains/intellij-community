@@ -115,7 +115,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
         final String exceptionName = type.getPresentableText();
-        return InspectionGadgetsBundle.message("bad.exception.thrown.problem.descriptor", exceptionName) + " ";
+        return InspectionGadgetsBundle.message("bad.exception.thrown.problem.descriptor", exceptionName);
     }
 
     public BaseInspectionVisitor buildVisitor(){

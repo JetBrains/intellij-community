@@ -28,8 +28,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverriddenMethodCallInConstructorInspection
         extends MethodInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.display.name");
+        return InspectionGadgetsBundle.message(
+                "overridden.method.call.in.constructor.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +39,8 @@ public class OverriddenMethodCallInConstructorInspection
     }
 
     public String buildErrorString(PsiElement location){
-      return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
+      return InspectionGadgetsBundle.message(
+              "overridden.method.call.in.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -47,7 +50,8 @@ public class OverriddenMethodCallInConstructorInspection
     private static class AbstractMethodCallInConstructorVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
@@ -57,10 +61,8 @@ public class OverriddenMethodCallInConstructorInspection
             if(!method.isConstructor()){
                 return;
             }
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
             final PsiExpression qualifierExpression =
                     methodExpression.getQualifierExpression();
             if(qualifierExpression != null) {
@@ -76,16 +78,18 @@ public class OverriddenMethodCallInConstructorInspection
             if(containingClass.hasModifierProperty(PsiModifier.FINAL)){
                 return;
             }
-            final PsiMethod calledMethod = (PsiMethod) methodExpression.resolve();
+            final PsiMethod calledMethod =
+                    (PsiMethod) methodExpression.resolve();
             if(calledMethod == null){
                 return;
             }
             if(!PsiUtil.canBeOverriden(calledMethod)){
                 return;
             }
-            final PsiClass calledMethodClass = calledMethod.getContainingClass();
-            if(!InheritanceUtil.isInheritorOrSelf(containingClass,
-                                                  calledMethodClass, true)){
+            final PsiClass calledMethodClass =
+                    calledMethod.getContainingClass();
+            if(!InheritanceUtil.isCorrectDescendant(calledMethodClass,
+                    containingClass, true)){
                 return;
             }
             if(!MethodUtils.isOverridden(calledMethod)){

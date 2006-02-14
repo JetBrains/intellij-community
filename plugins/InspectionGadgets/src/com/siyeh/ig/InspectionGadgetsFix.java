@@ -19,7 +19,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
-
-    public static final Key<Object> FIX_KEY =
-            Key.create("InspectionGadgetsFix.applyFix.FIX_KEY");
 
     //to appear in "Apply Fix" statement when multiple Quick Fixes exist
     public String getFamilyName() {
@@ -45,10 +41,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             return;
         }
         if(isQuickFixOnReadOnlyFile(problemElement)){
-            return;
-        }
-        final Object data = problemElement.getCopyableUserData(FIX_KEY);
-        if (data == null || !data.equals(getName())) {
             return;
         }
         try{

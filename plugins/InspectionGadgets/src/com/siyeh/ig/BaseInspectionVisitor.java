@@ -127,18 +127,12 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
         final InspectionGadgetsFix[] fixes = inspection.buildFixes(location);
         if(fixes != null){
-            for (InspectionGadgetsFix fix : fixes){
-                location.putCopyableUserData(InspectionGadgetsFix.FIX_KEY,
-                                             fix.getName());
-            }
             return fixes;
         }
         final InspectionGadgetsFix fix = inspection.buildFix(location);
         if(fix == null){
             return null;
         }
-        location.putCopyableUserData(InspectionGadgetsFix.FIX_KEY,
-                                     fix.getName());
         return new InspectionGadgetsFix[]{fix};
     }
 
@@ -159,7 +153,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     public void visitClass(PsiClass aClass) {
         // only visit a class if we're starting in it, to prevent duplicate
-        // messages.
+        // messages which would occur if the visitor descended into
+        // nested and anonymous classes.
         if(inspection instanceof ClassInspection && !classVisited) {
             classVisited = true;
             super.visitClass(aClass);

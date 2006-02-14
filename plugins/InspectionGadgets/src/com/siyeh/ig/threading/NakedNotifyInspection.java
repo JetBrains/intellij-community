@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,7 +46,8 @@ public class NakedNotifyInspection extends MethodInspection {
       }
     }
 
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(
+                @NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiCodeBlock body = statement.getBody();
       if (body != null) {
@@ -71,18 +73,14 @@ public class NakedNotifyInspection extends MethodInspection {
         (PsiMethodCallExpression)firstExpression;
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
-      if (methodExpression == null) {
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
+                    !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
         return;
       }
-      @NonNls final String methodName = methodExpression.getReferenceName();
-
-      if (!"notify".equals(methodName) && !"notifyAll".equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
       if (argumentList.getExpressions().length != 0) {
         return;
       }

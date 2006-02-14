@@ -68,11 +68,12 @@ public class ComparisonUtils {
 
     }
 
-    public static boolean isComparison(@Nullable PsiExpression exp) {
-        if(!(exp instanceof PsiBinaryExpression)) {
+    public static boolean isComparison(@Nullable PsiExpression expression) {
+        if(!(expression instanceof PsiBinaryExpression)) {
             return false;
         }
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) exp;
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         return s_comparisonTokens.contains(tokenType);

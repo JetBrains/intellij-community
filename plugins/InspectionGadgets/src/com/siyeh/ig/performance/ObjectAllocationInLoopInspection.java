@@ -16,7 +16,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -25,28 +24,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectAllocationInLoopInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.PERFORMANCE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ObjectAllocationInLoopsVisitor();
-  }
-
-  private static class ObjectAllocationInLoopsVisitor extends BaseInspectionVisitor {
-
-
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-
-      if (!ControlFlowUtils.isInLoop(expression)) {
-        return;
-      }
-      if (ControlFlowUtils.isInExitStatement(expression)) {
-        return;
-      }
-      registerError(expression);
+    public String getGroupDisplayName() {
+        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new ObjectAllocationInLoopsVisitor();
+    }
+
+    private static class ObjectAllocationInLoopsVisitor extends BaseInspectionVisitor {
+
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+            super.visitNewExpression(expression);
+
+            if (!ControlFlowUtils.isInLoop(expression)) {
+                return;
+            }
+            if (ControlFlowUtils.isInExitStatement(expression)) {
+                return;
+            }
+            registerError(expression);
+        }
+    }
 }

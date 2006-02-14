@@ -35,11 +35,9 @@ import org.jetbrains.annotations.NonNls;
 public class AssignmentToCatchBlockParameterInspection
         extends ExpressionInspection{
 
-    private final AssignmentToCatchBlockParameterFix fix =
-            new AssignmentToCatchBlockParameterFix();
-
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.display.name");
+        return InspectionGadgetsBundle.message(
+                "assignment.to.catch.block.parameter.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -47,18 +45,20 @@ public class AssignmentToCatchBlockParameterInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "assignment.to.catch.block.parameter.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new AssignmentToCatchBlockParameterFix();
     }
 
     private static class AssignmentToCatchBlockParameterFix
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.extract.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "assignment.to.catch.block.parameter.extract.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -68,13 +68,13 @@ public class AssignmentToCatchBlockParameterInspection
             final PsiCatchSection catchSection =
                     PsiTreeUtil.getParentOfType(variable,
                                                 PsiCatchSection.class);
-
             assert catchSection != null;
             final PsiCodeBlock body = catchSection.getCatchBlock();
             final PsiType type = variable.getType();
-
+            if (type == null) {
+                return;
+            }
             final PsiManager psiManager = PsiManager.getInstance(project);
-
             final CodeStyleManager codeStyleManager =
                     psiManager.getCodeStyleManager();
             final String originalVariableName = variable.getText();
@@ -90,9 +90,8 @@ public class AssignmentToCatchBlockParameterInspection
                 baseName = "value";
             }
             final String variableName =
-                    codeStyleManager.suggestUniqueVariableName(baseName,
-                                                               catchSection,
-                                                               false);
+                    codeStyleManager.suggestUniqueVariableName(
+                            baseName, catchSection, false);
             final String className = type.getPresentableText();
             assert body != null;
             final PsiElement[] children = body.getChildren();
@@ -102,24 +101,18 @@ public class AssignmentToCatchBlockParameterInspection
                                     originalVariableName, buffer);
             }
             final String text = '{' + className + ' ' + variableName + " = " +
-                                originalVariableName +
-                                ';' +
-                                buffer;
-
+                                originalVariableName + ';' + buffer;
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
             final PsiCodeBlock block =
-                    elementFactory.createCodeBlockFromText(text,
-                                                           null);
+                    elementFactory.createCodeBlockFromText(text, null);
             body.replace(block);
             codeStyleManager.reformat(catchSection);
         }
 
-        private static void replaceVariableName(PsiElement element,
-                                                String newName,
-                                                String originalName,
-                                                StringBuffer out){
-
+        private static void replaceVariableName(
+                PsiElement element, String newName, String originalName,
+                StringBuffer out){
             final String text = element.getText();
             if(element instanceof PsiReferenceExpression){
                 if(text.equals(originalName)){
@@ -132,8 +125,7 @@ public class AssignmentToCatchBlockParameterInspection
                 out.append(text);
             } else{
                 for(final PsiElement child : children){
-                    replaceVariableName(child, newName,
-                                        originalName, out);
+                    replaceVariableName(child, newName, originalName, out);
                 }
             }
         }
@@ -156,13 +148,15 @@ public class AssignmentToCatchBlockParameterInspection
             if(!(lhs instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiReferenceExpression ref = (PsiReferenceExpression) lhs;
-            final PsiElement variable = ref.resolve();
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression) lhs;
+            final PsiElement variable = reference.resolve();
             if(!(variable instanceof PsiParameter)){
                 return;
             }
-            if(!(((PsiParameter) variable)
-                    .getDeclarationScope() instanceof PsiCatchSection)){
+            final PsiParameter parameter = (PsiParameter)variable;
+            final PsiElement declarationScope = parameter.getDeclarationScope();
+            if(!(declarationScope instanceof PsiCatchSection)){
                 return;
             }
             registerError(lhs);

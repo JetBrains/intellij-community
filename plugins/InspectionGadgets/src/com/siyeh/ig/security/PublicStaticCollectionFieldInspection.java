@@ -16,7 +16,6 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -27,30 +26,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticCollectionFieldInspection extends FieldInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new PublicStaticArrayFieldVisitor();
-  }
-
-  private static class PublicStaticArrayFieldVisitor extends BaseInspectionVisitor {
-    public void visitField(@NotNull PsiField field) {
-      super.visitField(field);
-      if (!field.hasModifierProperty(PsiModifier.PUBLIC)
-          && !field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final PsiType type = field.getType();
-      if (type == null) {
-        return;
-      }
-      if (!CollectionUtils.isCollectionClass(type)) {
-        return;
-      }
-      registerFieldError(field);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new PublicStaticArrayFieldVisitor();
+    }
+
+    private static class PublicStaticArrayFieldVisitor
+            extends BaseInspectionVisitor {
+        
+        public void visitField(@NotNull PsiField field) {
+            super.visitField(field);
+            if (!field.hasModifierProperty(PsiModifier.PUBLIC)
+                && !field.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            final PsiType type = field.getType();
+            if (type == null) {
+                return;
+            }
+            if (!CollectionUtils.isCollectionClass(type)) {
+                return;
+            }
+            registerFieldError(field);
+        }
+    }
 }

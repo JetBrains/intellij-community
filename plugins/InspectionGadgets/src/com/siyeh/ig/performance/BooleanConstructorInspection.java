@@ -32,14 +32,13 @@ import org.jetbrains.annotations.NonNls;
 
 public class BooleanConstructorInspection extends ExpressionInspection{
 
-    private final BooleanConstructorFix fix = new BooleanConstructorFix();
-
     public String getID(){
         return "BooleanConstructorCall";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("boolean.constructor.display.name");
+        return InspectionGadgetsBundle.message(
+                "boolean.constructor.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -51,7 +50,8 @@ public class BooleanConstructorInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("boolean.constructor.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "boolean.constructor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -59,15 +59,14 @@ public class BooleanConstructorInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new BooleanConstructorFix();
     }
 
     private static class BooleanConstructorFix extends InspectionGadgetsFix{
-      @NonNls private static final String TRUE = Boolean.TRUE.toString();
-      @NonNls private static final String FALSE = Boolean.FALSE.toString();
 
       public String getName(){
-          return InspectionGadgetsBundle.message("boolean.aonstructor.simplify.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "boolean.aonstructor.simplify.quickfix");
       }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -83,10 +82,11 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             final LanguageLevel languageLevel =
                     psiManager.getEffectiveLanguageLevel();
             @NonNls final String newExpression;
-          if(TRUE.equals(text) || withDoubleQuotes(TRUE).equalsIgnoreCase(text)){
+          if(PsiKeyword.TRUE.equals(text) ||
+                  withDoubleQuotes(PsiKeyword.TRUE).equalsIgnoreCase(text)){
               newExpression = "Boolean.TRUE";
-          } else if(FALSE.equals(text) ||
-                    withDoubleQuotes(FALSE).equalsIgnoreCase(text)){
+          } else if(PsiKeyword.FALSE.equals(text) ||
+                    withDoubleQuotes(PsiKeyword.FALSE).equalsIgnoreCase(text)){
               newExpression = "Boolean.FALSE";
           } else if(languageLevel.equals(LanguageLevel.JDK_1_3)){
               final PsiType argType = arg.getType();
@@ -107,8 +107,8 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             replaceExpression(expression, newExpression);
         }
 
-      private String withDoubleQuotes(final String expr) {
-        return "\"" + expr + "\"";
+        private static String withDoubleQuotes(String expr) {
+            return '\"' + expr + '\"';
       }
     }
 

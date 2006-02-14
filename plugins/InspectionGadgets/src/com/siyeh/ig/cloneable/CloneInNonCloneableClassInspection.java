@@ -16,21 +16,24 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakeCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends MethodInspection {
 
     private InspectionGadgetsFix fix = new MakeCloneableFix();
+
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "clone.method.in.non.cloneable.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +41,8 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "clone.method.in.non.cloneable.class.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
@@ -49,34 +53,19 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
         return new CloneInNonCloneableClassVisitor();
     }
 
-    private static class CloneInNonCloneableClassVisitor extends BaseInspectionVisitor {
+    private static class CloneInNonCloneableClassVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method){
+            if (!CloneUtils.isClone(method)) {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
-            final String name = method.getName();
-            if(!HardcodedMethodConstants.CLONE.equals(name)) {
-              return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null)
-            {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null || parameters.length!=0)
-            {
-                return;
-            }
-            if(containingClass == null)
-            {
-                return;
-            }
-            if(CloneUtils.isCloneable(containingClass)){
+            if (containingClass == null ||
+                    CloneUtils.isCloneable(containingClass)) {
                 return;
             }
             registerMethodError(method);
         }
-
     }
-
 }

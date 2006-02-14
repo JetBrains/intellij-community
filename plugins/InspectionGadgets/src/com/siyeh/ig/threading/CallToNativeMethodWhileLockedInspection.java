@@ -20,46 +20,57 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.SynchronizationUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CallToNativeMethodWhileLockedInspection extends ExpressionInspection {
+public class CallToNativeMethodWhileLockedInspection
+        extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new WaitNotInSynchronizedContextVisitor();
-  }
-
-  private static class WaitNotInSynchronizedContextVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getQualifiedName();
-      if ("java.lang.Object".equals(className)) {
-        return;
-      }
-      if (!isInSynchronizedContext(expression)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "call.to.native.method.while.locked.display.name");
     }
 
-    private static boolean isInSynchronizedContext(PsiElement element) {
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
-      if (context instanceof PsiSynchronizedStatement) return true;
-      if (context != null && ((PsiMethod)context).hasModifierProperty(PsiModifier.SYNCHRONIZED)) return true;
-      return false;
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "call.to.native.method.while.locked.problem.descriptor");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new WaitNotInSynchronizedContextVisitor();
+    }
+
+    private static class WaitNotInSynchronizedContextVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            final String className = containingClass.getQualifiedName();
+            if ("java.lang.Object".equals(className)) {
+                return;
+            }
+            if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

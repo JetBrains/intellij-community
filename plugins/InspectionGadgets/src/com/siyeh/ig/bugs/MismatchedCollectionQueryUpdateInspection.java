@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends VariableInspection{
+
     public String getID(){
         return "MismatchedQueryAndUpdateOfCollection";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("mismatched.update.collection.display.name");
+        return InspectionGadgetsBundle.message(
+                "mismatched.update.collection.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -55,9 +57,11 @@ public class MismatchedCollectionQueryUpdateInspection
         }
         final boolean updated = collectionContentsAreUpdated(variable, context);
         if(updated){
-            return InspectionGadgetsBundle.message("mismatched.update.collection.problem.descriptor.updated.not.queried");
+            return InspectionGadgetsBundle.message(
+                    "mismatched.update.collection.problem.descriptor.updated.not.queried");
         } else{
-            return InspectionGadgetsBundle.message("mismatched.update.collection.problem.description.queried.not.updated");
+            return InspectionGadgetsBundle.message(
+                    "mismatched.update.collection.problem.description.queried.not.updated");
         }
     }
 
@@ -104,7 +108,6 @@ public class MismatchedCollectionQueryUpdateInspection
             }
             final boolean written =
                     collectionContentsAreUpdated(variable, codeBlock);
-
             final boolean read =
                     collectionContentsAreQueried(variable, codeBlock);
             if(read!=written){

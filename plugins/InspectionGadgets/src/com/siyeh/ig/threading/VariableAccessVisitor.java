@@ -58,7 +58,6 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
-
         if(qualifier != null && !(qualifier instanceof PsiThisExpression)){
             return;
         }

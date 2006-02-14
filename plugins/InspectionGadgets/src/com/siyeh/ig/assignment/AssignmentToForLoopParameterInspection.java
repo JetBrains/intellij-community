@@ -32,6 +32,9 @@ import javax.swing.*;
 public class AssignmentToForLoopParameterInspection
         extends ExpressionInspection {
 
+    /** @noinspection PublicField for externalization purposes*/
+    public boolean m_checkForeachParameters = false;
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.display.name");
     }
@@ -50,12 +53,11 @@ public class AssignmentToForLoopParameterInspection
 
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option"), this,
-                                              "m_checkForeachParameters");
-
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "assignment.to.for.loop.parameter.check.foreach.option"),
+                this, "m_checkForeachParameters");
     }
-
-    public boolean m_checkForeachParameters = false;
 
     private class AssignmentToForLoopParameterVisitor
             extends BaseInspectionVisitor {
@@ -158,9 +160,12 @@ public class AssignmentToForLoopParameterInspection
         }
 
         private boolean isInForStatementBody(PsiExpression expression,
-                                                    PsiForStatement statement) {
+                                             PsiForStatement statement) {
             final PsiStatement body = statement.getBody();
-            return body != null && PsiTreeUtil.isAncestor(body, expression, true);
+            if (body == null) {
+                return false;
+            }
+            return PsiTreeUtil.isAncestor(body, expression, true);
         }
     }
 }

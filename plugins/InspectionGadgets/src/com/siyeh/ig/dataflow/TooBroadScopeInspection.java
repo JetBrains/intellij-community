@@ -46,6 +46,9 @@ import javax.swing.*;
 
 public class TooBroadScopeInspection extends StatementInspection
 {
+    static final Class[] SKIP_CLASSES =
+            new Class[] {PsiWhiteSpace.class, PsiComment.class};
+    
     /** @noinspection PublicField for externalization*/
     public boolean m_allowConstructorAsInitializer = false;
     /** @noinspection PublicField for externalization*/
@@ -123,8 +126,6 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiReference[] references =
                     searchHelper.findReferences(
                             variable, variable.getUseScope(), false);
-            final PsiReference firstReference = references[0];
-            final PsiElement referenceElement = firstReference.getElement();
             PsiElement commonParent = ScopeUtils.getCommonParent(references);
             assert commonParent != null;
             final PsiExpression initializer = variable.getInitializer();
@@ -140,6 +141,8 @@ public class TooBroadScopeInspection extends StatementInspection
                     return;
                 }
             }
+            final PsiReference firstReference = references[0];
+            final PsiElement referenceElement = firstReference.getElement();
             final PsiElement firstReferenceScope =
                     ScopeUtils.getParentOfTypes(referenceElement,
                                                 ScopeUtils.TYPES);
@@ -245,8 +248,8 @@ public class TooBroadScopeInspection extends StatementInspection
         throws IncorrectOperationException
         {
             PsiStatement statement =
-                    PsiTreeUtil.getParentOfType(location, PsiStatement.class,
-                                                false);
+                    PsiTreeUtil.getParentOfType(location,
+                            PsiStatement.class, false);
             assert statement != null;
             PsiElement statementParent = statement.getParent();
             while (statementParent instanceof PsiStatement &&
@@ -383,7 +386,7 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiElement blockChild =
                     ScopeUtils.getChildWhichContainsElement(variableScope,
                                                             referenceElement);
-            if (blockChild == null /* || blockChild instanceof JspExpressionStatement*/)  // TODO[Bas] - commented because uncompilable code
+            if (blockChild == null)
             {
                 return;
             }
@@ -416,6 +419,22 @@ public class TooBroadScopeInspection extends StatementInspection
                 {
                     return;
                 }
+            }
+            final String blockChildText = blockChild.getText();
+            if (blockChildText.startsWith("<%=") &&
+                    blockChildText.endsWith("%>"))
+            {
+                // workaround because JspExpressionStatement is not part of
+                // the openapi.
+
+                final PsiElement element =
+                        PsiTreeUtil.skipSiblingsBackward(insertionPoint,
+                                SKIP_CLASSES);
+                if (variable.equals(element))
+                {
+                    return;
+                }
+                return;
             }
             registerVariableError(variable);
         }

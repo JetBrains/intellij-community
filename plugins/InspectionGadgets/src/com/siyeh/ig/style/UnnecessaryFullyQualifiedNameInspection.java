@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,34 +27,39 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
+public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassInspection{
 
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
-    private final UnnecessaryFullyQualifiedNameFix fix =
-            new UnnecessaryFullyQualifiedNameFix();
-
+    /**
+     * @see java.lang.String#concat(String)
+     */
     public String getGroupDisplayName(){
-        return GroupNames.STYLE_GROUP_NAME;
+        return com.intellij.codeInsight.daemon.GroupNames.STYLE_GROUP_NAME;
+    }
+
+    public java.lang.String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.fully.qualified.name.display.name");
     }
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.ignore.option"),
-                this,
-                "m_ignoreJavadoc");
+          com.siyeh.InspectionGadgetsBundle.message(
+                  "unnecessary.fully.qualified.name.ignore.option"),
+                this, "m_ignoreJavadoc");
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "unnecessary.fully.qualified.name.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -63,20 +67,21 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new UnnecessaryFullyQualifiedNameFix();
     }
 
     private static class UnnecessaryFullyQualifiedNameFix
             extends InspectionGadgetsFix{
 
         public String getName(){
-            return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.fully.qualified.name.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final CodeStyleSettingsManager settingsManager =
-                    CodeStyleSettingsManager.getInstance(project);
+                    com.intellij.psi.codeStyle.CodeStyleSettingsManager.getInstance(project);
             final CodeStyleSettings settings =
                     settingsManager.getCurrentSettings();
             final boolean oldUseFQNamesInJavadoc =
@@ -85,9 +90,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             try{
                 settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
                 settings.USE_FQ_CLASS_NAMES = false;
-                final PsiJavaCodeReferenceElement reference =
-                        (PsiJavaCodeReferenceElement) descriptor
-                                .getPsiElement();
+                final com.intellij.psi.PsiJavaCodeReferenceElement reference =
+                        (PsiJavaCodeReferenceElement)
+                                descriptor.getPsiElement();
                 final PsiManager psiManager = reference.getManager();
                 final CodeStyleManager styleManager =
                         psiManager.getCodeStyleManager();
@@ -105,15 +110,20 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
         public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference){
             super.visitReferenceElement(reference);
-            final String text = reference.getText();
-            if(text.indexOf((int) '.') < 0){
+            if (!reference.isQualified()) {
                 return;
             }
-
-            if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
+            final PsiElement parent = reference.getParent();
+            if (parent instanceof PsiMethodCallExpression ||
+                    parent instanceof PsiAssignmentExpression ||
+                    parent instanceof PsiVariable) {
                 return;
             }
-
+            final PsiElement element = PsiTreeUtil.getParentOfType(reference,
+                    PsiImportStatementBase.class, PsiPackageStatement.class);
+            if (element != null) {
+                return;
+            }
             if(m_ignoreJavadoc){
                 final PsiElement containingComment =
                         PsiTreeUtil.getParentOfType(reference,
@@ -126,16 +136,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             if(!(psiElement instanceof PsiClass)){
                 return;
             }
-            final PsiReferenceParameterList typeParameters =
-                    reference.getParameterList();
-            if(typeParameters == null){
-                return;
-            }
-            typeParameters.accept(this);
             final PsiClass aClass = (PsiClass) psiElement;
             final PsiClass outerClass =
                     ClassUtils.getOutermostContainingClass(aClass);
             final String fqName = outerClass.getQualifiedName();
+            final String text = reference.getText();
             if(!text.startsWith(fqName)){
                 return;
             }

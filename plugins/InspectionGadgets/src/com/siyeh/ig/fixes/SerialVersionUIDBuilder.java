@@ -263,7 +263,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             while(unwrappedType instanceof PsiArrayType){
                 final PsiArrayType arrayType = (PsiArrayType) unwrappedType;
                 unwrappedType = arrayType.getComponentType();
-                fieldNameBuffer.append("$");
+                fieldNameBuffer.append('$');
             }
         } else{
             fieldNameBuffer = new StringBuffer(CLASS_ACCESS_METHOD_PREFIX);

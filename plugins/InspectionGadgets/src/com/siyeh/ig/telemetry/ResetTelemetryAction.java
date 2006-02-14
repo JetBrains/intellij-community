@@ -15,22 +15,27 @@
  */
 package com.siyeh.ig.telemetry;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.CommonBundle;
 import com.siyeh.InspectionGadgetsBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class ResetTelemetryAction extends AnAction{
+    
     private final InspectionGadgetsTelemetry telemetry;
     private final TelemetryDisplay display;
 
     private static final Icon resetIcon =
             IconHelper.getIcon("/actions/reset.png");
-    public ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
+
+    ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
                                 TelemetryDisplay display){
-        super(CommonBundle.message("button.reset") , InspectionGadgetsBundle.message("action.reset.telemetry.description"), resetIcon);
+        super(CommonBundle.message("button.reset"),
+                InspectionGadgetsBundle.message(
+                        "action.reset.telemetry.description"),
+                resetIcon);
         this.telemetry = telemetry;
         this.display = display;
     }

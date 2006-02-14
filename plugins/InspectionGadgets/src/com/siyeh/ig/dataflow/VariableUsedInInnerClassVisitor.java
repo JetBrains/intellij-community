@@ -32,10 +32,11 @@ class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
 
     public void visitElement(@NotNull PsiElement element)
     {
-        if(!usedInInnerClass)
+        if (usedInInnerClass)
         {
-            super.visitElement(element);
+            return;
         }
+        super.visitElement(element);
     }
 
     public void visitAnonymousClass(

@@ -128,7 +128,7 @@ public class ExceptionUtils{
     private static boolean tryStatementThrowsException(
             PsiTryStatement tryStatement){
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if(catchBlocks == null || catchBlocks.length == 0){
+        if(catchBlocks.length == 0){
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
             if(blockThrowsException(tryBlock)){
                 return true;
@@ -197,9 +197,6 @@ public class ExceptionUtils{
                 return;
             }
             final PsiReferenceList throwsList = method.getThrowsList();
-            if(throwsList == null){
-                return;
-            }
             final PsiManager psiManager = expression.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             final PsiJavaCodeReferenceElement[] list =
@@ -222,9 +219,6 @@ public class ExceptionUtils{
                 return;
             }
             final PsiReferenceList throwsList = method.getThrowsList();
-            if(throwsList == null){
-                return;
-            }
             final PsiManager psiManager = expression.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             final PsiJavaCodeReferenceElement[] list =

@@ -299,12 +299,38 @@ public class CollectionUtils{
         }
         final PsiNewExpression expression = (PsiNewExpression) initializer;
         final PsiExpression[] dimensions = expression.getArrayDimensions();
-        if(dimensions.length != 1){
-            return false;
+        if(dimensions.length == 0){
+            PsiArrayInitializerExpression arrayInitializer =
+                    expression.getArrayInitializer();
+            if (arrayInitializer == null) {
+                return false;
+            }
+            PsiExpression[] initializers =
+                    arrayInitializer.getInitializers();
+            while (initializers.length == 1) {
+                if (!(initializers[0] instanceof
+                        PsiArrayInitializerExpression)) {
+                    return false;
+                }
+                arrayInitializer =
+                        (PsiArrayInitializerExpression)initializers[0];
+                initializers = arrayInitializer.getInitializers();
+            }
+            if (initializers.length == 0) {
+                return true;
+            } else if (initializers.length == 1) {
+
+            } else {
+                return false;
+            }
         }
-        final PsiExpression dimension = dimensions[0];
-        final String dimensionText = dimension.getText();
-        return "0".equals(dimensionText);
+        for (PsiExpression dimension : dimensions) {
+            final String dimensionText = dimension.getText();
+            if (!"0".equals(dimensionText)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static boolean isArrayOrCollectionField(
@@ -318,24 +344,26 @@ public class CollectionUtils{
         if(type == null){
             return false;
         }
-        boolean isArray = false;
-        if(type.getArrayDimensions() > 0){
-            isArray = true;
-        } else if (!isCollectionClassOrInterface(type)){
+        final PsiClass valueContainingClass =
+                PsiTreeUtil.getParentOfType(value, PsiClass.class);
+        if(valueContainingClass == null){
             return false;
+        }
+        boolean isArray = false;
+        if (!isCollectionClassOrInterface(type)) {
+            if (type instanceof PsiArrayType) {
+                isArray = true;
+            } else {
+                return false;
+            }
         }
         final PsiElement referent = fieldReference.resolve();
         if(!(referent instanceof PsiField)){
             return false;
         }
         final PsiField field = (PsiField) referent;
-        if (isArray){
-            return !isConstantArrayOfZeroSize(field);
-        }
-        final PsiClass valueContainingClass =
-                PsiTreeUtil.getParentOfType(value, PsiClass.class);
-        if(valueContainingClass == null){
-            return false;
+        if (isArray && isConstantArrayOfZeroSize(field)) {
+            return false;           
         }
         final PsiClass fieldContainingClass = field.getContainingClass();
         return valueContainingClass.equals(fieldContainingClass);

@@ -17,13 +17,13 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
@@ -45,11 +45,11 @@ public class RefusedBequestInspection extends MethodInspection{
     }
 
     public JComponent createOptionsPanel() {
-      //noinspection HardCodedStringLiteral
-      return new SingleCheckboxOptionsPanel(
-              "<html>" +
-              InspectionGadgetsBundle.message("reqused.bequest.ignore.empty.super.methods.text") +
-              "</html>", this, "ignoreEmptySuperMethods");
+        //noinspection HardCodedStringLiteral
+        return new SingleCheckboxOptionsPanel(
+                "<html>" +
+                        InspectionGadgetsBundle.message("reqused.bequest.ignore.empty.super.methods.text") +
+                        "</html>", this, "ignoreEmptySuperMethods");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -64,18 +64,8 @@ public class RefusedBequestInspection extends MethodInspection{
             if(body == null){
                 return;
             }
-            PsiMethod leastConcreteSuperMethod = null;
-          final PsiMethod[] superMethods =
-                  method.findSuperMethods(true);
-            for(final PsiMethod superMethod : superMethods){
-                final PsiClass containingClass =
-                        superMethod.getContainingClass();
-                if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                   !containingClass.isInterface()){
-                    leastConcreteSuperMethod = superMethod;
-                    break;
-                }
-            }
+            final PsiMethod leastConcreteSuperMethod =
+                    getLeastConcreteSuperMethod(method);
             if(leastConcreteSuperMethod == null){
                 return;
             }
@@ -99,6 +89,22 @@ public class RefusedBequestInspection extends MethodInspection{
             registerMethodError(method);
         }
 
+        @Nullable
+        private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
+            PsiMethod leastConcreteSuperMethod = null;
+            final PsiMethod[] superMethods = method.findSuperMethods(true);
+            for(final PsiMethod superMethod : superMethods){
+                final PsiClass containingClass =
+                        superMethod.getContainingClass();
+                if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                        !containingClass.isInterface()){
+                    leastConcreteSuperMethod = superMethod;
+                    return leastConcreteSuperMethod;
+                }
+            }
+            return leastConcreteSuperMethod;
+        }
+
         private boolean containsSuperCall(PsiCodeBlock body,
                                           PsiMethod method){
             final SuperCallVisitor visitor = new SuperCallVisitor(method);
@@ -111,12 +117,11 @@ public class RefusedBequestInspection extends MethodInspection{
 
         private PsiMethod methodToSearchFor;
         private boolean hasSuperCall = false;
-      @NonNls private static final String SUPER = "super";
 
-      SuperCallVisitor(PsiMethod methodToSearchFor){
-          super();
-          this.methodToSearchFor = methodToSearchFor;
-      }
+        SuperCallVisitor(PsiMethod methodToSearchFor){
+            super();
+            this.methodToSearchFor = methodToSearchFor;
+        }
 
         public void visitElement(@NotNull PsiElement element){
             if(!hasSuperCall){
@@ -132,16 +137,13 @@ public class RefusedBequestInspection extends MethodInspection{
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if(qualifier == null){
                 return;
             }
             final String text = qualifier.getText();
-            if(!SUPER.equals(text)){
+            if(!PsiKeyword.SUPER.equals(text)){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();

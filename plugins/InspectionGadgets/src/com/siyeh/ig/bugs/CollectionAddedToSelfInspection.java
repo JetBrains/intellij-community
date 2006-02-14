@@ -28,44 +28,47 @@ import org.jetbrains.annotations.NotNull;
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("collection.added.to.self.display.name");
+        return InspectionGadgetsBundle.message(
+                "collection.added.to.self.display.name");
     }
 
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("collection.added.to.self.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "collection.added.to.self.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new CollectionAddedToSelfVisitor();
     }
 
-    private static class CollectionAddedToSelfVisitor extends BaseInspectionVisitor {
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+    private static class CollectionAddedToSelfVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            @NonNls final String methodName = methodExpression.getReferenceName();
-            if (!"put".equals(methodName) &&
-                !"set".equals(methodName) &&
+            final PsiReferenceExpression methodExpression =
+                    call.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"put".equals(methodName) && !"set".equals(methodName) &&
                 !"add".equals(methodName)) {
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if(qualifier ==null)
-            {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(qualifier ==null) {
                 return;
             }
-            if(!(qualifier instanceof PsiReferenceExpression))
-            {
+            if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if(!(referent instanceof PsiVariable))
-            {
+            if(!(referent instanceof PsiVariable)){
                 return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
@@ -76,30 +79,23 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
                     hasMatchingArg = true;
                 }
             }
-            if(!hasMatchingArg)
-            {
-                return ;
+            if(!hasMatchingArg){
+                return;
             }
             final PsiType qualifierType = qualifier.getType();
             if(!(qualifierType instanceof PsiClassType)){
                 return ;
             }
-
-            final PsiClass qualifierClass =
-                    ((PsiClassType) qualifierType).resolve();
-            if(qualifierClass == null)
-            {
+            final PsiClassType classType = (PsiClassType)qualifierType;
+            final PsiClass qualifierClass = classType.resolve();
+            if(qualifierClass == null){
                 return;
             }
             if(!ClassUtils.isSubclass(qualifierClass, "java.util.Collection") &&
-               !ClassUtils.isSubclass(qualifierClass,
-                                      "java.util.Map")){
-
+               !ClassUtils.isSubclass(qualifierClass, "java.util.Map")) {
                 return;
             }
             registerError(qualifier);
         }
-
     }
-
 }

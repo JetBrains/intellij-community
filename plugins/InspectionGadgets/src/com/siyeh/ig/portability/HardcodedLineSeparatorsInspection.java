@@ -26,11 +26,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
-    private static final int NEW_LINE_CHAR = (int) '\n';
-    private static final int RETURN_CHAR = (int) '\r';
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("hardcoded.line.separator.display.name");
+        return InspectionGadgetsBundle.message(
+                "hardcoded.line.separator.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -42,16 +41,22 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("hardcoded.line.separator.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "hardcoded.line.separator.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new HardcodedLineSeparatorsVisitor();
     }
 
-    private static class HardcodedLineSeparatorsVisitor extends BaseInspectionVisitor {
+    private static class HardcodedLineSeparatorsVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        private static final int NEW_LINE_CHAR = (int) '\n';
+        private static final int RETURN_CHAR = (int) '\r';
+
+        public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (type == null) {
@@ -71,8 +76,8 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
                 if (value == null) {
                     return;
                 }
-                if ((value) == NEW_LINE_CHAR
-                        || (value) == RETURN_CHAR) {
+                if (value == NEW_LINE_CHAR
+                        || value == RETURN_CHAR) {
                     registerError(expression);
                 }
             }

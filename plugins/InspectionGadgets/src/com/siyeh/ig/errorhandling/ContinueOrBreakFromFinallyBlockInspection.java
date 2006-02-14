@@ -18,7 +18,6 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiContinueStatement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
@@ -28,48 +27,48 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ContinueOrBreakFromFinallyBlockVisitor();
-  }
-
-  private static class ContinueOrBreakFromFinallyBlockVisitor extends StatementInspectionVisitor {
-
-    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      super.visitContinueStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-        return;
-      }
-      final PsiStatement continuedStatement = statement.findContinuedStatement();
-      if (continuedStatement == null) {
-        return;
-      }
-      if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
-    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-      super.visitBreakStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-        return;
-      }
-      final PsiStatement exitedStatement = statement.findExitedStatement();
-      if (exitedStatement == null) {
-        return;
-      }
-      if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
-        return;
-      }
-      registerStatementError(statement);
+    public boolean isEnabledByDefault() {
+        return true;
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ContinueOrBreakFromFinallyBlockVisitor();
+    }
+
+    private static class ContinueOrBreakFromFinallyBlockVisitor extends StatementInspectionVisitor {
+
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+            super.visitContinueStatement(statement);
+            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+                return;
+            }
+            final PsiStatement continuedStatement = statement.findContinuedStatement();
+            if (continuedStatement == null) {
+                return;
+            }
+            if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+            super.visitBreakStatement(statement);
+            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+                return;
+            }
+            final PsiStatement exitedStatement = statement.findExitedStatement();
+            if (exitedStatement == null) {
+                return;
+            }
+            if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
+                return;
+            }
+            registerStatementError(statement);
+        }
+    }
 }

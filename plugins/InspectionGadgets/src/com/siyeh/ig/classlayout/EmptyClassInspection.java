@@ -41,7 +41,8 @@ public class EmptyClassInspection extends ClassInspection {
       if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
         return;
       }
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter ||
@@ -49,15 +50,15 @@ public class EmptyClassInspection extends ClassInspection {
         return;
       }
       final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors != null && constructors.length > 0) {
+            if (constructors.length > 0) {
         return;
       }
       final PsiMethod[] methods = aClass.getMethods();
-      if (methods != null && methods.length > 0) {
+            if (methods.length > 0) {
         return;
       }
       final PsiField[] fields = aClass.getFields();
-      if (fields != null && fields.length > 0) {
+            if (fields.length > 0) {
         return;
       }
       registerClassError(aClass);

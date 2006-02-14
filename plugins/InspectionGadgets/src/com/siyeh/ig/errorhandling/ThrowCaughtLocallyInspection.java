@@ -24,45 +24,52 @@ import com.siyeh.ig.StatementInspectionVisitor;
 
 public class ThrowCaughtLocallyInspection extends StatementInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.ERRORHANDLING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThrowCaughtLocallyVisitor();
-  }
-
-  private static class ThrowCaughtLocallyVisitor extends StatementInspectionVisitor {
-
-    public void visitThrowStatement(PsiThrowStatement statement) {
-      super.visitThrowStatement(statement);
-      final PsiExpression exception = statement.getException();
-      if (exception == null) {
-        return;
-      }
-      final PsiType exceptionType = exception.getType();
-      if (exceptionType == null) {
-        return;
-      }
-
-      PsiTryStatement containingTryStatement =
-        PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class);
-      while (containingTryStatement != null) {
-        final PsiCodeBlock tryBlock = containingTryStatement.getTryBlock();
-        if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
-          final PsiParameter[] catchBlockParameters =
-            containingTryStatement.getCatchBlockParameters();
-          for (final PsiParameter parameter : catchBlockParameters) {
-            final PsiType parameterType = parameter.getType();
-            if (parameterType.isAssignableFrom(exceptionType)) {
-              registerStatementError(statement);
-              return;
-            }
-          }
-        }
-        containingTryStatement =
-          PsiTreeUtil.getParentOfType(containingTryStatement, PsiTryStatement.class);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThrowCaughtLocallyVisitor();
+    }
+
+    private static class ThrowCaughtLocallyVisitor
+            extends StatementInspectionVisitor {
+
+        public void visitThrowStatement(PsiThrowStatement statement) {
+            super.visitThrowStatement(statement);
+            final PsiExpression exception = statement.getException();
+            if (exception == null) {
+                return;
+            }
+            final PsiType exceptionType = exception.getType();
+            if (exceptionType == null) {
+                return;
+            }
+
+            PsiTryStatement containingTryStatement =
+                    PsiTreeUtil.getParentOfType(statement,
+                            PsiTryStatement.class);
+            while (containingTryStatement != null) {
+                final PsiCodeBlock tryBlock =
+                        containingTryStatement.getTryBlock();
+                if (tryBlock == null) {
+                    return;
+                }
+                if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
+                    final PsiParameter[] catchBlockParameters =
+                            containingTryStatement.getCatchBlockParameters();
+                    for (final PsiParameter parameter : catchBlockParameters) {
+                        final PsiType parameterType = parameter.getType();
+                        if (parameterType.isAssignableFrom(exceptionType)) {
+                            registerStatementError(statement);
+                            return;
+                        }
+                    }
+                }
+                containingTryStatement =
+                        PsiTreeUtil.getParentOfType(containingTryStatement,
+                                PsiTryStatement.class);
+            }
+        }
+    }
 }

@@ -20,8 +20,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
+
     private boolean assigned = false;
-    private final @NotNull PsiVariable variable;
+    @NotNull private final PsiVariable variable;
 
     public VariableAssignedVisitor(@NotNull PsiVariable variable){
         super();
@@ -34,7 +35,8 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
+    public void visitAssignmentExpression(
+            @NotNull PsiAssignmentExpression assignment){
         if(assigned){
             return;
         }
@@ -45,15 +47,13 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression){
+    public void visitPrefixExpression(
+            @NotNull PsiPrefixExpression prefixExpression){
         if(assigned){
             return;
         }
         super.visitPrefixExpression(prefixExpression);
         final PsiJavaToken operationSign = prefixExpression.getOperationSign();
-        if(operationSign == null){
-            return;
-        }
         final IElementType tokenType = operationSign.getTokenType();
         if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                    !tokenType.equals(JavaTokenType.MINUSMINUS)){
@@ -65,15 +65,13 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression postfixExpression){
+    public void visitPostfixExpression(
+            @NotNull PsiPostfixExpression postfixExpression){
         if(assigned){
             return;
         }
         super.visitPostfixExpression(postfixExpression);
         final PsiJavaToken operationSign = postfixExpression.getOperationSign();
-        if(operationSign == null){
-            return;
-        }
         final IElementType tokenType = operationSign.getTokenType();
         if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                    !tokenType.equals(JavaTokenType.MINUSMINUS)){

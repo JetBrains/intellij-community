@@ -38,15 +38,15 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
             return true;
         }
-        if (InheritanceUtil.isInheritorOrSelf(innerClass, aClass, true)) {
+        if (InheritanceUtil.isCorrectDescendant(innerClass, aClass, true)) {
             return true;
         }
         PsiClass classScope = aClass;
         final PsiClass outerClass =
                 PsiTreeUtil.getParentOfType(innerClass, PsiClass.class);
         while (classScope != null) {
-            if (InheritanceUtil.isInheritorOrSelf(outerClass,
-                    classScope, true)) {
+            if (InheritanceUtil.isCorrectDescendant(outerClass, classScope,
+                    true)) {
                 return false;
             }
             final PsiElement scope = classScope.getScope();

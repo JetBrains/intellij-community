@@ -32,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class StringEqualityInspection extends ExpressionInspection {
-    private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("string.comparison.display.name");
+        return InspectionGadgetsBundle.message(
+                "string.comparison.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -47,7 +47,8 @@ public class StringEqualityInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("string.comparison.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "string.comparison.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -55,12 +56,14 @@ public class StringEqualityInspection extends ExpressionInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new EqualityToEqualsFix();
     }
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
+
         public String getName() {
-            return InspectionGadgetsBundle.message("string.comparison.replace.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "string.comparison.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -68,7 +71,9 @@ public class StringEqualityInspection extends ExpressionInspection {
             final PsiElement comparisonToken = descriptor.getPsiElement();
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
-            assert expression != null;
+            if (expression == null) {
+                return;
+            }
             boolean negated=false;
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -76,16 +81,28 @@ public class StringEqualityInspection extends ExpressionInspection {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression strippedLhs =
+                    ParenthesesUtils.stripParentheses(lhs);
+            if (strippedLhs == null) {
+                return;
+            }
             final PsiExpression rhs = expression.getROperand();
-
-            final PsiExpression strippedRhs = ParenthesesUtils.stripParentheses(rhs);
-
+            if (rhs == null) {
+                return;
+            }
+            final PsiExpression strippedRhs =
+                    ParenthesesUtils.stripParentheses(rhs);
+            if (strippedRhs == null) {
+                return;
+            }
             @NonNls final String expString;
-            if (ParenthesesUtils.getPrecendence(strippedLhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-                expString = '(' + strippedLhs.getText() + ").equals(" + strippedRhs.getText() + ')';
+            if (ParenthesesUtils.getPrecendence(strippedLhs) >
+                ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+                expString = '(' + strippedLhs.getText() + ").equals(" +
+                            strippedRhs.getText() + ')';
             } else {
-                expString = strippedLhs.getText() + ".equals(" + strippedRhs.getText() + ')';
+                expString = strippedLhs.getText() + ".equals(" +
+                            strippedRhs.getText() + ')';
             }
             final String newExpression;
             if (negated) {
@@ -99,7 +116,8 @@ public class StringEqualityInspection extends ExpressionInspection {
 
     private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
@@ -119,7 +137,9 @@ public class StringEqualityInspection extends ExpressionInspection {
             if (PsiKeyword.NULL.equals(lhsText)) {
                 return;
             }
-            assert rhs != null;
+            if (rhs == null) {
+                return;
+            }
             final String rhsText = rhs.getText();
             if (PsiKeyword.NULL.equals(rhsText)) {
                 return;
@@ -139,5 +159,4 @@ public class StringEqualityInspection extends ExpressionInspection {
             return TypeUtils.isJavaLangString(lhsType);
         }
     }
-
 }

@@ -23,29 +23,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticArrayFieldInspection extends FieldInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.SECURITY_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new PublicStaticArrayFieldVisitor();
-  }
-
-  private static class PublicStaticArrayFieldVisitor extends BaseInspectionVisitor {
-    public void visitField(@NotNull PsiField field) {
-      super.visitField(field);
-      if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final PsiType type = field.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return;
-      }
-      registerFieldError(field);
+    public String getGroupDisplayName() {
+        return GroupNames.SECURITY_GROUP_NAME;
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new PublicStaticArrayFieldVisitor();
+    }
+
+    private static class PublicStaticArrayFieldVisitor extends BaseInspectionVisitor {
+        public void visitField(@NotNull PsiField field) {
+            super.visitField(field);
+            if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
+            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            final PsiType type = field.getType();
+            if (!(type instanceof PsiArrayType)) {
+                return;
+            }
+            registerFieldError(field);
+        }
+    }
 }

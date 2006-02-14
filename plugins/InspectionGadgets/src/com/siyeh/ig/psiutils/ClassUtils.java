@@ -21,8 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -82,14 +82,17 @@ public class ClassUtils {
         super();
     }
 
-    public static boolean isSubclass(@NotNull PsiClass aClass,
-                                     String ancestorName) {
+    public static boolean isSubclass(@Nullable PsiClass aClass,
+                                     @NonNls String ancestorName) {
+        if (aClass == null) {
+            return false;
+        }
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClass ancestorClass =
                 psiManager.findClass(ancestorName, scope);
-        return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
+        return InheritanceUtil.isCorrectDescendant(aClass, ancestorClass, true);
     }
 
     public static boolean isPrimitive(PsiType type) {
@@ -174,14 +177,15 @@ public class ClassUtils {
         return primitiveNumericTypes.contains(type);
     }
 
+    // todo remove me! PsiUtil.isInnerClass exists
     public static boolean isInnerClass(PsiClass aClass) {
         final PsiClass parentClass = getContainingClass(aClass);
         return parentClass != null;
     }
 
     @Nullable
-    public static PsiClass getContainingClass(PsiElement aClass) {
-        return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+    public static PsiClass getContainingClass(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, PsiClass.class);
     }
 
     public static PsiClass getOutermostContainingClass(PsiClass aClass) {

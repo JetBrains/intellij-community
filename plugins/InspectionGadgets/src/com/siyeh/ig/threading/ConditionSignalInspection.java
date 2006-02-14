@@ -68,7 +68,7 @@ public class ConditionSignalInspection extends ExpressionInspection {
       else {
         final String qualifierText = qualifier.getText();
         replaceExpression(methodExpression,
-                          qualifierText + "." + signalAll);
+                          qualifierText + '.' + signalAll);
       }
     }
   }

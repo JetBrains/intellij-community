@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +33,8 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     private InspectionGadgetsFix fix = new ArrayEqualsFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("equals.called.on.array.display.name");
+        return InspectionGadgetsBundle.message(
+                "equals.called.on.array.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -40,7 +42,8 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-      return InspectionGadgetsBundle.message("equals.called.on.array.problem.descriptor");
+      return InspectionGadgetsBundle.message(
+              "equals.called.on.array.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -50,7 +53,8 @@ public class ArrayEqualsInspection extends ExpressionInspection{
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
 
         public String getName(){
-          return InspectionGadgetsBundle.message("equals.called.on.array.replace.quickfix");
+          return InspectionGadgetsBundle.message(
+                  "equals.called.on.array.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -63,10 +67,10 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) expression.getParent();
             final PsiExpression qualifier = expression.getQualifierExpression();
+            assert qualifier != null;
             final String qualifierText = qualifier.getText();
             assert call != null;
             final PsiExpressionList argumentList = call.getArgumentList();
-            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final String argText = args[0].getText();
             @NonNls final String newExpressionText =
@@ -85,14 +89,16 @@ public class ArrayEqualsInspection extends ExpressionInspection{
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!IsEqualsUtil.isEquals(expression)){
+            if(!MethodCallUtils.isEqualsCall(expression)){
                 return;
             }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpressionList argumentList = expression.getArgumentList();
-            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length == 0) {
+                return;
+            }
             final PsiExpression arg = args[0];
             if(arg == null){
                 return;

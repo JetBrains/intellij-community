@@ -30,55 +30,53 @@ import javax.swing.*;
 
 public class SerializableInnerClassWithNonSerializableOuterClassInspection extends ClassInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreSerializableDueToInheritance = true;
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreSerializableDueToInheritance = true;
 
-  public String getGroupDisplayName() {
-    return GroupNames.SERIALIZATION_GROUP_NAME;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("serializable.inner.class.with.non.serializable.outer.class.ignore.option"),
-                                          this, "m_ignoreSerializableDueToInheritance");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SerializableDefinesSerialVersionUIDVisitor();
-  }
-
-  private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (m_ignoreSerializableDueToInheritance) {
-        if (!SerializationUtils.isDirectlySerializable(aClass)) {
-          return;
-        }
-      }
-      else {
-        if (!SerializationUtils.isSerializable(aClass)) {
-          return;
-        }
-      }
-      if (SerializationUtils.isSerializable(containingClass)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-  }
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("serializable.inner.class.with.non.serializable.outer.class.ignore.option"),
+                this, "m_ignoreSerializableDueToInheritance");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new SerializableDefinesSerialVersionUIDVisitor();
+    }
+
+    private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            final PsiClass containingClass = aClass.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            if (m_ignoreSerializableDueToInheritance) {
+                if (!SerializationUtils.isDirectlySerializable(aClass)) {
+                    return;
+                }
+            } else {
+                if (!SerializationUtils.isSerializable(aClass)) {
+                    return;
+                }
+            }
+            if (SerializationUtils.isSerializable(containingClass)) {
+                return;
+            }
+            registerClassError(aClass);
+        }
+    }
 }

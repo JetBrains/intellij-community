@@ -26,69 +26,63 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends ClassInspection {
 
-  public String getID() {
-    return "ClassExplicitlyAnnotation";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiClass containingClass = ClassUtils.getContainingClass(location);
-    assert containingClass != null;
-    return InspectionGadgetsBundle.message("extends.annotation.problem.descriptor", containingClass.getName());
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ExtendsAnnotationVisitor();
-  }
-
-  private static class ExtendsAnnotationVisitor extends BaseInspectionVisitor {
-
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      final PsiManager manager = aClass.getManager();
-      final LanguageLevel languageLevel =
-        manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      if (aClass.isAnnotationType()) {
-        return;
-      }
-      final PsiReferenceList extendsList = aClass.getExtendsList();
-      if (extendsList != null) {
-        final PsiJavaCodeReferenceElement[] elements =
-          extendsList.getReferenceElements();
-        for (final PsiJavaCodeReferenceElement element : elements) {
-          final PsiElement referent = element.resolve();
-          if (referent instanceof PsiClass) {
-            ((PsiClass)referent).isAnnotationType();
-            if (((PsiClass)referent).isAnnotationType()) {
-              registerError(element);
-            }
-          }
-        }
-      }
-      final PsiReferenceList implementsList = aClass.getImplementsList();
-      if (implementsList != null) {
-        final PsiJavaCodeReferenceElement[] elements =
-          implementsList.getReferenceElements();
-        for (final PsiJavaCodeReferenceElement element : elements) {
-          final PsiElement referent = element.resolve();
-          if (referent instanceof PsiClass) {
-            ((PsiClass)referent).isAnnotationType();
-            if (((PsiClass)referent).isAnnotationType()) {
-              registerError(element);
-            }
-          }
-        }
-      }
+    public String getID() {
+        return "ClassExplicitlyAnnotation";
     }
-  }
+
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    public String buildErrorString(PsiElement location) {
+        final PsiClass containingClass = ClassUtils.getContainingClass(location);
+        assert containingClass != null;
+        return InspectionGadgetsBundle.message("extends.annotation.problem.descriptor",
+                containingClass.getName());
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExtendsAnnotationVisitor();
+    }
+
+    private static class ExtendsAnnotationVisitor extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            final PsiManager manager = aClass.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return;
+            }
+            if (aClass.isAnnotationType()) {
+                return;
+            }
+            final PsiReferenceList extendsList = aClass.getExtendsList();
+            checkReferenceList(extendsList);
+            final PsiReferenceList implementsList = aClass.getImplementsList();
+            checkReferenceList(implementsList);
+        }
+
+        private void checkReferenceList(PsiReferenceList referenceList) {
+            if (referenceList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] elements =
+                    referenceList.getReferenceElements();
+            for (final PsiJavaCodeReferenceElement element : elements) {
+                final PsiElement referent = element.resolve();
+                if (referent instanceof PsiClass) {
+                    final PsiClass psiClass = (PsiClass) referent;
+                    psiClass.isAnnotationType();
+                    if(psiClass.isAnnotationType()){
+                        registerError(element);
+                    }
+                }
+            }
+        }
+    }
 }

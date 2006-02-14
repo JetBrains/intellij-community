@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.telemetry;
 
-import javax.swing.*;
-
+import javax.swing.JComponent;
 
 public interface TelemetryDisplay{
 
     JComponent getContentPane();
 
     void update();
-
 }

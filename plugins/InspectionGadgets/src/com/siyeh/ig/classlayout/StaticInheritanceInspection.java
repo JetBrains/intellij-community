@@ -31,118 +31,120 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceInspection extends ClassInspection {
 
-  private final StaticInheritanceFix fix = new StaticInheritanceFix();
+    private final StaticInheritanceFix fix = new StaticInheritanceFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  public static class StaticInheritanceFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
-      final String referencedClassName = referenceElement.getText();
-      final PsiClass iface = (PsiClass)referenceElement.resolve();
-      assert iface != null;
-      final PsiField[] allFields = iface.getAllFields();
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
+    }
 
-      final PsiClass implementingClass =
-        PsiTreeUtil.getParentOfType(referenceElement,
-                                    PsiClass.class);
-      final PsiManager manager = referenceElement.getManager();
-      final PsiSearchHelper searchHelper = manager.getSearchHelper();
-      assert implementingClass != null;
-      final SearchScope searchScope = implementingClass.getUseScope();
-      for (final PsiField field : allFields) {
-        final PsiReference[] references =
-          searchHelper.findReferences(field, searchScope, false);
+    private static class StaticInheritanceFix extends InspectionGadgetsFix {
 
-        for (PsiReference reference1 : references) {
-          if (!(reference1 instanceof PsiReferenceExpression)) {
-            continue;
-          }
-          final PsiReferenceExpression reference =
-            (PsiReferenceExpression)reference1;
-          if (reference.isQualified()) {
-            final PsiExpression qualifier =
-              reference.getQualifierExpression();
-            final String referenceName =
-              reference.getReferenceName();
-            if (qualifier instanceof PsiReferenceExpression) {
-              final PsiElement referent =
-                ((PsiReferenceExpression)qualifier).resolve();
-              if (referent != null && !referent.equals(iface)) {
-                replaceExpression(reference,
-                                  referencedClassName + '.' +
-                                  referenceName);
-              }
-            }
-            else {
-              replaceExpression(reference,
+        public String getName() {
+            return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
+            final String referencedClassName = referenceElement.getText();
+            final PsiClass iface = (PsiClass)referenceElement.resolve();
+            assert iface != null;
+            final PsiField[] allFields = iface.getAllFields();
+
+            final PsiClass implementingClass =
+                    PsiTreeUtil.getParentOfType(referenceElement,
+                            PsiClass.class);
+            final PsiManager manager = referenceElement.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            assert implementingClass != null;
+            final SearchScope searchScope = implementingClass.getUseScope();
+            for (final PsiField field : allFields) {
+                final PsiReference[] references =
+                        searchHelper.findReferences(field, searchScope, false);
+
+                for (PsiReference reference1 : references) {
+                    if (!(reference1 instanceof PsiReferenceExpression)) {
+                        continue;
+                    }
+                    final PsiReferenceExpression reference =
+                            (PsiReferenceExpression)reference1;
+                    if (reference.isQualified()) {
+                        final PsiExpression qualifier =
+                                reference.getQualifierExpression();
+                        final String referenceName =
+                                reference.getReferenceName();
+                        if (qualifier instanceof PsiReferenceExpression) {
+                            final PsiElement referent =
+                                    ((PsiReference)qualifier).resolve();
+                            if (referent != null && !referent.equals(iface)) {
+                                replaceExpression(reference,
+                                        referencedClassName + '.' +
+                                                referenceName);
+                            }
+                        }
+                        else {
+                            replaceExpression(reference,
+                                    referencedClassName + '.' +
+                                            referenceName);
+                        }
+                    }
+                    else {
+                        final String referenceText = reference.getText();
+                        replaceExpression(reference,
                                 referencedClassName + '.' +
-                                referenceName);
+                                        referenceText);
+                    }
+                }
             }
-          }
-          else {
-            final String referenceText = reference.getText();
-            replaceExpression(reference,
-                              referencedClassName + '.' +
-                              referenceText);
-          }
+            deleteElement(referenceElement);
         }
-      }
-      deleteElement(referenceElement);
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StaticInheritanceVisitor();
-  }
-
-  private static class StaticInheritanceVisitor extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      final PsiReferenceList implementsList = aClass.getImplementsList();
-      if (implementsList == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] refs =
-        implementsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement ref : refs) {
-        final PsiClass iface = (PsiClass)ref.resolve();
-        if (iface != null) {
-          if (interfaceContainsOnlyConstants(iface)) {
-            registerError(ref);
-          }
-        }
-      }
     }
 
-    private boolean interfaceContainsOnlyConstants(PsiClass iface) {
-      if (iface.getAllFields().length == 0) {
-        // ignore it, it's either a true interface or just a marker
-        return false;
-      }
-      if (iface.getMethods().length != 0) {
-        return false;
-      }
-      final PsiClass[] parentInterfaces = iface.getInterfaces();
-      for (final PsiClass parentInterface : parentInterfaces) {
-        if (!interfaceContainsOnlyConstants(parentInterface)) {
-          return false;
-        }
-      }
-      return true;
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticInheritanceVisitor();
     }
-  }
+
+    private static class StaticInheritanceVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+            final PsiReferenceList implementsList = aClass.getImplementsList();
+            if (implementsList == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] refs =
+                    implementsList.getReferenceElements();
+            for (final PsiJavaCodeReferenceElement ref : refs) {
+                final PsiClass iface = (PsiClass)ref.resolve();
+                if (iface != null) {
+                    if (interfaceContainsOnlyConstants(iface)) {
+                        registerError(ref);
+                    }
+                }
+            }
+        }
+
+        private static boolean interfaceContainsOnlyConstants(PsiClass iface) {
+            if (iface.getAllFields().length == 0) {
+                // ignore it, it's either a true interface or just a marker
+                return false;
+            }
+            if (iface.getMethods().length != 0) {
+                return false;
+            }
+            final PsiClass[] parentInterfaces = iface.getInterfaces();
+            for (final PsiClass parentInterface : parentInterfaces) {
+                if (!interfaceContainsOnlyConstants(parentInterface)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
 }

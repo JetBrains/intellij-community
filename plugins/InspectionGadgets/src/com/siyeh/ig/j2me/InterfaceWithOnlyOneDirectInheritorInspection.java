@@ -21,15 +21,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspection {
+import java.util.Collection;
+
+public class InterfaceWithOnlyOneDirectInheritorInspection
+        extends ClassInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("interface.one.inheritor.display.name");
+        return InspectionGadgetsBundle.message(
+                "interface.one.inheritor.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,14 +43,16 @@ public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspecti
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("interface.one.inheritor.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "interface.one.inheritor.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new InterfaceNeverImplementedVisitor();
+        return new InterfaceWithOnlyOneDirectInheritorVisitor();
     }
 
-    private static class InterfaceNeverImplementedVisitor extends BaseInspectionVisitor {
+    private static class InterfaceWithOnlyOneDirectInheritorVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
@@ -57,15 +65,21 @@ public class InterfaceWithOnlyOneDirectInheritorInspection extends ClassInspecti
             registerClassError(aClass);
         }
 
-        private static boolean hasOneInheritor(PsiClass aClass) {
-            final PsiManager psiManager = aClass.getManager();
-            final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
+        private static boolean hasOneInheritor(final PsiClass aClass) {
+            final PsiManager manager = aClass.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
-            final PsiClass[] inheritors =
-                    searchHelper.findInheritors(aClass, searchScope, false);
-            return inheritors.length == 1;
+            final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
+                    new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);
+            final ProgressManager instance = ProgressManager.getInstance();
+            instance.runProcess(new Runnable() {
+                public void run() {
+                    searchHelper.processInheritors(processor, aClass,
+                            searchScope, false);
+                }
+            }, null);
+            final Collection<PsiClass> collection = processor.getCollection();
+            return collection.size() == 1;
         }
-
     }
-
 }

@@ -31,16 +31,16 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TelemetryToolWindowImpl implements TelemetryToolWindow{
+
     private final TelemetryDisplay telemetryDisplay;
     private final JPanel myContentPanel;
     private ToolWindow myToolWindow = null;
-    private final Project project;
 
-    public TelemetryToolWindowImpl(Project project){
+    public TelemetryToolWindowImpl() {
         super();
-        this.project = project;
         final Application application = ApplicationManager.getApplication();
-        final InspectionGadgetsPlugin plugin = application.getComponent(InspectionGadgetsPlugin.class);
+        final InspectionGadgetsPlugin plugin =
+                application.getComponent(InspectionGadgetsPlugin.class);
         final InspectionGadgetsTelemetry telemetry = plugin.getTelemetry();
         telemetryDisplay = new TelemetryDisplayImpl(telemetry);
         final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
@@ -48,7 +48,7 @@ public class TelemetryToolWindowImpl implements TelemetryToolWindow{
         toolbarGroup.add(new ResetTelemetryAction(telemetry, telemetryDisplay));
         final ActionManager actionManager = ActionManager.getInstance();
         final ActionToolbar toolbar =
-                actionManager.createActionToolbar(CYCLE_TOOL_WINDOW_ID,
+                actionManager.createActionToolbar(TOOL_WINDOW_ID,
                                                   toolbarGroup, true);
         myContentPanel = new JPanel(new BorderLayout());
         myContentPanel.setBackground(Color.gray);
@@ -58,14 +58,15 @@ public class TelemetryToolWindowImpl implements TelemetryToolWindow{
         myContentPanel.add(displayContentPane, BorderLayout.CENTER);
     }
 
-    public void register(){
+    public void register(Project project){
         final ToolWindowManager toolWindowManager =
                 ToolWindowManager.getInstance(project);
         myToolWindow =
-                toolWindowManager.registerToolWindow(CYCLE_TOOL_WINDOW_ID,
+                toolWindowManager.registerToolWindow(TOOL_WINDOW_ID,
                                                      myContentPanel,
-                                                     ToolWindowAnchor.BOTTOM);
-        myToolWindow.setTitle(InspectionGadgetsBundle.message("telemetry.toolwindow.title"));
+                                                     ToolWindowAnchor.LEFT);
+        myToolWindow.setTitle(InspectionGadgetsBundle.message(
+                "telemetry.toolwindow.title"));
         myToolWindow.setAvailable(true, null);
     }
 
@@ -80,10 +81,9 @@ public class TelemetryToolWindowImpl implements TelemetryToolWindow{
         myToolWindow.setAvailable(false, null);
     }
 
-
-    public void unregister(){
+    public void unregister(Project project){
         final ToolWindowManager toolWindowManager =
                 ToolWindowManager.getInstance(project);
-        toolWindowManager.unregisterToolWindow(CYCLE_TOOL_WINDOW_ID);
+        toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID);
     }
 }

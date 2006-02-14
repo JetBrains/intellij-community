@@ -15,14 +15,13 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
 import com.siyeh.ig.telemetry.TelemetryToolWindowImpl;
 
 public class InspectionGadgetsProjectComponent implements ProjectComponent{
+
     private TelemetryToolWindow toolWindow = null;
     private boolean telemetryEnabled = true;
     private Project project;
@@ -32,21 +31,17 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
         this.project = project;
     }
 
-
     public void projectOpened(){
-        final Application application = ApplicationManager.getApplication();
-        final InspectionGadgetsPlugin plugin =
-                application.getComponent(InspectionGadgetsPlugin.class);
-        telemetryEnabled = plugin.isTelemetryEnabled();
+        telemetryEnabled = InspectionGadgetsPlugin.isTelemetryEnabled();
         if(telemetryEnabled){
-            toolWindow = new TelemetryToolWindowImpl(project);
-            toolWindow.register();
+            toolWindow = new TelemetryToolWindowImpl();
+            toolWindow.register(project);
         }
     }
 
     public void projectClosed(){
         if(telemetryEnabled){
-            toolWindow.unregister();
+            toolWindow.unregister(project);
         }
     }
 

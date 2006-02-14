@@ -27,15 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class JNDIResourceInspection extends ExpressionInspection{
-  @NonNls private static final String LIST = "list";
-  @NonNls private static final String LIST_BINDING = "listBindings";
 
-  public String getID(){
-      return "JNDIResourceOpenedButNotSafelyClosed";
-  }
+    public String getID(){
+        return "JNDIResourceOpenedButNotSafelyClosed";
+    }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("jndi.resource.opened.not.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "jndi.resource.opened.not.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -46,7 +45,8 @@ public class JNDIResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("resource.opened.not.closed.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -55,7 +55,11 @@ public class JNDIResourceInspection extends ExpressionInspection{
 
     private static class JNDIResourceVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        @NonNls private static final String LIST = "list";
+        @NonNls private static final String LIST_BINDING = "listBindings";
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJNDIFactoryMethod(expression)) {
                 return;
@@ -82,14 +86,14 @@ public class JNDIResourceInspection extends ExpressionInspection{
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
+                                PsiTryStatement.class);
                 if(tryStatement == null) {
                     registerError(expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)) {
+                        expression,
+                        boundVariable)) {
                     return;
                 }
                 currentContext = tryStatement;
@@ -124,23 +128,23 @@ public class JNDIResourceInspection extends ExpressionInspection{
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
+                                PsiTryStatement.class);
                 if(tryStatement == null){
                     registerError(expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)){
+                        expression,
+                        boundVariable)){
                     return;
                 }
                 currentContext = tryStatement;
             }
         }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -162,15 +166,37 @@ public class JNDIResourceInspection extends ExpressionInspection{
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
+
+        private static boolean isJNDIResource(PsiNewExpression expression){
+            return TypeUtils.expressionHasTypeOrSubtype(
+                    "javax.naming.InitialContext", expression);
+        }
+
+        private static boolean isJNDIFactoryMethod(
+                PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if(!(LIST.equals(methodName) || LIST_BINDING.equals(methodName)))
+            {
+                return false;
+            }
+            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            if(qualifier == null)
+            {
+                return false;
+            }
+            return TypeUtils.expressionHasTypeOrSubtype("javax.naming.Context",
+                    qualifier);
+        }
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
         private boolean containsClose = false;
         private PsiVariable socketToClose;
 
-        private CloseVisitor(PsiVariable socketToCLose){
+        private CloseVisitor(PsiVariable socketToClose){
             super();
-            this.socketToClose = socketToCLose;
+            this.socketToClose = socketToClose;
         }
 
         public void visitElement(@NotNull PsiElement element){
@@ -179,19 +205,17 @@ public class JNDIResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-              return;
+                return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
@@ -212,30 +236,5 @@ public class JNDIResourceInspection extends ExpressionInspection{
         public boolean containsStreamClose(){
             return containsClose;
         }
-    }
-
-    private static boolean isJNDIResource(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("javax.naming.InitialContext",
-                                                    expression);
-    }
-
-    private static boolean isJNDIFactoryMethod(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null)
-        {
-            return false;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!(LIST.equals(methodName) || LIST_BINDING.equals(methodName)))
-        {
-            return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null)
-        {
-            return false;
-        }
-        return TypeUtils.expressionHasTypeOrSubtype("javax.naming.Context",
-                                                    qualifier);
     }
 }

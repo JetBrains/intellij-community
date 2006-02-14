@@ -21,51 +21,43 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class AwaitNotInLoopInspection extends ExpressionInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new AwaitNotInLoopVisitor();
-  }
-
-  private static class AwaitNotInLoopVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (methodName == null) {
-        return;
-      }
-      if (!methodName.startsWith("await")) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!ClassUtils.isSubclass(containingClass,
-                                 "java.util.concurrent.locks.Condition")) {
-        return;
-      }
-
-      if (ControlFlowUtils.isInLoop(expression)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new AwaitNotInLoopVisitor();
+    }
+
+    private static class AwaitNotInLoopVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (!MethodCallUtils.isMethodCall(expression, "await", 0, PsiType.VOID)){
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (!ClassUtils.isSubclass(containingClass,
+                    "java.util.concurrent.locks.Condition")) {
+                return;
+            }
+            if (ControlFlowUtils.isInLoop(expression)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

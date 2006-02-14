@@ -106,8 +106,12 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
+            final PsiElement element = descriptor.getPsiElement();
+            if(!(element instanceof PsiAssignmentExpression)){
+                return;
+            }
             final PsiAssignmentExpression expression =
-                    (PsiAssignmentExpression) descriptor.getPsiElement();
+                    (PsiAssignmentExpression) element;
             final String newExpression =
                     calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);

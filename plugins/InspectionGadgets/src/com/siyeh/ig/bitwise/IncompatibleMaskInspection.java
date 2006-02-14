@@ -20,20 +20,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class IncompatibleMaskInspection extends ExpressionInspection{
+
     public String getID(){
         return "IncompatibleBitwiseMaskOperation";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("incompatible.mask.operation.display.name");
+        return InspectionGadgetsBundle.message(
+                "incompatible.mask.operation.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -50,9 +52,11 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         final PsiJavaToken operationSign = binaryExpression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){
-            return InspectionGadgetsBundle.message("incompatible.mask.operation.problem.descriptor.always.false");
+            return InspectionGadgetsBundle.message(
+                    "incompatible.mask.operation.problem.descriptor.always.false");
         } else{
-            return InspectionGadgetsBundle.message("incompatible.mask.operation.problem.descriptor.always.true");
+            return InspectionGadgetsBundle.message(
+                    "incompatible.mask.operation.problem.descriptor.always.true");
         }
     }
 
@@ -62,9 +66,11 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
 
     private static class IncompatibleMaskVisitor extends BaseInspectionVisitor{
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            final PsiExpression rhs = expression.getROperand();
+            if(rhs == null){
                 return;
             }
             if(!ComparisonUtils.isEqualityComparison(expression)){
@@ -74,13 +80,14 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             if(expressionType == null){
                 return;
             }
-            final PsiExpression rhs = expression.getROperand();
-            final PsiExpression strippedRhs = stripExpression(rhs);
+            final PsiExpression strippedRhs =
+                    ParenthesesUtils.stripParentheses(rhs);
             if(strippedRhs == null){
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression strippedLhs = stripExpression(lhs);
+            final PsiExpression strippedLhs =
+                    ParenthesesUtils.stripParentheses(lhs);
             if(strippedLhs == null){
                 return;
             }
@@ -98,22 +105,9 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
                 }
             }
         }
-    }
 
-    @Nullable
-    private static PsiExpression stripExpression(PsiExpression exp){
-        if(exp == null){
-            return null;
-        }
-        if(exp instanceof PsiParenthesizedExpression){
-            final PsiExpression body =
-                    ((PsiParenthesizedExpression) exp).getExpression();
-            return stripExpression(body);
-        }
-        return exp;
-    }
-
-    private static boolean isIncompatibleMask(PsiBinaryExpression maskExpression,
+        private static boolean isIncompatibleMask(
+                PsiBinaryExpression maskExpression,
                                               PsiExpression constantExpression){
         final PsiJavaToken sign = maskExpression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
@@ -123,8 +117,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         if(constantValue == null){
             return false;
         }
-        final long constantLongValue = (Long) constantValue;
-
+            final long constantLongValue = ((Long)constantValue).longValue();
         final PsiExpression maskRhs = maskExpression.getROperand();
         final PsiExpression maskLhs = maskExpression.getLOperand();
         final long constantMaskValue;
@@ -132,13 +125,17 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             final Object rhsValue =
                     ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);
             if (rhsValue == null) {
-                return false; // Might indeed be the case with "null" literal whoes constant value evaluates to null. Check out (a|null) case.
+                    return false; // Might indeed be the case with "null" literal
+                    // whoes constant value evaluates to null. Check out (a|null) case.
             }
-            constantMaskValue = ((Long) rhsValue);
+                constantMaskValue = ((Long)rhsValue).longValue();
         } else{
             final Object lhsValue =
                     ConstantExpressionUtil.computeCastTo(maskLhs, PsiType.LONG);
-            constantMaskValue = ((Long) lhsValue);
+                if (lhsValue == null) {
+                    return false;
+                }
+                constantMaskValue = ((Long)lhsValue).longValue();
         }
 
         if(tokenType.equals(JavaTokenType.OR)){
@@ -161,7 +158,6 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         if(!(expression instanceof PsiBinaryExpression)){
             return false;
         }
-
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
@@ -177,4 +173,5 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         final PsiExpression lhs = binaryExpression.getLOperand();
         return PsiUtil.isConstantExpression(lhs);
     }
+}
 }

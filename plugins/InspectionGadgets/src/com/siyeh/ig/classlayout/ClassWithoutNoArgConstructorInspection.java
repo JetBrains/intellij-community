@@ -27,66 +27,64 @@ import javax.swing.*;
 
 public class ClassWithoutNoArgConstructorInspection extends ClassInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreClassesWithNoConstructors = true;
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreClassesWithNoConstructors = true;
 
-  public String getGroupDisplayName() {
-    return GroupNames.JAVABEANS_GROUP_NAME;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option"),
-                                          this,
-                                          "m_ignoreClassesWithNoConstructors");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ClassWithoutNoArgConstructorVisitor();
-  }
-
-  private class ClassWithoutNoArgConstructorVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
-        return;
-      }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiAnonymousClass) {
-        return;
-      }
-      if (m_ignoreClassesWithNoConstructors &&
-          !classHasConstructor(aClass)) {
-        return;
-      }
-      if (classHasNoArgConstructor(aClass)) {
-        return;
-      }
-      registerClassError(aClass);
+    public String getGroupDisplayName() {
+        return GroupNames.JAVABEANS_GROUP_NAME;
     }
-  }
 
-  private static boolean classHasNoArgConstructor(PsiClass aClass) {
-    final PsiMethod[] constructors = aClass.getConstructors();
-    for (final PsiMethod constructor : constructors) {
-      final PsiParameterList parameterList =
-        constructor.getParameterList();
-      if (parameterList != null) {
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters != null && parameters.length == 0) {
-          return true;
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message("class.without.no.arg.constructor.ignore.option"),
+                this, "m_ignoreClassesWithNoConstructors");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassWithoutNoArgConstructorVisitor();
+    }
+
+    private class ClassWithoutNoArgConstructorVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so it doesn't drill down
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
+                return;
+            }
+            if (aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass) {
+                return;
+            }
+            if (m_ignoreClassesWithNoConstructors &&
+                    !classHasConstructor(aClass)) {
+                return;
+            }
+            if (classHasNoArgConstructor(aClass)) {
+                return;
+            }
+            registerClassError(aClass);
         }
-      }
-    }
-    return false;
-  }
 
-  private static boolean classHasConstructor(PsiClass aClass) {
-    final PsiMethod[] constructors = aClass.getConstructors();
-    return constructors.length != 0;
-  }
+        private boolean classHasNoArgConstructor(PsiClass aClass) {
+            final PsiMethod[] constructors = aClass.getConstructors();
+            for (final PsiMethod constructor : constructors) {
+                final PsiParameterList parameterList =
+                        constructor.getParameterList();
+                final PsiParameter[] parameters = parameterList.getParameters();
+                if (parameters != null && parameters.length == 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean classHasConstructor(PsiClass aClass) {
+            final PsiMethod[] constructors = aClass.getConstructors();
+            return constructors.length != 0;
+        }
+    }
 }

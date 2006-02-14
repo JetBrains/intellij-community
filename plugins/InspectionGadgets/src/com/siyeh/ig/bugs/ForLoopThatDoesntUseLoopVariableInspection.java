@@ -23,13 +23,12 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ForLoopThatDoesntUseLoopVariableInspection
         extends StatementInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.display.name");
+        return InspectionGadgetsBundle.message(
+                "for.loop.not.use.loop.variable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -52,14 +51,16 @@ public class ForLoopThatDoesntUseLoopVariableInspection
         }
         if(count == 1){
           if (isCondition){
-            return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.condition");
+                return InspectionGadgetsBundle.message(
+                        "for.loop.not.use.loop.variable.problem.descriptor.condition");
           } else {
-            return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.update");
+                return InspectionGadgetsBundle.message(
+                        "for.loop.not.use.loop.variable.problem.descriptor.update");
           }
         } else{
-          return InspectionGadgetsBundle.message("for.loop.not.use.loop.variable.problem.descriptor.both.condition.and.update");
+            return InspectionGadgetsBundle.message(
+                    "for.loop.not.use.loop.variable.problem.descriptor.both.condition.and.update");
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -182,7 +183,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
             }
         }
 
-        private boolean isUsed(){
+        public boolean isUsed(){
             return used;
         }
     }

@@ -26,8 +26,10 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("properties.object.as.hashtable.display.name");
+        return InspectionGadgetsBundle.message(
+                "properties.object.as.hashtable.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -35,8 +37,8 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-
-        return InspectionGadgetsBundle.message("properties.object.as.hashtable.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "properties.object.as.hashtable.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -46,14 +48,11 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
     private static class SystemSetSecurityManagerVisitor
                                                          extends BaseInspectionVisitor{
 
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             if(!isHashtableMethod(methodName)){
                 return;
@@ -69,7 +68,8 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
             if(!ClassUtils.isSubclass(containingClass, "java.util.Hashtable")){
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             if(qualifier == null){
                 return;
             }
@@ -81,9 +81,9 @@ public class UseOfPropertiesAsHashtableInspection extends ExpressionInspection{
         }
 
         private static boolean isHashtableMethod(String name){
-            return HardcodedMethodConstants.PUT.equals(name) || HardcodedMethodConstants.PUTALL.equals(name) || HardcodedMethodConstants.GET
-                    .equals(name);
+            return HardcodedMethodConstants.PUT.equals(name) ||
+                    HardcodedMethodConstants.PUTALL.equals(name) ||
+                    HardcodedMethodConstants.GET.equals(name);
         }
-
     }
 }

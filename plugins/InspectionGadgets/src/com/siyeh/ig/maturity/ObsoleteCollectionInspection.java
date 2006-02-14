@@ -43,7 +43,9 @@ public class ObsoleteCollectionInspection extends VariableInspection{
         return new ObsoleteCollectionVisitor();
     }
 
-    private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor{
+    private static class ObsoleteCollectionVisitor
+            extends BaseInspectionVisitor{
+
         public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final PsiType type = variable.getType();
@@ -60,29 +62,27 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             if(!isObsoleteCollectionType(type)){
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();
+            final PsiJavaCodeReferenceElement classNameElement =
+                    newExpression.getClassReference();
             registerError(classNameElement);
         }
 
         @SuppressWarnings({"HardCodedStringLiteral"})
-        private static boolean isObsoleteCollectionType(PsiType type){
+        private static boolean isObsoleteCollectionType(PsiType type) {
             if(type == null){
                 return false;
             }
-
-            type = type.getDeepComponentType();
-            if (!(type instanceof PsiClassType)) return false;
-            PsiClassType classType = (PsiClassType) type;
-
-            if ("Vector".equals(classType.getClassName()) && classType.equalsToText("java.util.Vector")) {
+            final PsiType deepComponentType = type.getDeepComponentType();
+            if (!(deepComponentType instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType)deepComponentType;
+            if ("Vector".equals(classType.getClassName()) &&
+                classType.equalsToText("java.util.Vector")) {
                 return true;
             }
-
-            if ("Hashtable".equals(classType.getClassName()) && classType.equalsToText("java.util.Hashtable")) {
-                return true;
-            }
-
-            return false;
+            return "Hashtable".equals(classType.getClassName()) &&
+                   classType.equalsToText("java.util.Hashtable");
         }
     }
 }

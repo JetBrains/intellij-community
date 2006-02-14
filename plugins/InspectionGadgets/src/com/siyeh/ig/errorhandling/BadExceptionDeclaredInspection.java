@@ -108,7 +108,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor") + " ";
+        return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){

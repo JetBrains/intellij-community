@@ -103,18 +103,12 @@ public class ThreadPriorityInspection extends ExpressionInspection {
             if (!normPriority.equals(referenceName)) {
                 return false;
             }
-            final PsiExpression qualifierExpression =
-                    referenceExpression.getQualifierExpression();
-            if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+            final PsiElement element = referenceExpression.resolve();
+            if (!(element instanceof PsiField)) {
                 return false;
             }
-            final PsiReferenceExpression classReferenceExpression =
-                    (PsiReferenceExpression)qualifierExpression;
-            final PsiElement element = classReferenceExpression.resolve();
-            if (!(element instanceof PsiClass)) {
-                return false;
-            }
-            final PsiClass aClass = (PsiClass)element;
+            final PsiField field = (PsiField)element;
+            final PsiClass aClass = field.getContainingClass();
             final String className = aClass.getQualifiedName();
             return "java.lang.Thread".equals(className);
         }

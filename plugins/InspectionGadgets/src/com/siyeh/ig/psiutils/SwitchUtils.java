@@ -22,13 +22,18 @@ import com.intellij.psi.PsiSwitchStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class SwitchUtils{
+
     private SwitchUtils(){
         super();
     }
 
-    public static int calculateBranchCount(@NotNull PsiSwitchStatement statement){
-    final PsiCodeBlock body = statement.getBody();
+    public static int calculateBranchCount(
+            @NotNull PsiSwitchStatement statement){
+        final PsiCodeBlock body = statement.getBody();
         int branches = 0;
+        if (body == null) {
+            return branches;
+        }
         final PsiStatement[] statements = body.getStatements();
         for(final PsiStatement child : statements){
             if(child instanceof PsiSwitchLabelStatement){

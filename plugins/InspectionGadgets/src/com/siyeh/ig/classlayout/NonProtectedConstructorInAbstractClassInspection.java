@@ -30,61 +30,69 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonProtectedConstructorInAbstractClassInspection extends MethodInspection {
+public class NonProtectedConstructorInAbstractClassInspection
+        extends MethodInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreNonPublicClasses = false;
-  private final MakeProtectedFix fix = new MakeProtectedFix();
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreNonPublicClasses = false;
 
-  public String getID() {
-    return "ConstructorNotProtectedInAbstractClass";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("non.protected.constructor.in.abstract.class.ignore.option"),
-                                          this, "m_ignoreNonPublicClasses");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonProtectedConstructorInAbstractClassVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private class NonProtectedConstructorInAbstractClassVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
-      if (!method.isConstructor()) {
-        return;
-      }
-      if (method.hasModifierProperty(PsiModifier.PROTECTED)
-          || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (m_ignoreNonPublicClasses && !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
-      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      if (containingClass.isEnum()) {
-        return;
-      }
-      registerMethodError(method);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "non.protected.constructor.in.abstract.class.display.name");
     }
 
-  }
+    public String getID() {
+        return "ConstructorNotProtectedInAbstractClass";
+    }
+
+    public String getGroupDisplayName() {
+        return GroupNames.INHERITANCE_GROUP_NAME;
+    }
+
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "non.protected.constructor.in.abstract.class.ignore.option"),
+                this, "m_ignoreNonPublicClasses");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new NonProtectedConstructorInAbstractClassVisitor();
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MakeProtectedFix();
+    }
+
+    private class NonProtectedConstructorInAbstractClassVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            //no call to super, so we don't drill into anonymous classes
+            if (!method.isConstructor()) {
+                return;
+            }
+            if (method.hasModifierProperty(PsiModifier.PROTECTED)
+                || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
+            if (m_ignoreNonPublicClasses &&
+                !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
+            if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            if (containingClass.isEnum()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

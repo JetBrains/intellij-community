@@ -62,7 +62,8 @@ public class InstanceVariableUninitializedUseInspection
     private class InstanceVariableInitializationVisitor extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
-            UninitializedReadCollector uninitializedReadsCollector = new UninitializedReadCollector();
+            final UninitializedReadCollector uninitializedReadsCollector =
+                    new UninitializedReadCollector();
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
@@ -98,8 +99,8 @@ public class InstanceVariableUninitializedUseInspection
             }
         }
 
-        private boolean isInitializedInInitializer(@NotNull PsiField field,
-                                                   UninitializedReadCollector uninitializedReadsCollector) {
+        private boolean isInitializedInInitializer(
+                @NotNull PsiField field, UninitializedReadCollector uninitializedReadsCollector) {
             final PsiClass aClass = field.getContainingClass();
             if(aClass == null) {
                 return false;

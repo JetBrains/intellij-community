@@ -107,8 +107,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             final PsiManager manager = element.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
-            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             super.visitElement(element);
@@ -160,6 +159,9 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         }
 
         private void checkExpression(PsiExpression expression){
+            if (expression.getParent() instanceof PsiParenthesizedExpression) {
+                return;
+            }
             final PsiType expressionType = expression.getType();
             if(expressionType == null){
                 return;

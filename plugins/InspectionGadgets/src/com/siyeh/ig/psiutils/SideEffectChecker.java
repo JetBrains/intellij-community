@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class SideEffectChecker{
+
     private SideEffectChecker(){
         super();
     }
@@ -31,6 +32,7 @@ public class SideEffectChecker{
     }
 
     private static class SideEffectsVisitor extends PsiRecursiveElementVisitor{
+        
         private boolean mayHaveSideEffects = false;
 
         public void visitElement(@NotNull PsiElement element){
@@ -39,7 +41,8 @@ public class SideEffectChecker{
             }
         }
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -47,7 +50,8 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -63,7 +67,8 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -76,7 +81,8 @@ public class SideEffectChecker{
             }
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -89,7 +95,7 @@ public class SideEffectChecker{
             }
         }
 
-        private boolean mayHaveSideEffects(){
+        public boolean mayHaveSideEffects(){
             return mayHaveSideEffects;
         }
     }

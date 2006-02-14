@@ -96,13 +96,11 @@ public class MethodMayBeStaticInspection extends MethodInspection{
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
-            if(method.hasModifierProperty(PsiModifier.STATIC)){
+            if (method.hasModifierProperty(PsiModifier.STATIC) ||
+                method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
             if(method.isConstructor()){
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
             if(m_ignoreEmptyMethods && MethodUtils.isEmpty(method)){
@@ -126,8 +124,8 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(TestUtils.isJUnitTestMethod(method)){
                 return;
             }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            if(superMethods.length > 0){
+            final PsiMethod superMethod = method.findDeepestSuperMethod();
+            if(superMethod != null){
                 return;
             }
             if(MethodUtils.isOverridden(method)){

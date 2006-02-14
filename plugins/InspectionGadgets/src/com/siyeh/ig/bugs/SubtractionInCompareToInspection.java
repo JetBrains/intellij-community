@@ -26,8 +26,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SubtractionInCompareToInspection extends ExpressionInspection{
+
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("subtraction.in.compareto.display.name");
+        return InspectionGadgetsBundle.message(
+                "subtraction.in.compareto.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -35,7 +37,8 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("subtraction.in.compareto.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "subtraction.in.compareto.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -44,6 +47,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
 
     private static class SubtractionInCompareToVisitor
                                                        extends BaseInspectionVisitor{
+
         public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
             if(!(exp.getROperand() != null)){
@@ -60,9 +64,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
             registerError(exp);
         }
 
-
         private static boolean isSubtraction(PsiBinaryExpression exp){
-            final PsiExpression lhs = exp.getLOperand();
             final PsiExpression rhs = exp.getROperand();
             if(rhs == null){
                 return false;

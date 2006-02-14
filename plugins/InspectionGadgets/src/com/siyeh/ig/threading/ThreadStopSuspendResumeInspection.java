@@ -24,54 +24,53 @@ import org.jetbrains.annotations.NonNls;
 
 public class ThreadStopSuspendResumeInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "CallToThreadStopSuspendOrResumeManager";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThreadStopSuspendVisitor();
-  }
-
-  private static class ThreadStopSuspendVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      if (!isSetSecurityManager(expression)) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public String getID() {
+        return "CallToThreadStopSuspendOrResumeManager";
     }
 
-    private static boolean isSetSecurityManager(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!("stop".equals(methodName) || "suspend".equals(methodName) ||
-            "resume".equals(methodName))) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return false;
-      }
-      final String className = aClass.getQualifiedName();
-      if (className == null) {
-        return false;
-      }
-      return "java.lang.Thread".equals(className);
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThreadStopSuspendVisitor();
+    }
+
+    private static class ThreadStopSuspendVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (!isStopSuspendOrResume(expression)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+
+        private static boolean isStopSuspendOrResume(
+                PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!("stop".equals(methodName) || "suspend".equals(methodName) ||
+                    "resume".equals(methodName))) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return false;
+            }
+            final String className = aClass.getQualifiedName();
+            if (className == null) {
+                return false;
+            }
+            return "java.lang.Thread".equals(className);
+        }
+    }
 }

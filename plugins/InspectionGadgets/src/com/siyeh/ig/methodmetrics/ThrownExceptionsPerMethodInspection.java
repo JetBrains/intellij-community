@@ -24,52 +24,56 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection {
+public class ThrownExceptionsPerMethodInspection
+        extends MethodMetricInspection {
 
-  public String getID() {
-    return "MethodWithTooExceptionsDeclared";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.METHODMETRICS_GROUP_NAME;
-  }
-
-  public String buildErrorString(PsiElement location) {
-    final PsiMethod method = (PsiMethod)location.getParent();
-    assert method != null;
-    final PsiReferenceList throwsList = method.getThrowsList();
-    final int numThrows = throwsList.getReferenceElements().length;
-    return InspectionGadgetsBundle.message("thrown.exceptions.per.method.problem.descriptor", numThrows);
-  }
-
-  protected int getDefaultLimit() {
-    return 3;
-  }
-
-  protected String getConfigurationLabel() {
-    return InspectionGadgetsBundle.message("thrown.exceptions.per.method.limit.option");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ParametersPerMethodVisitor();
-  }
-
-  private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
-
-    public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
-      final PsiReferenceList throwList = method.getThrowsList();
-      if (throwList == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] thrownExceptions = throwList.getReferenceElements();
-      if (thrownExceptions == null) {
-        return;
-      }
-      if (thrownExceptions.length <= getLimit()) {
-        return;
-      }
-      registerMethodError(method);
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "thrown.exceptions.per.method.display.name");
     }
-  }
+
+    public String getID() {
+        return "MethodWithTooExceptionsDeclared";
+    }
+
+    public String getGroupDisplayName() {
+        return GroupNames.METHODMETRICS_GROUP_NAME;
+    }
+
+    public String buildErrorString(PsiElement location) {
+        final PsiMethod method = (PsiMethod)location.getParent();
+        assert method != null;
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final int numThrows = throwsList.getReferenceElements().length;
+        return InspectionGadgetsBundle.message(
+                "thrown.exceptions.per.method.problem.descriptor",
+                Integer.valueOf(numThrows));
+    }
+
+    protected int getDefaultLimit() {
+        return 3;
+    }
+
+    protected String getConfigurationLabel() {
+        return InspectionGadgetsBundle.message(
+                "thrown.exceptions.per.method.limit.option");
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThrownExceptionsPerMethodVisitor();
+    }
+
+    private class ThrownExceptionsPerMethodVisitor extends BaseInspectionVisitor {
+
+        public void visitMethod(@NotNull PsiMethod method) {
+            // note: no call to super
+            final PsiReferenceList throwList = method.getThrowsList();
+            final PsiJavaCodeReferenceElement[] thrownExceptions =
+                    throwList.getReferenceElements();
+            if (thrownExceptions.length <= getLimit()) {
+                return;
+            }
+            registerMethodError(method);
+        }
+    }
 }

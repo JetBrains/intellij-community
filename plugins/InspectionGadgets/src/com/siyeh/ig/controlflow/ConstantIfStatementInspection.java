@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -28,13 +29,17 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ConstantIfStatementInspection extends StatementInspection {
 
-    private final ConstantIfStatementFix fix = new ConstantIfStatementFix();
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "constant.if.statement.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -44,12 +49,21 @@ public class ConstantIfStatementInspection extends StatementInspection {
         return true;
     }
 
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "constant.if.statement.problem.descriptor");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantIfStatementVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        if (location.getContainingFile() instanceof JspFile) {
+            return null;
+        }
+        return new ConstantIfStatementFix();
     }
 
     private static class ConstantIfStatementFix extends InspectionGadgetsFix {
@@ -84,8 +98,7 @@ public class ConstantIfStatementInspection extends StatementInspection {
                 throws IncorrectOperationException {
             if (branch instanceof PsiBlockStatement) {
                 final PsiCodeBlock parentBlock =
-                        PsiTreeUtil .getParentOfType(branch,
-                                PsiCodeBlock.class);
+                        PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
                 if (parentBlock == null) {
                     final String elseText = branch.getText();
                     replaceStatement(statement, elseText);
@@ -124,7 +137,6 @@ public class ConstantIfStatementInspection extends StatementInspection {
         private static boolean containsConflictingDeclarations(
                 PsiCodeBlock block, PsiCodeBlock parentBlock) {
             final PsiStatement[] statements = block.getStatements();
-
             final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
             for (final PsiStatement statement : statements) {
                 if (statement instanceof PsiDeclarationStatement) {
@@ -147,7 +159,6 @@ public class ConstantIfStatementInspection extends StatementInspection {
                     return true;
                 }
             }
-
             return false;
         }
 
@@ -164,18 +175,18 @@ public class ConstantIfStatementInspection extends StatementInspection {
     private static class ConstantIfStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(PsiIfStatement statment) {
-            super.visitIfStatement(statment);
-            final PsiExpression condition = statment.getCondition();
+        public void visitIfStatement(PsiIfStatement statement) {
+            super.visitIfStatement(statement);
+            final PsiExpression condition = statement.getCondition();
             if (condition == null) {
                 return;
             }
-            final PsiStatement thenBranch = statment.getThenBranch();
+            final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {
                 return;
             }
             if (BoolUtils.isTrue(condition) || BoolUtils.isFalse(condition)) {
-                registerStatementError(statment);
+                registerStatementError(statement);
             }
         }
     }
@@ -210,13 +221,13 @@ public class ConstantIfStatementInspection extends StatementInspection {
             super.visitCodeBlock(block);
         }
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        public void visitVariable(PsiVariable variable) {
             if (hasConflictingDeclaration) {
                 return;
             }
             super.visitVariable(variable);
             final String name = variable.getName();
-            if (name.equals(variableName)) {
+            if (name != null && name.equals(variableName)) {
                 hasConflictingDeclaration = true;
             }
         }

@@ -17,7 +17,6 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,7 +36,6 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection {
 
   private static class ComparisonOfShortAndCharVisitor
     extends BaseInspectionVisitor {
-
 
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);

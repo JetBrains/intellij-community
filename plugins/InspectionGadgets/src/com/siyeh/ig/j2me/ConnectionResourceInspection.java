@@ -26,12 +26,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class ConnectionResourceInspection extends ExpressionInspection{
+
     public String getID(){
         return "ConnectionOpenedButNotSafelyClosed";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("connection.opened.not.safely.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "connection.opened.not.safely.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -42,16 +44,19 @@ public class ConnectionResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("resource.opened.not.closed.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
         return new RecordStoreResourceVisitor();
     }
 
-    private static class RecordStoreResourceVisitor extends BaseInspectionVisitor{
+    private static class RecordStoreResourceVisitor
+            extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isConnectionFactoryMethod(expression)) {
                 return;
@@ -77,7 +82,8 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext, PsiTryStatement.class);
+                        PsiTreeUtil.getParentOfType(currentContext,
+                                PsiTryStatement.class);
                 if(tryStatement == null){
                 registerError(expression);
                     return;
@@ -92,9 +98,9 @@ public class ConnectionResourceInspection extends ExpressionInspection{
         }
 
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -116,9 +122,34 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
+
+        private static boolean isConnectionFactoryMethod(
+                @NotNull PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if(!HardcodedMethodConstants.OPEN.equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null)
+            {
+                return false;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return false;
+            }
+            final String className = containingClass.getQualifiedName();
+            @NonNls final String microeditionConnector =
+                    "javax.microedition.io.Connector";
+            return microeditionConnector.equals(className);
+        }
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 
@@ -133,16 +164,14 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             @NonNls final String closeStore = "closeRecordStore";
             if(!closeStore.equals(methodName)){
@@ -168,29 +197,4 @@ public class ConnectionResourceInspection extends ExpressionInspection{
             return containsClose;
         }
     }
-
-    private static boolean isConnectionFactoryMethod(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null) {
-            return false;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.OPEN.equals(methodName)) {
-          return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null)
-        {
-            return false;
-        }
-        final PsiClass containingClass = method.getContainingClass();
-        if(containingClass == null)
-        {
-            return false;
-        }
-        final String className = containingClass.getQualifiedName();
-        @NonNls final String microeditionConnector = "javax.microedition.io.Connector";
-        return microeditionConnector.equals(className);
-    }
-
 }

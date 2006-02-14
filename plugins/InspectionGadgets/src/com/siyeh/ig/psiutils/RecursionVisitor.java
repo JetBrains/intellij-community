@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class RecursionVisitor extends PsiRecursiveElementVisitor{
+
     private boolean recursive = false;
     private final PsiMethod method;
     private String methodName;
@@ -35,20 +36,16 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
-        if(recursive)
-        {
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression call){
+        if(recursive){
             return;
         }
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         final String calledMethodName = methodExpression.getReferenceName();
-        if(calledMethodName == null)
-        {
+        if(calledMethodName == null){
             return;
         }
         if(!calledMethodName.equals(methodName)){
@@ -64,8 +61,7 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null || qualifier instanceof PsiThisExpression)
-        {
+        if(qualifier == null || qualifier instanceof PsiThisExpression){
             recursive = true;
         }
     }

@@ -136,7 +136,6 @@ public class MethodUtils{
         if(!(value instanceof PsiReferenceExpression)){
             return null;
         }
-
         final PsiReferenceExpression reference = (PsiReferenceExpression) value;
         final PsiExpression qualifier = reference.getQualifierExpression();
         if(qualifier != null && !(qualifier instanceof PsiThisExpression)
@@ -161,7 +160,7 @@ public class MethodUtils{
         }
         final PsiClass fieldContainingClass = field.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        if (InheritanceUtil.isInheritorOrSelf(methodContainingClass,
+        if (InheritanceUtil.isCorrectDescendant(methodContainingClass,
                 fieldContainingClass, true)) {
             return field;
         } else {
@@ -235,11 +234,10 @@ public class MethodUtils{
         final PsiField field = (PsiField) referent;
         final PsiClass fieldContainingClass = field.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        if(!InheritanceUtil.isInheritorOrSelf(methodContainingClass,
+        if(!InheritanceUtil.isCorrectDescendant(methodContainingClass,
                 fieldContainingClass, true)){
             return null;
         }
-
         final PsiExpression rhs = assignment.getRExpression();
         if(!(rhs instanceof PsiReferenceExpression)){
             return null;

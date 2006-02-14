@@ -26,6 +26,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UtilityClassWithPublicConstructorInspection
         extends ClassInspection {
@@ -37,6 +38,12 @@ public class UtilityClassWithPublicConstructorInspection
 
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "utility.class.with.public.constructor.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

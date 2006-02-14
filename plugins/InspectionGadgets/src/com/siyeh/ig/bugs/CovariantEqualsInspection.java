@@ -17,17 +17,18 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantEqualsInspection extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("covariant.equals.display.name");
+        return InspectionGadgetsBundle.message(
+                "covariant.equals.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -35,7 +36,8 @@ public class CovariantEqualsInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("covariant.equals.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "covariant.equals.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

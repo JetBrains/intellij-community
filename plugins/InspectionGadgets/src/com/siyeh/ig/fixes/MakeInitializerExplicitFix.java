@@ -18,42 +18,37 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
+    
     public String getName(){
-        return InspectionGadgetsBundle.message("make.initialization.explicit.quickfix");
+        return InspectionGadgetsBundle.message(
+                "make.initialization.explicit.quickfix");
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException{
         final PsiElement fieldName = descriptor.getPsiElement();
         final PsiField field = (PsiField) fieldName.getParent();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final PsiElementFactory factory =
-                psiManager.getElementFactory();
-        assert field != null;
-        final PsiModifierList modifiers = field.getModifierList();
+        if (field == null) {
+            return;
+        }
+        if (field.getInitializer() != null) {
+            return;
+        }
         final PsiType type = field.getType();
-        final String name = field.getName();
-        final PsiClass containingClass = field.getContainingClass();
-        final String newFieldText =
-                modifiers.getText() + ' ' + type.getPresentableText() +
-                ' ' + name +
-                '=' + getDefaultValue(type) + ';';
-        final PsiField newField = factory
-                .createFieldFromText(newFieldText, containingClass);
-        final CodeStyleManager styleManager =
-                psiManager.getCodeStyleManager();
-        final PsiElement replacedField = field.replace(newField);
-        styleManager.reformat(replacedField);
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final PsiElementFactory factory = psiManager.getElementFactory();
+        final PsiExpression initializer =
+                factory.createExpressionFromText(getDefaultValue(type), field);
+        field.setInitializer(initializer);
     }
 
-    @NonNls private String getDefaultValue(PsiType type){
+    @NonNls private static String getDefaultValue(PsiType type){
         if(PsiType.INT.equals(type)){
             return "0";
         } else if(PsiType.LONG.equals(type)){

@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
+
     private boolean m_referencesStaticallyAccessible = true;
     private PsiMethod m_method;
 
@@ -33,10 +34,14 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         return m_referencesStaticallyAccessible;
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
+    public void visitElement(PsiElement element) {
         if(!m_referencesStaticallyAccessible){
             return;
         }
+        super.visitElement(element);
+    }
+
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
         final PsiElement parent =
                 PsiTreeUtil.getParentOfType(reference, PsiNewExpression.class);
@@ -58,12 +63,9 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
-        if(!m_referencesStaticallyAccessible){
-            return;
-        }
+    public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression){
         super.visitReferenceExpression(expression);
-
         final PsiElement qualifier = expression.getQualifierExpression();
         if (qualifier != null && !(qualifier instanceof PsiThisExpression) &&
                 !(qualifier instanceof PsiSuperExpression)){
@@ -85,9 +87,6 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
     }
 
     public void visitThisExpression(@NotNull PsiThisExpression expression){
-        if(!m_referencesStaticallyAccessible){
-            return;
-        }
         super.visitThisExpression(expression);
         m_referencesStaticallyAccessible = false;
     }
@@ -104,7 +103,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
         final PsiClass methodContainingClass = method.getContainingClass();
-        return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
+        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
                                                   methodContainingClass, true);
     }
 
@@ -114,7 +113,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiClass referenceContainingClass = m_method.getContainingClass();
         final PsiClass fieldContainingClass = field.getContainingClass();
-        return !InheritanceUtil.isInheritorOrSelf(referenceContainingClass,
+        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
                                                   fieldContainingClass, true);
     }
 }

@@ -17,8 +17,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +27,8 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    @NonNls private static final Set<String> updateNames = new HashSet<String>(25);
+    @NonNls private static final Set<String> updateNames =
+            new HashSet<String>(25);
     static{
         updateNames.add("add");
         updateNames.add("addAll");
@@ -70,16 +71,14 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+    public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression call){
         super.visitMethodCallExpression(call);
         if(updated){
             return;
         }
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
-        if(methodExpression == null){
-            return;
-        }
         final String methodName = methodExpression.getReferenceName();
         if(!updateNames.contains(methodName)){
             return;

@@ -33,8 +33,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ConstantMathCallInspection extends ExpressionInspection{
+
     @SuppressWarnings("StaticCollection")
-    @NonNls private static final Set<String> constantMathCall = new HashSet<String>(20);
+    @NonNls static final Set<String> constantMathCall =
+            new HashSet<String>(24);
 
     static {
         constantMathCall.add("abs");
@@ -46,12 +48,12 @@ public class ConstantMathCallInspection extends ExpressionInspection{
         constantMathCall.add("ceil");
         constantMathCall.add("cos");
         constantMathCall.add("cosh");
-        constantMathCall.add("cbrt");
         constantMathCall.add("exp");
         constantMathCall.add("expm1");
         constantMathCall.add("floor");
         constantMathCall.add("log");
         constantMathCall.add("log10");
+        constantMathCall.add("log1p");
         constantMathCall.add("rint");
         constantMathCall.add("round");
         constantMathCall.add("sin");
@@ -66,7 +68,8 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     private final MakeStrictFix fix = new MakeStrictFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("constant.math.call.display.name");
+        return InspectionGadgetsBundle.message(
+                "constant.math.call.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -74,7 +77,8 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("constant.math.call.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "constant.math.call.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -82,8 +86,10 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     }
 
     private static class MakeStrictFix extends InspectionGadgetsFix{
+
         public String getName(){
-            return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "constant.conditional.expression.simplify.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -95,20 +101,16 @@ public class ConstantMathCallInspection extends ExpressionInspection{
             assert reference != null;
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) reference.getParent();
-
             assert call != null;
             final PsiExpressionList argList = call.getArgumentList();
-
-            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
-
             final String methodName = reference.getReferenceName();
             final PsiExpression arg = args[0];
             final Double argValue =
                     (Double) ConstantExpressionUtil
                             .computeCastTo(arg, PsiType.DOUBLE);
-            final String newExpression = createValueString(methodName,
-                                                           argValue.doubleValue());
+            final String newExpression =
+                    createValueString(methodName, argValue.doubleValue());
             replaceExpressionAndShorten(call, newExpression);
         }
     }
@@ -118,30 +120,25 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     }
 
     private static class ConstantMathCallVisitor extends BaseInspectionVisitor{
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             if(!constantMathCall.contains(methodName)){
                 return;
             }
             final PsiExpressionList argList = expression.getArgumentList();
-            if(argList == null){
-                return;
-            }
             final PsiExpression[] args = argList.getExpressions();
             if(args.length == 0){
                 return;
             }
             final PsiExpression arg = args[0];
-            final Object argValue = ConstantExpressionUtil.computeCastTo(arg,
-                                                                         PsiType.DOUBLE);
-            if(argValue == null || !(argValue instanceof Double)){
+            final Object argValue =
+                    ConstantExpressionUtil.computeCastTo(arg, PsiType.DOUBLE);
+            if (argValue == null || !(argValue instanceof Double)){
                 return;
             }
             final double doubleValue = ((Double) argValue).doubleValue();
@@ -163,7 +160,6 @@ public class ConstantMathCallInspection extends ExpressionInspection{
                     && !"java.lang.StrictMath".equals(className)){
                 return;
             }
-
             registerMethodCallError(expression);
         }
     }
@@ -171,7 +167,7 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     @SuppressWarnings({"NestedMethodCall", "FloatingPointEquality"})
     @Nullable
     @NonNls
-    private static String createValueString(@NonNls String name, double value){
+    static String createValueString(@NonNls String name, double value){
         if("abs".equals(name)){
             return Double.toString(Math.abs(value));
         } else if("floor".equals(name)){
@@ -198,6 +194,12 @@ public class ConstantMathCallInspection extends ExpressionInspection{
             }
         }else if("log10".equals(name)){
             if(value == 1.0){
+                return "0.0";
+            } else{
+                return null;
+            }
+        }else if("log1p".equals(name)){
+            if(value == 0.0) {
                 return "0.0";
             } else{
                 return null;

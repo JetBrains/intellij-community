@@ -17,79 +17,66 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.SynchronizationUtil;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInSynchronizedContextInspection extends ExpressionInspection {
 
-  public String getID() {
-    return "WaitWhileNotSynced";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new WaitNotInSynchronizedContextVisitor();
-  }
-
-  private static class WaitNotInSynchronizedContextVisitor
-    extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!"wait".equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList paramList = method.getParameterList();
-      if (paramList == null) {
-        return;
-      }
-      final PsiParameter[] parameters = paramList.getParameters();
-      final int numParams = parameters.length;
-      if (numParams > 2) {
-        return;
-      }
-      if (numParams > 0) {
-        final PsiType parameterType = parameters[0].getType();
-        if (!parameterType.equals(PsiType.LONG)) {
-          return;
-        }
-      }
-
-      if (numParams > 1) {
-        final PsiType parameterType = parameters[1].getType();
-        if (!parameterType.equals(PsiType.INT)) {
-          return;
-        }
-      }
-
-      if (isInSynchronizedContext(expression)) {
-        return;
-      }
-
-      registerMethodCallError(expression);
+    public String getID() {
+        return "WaitWhileNotSynced";
     }
 
-    private static boolean isInSynchronizedContext(PsiElement element) {
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
-      if (context instanceof PsiSynchronizedStatement) return true;
-      if (context != null && ((PsiMethod)context).hasModifierProperty(PsiModifier.SYNCHRONIZED)) return true;
-      return false;
-    }        
-  }
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new WaitNotInSynchronizedContextVisitor();
+    }
+
+    private static class WaitNotInSynchronizedContextVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+                return;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiParameterList paramList = method.getParameterList();
+            final PsiParameter[] parameters = paramList.getParameters();
+            final int numParams = parameters.length;
+            if (numParams > 2) {
+                return;
+            }
+            if (numParams > 0) {
+                final PsiType parameterType = parameters[0].getType();
+                if (!parameterType.equals(PsiType.LONG)) {
+                    return;
+                }
+            }
+            if (numParams > 1) {
+                final PsiType parameterType = parameters[1].getType();
+                if (!parameterType.equals(PsiType.INT)) {
+                    return;
+                }
+            }
+            if (SynchronizationUtil.isInSynchronizedContext(expression)) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

@@ -35,15 +35,20 @@ import java.util.Set;
 
 public class MagicNumberInspection extends ExpressionInspection {
 
-    private static final int NUM_SPECIAL_CASE_LITERALS = 22;
     @NonNls private static final String[] s_specialCaseLiteralArray =
             new String[]{
-                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0L",
-                "1L", "2L", "0l", "1l", "2l", "0.0", "1.0", "0.0F", "1.0F", "0.0f", "1.0f"
+                    "0", "1", "2", "3", "4",
+                    "5", "6", "7", "8", "9",
+                    "10", "0L", "1L", "2L", "0l",
+                    "1l", "2l", "0.0", "1.0", "0.0F",
+                    "1.0F", "0.0f", "1.0f"
             };
-    /** @noinspection StaticCollection*/
-    private static final Set<String> s_specialCaseLiterals = new HashSet<String>(NUM_SPECIAL_CASE_LITERALS);
 
+    /** @noinspection StaticCollection*/
+    private static final Set<String> s_specialCaseLiterals =
+            new HashSet<String>(23);
+
+	/** @noinspection PublicField*/
     public boolean m_ignoreInHashCode = true;
 
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
@@ -85,7 +90,8 @@ public class MagicNumberInspection extends ExpressionInspection {
 
     private  class MagicNumberVisitor extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (!ClassUtils.isPrimitiveNumericType(type)) {
@@ -108,13 +114,16 @@ public class MagicNumberInspection extends ExpressionInspection {
                 final PsiMethod containingMethod =
                         PsiTreeUtil.getParentOfType(expression,
                                                     PsiMethod.class);
-                if(MethodUtils.isHashCode(containingMethod))
-                {
+                if(MethodUtils.isHashCode(containingMethod)) {
                     return;
                 }
-                
             }
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiPrefixExpression) {
+                registerError(parent);
+            } else {
             registerError(expression);
+            }
         }
 
         private  boolean isSpecialCase(String text) {
@@ -134,7 +143,5 @@ public class MagicNumberInspection extends ExpressionInspection {
             final PsiType type = field.getType();
             return ClassUtils.isImmutable(type);
         }
-
     }
-
 }

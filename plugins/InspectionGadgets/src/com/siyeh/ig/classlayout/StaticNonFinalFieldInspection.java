@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,23 +24,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticNonFinalFieldInspection extends FieldInspection {
 
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new StaticNonFinalFieldVisitor();
-  }
-
-  private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
-
-    public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-          field.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerFieldError(field);
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-  }
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticNonFinalFieldVisitor();
+    }
+
+    private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
+
+        public void visitField(@NotNull PsiField field) {
+            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+                field.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            registerFieldError(field);
+        }
+    }
 }

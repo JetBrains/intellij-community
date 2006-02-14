@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class RecordStoreResourceInspection extends ExpressionInspection{
+
     public String getID(){
         return "RecordStoreOpenedButNotSafelyClosed";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("recordstore.opened.not.safely.closed.display.name");
+        return InspectionGadgetsBundle.message(
+                "recordstore.opened.not.safely.closed.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -41,16 +43,19 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message("resource.opened.not.closed.problem.descriptor", text);
+        return InspectionGadgetsBundle.message(
+                "resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
         return new RecordStoreResourceVisitor();
     }
 
-    private static class RecordStoreResourceVisitor extends BaseInspectionVisitor{
+    private static class RecordStoreResourceVisitor
+            extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isRecordStoreFactoryMethod(expression)) {
                 return;
@@ -76,7 +81,8 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext, PsiTryStatement.class);
+                        PsiTreeUtil.getParentOfType(currentContext,
+                                PsiTryStatement.class);
                 if(tryStatement == null){
                 registerError(expression);
                     return;
@@ -91,9 +97,9 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
         }
 
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -115,9 +121,36 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
+
+        private static boolean isRecordStoreFactoryMethod(
+                @NotNull PsiMethodCallExpression expression){
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String openStore = "openRecordStore";
+            if(!openStore.equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null)
+            {
+                return false;
+            }
+            final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return false;
+            }
+            final String className = containingClass.getQualifiedName();
+            @NonNls final String recordStore =
+                    "javax.microedition.rms.RecordStore";
+            return recordStore.equals(className);
+        }
+
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 
@@ -132,16 +165,14 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
             final String methodName = methodExpression.getReferenceName();
             @NonNls final String closeStore = "closeRecordStore";
             if(!closeStore.equals(methodName)){
@@ -167,30 +198,4 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             return containsClose;
         }
     }
-
-    private static boolean isRecordStoreFactoryMethod(PsiMethodCallExpression expression){
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null) {
-            return false;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        @NonNls final String openStore = "openRecordStore";
-        if(!openStore.equals(methodName)) {
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null)
-        {
-            return false;
-        }
-        final PsiClass containingClass = method.getContainingClass();
-        if(containingClass == null)
-        {
-            return false;
-        }
-        final String className = containingClass.getQualifiedName();
-        @NonNls final String recordStore = "javax.microedition.rms.RecordStore";
-        return recordStore.equals(className);
-    }
-
 }

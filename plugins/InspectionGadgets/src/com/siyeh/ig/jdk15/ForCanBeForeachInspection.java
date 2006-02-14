@@ -1568,7 +1568,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             if(!(qualifierExpression instanceof PsiReferenceExpression)){
                 return false;
             }
-            final PsiReference reference = (PsiReferenceExpression)qualifierExpression;
+            final PsiReference reference = (PsiReference)qualifierExpression;
             if(!collection.equals(reference.resolve())){
                 return false;
             }

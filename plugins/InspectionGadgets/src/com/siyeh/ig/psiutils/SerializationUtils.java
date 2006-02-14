@@ -15,47 +15,35 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SerializationUtils{
-    private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
-    private static final String EXTERNALIZABLE_CLASS_NAME = "java.io.Externalizable";
+
+    private static final String SERIALIZABLE_CLASS_NAME =
+            "java.io.Serializable";
+    private static final String EXTERNALIZABLE_CLASS_NAME =
+            "java.io.Externalizable";
 
     private SerializationUtils(){
         super();
     }
 
-    public static boolean isSerializable(PsiClass aClass){
-        if(aClass == null)
-        {
-            return false;
-        }
-        final PsiManager manager = aClass.getManager();
-        final Project project = manager.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass serializable = manager.findClass(
-                SERIALIZABLE_CLASS_NAME, scope);
-        return InheritanceUtil.isInheritorOrSelf(aClass, serializable, true);
+    public static boolean isSerializable(@Nullable PsiClass aClass){
+        return ClassUtils.isSubclass(aClass, SERIALIZABLE_CLASS_NAME);
     }
 
-    public static boolean isExternalizable(@NotNull PsiClass aClass){
-        final PsiManager manager = aClass.getManager();
-        final Project project = manager.getProject();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass serializable = manager.findClass(
-                EXTERNALIZABLE_CLASS_NAME, scope);
-        return InheritanceUtil.isInheritorOrSelf(aClass, serializable, true);
+    public static boolean isExternalizable(@Nullable PsiClass aClass){
+        return ClassUtils.isSubclass(aClass, EXTERNALIZABLE_CLASS_NAME);
     }
 
     public static boolean isDirectlySerializable(@NotNull PsiClass aClass){
         final PsiReferenceList implementsList = aClass.getImplementsList();
         if(implementsList != null){
-            final PsiJavaCodeReferenceElement[] interfaces = implementsList.getReferenceElements();
+            final PsiJavaCodeReferenceElement[] interfaces =
+                    implementsList.getReferenceElements();
             for(PsiJavaCodeReferenceElement aInterfaces : interfaces){
                 final PsiClass implemented = (PsiClass) aInterfaces.resolve();
                 if(implemented != null){
@@ -156,5 +144,4 @@ public class SerializationUtils{
         final PsiType returnType = method.getReturnType();
         return TypeUtils.isJavaLangObject(returnType);
     }
-
 }

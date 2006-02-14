@@ -40,7 +40,7 @@ public class InheritanceUtil{
             return true;
         }
         if(class1.isInheritor(class2, true) ||
-           class2.isInheritor(class1, true)){
+                class2.isInheritor(class1, true)){
             return true;
         }
         final MutualSubclassProcessor processor =
@@ -68,7 +68,7 @@ public class InheritanceUtil{
 
         public boolean execute(PsiClass inheritor) {
             if (inheritor.equals(class2) ||
-                inheritor.isInheritor(class2, true)) {
+                    inheritor.isInheritor(class2, true)) {
                 mutualSubClass = true;
                 return false;
             }
@@ -102,7 +102,7 @@ public class InheritanceUtil{
 
         public boolean execute(PsiClass inheritor) {
             if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
-                  inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
+                    inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
                 implementation = true;
                 return false;
             }

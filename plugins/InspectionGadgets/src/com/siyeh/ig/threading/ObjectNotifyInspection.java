@@ -20,78 +20,76 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class ObjectNotifyInspection extends ExpressionInspection {
 
-  private final ObjectNotifyFix fix = new ObjectNotifyFix();
-
-  public String getID() {
-    return "CallToNotifyInsteadOfNotifyAll";
-  }
-
-  public String getGroupDisplayName() {
-    return GroupNames.THREADING_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ObjectNotifyVisitor();
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class ObjectNotifyFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("object.notify.replace.quickfix");
+    public String getID() {
+        return "CallToNotifyInsteadOfNotifyAll";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement methodNameElement = descriptor.getPsiElement();
-      final PsiReferenceExpression methodExpression =
-        (PsiReferenceExpression)methodNameElement.getParent();
-      assert methodExpression != null;
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      @NonNls final String notifyAll = "notifyAll";
-      if (qualifier == null) {
-        replaceExpression(methodExpression, notifyAll);
-      }
-      else {
-        final String qualifierText = qualifier.getText();
-        replaceExpression(methodExpression,
-                          qualifierText + "." + notifyAll);
-      }
+    public String getGroupDisplayName() {
+        return GroupNames.THREADING_GROUP_NAME;
     }
-  }
 
-  private static class ObjectNotifyVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression == null) {
-        return;
-      }
-      final String methodName = methodExpression.getReferenceName();
-
-      @NonNls final String notify = "notify";
-      if (!notify.equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      if (argumentList.getExpressions().length != 0) {
-        return;
-      }
-      registerMethodCallError(expression);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ObjectNotifyVisitor();
     }
-  }
+
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return new ObjectNotifyFix();
+    }
+
+    private static class ObjectNotifyFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "object.notify.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement methodNameElement = descriptor.getPsiElement();
+            final PsiReferenceExpression methodExpression =
+                    (PsiReferenceExpression)methodNameElement.getParent();
+            assert methodExpression != null;
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                replaceExpression(methodExpression,
+                        HardcodedMethodConstants.NOTIFY_ALL);
+            }
+            else {
+                final String qualifierText = qualifier.getText();
+                replaceExpression(methodExpression,
+                        qualifierText + '.' +
+                        HardcodedMethodConstants.NOTIFY_ALL);
+            }
+        }
+    }
+
+    private static class ObjectNotifyVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+
+            if (!HardcodedMethodConstants.NOTIFY.equals(methodName)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList.getExpressions().length != 0) {
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

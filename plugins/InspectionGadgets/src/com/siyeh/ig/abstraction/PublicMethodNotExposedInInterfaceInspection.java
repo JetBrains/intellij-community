@@ -20,17 +20,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class PublicMethodNotExposedInInterfaceInspection extends MethodInspection {
+public class PublicMethodNotExposedInInterfaceInspection
+        extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("public.method.not.in.interface.display.name");
+        return InspectionGadgetsBundle.message(
+                "public.method.not.in.interface.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,14 +39,16 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
     }
 
     protected String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("public.method.not.in.interface.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "public.method.not.in.interface.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new PublicMethodNotExposedInInterface();
     }
 
-    private static class PublicMethodNotExposedInInterface extends BaseInspectionVisitor {
+    private static class PublicMethodNotExposedInInterface
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
@@ -62,7 +65,8 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
             if (containingClass == null) {
                 return;
             }
-            if (containingClass.isInterface()|| containingClass.isAnnotationType()) {
+            if (containingClass.isInterface() ||
+                containingClass.isAnnotationType()) {
                 return;
             }
             if (!containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -78,7 +82,7 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
             registerMethodError(method);
         }
 
-        private boolean exposedInInterface(PsiMethod method) {
+        private static boolean exposedInInterface(PsiMethod method) {
           final PsiMethod[] superMethods = method.findSuperMethods();
             for(final PsiMethod superMethod : superMethods){
                 final PsiClass superClass = superMethod.getContainingClass();
@@ -95,7 +99,5 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
             }
             return false;
         }
-
     }
-
 }

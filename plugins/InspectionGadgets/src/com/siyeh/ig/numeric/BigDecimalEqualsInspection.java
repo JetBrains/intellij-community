@@ -23,76 +23,88 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.bugs.IsEqualsUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends ExpressionInspection {
 
-  private final BigDecimalEqualsFix fix = new BigDecimalEqualsFix();
+    private final BigDecimalEqualsFix fix = new BigDecimalEqualsFix();
 
-  public String getGroupDisplayName() {
-    return GroupNames.NUMERIC_GROUP_NAME;
-  }
-
-  public InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("big.decimal.equals.replace.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
-      assert expression != null;
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      final String qualifierText = qualifier.getText();
-      assert call != null;
-      final PsiExpressionList argumentList = call.getArgumentList();
-      assert argumentList != null;
-      final PsiExpression[] args = argumentList.getExpressions();
-      final String argText = args[0].getText();
-      replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0");
-    }
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new BigDecimalEqualsVisitor();
-  }
-
-  private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!IsEqualsUtil.isEquals(expression)) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      assert argumentList != null;
-      final PsiExpression[] args = argumentList.getExpressions();
-
-      final PsiExpression arg = args[0];
-      if (!TypeUtils.expressionHasType("java.math.BigDecimal", arg)) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!TypeUtils.expressionHasType("java.math.BigDecimal", qualifier)) {
-        return;
-      }
-      final PsiElement context = expression.getParent();
-      if (context instanceof PsiExpressionStatement) {
-        return; //cheesy, but necessary, because otherwise the quickfix will produce
-        //uncompilable code (out of merely incorrect code).
-      }
-      registerMethodCallError(expression);
+    public InspectionGadgetsFix buildFix(PsiElement location) {
+        return fix;
     }
 
-  }
+    private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "big.decimal.equals.replace.quickfix");
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiIdentifier name =
+                    (PsiIdentifier)descriptor.getPsiElement();
+            final PsiReferenceExpression expression =
+                    (PsiReferenceExpression)name.getParent();
+            assert expression != null;
+            final PsiMethodCallExpression call =
+                    (PsiMethodCallExpression)expression.getParent();
+            final PsiExpression qualifier = expression.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            final String qualifierText = qualifier.getText();
+            assert call != null;
+            final PsiExpressionList argumentList = call.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            final String argText = args[0].getText();
+            replaceExpression(call,
+                    qualifierText + ".compareTo(" + argText + ")==0");
+        }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new BigDecimalEqualsVisitor();
+    }
+
+    private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (!MethodCallUtils.isEqualsCall(expression)) {
+                return;
+            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (args.length == 0) {
+                return;
+            }
+            final PsiExpression arg = args[0];
+            if (!TypeUtils.expressionHasType("java.math.BigDecimal", arg)) {
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (!TypeUtils.expressionHasType("java.math.BigDecimal",
+                    qualifier)) {
+                return;
+            }
+            final PsiElement context = expression.getParent();
+            if (context instanceof PsiExpressionStatement) {
+                //cheesy, but necessary, because otherwise the quickfix will
+                // produce uncompilable code (out of merely incorrect code).
+                return;
+            }
+            registerMethodCallError(expression);
+        }
+    }
 }

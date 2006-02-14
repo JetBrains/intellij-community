@@ -255,33 +255,34 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     public Class<? extends LocalInspectionTool>[] getInspectionClasses(){
         if (m_inspectionClasses.isEmpty()){
-            registerNamingInspections();
+            registerAbstractionInspections();
             registerBugInspections();
+            registerClassLayoutInspections();
+            registerClassMetricsInspections();
             registerCloneInspections();
             registerConfusingInspections();
-            registerAbstractionInspections();
-            registerClassLayoutInspections();
-            registerImportInspections();
+            registerControlFlowInspections();
             registerEncapsulationInspections();
-            registerVisibilityInspections();
-            registerInitializerInspections();
-            registerFinalizationInspections();
             registerExceptionInspections();
-            registerVerboseInspections();
-            registerStyleInspections();
-            registerSerializationInspections();
-            registerThreadingInspections();
-            registerMethodMetricsInspections();
-            registerClassMetricsInspections();
-            registerPortabilityInspections();
+            registerFinalizationInspections();
+            registerImportInspections();
+            registerInitializerInspections();
             registerInternationalInspections();
-            registerPerformanceInspections();
-            registerMaturityInspections();
+            registerJ2MEInspections();
             registerJUnitInspections();
             registerLoggingInspections();
-            registerSecurityInspections();
+            registerMaturityInspections();
+            registerMethodMetricsInspections();
+            registerNamingInspections();
+            registerPerformanceInspections();
+            registerPortabilityInspections();
             registerResourceManagementInspections();
-            registerJ2MEInspections();
+            registerSecurityInspections();
+            registerSerializationInspections();
+            registerStyleInspections();
+            registerThreadingInspections();
+            registerVerboseInspections();
+            registerVisibilityInspections();
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends LocalInspectionTool>[] classArray =
@@ -292,19 +293,20 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     public void initComponent(){}
 
     private void registerResourceManagementInspections(){
-        m_inspectionClasses.add(HibernateResourceInspection.class);
-        m_inspectionClasses.add(JNDIResourceInspection.class);
-        m_inspectionClasses.add(SocketResourceInspection.class);
-        m_inspectionClasses.add(IOResourceInspection.class);
-        m_inspectionClasses.add(JDBCResourceInspection.class);
         m_inspectionClasses.add(ChannelResourceInspection.class);
         m_inspectionClasses.add(DriverManagerGetConnectionInspection.class);
+        m_inspectionClasses.add(HibernateResourceInspection.class);
+        m_inspectionClasses.add(IOResourceInspection.class);
+        m_inspectionClasses.add(JDBCResourceInspection.class);
+        m_inspectionClasses.add(JNDIResourceInspection.class);
+        m_inspectionClasses.add(SocketResourceInspection.class);
     }
 
     private void registerLoggingInspections(){
-        m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
         m_inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
+        m_inspectionClasses.add(ClassWithoutLoggerInspection.class);
         m_inspectionClasses.add(NonStaticFinalLoggerInspection.class);
+        //m_inspectionClasses.add(PublicMethodWithoutLoggingInspection.class);
     }
 
     private void registerSecurityInspections(){
@@ -367,6 +369,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConfusingMainMethodInspection.class);
         m_inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
         m_inspectionClasses.add(DollarSignInNameInspection.class);
+    }
+
+    private void registerControlFlowInspections() {
+        m_inspectionClasses.add(InfiniteLoopStatementInspection.class);
+        m_inspectionClasses.add(LoopConditionNotUpdatedInsideLoopInspection.class);
     }
 
     private void registerBugInspections(){
@@ -432,7 +439,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(IncompatibleMaskInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
         m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
-        m_inspectionClasses.add(InfiniteLoopStatementInspection.class);
         m_inspectionClasses.add(InfiniteRecursionInspection.class);
         m_inspectionClasses.add(SubtractionInCompareToInspection.class);
         m_inspectionClasses.add(EqualsUsesNonFinalVariableInspection.class);
@@ -839,6 +845,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(StringConcatenationInsideStringBufferAppendInspection.class);
         m_inspectionClasses.add(MultiplyOrDivideByPowerOfTwoInspection.class);
         m_inspectionClasses.add(LengthOneStringsInConcatenationInspection.class);
+        m_inspectionClasses.add(LengthOneStringInIndexOfInspection.class);
         m_inspectionClasses.add(BooleanConstructorInspection.class);
         m_inspectionClasses.add(CachedNumberConstructorCallInspection.class);
         m_inspectionClasses.add(StringToStringInspection.class);
