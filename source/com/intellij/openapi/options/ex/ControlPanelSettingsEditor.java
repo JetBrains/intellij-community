@@ -289,12 +289,9 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       ((SearchableConfigurable)configurable).clearSearch();
       @NonNls final String filter = mySearchField.getText();
       if (filter != null && filter.length() > 0 ){
-        final String[] options = filter.split("[\\W&&[^_-]]");
-        for (String option : options) {
-          final Runnable runnable = ((SearchableConfigurable)configurable).showOption(option);
-          if (runnable != null){
-            runnable.run();
-          }
+        final Runnable runnable = ((SearchableConfigurable)configurable).showOption(filter);
+        if (runnable != null){
+          runnable.run();
         }
       }
     }
@@ -316,19 +313,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
         final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
-          final String[] searchOptions = searchPattern.split("[\\W&&[^_-]]");
-          Set<Configurable> configurables = null;
-          for (String option : searchOptions) {
-            if (option != null && option.length() > 0){
-              final Set<Configurable> optionConfigurables = optionsRegistrar.getConfigurables(myGroups, option);
-              if (configurables == null){
-                configurables = optionConfigurables;
-              } else {
-                configurables.retainAll(optionConfigurables);
-              }
-            }
-          }
-          myOptionContainers = configurables;
+          myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern);
         } else {
           myOptionContainers = null;
         }

@@ -126,9 +126,8 @@ public class TraverseUIStarter implements ApplicationStarter {
         }
       }
     }
-    final Set<String> words = InspectionToolRegistrar.getToolWords();
+    final TreeSet<String> words = new TreeSet<String>(InspectionToolRegistrar.getToolWords());
     for (String word : words) {
-      if (word == null || word.length() == 0) continue;
       final List<String> mentionedInspections = InspectionToolRegistrar.getFilteredToolNames(word);
       StringBuffer allInspections = new StringBuffer();
       for (String inspection : mentionedInspections) {

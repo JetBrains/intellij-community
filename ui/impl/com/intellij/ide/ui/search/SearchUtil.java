@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NonNls;
@@ -52,36 +51,35 @@ public class SearchUtil {
   }
 
   private static void processComponent(final JComponent component, final Set<Pair<String,String>> configurableOptions, @NonNls String path) {
-    SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {
       final TitledBorder titledBorder = (TitledBorder)border;
       final String title = titledBorder.getTitle();
       if (title != null) {
-        processUILabel(title, configurableOptions, path, registrar);
+        processUILabel(title, configurableOptions, path);
       }
     }
     if (component instanceof JLabel) {
       final String label = ((JLabel)component).getText();
       if (label != null) {
-        processUILabel(label, configurableOptions, path, registrar);
+        processUILabel(label, configurableOptions, path);
       }
     }
     else if (component instanceof JCheckBox) {
       @NonNls final String checkBoxTitle = ((JCheckBox)component).getText();
       if (checkBoxTitle != null) {
-        processUILabel(checkBoxTitle, configurableOptions, path, registrar);
+        processUILabel(checkBoxTitle, configurableOptions, path);
       }
     }
     else if (component instanceof JRadioButton) {
       @NonNls final String radioButtonTitle = ((JRadioButton)component).getText();
       if (radioButtonTitle != null) {
-        processUILabel(radioButtonTitle, configurableOptions, path, registrar);
+        processUILabel(radioButtonTitle, configurableOptions, path);
       }
     } else if (component instanceof JButton){
       @NonNls final String buttonTitle = ((JButton)component).getText();
       if (buttonTitle != null) {
-        processUILabel(buttonTitle, configurableOptions, path, registrar);
+        processUILabel(buttonTitle, configurableOptions, path);
       }
     }
     if (component instanceof JTabbedPane) {
@@ -89,7 +87,7 @@ public class SearchUtil {
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
         final String title = tabbedPane.getTitleAt(i);
-        processUILabel(title, configurableOptions, path != null ? path + "." + title : title, registrar);
+        processUILabel(title, configurableOptions, path != null ? path + "." + title : title);
         final Component tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent instanceof JComponent){
           processComponent((JComponent)tabComponent, configurableOptions, title);
@@ -109,30 +107,11 @@ public class SearchUtil {
 
   private static void processUILabel(@NonNls final String title,
                                      final Set<Pair<String, String>> configurableOptions,
-                                     String path,
-                                     final SearchableOptionsRegistrar registrar) {
-    @NonNls final String text = title.toLowerCase();
-    final String[] options = text.split("[\\W&&[^_-]]");
-    for (String option : options) {
-      if (option != null) {
-        if (!registrar.isStopWord(option)) {
-          configurableOptions.add(Pair.create(PorterStemmerUtil.stem(option), path));
-        }
-      }
+                                     String path) {
+    final Set<String> words = getProcessedWords(title);
+    for (String option : words) {
+      configurableOptions.add(Pair.create(option, path));
     }
-  }
-
-  public static Runnable switchTab(final SearchableConfigurable configurable, final String option, final TabbedPaneWrapper tabbedPane, final GlassPanel glassPanel){
-    return new Runnable() {
-      public void run() {
-        final String tabIndex = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
-        LOG.assertTrue(tabIndex != null);
-        tabbedPane.setSelectedIndex(new Integer(tabIndex).intValue());
-        for(int i = 0; i < tabbedPane.getTabCount(); i++){
-          SearchUtil.traverseComponentsTree(glassPanel, tabbedPane.getComponentAt(i), option);
-        }
-      }
-    };
   }
 
   public static Runnable lightOptions(final JComponent component, final String option, final GlassPanel glassPanel){
@@ -209,20 +188,11 @@ public class SearchUtil {
     }
   }
 
-  private static boolean isComponentHighlighted(String text, String option){
-    SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-    option = PorterStemmerUtil.stem(option);
-    @NonNls final String toLowerCase = text.toLowerCase();
-    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
-    if (options != null) {
-      for (String opt : options) {
-        if (registrar.isStopWord(opt)) continue;
-        if (Comparing.strEqual(PorterStemmerUtil.stem(opt), option)){
-          return true;
-        }
-      }
-    }
-    return false;
+  public static boolean isComponentHighlighted(String text, String option){
+    final Set<String> options = getProcessedWords(option);
+    final Set<String> tokens = getProcessedWords(text);
+    options.removeAll(tokens);
+    return options.isEmpty();
   }
 
   public static Set<String> getProcessedWords(String text){

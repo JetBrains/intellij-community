@@ -4,8 +4,7 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ui.InspectCodePanel;
-import com.intellij.ide.ui.search.PorterStemmerUtil;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -185,11 +184,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
-    final String[] words = descriptionText.split("[\\W]");
+    final Set<String> words = SearchUtil.getProcessedWords(descriptionText);
     for (String word : words) {
-      if (word == null || word.length() == 0) continue;
-      if (SearchableOptionsRegistrar.getInstance().isStopWord(word)) continue;
-      word = PorterStemmerUtil.stem(word);
       ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
       if (descriptors == null) {
         descriptors = new ArrayList<String>();

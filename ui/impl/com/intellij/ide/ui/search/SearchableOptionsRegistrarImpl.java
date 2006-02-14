@@ -61,13 +61,21 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     catch (Exception e) {
       //do nothing
     }
-  }
+  }                                                                              
 
   @NotNull
   public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option) {
+    Set<String> options = SearchUtil.getProcessedWords(option);
     Set<Configurable> result = new HashSet<Configurable>();
-    if (myStopWords.contains(option)) return result;
-    final Set<String> helpIds = myOption2HelpId.get(PorterStemmerUtil.stem(option));
+    Set<String> helpIds = null;
+    for (String opt : options) {
+      final Set<String> optionIds = myOption2HelpId.get(opt);
+      if (optionIds == null) return result;
+      if (helpIds == null){
+        helpIds = optionIds;
+      }
+      helpIds.retainAll(optionIds);
+    }
     if (helpIds != null) {
       for (ConfigurableGroup configurable : configurables) {
         final Configurable[] groupConfigurables = configurable.getConfigurables();
@@ -82,8 +90,11 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
 
-  public String getInnerPath(SearchableConfigurable configurable, String option) {
-    option = PorterStemmerUtil.stem(option);
+  public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
+    final String[] options = option.split("[\\W&&[^_-]]");
+    if (options != null && options.length > 0){
+      option = PorterStemmerUtil.stem(options[0]);
+    }
     return myHelpIdWithOption2Path.get(Pair.create(configurable.getId(), option));
   }
 
