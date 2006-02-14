@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +27,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.TIntArrayList;
 
 import java.util.regex.Matcher;
@@ -108,6 +110,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile) {
+          LanguageLevel level = file.getProject() != null ? PsiManager.getInstance(file.getProject()).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
+          lexer = new JavaLexer(level);
           commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
         else if (PsiUtil.isInJspFile(file)) {
