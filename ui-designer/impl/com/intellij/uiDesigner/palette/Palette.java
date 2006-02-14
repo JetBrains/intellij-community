@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.uiDesigner.Properties;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -21,6 +23,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.util.Filter;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -82,6 +85,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   @NonNls private static final String ELEMENT_GROUP = "group";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
   @NonNls private static final String ATTRIBUTE_SINCE_VERSION = "since-version";
+  @NonNls private static final String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
+  @NonNls private static final String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
 
   public static Palette getInstance(@NotNull final Project project) {
     return project.getComponent(Palette.class);
@@ -152,6 +157,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   private void upgradePalette() {
     // load new components from the predefined Palette2.xml
     try {
+      //noinspection HardCodedStringLiteral
       final Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
       for(Object o: document.getRootElement().getChildren(ELEMENT_GROUP)) {
         Element groupElement = (Element) o;
@@ -173,6 +179,16 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       Element itemElement = (Element) o;
       if (itemElement.getAttributeValue(ATTRIBUTE_SINCE_VERSION, "").equals("2")) {
         processItemElement(itemElement, group, true);
+      }
+      final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
+      final ComponentItem item = getItem(className);
+      if (item != null) {
+        if (LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_AUTO_CREATE_BINDING, false)) {
+          item.setAutoCreateBinding(true);
+        }
+        if (LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_CAN_ATTACH_LABEL, false)) {
+          item.setCanAttachLabel(true);
+        }
       }
     }
   }
@@ -311,6 +327,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     // Tooltip text (optional)
     final String toolTipText = LwXmlReader.getString(itemElement, ATTRIBUTE_TOOLTIP_TEXT); // can be null
 
+    boolean autoCreateBinding = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_AUTO_CREATE_BINDING, false);
+    boolean canAttachLabel = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_CAN_ATTACH_LABEL, false);
+
     // Default constraint
     final GridConstraints constraints;
     final Element defaultConstraints = itemElement.getChild(ELEMENT_DEFAULT_CONSTRAINTS);
@@ -344,7 +363,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       toolTipText,
       constraints,
       propertyName2initialValue,
-      removable
+      removable,
+      autoCreateBinding,
+      canAttachLabel
     );
     addItem(group, item);
   }
@@ -463,6 +484,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
     // Removable
     itemElement.setAttribute(ATTRIBUTE_REMOVABLE, Boolean.toString(item.isRemovable()));
+    itemElement.setAttribute(ATTRIBUTE_AUTO_CREATE_BINDING, Boolean.toString(item.isAutoCreateBinding()));
+    itemElement.setAttribute(ATTRIBUTE_CAN_ATTACH_LABEL, Boolean.toString(item.isCanAttachLabel()));
 
     // Default constraints
     writeDefaultConstraintsElement(itemElement, item.getDefaultConstraints());
@@ -600,7 +623,16 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             // these properties are set through layout
             continue;
           }
-          property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType);
+          Filter<RadComponent> filter = null;
+          if (name.equals(SwingProperties.LABEL_FOR)) {
+            filter = new Filter<RadComponent>() {
+              public boolean accepts(final RadComponent t) {
+                ComponentItem item = getItem(t.getComponentClassName());
+                return item != null && item.isCanAttachLabel();
+              }
+            };
+          }
+          property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType, filter);
         }
         else if (Color.class.equals(propertyType)) {
           property = new IntroColorProperty(name, readMethod, writeMethod);

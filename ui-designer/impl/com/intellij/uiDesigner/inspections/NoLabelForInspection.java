@@ -4,21 +4,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 
 /**
  * @author yole
@@ -35,8 +35,8 @@ public class NoLabelForInspection extends BaseFormInspection {
   }
 
   protected void checkComponentProperties(final Module module, final IComponent component, FormErrorCollector collector) {
-    if (FormInspectionUtil.isComponentClass(module, component, JTextComponent.class) ||
-        FormInspectionUtil.isComponentClass(module, component, JComboBox.class)) {
+    ComponentItem item = Palette.getInstance(module.getProject()).getItem(component.getComponentClassName());
+    if (item != null && item.isCanAttachLabel()) {
       IComponent root = component;
       while(root.getParentContainer() != null) {
         root = root.getParentContainer();

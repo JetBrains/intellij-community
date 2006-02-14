@@ -55,6 +55,10 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private final HashMap<String, StringDescriptor> myPropertyName2intitialValue;
   /** Whether item is removable or not */
   private final boolean myRemovable;
+
+  private boolean myAutoCreateBinding;
+  private boolean myCanAttachLabel;
+
   @NotNull private Project myProject;
 
   public ComponentItem(
@@ -64,8 +68,12 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     @Nullable final String toolTipText,
     @NotNull final GridConstraints defaultConstraints,
     @NotNull final HashMap<String, StringDescriptor> propertyName2initialValue,
-    final boolean removable
+    final boolean removable,
+    final boolean autoCreateBinding,
+    final boolean canAttachLabel
   ){
+    myAutoCreateBinding = autoCreateBinding;
+    myCanAttachLabel = canAttachLabel;
     myProject = project;
     setClassName(className);
     setIconPath(iconPath);
@@ -103,7 +111,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
       myToolTipText,
       (GridConstraints)myDefaultConstraints.clone(),
       (HashMap<String, StringDescriptor>)myPropertyName2intitialValue.clone(),
-      myRemovable
+      myRemovable,
+      myAutoCreateBinding,
+      myCanAttachLabel
     );
     return result;
   }
@@ -238,6 +248,22 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    */
   HashMap<String, StringDescriptor> getInitialValues(){
     return myPropertyName2intitialValue;
+  }
+
+  public boolean isAutoCreateBinding() {
+    return myAutoCreateBinding;
+  }
+
+  public void setAutoCreateBinding(final boolean autoCreateBinding) {
+    myAutoCreateBinding = autoCreateBinding;
+  }
+
+  public boolean isCanAttachLabel() {
+    return myCanAttachLabel;
+  }
+
+  public void setCanAttachLabel(final boolean canAttachLabel) {
+    myCanAttachLabel = canAttachLabel;
   }
 
   public boolean equals(final Object o) {

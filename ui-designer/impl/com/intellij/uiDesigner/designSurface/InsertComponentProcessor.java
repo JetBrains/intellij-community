@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -59,28 +58,6 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   protected void processKeyEvent(final KeyEvent e) {}
-
-  /**
-   * TODO[vova] it would be fine to configure such "input" controls somewhere in palette
-   * @return whether component is an input control or not
-   */
-  private static boolean isInputComponent(@NotNull final RadComponent component){
-    final Class aClass = component.getComponentClass();
-    if(
-      AbstractButton.class.isAssignableFrom(aClass) ||
-      JComboBox.class.isAssignableFrom(aClass) ||
-      JList.class.isAssignableFrom(aClass) ||
-      JSpinner.class.isAssignableFrom(aClass) ||
-      JTabbedPane.class.isAssignableFrom(aClass) ||
-      JTable.class.isAssignableFrom(aClass) ||
-      JTextComponent.class.isAssignableFrom(aClass) ||
-      JTree.class.isAssignableFrom(aClass)
-    ){
-      return true;
-    }
-
-    return false;
-  }
 
   @NotNull
   private static String suggestBinding(final GuiEditor editor, @NotNull final String componentClassName){
@@ -122,7 +99,8 @@ public final class InsertComponentProcessor extends EventProcessor {
    * @param insertedComponent
    */
   public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
-    if(isInputComponent(insertedComponent)){
+    final ComponentItem item = Palette.getInstance(editor.getProject()).getItem(insertedComponent.getComponentClassName());
+    if (item != null && item.isAutoCreateBinding()) {
       doCreateBindingWhenDrop(editor, insertedComponent);
     }
   }
@@ -259,7 +237,7 @@ public final class InsertComponentProcessor extends EventProcessor {
               }
             }
             else {
-              myTargetContainer = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
+              myTargetContainer = GridInsertProcessor.processGridInsertOnDrop(location, components, null);
               if (myTargetContainer == null) {
                 return;
               }

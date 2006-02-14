@@ -52,6 +52,8 @@ public final class ComponentItemDialog extends DialogWrapper{
   private JRadioButton myClassRadioButton;
   private JRadioButton myNestedFormRadioButton;
   private TextFieldWithBrowseButton myTfNestedForm;
+  private JCheckBox myAutoCreateBindingCheckbox;
+  private JCheckBox myCanAttachLabelCheckbox;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
@@ -111,6 +113,9 @@ public final class ComponentItemDialog extends DialogWrapper{
       myChkVerWantGrow.setSelected((vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0);
     }
 
+    myAutoCreateBindingCheckbox.setSelected(itemToBeEdited.isAutoCreateBinding());
+    myCanAttachLabelCheckbox.setSelected(itemToBeEdited.isCanAttachLabel());
+
     myLblIcon.setLabelFor(myTfIconPath);
     myClassRadioButton.addChangeListener(new MyRadioChangeListener());
     myNestedFormRadioButton.addChangeListener(new MyRadioChangeListener());
@@ -164,6 +169,9 @@ public final class ComponentItemDialog extends DialogWrapper{
         (myChkVerWantGrow.isSelected() ? GridConstraints.SIZEPOLICY_WANT_GROW : 0)
       );
     }
+
+    myItemToBeEdited.setAutoCreateBinding(myAutoCreateBindingCheckbox.isSelected());
+    myItemToBeEdited.setCanAttachLabel(myCanAttachLabelCheckbox.isSelected());
 
     super.doOKAction();
   }

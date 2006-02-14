@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -8,6 +7,8 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComponentEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.Filter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +23,9 @@ public class IntroComponentProperty extends IntrospectedProperty {
   private ComponentEditor myEditor;
   @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroComponentProperty_";
 
-  public IntroComponentProperty(String name, Method readMethod, Method writeMethod, Class propertyType) {
+  public IntroComponentProperty(String name, Method readMethod, Method writeMethod, Class propertyType, Filter<RadComponent> filter) {
     super(name, readMethod, writeMethod);
-    myEditor = new ComponentEditor(propertyType);
+    myEditor = new ComponentEditor(propertyType, filter);
   }
 
   @NotNull public PropertyRenderer getRenderer() {

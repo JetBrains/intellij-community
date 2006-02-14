@@ -32,6 +32,7 @@
       class="javax.swing.JButton"
       icon="/com/intellij/uiDesigner/icons/button.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
       <initial-values>
@@ -42,6 +43,7 @@
       class="javax.swing.JRadioButton"
       icon="/com/intellij/uiDesigner/icons/radioButton.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
       <initial-values>
@@ -52,6 +54,7 @@
       class="javax.swing.JCheckBox"
       icon="/com/intellij/uiDesigner/icons/checkBox.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
       <initial-values>
@@ -72,6 +75,8 @@
       class="javax.swing.JTextField"
       icon="/com/intellij/uiDesigner/icons/textField.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
         <preferred-size width="150" height="-1"/>
@@ -81,6 +86,8 @@
       class="javax.swing.JPasswordField"
       icon="/com/intellij/uiDesigner/icons/passwordField.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
         <preferred-size width="150" height="-1"/>
@@ -90,6 +97,8 @@
       class="javax.swing.JFormattedTextField"
       icon="/com/intellij/uiDesigner/icons/formattedTextField.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
         <preferred-size width="150" height="-1"/>
@@ -99,6 +108,8 @@
       class="javax.swing.JTextArea"
       icon="/com/intellij/uiDesigner/icons/textArea.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -108,6 +119,8 @@
       class="javax.swing.JTextPane"
       icon="/com/intellij/uiDesigner/icons/textPane.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -117,6 +130,8 @@
       class="javax.swing.JEditorPane"
       icon="/com/intellij/uiDesigner/icons/editorPane.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -126,6 +141,8 @@
       class="javax.swing.JComboBox"
       icon="/com/intellij/uiDesigner/icons/comboBox.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
     </item>
@@ -133,6 +150,7 @@
       class="javax.swing.JTable"
       icon="/com/intellij/uiDesigner/icons/table.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -142,6 +160,7 @@
       class="javax.swing.JList"
       icon="/com/intellij/uiDesigner/icons/list.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="2" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -150,6 +169,7 @@
     <item class="javax.swing.JTree"
       icon="/com/intellij/uiDesigner/icons/tree.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
         <preferred-size width="150" height="50"/>
@@ -159,6 +179,7 @@
       class="javax.swing.JTabbedPane"
       icon="/com/intellij/uiDesigner/icons/tabbedPane.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
         <preferred-size width="200" height="200"/>
@@ -177,6 +198,8 @@
       class="javax.swing.JSpinner"
       icon="/com/intellij/uiDesigner/icons/spinner.png"
       removable="false"
+      auto-create-binding="true"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
         <preferred-size width="-1" height="-1"/>
@@ -186,6 +209,7 @@
       class="javax.swing.JSlider"
       icon="/com/intellij/uiDesigner/icons/slider.png"
       removable="false"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
         <preferred-size width="-1" height="-1"/>
@@ -206,6 +230,7 @@
       icon="/com/intellij/uiDesigner/icons/progressbar.png"
       removable="false"
       since-version="2"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
         <preferred-size width="-1" height="-1"/>
@@ -236,6 +261,7 @@
       icon="/com/intellij/uiDesigner/icons/scrollbar.png"
       removable="false"
       since-version="2"
+      auto-create-binding="true"
       >
       <default-constraints vsize-policy="6" hsize-policy="0" anchor="0" fill="2">
         <preferred-size width="-1" height="-1"/>

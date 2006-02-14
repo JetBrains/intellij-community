@@ -1,13 +1,13 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.Filter;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.util.ArrayList;
 
 /**
@@ -15,15 +15,17 @@ import java.util.ArrayList;
  */
 public class ComponentEditor extends ComboBoxPropertyEditor {
   private Class myPropertyType;
+  private Filter<RadComponent> myFilter;
   private String myOldValue;
 
-  public ComponentEditor(final Class propertyType) {
+  public ComponentEditor(final Class propertyType, final Filter<RadComponent> filter) {
     myPropertyType = propertyType;
+    myFilter = filter;
     myCbx.setRenderer(new ComponentRenderer());
   }
 
   public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
-    RadComponent[] components = collectFocusableComponents(component);
+    RadComponent[] components = collectFilteredComponents(component);
     // components [0] = null (<none>)
     myCbx.setModel(new DefaultComboBoxModel(components));
     myOldValue = (String) value;
@@ -41,7 +43,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
     return myCbx;
   }
 
-  private RadComponent[] collectFocusableComponents(final RadComponent component) {
+  private RadComponent[] collectFilteredComponents(final RadComponent component) {
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
     result.add(null);
 
@@ -57,7 +59,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor {
         if (!myPropertyType.isInstance(delegee)) {
           return true;
         }
-        if (delegee instanceof JTextComponent || delegee instanceof JComboBox || delegee instanceof JSpinner) {
+        if (myFilter == null || myFilter.accepts(radComponent)) {
           result.add(radComponent);
         }
         return true;

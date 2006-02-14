@@ -33,7 +33,9 @@ public class AddComponentAction extends AnAction {
       null,
       new GridConstraints(),
       new HashMap<String, StringDescriptor>(),
-      true/*all user defined components are removable*/
+      true/*all user defined components are removable*/,
+      false,
+      false
     );
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded);
