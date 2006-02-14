@@ -29,6 +29,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -114,11 +115,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   private SimpleTextAttributes myPropertyNameAttrs;
   private SimpleTextAttributes myErrorPropertyNameAttrs;
+  private SimpleTextAttributes myWarningPropertyNameAttrs;
   private SimpleTextAttributes myModifiedPropertyNameAttrs;
   private SimpleTextAttributes myModifiedErrorPropertyNameAttrs;
+  private SimpleTextAttributes myModifiedWarningPropertyNameAttrs;
   private boolean myInsideSynch;
 
-  PropertyInspectorTable(Project project, /*@NotNull*/ final GuiEditor editor, @NotNull final ComponentTree componentTree){
+  PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
     myBorderProperty = new BorderProperty(project);
@@ -138,7 +141,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myMaximumSizeProperty = new MaximumSizeProperty();
     myLayoutManagerProperty = new LayoutManagerProperty();
 
-    myEditor = editor;
     myPropertyEditorListener = new MyPropertyEditorListener();
     myLafManagerListener = new MyLafManagerListener();
     myComponentTree=componentTree;
@@ -264,6 +266,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myModifiedErrorPropertyNameAttrs = new SimpleTextAttributes(
       SimpleTextAttributes.STYLE_WAVED | SimpleTextAttributes.STYLE_BOLD,
       null, Color.RED
+    );
+    myWarningPropertyNameAttrs = new SimpleTextAttributes(
+      SimpleTextAttributes.STYLE_WAVED,
+      null, Color.ORANGE
+    );
+    myModifiedWarningPropertyNameAttrs = new SimpleTextAttributes(
+      SimpleTextAttributes.STYLE_WAVED | SimpleTextAttributes.STYLE_BOLD,
+      null, Color.ORANGE
     );
     super.updateUI();
   }
@@ -832,15 +842,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       if(column==0){ // painter for first column
-        // 1. Text
-        final boolean hasErrors = getErrorForRow(row) != null;
-        SimpleTextAttributes attrs;
-        if (hasErrors) {
-          attrs = property.isModified(myComponent) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
-        }
-        else {
-          attrs = property.isModified(myComponent) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
-        }
+        SimpleTextAttributes attrs = getTextAttributes(row, property);
         myPropertyNameRenderer.append(property.getName(), attrs);
 
         // 2. Icon
@@ -892,6 +894,22 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       return myPropertyNameRenderer;
+    }
+
+    private SimpleTextAttributes getTextAttributes(final int row, final Property property) {
+      // 1. Text
+      ErrorInfo errInfo = getErrorInfoForRow(row);
+      SimpleTextAttributes attrs;
+      if (errInfo != null && errInfo.getHighlightDisplayLevel() == HighlightDisplayLevel.ERROR) {
+        attrs = property.isModified(myComponent) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
+      }
+      else if (errInfo != null) {
+        attrs = property.isModified(myComponent) ? myModifiedWarningPropertyNameAttrs : myWarningPropertyNameAttrs;
+      }
+      else {
+        attrs = property.isModified(myComponent) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
+      }
+      return attrs;
     }
   }
 

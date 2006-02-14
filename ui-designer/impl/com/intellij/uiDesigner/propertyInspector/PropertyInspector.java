@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,13 +27,14 @@ public final class PropertyInspector extends JPanel{
   private final QuickFixManager myQuickFixManager;
   private GuiEditor myEditor;
   private PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
+  @NonNls private static final String INSPECTOR_CARD = "inspector";
+  @NonNls private static final String EMPTY_CARD = "empty";
 
-  public PropertyInspector(Project project, final GuiEditor editor, @NotNull final ComponentTree componentTree) {
+  public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
     super(new CardLayout());
 
-    myInspectorTable = new PropertyInspectorTable(project, editor, componentTree);
+    myInspectorTable = new PropertyInspectorTable(project, componentTree);
     myComponentTree = componentTree;
-    myEditor = editor;
 
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
@@ -52,8 +54,7 @@ public final class PropertyInspector extends JPanel{
         }
       }
     );
-    //noinspection HardCodedStringLiteral
-    add(inspectorCard, "inspector");
+    add(inspectorCard, INSPECTOR_CARD);
 
     // Empty card
     final MultiLineLabel label = new MultiLineLabel(UIDesignerBundle.message("label.select.single.component.to.edit.its.properties")){
@@ -64,17 +65,13 @@ public final class PropertyInspector extends JPanel{
     };
     label.setOpaque(true);
     label.setHorizontalAlignment(SwingConstants.CENTER);
-    //noinspection HardCodedStringLiteral
-    add(label, "empty");
+    add(label, EMPTY_CARD);
 
     myComponentSelectionListener = new MyComponentSelectionListener();
-    if (editor != null) {
-      editor.addComponentSelectionListener(myComponentSelectionListener);
-    }
     synchWithTree(false);
 
     // Install light bulb
-    myQuickFixManager = new QuickFixManagerImpl(editor, myInspectorTable);
+    myQuickFixManager = new QuickFixManagerImpl(null, myInspectorTable);
   }
 
   public void setEditor(final GuiEditor editor) {
@@ -99,13 +96,11 @@ public final class PropertyInspector extends JPanel{
     final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
     final CardLayout cardLayout = (CardLayout)getLayout();
     if(selectedComponents.length == 1){
-      //noinspection HardCodedStringLiteral
-      cardLayout.show(this, "inspector");
+      cardLayout.show(this, INSPECTOR_CARD);
       myInspectorTable.synchWithTree(forceSynch);
     }
     else{
-      //noinspection HardCodedStringLiteral
-      cardLayout.show(this, "empty");
+      cardLayout.show(this, EMPTY_CARD);
     }
   }
 

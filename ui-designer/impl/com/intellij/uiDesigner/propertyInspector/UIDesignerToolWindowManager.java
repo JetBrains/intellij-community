@@ -56,7 +56,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
         myComponentTree = new ComponentTree();
         final JScrollPane scrollPane = new JScrollPane(myComponentTree);
         scrollPane.setPreferredSize(new Dimension(250, -1));
-        myPropertyInspector= new PropertyInspector(myProject, null, myComponentTree);
+        myPropertyInspector= new PropertyInspector(myProject, myComponentTree);
         myToolWindowPanel.setFirstComponent(scrollPane);
         myToolWindowPanel.setSecondComponent(myPropertyInspector);
         myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
