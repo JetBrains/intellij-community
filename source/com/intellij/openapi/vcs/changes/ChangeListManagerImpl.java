@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -12,12 +14,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -43,7 +46,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myVcsManager = vcsManager;
     myDefaultChangelist = new ChangeList("Default");
     myDefaultChangelist.setDefault(true);
-    myView = new ChangesListView(project);
+    myView = new ChangesListView();
     myChangeLists.add(myDefaultChangelist);
   }
 
@@ -77,11 +80,23 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private JComponent createChangeViewComponent() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    final RefreshAction action = new RefreshAction();
     JPanel panel = new JPanel(new BorderLayout());
-    action.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
-    group.add(action);
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    RefreshAction refreshAction = new RefreshAction();
+    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
+
+    AddChangeListAction newChangeListAction = new AddChangeListAction();
+    newChangeListAction.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
+
+    final RemoveChangeListAction removeChangeListAction = new RemoveChangeListAction();
+    removeChangeListAction.registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
+
+    group.add(refreshAction);
+    group.add(newChangeListAction);
+    group.add(removeChangeListAction);
+    group.add(new SetDefaultChangeListAction());
+
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
@@ -127,9 +142,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void udpateUI(VcsDirtyScope scope, final Collection<Change> changes) {
     synchronized (myChangeLists) {
+      Set<Change> allChanges = new HashSet<Change>(changes);
       for (ChangeList list : myChangeLists) {
-        list.updateChangesIn(scope, changes);
+        if (list == myDefaultChangelist) continue;
+        list.updateChangesIn(scope, allChanges);
+        allChanges.removeAll(list.getChanges());
       }
+      myDefaultChangelist.updateChangesIn(scope, allChanges);
       scheduleRefresh();
     }
   }
@@ -141,16 +160,47 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         myRepaintAlarm.addRequest(new Runnable() {
           public void run() {
             if (myDisposed) return;
-            myView.updateModel();
+            myView.updateModel(getChangeLists());
           }
         }, 100);
       }
     });
   }
 
+  @NotNull
   public List<ChangeList> getChangeLists() {
     synchronized (myChangeLists) {
       return myChangeLists;
+    }
+  }
+
+  public void addChangeList(String name) {
+    synchronized (myChangeLists) {
+      myChangeLists.add(new ChangeList(name));
+      scheduleRefresh();
+    }
+  }
+
+  public void removeChangeList(ChangeList list) {
+    synchronized (myChangeLists) {
+      if (list.isDefault()) throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
+
+      final Collection<Change> changes = list.getChanges();
+      for (Change change : changes) {
+        myDefaultChangelist.addChange(change);
+      }
+      myChangeLists.remove(list);
+
+      scheduleRefresh();
+    }
+  }
+
+  public void setDefaultChangeList(ChangeList list) {
+    synchronized (myChangeLists) {
+      myDefaultChangelist.setDefault(false);
+      list.setDefault(true);
+      myDefaultChangelist = list;
+      scheduleRefresh();
     }
   }
 
@@ -161,6 +211,76 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void actionPerformed(AnActionEvent e) {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    }
+  }
+
+  public class AddChangeListAction extends AnAction {
+    public AddChangeListAction() {
+      super("New ChangeList", "Create new changelist", IconLoader.getIcon("/actions/include.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      String rc = Messages.showInputDialog(myProject, "Enter new changelist name", "New ChangeList", Messages.getQuestionIcon());
+      if (rc != null) {
+        if (rc.length() == 0) {
+          rc = getUniqueName();
+        }
+
+        addChangeList(rc);
+      }
+    }
+
+    private String getUniqueName() {
+      int unnamedcount = 0;
+      for (ChangeList list : getChangeLists()) {
+        if (list.getDescription().startsWith("Unnamed")) {
+          unnamedcount++;
+        }
+      }
+
+      return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
+    }
+  }
+
+  public class SetDefaultChangeListAction extends AnAction {
+    public SetDefaultChangeListAction() {
+      super("Set Default", "Set default changelist", IconLoader.getIcon("/actions/submit1.png"));
+    }
+
+
+    public void update(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 && !lists[0].isDefault());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      setDefaultChangeList(((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0]);
+    }
+  }
+
+  public class RemoveChangeListAction extends AnAction {
+    public RemoveChangeListAction() {
+      super("Remove Changelist", "Remove changelist and move all changes to default", IconLoader.getIcon("/actions/exclude.png"));
+    }
+
+
+    public void update(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 && !lists[0].isDefault());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final ChangeList list = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0];
+      int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
+               Messages.showYesNoDialog(myProject,
+                                        "Are you sure want to remove changelist '" + list.getDescription() + "'?\n" +
+                                        "All changes will be moved to default changelist.",
+                                        "Remove Change List",
+                                        Messages.getQuestionIcon());
+
+      if (rc == DialogWrapper.OK_EXIT_CODE) {
+        removeChangeList(list);
+      }
     }
   }
 }

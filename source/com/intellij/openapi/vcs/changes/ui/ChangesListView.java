@@ -1,11 +1,11 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,16 +15,21 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author max
  */
-public class ChangesListView extends TreeTable {
+public class ChangesListView extends TreeTable implements DataProvider {
   private static final ColumnInfo<DefaultMutableTreeNode, String> CHANGELIST_OR_FILE =
     new ColumnInfo<DefaultMutableTreeNode, String>("change") {
       public Class getColumnClass() {
@@ -74,17 +79,14 @@ public class ChangesListView extends TreeTable {
     return revision.getFile();
   }
 
-  private Project myProject;
   private DefaultMutableTreeNode myRoot;
 
-
-  public ChangesListView(final Project project) {
+  public ChangesListView() {
     super(
       new ListTreeTableModelOnColumns(new DefaultMutableTreeNode("root"), new ColumnInfo[]{CHANGELIST_OR_FILE, CHANGE_PATH, CHANGE_TYPE}));
-    myProject = project;
     final Tree tree = getTree();
     myRoot = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    tree.setShowsRootHandles(false);
+    tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setCellRenderer(new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(JTree tree,
@@ -97,7 +99,10 @@ public class ChangesListView extends TreeTable {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
         Object object = node.getUserObject();
         if (object instanceof ChangeList) {
-          append(((ChangeList)object).getDescription(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          final ChangeList list = ((ChangeList)object);
+          append(list.getDescription(), list.isDefault()
+                                        ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                        : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else if (object instanceof Change) {
           final Change change = (Change)object;
@@ -124,11 +129,11 @@ public class ChangesListView extends TreeTable {
         return Color.black;
       }
     });
-  }  
+  }
 
-  public void updateModel() {
+  public void updateModel(java.util.List<ChangeList> changeLists) {
     myRoot.removeAllChildren();
-    for (ChangeList list : ChangeListManager.getInstance(myProject).getChangeLists()) {
+    for (ChangeList list : changeLists) {
       DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
       myRoot.add(listNode);
       for (Change change : list.getChanges()) {
@@ -139,5 +144,55 @@ public class ChangesListView extends TreeTable {
     ((DefaultTreeModel)getTree().getModel()).nodeStructureChanged(myRoot);
 
     TreeUtil.expandAll(getTree());
+  }
+
+  @Nullable
+  public Object getData(String dataId) {
+    if (DataConstants.CHANGES.equals(dataId)) {
+      return getSelectedChanges();
+    }
+    else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
+      return getSelectedChangeLists();
+    }
+    return null;
+  }
+
+  @NotNull
+  private Change[] getSelectedChanges() {
+    Set<Change> changes = new HashSet<Change>();
+
+    for (ChangeList list : getSelectedChangeLists()) {
+      changes.addAll(list.getChanges());
+    }
+
+    final TreePath[] paths = getTree().getSelectionPaths();
+    if (paths == null) return new Change[0];
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof Change) {
+        changes.add((Change)userObject);
+      }
+    }
+
+    return changes.toArray(new Change[changes.size()]);
+  }
+
+  @NotNull
+  private ChangeList[] getSelectedChangeLists() {
+    Set<ChangeList> lists = new HashSet<ChangeList>();
+
+    final TreePath[] paths = getTree().getSelectionPaths();
+    if (paths == null) return new ChangeList[0];
+
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof ChangeList) {
+        lists.add((ChangeList)userObject);
+      }
+    }
+
+    return lists.toArray(new ChangeList[lists.size()]);
   }
 }

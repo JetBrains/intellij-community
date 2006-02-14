@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -123,8 +124,9 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private void fileStatusesChanged() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      FileStatusManager.getInstance(openProject).fileStatusesChanged();
+    for (Project project : openProjects) {
+      FileStatusManager.getInstance(project).fileStatusesChanged();
+      VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
     }
   }
 
@@ -369,10 +371,11 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     return myUserDirIgnores;
   }
 
-  private void fireStatusChanged(VirtualFile file) {
+  private static void fireStatusChanged(VirtualFile file) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      FileStatusManager.getInstance(openProject).fileStatusChanged(file);
+    for (Project project : openProjects) {
+      FileStatusManager.getInstance(project).fileStatusChanged(file);
+      VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }
   }
 

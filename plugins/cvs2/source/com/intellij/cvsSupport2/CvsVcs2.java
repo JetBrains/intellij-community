@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -268,6 +269,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     super.activate();
     myStorageComponent.init(getProject(), false);
     CvsEntriesManager.getInstance().addCvsEntriesListener(this);
+    VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
     FileStatusManager.getInstance(getProject()).fileStatusesChanged();
   }
 
@@ -277,6 +279,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
     if (myProjectIsOpened) {
       FileStatusManager.getInstance(getProject()).fileStatusesChanged();
+      VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
     }
   }
 
@@ -298,6 +301,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
   public void entryChanged(VirtualFile file) {
     FileStatusManager.getInstance(getProject()).fileStatusChanged(file);
+    VcsDirtyScopeManager.getInstance(getProject()).fileDirty(file);
   }
 
   public FileViewEnvironment getFileViewEnvironment() {

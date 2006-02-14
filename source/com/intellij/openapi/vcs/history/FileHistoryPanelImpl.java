@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -35,6 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -50,13 +52,10 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -612,13 +611,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     private void getVersion(final VcsFileRevision revision) {
-      if ((getVirtualFile() != null) && !getVirtualFile().isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(new VirtualFile[]{getVirtualFile()}).hasReadonlyFiles()) {
+      final VirtualFile file = getVirtualFile();
+      if ((file != null) && !file.isWritable()) {
+        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(new VirtualFile[]{file}).hasReadonlyFiles()) {
           return;
         }
       }
 
-      LvcsAction action = getVirtualFile() != null ? startLvcsAction(revision) : LvcsAction.EMPTY;
+      LvcsAction action = file != null ? startLvcsAction(revision) : LvcsAction.EMPTY;
 
       final byte[] revisionContent;
       try {
@@ -647,8 +647,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                                                                                              null);
                                                              }
                                                            });
-        if (getVirtualFile() != null) {
-          FileStatusManager.getInstance(myProject).fileStatusChanged(getVirtualFile());
+        if (file != null) {
+          FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+          VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
         }
       }
       finally {

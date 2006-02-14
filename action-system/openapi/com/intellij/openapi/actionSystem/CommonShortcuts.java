@@ -44,4 +44,8 @@ public class CommonShortcuts {
   public static ShortcutSet getEditSource() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EDIT_SOURCE));
   }
+
+  public static ShortcutSet getNew() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_NEW_ELEMENT));
+  }
 }
