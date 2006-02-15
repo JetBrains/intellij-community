@@ -856,7 +856,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression condition = forStatement.getCondition();
-        if(!isArrayLengthComparison(condition, indexVar)){
+        if(condition == null || !isArrayLengthComparison(condition, indexVar)){
             return false;
         }
         final PsiStatement update = forStatement.getUpdate();
@@ -1115,7 +1115,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         return false;
     }
 
-    private static boolean isArrayLengthComparison(PsiExpression condition,
+    private static boolean isArrayLengthComparison(@NotNull PsiExpression condition,
                                                    PsiLocalVariable var){
         final PsiExpression strippedCondition =
                 ParenthesesUtils.stripParentheses(condition);

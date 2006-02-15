@@ -122,5 +122,6 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Application
         public float getWeight() {
             return 10;
         }
+
     }
 }
