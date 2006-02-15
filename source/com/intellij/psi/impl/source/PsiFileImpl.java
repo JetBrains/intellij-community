@@ -61,7 +61,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return super.getRepositoryId() != -2;
   }
 
-  public FileElement getTreeElement() {
+  public synchronized FileElement getTreeElement() {
     if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
       setTreeElement(loadTreeElement());
     }
@@ -96,25 +96,27 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement loadTreeElement() {
+    FileElement treeElement = (FileElement)_getTreeElement();
+    if (treeElement != null) return treeElement;
+    if (getViewProvider().isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
+      LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
+    }
+    final FileViewProvider viewProvider = getViewProvider();
     // load document outside lock for better performance
+    final Document document = viewProvider.getDocument();
     synchronized (PsiLock.LOCK) {
-      FileElement treeElement = (FileElement)_getTreeElement();
-      if (treeElement != null) return treeElement;
-      if (getViewProvider().isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
-        LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
-      }
-      final FileViewProvider viewProvider = getViewProvider();
-      final Document document = viewProvider.getDocument();
       treeElement = createFileElement(viewProvider.getContents());
       treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
-      if (getViewProvider().isEventSystemEnabled()) ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
-      if (getViewProvider().isPhysical() && LOG.isDebugEnabled()) {
-        LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
-      }
-      return treeElement;
     }
+    if (getViewProvider().isEventSystemEnabled()) {
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
+    }
+    if (LOG.isDebugEnabled() && getViewProvider().isPhysical()) {
+      LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
+    }
+    return treeElement;
   }
 
   protected FileElement createFileElement(final CharSequence docText) {
