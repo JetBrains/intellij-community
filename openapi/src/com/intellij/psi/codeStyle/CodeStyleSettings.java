@@ -906,6 +906,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public IndentOptions getIndentOptions(FileType fileType) {
     if (USE_SAME_INDENTS || fileType == null || fileType == StdFileTypes.JAVA) return JAVA_INDENT_OPTIONS;
+    // Allow inheriting indent settings for JS from Java, till language indent options API
+    if ("JavaScript".equals(fileType.getName())) return JAVA_INDENT_OPTIONS;
+
     if (fileType == StdFileTypes.JSP) return JSP_INDENT_OPTIONS;
     if (fileType == StdFileTypes.XML) return XML_INDENT_OPTIONS;
     return OTHER_INDENT_OPTIONS;
