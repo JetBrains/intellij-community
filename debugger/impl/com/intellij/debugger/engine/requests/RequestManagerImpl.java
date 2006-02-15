@@ -156,6 +156,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
     }
 
+    registerRequestInternal(requestor, request);
+  }
+
+  public void registerRequestInternal(final Requestor requestor, final EventRequest request) {
     registerRequest(requestor, request);
     callbackOnEvent(requestor, request);
   }
@@ -181,8 +185,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     classPrepareRequest.addClassFilter(pattern);
     classPrepareRequest.putProperty(CLASS_NAME, pattern);
 
-    registerRequest(requestor, classPrepareRequest);
-    callbackOnEvent(requestor, classPrepareRequest);
+    registerRequestInternal(requestor, classPrepareRequest);
     return classPrepareRequest;
   }
 

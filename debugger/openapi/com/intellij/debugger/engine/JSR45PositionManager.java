@@ -30,10 +30,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 
@@ -81,7 +78,7 @@ public abstract class JSR45PositionManager implements PositionManager {
     SourcePosition sourcePosition = null;
 
     try {
-      String sourcePath = getRelativePath(location.sourcePath(JSP_STRATUM));
+      String sourcePath = getRelativeSourcePathByLocation(location);
       PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject(), myScope);
       if(file == null) throw new NoDataException();
       int lineNumber = getLineNumber(location);
@@ -97,6 +94,10 @@ public abstract class JSR45PositionManager implements PositionManager {
     if(sourcePosition == null) throw new NoDataException();
 
     return sourcePosition;
+  }
+
+  protected String getRelativeSourcePathByLocation(final Location location) throws AbsentInformationException {
+    return getRelativePath(location.sourcePath(JSP_STRATUM));
   }
 
   protected int getLineNumber(final Location location) {
@@ -141,9 +142,8 @@ public abstract class JSR45PositionManager implements PositionManager {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<Location>>() {
       public List<Location> compute() {
         try {
-          final List<String> paths = type.sourcePaths(JSP_STRATUM);
-          for (String path : paths) {
-            final String relativePath = getRelativePath(path);
+          final List<String> relativePaths = getRelativeSourePathsByType(type);
+          for (String relativePath : relativePaths) {
             final PsiFile file = myHelper.getDeployedJspSource(relativePath, myDebugProcess.getProject(), myScope);
             if(file != null && file.equals(position.getFile())) {
               return getLocationsOfLine(type, getJspSourceName(file.getName(), type), relativePath, position.getLine() + 1);
@@ -174,6 +174,15 @@ public abstract class JSR45PositionManager implements PositionManager {
     });
   }
 
+  protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
+    final List<String> paths = type.sourcePaths(JSP_STRATUM);
+    final ArrayList<String> relativePaths = new ArrayList<String>();
+    for (String path : paths) {
+      relativePaths.add(getRelativePath(path));
+    }
+    return relativePaths;
+  }
+
   protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,
                                               final String relativePath, final int lineNumber) throws AbsentInformationException {
     return type.locationsOfLine(JSP_STRATUM, fileName, lineNumber);
@@ -188,15 +197,20 @@ public abstract class JSR45PositionManager implements PositionManager {
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(new ClassPrepareRequestor() {
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-        try {
-          if(locationsOfClassAt(referenceType, position) != null) {
-            requestor.processClassPrepare(debuggerProcess, referenceType);
-          }
-        }
-        catch (NoDataException e) {
-        }
+        onClassPrepare(debuggerProcess, referenceType, position, requestor);
       }
     }, JSP_PATTERN);
+  }
+
+  protected void onClassPrepare(final DebugProcess debuggerProcess, final ReferenceType referenceType,
+                              final SourcePosition position, final ClassPrepareRequestor requestor) {
+    try {
+      if(locationsOfClassAt(referenceType, position) != null) {
+        requestor.processClassPrepare(debuggerProcess, referenceType);
+      }
+    }
+    catch (NoDataException e) {
+    }
   }
 
   protected String getRelativePath(String jspPath) {
