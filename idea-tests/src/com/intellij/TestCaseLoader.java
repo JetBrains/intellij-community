@@ -10,6 +10,7 @@ package com.intellij;
 
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
+import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
@@ -75,9 +76,10 @@ public class TestCaseLoader {
   private boolean shouldAddTestCase(final Class testCaseClass) {
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
     boolean shouldAdd = false;
+    if (shouldExcludeTestClass(testCaseClass)) return false;
+
     if ((TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) &&
         testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
-      if (shouldExcludeTestClass(testCaseClass)) return false;
       if (USE_ADVANCED_LOGIC) {
         String name = testCaseClass.getName().substring(0, testCaseClass.getName().length() - TEST_NAME_SUFFIX.length());
         //noinspection EmptyCatchBlock
@@ -91,16 +93,13 @@ public class TestCaseLoader {
       }
     }
     else if (testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
-      System.out.println("testCaseClass.getName() = " + testCaseClass.getName());
       //noinspection EmptyCatchBlock
-      /*
       try {
         final Method suiteMethod = testCaseClass.getMethod("suite");
         if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
           shouldAdd = true;
         }
       } catch (NoSuchMethodException e) { }
-      */
     }
 
     return shouldAdd;
