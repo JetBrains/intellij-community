@@ -120,7 +120,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends com.siyeh.ig.ClassI
                 return;
             }
             final PsiElement element = PsiTreeUtil.getParentOfType(reference,
-                    PsiImportStatementBase.class, PsiPackageStatement.class);
+                    PsiImportStatementBase.class, PsiPackageStatement.class, PsiCodeFragment.class);
             if (element != null) {
                 return;
             }
