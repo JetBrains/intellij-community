@@ -31,18 +31,23 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     IProperty textProperty = DuplicateMnemonicInspection.findProperty(component, SwingProperties.TEXT);
     if (textProperty != null) {
       Object propValue = textProperty.getPropertyValue(component);
+      String value = null;
       if (propValue instanceof StringDescriptor) {
         StringDescriptor descriptor = (StringDescriptor) propValue;
-        String value;
         if (component instanceof RadComponent) {
           value = ReferenceUtil.resolve((RadComponent) component, descriptor);
         }
         else {
           value = ReferenceUtil.resolve(module, descriptor, null);
         }
+      }
+      else if (propValue instanceof String) {
+        value = (String) propValue;
+      }
+      if (value != null) {
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
         if (twm.myMnemonicIndex < 0) {
-          if (FormInspectionUtil.isComponentClass(module, component, JButton.class)) {
+          if (FormInspectionUtil.isComponentClass(module, component, AbstractButton.class)) {
             collector.addError(getID(), textProperty,
                                UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
                                new MyEditorQuickFixProvider());
