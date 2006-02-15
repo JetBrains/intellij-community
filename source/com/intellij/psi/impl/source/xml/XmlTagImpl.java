@@ -185,8 +185,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
         public CachedValueProvider.Result<XmlNSDescriptor> compute() {
           XmlFile currentFile = retrieveFile(fileLocation);
-          if (currentFile == null) return new Result<XmlNSDescriptor>(null, XmlTagImpl.this);
           PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
+          if (currentOwner == null) return new Result<XmlNSDescriptor>(null, XmlTagImpl.this);
 
           final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)currentOwner.getMetaData();
           return new Result<XmlNSDescriptor>(
