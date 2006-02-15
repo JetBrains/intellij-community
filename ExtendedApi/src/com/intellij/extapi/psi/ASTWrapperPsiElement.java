@@ -90,7 +90,7 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public PsiFile getContainingFile() {
     final PsiElement parent = getParent();
-    return (parent != null)?parent.getContainingFile():null;
+    return parent != null ? parent.getContainingFile() : null;
   }
 
   public TextRange getTextRange() {
@@ -211,11 +211,12 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   public boolean isValid() {
     final PsiFile containingFile = getContainingFile();
-    return (containingFile!=null)?containingFile.isValid():false;
+    return containingFile != null && containingFile.isValid();
   }
 
   public boolean isWritable() {
-    return getContainingFile().isWritable();
+    final PsiFile containingFile = getContainingFile();
+    return containingFile != null && containingFile.isWritable();
   }
 
   public PsiReference getReference() {
@@ -239,7 +240,8 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public boolean isPhysical() {
-    return getContainingFile().isPhysical();
+    final PsiFile containingFile = getContainingFile();
+    return containingFile != null && containingFile.isPhysical();
   }
 
   public GlobalSearchScope getResolveScope() {
