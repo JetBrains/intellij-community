@@ -1,34 +1,21 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.ide.IdeView;
-import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class CreateDialogAction extends CreateElementActionBase {
+public final class CreateDialogAction extends AbstractCreateFormAction {
   private boolean myRecentGenerateOK;
   private boolean myRecentGenerateCancel;
   private boolean myRecentGenerateMain;
@@ -78,7 +65,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
   }
 
   protected String getCommandName() {
-    return UIDesignerBundle.message("command.create.class");
+    return UIDesignerBundle.message("command.create.dialog");
   }
 
   protected void checkBeforeCreate(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
@@ -87,31 +74,6 @@ public final class CreateDialogAction extends CreateElementActionBase {
 
   protected String getErrorTitle() {
     return UIDesignerBundle.message("error.cannot.create.dialog");
-  }
-
-  public void update(final AnActionEvent e) {
-    super.update(e);
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Presentation presentation = e.getPresentation();
-    if (presentation.isEnabled()) {
-      final IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
-      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      final PsiDirectory[] dirs = view.getDirectories();
-      for (int i = 0; i < dirs.length; i++) {
-        final PsiDirectory dir = dirs[i];
-        if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
-          return;
-        }
-      }
-
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-    }
-  }
-
-  protected String getActionName(final PsiDirectory directory, final String newName) {
-    return UIDesignerBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -203,29 +165,6 @@ public final class CreateDialogAction extends CreateElementActionBase {
     return result.toString();
   }
 
-  private String createFormBody(final String fullQualifiedClassName) throws IncorrectOperationException {
-
-    //noinspection HardCodedStringLiteral
-    final String resource = "/com/intellij/uiDesigner/NewDialog.xml";
-    final InputStream inputStream = getClass().getResourceAsStream(resource);
-
-    final StringBuffer buffer = new StringBuffer();
-    try {
-      for (int ch; (ch = inputStream.read()) != -1;) {
-        buffer.append((char)ch);
-      }
-    }
-    catch (IOException e) {
-      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", resource),e);
-    }
-
-    String s = buffer.toString();
-
-    s = StringUtil.replace(s, "$CLASS$", fullQualifiedClassName);
-
-    return s;
-  }
-
 
   @NotNull
   protected PsiElement[] create(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
@@ -240,7 +179,8 @@ public final class CreateDialogAction extends CreateElementActionBase {
     final String packageName = aPackage.getQualifiedName();
     final String fqClassName = packageName.length() == 0 ? newName : packageName + "." + newName;
 
-    final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", createFormBody(fqClassName));
+    final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewDialog.xml");
+    final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
     PsiElement createdFile = directory.add(formFile);
 
     PsiClass[] classes = ((PsiJavaFile)sourceFile).getClasses();

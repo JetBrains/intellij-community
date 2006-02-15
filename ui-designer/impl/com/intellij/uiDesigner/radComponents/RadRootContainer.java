@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +30,8 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private Locale myStringDescriptorLocale;
   private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
 
-  public RadRootContainer(final Module module, final Class aClass, final String id) {
-    super(module, aClass, id);
+  public RadRootContainer(final Module module, final String id) {
+    super(module, JPanel.class, id);
     getDelegee().setBackground(Color.WHITE);
   }
 

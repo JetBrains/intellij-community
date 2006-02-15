@@ -694,7 +694,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     catch (final Exception exc) {
       LOG.info(exc);
       // setting fictive container
-      setRootContainer(new RadRootContainer(myModule, JPanel.class, "0"));
+      setRootContainer(new RadRootContainer(myModule, "0"));
       myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
       myCardLayout.show(this, CARD_INVALID);
       repaint();

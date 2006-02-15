@@ -124,7 +124,7 @@ public final class XmlReader {
         }
         else {
           if (lwContainer instanceof LwRootContainer) {
-            component = new RadRootContainer(module, componentClass, id);
+            component = new RadRootContainer(module, id);
           }
           else {
             component = new RadContainer(module, componentClass, id);
