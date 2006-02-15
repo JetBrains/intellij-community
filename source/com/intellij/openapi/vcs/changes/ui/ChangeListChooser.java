@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class ChangeListChooser extends DialogWrapper {
       }
     });
 
-    if (myExistingLists.size() > 0) {
+    if (myExistingLists.size() > 1) {
       myRbExisting.setSelected(true);
     }
     else {
@@ -110,7 +111,7 @@ public class ChangeListChooser extends DialogWrapper {
       mySelectedList = (ChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      mySelectedList = new ChangeList(myNewListNameField.getText());
+      mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListNameField.getText());
     }
 
     super.doOKAction();

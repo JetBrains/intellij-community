@@ -176,10 +176,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public void addChangeList(String name) {
+  public ChangeList addChangeList(String name) {
     synchronized (myChangeLists) {
-      myChangeLists.add(new ChangeList(name));
+      final ChangeList list = new ChangeList(name);
+      myChangeLists.add(list);
       scheduleRefresh();
+      return list;
     }
   }
 

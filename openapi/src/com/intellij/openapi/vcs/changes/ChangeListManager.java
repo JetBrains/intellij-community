@@ -18,6 +18,6 @@ public abstract class ChangeListManager {
   @NotNull
   public abstract List<ChangeList> getChangeLists();
 
-  public abstract void addChangeList(@NotNull String name);
+  public abstract ChangeList addChangeList(@NotNull String name);
   public abstract void setDefaultChangeList(@NotNull ChangeList list);
 }

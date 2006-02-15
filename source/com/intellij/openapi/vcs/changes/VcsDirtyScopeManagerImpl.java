@@ -28,6 +28,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
+  private boolean myIsDisposed = false;
 
   public VcsDirtyScopeManagerImpl(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
     myProject = project;
@@ -58,6 +59,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void projectClosed() {
+    myIsDisposed = true;
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 
@@ -74,6 +76,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void fileDirty(FilePath file) {
+    if (myIsDisposed) return;
     VirtualFile parent = file.getVirtualFileParent();
     final VirtualFile root = myIndex.getContentRootForFile(parent);
     getScope(root).addDirtyFile(file);
@@ -81,6 +84,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {
+    if (myIsDisposed) return;
     final VirtualFile root = myIndex.getContentRootForFile(dir);
     FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
     getScope(root).addDirtyDirRecursively(path);
