@@ -1,8 +1,10 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
@@ -48,6 +50,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
@@ -1208,14 +1211,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
         args.add(virtualMachine.mirrorOf(true));
         args.add(classLoader);
       }
-      try {
-        final Value value = invokeMethod(evaluationContext, classClassType, forNameMethod, args);
-        if (value instanceof ClassObjectReference) {
-          refType = ((ClassObjectReference)value).reflectedType();
-        }
-      }
-      finally {
-        qNameMirror.enableCollection();
+      final Value value = invokeMethod(evaluationContext, classClassType, forNameMethod, args);
+      if (value instanceof ClassObjectReference) {
+        refType = ((ClassObjectReference)value).reflectedType();
       }
     }
     return refType;
