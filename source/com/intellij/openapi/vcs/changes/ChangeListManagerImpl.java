@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
@@ -54,7 +56,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myView = new ChangesListView();
+    myView = new ChangesListView(project);
   }
 
   public void projectOpened() {
@@ -111,12 +113,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     group.add(removeChangeListAction);
     group.add(new SetDefaultChangeListAction());
     group.add(new MoveChangesToAnotherListAction());
+    group.add(new ShowDiffAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
 
-    myView.installDndSupport(myProject, this);
+    myView.installDndSupport(this);
     return panel;
   }
 
@@ -323,6 +326,53 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (resultList != null) {
         moveChangesTo(resultList, changes);
       }
+    }
+  }
+
+  public class ShowDiffAction extends AnAction {
+    public ShowDiffAction() {
+      super("Show Diff", "Show diff for selected change", IconLoader.getIcon("/actions/diff.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(changes != null && changes.length == 1);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      if (changes == null) return;
+
+      Change change = changes[0];
+
+      final DiffTool tool = DiffManager.getInstance().getDiffTool();
+
+      final ContentRevision bRev = change.getBeforeRevision();
+      final ContentRevision aRev = change.getAfterRevision();
+
+      if (bRev != null && bRev.getFile().getFileType().isBinary() || aRev != null && aRev.getFile().getFileType().isBinary()) {
+        return;
+      }
+
+      String title = bRev != null ? bRev.getFile().getPath() : aRev != null ? aRev.getFile().getPath() : "Unknown diff";
+      final SimpleDiffRequest diffReq = new SimpleDiffRequest(myProject, title);
+
+      diffReq.setContents(createContent(bRev), createContent(aRev));
+      diffReq.setContentTitles("Base version", "Your version");
+      tool.show(diffReq);
+    }
+
+    private DiffContent createContent(ContentRevision revision) {
+      if (revision == null) return new SimpleContent("");
+      if (revision instanceof CurrentContentRevision) {
+        final CurrentContentRevision current = (CurrentContentRevision)revision;
+        final VirtualFile vFile = current.getVirtualFile();
+        return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
+      }
+
+      SimpleContent content = new SimpleContent(revision.getContent(), revision.getFile().getFileType());
+      content.setReadOnly(true);
+      return content;
     }
   }
 

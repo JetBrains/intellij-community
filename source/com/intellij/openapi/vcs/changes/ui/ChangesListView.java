@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -11,6 +12,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -31,6 +34,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,6 +87,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
+  private final Project myProject;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getBeforeRevision();
@@ -93,9 +98,10 @@ public class ChangesListView extends TreeTable implements DataProvider {
 
   private DefaultMutableTreeNode myRoot;
 
-  public ChangesListView() {
+  public ChangesListView(final Project project) {
     super(
       new ListTreeTableModelOnColumns(new DefaultMutableTreeNode("root"), new ColumnInfo[]{CHANGELIST_OR_FILE, CHANGE_PATH, CHANGE_TYPE}));
+    myProject = project;
     final Tree tree = getTree();
     myRoot = (DefaultMutableTreeNode)tree.getModel().getRoot();
     tree.setShowsRootHandles(true);
@@ -143,11 +149,11 @@ public class ChangesListView extends TreeTable implements DataProvider {
     });
   }
 
-  public void installDndSupport(Project project, ChangeListOwner owner) {
+  public void installDndSupport(ChangeListOwner owner) {
     myDragOwner = owner;
     myDragSource = new DragSource();
     myDropTarget = new DropTarget();
-    myDndManager = DnDManager.getInstance(project);
+    myDndManager = DnDManager.getInstance(myProject);
 
     myDndManager.registerSource(myDragSource, this);
     myDndManager.registerTarget(myDropTarget, this);
@@ -188,7 +194,34 @@ public class ChangesListView extends TreeTable implements DataProvider {
     else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
       return getSelectedChangeLists();
     }
+    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+      return getSelectedFiles();
+    }
+    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      final VirtualFile[] files = getSelectedFiles();
+      Navigatable[] navigatables = new Navigatable[files.length];
+      for (int i = 0; i < files.length; i++) {
+        navigatables[i] = new OpenFileDescriptor(myProject, files[i], 0);
+      }
+      return navigatables;
+    }
+
     return null;
+  }
+
+  private VirtualFile[] getSelectedFiles() {
+    final Change[] changes = getSelectedChanges();
+    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (Change change : changes) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        final VirtualFile file = afterRevision.getFile().getVirtualFile();
+        if (file != null && file.isValid()) {
+          files.add(file);
+        }
+      }
+    }
+    return files.toArray(new VirtualFile[files.size()]);
   }
 
   @NotNull
