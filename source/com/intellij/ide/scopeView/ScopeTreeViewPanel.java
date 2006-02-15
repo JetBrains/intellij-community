@@ -83,7 +83,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   private boolean myInitialized = false;
 
-  private TreeExpantionMonitor myTreeExpantionMonitor;
+  private TreeExpansionMonitor myTreeExpansionMonitor;
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
@@ -183,7 +183,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         return getSelectedPsiElements();
       }
     };
-    myTreeExpantionMonitor = TreeExpantionMonitor.install(myTree, myProject);
+    myTreeExpansionMonitor = TreeExpansionMonitor.install(myTree, myProject);
     myTree.addTreeWillExpandListener(new ScopeTreeViewExpander(myTree));
   }
 
@@ -204,8 +204,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
-    myTreeExpantionMonitor.freeze();
-    final DefaultMutableTreeNode root = ((DefaultMutableTreeNode)myTree.getModel().getRoot());
+    myTreeExpansionMonitor.freeze();
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
     root.removeAllChildren();
     if (scope == null){ //was deleted
       scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
@@ -225,10 +225,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     final TreeModelBuilder.TreeModel treeModel = myBuilder.build(myProject, showProgress);
     final DefaultMutableTreeNode scopeRootNode = (DefaultMutableTreeNode)treeModel.getRoot();
     for(int i = scopeRootNode.getChildCount() - 1; i >= 0; i--){
-      root.add ((MutableTreeNode)scopeRootNode.getChildAt(i));
+      root.add((MutableTreeNode)scopeRootNode.getChildAt(i));
     }
     ((DefaultTreeModel)myTree.getModel()).reload();
-    myTreeExpantionMonitor.restore();
+    myTreeExpansionMonitor.restore();
   }
 
   public void reloadScopes(final NamedScopesHolder holder) {
@@ -370,10 +370,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
               final PackageDependenciesNode rootToReload = myBuilder.addFileNode((PsiFile)child);
               final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
               if (rootToReload != null) {
-                TreeUtil.sort(rootToReload, new DependecyNodeComparator());
+                TreeUtil.sort(rootToReload, new DependencyNodeComparator());
                 treeModel.reload(rootToReload);
               } else {
-                TreeUtil.sort(treeModel, new DependecyNodeComparator());
+                TreeUtil.sort(treeModel, new DependencyNodeComparator());
                 treeModel.reload();
               }
             }
@@ -423,7 +423,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
             if (!myTree.isCollapsed(treePath)) {
               myTree.collapsePath(treePath);
               myTree.expandPath(treePath);
-              TreeUtil.sort(parentNode, new DependecyNodeComparator());
+              TreeUtil.sort(parentNode, new DependencyNodeComparator());
             }
           }
         }

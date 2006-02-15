@@ -1,5 +1,7 @@
 package com.intellij.cyclicDependencies.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
 import com.intellij.openapi.actionSystem.*;
@@ -20,8 +22,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScopeBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -33,9 +34,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.text.MessageFormat;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -49,8 +47,8 @@ public class CyclicDependenciesPanel extends JPanel {
   private MyTree myRightTree = new MyTree();
   private UsagesPanel myUsagesPanel;
 
-  private TreeExpantionMonitor myRightTreeExpantionMonitor;
-  private TreeExpantionMonitor myLeftTreeExpantionMonitor;
+  private TreeExpansionMonitor myRightTreeExpansionMonitor;
+  private TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
   private Project myProject;
   private CyclicDependenciesBuilder myBuilder;
@@ -79,8 +77,8 @@ public class CyclicDependenciesPanel extends JPanel {
     add(splitter, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.NORTH);
 
-    myRightTreeExpantionMonitor = TreeExpantionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpantionMonitor = TreeExpantionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = TreeExpansionMonitor.install(myRightTree, myProject);
+    myLeftTreeExpansionMonitor = TreeExpansionMonitor.install(myLeftTree, myProject);
 
     updateLeftTreeModel();
     updateRightTreeModel();
@@ -232,13 +230,13 @@ public class CyclicDependenciesPanel extends JPanel {
     boolean showFiles = mySettings.UI_SHOW_FILES; //do not show files in the left tree
     mySettings.UI_FLATTEN_PACKAGES = true;
     mySettings.UI_SHOW_FILES = false;
-    myLeftTreeExpantionMonitor.freeze();
+    myLeftTreeExpansionMonitor.freeze();
     myLeftTree.setModel(TreeModelBuilder.createTreeModel(myProject, false, psiFiles, new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
         return false;
       }
     }, mySettings));
-    myLeftTreeExpantionMonitor.restore();
+    myLeftTreeExpansionMonitor.restore();
     expandFirstLevel(myLeftTree);
     mySettings.UI_SHOW_FILES = showFiles;
     mySettings.UI_FLATTEN_PACKAGES = false;
@@ -285,9 +283,9 @@ public class CyclicDependenciesPanel extends JPanel {
       }
       mySettings.UI_GROUP_BY_SCOPE_TYPE = group;
     }
-    myRightTreeExpantionMonitor.freeze();
+    myRightTreeExpansionMonitor.freeze();
     myRightTree.setModel(new TreeModelBuilder.TreeModel(root, -1, -1));
-    myRightTreeExpantionMonitor.restore();
+    myRightTreeExpansionMonitor.restore();
     expandFirstLevel(myRightTree);
   }
 

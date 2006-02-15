@@ -1,6 +1,6 @@
 package com.intellij.ide.scopeView;
 
-import com.intellij.packageDependencies.ui.DependecyNodeComparator;
+import com.intellij.packageDependencies.ui.DependencyNodeComparator;
 import com.intellij.packageDependencies.ui.DirectoryNode;
 import com.intellij.packageDependencies.ui.FileNode;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
@@ -59,7 +59,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(classNode);
         }
       }
-      TreeUtil.sort(node, new DependecyNodeComparator());
+      TreeUtil.sort(node, new DependencyNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
   }
@@ -87,7 +87,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.add(fileNode);
         }
       }
-      TreeUtil.sort(node, new DependecyNodeComparator());
+      TreeUtil.sort(node, new DependencyNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
   }

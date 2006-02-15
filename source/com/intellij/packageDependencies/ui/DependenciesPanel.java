@@ -43,8 +43,8 @@ public class DependenciesPanel extends JPanel {
   private UsagesPanel myUsagesPanel;
 
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
-  private TreeExpantionMonitor myRightTreeExpantionMonitor;
-  private TreeExpantionMonitor myLeftTreeExpantionMonitor;
+  private TreeExpansionMonitor myRightTreeExpansionMonitor;
+  private TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
   private TreeModelBuilder.Marker myRightTreeMarker;
   private TreeModelBuilder.Marker myLeftTreeMarker;
@@ -74,8 +74,8 @@ public class DependenciesPanel extends JPanel {
     add(splitter, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.NORTH);
 
-    myRightTreeExpantionMonitor = TreeExpantionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpantionMonitor = TreeExpantionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = TreeExpansionMonitor.install(myRightTree, myProject);
+    myLeftTreeExpansionMonitor = TreeExpansionMonitor.install(myLeftTree, myProject);
 
     myRightTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
@@ -231,9 +231,9 @@ public class DependenciesPanel extends JPanel {
       deps.addAll(myDependencies.get(psiFile));
     }
     deps.removeAll(scope);
-    myRightTreeExpantionMonitor.freeze();
+    myRightTreeExpansionMonitor.freeze();
     myRightTree.setModel(buildTreeModel(deps, myRightTreeMarker));
-    myRightTreeExpantionMonitor.restore();
+    myRightTreeExpansionMonitor.restore();
     expandFirstLevel(myRightTree);
   }
 
@@ -255,9 +255,9 @@ public class DependenciesPanel extends JPanel {
 
   private void updateLeftTreeModel() {
     Set<PsiFile> psiFiles = myDependencies.keySet();
-    myLeftTreeExpantionMonitor.freeze();
+    myLeftTreeExpansionMonitor.freeze();
     myLeftTree.setModel(buildTreeModel(psiFiles, myLeftTreeMarker));
-    myLeftTreeExpantionMonitor.restore();
+    myLeftTreeExpansionMonitor.restore();
     expandFirstLevel(myLeftTree);
   }
 

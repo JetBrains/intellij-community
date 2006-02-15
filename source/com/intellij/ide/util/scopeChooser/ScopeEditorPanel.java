@@ -46,7 +46,7 @@ public class ScopeEditorPanel {
   private JPanel myLegendPanel;
 
   private final Project myProject;
-  private TreeExpantionMonitor myTreeExpantionMonitor;
+  private TreeExpansionMonitor myTreeExpansionMonitor;
   private TreeModelBuilder.Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
@@ -68,7 +68,7 @@ public class ScopeEditorPanel {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpantionMonitor = TreeExpantionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = TreeExpansionMonitor.install(myPackageTree, myProject);
 
     myTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
@@ -360,7 +360,7 @@ public class ScopeEditorPanel {
   }
 
   private void updateTreeModel() {
-    myTreeExpantionMonitor.freeze();
+    myTreeExpansionMonitor.freeze();
     TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, myIsFirstUpdate, false, myTreeMarker);
     myIsFirstUpdate = false;
 
@@ -373,7 +373,7 @@ public class ScopeEditorPanel {
     }
 
     myPackageTree.setModel(model);
-    myTreeExpantionMonitor.restore();
+    myTreeExpansionMonitor.restore();
   }
 
   public int getMarkedFileCount(){

@@ -12,9 +12,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class TreeExpantionMonitor {
-  public static TreeExpantionMonitor install(JTree tree, Project project) {
-    return new TreeExpantionMonitor(tree, project);
+public class TreeExpansionMonitor {
+  public static TreeExpansionMonitor install(JTree tree, Project project) {
+    return new TreeExpansionMonitor(tree, project);
   }
 
   private Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
@@ -23,7 +23,7 @@ public class TreeExpantionMonitor {
   private boolean myFrozen = false;
   private Project myProject;
 
-  private TreeExpantionMonitor(JTree tree, Project project) {
+  private TreeExpansionMonitor(JTree tree, Project project) {
     myTree = tree;
     myProject = project;
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {

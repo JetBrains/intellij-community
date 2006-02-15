@@ -35,13 +35,8 @@ public class TreeModelBuilder {
   private Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
 
-
-  private static final class ScopeType {
-    private ScopeType() {}
-
-    public static ScopeType TEST = new ScopeType();
-    public static ScopeType SOURCE = new ScopeType();
-    public static ScopeType LIB = new ScopeType();
+  private static enum ScopeType {
+    TEST, SOURCE, LIB
   }
 
   private boolean myShowModules;
@@ -53,7 +48,7 @@ public class TreeModelBuilder {
   private Marker myMarker;
   private boolean myAddUnmarkedFiles;
   private PackageDependenciesNode myRoot;
-  private HashMap<ScopeType,Map<PsiDirectory,DirectoryNode>> myModuleDirNodes = new HashMap<ScopeType, Map<PsiDirectory, DirectoryNode>>();
+  private Map<ScopeType,Map<PsiDirectory,DirectoryNode>> myModuleDirNodes = new HashMap<ScopeType, Map<PsiDirectory, DirectoryNode>>();
   private Map<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>> myModulePackageNodes = new HashMap<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>> myLibraryPackageNodes = new HashMap<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<ScopeType, Map<Module, ModuleNode>>();
@@ -125,8 +120,8 @@ public class TreeModelBuilder {
   }
 
   public static class TreeModel extends DefaultTreeModel {
-    private int myMarkedFileCount = 0;
-    private int myTotalFileCount = 0;
+    private final int myMarkedFileCount;
+    private final int myTotalFileCount;
 
     public TreeModel(TreeNode root, int total, int marked) {
       super(root);
@@ -176,7 +171,7 @@ public class TreeModelBuilder {
           }
         } else if (entry instanceof JdkOrderEntry){
           VirtualFile[] files = entry.getFiles(OrderRootType.SOURCES);
-          if (files == null || files.length == 0){
+          if (files.length == 0){
             files = entry.getFiles(OrderRootType.CLASSES);
           }
           roots.addAll(Arrays.asList(files));
@@ -205,7 +200,6 @@ public class TreeModelBuilder {
   }
 
   public TreeModel build(final Project project, boolean showProgress) {
-
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         countFiles(project);
@@ -238,7 +232,7 @@ public class TreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependecyNodeComparator());
+    TreeUtil.sort(myRoot, new DependencyNodeComparator());
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
@@ -301,7 +295,7 @@ public class TreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependecyNodeComparator());
+    TreeUtil.sort(myRoot, new DependencyNodeComparator());
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
@@ -359,8 +353,8 @@ public class TreeModelBuilder {
   }
 
   public PackageDependenciesNode removeNode(final PsiElement element, final PsiDirectory parent){
-    boolean isMarked = false;
     if (element != null && element.isValid()) {
+      boolean isMarked = false;
       if (element instanceof PsiFile){
         isMarked = myMarker.isMarked((PsiFile)element);
       } else if (element instanceof PsiDirectory){
