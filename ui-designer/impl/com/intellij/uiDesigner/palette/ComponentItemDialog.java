@@ -150,23 +150,25 @@ public final class ComponentItemDialog extends DialogWrapper{
     }
     myItemToBeEdited.setIconPath(myTfIconPath.getText().trim());
 
-    // Horizontal size policy
     {
       final GridConstraints defaultConstraints = myItemToBeEdited.getDefaultConstraints();
+      // Horizontal size policy
       defaultConstraints.setHSizePolicy(
         (myChkHorCanShrink.isSelected() ? GridConstraints.SIZEPOLICY_CAN_SHRINK : 0) |
         (myChkHorCanGrow.isSelected() ? GridConstraints.SIZEPOLICY_CAN_GROW : 0) |
         (myChkHorWantGrow.isSelected() ? GridConstraints.SIZEPOLICY_WANT_GROW : 0)
       );
-    }
 
-    // Vertical size policy
-    {
-      final GridConstraints defaultConstraints = myItemToBeEdited.getDefaultConstraints();
+      // Vertical size policy
       defaultConstraints.setVSizePolicy(
         (myChkVerCanShrink.isSelected() ? GridConstraints.SIZEPOLICY_CAN_SHRINK : 0) |
         (myChkVerCanGrow.isSelected() ? GridConstraints.SIZEPOLICY_CAN_GROW : 0) |
         (myChkVerWantGrow.isSelected() ? GridConstraints.SIZEPOLICY_WANT_GROW : 0)
+      );
+
+      defaultConstraints.setFill(
+        (myChkHorWantGrow.isSelected() ? GridConstraints.FILL_HORIZONTAL : 0) |
+        (myChkVerWantGrow.isSelected() ? GridConstraints.FILL_VERTICAL : 0)
       );
     }
 
