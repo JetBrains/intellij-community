@@ -65,8 +65,14 @@ public class IntroColorProperty extends IntrospectedProperty {
   @Override protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
     ColorDescriptor colorDescriptor = (ColorDescriptor) value;
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), colorDescriptor);
-    if (colorDescriptor != null) {
+    if (colorDescriptor != null && colorDescriptor.isColorSet()) {
       super.setValueImpl(component, colorDescriptor.getResolvedColor());
     }
+  }
+
+
+  @Override public void resetValue(RadComponent component) throws Exception {
+    super.resetValue(component);
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
   }
 }

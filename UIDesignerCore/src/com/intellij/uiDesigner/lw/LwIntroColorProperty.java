@@ -46,6 +46,6 @@ public class LwIntroColorProperty extends LwIntrospectedProperty {
     if (awtColor != null) {
       return ColorDescriptor.fromAWTColor(awtColor);
     }
-    return null;
+    return new ColorDescriptor(null);
   }
 }

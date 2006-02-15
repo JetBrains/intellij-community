@@ -63,7 +63,7 @@ public class ColorDescriptor extends Color {
   }
 
   public ColorDescriptor(final Color color) {
-    super(color.getRGB());
+    super(color != null ? color.getRGB() : 0);
     myColor = color;
   }
 
@@ -97,7 +97,10 @@ public class ColorDescriptor extends Color {
     if (myAWTColor != null) {
       return myAWTColor;
     }
-    return "[" + getRed() + "," + getGreen() + "," + getBlue() + "]";
+    if (myColor != null) {
+      return "[" + getRed() + "," + getGreen() + "," + getBlue() + "]";
+    }
+    return "null";
   }
 
   public boolean equals(Object obj) {
@@ -118,5 +121,9 @@ public class ColorDescriptor extends Color {
       return myAWTColor.equals(rhs.myAWTColor);
     }
     return false;
+  }
+
+  public boolean isColorSet() {
+    return myColor != null || mySwingColor != null || mySystemColor != null || myAWTColor != null;
   }
 }

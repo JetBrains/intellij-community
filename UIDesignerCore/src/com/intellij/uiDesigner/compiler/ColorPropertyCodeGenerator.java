@@ -54,7 +54,7 @@ public class ColorPropertyCodeGenerator extends PropertyCodeGenerator {
     else if (descriptor.getAWTColor() != null) {
       generator.getStatic(ourColorType, descriptor.getAWTColor(), ourColorType);
     }
-    else {
+    else if (descriptor.isColorSet()) {
       throw new IllegalStateException("Unknown color type");
     }
   }

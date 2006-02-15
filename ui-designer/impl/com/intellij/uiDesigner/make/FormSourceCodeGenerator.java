@@ -343,10 +343,15 @@ public final class FormSourceCodeGenerator {
         value = textWithMnemonic.myText;
       }
 
-      startMethodCall(variable, property.getWriteMethodName());
-
 
       final String propertyClass = property.getPropertyClassName();
+      if (propertyClass.equals(Color.class.getName())) {
+        ColorDescriptor descriptor = (ColorDescriptor) value;
+        if (!descriptor.isColorSet()) continue;
+      }
+
+      startMethodCall(variable, property.getWriteMethodName());
+
       if (propertyClass.equals(Dimension.class.getName())) {
         newDimension((Dimension)value);
       }
