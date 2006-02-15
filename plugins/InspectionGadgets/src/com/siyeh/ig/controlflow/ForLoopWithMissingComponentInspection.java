@@ -108,7 +108,6 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-
             if (hasCondition(statement) && hasInitializer(statement)
                     && hasUpdate(statement)) {
                 return;

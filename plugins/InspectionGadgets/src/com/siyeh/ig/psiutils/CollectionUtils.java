@@ -294,35 +294,27 @@ public class CollectionUtils{
             return false;
         }
         final PsiExpression initializer = field.getInitializer();
-        if(!(initializer instanceof PsiNewExpression)){
+        if (initializer instanceof PsiArrayInitializerExpression) {
+            final PsiArrayInitializerExpression arrayInitializerExpression =
+                    (PsiArrayInitializerExpression)initializer;
+            final PsiExpression[] initializers =
+                    arrayInitializerExpression.getInitializers();
+            return initializers.length == 0;
+        }
+        if(!(initializer instanceof PsiNewExpression)) {
             return false;
         }
         final PsiNewExpression expression = (PsiNewExpression) initializer;
         final PsiExpression[] dimensions = expression.getArrayDimensions();
         if(dimensions.length == 0){
-            PsiArrayInitializerExpression arrayInitializer =
+            final PsiArrayInitializerExpression arrayInitializer =
                     expression.getArrayInitializer();
             if (arrayInitializer == null) {
                 return false;
             }
-            PsiExpression[] initializers =
+            final PsiExpression[] initializers =
                     arrayInitializer.getInitializers();
-            while (initializers.length == 1) {
-                if (!(initializers[0] instanceof
-                        PsiArrayInitializerExpression)) {
-                    return false;
-                }
-                arrayInitializer =
-                        (PsiArrayInitializerExpression)initializers[0];
-                initializers = arrayInitializer.getInitializers();
-            }
-            if (initializers.length == 0) {
-                return true;
-            } else if (initializers.length == 1) {
-
-            } else {
-                return false;
-            }
+            return initializers.length == 0;
         }
         for (PsiExpression dimension : dimensions) {
             final String dimensionText = dimension.getText();
