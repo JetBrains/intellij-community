@@ -85,9 +85,12 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
     public RefactoringElementListener getListener(PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass psiClass = (PsiClass) element;
-        final ComponentItem item = myPalette.getItem(RefactoringUtil.getInnerClassNameForClassLoader(psiClass));
-        if (item != null) {
-          return new MyRefactoringElementListener(item);
+        final String oldName = RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+        if (oldName != null) {
+          final ComponentItem item = myPalette.getItem(oldName);
+          if (item != null) {
+            return new MyRefactoringElementListener(item);
+          }
         }
       }
       return null;
