@@ -147,7 +147,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
 
   @NotNull
   public PsiType[] getTypeParameters() {
-    return myParameterList.getTypeArguments();
+    return myParameterList == null ? PsiType.EMPTY_ARRAY : myParameterList.getTypeArguments();
   }
 
   public PsiElement getQualifier() {
