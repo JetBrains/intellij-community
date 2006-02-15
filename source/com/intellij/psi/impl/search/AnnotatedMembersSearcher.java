@@ -35,7 +35,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
     RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
 
     RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-    final SearchScope useScope = annClass.getUseScope();
+    final SearchScope useScope = p.getScope();
 
     final VirtualFileFilter rootFilter;
     if (useScope instanceof GlobalSearchScope) {
