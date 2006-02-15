@@ -258,7 +258,7 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
   }
 
   public String getId() {

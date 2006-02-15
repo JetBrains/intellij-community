@@ -348,7 +348,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myComponent.myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myComponent.myPanel, option, myGlassPanel);
   }
 
   public String getId() {

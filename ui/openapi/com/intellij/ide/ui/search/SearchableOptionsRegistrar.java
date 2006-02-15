@@ -17,7 +17,6 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -29,7 +28,7 @@ import java.util.Set;
  * User: anna
  * Date: 13-Feb-2006
  */
-public abstract class SearchableOptionsRegistrar implements ApplicationComponent {
+public abstract class SearchableOptionsRegistrar{
   public static SearchableOptionsRegistrar getInstance(){
     return ApplicationManager.getApplication().getComponent(SearchableOptionsRegistrar.class);
   }
@@ -42,4 +41,6 @@ public abstract class SearchableOptionsRegistrar implements ApplicationComponent
   public abstract void addOption(SearchableConfigurable configurable, String option, String path);
 
   public abstract boolean isStopWord(String word);
+
+  public abstract String getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
 }

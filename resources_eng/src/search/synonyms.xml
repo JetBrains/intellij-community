@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options>
+  <configurable id="preferences.keymap" configurable_name="Keymap">
+    <option name="keymap">
+      <synonym>mapping</synonym>
+    </option>
+  </configurable>
+  <configurable id="project.propCompiler" configurable_name="Compiler">
+  </configurable>
+  <configurable id="preferences.lookFeel" configurable_name="Appearance">
+  </configurable>
+  <configurable id="preferences.sourceCode" configurable_name="Global&#10;Code Style">
+  </configurable>
+  <configurable id="project.propVCSSupport" configurable_name="Version Control">
+  </configurable>
+  <configurable id="preferences.sourceCode" configurable_name="Project&#10;Code Style">
+  </configurable>
+  <configurable id="project.propLocalVCS" configurable_name="Local History">
+    <synonym>recovery</synonym>
+  </configurable>
+  <configurable id="preferences.general" configurable_name="General">
+    <synonym>abracadabra</synonym>
+  </configurable>
+  <configurable id="preferences.codeCompletion" configurable_name="Code Completion">
+  </configurable>
+  <configurable id="preferences.externalResources" configurable_name="Resources">
+  </configurable>
+  <configurable id="preferences.customizations" configurable_name="Customizations">
+  </configurable>
+  <configurable id="preferences.updates" configurable_name="Updates">
+  </configurable>
+  <configurable id="errors" configurable_name="Errors">
+  </configurable>
+  <configurable id="preferences.toDoOptions" configurable_name="TODO">
+  </configurable>
+  <configurable id="editing.templates" configurable_name="Live Templates">
+  </configurable>
+  <configurable id="preferences.colorsFonts" configurable_name="Colors &amp; Fonts">
+  </configurable>
+  <configurable id="preferences.jdkGlobalLibs" configurable_name="JDK &amp;&#10;Global Libraries">
+  </configurable>
+  <configurable id="preferences.fileTypes" configurable_name="File Types">
+  </configurable>
+  <configurable id="project.propGUI" configurable_name="GUI Designer">
+  </configurable>
+  <configurable id="fileTemplates" configurable_name="File Templates">
+  </configurable>
+  <configurable id="preferences.editor" configurable_name="Editor">
+  </configurable>
+  <configurable id="preferences.externalTools" configurable_name="External Tools">
+  </configurable>
+  <configurable id="preferences.intentionPowerPack" configurable_name="Intention Settings">
+  </configurable>
+  <configurable id="preferences.pathVariables" configurable_name="Path Variables">
+  </configurable>
+  <configurable id="preferences.pluginManager" configurable_name="Plugins">
+  </configurable>
+</options>
+

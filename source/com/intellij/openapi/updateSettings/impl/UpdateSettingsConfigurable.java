@@ -182,7 +182,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myUpdatesSettingsPanel.myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myUpdatesSettingsPanel.myPanel, option, myGlassPanel);
   }
 
   public String getId() {

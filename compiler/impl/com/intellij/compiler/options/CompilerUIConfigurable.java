@@ -218,7 +218,7 @@ public class CompilerUIConfigurable implements Configurable {
   }
 
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {
-    return SearchUtil.lightOptions(myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(configurable, myPanel, option, myGlassPanel);
   }
 
   public void clearSearch() {

@@ -142,7 +142,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myPluginManagerMain.getMainPanel(), option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myPluginManagerMain.getMainPanel(), option, myGlassPanel);
   }
 
   public String getId() {

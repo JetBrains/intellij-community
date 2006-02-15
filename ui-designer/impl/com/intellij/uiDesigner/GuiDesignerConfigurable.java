@@ -206,7 +206,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myGeneralUI.myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myGeneralUI.myPanel, option, myGlassPanel);
   }
 
   public String getId() {

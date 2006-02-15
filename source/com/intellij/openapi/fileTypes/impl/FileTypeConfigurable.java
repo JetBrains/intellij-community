@@ -473,7 +473,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myFileTypePanel.getComponent(), option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myFileTypePanel.getComponent(), option, myGlassPanel);
   }
 
   public String getId() {

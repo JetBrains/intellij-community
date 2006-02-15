@@ -60,7 +60,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myPanel.myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myPanel.myPanel, option, myGlassPanel);
   }
 
   public String getId() {

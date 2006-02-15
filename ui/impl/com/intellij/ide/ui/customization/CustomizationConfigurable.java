@@ -68,7 +68,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myPanel.getPanel(), option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myPanel.getPanel(), option, myGlassPanel);
   }
 
   public String getId() {

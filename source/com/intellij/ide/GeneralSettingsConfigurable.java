@@ -313,7 +313,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myComponent.myPanel, option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myComponent.myPanel, option, myGlassPanel);
   }
 
   public String getId() {

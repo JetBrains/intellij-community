@@ -67,7 +67,7 @@ public class PathMacroConfigurable implements SearchableConfigurable, Applicatio
   }
 
   public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(myEditor.getPanel(), option, myGlassPanel);
+    return SearchUtil.lightOptions(this, myEditor.getPanel(), option, myGlassPanel);
   }
 
   public String getId() {

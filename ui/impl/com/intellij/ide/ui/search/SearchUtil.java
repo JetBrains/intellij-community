@@ -114,11 +114,14 @@ public class SearchUtil {
     }
   }
 
-  public static Runnable lightOptions(final JComponent component, final String option, final GlassPanel glassPanel){
+  public static Runnable lightOptions(final SearchableConfigurable configurable,
+                                      final JComponent component,
+                                      final String option,
+                                      final GlassPanel glassPanel){
     return new Runnable() {
       public void run() {
-        if (!SearchUtil.traverseComponentsTree(glassPanel, component, option, true)){
-          SearchUtil.traverseComponentsTree(glassPanel, component, option, false);
+        if (!SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, true)){
+          SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, false);
         }
       }
     };
@@ -129,7 +132,7 @@ public class SearchUtil {
                                       final JComponent component,
                                       final TabbedPaneWrapper tabbedPane,
                                       final GlassPanel glassPanel){
-    final Runnable runnable = SearchUtil.lightOptions(component, option, glassPanel);
+    final Runnable runnable = SearchUtil.lightOptions(configurable, component, option, glassPanel);
     final String path = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
     if (path != null){
       return new Runnable() {
@@ -163,30 +166,34 @@ public class SearchUtil {
     return -1;
   }
 
-  private static boolean traverseComponentsTree(GlassPanel glassPanel, JComponent rootComponent, String option, boolean force){
+  private static boolean traverseComponentsTree(final SearchableConfigurable configurable,
+                                                GlassPanel glassPanel,
+                                                JComponent rootComponent,
+                                                String option,
+                                                boolean force){
     boolean highlight = false;
     if (rootComponent instanceof JCheckBox){
       final JCheckBox checkBox = ((JCheckBox)rootComponent);
-      if (isComponentHighlighted(checkBox.getText(), option, force)){
+      if (isComponentHighlighted(checkBox.getText(), option, force, configurable)){
         highlight = true;
         glassPanel.addSpotlight(checkBox);
       }
     }
     else if (rootComponent instanceof JRadioButton) {
       final JRadioButton radioButton = ((JRadioButton)rootComponent);
-      if (isComponentHighlighted(radioButton.getText(), option, force)){
+      if (isComponentHighlighted(radioButton.getText(), option, force, configurable)){
         highlight = true;
         glassPanel.addSpotlight(radioButton);
       }
     } else if (rootComponent instanceof JLabel){
       final JLabel label = ((JLabel)rootComponent);
-      if (isComponentHighlighted(label.getText(), option, force)){
+      if (isComponentHighlighted(label.getText(), option, force, configurable)){
         highlight = true;
         glassPanel.addSpotlight(label);
       }
     } else if (rootComponent instanceof JButton){
       final JButton button = ((JButton)rootComponent);
-      if (isComponentHighlighted(button.getText(), option, force)){
+      if (isComponentHighlighted(button.getText(), option, force, configurable)){
         highlight = true;
         glassPanel.addSpotlight(button);
       }
@@ -194,7 +201,7 @@ public class SearchUtil {
     final Component[] components = rootComponent.getComponents();
     for (Component component : components) {
       if (component instanceof JComponent) {
-        final boolean innerHighlight = traverseComponentsTree(glassPanel, (JComponent)component, option, force);
+        final boolean innerHighlight = traverseComponentsTree(configurable, glassPanel, (JComponent)component, option, force);
         if (innerHighlight){
           highlight = true;
         }
@@ -203,8 +210,8 @@ public class SearchUtil {
     return highlight;
   }
 
-  public static boolean isComponentHighlighted(String text, String option, final boolean force){
-    final Set<String> options = getProcessedWords(option);
+  public static boolean isComponentHighlighted(String text, String option, final boolean force, final SearchableConfigurable configurable){
+    final Set<String> options = replaceSynonyms(getProcessedWords(option), configurable);
     final Set<String> tokens = getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
@@ -214,6 +221,20 @@ public class SearchUtil {
       options.removeAll(tokens);
       return options.isEmpty();
     }
+  }
+
+  public static Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
+    final Set<String> result = new HashSet<String>(options);
+    final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+    for (String option : options) {
+      final String synonym = registrar.getSynonym(option, configurable);
+      if (synonym != null) {
+        result.add(synonym);
+      } else {
+        result.add(option);
+      }
+    }
+    return result;
   }
 
   public static Set<String> getProcessedWords(String text){
@@ -232,13 +253,14 @@ public class SearchUtil {
     return result;
   }
 
-  public static Runnable lightOptions(final JComponent component,
+  public static Runnable lightOptions(final SearchableConfigurable configurable,
+                                      final JComponent component,
                                       final String option,
                                       final GlassPanel glassPanel,
                                       final boolean forceSelect) {
     return new Runnable() {
       public void run() {
-        SearchUtil.traverseComponentsTree(glassPanel, component, option, forceSelect);
+        SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, forceSelect);
       }
     };
   }
