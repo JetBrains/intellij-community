@@ -97,6 +97,7 @@ public class TestCaseLoader {
       try {
         final Method suiteMethod = testCaseClass.getMethod("suite");
         if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+          System.out.println("testCaseClass = " + testCaseClass);
           shouldAdd = true;
         }
       } catch (NoSuchMethodException e) { }
