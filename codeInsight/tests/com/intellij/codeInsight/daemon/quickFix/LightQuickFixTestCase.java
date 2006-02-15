@@ -159,5 +159,5 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return availableActions;
   }
 
-  protected abstract String getBasePath();
+  @NonNls protected abstract String getBasePath();
 }

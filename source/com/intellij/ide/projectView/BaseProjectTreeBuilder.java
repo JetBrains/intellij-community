@@ -45,7 +45,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  protected static final VirtualFile[] getFilesToRefresh(Object element) {
+  protected static VirtualFile[] getFilesToRefresh(Object element) {
     final VirtualFile virtualFile;
     if (element instanceof PsiDirectory){
       virtualFile = ((PsiDirectory)element).getVirtualFile();
@@ -149,7 +149,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (node instanceof DefaultMutableTreeNode) {
       final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (userObject instanceof ProjectViewNode) {
-        final ProjectViewNode projectViewNode = ((ProjectViewNode)userObject);
+        final ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
         return projectViewNode.canRepresent(element);
       } else {
         return false;
@@ -163,11 +163,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (current.canRepresent(element)) return current;
 
-    if (current instanceof ProjectViewNode && file != null && !(((ProjectViewNode)current).contains(file))) return null;
+    if (current instanceof ProjectViewNode && file != null && !((ProjectViewNode)current).contains(file)) return null;
 
     DefaultMutableTreeNode currentNode = getNodeForElement(current);
 
-    boolean expanded = currentNode == null ? false : getTree().isExpanded(new TreePath(currentNode.getPath()));
+    boolean expanded = currentNode != null && getTree().isExpanded(new TreePath(currentNode.getPath()));
 
     List<AbstractTreeNode> kids = getOrBuildChildren(current);
     for (AbstractTreeNode node : kids) {

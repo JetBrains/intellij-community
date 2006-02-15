@@ -95,7 +95,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private String myCurrentViewId;
   // - options
 
-
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
@@ -115,10 +114,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final Runnable myTreeChangeListener;
   private final ModuleListener myModulesListener;
   private String mySavedPaneId;
+  private String mySavedPaneSubId;
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
-  @NonNls private static final String ATTRIBUTE_CURRENTVIEW = "currentView";
+  @NonNls private static final String ATTRIBUTE_CURRENT_VIEW = "currentView";
+  @NonNls private static final String ATTRIBUTE_CURRENT_SUBVIEW = "currentSubView";
   @NonNls private static final String ELEMENT_FLATTEN_PACKAGES = "flattenPackages";
   @NonNls private static final String ELEMENT_SHOW_MEMBERS = "showMembers";
   @NonNls private static final String ELEMENT_SHOW_MODULES = "showModules";
@@ -152,15 +153,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     };
     myModulesListener = new ModuleListener() {
       public void moduleRemoved(Project project, Module module) {
-        updateAllBuilders();
+        refresh();
       }
 
       public void modulesRenamed(Project project, List<Module> modules) {
-        updateAllBuilders();
+        refresh();
       }
 
       public void moduleAdded(Project project, Module module) {
-        updateAllBuilders();
+        refresh();
       }
 
       public void beforeModuleRemoved(Project project, Module module) {
@@ -192,7 +193,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     });
   }
 
-  private void showInitialPane(final String id, final String subId) {
+  private void requestToShowInitialPane(final String id, final String subId) {
     initAlarm.cancelAllRequests();
     initAlarm.addRequest(new Runnable() {
       public void run() {
@@ -207,7 +208,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       doAddUninitializedPanes();
     }
     if (myCurrentViewId == null || myCurrentViewId.equals(pane.getId())) {
-      showInitialPane(pane.getId(), null);
+      requestToShowInitialPane(pane.getId(), null);
     }
     showSavedPane();
   }
@@ -215,14 +216,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private void showSavedPane() {
     AbstractProjectViewPane pane = getProjectViewPaneById(mySavedPaneId);
     if (pane != null) {
-      showInitialPane(mySavedPaneId, null);
+      requestToShowInitialPane(mySavedPaneId, mySavedPaneSubId);
     }
   }
 
   public synchronized void removeProjectPane(AbstractProjectViewPane pane) {
     //assume we are completely initialized here
     String idToRemove = pane.getId();
-    if (myId2Pane.remove(idToRemove) == null) return;
+    if (!myId2Pane.containsKey(idToRemove)) return;
     pane.removeTreeChangeListener();
     myCombo.removeItem(Pair.create(idToRemove,null));
     String[] subIds = pane.getSubIds();
@@ -231,6 +232,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         myCombo.removeItem(Pair.create(idToRemove, subId));
       }
     }
+    myId2Pane.remove(idToRemove);
     if (idToRemove.equals(myCurrentViewId)) {
       final String[] paneIds = myId2Pane.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       if (paneIds.length == 0) {
@@ -247,7 +249,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
-    createToolbarActions();
     myUninitializedPanes.clear();
     showSavedPane();
   }
@@ -266,36 +267,41 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
-    final int componentIndexToInsert1 = componentIndexToInsert;
-    //SwingUtilities.invokeLater(new Runnable(){
-      int index = componentIndexToInsert1;
-      //public void run() {
-        myCombo.insertItemAt(Pair.create(id,null), index);
-        String[] subIds = newPane.getSubIds();
-        if (subIds != null) {
-          for (String subId : subIds) {
-            myCombo.insertItemAt(Pair.create(id,subId), ++index);
-          }
-        }
-        showInitialPane(id, null);
-      //}
-    //});
+    int index = componentIndexToInsert;
+    myCombo.insertItemAt(Pair.create(id, null), index);
+    String[] subIds = newPane.getSubIds();
+    if (subIds != null) {
+      for (String subId : subIds) {
+        myCombo.insertItemAt(Pair.create(id, subId), ++index);
+      }
+    }
+    requestToShowInitialPane(id, null);
   }
 
-  private void showPane(String id, String subId) {
-    final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
+  private void showPane(AbstractProjectViewPane newPane) {
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
+    PsiElement selectedPsiElement = null;
     if (currentPane != null) {
       currentPane.saveExpandedPaths();
+      Object selected = currentPane.getSelectedElement();
+      if (selected instanceof PsiElement) {
+        selectedPsiElement = (PsiElement)selected;
+      }
+      if (selected instanceof PackageElement) {
+        PsiPackage psiPackage = ((PackageElement)selected).getPackage();
+        PsiDirectory[] directories = psiPackage.getDirectories();
+        selectedPsiElement = directories.length == 0 ? null : directories[0];
+      }
       currentPane.dispose();
     }
     myViewContentPanel.removeAll();
     JComponent component = newPane.createComponent();
     myViewContentPanel.setLayout(new BorderLayout());
     myViewContentPanel.add(component, BorderLayout.CENTER);
-    myCurrentViewId = id;
+    myCurrentViewId = newPane.getId();
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
+    createToolbarActions();
 
     newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
@@ -303,6 +309,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     newPane.getComponentToFocus().requestFocus();
     updateToolWindowTitle();
     showOrHideStructureView(isShowStructure());
+
+    if (selectedPsiElement != null) {
+      PsiFile containingFile = selectedPsiElement.getContainingFile();
+      VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
+      if (selectedPsiElement instanceof PsiDirectory) {
+        virtualFile = ((PsiDirectory)selectedPsiElement).getVirtualFile();
+      }
+      newPane.select(selectedPsiElement, virtualFile, true);
+    }
   }
 
   private void setupImpl() {
@@ -312,7 +327,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         Pair<String, String> ids = (Pair<String, String>)value;
         String id = ids.first;
         String subId = ids.second;
-        AbstractProjectViewPane pane = myId2Pane.get(id);
+        AbstractProjectViewPane pane = getProjectViewPaneById(id);
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (subId == null) {
           setIconTextGap(4);
@@ -354,7 +369,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     };
 
     myAutoScrollFromSourceHandler.install();
-    createToolbarActions();
 
     final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
     JComponent toolbarComponent = toolBar.getComponent();
@@ -395,7 +409,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           });
           return;
         }
-        showPane(id, subId);
+        showPane(newPane);
       }
     });
 
@@ -457,10 +471,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.add(new ShowStructureAction());
     myActionGroup.add(new SortByTypeAction());
 
-    final List<AbstractProjectViewPane> panes = new ArrayList<AbstractProjectViewPane>(myId2Pane.values());
-    for (AbstractProjectViewPane projectViewPane : panes) {
-      projectViewPane.addToolbarActions(myActionGroup);
-    }
+    getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }
 
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
@@ -499,13 +510,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private JComponent getComponent() {
     return myDataProvider;
-  }
-
-  void updateAllBuilders() {
-    final Collection<AbstractProjectViewPane> panes = myId2Pane.values();
-    for (AbstractProjectViewPane projectViewPane : panes) {
-      projectViewPane.updateFromRoot(false);
-    }
   }
 
   public String getCurrentViewId() {
@@ -1032,7 +1036,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   public void readExternal(Element parentNode) throws InvalidDataException {
     Element navigatorElement = parentNode.getChild(ELEMENT_NAVIGATOR);
     if (navigatorElement != null) {
-      mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENTVIEW);
+      mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
+      mySavedPaneSubId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_SUBVIEW);
       readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
@@ -1050,8 +1055,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     Element navigatorElement = new Element(ELEMENT_NAVIGATOR);
-    if (getCurrentViewId() != null) {
-      navigatorElement.setAttribute(ATTRIBUTE_CURRENTVIEW, getCurrentViewId());
+    AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
+    if (currentPane != null) {
+      navigatorElement.setAttribute(ATTRIBUTE_CURRENT_VIEW, currentPane.getId());
+      String subId = currentPane.getSubId();
+      if (subId != null) {
+        navigatorElement.setAttribute(ATTRIBUTE_CURRENT_SUBVIEW, subId);
+      }
     }
     writeOption(navigatorElement, myFlattenPackages, ELEMENT_FLATTEN_PACKAGES);
     writeOption(navigatorElement, myShowMembers, ELEMENT_SHOW_MEMBERS);
@@ -1066,7 +1076,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     splitterProportions.saveSplitterProportions(myPanel);
     splitterProportions.writeExternal(navigatorElement);
-//    navigatorElement.setAttribute(ATTRIBUTE_SPLITTER_PROPORTION, Float.toString(getSplitterProportion()));
     parentNode.addContent(navigatorElement);
   }
 
@@ -1137,7 +1146,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private void setPaneOption(Map<String, Boolean> optionsMap, boolean value, String paneId, final boolean updatePane) {
     optionsMap.put(paneId, value ? Boolean.TRUE : Boolean.FALSE);
     if (updatePane) {
-      final AbstractProjectViewPane pane = myId2Pane.get(paneId);
+      final AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
       if (pane != null) {
         pane.updateFromRoot(false);
       }
