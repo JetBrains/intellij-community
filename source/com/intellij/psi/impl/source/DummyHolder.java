@@ -171,7 +171,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return parserDefinition.createLexer(getManager().getProject());
   }
 
-  public FileElement getTreeElement() {
+  public synchronized FileElement getTreeElement() {
     if(myFileElement == null){
       myFileElement = new FileElement(DUMMY_HOLDER);
       myFileElement.setPsiElement(this);
