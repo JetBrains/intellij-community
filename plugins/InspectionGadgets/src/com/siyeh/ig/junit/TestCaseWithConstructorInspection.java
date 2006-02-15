@@ -77,6 +77,10 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
             if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
+            if (initializer.getParent() instanceof PsiClass &&
+                !TestUtils.isJUnitTestClass((PsiClass) initializer.getParent())) {
+                return;
+            }
             final PsiCodeBlock body = initializer.getBody();
             if (isTrivial(body)) {
                 return;
