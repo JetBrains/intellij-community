@@ -75,7 +75,7 @@ public final class GridLayoutManager extends AbstractLayout {
   public static Object DESIGN_TIME_INSETS = new Object();
 
   private static final int SKIP_ROW = 1;
-  private static final int SKIP_COL = 1;
+  private static final int SKIP_COL = 2;
 
   public GridLayoutManager(final int rowCount, final int columnCount) {
     if (columnCount < 1) {
