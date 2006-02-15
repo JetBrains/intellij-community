@@ -14,7 +14,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class PsiElementBase extends ElementBase implements PsiElement,NavigationItem {
+public abstract class PsiElementBase extends ElementBase implements PsiElement {
   public PsiElement getFirstChild() {
     PsiElement[] children = getChildren();
     if (children.length == 0) return null;
@@ -105,10 +105,6 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
     return getManager().getSearchHelper().getUseScope(this);
   }
 
-  public ItemPresentation getPresentation() {
-    return null;
-  }
-
   public void navigate(boolean requestFocus) {
     EditSourceUtil.getDescriptor(this).navigate(requestFocus);
   }
@@ -121,16 +117,17 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement,N
     return canNavigate();
   }
 
-  public FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  public String getName() {
-    return this instanceof PsiNamedElement ? ((PsiNamedElement)this).getName() : null;
-  }
-
   public Project getProject() {
     final PsiManager manager = getManager();
     return manager != null ? manager.getProject() : null;
+  }
+
+  //default implementations of methods from NavigationItem
+  public ItemPresentation getPresentation() {
+    return null;
+  }
+
+  public FileStatus getFileStatus() {
+    return FileStatus.NOT_CHANGED;
   }
 }

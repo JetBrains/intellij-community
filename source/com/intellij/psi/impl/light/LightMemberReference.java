@@ -4,27 +4,24 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class LightMemberReference extends LightElement implements PsiJavaCodeReferenceElement {
-  private final GlobalSearchScope myResolveScope;
-  private final PsiMember myRefClass;
+  private final PsiMember myRefMember;
   private PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 
   public LightMemberReference(PsiManager manager, PsiMember refClass, PsiSubstitutor substitutor) {
     super(manager);
-    myRefClass = refClass;
+    myRefMember = refClass;
 
-    myResolveScope = null;
     mySubstitutor = substitutor;
   }
 
   public PsiElement resolve() {
-      return myRefClass;
+      return myRefMember;
   }
 
   @NotNull
@@ -60,7 +57,14 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public String getQualifiedName() {
-      return myRefClass.getName();
+    final PsiClass containingClass = myRefMember.getContainingClass();
+    if (containingClass != null) {
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (qualifiedName != null) {
+        return qualifiedName + '.' + myRefMember.getName();
+      }
+    }
+    return myRefMember.getName();
   }
 
   public String getReferenceName() {
@@ -68,7 +72,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public String getText() {
-    return getName();
+    return myRefMember.getName() + myParameterList.getText();
   }
 
   public PsiReference getReference() {
@@ -94,7 +98,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public PsiElement copy() {
-      return new LightMemberReference(myManager, myRefClass, mySubstitutor);
+      return new LightMemberReference(myManager, myRefMember, mySubstitutor);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -112,7 +116,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public String toString() {
-    return "LightClassReference:" + getName();
+    return "LightClassReference:" + myRefMember.getName();
   }
 
   public boolean isReferenceTo(PsiElement element) {
@@ -137,12 +141,13 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public boolean isValid() {
-    return myRefClass == null || myRefClass.isValid();
+    if (myParameterList != null && !myParameterList.isValid()) return false;
+    return myRefMember == null || myRefMember.isValid();
   }
 
   @NotNull
   public PsiType[] getTypeParameters() {
-    return PsiType.EMPTY_ARRAY;
+    return myParameterList.getTypeArguments();
   }
 
   public PsiElement getQualifier() {
