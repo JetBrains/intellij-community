@@ -5,102 +5,102 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface Constants extends ElementType {
-  public static interface PsiElementArrayConstructor<T extends PsiElement> {
+  interface PsiElementArrayConstructor<T extends PsiElement> {
     T[] newPsiElementArray(int length);
   }
 
-  public static final PsiElementArrayConstructor<PsiElement> PSI_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiElement>() {
+  PsiElementArrayConstructor<PsiElement> PSI_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiElement>() {
     public PsiElement[] newPsiElementArray(int length) {
       return length != 0 ? new PsiElement[length] : PsiElement.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiClass> PSI_CLASS_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiClass>() {
+  PsiElementArrayConstructor<PsiClass> PSI_CLASS_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiClass>() {
     public PsiClass[] newPsiElementArray(int length) {
       return length != 0 ? new PsiClass[length] : PsiClass.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiField> PSI_FIELD_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiField>() {
+  PsiElementArrayConstructor<PsiField> PSI_FIELD_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiField>() {
     public PsiField[] newPsiElementArray(int length) {
       return length != 0 ? new PsiField[length] : PsiField.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiMethod> PSI_METHOD_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiMethod>() {
+  PsiElementArrayConstructor<PsiMethod> PSI_METHOD_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiMethod>() {
     public PsiMethod[] newPsiElementArray(int length) {
       return length != 0 ? new PsiMethod[length] : PsiMethod.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiClassInitializer> PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiClassInitializer>() {
+  PsiElementArrayConstructor<PsiClassInitializer> PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiClassInitializer>() {
     public PsiClassInitializer[] newPsiElementArray(int length) {
       return length != 0 ? new PsiClassInitializer[length] : PsiClassInitializer.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiParameter> PSI_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiParameter>() {
+  PsiElementArrayConstructor<PsiParameter> PSI_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiParameter>() {
     public PsiParameter[] newPsiElementArray(int length) {
       return length != 0 ? new PsiParameter[length] : PsiParameter.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiCatchSection> PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR = new PsiElementArrayConstructor<PsiCatchSection>() {
+  PsiElementArrayConstructor<PsiCatchSection> PSI_CATCH_SECTION_ARRAYS_CONSTRUCTOR = new PsiElementArrayConstructor<PsiCatchSection>() {
     public PsiCatchSection[] newPsiElementArray(int length) {
       return length != 0 ? new PsiCatchSection[length] : PsiCatchSection.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiJavaCodeReferenceElement> PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiJavaCodeReferenceElement>() {
+  PsiElementArrayConstructor<PsiJavaCodeReferenceElement> PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiJavaCodeReferenceElement>() {
     public PsiJavaCodeReferenceElement[] newPsiElementArray(int length) {
       return length != 0 ? new PsiJavaCodeReferenceElement[length] : PsiJavaCodeReferenceElement.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiStatement> PSI_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiStatement>() {
+  PsiElementArrayConstructor<PsiStatement> PSI_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiStatement>() {
     public PsiStatement[] newPsiElementArray(int length) {
       return length != 0 ? new PsiStatement[length] : PsiStatement.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiExpression> PSI_EXPRESSION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiExpression>() {
+  PsiElementArrayConstructor<PsiExpression> PSI_EXPRESSION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiExpression>() {
     public PsiExpression[] newPsiElementArray(int length) {
       return length != 0 ? new PsiExpression[length] : PsiExpression.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiImportStatement> PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStatement>() {
+  PsiElementArrayConstructor<PsiImportStatement> PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStatement>() {
     public PsiImportStatement[] newPsiElementArray(int length) {
       return length != 0 ? new PsiImportStatement[length] : PsiImportStatement.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiImportStaticStatement> PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStaticStatement>() {
+  PsiElementArrayConstructor<PsiImportStaticStatement> PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStaticStatement>() {
     public PsiImportStaticStatement[] newPsiElementArray(int length) {
       return length != 0 ? new PsiImportStaticStatement[length] : PsiImportStaticStatement.EMPTY_ARRAY;
     }
   };
 
 
-  public static final PsiElementArrayConstructor<PsiImportStatementBase> PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStatementBase>() {
+  PsiElementArrayConstructor<PsiImportStatementBase> PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiImportStatementBase>() {
     public PsiImportStatementBase[] newPsiElementArray(int length) {
       return length != 0 ? new PsiImportStatementBase[length] : PsiImportStatementBase.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiAnnotationMemberValue> PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotationMemberValue>() {
+  PsiElementArrayConstructor<PsiAnnotationMemberValue> PSI_ANNOTATION_MEMBER_VALUE_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotationMemberValue>() {
     public PsiAnnotationMemberValue[] newPsiElementArray(int length) {
       return length != 0 ? new PsiAnnotationMemberValue[length] : PsiAnnotationMemberValue.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiNameValuePair> PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiNameValuePair>() {
+  PsiElementArrayConstructor<PsiNameValuePair> PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiNameValuePair>() {
     public PsiNameValuePair[] newPsiElementArray(int length) {
       return length != 0 ? new PsiNameValuePair[length] : PsiNameValuePair.EMPTY_ARRAY;
     }
   };
 
-  public static final PsiElementArrayConstructor<PsiAnnotation> PSI_ANNOTATION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotation>() {
+  PsiElementArrayConstructor<PsiAnnotation> PSI_ANNOTATION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotation>() {
     public PsiAnnotation[] newPsiElementArray(int length) {
       return length != 0 ? new PsiAnnotation[length] : PsiAnnotation.EMPTY_ARRAY;
     }
