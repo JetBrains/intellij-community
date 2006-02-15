@@ -16,7 +16,11 @@ public class ChangeList {
   private String myDescription;
   private boolean myIsDefault = false;
 
-  public ChangeList(final String description) {
+  public static ChangeList createEmptyChangeList(String description) {
+    return new ChangeList(description);
+  }
+
+  private ChangeList(final String description) {
     myDescription = description;
   }
 

@@ -327,9 +327,11 @@ public class SimpleColoredComponent extends JComponent {
   }
 
   private void checkCanPaint() {
+    /* wtf??
     if (!isDisplayable()) {
       LOG.assertTrue(false, logSwingPath());
     }
+    */
     final Application application = ApplicationManager.getApplication();
     if (application != null) {
       application.assertIsDispatchThread();

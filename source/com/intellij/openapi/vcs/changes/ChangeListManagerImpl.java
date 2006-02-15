@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent {
+public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner {
   private Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = "Changes";
@@ -45,7 +45,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myDefaultChangelist = new ChangeList("Default");
+    myDefaultChangelist = ChangeList.createEmptyChangeList("Default");
     myDefaultChangelist.setDefault(true);
     myView = new ChangesListView();
     myChangeLists.add(myDefaultChangelist);
@@ -66,6 +66,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       myDisposed = true;
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
+      myView.dispose();
     }
   }
 
@@ -102,6 +103,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
+
+    myView.installDndSupport(myProject, this);
     return panel;
   }
 
@@ -178,7 +181,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public ChangeList addChangeList(String name) {
     synchronized (myChangeLists) {
-      final ChangeList list = new ChangeList(name);
+      final ChangeList list = ChangeList.createEmptyChangeList(name);
       myChangeLists.add(list);
       scheduleRefresh();
       return list;
@@ -306,18 +309,22 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       chooser.show();
       ChangeList resultList = chooser.getSelectedList();
       if (resultList != null) {
-        for (ChangeList list : getChangeLists()) {
-          for (Change change : changes) {
-            list.removeChange(change);
-          }
-        }
-
-        for (Change change : changes) {
-          resultList.addChange(change);
-        }
-
-        scheduleRefresh();
+        moveChangesTo(resultList, changes);
       }
     }
+  }
+
+  public void moveChangesTo(final ChangeList list, final Change[] changes) {
+    for (ChangeList existingList : getChangeLists()) {
+      for (Change change : changes) {
+        existingList.removeChange(change);
+      }
+    }
+
+    for (Change change : changes) {
+      list.addChange(change);
+    }
+
+    scheduleRefresh();
   }
 }

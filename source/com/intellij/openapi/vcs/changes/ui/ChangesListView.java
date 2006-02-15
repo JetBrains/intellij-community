@@ -1,14 +1,20 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -19,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,6 +79,10 @@ public class ChangesListView extends TreeTable implements DataProvider {
       return "";
     }
   };
+  private ChangesListView.DragSource myDragSource;
+  private ChangesListView.DropTarget myDropTarget;
+  private DnDManager myDndManager;
+  private ChangeListOwner myDragOwner;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getBeforeRevision();
@@ -129,6 +141,28 @@ public class ChangesListView extends TreeTable implements DataProvider {
         return Color.black;
       }
     });
+  }
+
+  public void installDndSupport(Project project, ChangeListOwner owner) {
+    myDragOwner = owner;
+    myDragSource = new DragSource();
+    myDropTarget = new DropTarget();
+    myDndManager = DnDManager.getInstance(project);
+
+    myDndManager.registerSource(myDragSource, this);
+    myDndManager.registerTarget(myDropTarget, this);
+  }
+
+  public void dispose() {
+    if (myDragSource != null) {
+      myDndManager.unregisterSource(myDragSource, getTree());
+      myDndManager.unregisterTarget(myDropTarget, getTree());
+
+      myDragSource = null;
+      myDropTarget = null;
+      myDndManager = null;
+      myDragOwner = null;
+    }
   }
 
   public void updateModel(java.util.List<ChangeList> changeLists) {
@@ -194,5 +228,154 @@ public class ChangesListView extends TreeTable implements DataProvider {
     }
 
     return lists.toArray(new ChangeList[lists.size()]);
+  }
+
+  public class DragSource implements DnDSource {
+    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      if (action != DnDAction.MOVE) return false;
+      return getSelectedChanges().length > 0;
+    }
+
+    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+      return new DnDDragStartBean(new ChangeListDragBean(ChangesListView.this, getSelectedChanges()));
+    }
+
+    @Nullable
+    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+      return new Pair<Image, Point>(DragImageFactory.createImage(ChangesListView.this, 0), new Point());
+    }
+  }
+
+  private static class DragImageFactory {
+    private static void drawSelection(JTable table, int column, Graphics g, final int width) {
+      int y = 0;
+      final int[] rows = table.getSelectedRows();
+      final int height = table.getRowHeight();
+      for (int row : rows) {
+        final TableCellRenderer renderer = table.getCellRenderer(row, column);
+        final Component component = renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+        g.translate(0, y);
+        component.setBounds(0, 0, width, height);
+        boolean wasOpaque = false;
+        if (component instanceof JComponent) {
+          final JComponent j = (JComponent)component;
+          if (j.isOpaque()) wasOpaque = true;
+          j.setOpaque(false);
+        }
+        component.paint(g);
+        if (wasOpaque) {
+          ((JComponent)component).setOpaque(true);
+        }
+        y += height;
+        g.translate(0, -y);
+      }
+    }
+
+    public static Image createImage(final JTable table, int column) {
+      final int height = Math.min(100, table.getSelectedRowCount() * table.getRowHeight());
+      final int width = table.getColumnModel().getColumn(column).getWidth();
+
+      final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = (Graphics2D)image.getGraphics();
+
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+
+      drawSelection(table, column, g2, width);
+      return image;
+    }
+  }
+
+  private static class ChangeListDragBean {
+    private ChangesListView myView;
+    private Change[] myChanges;
+    private ChangeList myDropList = null;
+
+
+    public ChangeListDragBean(final ChangesListView view, final Change[] changes) {
+      myView = view;
+      myChanges = changes;
+    }
+
+    public ChangesListView getView() {
+      return myView;
+    }
+
+    public Change[] getChanges() {
+      return myChanges;
+    }
+
+    public void setTargetList(final ChangeList dropList) {
+      myDropList = dropList;
+    }
+
+
+    public ChangeList getDropList() {
+      return myDropList;
+    }
+  }
+
+  public class DropTarget implements DnDTarget {
+    public boolean update(DnDEvent aEvent) {
+      aEvent.hideHighlighter();
+
+      Object attached = aEvent.getAttachedObject();
+      if (!(attached instanceof ChangeListDragBean)) return false;
+
+      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+      if (dragBean.getView() != ChangesListView.this) return false;
+      dragBean.setTargetList(null);
+
+      RelativePoint dropPoint = aEvent.getRelativePoint();
+      Point onTable = dropPoint.getPoint(ChangesListView.this);
+      final int dropRow = rowAtPoint(onTable);
+      final TreePath dropPath = getTree().getPathForRow(dropRow);
+
+      if (dropPath == null) return false;
+
+      Object object;
+      DefaultMutableTreeNode dropNode = (DefaultMutableTreeNode)dropPath.getLastPathComponent();
+      do {
+        if (dropNode == null || dropNode.isRoot()) return false;
+        object = dropNode.getUserObject();
+        if (object instanceof ChangeList) break;
+        dropNode = (DefaultMutableTreeNode)dropNode.getParent();
+      }
+      while (true);
+
+      ChangeList dropList = (ChangeList)object;
+      final Change[] changes = dragBean.getChanges();
+      for (Change change : dropList.getChanges()) {
+        for (Change incomingChange : changes) {
+          if (change == incomingChange) return false;
+        }
+      }
+
+      final Rectangle tableCellRect = getCellRect(getTree().getRowForPath(new TreePath(dropNode.getPath())), 0, false);
+
+      aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect),
+                             DnDEvent.DropTargetHighlightingType.RECTANGLE);
+
+      aEvent.setDropPossible(true, null);
+      dragBean.setTargetList(dropList);
+
+      return false;
+    }
+
+    public void drop(DnDEvent aEvent) {
+      Object attached = aEvent.getAttachedObject();
+      if (!(attached instanceof ChangeListDragBean)) return;
+
+      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+      final ChangeList dropList = dragBean.getDropList();
+      if (dropList != null) {
+        myDragOwner.moveChangesTo(dropList, dragBean.getChanges());
+      }
+    }
+
+    public void cleanUpOnLeave() {
+    }
+
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+    }
   }
 }
