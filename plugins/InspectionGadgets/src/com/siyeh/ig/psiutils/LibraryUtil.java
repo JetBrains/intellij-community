@@ -15,11 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class LibraryUtil {
 
@@ -32,6 +30,9 @@ public class LibraryUtil {
 
     public static boolean classIsInLibrary(@NotNull PsiClass aClass) {
         final PsiFile file = aClass.getContainingFile();
+        if (file == null) {
+            return false;
+        }
         final String fileName = file.getName();
         if (fileName == null) {
             return false;
@@ -54,4 +55,19 @@ public class LibraryUtil {
         }
 		return false;
 	}
+
+    public static boolean isOverrideOfLibraryMethodParameter(
+            PsiVariable variable) {
+        if (variable instanceof PsiParameter) {
+            final PsiParameter parameter = (PsiParameter)variable;
+            final PsiElement scope = parameter.getDeclarationScope();
+            if (scope instanceof PsiMethod) {
+                final PsiMethod method = (PsiMethod)scope;
+                if (isOverrideOfLibraryMethod(method)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

@@ -20,15 +20,18 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ObsoleteCollectionInspection extends VariableInspection{
+
     public String getID(){
         return "UseOfObsoleteCollectionType";
     }
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("use.obsolete.collection.type.display.name");
+        return InspectionGadgetsBundle.message(
+                "use.obsolete.collection.type.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -36,7 +39,8 @@ public class ObsoleteCollectionInspection extends VariableInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("use.obsolete.collection.type.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "use.obsolete.collection.type.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -49,17 +53,33 @@ public class ObsoleteCollectionInspection extends VariableInspection{
         public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final PsiType type = variable.getType();
-            if(!isObsoleteCollectionType(type)){
+            if (!isObsoleteCollectionType(type)){
+                return;
+            }
+            if (LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
         }
 
+        public void visitMethod(PsiMethod method) {
+            super.visitMethod(method);
+            final PsiType returnType = method.getReturnType();
+            if (!isObsoleteCollectionType(returnType)) {
+                return;
+            }
+            if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+                return;
+            }
+            final PsiTypeElement typeElement = method.getReturnTypeElement();
+            registerError(typeElement);
+        }
+
         public void visitNewExpression(@NotNull PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
-            if(!isObsoleteCollectionType(type)){
+            if (!isObsoleteCollectionType(type)){
                 return;
             }
             final PsiJavaCodeReferenceElement classNameElement =
@@ -77,12 +97,17 @@ public class ObsoleteCollectionInspection extends VariableInspection{
                 return false;
             }
             final PsiClassType classType = (PsiClassType)deepComponentType;
-            if ("Vector".equals(classType.getClassName()) &&
-                classType.equalsToText("java.util.Vector")) {
-                return true;
+            final String className = classType.getClassName();
+            if (!"Vector".equals(className) && !"Hashtable".equals(className)) {
+                return false;
             }
-            return "Hashtable".equals(classType.getClassName()) &&
-                   classType.equalsToText("java.util.Hashtable");
+            final PsiClass aClass = classType.resolve();
+            if (aClass == null) {
+                return false;
+            }
+            final String name = aClass.getQualifiedName();
+            return "java.util.Vector".equals(name) ||
+                   "java.util.Hashtable".equals(name);
         }
     }
 }

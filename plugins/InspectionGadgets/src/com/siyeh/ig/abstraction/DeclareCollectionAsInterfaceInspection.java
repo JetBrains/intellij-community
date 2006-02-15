@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,8 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("collection.declared.by.class.display.name");
+        return InspectionGadgetsBundle.message(
+                "collection.declared.by.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -40,21 +42,24 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
     public String buildErrorString(PsiElement location) {
         final String type = location.getText();
         final String interfaceName = CollectionUtils.getInterfaceForClass(type);
-        return InspectionGadgetsBundle.message("collection.declarated.by.class.problem.descriptor", interfaceName);
+        return InspectionGadgetsBundle.message(
+                "collection.declarated.by.class.problem.descriptor",
+                interfaceName);
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new DeclareCollectionAsInterfaceVisitor();
     }
 
-    private static class DeclareCollectionAsInterfaceVisitor extends BaseInspectionVisitor {
+    private static class DeclareCollectionAsInterfaceVisitor
+            extends BaseInspectionVisitor {
 
         public void visitVariable(@NotNull PsiVariable variable) {
             final PsiType type = variable.getType();
-            if (type == null) {
+            if (!CollectionUtils.isCollectionClass(type)) {
                 return;
             }
-            if (!CollectionUtils.isCollectionClass(type)) {
+            if (LibraryUtil.isOverrideOfLibraryMethodParameter(variable)) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
@@ -67,10 +72,11 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
             if (!CollectionUtils.isCollectionClass(type)) {
                 return;
             }
+            if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+                return;
+            }
             final PsiTypeElement typeElement = method.getReturnTypeElement();
             registerError(typeElement);
         }
-
     }
-
 }
