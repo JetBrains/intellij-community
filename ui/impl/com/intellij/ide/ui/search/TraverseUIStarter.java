@@ -137,19 +137,9 @@ public class TraverseUIStarter implements ApplicationStarter {
     }
   }
 
-  private void processIntentions(final Element configurableElement) {
+  private static void processIntentions(final Element configurableElement) {
     final IntentionManagerSettings intentionManagerSettings = IntentionManagerSettings.getInstance();
     intentionManagerSettings.buildIndex();
-     while (!intentionManagerSettings.isIndexBuild()){//wait for index build
-      synchronized (this) {
-        try {
-          wait(100);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    }
     final TreeSet<String> words = new TreeSet<String>(intentionManagerSettings.getIntentionWords());
     for (String word : words) {
       final List<String> mentionedIntentions = intentionManagerSettings.getFilteredIntentionNames(word);
