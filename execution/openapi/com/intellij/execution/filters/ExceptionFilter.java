@@ -73,12 +73,11 @@ public class ExceptionFilter implements Filter{
     final String filePath = fileAndLine.substring(0, colonIndex).replace('/', File.separatorChar);
     try{
       final int lineNumber = Integer.parseInt(lineString);
-      final String className1 = className;
       final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass aClass = manager.findClass(className1, GlobalSearchScope.allScope(myProject));
+      PsiClass aClass = manager.findClass(className, GlobalSearchScope.allScope(myProject));
       if (aClass == null) return null;
-      final PsiFile file = aClass.getContainingFile();
-      if (file.getNavigationElement() == null) return null;
+      final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
+      if (file == null) return null;
       final int slashIndex = filePath.lastIndexOf(File.separatorChar);
       final String shortFileName = slashIndex < 0 ? filePath : filePath.substring(slashIndex + 1);
       if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
