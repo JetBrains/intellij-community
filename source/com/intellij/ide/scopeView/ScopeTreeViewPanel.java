@@ -34,6 +34,7 @@ import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -417,8 +418,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           final PsiElement parent = event.getParent();
-          if (parent instanceof PsiJavaFile) {
-            final PackageDependenciesNode parentNode = myBuilder.getFileParentNode((PsiFile)parent);
+          PsiJavaFile file = PsiTreeUtil.getParentOfType(parent, PsiJavaFile.class, false);
+          if (file != null) {
+            final PackageDependenciesNode parentNode = myBuilder.getFileParentNode(file);
             final TreePath treePath = new TreePath(parentNode.getPath());
             if (!myTree.isCollapsed(treePath)) {
               myTree.collapsePath(treePath);
