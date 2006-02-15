@@ -234,6 +234,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
       int newSize = newCoord - prevCoord;
 
+      if (!myEditor.ensureEditable()) {
+        return;
+      }
+
       if (mySelectedContainer.getParent().isXY()  && myResizeLine == coords.length) {
         final JComponent parentDelegee = mySelectedContainer.getDelegee();
         Dimension containerSize = parentDelegee.getSize();
