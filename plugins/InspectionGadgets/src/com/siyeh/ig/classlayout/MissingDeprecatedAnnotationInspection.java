@@ -27,143 +27,130 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MissingDeprecatedAnnotationInspection extends ClassInspection {
 
-  private final MissingDeprecatedAnnotationFix fix = new MissingDeprecatedAnnotationFix();
-
-  public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class MissingDeprecatedAnnotationFix
-    extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "missing.deprecated.annotation.display.name");
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-
-      final PsiElement identifier = descriptor.getPsiElement();
-      final PsiModifierListOwner parent =
-        (PsiModifierListOwner)identifier.getParent();
-      assert parent != null;
-      final PsiManager psiManager = parent.getManager();
-      final PsiElementFactory factory = psiManager
-        .getElementFactory();
-      final PsiAnnotation annotation = factory
-        .createAnnotationFromText("@java.lang.Deprecated",
-                                  parent);
-
-      final PsiModifierList modifierList = parent.getModifierList();
-      modifierList.addAfter(annotation, null);
+    public String getGroupDisplayName() {
+        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
-  }
 
-  public BaseInspectionVisitor buildVisitor() {
-    return new MissingDeprecatedAnnotationVisitor();
-  }
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "missing.deprecated.annotation.problem.descriptor");
+    }
 
-  private static class MissingDeprecatedAnnotationVisitor
-    extends BaseInspectionVisitor {
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new MissingDeprecatedAnnotationFix();
+    }
 
-    public void visitClass(@NotNull PsiClass aClass) {
-      super.visitClass(aClass);
-        final PsiManager manager = aClass.getManager();
-        final LanguageLevel languageLevel =
-          manager.getEffectiveLanguageLevel();
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-          return;
+    private static class MissingDeprecatedAnnotationFix
+            extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "missing.deprecated.annotation.add.quickfix");
         }
-        if (!hasDeprecatedCommend(aClass)) {
-          return;
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+
+            final PsiElement identifier = descriptor.getPsiElement();
+            final PsiModifierListOwner parent =
+                    (PsiModifierListOwner)identifier.getParent();
+            assert parent != null;
+            final PsiManager psiManager = parent.getManager();
+            final PsiElementFactory factory = psiManager.getElementFactory();
+            final PsiAnnotation annotation =
+                    factory.createAnnotationFromText("@java.lang.Deprecated",
+                            parent);
+            final PsiModifierList modifierList = parent.getModifierList();
+            modifierList.addAfter(annotation, null);
         }
-        if (hasDeprecatedAnnotation(aClass)) {
-          return;
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new MissingDeprecatedAnnotationVisitor();
+    }
+
+    private static class MissingDeprecatedAnnotationVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            super.visitClass(aClass);
+            final PsiManager manager = aClass.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return;
+            }
+            if (!hasDeprecatedComment(aClass)) {
+                return;
+            }
+            if (hasDeprecatedAnnotation(aClass)) {
+                return;
+            }
+            registerClassError(aClass);
         }
-        registerClassError(aClass);
-    }
 
-    public void visitMethod(@NotNull PsiMethod method) {
-      final PsiManager manager = method.getManager();
-      final LanguageLevel languageLevel =
-        manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      if (!hasDeprecatedCommend(method)) {
-        return;
-      }
-      if (hasDeprecatedAnnotation(method)) {
-        return;
-      }
-      registerMethodError(method);
-    }
+        public void visitMethod(@NotNull PsiMethod method) {
+            final PsiManager manager = method.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return;
+            }
+            if (!hasDeprecatedComment(method)) {
+                return;
+            }
+            if (hasDeprecatedAnnotation(method)) {
+                return;
+            }
+            registerMethodError(method);
+        }
 
-    public void visitField(@NotNull PsiField field) {
-      final PsiManager manager = field.getManager();
-      final LanguageLevel languageLevel =
-        manager.getEffectiveLanguageLevel();
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        return;
-      }
-      if (!hasDeprecatedCommend(field)) {
-        return;
-      }
-      if (hasDeprecatedAnnotation(field)) {
-        return;
-      }
-      registerFieldError(field);
-    }
-  }
+        public void visitField(@NotNull PsiField field) {
+            final PsiManager manager = field.getManager();
+            final LanguageLevel languageLevel =
+                    manager.getEffectiveLanguageLevel();
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+                return;
+            }
+            if (!hasDeprecatedComment(field)) {
+                return;
+            }
+            if (hasDeprecatedAnnotation(field)) {
+                return;
+            }
+            registerFieldError(field);
+        }
 
-  private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
-    final PsiModifierList modifierList = element.getModifierList();
-    if (modifierList == null) {
-      return false;
-    }
-    final PsiAnnotation[] annotations = modifierList.getAnnotations();
+        private static boolean hasDeprecatedAnnotation(
+                PsiModifierListOwner element){
+            final PsiModifierList modifierList = element.getModifierList();
+            if(modifierList == null){
+                return false;
+            }
+            final PsiAnnotation annotation =
+                    modifierList.findAnnotation("java.lang.Deprecated");
+            return annotation != null;
+        }
 
-    for (final PsiAnnotation annotation : annotations) {
-      final PsiJavaCodeReferenceElement reference = annotation
-        .getNameReferenceElement();
-      if (reference == null) {
-        return false;
-      }
-      final PsiClass annotationClass =
-        (PsiClass)reference.resolve();
-      if (annotationClass == null) {
-        return false;
-      }
-      final String annotationClassName =
-        annotationClass.getQualifiedName();
-      if ("java.lang.Deprecated".equals(annotationClassName)) {
-        return true;
-      }
+        private static boolean hasDeprecatedComment(
+                PsiDocCommentOwner element) {
+            final PsiDocComment comment = element.getDocComment();
+            if (comment == null) {
+                return false;
+            }
+            final PsiDocTag deprecatedTag = comment.findTagByName("deprecated");
+            return deprecatedTag != null;
+        }
     }
-    return false;
-  }
-
-  private static boolean hasDeprecatedCommend(PsiDocCommentOwner element) {
-    final PsiDocComment comment = element.getDocComment();
-    if (comment == null) {
-      return false;
-    }
-    final PsiDocTag[] tags = comment.getTags();
-    for (PsiDocTag tag : tags) {
-      final String tagName = tag.getName();
-      @NonNls final String deprecated = "deprecated";
-      if (deprecated.equals(tagName)) {
-        return true;
-      }
-    }
-    return false;
-  }
 }
