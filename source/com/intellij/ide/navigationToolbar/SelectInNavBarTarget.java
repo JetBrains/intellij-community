@@ -71,4 +71,5 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
     final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
     ((IdeRootPane)frame.getRootPane()).getNavigationBar().select();
   }
+
 }

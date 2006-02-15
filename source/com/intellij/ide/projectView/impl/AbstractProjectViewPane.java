@@ -4,6 +4,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.*;
@@ -18,9 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.ui.AutoScrollFromSourceHandler;
-import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -35,7 +36,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   protected ProjectViewTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   protected BaseProjectTreeBuilder myTreeBuilder;
-  private final TreeState myReadTreeState = new TreeState();
+  private TreeState myReadTreeState = new TreeState();
+  private String mySubId;
 
   protected final void fireTreeChangeListener() {
     if (myTreeChangeListener != null) myTreeChangeListener.run();
@@ -54,22 +56,39 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public abstract String getTitle();
   public abstract Icon getIcon();
-  public abstract String getId();
-  public abstract JComponent getComponent();
+  @NotNull public abstract String getId();
+  @Nullable public final String getSubId(){
+    return mySubId;
+  }
+
+  public final void setSubId(@Nullable String subId) {
+    mySubId = subId;
+  }
+
+  @Nullable public String[] getSubIds(){
+    return null;
+  }
+  @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
+    throw new IllegalStateException("should not call");
+  }
+  public abstract JComponent createComponent();
   public JComponent getComponentToFocus() {
     return myTree;
   }
   public abstract void expand(final Object[] path);
   public abstract void expand(final Object element);
-  public abstract void dispose();
+  public void dispose() {
+    myTreeBuilder.dispose();
+    myTreeBuilder = null;
+    myTree = null;
+    myTreeStructure = null;
+  }
+
   public abstract void updateFromRoot(boolean restoreExpandedPaths);
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
-  public abstract TreePath[] getSelectionPaths();
-  public abstract void installAutoScrollToSourceHandler(AutoScrollToSourceHandler autoScrollToSourceHandler);
-
-  public static void installAutoScrollFromSourceHandler(AutoScrollFromSourceHandler autoScrollFromSourceHandler) {
-    autoScrollFromSourceHandler.install();
+  public TreePath[] getSelectionPaths() {
+    return myTree == null ? null : myTree.getSelectionPaths();
   }
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
@@ -78,10 +97,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public abstract void updateTreePopupHandler();
 
   private List<AbstractTreeNode> getSelectedNodes(){
-    final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
+    final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
@@ -218,11 +236,31 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (myTree != null) {
-      TreeState.createOn(myTree).writeExternal(element);
+      saveExpandedPaths();
+    }
+    myReadTreeState.writeExternal(element);
+  }
+
+  void saveExpandedPaths() {
+    if (myTree != null) {
+      myReadTreeState = TreeState.createOn(myTree);
     }
   }
 
   public final void restoreState(){
     myReadTreeState.applyTo(myTree);
+  }
+
+  public void installComparator() {
+    final ProjectView projectView = ProjectView.getInstance(myProject);
+    myTreeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator() {
+      protected boolean isSortByType() {
+        return projectView.isSortByType(getId());
+      }
+
+      protected boolean isAbbreviatePackageNames() {
+        return projectView.isAbbreviatePackageNames(getId());
+      }
+    });
   }
 }

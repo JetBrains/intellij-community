@@ -20,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -128,7 +129,7 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  public static TreeState createOn(JTree tree) {
+  public static TreeState createOn(@NotNull JTree tree) {
     return new TreeState(createPaths(tree), new ArrayList<List<PathElement>>());
   }
 

@@ -61,4 +61,5 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   public float getWeight() {
     return StandardTargetWeights.STRUCTURE_WEIGHT;
   }
+
 }

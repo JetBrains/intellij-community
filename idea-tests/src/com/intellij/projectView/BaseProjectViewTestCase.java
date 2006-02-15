@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.SelectInManager;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestSourceBasedTestCase;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,8 +43,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected void tearDown() throws Exception {
-    for (Iterator<AbstractProjectViewPSIPane> iterator = myPanes.iterator(); iterator.hasNext();) {
-      iterator.next().dispose();
+    for (final AbstractProjectViewPSIPane myPane : myPanes) {
+      myPane.dispose();
     }
     myPanes = null;
     myStructure = null;
@@ -50,8 +52,13 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject) {
+    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject, SelectInManager.getInstance(myProject)) {
       protected ProjectViewSelectInTarget createSelectInTarget() {
+        return null;
+      }
+
+      @NonNls
+      public String getComponentName() {
         return null;
       }
 
@@ -98,7 +105,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return null;
       }
     };
-    pane.initTree();
+    pane.createComponent();
     myPanes.add(pane);
     return pane;
   }
@@ -113,7 +120,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   static VirtualFile[] getFiles(AbstractTreeNode kid) {
     if (kid instanceof BasePsiNode) {
-      Object value = ((BasePsiNode)kid).getValue();
+      Object value = kid.getValue();
       if (value instanceof PsiDirectory) {
         return new VirtualFile[]{((PsiDirectory)value).getVirtualFile()};
       }
@@ -132,12 +139,11 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected static void collect(AbstractTreeNode node, MultiValuesMap<VirtualFile, AbstractTreeNode> map,
                                 final AbstractTreeStructure structure) {
-    Object[] kids = (Object[])structure.getChildElements(node);
-    for (int i = 0; i < kids.length; i++) {
-      ProjectViewNode kid = (ProjectViewNode)kids[i];
+    Object[] kids = structure.getChildElements(node);
+    for (Object kid1 : kids) {
+      ProjectViewNode kid = (ProjectViewNode)kid1;
       final VirtualFile[] files = getFiles(kid);
-      for (int j = 0; j < files.length; j++) {
-        VirtualFile vFile = files[j];
+      for (VirtualFile vFile : files) {
         map.put(vFile, kid);
         ProjectViewNode eachParent = (ProjectViewNode)kid.getParent();
         while (eachParent != null) {
@@ -155,7 +161,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected AbstractProjectTreeStructure getProjectTreeStructure() {
-    return ((AbstractProjectTreeStructure)myStructure);
+    return (AbstractProjectTreeStructure)myStructure;
   }
 
   protected void assertStructureEqual(String expected) {
@@ -185,30 +191,29 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   private void checkGetParentConsistency(Object from) {
     Object[] childElements = myStructure.getChildElements(from);
-    for (int i = 0; i < childElements.length; i++) {
-      Object childElement = childElements[i];
+    for (Object childElement : childElements) {
       assertSame(from, myStructure.getParentElement(childElement));
       checkGetParentConsistency(childElement);
     }
   }
 
-  protected boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
+  protected static boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
     TreePath path = new TreePath(nodeForElement.getPath());
     return pane.getTree().isExpanded(path.getParentPath());
   }
 
-  protected DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
+  protected static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
     JTree tree = pane.getTree();
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
     return getNodeForElement(root, model, element);
   }
 
-  private DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
+  private static DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
     if (root instanceof DefaultMutableTreeNode) {
       Object userObject = ((DefaultMutableTreeNode)root).getUserObject();
       if (userObject instanceof AbstractTreeNode) {
-        AbstractTreeNode treeNode = ((AbstractTreeNode)userObject);
+        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
         if (element.equals(treeNode.getValue())) return (DefaultMutableTreeNode)root;
         for (int i = 0; i < model.getChildCount(root); i++) {
           DefaultMutableTreeNode nodeForChild = getNodeForElement(model.getChild(root, i), model, element);
@@ -219,21 +224,21 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return null;
   }
 
-  protected void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
+  protected static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
     pane.dispose();
-    pane.initTree();
+    pane.createComponent();
     assertNull(getNodeForElement(element,pane));
     pane.select(element, virtualFile, true);
     assertTrue(isExpanded(element, pane));
   }
 
-  protected boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
+  protected static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
     DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
     if (nodeForElement == null) return false;
     return isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
   }
 
-  protected void assertListsEqual(DefaultListModel model, String expected) {
+  protected static void assertListsEqual(DefaultListModel model, String expected) {
     assertEquals(expected, IdeaTestUtil.print(model));
   }
 
@@ -241,15 +246,13 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<VirtualFile, AbstractTreeNode>();
     collect((AbstractTreeNode)rootElement, map, structure);
 
-    Iterator<VirtualFile> files = map.keySet().iterator();
-    while (files.hasNext()) {
-      VirtualFile eachFile = files.next();
+    for (VirtualFile eachFile : map.keySet()) {
       Collection<AbstractTreeNode> nodes = map.values();
-      for (Iterator<AbstractTreeNode> iterator = nodes.iterator(); iterator.hasNext();) {
-        ProjectViewNode eachNode = (ProjectViewNode)iterator.next();
+      for (final AbstractTreeNode node : nodes) {
+        ProjectViewNode eachNode = (ProjectViewNode)node;
         boolean actual = eachNode.contains(eachFile);
         boolean expected = map.get(eachFile).contains(eachNode);
-        if (actual != expected){
+        if (actual != expected) {
           assertTrue("file=" + eachFile + " node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
         }
       }
@@ -260,7 +263,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return "projectView";
   }
 
-  protected String getPackageRelativePath() {
+  protected static String getPackageRelativePath() {
     return "com/package1";
   }
 

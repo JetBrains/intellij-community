@@ -1,9 +1,7 @@
 package com.intellij.ide.impl;
 
-import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
-import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -24,7 +22,7 @@ public class PackageViewSelectInTarget extends ProjectViewSelectInTarget {
   public boolean canSelect(PsiFile file) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile vFile = getCorrespondingVirtualFile(file);
-    
+
     if (vFile == null) {
       return false;
     }
@@ -77,4 +75,5 @@ public class PackageViewSelectInTarget extends ProjectViewSelectInTarget {
   public float getWeight() {
     return StandardTargetWeights.PACKAGES_WEIGHT;
   }
+
 }

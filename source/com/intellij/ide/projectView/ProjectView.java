@@ -15,7 +15,9 @@ public abstract class ProjectView {
 
   public abstract PsiElement getParentOfCurrentSelection();
 
+  // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(String viewId);
+  public abstract void changeView(String viewId, String subId);
 
   public abstract void changeView();
 

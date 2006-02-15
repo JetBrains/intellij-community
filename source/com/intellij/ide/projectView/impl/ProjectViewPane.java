@@ -3,29 +3,29 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInManager;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-import org.jetbrains.annotations.NonNls;
-
 public final class ProjectViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
   @NonNls public static final String ID = "ProjectPane";
-  private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
+  public static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 
-  public ProjectViewPane(Project project) {
-    super(project);
+  public ProjectViewPane(Project project, SelectInManager selectInManager) {
+    super(project, selectInManager);
   }
 
   public String getTitle() {

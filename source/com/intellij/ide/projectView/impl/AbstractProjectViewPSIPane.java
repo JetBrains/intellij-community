@@ -11,24 +11,28 @@ import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
+import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
@@ -54,12 +58,35 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
+public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane implements ProjectComponent {
   protected JScrollPane myComponent;
   private MouseListener myTreePopupHandler;
 
-  protected AbstractProjectViewPSIPane(Project project) {
+  protected AbstractProjectViewPSIPane(Project project, SelectInManager selectInManager) {
     super(project);
+    selectInManager.addTarget(createSelectInTarget());
+  }
+
+  public JComponent createComponent() {
+    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
+    DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
+    myTree = createTree(treeModel);
+    DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+    myComponent = new JScrollPane(myTree);
+//    myComponent.setBorder(BorderFactory.createEmptyBorder());
+    myTreeStructure = createStructure();
+    myTreeBuilder = createBuilder(treeModel);
+
+    installComparator();
+    initPSITree();
+    restoreState();
+    return myComponent;
+  }
+
+  public final void dispose() {
+    myTreePopupHandler = null;
+    myComponent = null;
+    super.dispose();
   }
 
   protected final void initPSITree() {
@@ -153,10 +180,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.expandPath(treePath);
   }
 
-  public final void dispose() {
-    myTreeBuilder.dispose();
-  }
-
   public final void updateFromRoot(boolean restoreExpandedPaths) {
     final ArrayList pathsToExpand = new ArrayList();
     final ArrayList selectionPaths = new ArrayList();
@@ -184,36 +207,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     });
   }
 
-  public final TreePath[] getSelectionPaths() {
-    return myTree.getSelectionPaths();
-  }
-
-  public final void installAutoScrollToSourceHandler(AutoScrollToSourceHandler autoScrollToSourceHandler) {
-    autoScrollToSourceHandler.install(myTree);
-  }
-
   public void updateTreePopupHandler() {
     myTree.removeMouseListener(myTreePopupHandler);
     ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
     myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
-  }
-
-  public void initTree() {
-    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
-    DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
-    myTree = createTree(treeModel);
-    DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
-    myComponent = new JScrollPane(myTree);
-    myComponent.setBorder(BorderFactory.createEmptyBorder());
-    myTreeStructure = createStructure();
-    myTreeBuilder = createBuilder(treeModel);
-
-    SelectInManager selectInManager = SelectInManager.getInstance(myProject);
-    selectInManager.addTarget(createSelectInTarget());
-
-    ((ProjectViewImpl)ProjectView.getInstance(myProject)).setComparator(this);
-    initPSITree();
-    restoreState();
   }
 
   protected abstract ProjectViewSelectInTarget createSelectInTarget();
@@ -233,7 +230,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public void projectOpened() {
     final Runnable runnable = new Runnable() {
       public void run() {
-        initTree();
+        //initTree();
         final ProjectView projectView = ProjectView.getInstance(myProject);
         projectView.addProjectPane(AbstractProjectViewPSIPane.this);
       }
@@ -242,7 +239,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   public void projectClosed() {
-    dispose();
   }
 
   public void initComponent() { }
@@ -287,11 +283,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
   }
 
-  public JComponent getComponent() {
-    return myComponent;
-  }
-
-   //------------- DnD for Favorites View -------------------
+  //------------- DnD for Favorites View -------------------
 
   private static final DataFlavor[] FLAVORS;
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
@@ -329,12 +321,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
             public boolean isDataFlavorSupported(DataFlavor flavor) {
               DataFlavor[] flavors = getTransferDataFlavors();
-              for (int i = 0; i < flavors.length; i++) {
-                if (flavor.equals(flavors[i])) {
-                  return true;
-                }
-              }
-              return false;
+              return ArrayUtil.find(flavors, flavor) != -1;
             }
 
             public Object getTransferData(DataFlavor flavor) {

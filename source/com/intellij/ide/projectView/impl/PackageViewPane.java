@@ -4,6 +4,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInManager;
 import com.intellij.ide.impl.PackageViewSelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
@@ -37,10 +38,10 @@ import java.util.Set;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
   @NonNls public static final String ID = "PackagesPane";
-  private static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
+  public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 
-  public PackageViewPane(Project project) {
-    super(project);
+  public PackageViewPane(Project project, SelectInManager selectInManager) {
+    super(project, selectInManager);
   }
 
   public String getTitle() {
@@ -153,8 +154,8 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
         if (ProjectView.getInstance(myProject).isShowModules(getId())) {
           Module[] modules = getModulesFor(dir);
           boolean rv = false;
-          for (int idx = 0; idx < modules.length; idx++) {
-            rv |= addPackageElementToUpdate(aPackage, modules[idx]);
+          for (Module module : modules) {
+            rv |= addPackageElementToUpdate(aPackage, module);
           }
           return rv;
         }

@@ -1,7 +1,8 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
-import com.intellij.ide.IdeBundle;
 
 /**
  * @author dsl
@@ -32,7 +32,7 @@ public class RenameModuleHandler implements RenameHandler {
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     return module != null;
   }
 
@@ -46,7 +46,7 @@ public class RenameModuleHandler implements RenameHandler {
 
   public void invoke(final Project project, PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(dataContext != null);
-    final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
                              IdeBundle.message("prompt.enter.new.module.name"),
@@ -98,7 +98,6 @@ public class RenameModuleHandler implements RenameHandler {
                             });
                 modifiableModel.dispose();
                 success.set(Boolean.FALSE);
-                return;
               }
             }
           });
