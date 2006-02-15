@@ -196,7 +196,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
       boolean deprecated;
       if (getTreeElement() != null) {
         PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
         if (!deprecated) {
           deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
         }
@@ -276,8 +276,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     }
 
     public String getCanonicalText() {
-      String name = getContainingClass().getName();
-      return name;
+      return getContainingClass().getName();
     }
 
     public boolean isReferenceTo(PsiElement element) {
