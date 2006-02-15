@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -81,5 +82,18 @@ public abstract class InspectionProfileEntry {
     DefaultJDOMExternalizer.writeExternal(this, node);
   }
 
+  /**
+   * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation
+   * @param project
 
+   */
+  public void projectOpened(Project project) {
+  }
+
+  /**
+   * Cleanup inspection settings conserning with project. Is called on project closed for all profiles as well as on profile deletion
+   * @param project
+   */
+  public void projectClosed(Project project) {
+  }
 }

@@ -179,7 +179,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     profilesSet.add(PROJECT_PROFILE);
     final List<String> sortedProfiles = new ArrayList<String>(profilesSet);
     Collections.sort(sortedProfiles);
-    if (!usedProfiles.isEmpty()) {
+    if (!sortedProfiles.isEmpty()) {
       final Element assignedScopes = new Element(SCOPES);
       List<NamedScope> scopes = new ArrayList<NamedScope>(usedProfiles.keySet());
       Collections.sort(scopes, new Comparator<NamedScope>() {

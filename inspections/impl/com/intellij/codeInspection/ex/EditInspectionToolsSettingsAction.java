@@ -52,7 +52,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles ? profileManager.getRootProfile() : projectProfileManager.getProfile((PsiElement)file));
+    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles ? profileManager.getRootProfile() : projectProfileManager.getInspectionProfile((PsiElement)file));
     editToolSettings(project, inspectionProfile, canChooseDifferentProfiles, myShortName, canChooseDifferentProfiles ? profileManager : InspectionProjectProfileManager.getInstance(project));
   }
 

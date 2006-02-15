@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -9,7 +10,6 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -409,7 +409,7 @@ public class GenericsHighlightUtil {
   //precondition: TypeConversionUtil.isAssignable(lType, rType) || expressionAssignable
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
     if (elementToHighlight.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(elementToHighlight.getProject()).getInspectionProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     if (!isGenericToRaw(lType, rType)) return null;
     String description = JavaErrorMessages.message("generics.unchecked.assignment",
                                                    HighlightUtil.formatType(rType),
@@ -437,7 +437,7 @@ public class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
     if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getProfile(typeCast).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(typeCast.getProject()).getInspectionProfile(typeCast).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
     if (typeElement == null) return null;
     final PsiType castType = typeElement.getType();
@@ -537,7 +537,7 @@ public class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
     if (call.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getProfile(call).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(call.getProject()).getInspectionProfile(call).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
 
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -941,7 +941,7 @@ public class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getProfile(overrider).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {
       PsiMethod baseMethod = signature.getMethod();
       PsiSubstitutor substitutor = signature.getSubstitutor();

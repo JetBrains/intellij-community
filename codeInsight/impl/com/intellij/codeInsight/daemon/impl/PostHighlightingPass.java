@@ -16,8 +16,8 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.UnusedSymbolSettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -234,7 +234,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getProfile(identifier);
+    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
     PsiElement parent = identifier.getParent();
@@ -242,7 +242,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_SYMBOL, identifier);
     String displayName  = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL);
     HighlightInfo info;
-    InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
+    UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
     if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {
       info = processLocalVariable((PsiLocalVariable)parent, options, displayName);
     }
@@ -434,7 +434,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
-    if (!InspectionProjectProfileManager.getInstance(myProject).getProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
+    if (!InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
 
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
@@ -859,10 +860,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       else {
         myAdditionalJavadocTags = myTag.getName();
       }
-      final InspectionProfileImpl inspectionProfile =
-        ((InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProfile(myTag));
+      final InspectionProfile inspectionProfile =
+        InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myTag);
       //correct save settings
-      inspectionProfile.isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
+      ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       inspectionProfile.save();
     }
   }

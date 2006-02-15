@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,9 +46,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
-      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
-        return tools.toArray(new LocalInspectionTool[tools.size()]);
+      public InspectionProfileEntry[] getInspectionTools() {
+        final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
+        return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
@@ -66,6 +68,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
+    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
   }
   protected void enableInspectionTool(LocalInspectionTool tool){
     final String shortName = tool.getShortName();

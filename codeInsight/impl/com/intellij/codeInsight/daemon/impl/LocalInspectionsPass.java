@@ -103,7 +103,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
 
-    final LocalInspectionTool[] tools = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile).getHighlightingLocalInspectionTools();
+    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
+    final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
     final ProblemsHolder holder = new ProblemsHolder(iManager);
     final List<Pair<LocalInspectionTool, PsiElementVisitor>> visitors = new ArrayList<Pair<LocalInspectionTool, PsiElementVisitor>>();
@@ -220,7 +221,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile);
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile);
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
@@ -264,7 +265,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile);
+      InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 

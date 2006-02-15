@@ -85,7 +85,7 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
 
     if (suppressedScopes.values().size() == 0) return null;
     // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfile((PsiElement)file);
+    InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper(file);
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();
 
     for (Collection<String> ids : suppressedScopes.values()) {

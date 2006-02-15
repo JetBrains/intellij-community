@@ -29,13 +29,13 @@ public class CodeInspectionOnEditorAction extends AnAction {
     }
   }
 
-  protected void analyze(Project project, PsiFile psiFile) {
+  protected static void analyze(Project project, PsiFile psiFile) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
     inspectionManagerEx.setCurrentScope(scope);
     final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getProfile((PsiElement)psiFile);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile((PsiElement)psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

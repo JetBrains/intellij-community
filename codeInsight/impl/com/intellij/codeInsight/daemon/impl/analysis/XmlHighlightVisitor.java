@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
@@ -11,10 +10,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
@@ -28,14 +27,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -159,7 +158,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
           final String name = tag.getName();
 
-          InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+          InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
           HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME)).getTool();
           reportOneTagProblem(
             tag,
@@ -467,7 +466,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             final InsertRequiredAttributeIntention insertRequiredAttributeIntention = new InsertRequiredAttributeIntention(
                 tag, attrName, null);
             final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
             RequiredAttributesInspection inspection = (RequiredAttributesInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME)).getTool();
             reportOneTagProblem(
               tag,
@@ -502,7 +501,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(type), name)) return;
     }
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
     final IntentionAction intentionAction = inspection.getIntentionAction(tag, name, type);
     if (htmlTag && profile.isToolEnabled(key)) {
       addElementsForTagWithManyQuickFixes(
@@ -654,7 +653,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     IntentionAction[] quickFixes;
 
     if (tag instanceof HtmlTag) {
-      final InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
+      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
       HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
       if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return null;

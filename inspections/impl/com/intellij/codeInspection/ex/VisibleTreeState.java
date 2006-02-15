@@ -59,7 +59,7 @@ public class VisibleTreeState implements JDOMExternalizable {
 
   private void traverseNodes(final DefaultMutableTreeNode root, List<TreePath> pathsToExpand, List<TreePath> toSelect) {
     final Object userObject = root.getUserObject();
-    final TreeNode[] rootPath = ((DefaultMutableTreeNode)root).getPath();
+    final TreeNode[] rootPath = root.getPath();
     if (userObject instanceof Descriptor) {
       final String displayName = ((Descriptor)userObject).getText();
       if (mySelectedNodes.contains(displayName)) {
@@ -69,11 +69,12 @@ public class VisibleTreeState implements JDOMExternalizable {
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
-    else {
-      if (mySelectedNodes.contains(userObject)) {
+    else if (userObject instanceof String){
+      final String str = (String)userObject;
+      if (mySelectedNodes.contains(str)) {
         toSelect.add(new TreePath(rootPath));
       }
-      if (myExpandedNodes.contains(userObject)) {
+      if (myExpandedNodes.contains(str)) {
         pathsToExpand.add(new TreePath(rootPath));
       }
       for (int i = 0; i < root.getChildCount(); i++) {
@@ -128,14 +129,12 @@ public class VisibleTreeState implements JDOMExternalizable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<String> iterator = myExpandedNodes.iterator(); iterator.hasNext();) {
-      final String expandedNode = iterator.next();
+    for (final String expandedNode : myExpandedNodes) {
       Element exp = new Element(EXPANDED);
       exp.setAttribute(NAME, expandedNode);
       element.addContent(exp);
     }
-    for (Iterator<String> iterator = mySelectedNodes.iterator(); iterator.hasNext();) {
-      final String selectedNode = iterator.next();
+    for (final String selectedNode : mySelectedNodes) {
       Element exp = new Element(SELECTED);
       exp.setAttribute(NAME, selectedNode);
       element.addContent(exp);
@@ -145,12 +144,9 @@ public class VisibleTreeState implements JDOMExternalizable {
   public boolean compare(Object object) {
     if (!(object instanceof VisibleTreeState)) return false;
     final VisibleTreeState that = (VisibleTreeState)object;
-    if (myExpandedNodes == null && that.myExpandedNodes != null) {
-      return false;
-    }
     if (myExpandedNodes.size() != that.myExpandedNodes.size()) return false;
-    for (Iterator<String> iterator = myExpandedNodes.iterator(); iterator.hasNext();) {
-      if (!that.myExpandedNodes.contains(iterator.next())) {
+    for (final String myExpandedNode : myExpandedNodes) {
+      if (!that.myExpandedNodes.contains(myExpandedNode)) {
         return false;
       }
     }
@@ -158,8 +154,8 @@ public class VisibleTreeState implements JDOMExternalizable {
       return that.mySelectedNodes == null;
     }
     if (mySelectedNodes.size() != that.mySelectedNodes.size()) return false;
-    for (Iterator<String> iterator = mySelectedNodes.iterator(); iterator.hasNext();) {
-      if (!that.mySelectedNodes.contains(iterator.next())) {
+    for (final String mySelectedNode : mySelectedNodes) {
+      if (!that.mySelectedNodes.contains(mySelectedNode)) {
         return false;
       }
     }

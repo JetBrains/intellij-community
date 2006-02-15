@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
@@ -48,14 +49,14 @@ public class Descriptor {
   private JComponent myAdditionalConfigPanel;
   private Element myConfig;
   private InspectionToolsPanel.LevelChooser myChooser;
-  private InspectionTool myTool;
+  private InspectionProfileEntry myTool;
   private HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
 
 
   public Descriptor(HighlightDisplayKey key,
-                    InspectionProfile.ModifiableModel inspectionProfile) {
+                    ModifiableModel inspectionProfile) {
     myText = HighlightDisplayKey.getDisplayNameByKey(key);
     myGroup = GroupNames.GENERAL_GROUP_NAME;
     myKey = key;
@@ -64,10 +65,10 @@ public class Descriptor {
     myLevel = inspectionProfile.getErrorLevel(key);
   }
 
-  public Descriptor(InspectionTool tool, InspectionProfile.ModifiableModel inspectionProfile) {
+  public Descriptor(InspectionProfileEntry tool, InspectionProfile inspectionProfile) {
     @NonNls Element config = new Element("options");
     try {
-      tool.writeExternal(config);
+      tool.writeSettings(config);
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -75,7 +76,7 @@ public class Descriptor {
     myConfig = config;
     myText = tool.getDisplayName();
     myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? GroupNames.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
-    myDescriptorFileName = tool.getDescriptionFileName();
+    myDescriptorFileName = ((InspectionTool)tool).getDescriptionFileName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
     if (myKey == null) {
       if (tool instanceof LocalInspectionToolWrapper) {
@@ -121,9 +122,12 @@ public class Descriptor {
     return myLevel;
   }
 
-  public JComponent getAdditionalConfigPanel(InspectionProfile.ModifiableModel inspectionProfile) {
+  public JComponent getAdditionalConfigPanel(ModifiableModel inspectionProfile) {
     if (myAdditionalConfigPanel == null && myTool != null){
       myAdditionalConfigPanel = myTool.createOptionsPanel();
+      if (myAdditionalConfigPanel == null){
+        myAdditionalConfigPanel = new JPanel();
+      }
       return myAdditionalConfigPanel;
     }
 
@@ -149,7 +153,7 @@ public class Descriptor {
     return myConfig;
   }
 
-  public InspectionTool getTool() {
+  public InspectionProfileEntry getTool() {
     return myTool;
   }
 
@@ -165,7 +169,7 @@ public class Descriptor {
   }
 
 
-  public static JPanel createUnusedSymbolSettingsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
+  public static JPanel createUnusedSymbolSettingsPanel(final ModifiableModel inspectionProfile){
     JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
     final JCheckBox local = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option"));
     final JCheckBox field = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option1"));
@@ -174,7 +178,7 @@ public class Descriptor {
     final JCheckBox parameters = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option4"));
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        InspectionProfile.UnusedSymbolSettings settings = new InspectionProfile.UnusedSymbolSettings();
+        UnusedSymbolSettings settings = new UnusedSymbolSettings();
         settings.LOCAL_VARIABLE = local.isSelected();
         settings.CLASS = classes.isSelected();
         settings.FIELD = field.isSelected();
@@ -194,7 +198,7 @@ public class Descriptor {
     panel.add(classes);
     panel.add(parameters);
     if (inspectionProfile != null){
-      final InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = inspectionProfile.getUnusedSymbolSettings();
+      final UnusedSymbolSettings unusedSymbolSettings = inspectionProfile.getUnusedSymbolSettings();
       local.setSelected(unusedSymbolSettings.LOCAL_VARIABLE);
       field.setSelected(unusedSymbolSettings.FIELD);
       method.setSelected(unusedSymbolSettings.METHOD);

@@ -1,13 +1,12 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
@@ -31,8 +30,8 @@ public class DisableInspectionToolAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getProfile((PsiElement)file);
-    InspectionProfile.ModifiableModel model = inspectionProfile.getModifiableModel();
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile(file);
+    ModifiableModel model = inspectionProfile.getModifiableModel();
     model.disableTool(myToolId);
     model.commit();
     DaemonCodeAnalyzer.getInstance(project).restart();

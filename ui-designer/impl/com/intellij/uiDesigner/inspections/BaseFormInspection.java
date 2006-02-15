@@ -12,14 +12,17 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.PsiPropertiesProvider;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +54,7 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
   }
 
   public boolean isActive(PsiElement psiRoot) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getProfile(psiRoot);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getInspectionProfile(psiRoot);
     HighlightDisplayKey key = HighlightDisplayKey.find(myInspectionKey);
     if (key == null) {
       return false;

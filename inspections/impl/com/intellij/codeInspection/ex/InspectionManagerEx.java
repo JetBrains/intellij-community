@@ -175,7 +175,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     if (profile == null) {
       if (inspectionProfileManager.useProjectLevelProfileSettings()) {
         profile = InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
-        if (profile != null) return (InspectionProfileImpl)profile;
+        if (profile != null) return (InspectionProfile)profile;
       }
       final String[] avaliableProfileNames = inspectionProfileManager.getAvailableProfileNames();
       if (avaliableProfileNames == null || avaliableProfileNames.length == 0) {
@@ -185,7 +185,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
       myCurrentProfileName = avaliableProfileNames[0];
       profile = inspectionProfileManager.getProfile(myCurrentProfileName);
     }
-    return (InspectionProfileImpl)profile;
+    return (InspectionProfile)profile;
   }
 
   @NotNull
@@ -297,7 +297,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
 
   public static boolean isToCheckMember(PsiDocCommentOwner owner, InspectionTool tool) {
     if (((InspectionManagerEx)getInstance(owner.getProject())).RUN_WITH_EDITOR_PROFILE &&
-        InspectionProjectProfileManager.getInstance(owner.getProject()).getProfile(owner).getInspectionTool(tool.getShortName()) != tool) {
+        InspectionProjectProfileManager.getInstance(owner.getProject()).getInspectionProfile(owner).getInspectionTool(tool.getShortName()) != tool) {
       return false;
     }
     //!(tool instanceof LocalInspectionToolWrapper)
@@ -571,7 +571,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
       public void run() {
         performInspectionsWithProgress(scope, runWithEditorSettings);
 
-        InspectionTool[] tools = getCurrentProfile().getInspectionTools();
+        InspectionTool[] tools = InspectionProjectProfileManager.getInstance(getProject()).getProfileWrapper(getCurrentProfile().getName()).getInspectionTools();
         for (InspectionTool tool : tools) {
           if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
             tool.exportResults(root);
@@ -877,11 +877,11 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
           InspectionProfile profile;
           if (runWithEditorSettings){
-            profile = profileManager.getProfile((PsiElement)file);
+            profile = profileManager.getInspectionProfile(file);
           } else {
-            profile = (InspectionProfileImpl)profileManager.getProfile(myCurrentProfileName);
+            profile = (InspectionProfile)profileManager.getProfile(myCurrentProfileName);
             if (profile == null){
-              profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
+              profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
             }
           }
           final VirtualFile virtualFile = file.getVirtualFile();
@@ -924,14 +924,11 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     if (runWithEditorSettings){
       final Set<String> profiles = scope.getActiveInspectionProfiles();
       for (String profile : profiles) {
-        final InspectionProfile inspectionProfile = (InspectionProfileImpl)profileManager.getProfile(profile);
+        final InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
         processProfileTools(inspectionProfile, tools, localTools);
       }
     } else {
-      InspectionProfile profile = (InspectionProfileImpl)profileManager.getProfile(myCurrentProfileName);
-      if (profile == null){
-        profile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
-      }
+      InspectionProfileWrapper profile = profileManager.getProfileWrapper(myCurrentProfileName);
       processProfileTools(profile, tools, localTools);
     }
 
@@ -939,7 +936,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
   }
 
-  private void processProfileTools(final InspectionProfile inspectionProfile,
+  private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
                                    final Map<String, Set<InspectionTool>> tools,
                                    final Map<String, Set<InspectionTool>> localTools) {
     final InspectionTool[] usedTools = inspectionProfile.getInspectionTools();

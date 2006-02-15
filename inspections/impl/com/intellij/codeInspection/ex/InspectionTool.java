@@ -8,6 +8,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -15,24 +16,18 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class InspectionTool implements JDOMExternalizable {
+public abstract class InspectionTool extends InspectionProfileEntry {
   private InspectionManagerEx myManager;
-  private JComponent myOptions;
-
-  public InspectionTool() {
-  }
 
   public void initialize(InspectionManagerEx manager) {
     myManager = manager;
@@ -59,18 +54,6 @@ public abstract class InspectionTool implements JDOMExternalizable {
   @NotNull
   public abstract JobDescriptor[] getJobDescriptors();
 
-  protected JComponent createOptionsPanel() {
-    return new JPanel();
-  }
-
-  public final JComponent getOptionsPanel(boolean forceCreate) {
-    if (myOptions == null || forceCreate) {
-      myOptions = createOptionsPanel();
-    }
-
-    return myOptions;
-  }
-
   public boolean queryExternalUsagesRequests() {
     return false;
   }
@@ -82,13 +65,6 @@ public abstract class InspectionTool implements JDOMExternalizable {
   public boolean isEnabledByDefault() {
     return getDefaultLevel() != HighlightDisplayLevel.DO_NOT_SHOW;
   }
-
-  public abstract String getDisplayName();
-
-  public abstract String getGroupDisplayName();
-
-  @NonNls
-  public abstract String getShortName();
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public final String getDescriptionFileName() {
@@ -103,14 +79,6 @@ public abstract class InspectionTool implements JDOMExternalizable {
   }
 
   public abstract HTMLComposer getComposer();
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
 
   public abstract boolean hasReportedProblems();
 

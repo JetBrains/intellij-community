@@ -1,17 +1,17 @@
 package com.intellij.uiDesigner.inspections;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.InspectionProfile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   private GuiEditor myEditor;
   private RadComponent myComponent;
   private List<ErrorInfo> myResults = null;
-  private InspectionProfileImpl myProfile;
+  private InspectionProfile myProfile;
 
   public FormEditorErrorCollector(final GuiEditor editor, final RadComponent component) {
     myEditor = editor;
@@ -31,7 +31,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
 
     final PsiFile formPsiFile = PsiManager.getInstance(editor.getProject()).findFile(editor.getFile());
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(editor.getProject());
-    myProfile = profileManager.getProfile(formPsiFile);
+    myProfile = profileManager.getInspectionProfile(formPsiFile);
   }
 
   public ErrorInfo[] result() {

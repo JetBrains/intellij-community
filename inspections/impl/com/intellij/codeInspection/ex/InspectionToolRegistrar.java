@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ui.InspectCodePanel;
@@ -207,7 +208,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     return myWords2InspectionToolNameMap.keySet();
   }
 
-  public static URL getDescriptionUrl(InspectionTool tool, String descriptionFileName) {
+  public static URL getDescriptionUrl(InspectionProfileEntry tool, String descriptionFileName) {
     Class aClass;
     if (tool != null) {
       if (tool instanceof LocalInspectionToolWrapper) {

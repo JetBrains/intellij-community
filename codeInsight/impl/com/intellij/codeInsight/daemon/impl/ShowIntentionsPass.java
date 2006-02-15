@@ -38,10 +38,9 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -238,7 +237,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (javadocKey == null){
         HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
       }
-      if (((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getProfile((PsiElement)myFile)).getErrorLevel(javadocKey) ==
+      if (((InspectionProfile)InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile((PsiElement)myFile)).getErrorLevel(javadocKey) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
       }

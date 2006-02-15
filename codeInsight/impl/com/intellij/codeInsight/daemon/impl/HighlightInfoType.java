@@ -104,7 +104,7 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      HighlightDisplayLevel level = (psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getProfile(psiElement) :
+      HighlightDisplayLevel level = (psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement) :
                                     ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile())).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
@@ -135,7 +135,7 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getProfile(psiElement).getErrorLevel(mySeverityKey) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement).getErrorLevel(mySeverityKey) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }

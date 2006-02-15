@@ -192,16 +192,15 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return myTool.getDefaultLevel();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readSettings(Element element) throws InvalidDataException {
     myTool.readSettings(element);
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeSettings(Element element) throws WriteExternalException {
     myTool.writeSettings(element);
   }
 
-  protected JComponent createOptionsPanel() {
-    JComponent provided = myTool.createOptionsPanel();
-    return provided == null ? super.createOptionsPanel() : provided;
+  public JComponent createOptionsPanel() {
+    return myTool.createOptionsPanel();    
   }
 }

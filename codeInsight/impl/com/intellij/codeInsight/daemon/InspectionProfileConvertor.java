@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ModifiableModel;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
@@ -93,7 +94,7 @@ public class InspectionProfileConvertor {
     if (retrieveOldSettings(element)) {
       final InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE);
 
-      final InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
+      final ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
 
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
@@ -103,7 +104,7 @@ public class InspectionProfileConvertor {
   public static Element convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
     Element rootElement = new Element(INSPECTIONS_TAG);
     rootElement.setAttribute(NAME_ATT, profile.getName());
-    final InspectionTool[] tools = profile.getInspectionTools();
+    final InspectionProfileEntry[] tools = profile.getInspectionTools();
     final Document document = JDOMUtil.loadDocument(profileFile);
     for (final Object o : document.getRootElement().getChildren(INSP_TOOL_TAG)) {
       Element toolElement = (Element)((Element)o).clone();
@@ -146,8 +147,8 @@ public class InspectionProfileConvertor {
     }
   }
 
-  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) {
-    InspectionTool[] tools = profile.getInspectionTools();
+  private void fillErrorLevels(final ModifiableModel profile) {
+    InspectionProfileEntry[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
     for (final String shortName : myDisplayLevelMap.keySet()) {
@@ -170,16 +171,16 @@ public class InspectionProfileConvertor {
       profile.setErrorLevel(key, level);
     }
     //javadoc attributes
-    final InspectionTool inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
+    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
     JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 
 
   @Nullable
-  private static String convertToShortName(String displayName, InspectionTool[] tools) {
+  private static String convertToShortName(String displayName, InspectionProfileEntry[] tools) {
     if (displayName == null) return null;
-    for (InspectionTool tool : tools) {
+    for (InspectionProfileEntry tool : tools) {
       if (displayName.equals(tool.getDisplayName())) {
         return tool.getShortName();
       }

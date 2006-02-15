@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         } else {
           //if profile was disabled and cancel after apply was pressed
-          final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
+          final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
           final boolean canExecute = profile != null && profile.isExecutable();
           dialog.setOKActionEnabled(canExecute);
         }
@@ -76,7 +75,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     });
     profiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
+        final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
         final boolean canExecute = profile != null && profile.isExecutable();
         dialog.setOKActionEnabled(canExecute);
         if (canExecute){
@@ -84,7 +83,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profiles.getSelectedItem();
+    final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
     dialog.setOKActionEnabled(profile != null && profile.isExecutable());
 
     myRunWithChoosenButton.setSelected(!manager.RUN_WITH_EDITOR_PROFILE);

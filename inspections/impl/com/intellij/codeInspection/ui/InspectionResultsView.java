@@ -443,8 +443,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return resultsFound;
   }
 
-  private static void processProfile(final InspectionProfile profile, final Map<InspectionTool, HighlightDisplayLevel> tools) {
-    final InspectionTool[] inspectionTools = profile.getInspectionTools();
+  private void processProfile(final InspectionProfile profile, final Map<InspectionTool, HighlightDisplayLevel> tools) {
+    final InspectionTool[] inspectionTools = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionTools();
     for (InspectionTool tool : inspectionTools) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (profile.isToolEnabled(key)){
@@ -694,7 +694,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         final Set<String> profiles = myScope.getActiveInspectionProfiles();
         InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
         for (String profileName : profiles) {
-          ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();
+          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
         }
       }
     }
@@ -745,7 +745,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           final Set<String> profiles = myScope.getActiveInspectionProfiles();
           InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
           for (String profileName : profiles) {
-            ((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName)).cleanup();
+            ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
           }
         }
         final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));

@@ -15,9 +15,12 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
@@ -25,13 +28,22 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent{
+  private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
+  private Project myProject;
+
   public InspectionProjectProfileManager(final Project project) {
     super(project, Profile.INSPECTION);
+    myProject = project;
   }
 
   public static InspectionProjectProfileManager getInstance(Project project){
@@ -39,10 +51,10 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public String getProfileName(PsiFile psiFile) {
-    return getProfile((PsiElement)psiFile).getName();
+    return getInspectionProfile(psiFile).getName();
   }
 
-  public InspectionProfileImpl getProfile(@NotNull final PsiElement psiElement){
+  public InspectionProfileImpl getInspectionProfile(@NotNull final PsiElement psiElement){
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 
@@ -51,6 +63,30 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
   }
 
+  public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
+    return myName2Profile.get(getInspectionProfile(psiElement).getName());
+  }
+
+  public InspectionProfileWrapper getProfileWrapper(final String profileName){
+    return myName2Profile.get(profileName);
+  }
+
+  public void updateProfile(Profile profile) {
+    super.updateProfile(profile);
+    initProfile(profile);
+  }
+
+
+  public void updateProjectProfile(Profile profile) {
+    super.updateProjectProfile(profile);
+    initProfile(profile);
+  }
+
+  public void deleteProfile(String name) {
+    super.deleteProfile(name);
+    final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
+    profileWrapper.cleanup(myProject);
+  }
 
   @NonNls
   public String getComponentName() {
@@ -64,11 +100,27 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void projectOpened() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
+      public void run() {
+        Set<Profile> profiles = new HashSet<Profile>();
+        profiles.addAll(getProfiles());
+        profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
+        for (Profile profile : profiles) {
+          initProfile(profile);
+        }
+      }
+    });
+  }
+
+  private void initProfile(final Profile profile) {
+    final InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
+    wrapper.init(myProject);
+    myName2Profile.put(profile.getName(), wrapper);
   }
 
   public void projectClosed() {
+    for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
+      wrapper.cleanup(myProject);
+    }
   }
-
-
-
 }

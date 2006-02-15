@@ -2,6 +2,7 @@ package com.intellij.testFramework;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -78,6 +80,7 @@ import java.util.Map;
   public static Thread ourTestThread;
 
   private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
+  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new HashMap<String, LocalInspectionToolWrapper>();
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -232,12 +235,13 @@ import java.util.Map;
   protected void setUp() throws Exception {
     super.setUp();
     initApplication(this);
-    doSetup(getProjectJDK(), configureLocalInspectionTools(), this.myAvailableTools);
+    doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
   }
 
   static void doSetup(final ProjectJdk projectJDK,
                       final LocalInspectionTool[] localInspectionTools,
-                      final Map<String, LocalInspectionTool> availableToolsMap) throws Exception {
+                      final Map<String, LocalInspectionTool> availableToolsMap,
+                      final Map<String, LocalInspectionToolWrapper> availableLocalTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " haven't called tearDown(). Probably overriden without super call.",
                ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
@@ -247,13 +251,16 @@ import java.util.Map;
     }
 
     for (LocalInspectionTool tool : localInspectionTools) {
-      _enableInspectionTool(tool, availableToolsMap);
+      _enableInspectionTool(tool, availableToolsMap, availableLocalTools);
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("Configurable") {
-      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-        final Collection<LocalInspectionTool> tools = availableToolsMap.values();
-        return tools.toArray(new LocalInspectionTool[tools.size()]);
+      public InspectionProfileEntry[] getInspectionTools() {
+        if (availableLocalTools != null){
+          final Collection<LocalInspectionToolWrapper> tools = availableLocalTools.values();
+          return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+        }
+        return new InspectionProfileEntry[0];
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
@@ -278,6 +285,7 @@ import java.util.Map;
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
     inspectionProfileManager.setRootProfile(profile.getName());
+    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
 
     assertFalse(getPsiManager().isDisposed());
 
@@ -285,16 +293,19 @@ import java.util.Map;
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
-    _enableInspectionTool(tool, myAvailableTools);
+    _enableInspectionTool(tool, myAvailableTools, myAvailableLocalTools);
   }
 
-  private static void _enableInspectionTool(final LocalInspectionTool tool, final Map<String, LocalInspectionTool> availableToolsMap) {
+  private static void _enableInspectionTool(final LocalInspectionTool tool,
+                                            final Map<String, LocalInspectionTool> availableToolsMap,
+                                            final Map<String, LocalInspectionToolWrapper> availableLocalTools) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
     }
     availableToolsMap.put(shortName, tool);
+    availableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
   }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {

@@ -3,8 +3,8 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,11 +30,11 @@ import java.util.LinkedHashMap;
 /**
  * @author max
  */
-public class InspectionProfileImpl extends ProfileEx implements InspectionProfile.ModifiableModel, InspectionProfile {
+public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile {
   @NonNls public static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
   static {
-    final InspectionTool[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
-    for (InspectionTool tool : inspectionTools) {
+    final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
+    for (InspectionProfileEntry tool : inspectionTools) {
       final String shortName = tool.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null){
@@ -67,8 +67,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
   @NonNls private static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
-  @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
-  @NonNls private static final String CONFIG_FILE_EXTENSION = ".xml";
+ 
 
 //private String myBaseProfileName;
 
@@ -113,8 +112,8 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     return myBaseProfile.getName();
   }
 
-  public void setBaseProfile(InspectionProfileImpl profile) {
-    myBaseProfile = profile;
+  public void setBaseProfile(InspectionProfile profile) {
+    myBaseProfile = (InspectionProfileImpl)profile;
   }
 
   public boolean isChanged() {
@@ -129,8 +128,8 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
                                        InspectionProfileImpl profile1,
                                        InspectionProfileImpl profile2) {
     final String toolName = key.toString();
-    final InspectionTool tool1 = profile1.getInspectionTool(toolName);//findInspectionToolByName(profile1, toolDisplayName);
-    final InspectionTool tool2 = profile2.getInspectionTool(toolName);//findInspectionToolByName(profile2, toolDisplayName);
+    final InspectionProfileEntry tool1 = profile1.getInspectionTool(toolName);//findInspectionToolByName(profile1, toolDisplayName);
+    final InspectionProfileEntry tool2 = profile2.getInspectionTool(toolName);//findInspectionToolByName(profile2, toolDisplayName);
     if (tool1 == null && tool2 == null) {
       return true;
     }
@@ -138,9 +137,9 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
       try {
         @NonNls String tempRoot = "root";
         Element oldToolSettings = new Element(tempRoot);
-        tool1.writeExternal(oldToolSettings);
+        tool1.writeSettings(oldToolSettings);
         Element newToolSettings = new Element(tempRoot);
-        tool2.writeExternal(newToolSettings);
+        tool2.writeSettings(newToolSettings);
         return JDOMUtil.areElementsEqual(oldToolSettings, newToolSettings);
       }
       catch (WriteExternalException e) {
@@ -188,7 +187,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
   }
 
-  protected boolean isNonInspectionHighlighting(HighlightDisplayKey key){
+  protected static boolean isNonInspectionHighlighting(HighlightDisplayKey key){
     return key == HighlightDisplayKey.UNUSED_IMPORT ||
            key == HighlightDisplayKey.UNUSED_SYMBOL ||
            key == HighlightDisplayKey.UNCHECKED_WARNING;                                          
@@ -247,7 +246,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
 
       InspectionTool tool = myTools.get(toolClassName);
       if (tool != null) {
-        tool.readExternal(toolElement);
+        tool.readSettings(toolElement);
       }
 
       HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
@@ -282,7 +281,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
 
       final InspectionTool tool = myTools.get(toolName);
       if (tool != null) {
-        tool.writeExternal(inspectionElement);
+        tool.writeSettings(inspectionElement);
       }
       element.addContent(inspectionElement);
     }
@@ -291,7 +290,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     element.addContent(unusedSymbolSettings);
   }
 
-  public InspectionTool getInspectionTool(String shortName) {
+  public InspectionProfileEntry getInspectionTool(String shortName) {
     if (myTools.isEmpty()) {
       initInspectionTools();
     }
@@ -351,7 +350,7 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     return myDisplayLevelMap.isEmpty();
   }
 
-  public InspectionTool[] getInspectionTools() {
+  public InspectionProfileEntry[] getInspectionTools() {
     if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
      initInspectionTools();
     }
@@ -374,43 +373,31 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     load();
   }
 
-  public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
-    ArrayList<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
-    final InspectionTool[] tools = getInspectionTools();
-    for (InspectionTool tool : tools) {
-      if (tool instanceof LocalInspectionToolWrapper) {
-        final ToolState state = getToolState(HighlightDisplayKey.find(tool.getShortName()));
-        if (state.isEnabled()) {
-          enabled.add(((LocalInspectionToolWrapper)tool).getTool());
-        }
-      }
-    }
-    return enabled.toArray(new LocalInspectionTool[enabled.size()]);
-  }
-
   public ModifiableModel getModifiableModel() {
     return new InspectionProfileImpl(this);
   }
 
-  public void copyFrom(InspectionProfileImpl profile) {
-    super.copyFrom(profile);
+  public void copyFrom(InspectionProfile profile) {
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
+    super.copyFrom(inspectionProfile);
     if (profile == null) return;
-    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(profile.myDisplayLevelMap);
-    myBaseProfile = profile.myBaseProfile;
-    copyToolsConfigurations(profile);
+    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
+    myBaseProfile = inspectionProfile.myBaseProfile;
+    copyToolsConfigurations(inspectionProfile);
   }
 
-  public void inheritFrom(InspectionProfileImpl profile) {
-    myBaseProfile = profile;
-    copyToolsConfigurations(profile);
+  public void inheritFrom(InspectionProfile profile) {
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)profile;
+    myBaseProfile = inspectionProfile;
+    copyToolsConfigurations(inspectionProfile);
   }
 
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     myUnusedSymbolSettings = profile.myUnusedSymbolSettings.copySettings();
     try {
       if (!profile.myTools.isEmpty()) {
-        final InspectionTool[] inspectionTools = getInspectionTools();
-        for (InspectionTool inspectionTool : inspectionTools) {
+        final InspectionProfileEntry[] inspectionTools = getInspectionTools();
+        for (InspectionProfileEntry inspectionTool : inspectionTools) {
           copyToolConfig(inspectionTool, profile);
         }
       }
@@ -423,15 +410,15 @@ public class InspectionProfileImpl extends ProfileEx implements InspectionProfil
     }
   }
 
-  private void copyToolConfig(final InspectionTool inspectionTool, final InspectionProfileImpl profile)
+  private static void copyToolConfig(final InspectionProfileEntry inspectionTool, final InspectionProfileImpl profile)
     throws WriteExternalException, InvalidDataException {
     final String name = inspectionTool.getShortName();
-    final InspectionTool tool = profile.getInspectionTool(name);
+    final InspectionProfileEntry tool = profile.getInspectionTool(name);
     if (tool != null){
       @NonNls String tempRoot = "config";
       Element config = new Element(tempRoot);
-      tool.writeExternal(config);
-      inspectionTool.readExternal(config);
+      tool.writeSettings(config);
+      inspectionTool.readSettings(config);
     }
   }
 
