@@ -29,13 +29,29 @@ public class PorterStemmerUtil {
     if (str.length() > 0) {
       // all characters must be letters
       char[] c = str.toCharArray();
+      StringBuffer result = new StringBuffer();
+      StringBuffer buf = new StringBuffer(str.length());
       for (char character : c) {
-        if (!Character.isLetter(character)) return null;
+        if (!Character.isLetter(character) && !Character.isDigit(character)) return null;
+        if (Character.isLetter(character)){
+          buf.append(character);
+        } else {
+          result.append(buf.toString());
+          result.append(character);
+          buf = new StringBuffer(str.length());
+        }
       }
+      if (buf.length() > 0){
+        result.append(stemString(buf.toString()));
+      }
+      return result.toString();
     }
     else {
       return null;
     }
+  }
+
+  private static String stemString(String str){
     str = step1a(str);
     str = step1b(str);
     str = step1c(str);
