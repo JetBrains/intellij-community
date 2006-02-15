@@ -10,7 +10,6 @@ package com.intellij;
 
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
-import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
@@ -92,13 +91,16 @@ public class TestCaseLoader {
       }
     }
     else if (testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
+      System.out.println("testCaseClass.getName() = " + testCaseClass.getName());
       //noinspection EmptyCatchBlock
+      /*
       try {
         final Method suiteMethod = testCaseClass.getMethod("suite");
         if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
           shouldAdd = true;
         }
       } catch (NoSuchMethodException e) { }
+      */
     }
 
     return shouldAdd;
