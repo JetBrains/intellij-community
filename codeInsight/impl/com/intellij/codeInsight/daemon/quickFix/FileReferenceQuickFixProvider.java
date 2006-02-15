@@ -7,18 +7,18 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.UnknownFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -26,9 +26,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +36,8 @@ import java.util.Collection;
  * @author Maxim.Mossienko
  */
 public class FileReferenceQuickFixProvider {
+  private FileReferenceQuickFixProvider() {}
+
   public static void registerQuickFix(final HighlightInfo info, final PsiReference reference) {
     final FileReference fileReference = (FileReference)reference;
     final FileReferenceSet fileReferenceSet = fileReference.getFileReferenceSet();
@@ -231,7 +232,7 @@ public class FileReferenceQuickFixProvider {
 
         if (text != null) {
           for(FileEditor feditor:fileEditors) {
-            if (feditor instanceof TextEditor) { // JSP is not save to edit via Psi
+            if (feditor instanceof TextEditor) { // JSP is not safe to edit via Psi
               final Document document = ((TextEditor)feditor).getEditor().getDocument();
               document.setText(text);
 

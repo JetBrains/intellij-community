@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
@@ -629,7 +630,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (attributeDescriptor == null) {
       final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
-      reportAttributeProblem(tag, name, attribute, localizedMessage);
+      final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
+      TagFileQuickFixProvider.registerTagFileAttributeReferenceQuickFix(highlightInfo, attribute.getReference());
     }
     else {
       checkDuplicateAttribute(tag, attribute);
@@ -644,7 +646,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private void reportAttributeProblem(final XmlTag tag,
+  private HighlightInfo reportAttributeProblem(final XmlTag tag,
                                       final String localName,
                                       final XmlAttribute attribute,
                                       final String localizedMessage) {
@@ -655,9 +657,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       final InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getProfile(tag);
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
       HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
-      if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return;
+      if(isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),localName)) return null;
       final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
-      if (!inspectionProfile.isToolEnabled(key)) return;
+      if (!inspectionProfile.isToolEnabled(key)) return null;
 
       quickFixes = new IntentionAction[] {
         inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
@@ -681,6 +683,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
       }
     }
+
+    return highlightInfo;
   }
 
   private void checkDuplicateAttribute(XmlTag tag, final XmlAttribute attribute) {
