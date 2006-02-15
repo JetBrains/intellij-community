@@ -58,7 +58,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void projectOpened() {
-    if (myChangeLists.size() == 0) {
+    if (myChangeLists.isEmpty()) {
       final ChangeList list = ChangeList.createEmptyChangeList("Default");
       myChangeLists.add(list);
       setDefaultChangeList(list);

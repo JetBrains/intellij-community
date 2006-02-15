@@ -77,10 +77,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void fileDirty(FilePath file) {
     if (myIsDisposed) return;
-    VirtualFile parent = file.getVirtualFileParent();
-    final VirtualFile root = myIndex.getContentRootForFile(parent);
-    getScope(root).addDirtyFile(file);
-    myChangeListManager.scheduleUpdate();
+    VirtualFile root = VcsDirtyScope.getRootFor(myIndex, file);
+    if (root != null) {
+      getScope(root).addDirtyFile(file);
+      myChangeListManager.scheduleUpdate();
+    }
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {

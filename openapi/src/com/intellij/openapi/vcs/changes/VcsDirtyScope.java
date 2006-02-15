@@ -4,10 +4,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import gnu.trove.THashSet;
 
+import java.io.File;
 import java.util.Set;
 
 /**
@@ -62,12 +64,7 @@ public class VcsDirtyScope {
   }
 
   public boolean belongsTo(FilePath path) {
-    VirtualFile vFile = path.getVirtualFile();
-    if (vFile == null) {
-      vFile = path.getVirtualFileParent();
-    }
-
-    if (myIndex.getContentRootForFile(vFile) != myScopeRoot) return false;
+    if (getRootFor(myIndex, path) != myScopeRoot) return false;
 
     for (FilePath filePath : myDirtyDirectoriesRecursively) {
       if (path.isUnder(filePath, false)) return true;
@@ -79,5 +76,21 @@ public class VcsDirtyScope {
     }
 
     return false;
+  }
+
+  public static VirtualFile getRootFor(ProjectFileIndex index, FilePath file) {
+    VirtualFile parent = file.getVirtualFileParent();
+    if (parent == null) {
+      File ioFile = file.getIOFile();
+      do {
+        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        if (parent != null) break;
+        ioFile = ioFile.getParentFile();
+        if (ioFile == null) return null;
+      }
+      while (true);
+    }
+
+    return index.getContentRootForFile(parent);
   }
 }
