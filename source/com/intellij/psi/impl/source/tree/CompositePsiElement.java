@@ -46,10 +46,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void acceptChildren(PsiElementVisitor visitor) {
-    for (PsiElement child = getFirstChild(); child != null; ) {
-      final PsiElement nextSibling = child.getNextSibling();
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       child.accept(visitor);
-      child = nextSibling;
     }
   }
 
