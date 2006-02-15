@@ -1115,6 +1115,11 @@ public final class PsiUtil {
   public static Language getLanguageAtOffset (PsiFile file, int offset) {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
+    return findLanguageFromElement(elt, file);
+  }
+
+  @NotNull
+  public static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
     final Language language = elt.getLanguage();
     if (isInJspFile(file) && language == StdLanguages.XML) {
       ASTNode root = getRoot(elt.getNode());

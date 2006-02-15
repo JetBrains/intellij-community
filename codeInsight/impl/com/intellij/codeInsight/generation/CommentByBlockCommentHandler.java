@@ -21,8 +21,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
@@ -145,26 +148,44 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return commentedRange;
   }
 
-  private Commenter getCommenter() {
-    final FileType fileType = myFile.getFileType();
+  private static Commenter findCommenter(PsiFile file, Editor editor) {
+    final FileType fileType = file.getFileType();
     if (fileType instanceof CustomFileType) {
       return ((CustomFileType)fileType).getCommenter();
     }
 
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    Language lang = getLanguageAtOffset(caretOffset, false);
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    PsiElement elt = getElementAtOffset(file, caretOffset);
+    Language lang = elt != null ? elt.getLanguage(): null;
     if (lang == null) return null;
+
     if (selectionModel.hasSelection()) {
-      Language l1 = getLanguageAtOffset(selectionModel.getSelectionStart(), false);
-      Language l2 = getLanguageAtOffset(selectionModel.getSelectionEnd(), true);
-      if (!Comparing.equal(lang, l1) || !Comparing.equal(lang, l2)) {
-        // selection covers multiple languages use language of the file to comment
-        lang = myFile.getLanguage();
-      }
+      lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
     }
 
     return lang.getCommenter();
+  }
+
+  static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file, Language lang) {
+    PsiElement elt;
+    int curOffset = start;
+    do {
+      elt = getElementAtOffset(file,curOffset);
+      if (elt == null) break;
+      if (!(elt instanceof PsiWhiteSpace)) {
+        if (!Comparing.equal(lang, PsiUtil.findLanguageFromElement(elt,file))) {
+          lang = file.getLanguage();
+          break;
+        }
+      }
+      curOffset = elt.getTextRange().getEndOffset();
+    } while(curOffset < end);
+    return lang;
+  }
+
+  private Commenter getCommenter() {
+    return findCommenter(myFile, myEditor);
   }
 
   private PsiElement findCommentAtCaret() {
@@ -173,16 +194,13 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
 
-  private Language getLanguageAtOffset(final int offset, boolean backward) {
-    PsiElement elt = myFile.findElementAt(offset);
-    if (backward && elt instanceof PsiWhiteSpace) {
-      elt = elt.getPrevSibling();
+  private static @Nullable PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
+    PsiElement elt = file.findElementAt(offset);
+    if (elt == null && offset > 0) {
+      elt = file.findElementAt(offset - 1);
     }
-    if (elt == null) {
-      if (offset > 0) elt = myFile.findElementAt(offset - 1);
-      if (elt == null) return null;
-    }
-    return elt.getLanguage();
+
+    return elt;
   }
 
   public boolean startInWriteAction() {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
@@ -230,7 +231,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    return PsiUtil.getLanguageAtOffset(myFile, offset).getCommenter();
+    Language language = PsiUtil.getLanguageAtOffset(myFile, offset);
+    language = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, myDocument.getLineEndOffset(line),myFile, language);
+    return language.getCommenter();
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
