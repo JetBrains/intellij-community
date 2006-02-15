@@ -10,6 +10,7 @@ package com.intellij;
 
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
+import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
@@ -58,7 +59,7 @@ public class TestCaseLoader {
     System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
   }
 
-  /**
+  /*
    * Adds <code>testCaseClass</code> to the list of classdes
    * if the class is a test case we wish to load. Calls
    * <code>shouldLoadTestCase ()</code> to determine that.
@@ -69,7 +70,7 @@ public class TestCaseLoader {
     }
   }
 
-  /**
+  /*
    * Determine if we should load this test case.
    */
   private boolean shouldAddTestCase(final Class testCaseClass) {
@@ -80,22 +81,30 @@ public class TestCaseLoader {
       if (shouldExcludeTestClass(testCaseClass)) return false;
       if (USE_ADVANCED_LOGIC) {
         String name = testCaseClass.getName().substring(0, testCaseClass.getName().length() - TEST_NAME_SUFFIX.length());
+        //noinspection EmptyCatchBlock
         try {
           Class.forName(name);
           shouldAdd = true;
-        }
-        catch (ClassNotFoundException ignored) {
-        }
+        } catch (ClassNotFoundException ignored) { }
       }
       else {
         shouldAdd = true;
       }
     }
+    else if (testCaseClass.getName().endsWith(TEST_NAME_SUFFIX)) {
+      //noinspection EmptyCatchBlock
+      try {
+        final Method suiteMethod = testCaseClass.getMethod("suite");
+        if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+          shouldAdd = true;
+        }
+      } catch (NoSuchMethodException e) { }
+    }
 
     return shouldAdd;
   }
 
-  /**
+  /*
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
