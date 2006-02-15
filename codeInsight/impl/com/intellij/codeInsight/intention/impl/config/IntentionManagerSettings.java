@@ -34,7 +34,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static final @NonNls String IGNORE_ACTION_TAG = "ignoreAction";
   private static final @NonNls String NAME_ATT = "name";
 
-  private HashMap<String, ArrayList<String>> myWords2DescriptorsMap;
+  private HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
 
   static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
@@ -44,18 +44,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public static IntentionManagerSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(IntentionManagerSettings.class);
-  }
-
-  public IntentionManagerSettings() {
-    ApplicationManager.getApplication().invokeLater(new Runnable(){
-      public void run() {
-        new Thread(){
-          public void run() {
-            buildIndex();
-          }
-        }.start();
-      }
-    });
   }
 
   public String getComponentName() {
@@ -120,7 +108,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public void registerMetaData(IntentionActionMetaData metaData) {
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
-    if (!myMetaData.containsKey(metaData.myFamily) && isIndexBuild()){
+    if (!myMetaData.containsKey(metaData.myFamily)){
       try {
         processMetaData(metaData);
       }
@@ -131,22 +119,16 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     myMetaData.put(metaData.myFamily, metaData);
   }
 
-  public boolean isIndexBuild(){
-    return myWords2DescriptorsMap != null && !myWords2DescriptorsMap.isEmpty();
-  }
 
-  public synchronized void buildIndex(){
-    if (myWords2DescriptorsMap == null) {
-      myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
-      try {
-        final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
-        for (IntentionActionMetaData metaData : list) {
-          processMetaData(metaData);
-        }
+  public void buildIndex(){
+    try {
+      final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
+      for (IntentionActionMetaData metaData : list) {
+        processMetaData(metaData);
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 
