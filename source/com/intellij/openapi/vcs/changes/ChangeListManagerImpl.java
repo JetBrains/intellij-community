@@ -8,26 +8,35 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
 /**
  * @author max
  */
-public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner {
+public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   private Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private static final String TOOLWINDOW_ID = "Changes";
@@ -45,13 +54,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myDefaultChangelist = ChangeList.createEmptyChangeList("Default");
-    myDefaultChangelist.setDefault(true);
     myView = new ChangesListView();
-    myChangeLists.add(myDefaultChangelist);
   }
 
   public void projectOpened() {
+    if (myChangeLists.size() == 0) {
+      final ChangeList list = ChangeList.createEmptyChangeList("Default");
+      myChangeLists.add(list);
+      setDefaultChangeList(list);
+    }
+
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
@@ -204,7 +216,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void setDefaultChangeList(ChangeList list) {
     synchronized (myChangeLists) {
-      myDefaultChangelist.setDefault(false);
+      if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
       list.setDefault(true);
       myDefaultChangelist = list;
       scheduleRefresh();
@@ -326,5 +338,75 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     scheduleRefresh();
+  }
+
+
+  @SuppressWarnings({"unchecked"})
+  public void readExternal(Element element) throws InvalidDataException {
+    final List<Element> listNodes = (List<Element>)element.getChildren("list");
+    for (Element listNode : listNodes) {
+      ChangeList list = addChangeList(listNode.getAttributeValue("name"));
+      final List<Element> changeNodes = (List<Element>)listNode.getChildren("change");
+      for (Element changeNode : changeNodes) {
+        list.addChange(readChange(changeNode));
+      }
+
+      if ("true".equals(listNode.getAttributeValue("default"))) {
+        setDefaultChangeList(list);
+      }
+    }
+
+    if (myChangeLists.size() > 0 && myDefaultChangelist == null) {
+      setDefaultChangeList(myChangeLists.get(0));
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    for (ChangeList list : getChangeLists()) {
+      Element listNode = new Element("list");
+      element.addContent(listNode);
+      if (list.isDefault()) {
+        listNode.setAttribute("default", "true");
+      }
+
+      listNode.setAttribute("name", list.getDescription());
+      for (Change change : list.getChanges()) {
+        writeChange(listNode, change);
+      }
+    }
+  }
+
+  private void writeChange(final Element listNode, final Change change) {
+    Element changeNode = new Element("change");
+    listNode.addContent(changeNode);
+    changeNode.setAttribute("type", change.getType().name());
+
+    final ContentRevision bRev = change.getBeforeRevision();
+    final ContentRevision aRev = change.getAfterRevision();
+
+    changeNode.setAttribute("beforePath", bRev != null ? bRev.getFile().getPath() : "");
+    changeNode.setAttribute("afterPath", aRev != null ? aRev.getFile().getPath() : "");
+  }
+
+  private Change readChange(Element changeNode) {
+    String bRev = changeNode.getAttributeValue("beforePath");
+    String aRev = changeNode.getAttributeValue("afterPath");
+    return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
+  }
+
+  private static class FakeRevision implements ContentRevision {
+    private FilePath myFile;
+
+    public FakeRevision(String path) {
+      myFile = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+    }
+
+    @Nullable
+    public String getContent() { return null; }
+
+    @NotNull
+    public FilePath getFile() {
+      return myFile;
+    }
   }
 }
