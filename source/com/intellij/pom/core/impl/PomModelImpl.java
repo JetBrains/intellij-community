@@ -166,7 +166,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
         { // update
           final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          final Set<PomModelAspect> dependants = new HashSet<PomModelAspect>();
+          final Set<PomModelAspect> dependants = new LinkedHashSet<PomModelAspect>();
           final Iterator<PomModelAspect> changedIterator = changedAspects.iterator();
           while (changedIterator.hasNext()) {
             final PomModelAspect pomModelAspect = changedIterator.next();

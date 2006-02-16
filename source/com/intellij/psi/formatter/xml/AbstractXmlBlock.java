@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;

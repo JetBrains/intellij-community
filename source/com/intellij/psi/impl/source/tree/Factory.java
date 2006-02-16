@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlDocument;
@@ -71,9 +70,6 @@ public class Factory implements Constants {
     }
     else if (type == JspTokenType.JSP_COMMENT) {
       element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
-    }
-    else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
-      element = new OuterLanguageElement(buffer, startOffset, endOffset, table);
     }
     else {
       if (KEYWORD_BIT_SET.contains(type)) {
@@ -379,12 +375,6 @@ public class Factory implements Constants {
     }
     else if (type == CATCH_SECTION) {
       element = new PsiCatchSectionImpl();
-    }
-    else if (type == JspElementType.JSP_TEMPLATE_STATEMENT) {
-      element = new JspTemplateStatement();
-    }
-    else if (type == JspElementType.JSP_TEMPLATE_DECLARATION) {
-      element =  new JspTemplateDeclaration();
     }
     else if (type == XML_DOCUMENT) {
       element = new XmlDocumentImpl();

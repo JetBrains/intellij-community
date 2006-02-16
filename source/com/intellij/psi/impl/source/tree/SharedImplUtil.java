@@ -43,18 +43,17 @@ public class SharedImplUtil {
     return treePrev != null ? SourceTreeToPsiMap.treeElementToPsi(treePrev.getTransformedLastOrSelf()) : null;
   }
 
-  public static PsiFile getContainingFile(TreeElement thisElement) {
-    TreeElement element;
+  public static PsiFile getContainingFile(ASTNode thisElement) {
+    ASTNode element;
     for (element = thisElement; element.getTreeParent() != null; element = element.getTreeParent()) {
     }
 
-    if (element.getManager() == null) return null; // otherwise treeElementToPsi may crash!
-    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
+    PsiElement psiElement = element.getPsi();
     if (!(psiElement instanceof PsiFile)) return null;
     return psiElement.getContainingFile();
   }
 
-  public static boolean isValid(TreeElement thisElement) {
+  public static boolean isValid(ASTNode thisElement) {
     LOG.assertTrue(thisElement instanceof PsiElement);
     PsiFile file = getContainingFile(thisElement);
     if (file == null) return false;

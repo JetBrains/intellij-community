@@ -67,9 +67,6 @@ public class XmlAspectImpl implements XmlAspect {
         public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
         public void visitElement(PsiElement element) {
-          final Language language = element.getNode().getElementType().getLanguage();
-          if (language != StdLanguages.XML && language != Language.ANY) return;
-
           final ASTNode child = element.getNode();
           final ASTNode treeParent = child.getTreeParent();
           if (treeParent == null) return;
@@ -163,7 +160,7 @@ public class XmlAspectImpl implements XmlAspect {
 
         public void visitFile(PsiFile file) {
           final XmlDocument document = ((XmlFile)file).getDocument();
-          
+
           if (document != null) {
             xmlChangeSet.clear();
             xmlChangeSet.add(new XmlDocumentChangedImpl(document));
