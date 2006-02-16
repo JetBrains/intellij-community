@@ -55,7 +55,8 @@ public class OuterLanguageElement extends LeafElement implements PsiElement{
 
   public void setRange(final TextRange range) {
     myRange = range;
-    getTreeParent().subtreeChanged();
+    final CompositeElement element = getTreeParent();
+    if(element != null) element.subtreeChanged();
   }
 
   public XmlText getFollowingText() {
