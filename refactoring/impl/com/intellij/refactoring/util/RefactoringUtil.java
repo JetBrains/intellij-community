@@ -758,7 +758,7 @@ public class RefactoringUtil {
         boolean isInDifferentCases = false;
         for (PsiStatement statement : statements) {
           if (statement instanceof PsiSwitchLabelStatement) {
-            int caseOffset = statement.getTextOffset();
+            int caseOffset = statement.getTextRange().getStartOffset();
             if (startOffset < caseOffset && caseOffset < endOffset) {
               isInDifferentCases = true;
               break;
