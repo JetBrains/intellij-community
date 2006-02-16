@@ -15,17 +15,16 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.lang.jsp.JspFileViewProvider;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element representing a file.
  */
-public interface PsiFile extends PsiElement, PsiFileSystemItem {
+public interface PsiFile extends PsiFileSystemItem {
   /**
    * The empty array of PSI files which can be reused to avoid unnecessary allocations.
    */
