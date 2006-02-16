@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a file system directory and allows to access its contents.
  */
-public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationItem {
+public interface PsiDirectory extends PsiFileSystemItem {
   /**
    * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
    */
