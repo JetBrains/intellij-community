@@ -4,10 +4,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
@@ -18,11 +18,12 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FilterComponent;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -32,8 +33,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class KeymapPanel extends JPanel {
 
@@ -59,6 +58,7 @@ public class KeymapPanel extends JPanel {
 
   private JCheckBox myDisableMnemonicsCheckbox;
   private ActionsTree myActionsTree;
+  private FilterComponent myFilterComponent;
 
   private final DocumentListener myKeymapNameListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
@@ -428,7 +428,19 @@ public class KeymapPanel extends JPanel {
     });
     panel.add(myDisableMnemonicsCheckbox, new GridBagConstraints(3,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 0, 0, 0),0,0));
 
+    myFilterComponent = new FilterComponent("KEYMAP", 5){
+      protected void filter() {
+        myActionsTree.filter(getFilter(), getCurrentQuickListIds());
+      }
+    };
+    panel.add(myFilterComponent, new GridBagConstraints(0,1,4,1,1,0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8,8,0,0), 0,0));
+
     return panel;
+  }
+
+  public void showOption(String option){
+    myFilterComponent.setFilter(option);
+    myActionsTree.filter(option, getCurrentQuickListIds());
   }
 
   private JPanel createShortcutsButtonsPanel() {

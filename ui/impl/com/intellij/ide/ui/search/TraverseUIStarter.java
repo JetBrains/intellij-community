@@ -9,7 +9,11 @@ import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
@@ -85,7 +89,9 @@ public class TraverseUIStarter implements ApplicationStarter {
         }
         configurableElement.addContent(optionElement);
       }
-      if (configurable instanceof InspectionProfileConfigurable){
+      if (configurable instanceof KeymapConfigurable){
+        processKeymap(configurableElement);
+      } else if (configurable instanceof InspectionProfileConfigurable){
         processInspectionTools(configurableElement);
       } else if (configurable instanceof IntentionSettingsConfigurable){
         processIntentions(configurableElement);
@@ -133,6 +139,28 @@ public class TraverseUIStarter implements ApplicationStarter {
       Element optionElement = new Element(OPTION);
       optionElement.setAttribute(NAME, option);
       optionElement.setAttribute(PATH, path);
+      configurableElement.addContent(optionElement);
+    }
+  }
+
+  private static void processKeymap(final Element configurableElement){
+    final ActionManager actionManager = ActionManager.getInstance();
+    final Set<String> ids = ((ActionManagerImpl)actionManager).getActionIds();
+    final TreeSet<String> options = new TreeSet<String>();
+    for (String id : ids) {
+      final AnAction anAction = actionManager.getAction(id);
+      final String text = anAction.getTemplatePresentation().getText();
+      if (text != null) {
+        options.addAll(SearchUtil.getProcessedWords(text));
+      }
+      final String description = anAction.getTemplatePresentation().getDescription();
+      if (description != null) {
+        options.addAll(SearchUtil.getProcessedWords(description));
+      }
+    }
+    for (String opt : options) {
+      Element optionElement = new Element(OPTION);
+      optionElement.setAttribute(NAME, opt);
       configurableElement.addContent(optionElement);
     }
   }

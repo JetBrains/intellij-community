@@ -3,20 +3,21 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -25,9 +26,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
@@ -140,8 +138,7 @@ public class ActionsTree {
     myTreeTable.getColumnModel().getColumn(0).setPreferredWidth(200);
     myTreeTable.getColumnModel().getColumn(1).setPreferredWidth(100);
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
-    myComponent = scrollPane;
+    myComponent = ScrollPaneFactory.createScrollPane(myTreeTable);
   }
 
   public JComponent getComponent() {
@@ -176,6 +173,18 @@ public class ActionsTree {
   }
 
   public void reset(Keymap keymap, final QuickList[] allQuickLists) {
+    reset(keymap, allQuickLists, null);
+  }
+
+  public Group getMainGroup() {
+    return myMainGroup;
+  }
+
+  public void filter(final String filter, final QuickList[] currentQuickListIds) {
+    reset(myKeymap, currentQuickListIds, filter);
+  }
+
+  private void reset(final Keymap keymap, final QuickList[] allQuickLists, final String filter) {
     myKeymap = keymap;
 
     final PathsKeeper pathsKeeper = new PathsKeeper();
@@ -184,8 +193,10 @@ public class ActionsTree {
     myRoot.removeAllChildren();
 
     Project project = (Project)DataManager.getInstance().getDataContext(getComponent()).getData(DataConstants.PROJECT);
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists);
-
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true);
+    if (filter != null && mainGroup.initIds().isEmpty()){
+      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false);
+    }
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
     MyModel model = (MyModel)myTreeTable.getTree().getModel();
@@ -193,10 +204,6 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
-  }
-
-  public Group getMainGroup() {
-    return myMainGroup;
   }
 
   private class MyModel extends DefaultTreeModel implements TreeTableModel {
@@ -269,16 +276,15 @@ public class ActionsTree {
   }
 
 
-  private boolean isActionChanged(String actionId, Keymap oldKeymap, Keymap newKeymap) {
+  private static boolean isActionChanged(String actionId, Keymap oldKeymap, Keymap newKeymap) {
     Shortcut[] oldShortcuts = oldKeymap.getShortcuts(actionId);
     Shortcut[] newShortcuts = newKeymap.getShortcuts(actionId);
     return !Comparing.equal(oldShortcuts, newShortcuts);
   }
 
-  private boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
+  private static boolean isGroupChanged(Group group, Keymap oldKeymap, Keymap newKeymap) {
     ArrayList children = group.getChildren();
-    for (int i = 0; i < children.size(); i++) {
-      Object child = children.get(i);
+    for (Object child : children) {
       if (child instanceof Group) {
         if (isGroupChanged((Group)child, oldKeymap, newKeymap)) {
           return true;
@@ -290,7 +296,7 @@ public class ActionsTree {
           return true;
         }
       }
-      else if (child instanceof QuickList){
+      else if (child instanceof QuickList) {
         String actionId = ((QuickList)child).getActionId();
         if (isActionChanged(actionId, oldKeymap, newKeymap)) {
           return true;
@@ -376,14 +382,14 @@ public class ActionsTree {
     }
 
     private void _storePaths(DefaultMutableTreeNode root) {
-      ArrayList childNodes = childrenToArray(root);
-      for(Iterator iterator = childNodes.iterator(); iterator.hasNext();){
-        DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)iterator.next();
+      ArrayList<TreeNode> childNodes = childrenToArray(root);
+      for (final Object childNode1 : childNodes) {
+        DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)childNode1;
         TreePath path = new TreePath(childNode.getPath());
-        if (myTree.isPathSelected(path)){
+        if (myTree.isPathSelected(path)) {
           mySelectionPaths.add(getPath(childNode));
         }
-        if (myTree.isExpanded(path) || childNode.getChildCount() == 0){
+        if (myTree.isExpanded(path) || childNode.getChildCount() == 0) {
           myPathsToExpand.add(getPath(childNode));
           _storePaths(childNode);
         }
@@ -391,10 +397,9 @@ public class ActionsTree {
     }
 
     public void restorePaths() {
-      for(int i = 0; i < myPathsToExpand.size(); i++){
-        String path = myPathsToExpand.get(i);
+      for (String path : myPathsToExpand) {
         DefaultMutableTreeNode node = getNodeForPath(path);
-        if (node != null){
+        if (node != null) {
           myTree.expandPath(new TreePath(node.getPath()));
         }
       }
@@ -403,10 +408,9 @@ public class ActionsTree {
       alarm.addRequest(new Runnable() {
         public void run() {
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-          for(int i = 0; i < mySelectionPaths.size(); i++){
-            String path = mySelectionPaths.get(i);
+          for (String path : mySelectionPaths) {
             final DefaultMutableTreeNode node = getNodeForPath(path);
-            if (node != null){
+            if (node != null) {
               int rowForPath = myTree.getRowForPath(new TreePath(treeModel.getPathToRoot(node)));
               myTreeTable.getSelectionModel().setSelectionInterval(rowForPath, rowForPath);
               // TODO[anton] make selection visible
@@ -418,8 +422,8 @@ public class ActionsTree {
     }
 
 
-    private ArrayList childrenToArray(DefaultMutableTreeNode node) {
-      ArrayList arrayList = new ArrayList();
+    private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
+      ArrayList<TreeNode> arrayList = new ArrayList<TreeNode>();
       for(int i = 0; i < node.getChildCount(); i++){
         arrayList.add(node.getChildAt(i));
       }

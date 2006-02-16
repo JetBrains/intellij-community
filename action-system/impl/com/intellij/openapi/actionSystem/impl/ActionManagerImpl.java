@@ -30,8 +30,8 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
@@ -845,6 +845,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       if (frame != null && frame.getState() != JFrame.ICONIFIED) return true;
     }
     return false;
+  }
+
+  public Set<String> getActionIds(){
+    return myId2Action.keySet();
   }
 
   private class MyTimer extends Timer implements ActionListener {

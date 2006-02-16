@@ -4,11 +4,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,7 +40,7 @@ public class QuickListPanel {
   private JButton myAddSeparatorButton;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
-    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
+    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists, null, false);
     DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);

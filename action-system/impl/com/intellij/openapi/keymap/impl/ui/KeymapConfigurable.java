@@ -65,8 +65,13 @@ public class KeymapConfigurable extends BaseConfigurable implements SearchableCo
     myPanel.selectAction(actionId);
   }
 
-  public Runnable showOption(String option) {
-    return SearchUtil.lightOptions(this, myPanel, option, myGlassPanel);
+  public Runnable showOption(final String option) {
+    return new Runnable(){
+      public void run() {
+        SearchUtil.lightOptions(KeymapConfigurable.this, myPanel, option, myGlassPanel).run();
+        myPanel.showOption(option);
+      }
+    };
   }
 
   public String getId() {
