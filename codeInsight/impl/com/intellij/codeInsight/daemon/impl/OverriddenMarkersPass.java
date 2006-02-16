@@ -20,6 +20,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.javaee.ejb.role.EjbRolesUtil;
+import com.intellij.javaee.ejb.role.EjbMethodRole;
+import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
 
 import javax.swing.*;
 import java.util.*;
@@ -150,6 +153,18 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
           return !hisMethods.isEmpty();
         }
       });
+      if (hisMethods.size() != 0 && !(EjbRolesUtil.getEjbRolesUtil().getEjbRoles(aClass).length > 0)) {
+        for (Iterator iterator = hisMethods.iterator(); iterator.hasNext();) {
+          PsiMethod hisMethod = (PsiMethod)iterator.next();
+          for (EjbMethodRole role : EjbRolesUtil.getEjbRolesUtil().getEjbRoles(hisMethod)) {
+            if ((role instanceof EjbDeclMethodRole) && ((EjbDeclMethodRole)role).findAllImplementations().length > 0) {
+              iterator.remove();
+              overridden.add(hisMethod);
+              break;
+            }
+          }
+        }
+      }
     }
 
     for (PsiMethod method : overridden) {
