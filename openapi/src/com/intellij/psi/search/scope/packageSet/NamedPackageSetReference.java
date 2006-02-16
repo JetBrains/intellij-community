@@ -34,7 +34,7 @@ public class NamedPackageSetReference implements PackageSet {
   }
 
   public String getText() {
-    return myName;
+    return "$" + myName;
   }
 
   public int getNodePriority() {
