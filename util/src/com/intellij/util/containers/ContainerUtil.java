@@ -147,6 +147,14 @@ public class ContainerUtil {
     return find(iterable.iterator(), condition);
   }
 
+  public static <T> T find(Iterable<? extends T> iterable, final T equalTo) {
+    return find(iterable, new Condition<T>() {
+      public boolean value(final T object) {
+        return equalTo == object || equalTo.equals(object);
+      }
+    });
+  }
+
   public static <T> T find(Iterator<? extends T> iterator, Condition<T> condition) {
     while (iterator.hasNext()) {
       T value = iterator.next();
@@ -270,4 +278,9 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T> Collection<T> subtract(Collection<T> from, Collection<T> what) {
+    final HashSet<T> set = new HashSet<T>(from);
+    set.removeAll(what);
+    return set;
+  }
 }
