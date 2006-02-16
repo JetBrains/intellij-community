@@ -62,6 +62,11 @@ public interface GroupNames {
   String DATA_FLOW_ISSUES = InspectionsBundle.message("group.names.data.flow.issues");
   String DECLARATION_REDUNDANCY = InspectionsBundle.message("group.names.declaration.redundancy");
 
+  String PACKAGING_GROUP_NAME = InspectionsBundle.message("group.names.packaging.issues");
+  String DEPENDENCY_GROUP_NAME = InspectionsBundle.message("group.names.dependency.issues");
+  String MODULARIZATION_GROUP_NAME = InspectionsBundle.message("group.names.modularization.issues");
+
   String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
   String HTML_INSPECTIONS = XmlBundle.message("html.inspections.group.name");
+
 }
