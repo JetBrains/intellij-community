@@ -44,10 +44,10 @@ public class NotifyNotInSynchronizedContextInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new WaitNotInSynchronizedContextVisitor();
+        return new NotifyNotInSynchronizedContextVisitor();
     }
 
-    private static class WaitNotInSynchronizedContextVisitor
+    private static class NotifyNotInSynchronizedContextVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(

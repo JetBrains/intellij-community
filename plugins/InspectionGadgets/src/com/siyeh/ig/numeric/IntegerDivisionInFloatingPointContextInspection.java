@@ -54,10 +54,10 @@ public class IntegerDivisionInFloatingPointContextInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new FloatingPointEqualityComparisonVisitor();
+        return new IntegerDivisionInFloatingPointContextVisitor();
     }
 
-    private static class FloatingPointEqualityComparisonVisitor
+    private static class IntegerDivisionInFloatingPointContextVisitor
             extends BaseInspectionVisitor {
 
         public void visitBinaryExpression(

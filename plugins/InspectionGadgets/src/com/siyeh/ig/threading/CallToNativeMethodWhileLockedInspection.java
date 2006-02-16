@@ -17,11 +17,10 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +43,10 @@ public class CallToNativeMethodWhileLockedInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new WaitNotInSynchronizedContextVisitor();
+        return new CallToNativeMethodWhileLockedVisitor();
     }
 
-    private static class WaitNotInSynchronizedContextVisitor
+    private static class CallToNativeMethodWhileLockedVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(

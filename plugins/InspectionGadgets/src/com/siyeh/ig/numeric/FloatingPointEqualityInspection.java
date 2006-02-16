@@ -19,34 +19,60 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class FloatingPointEqualityInspection extends ExpressionInspection {
 
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "floating.point.equality.display.name");
+    }
+
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
+    }
+
+    @Nullable
+    protected String buildErrorString(PsiElement location) {
+        return InspectionGadgetsBundle.message(
+                "floating.point.equality.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new FloatingPointEqualityComparisonVisitor();
     }
 
-    private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
+    private static class FloatingPointEqualityComparisonVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
+
             if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
+                return;
+            }
+            @NonNls final String lhsText = lhs.getText();
+            if (lhsText.equals("0.0") || lhsText.equals("-0.0")) {
+                return;
+            }
+            @NonNls final String rhsText = rhs.getText();
+            if (rhsText.equals("0.0") || rhsText.equals("-0.0")) {
                 return;
             }
             registerError(expression);
