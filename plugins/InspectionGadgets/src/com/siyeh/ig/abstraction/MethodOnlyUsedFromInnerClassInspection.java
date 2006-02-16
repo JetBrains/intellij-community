@@ -28,6 +28,7 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
@@ -80,28 +81,14 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     private class MethodOnlyUsedFromNestedClassVisitor
         extends BaseInspectionVisitor {
 
-        public void visitMethod(final PsiMethod method) {
+        public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.PRIVATE) ||
                 method.isConstructor()) {
                 return;
             }
-            final PsiManager manager = method.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final PsiClass methodClass = method.getContainingClass();
-            final LocalSearchScope scope =
-                    new LocalSearchScope(methodClass);
             final MethodReferenceFinder processor =
-                    new MethodReferenceFinder(methodClass);
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            progressManager.runProcess(new Runnable() {
-                public void run() {
-                    searchHelper.processReferences(processor, method, scope,
-                            false);
-                }
-            }, null);
-
+                    new MethodReferenceFinder(method);
             if (!processor.isOnlyAccessedFromInnerClass()) {
                 return;
             }
@@ -135,16 +122,23 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
             implements PsiReferenceProcessor {
 
         private final PsiClass methodClass;
+        private final PsiMethod method;
         private boolean onlyAccessedFromInnerClass = false;
 
         private PsiClass cache = null;
 
-        MethodReferenceFinder(PsiClass methodClass) {
-            this.methodClass = methodClass;
+        MethodReferenceFinder(@NotNull PsiMethod method) {
+            this.method = method;
+            methodClass = method.getContainingClass();
         }
 
         public boolean execute(PsiReference reference) {
             final PsiElement element = reference.getElement();
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+            if (method.equals(containingMethod)) {
+                return true;
+            }
             final PsiClass containingClass =
                     ClassUtils.getContainingClass(element);
             if (containingClass == null) {
@@ -172,6 +166,20 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         }
 
         public boolean isOnlyAccessedFromInnerClass() {
+            final PsiClass methodClass = method.getContainingClass();
+            final LocalSearchScope scope =
+                    new LocalSearchScope(methodClass);
+
+            final PsiManager manager = method.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final ProgressManager progressManager =
+                    ProgressManager.getInstance();
+            progressManager.runProcess(new Runnable() {
+                public void run() {
+                    searchHelper.processReferences(
+                            MethodReferenceFinder.this, method, scope, false);
+                }
+            }, null);
             return onlyAccessedFromInnerClass;
         }
 
