@@ -166,7 +166,6 @@ public final class ResizeProcessor extends EventProcessor {
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       myComponent.getDelegee().setVisible(true);
       myComponent.setResizing(false);
-      myComponent.setDragging(false);
       myComponent.setSelected(true);
       if (myResizedCopy != null) {
         myEditor.getDragLayer().remove(myResizedCopy.getDelegee());
@@ -204,6 +203,7 @@ public final class ResizeProcessor extends EventProcessor {
       myComponent.setResizing(false);
       */
       myEditor.getActiveDecorationLayer().removeFeedback();
+      myComponent.setDragging(false);
       myEditor.refreshAndSave(true);
     }
 
