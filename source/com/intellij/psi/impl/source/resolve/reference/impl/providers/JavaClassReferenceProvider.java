@@ -228,11 +228,38 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       public void processVariants(final PsiScopeProcessor processor) {
+        PsiScopeProcessor processorToUse = processor;
+
         if (myInStaticImport) {
           // allows to complete members
           processor.handleEvent(PsiScopeProcessor.Event.CHANGE_LEVEL, null);
+        } else if (isStaticClassReference()) {
+          processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+          processorToUse = new PsiScopeProcessor() {
+            public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+              if (element instanceof PsiClass) processor.execute(element, substitutor);
+              return true;
+            }
+
+            public <T> T getHint(Class<T> hintClass) {
+              return processor.getHint(hintClass);
+            }
+
+            public void handleEvent(Event event, Object associated) {
+              processor.handleEvent(event, associated);
+            }
+          };
         }
-        super.processVariants(processor);
+        super.processVariants(processorToUse);
+      }
+
+      private boolean isStaticClassReference() {
+        final String s = getElement().getText();
+        return isStaticClassReference(s);
+      }
+
+      private boolean isStaticClassReference(final String s) {
+        return myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2;
       }
 
       public PsiReference getContextReference(){
@@ -328,7 +355,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
           if (myInStaticImport) {
             return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
-          } else if (getElement().getText().charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
+          } else if (isStaticClassReference()) {
             final PsiClass[] psiClasses = aClass.getInnerClasses();
             final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
 
@@ -355,7 +382,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
         final String elementText = getElement().getText();
 
-        if (myIndex > 0 && elementText.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
+        if (isStaticClassReference(elementText)) {
           final PsiElement psiElement = myReferences[myIndex - 1].resolve();
 
           if (psiElement instanceof PsiClass) {
