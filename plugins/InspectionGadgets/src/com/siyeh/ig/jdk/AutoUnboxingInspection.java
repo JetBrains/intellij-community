@@ -20,8 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -31,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 
 public class AutoUnboxingInspection extends ExpressionInspection{
 
@@ -67,6 +73,27 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
+        final PsiElement parent = location.getParent();
+        // if the value of the postfix expression is used in
+        // the same expression statement don't offer the
+        // quick fix to avoid breaking code
+        if (parent instanceof PsiPostfixExpression) {
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression)location;
+            final PsiElement element = reference.resolve();
+            if (element != null) {
+                final PsiStatement statement =
+                        PsiTreeUtil.getParentOfType(parent,
+                                PsiStatement.class);
+                final LocalSearchScope scope = new LocalSearchScope(statement);
+                final Query<PsiReference> query =
+                        ReferencesSearch.search(element, scope);
+                final Collection<PsiReference> references = query.findAll();
+                if (references.size() > 1) {
+                    return null;
+                }
+            }
+        }
         return new AutoUnboxingFix();
     }
 
@@ -85,18 +112,103 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             if (type == null){
                 return;
             }
-            final PsiType expectedType =
-                    ExpectedTypeUtils.findExpectedType(expression, false);
-            assert expectedType != null;
-            final String expectedTypeText = expectedType.getCanonicalText();
+            final PsiPrimitiveType unboxedType =
+                    PsiPrimitiveType.getUnboxedType(type);
+            if (unboxedType == null) {
+                return;
+            }
+            final String unboxedTypeText = unboxedType.getCanonicalText();
             final String expressionText = expression.getText();
-            final String boxClassName = s_unboxingMethods.get(expectedTypeText);
+            final String boxClassName = s_unboxingMethods.get(unboxedTypeText);
+            final String newExpressionText;
             if (expression instanceof PsiTypeCastExpression) {
-                replaceExpression(expression,
-                        '(' + expressionText + ")." + boxClassName + "()");
+                newExpressionText = '(' + expressionText + ")." +
+                        boxClassName + "()";
             } else{
-                replaceExpression(expression,
-                        expressionText + '.' + boxClassName + "()");
+                newExpressionText = expressionText + '.' + boxClassName + "()";
+            }
+            final PsiManager manager = expression.getManager();
+            final PsiElementFactory factory =
+                    manager.getElementFactory();
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression)parent;
+                final PsiJavaToken operationSign =
+                        prefixExpression.getOperationSign();
+                final IElementType tokenType = operationSign.getTokenType();
+                if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
+                    replaceExpression(prefixExpression,
+                            expressionText + '=' + newExpressionText + "+1");
+                } else {
+                    replaceExpression(prefixExpression,
+                            expressionText + '=' + newExpressionText + "-1");
+                }
+            } else if (parent instanceof PsiPostfixExpression) {
+                final PsiPostfixExpression postfixExpression =
+                        (PsiPostfixExpression)parent;
+                final PsiJavaToken operationSign =
+                        postfixExpression.getOperationSign();
+                final IElementType tokenType = operationSign.getTokenType();
+                final PsiElement grandParent = postfixExpression.getParent();
+                if (grandParent instanceof PsiExpressionStatement) {
+                    if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
+                        replaceExpression(postfixExpression,
+                                expressionText + '=' + newExpressionText +
+                                        "+1");
+                    } else {
+                        replaceExpression(postfixExpression,
+                                expressionText + '=' + newExpressionText +
+                                        "-1");
+                    }
+                } else {
+                    final PsiElement element = postfixExpression.replace(
+                            postfixExpression.getOperand());
+                    final PsiStatement statement =
+                            PsiTreeUtil.getParentOfType(element,
+                                    PsiStatement.class);
+                    if (statement == null) {
+                        return;
+                    }
+                    final PsiStatement newStatement;
+                    if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
+                        newStatement = factory.createStatementFromText(
+                                expressionText + '=' + newExpressionText + "+1;",
+                                statement);
+                    } else {
+                        newStatement = factory.createStatementFromText(
+                                expressionText + '=' + newExpressionText + "-1;",
+                                statement);
+                    }
+                    final PsiElement greatGrandParent = statement.getParent();
+                    greatGrandParent.addAfter(newStatement, statement);
+                }
+            } else if (parent instanceof PsiAssignmentExpression) {
+                final PsiAssignmentExpression assignmentExpression =
+                        (PsiAssignmentExpression)parent;
+                final PsiExpression lExpression =
+                        assignmentExpression.getLExpression();
+                if (expression.equals(lExpression)) {
+                    final PsiJavaToken operationSign =
+                            assignmentExpression.getOperationSign();
+                    final String operationSignText = operationSign.getText();
+                    final char sign = operationSignText.charAt(0);
+                    final PsiExpression rExpression =
+                            assignmentExpression.getRExpression();
+                    if (rExpression == null) {
+                        return;
+                    }
+                    final String text = lExpression.getText() + '=' +
+                            newExpressionText + sign + rExpression.getText();
+                    final PsiExpression newExpression =
+                            factory.createExpressionFromText(text,
+                                    assignmentExpression);
+                    assignmentExpression.replace(newExpression);
+                } else {
+                    replaceExpression(expression, newExpressionText);
+                }
+            } else {
+                replaceExpression(expression, newExpressionText);
             }
         }
     }

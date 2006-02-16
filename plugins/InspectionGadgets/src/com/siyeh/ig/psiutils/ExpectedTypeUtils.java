@@ -19,10 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +40,16 @@ public class ExpectedTypeUtils{
             @NotNull PsiExpression expression,
             boolean calculateTypeForComplexReferences){
         PsiElement context = expression.getParent();
-        PsiExpression wrappedExp = expression;
+        PsiExpression wrappedExpression = expression;
         while(context != null && context instanceof PsiParenthesizedExpression){
-            wrappedExp = (PsiExpression) context;
+            wrappedExpression = (PsiExpression) context;
             context = context.getParent();
         }
         if(context == null){
             return null;
         }
         final ExpectedTypeVisitor visitor =
-                new ExpectedTypeVisitor(wrappedExp,
+                new ExpectedTypeVisitor(wrappedExpression,
                         calculateTypeForComplexReferences);
         context.accept(visitor);
         return visitor.getExpectedType();
@@ -63,22 +63,56 @@ public class ExpectedTypeUtils{
         private static final Set<IElementType> arithmeticOps =
                 new HashSet<IElementType>(5);
 
+        private static final Set<IElementType> comparisonOps =
+                new HashSet<IElementType>(6);
+
+        private static final Set<IElementType> booleanOps =
+                new HashSet<IElementType>(5);
+
+        private static final Set<IElementType> operatorAssignmentOps =
+                new HashSet<IElementType>(11);
+
         static {
             arithmeticOps.add(JavaTokenType.PLUS);
             arithmeticOps.add(JavaTokenType.MINUS);
             arithmeticOps.add(JavaTokenType.ASTERISK);
             arithmeticOps.add(JavaTokenType.DIV);
             arithmeticOps.add(JavaTokenType.PERC);
+
+            comparisonOps.add(JavaTokenType.EQEQ);
+            comparisonOps.add(JavaTokenType.NE);
+            comparisonOps.add(JavaTokenType.LE);
+            comparisonOps.add(JavaTokenType.LT);
+            comparisonOps.add(JavaTokenType.GE);
+            comparisonOps.add(JavaTokenType.GT);
+
+            booleanOps.add(JavaTokenType.ANDAND);
+            booleanOps.add(JavaTokenType.AND);
+            booleanOps.add(JavaTokenType.XOR);
+            booleanOps.add(JavaTokenType.OROR);
+            booleanOps.add(JavaTokenType.OR);
+
+            operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
+            operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
+            operatorAssignmentOps.add(JavaTokenType.ASTERISKEQ);
+            operatorAssignmentOps.add(JavaTokenType.DIVEQ);
+            operatorAssignmentOps.add(JavaTokenType.ANDEQ);
+            operatorAssignmentOps.add(JavaTokenType.OREQ);
+            operatorAssignmentOps.add(JavaTokenType.XOREQ);
+            operatorAssignmentOps.add(JavaTokenType.PERCEQ);
+            operatorAssignmentOps.add(JavaTokenType.LTLTEQ);
+            operatorAssignmentOps.add(JavaTokenType.GTGTEQ);
+            operatorAssignmentOps.add(JavaTokenType.GTGTGTEQ);
         }
 
-        private final PsiExpression wrappedExp;
+        private final PsiExpression wrappedExpression;
         private final boolean calculateTypeForComplexReferences;
         private PsiType expectedType = null;
 
-        ExpectedTypeVisitor(PsiExpression wrappedExp,
+        ExpectedTypeVisitor(PsiExpression wrappedExpression,
                             boolean calculateTypeForComplexReferences){
             super();
-            this.wrappedExp = wrappedExp;
+            this.wrappedExpression = wrappedExpression;
             this.calculateTypeForComplexReferences =
                     calculateTypeForComplexReferences;
         }
@@ -89,7 +123,7 @@ public class ExpectedTypeUtils{
 
         public void visitField(@NotNull PsiField field){
             final PsiExpression initializer = field.getInitializer();
-            if(wrappedExp.equals(initializer)){
+            if(wrappedExpression.equals(initializer)){
                 expectedType = field.getType();
             }
         }
@@ -111,30 +145,30 @@ public class ExpectedTypeUtils{
 
         public void visitArrayAccessExpression(
                 PsiArrayAccessExpression accessExpression){
-            final PsiExpression indexExpression = accessExpression
-                    .getIndexExpression();
-            if(wrappedExp.equals(indexExpression)){
+            final PsiExpression indexExpression =
+                    accessExpression.getIndexExpression();
+            if(wrappedExpression.equals(indexExpression)){
                 expectedType = PsiType.INT;
             }
         }
 
         public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression binaryExp){
-            final PsiJavaToken sign = binaryExp.getOperationSign();
+                @NotNull PsiBinaryExpression binaryExpression){
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            final PsiType type = binaryExp.getType();
+            final PsiType type = binaryExpression.getType();
             if(TypeUtils.isJavaLangString(type)){
                 expectedType = null;
             } else if(isArithmeticOperation(tokenType)){
                 expectedType = type;
             } else if(isComparisonOperation(tokenType)){
-                final PsiExpression lhs = binaryExp.getLOperand();
+                final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiType lhsType = lhs.getType();
                 if(ClassUtils.isPrimitive(lhsType)){
                     expectedType = lhsType;
                     return;
                 }
-                final PsiExpression rhs = binaryExp.getROperand();
+                final PsiExpression rhs = binaryExpression.getROperand();
                 if(rhs == null){
                     expectedType = null;
                     return;
@@ -145,6 +179,8 @@ public class ExpectedTypeUtils{
                     return;
                 }
                 expectedType = null;
+            } else if(isBooleanOperation(tokenType)){
+                expectedType = type;
             } else{
                 expectedType = null;
             }
@@ -152,12 +188,22 @@ public class ExpectedTypeUtils{
 
         public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
-            expectedType = expression.getType();
+            final PsiType type = expression.getType();
+            if (type instanceof PsiPrimitiveType) {
+                expectedType = type;
+            } else {
+                expectedType = PsiPrimitiveType.getUnboxedType(type);
+            }
         }
 
         public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression){
-            expectedType = expression.getType();
+            final PsiType type = expression.getType();
+            if (type instanceof PsiPrimitiveType) {
+                expectedType = type;
+            } else {
+                expectedType = PsiPrimitiveType.getUnboxedType(type);
+            }
         }
 
         public void visitWhileStatement(
@@ -189,26 +235,39 @@ public class ExpectedTypeUtils{
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             final PsiExpression rExpression = assignment.getRExpression();
-            if(rExpression != null){
-                if(rExpression.equals(wrappedExp)){
-                    final PsiExpression lExpression =
-                            assignment.getLExpression();
-                    final PsiType lType = lExpression.getType();
-                    if(lType == null){
-                        expectedType = null;
-                    } else if(TypeUtils.isJavaLangString(lType)) {
-                        final PsiJavaToken operationSign =
-                                assignment.getOperationSign();
-                        if(JavaTokenType.PLUSEQ.equals(
-                                operationSign.getTokenType())) {
-                            // e.g. String += any type
-                            expectedType = rExpression.getType();
-                        } else{
-                            expectedType = lType;
-                        }
+            final PsiJavaToken operationSign =
+                    assignment.getOperationSign();
+            final IElementType tokenType = operationSign.getTokenType();
+            final PsiExpression lExpression =
+                    assignment.getLExpression();
+            final PsiType lType = lExpression.getType();
+            if(rExpression != null &&
+                    wrappedExpression.equals(rExpression)){
+                if(lType == null){
+                    expectedType = null;
+                } else if(TypeUtils.isJavaLangString(lType)){
+                    if(JavaTokenType.PLUSEQ.equals(tokenType)){
+                        // e.g. String += any type
+                        expectedType = rExpression.getType();
                     } else{
                         expectedType = lType;
                     }
+                } else if (isOperatorAssignmentOperation(tokenType)){
+                    if (lType instanceof PsiPrimitiveType){
+                        expectedType = lType;
+                    } else{
+                        expectedType =
+                                PsiPrimitiveType.getUnboxedType(lType);
+                    }
+                } else{
+                    expectedType = lType;
+                }
+            } else{
+                if (isOperatorAssignmentOperation(tokenType) &&
+                        !(lType instanceof PsiPrimitiveType)){
+                    expectedType = PsiPrimitiveType.getUnboxedType(lType);
+                } else{
+                    expectedType = lType;
                 }
             }
         }
@@ -216,7 +275,7 @@ public class ExpectedTypeUtils{
         public void visitConditionalExpression(
                 PsiConditionalExpression conditional){
             final PsiExpression condition = conditional.getCondition();
-            if(condition.equals(wrappedExp)){
+            if(condition.equals(wrappedExpression)){
                 expectedType = PsiType.BOOLEAN;
             } else{
                 expectedType = conditional.getType();
@@ -245,7 +304,7 @@ public class ExpectedTypeUtils{
                             (PsiVariable) declaredElement;
                     final PsiExpression initializer =
                             variable.getInitializer();
-                    if(wrappedExp.equals(initializer)){
+                    if(wrappedExpression.equals(initializer)){
                         expectedType = variable.getType();
                         return;
                     }
@@ -253,22 +312,22 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitExpressionList(PsiExpressionList expList){
-            final JavaResolveResult result = findCalledMethod(expList);
+        public void visitExpressionList(PsiExpressionList expressionList){
+            final JavaResolveResult result = findCalledMethod(expressionList);
             final PsiMethod method = (PsiMethod) result.getElement();
             if(method == null){
                 expectedType = null;
             } else{
                 final int parameterPosition =
-                        getParameterPosition(expList, wrappedExp);
+                        getParameterPosition(expressionList, wrappedExpression);
                 expectedType = getTypeOfParameter(result, parameterPosition);
             }
         }
 
         @NotNull
         private static JavaResolveResult findCalledMethod(
-                PsiExpressionList expList){
-            final PsiElement parent = expList.getParent();
+                PsiExpressionList expressionList){
+            final PsiElement parent = expressionList.getParent();
             if(parent instanceof PsiCallExpression){
                 final PsiCallExpression call = (PsiCallExpression) parent;
                 return call.resolveMethodGenerics();
@@ -360,7 +419,7 @@ public class ExpectedTypeUtils{
                                 !superMethod.hasModifierProperty(
                                         PsiModifier.STATIC) &&
                                 PsiUtil.isAccessible(superMethod, aClass,
-                                                     aClass) &&
+                                        aClass) &&
                                 signature.equals(superMethod.getSignature(
                                         superClassSubstitutor));
                 if(looksLikeSuperMethod){
@@ -400,25 +459,32 @@ public class ExpectedTypeUtils{
             return ClassUtils.inSamePackage(containingClass, referencingClass);
         }
 
-        private static boolean isArithmeticOperation(IElementType sign){
+        private static boolean isArithmeticOperation(
+                @NotNull IElementType sign){
             return arithmeticOps.contains(sign);
         }
 
         private static boolean isComparisonOperation(
                 @NotNull IElementType sign){
-            return sign.equals(JavaTokenType.EQEQ)
-                    || sign.equals(JavaTokenType.NE)
-                    || sign.equals(JavaTokenType.LE)
-                    || sign.equals(JavaTokenType.LT)
-                    || sign.equals(JavaTokenType.GE)
-                    || sign.equals(JavaTokenType.GT);
+            return comparisonOps.contains(sign);
+        }
+
+        private static boolean isBooleanOperation(
+                @NotNull IElementType sign){
+            return booleanOps.contains(sign);
+        }
+
+        private static boolean isOperatorAssignmentOperation(
+                @NotNull IElementType sign){
+            return operatorAssignmentOps.contains(sign);
         }
 
         private static int getParameterPosition(
-                @NotNull PsiExpressionList expressionList, PsiExpression exp) {
+                @NotNull PsiExpressionList expressionList,
+                PsiExpression expression) {
             final PsiExpression[] expressions = expressionList.getExpressions();
             for(int i = 0; i < expressions.length; i++){
-                if(expressions[i].equals(exp)){
+                if(expressions[i].equals(expression)){
                     return i;
                 }
             }
@@ -433,31 +499,32 @@ public class ExpectedTypeUtils{
                 return null;
             }
             final PsiSubstitutor substitutor = result.getSubstitutor();
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
             if(parameterPosition < 0){
                 return null;
             }
             if(parameterPosition >= parameters.length){
-                final int lastParamPosition = parameters.length - 1;
-                if(lastParamPosition < 0){
+                final int lastParameterPosition = parameters.length - 1;
+                if(lastParameterPosition < 0){
                     return null;
                 }
-                final PsiParameter lastParameter = parameters[lastParamPosition];
+                final PsiParameter lastParameter =
+                        parameters[lastParameterPosition];
                 if(lastParameter.isVarArgs()){
-                    return substitutor
-                            .substitute(((PsiArrayType) lastParameter.getType())
-                                    .getComponentType());
+                    final PsiArrayType arrayType =
+                            (PsiArrayType)lastParameter.getType();
+                    return substitutor.substitute(arrayType.getComponentType());
                 }
                 return null;
             }
-
-            final PsiParameter param = parameters[parameterPosition];
-            if(param.isVarArgs()){
-                return substitutor.substitute(
-                        ((PsiArrayType) param.getType()).getComponentType());
+            final PsiParameter parameter = parameters[parameterPosition];
+            if(parameter.isVarArgs()){
+                final PsiArrayType arrayType =
+                        (PsiArrayType)parameter.getType();
+                return substitutor.substitute(arrayType.getComponentType());
             }
-            return substitutor.substitute(param.getType());
+            return substitutor.substitute(parameter.getType());
         }
     }
 }
