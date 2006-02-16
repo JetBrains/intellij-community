@@ -9,9 +9,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
+import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -20,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,6 +62,44 @@ public class RepositoryHelper {
         is = null;
       }
     }
+  }
+
+  public static ArrayList<IdeaPluginDescriptor> Process( JLabel label )
+    throws IOException, ParserConfigurationException, SAXException
+  {
+    ArrayList<IdeaPluginDescriptor> plugins = null;
+    try {
+      String buildNumber = RepositoryHelper.ExtractBuildNumber();
+      //noinspection HardCodedStringLiteral
+      String url = RepositoryHelper.REPOSITORY_LIST_URL + "?build=" + buildNumber;
+
+      label.setText(IdeBundle.message("progress.connecting.to.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+      HttpConfigurable.getInstance().prepareURL(RepositoryHelper.REPOSITORY_HOST);
+//      if( !pi.isCanceled() )
+      {
+        RepositoryContentHandler handler = new RepositoryContentHandler();
+        HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
+
+        label.setText(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
+
+        InputStream is = RepositoryHelper.getConnectionInputStream( connection );
+        if (is != null)
+        {
+          label.setText(IdeBundle.message("progress.downloading.list.of.plugins"));
+          File temp = RepositoryHelper.CreateLocalPluginsDescriptions();
+          RepositoryHelper.ReadPluginsStream( temp, is, handler );
+
+          plugins = handler.getPluginsList();
+        }
+      }
+    }
+    catch (RuntimeException e)
+    {
+      if( e.getCause() == null || !( e.getCause() instanceof InterruptedException) )
+      {
+      }
+    }
+    return plugins;
   }
 
   public static File downloadPlugin (PluginNode pluginNode, boolean packet, long count, long available) throws IOException
@@ -106,7 +147,7 @@ public class RepositoryHelper {
 
       try {
         is = new ProgressStream(packet ? count : 0, packet ? available : Integer.valueOf(pluginNode.getSize()).intValue(),
-                                                is, pi);
+                                is, pi);
         int c;
         while ((c = is.read()) != -1) {
           if (pi.isCanceled())
@@ -150,7 +191,7 @@ public class RepositoryHelper {
             fileName = fileName.substring(1, fileName.length()-1);
           }
           if (fileName.indexOf('\\') >= 0 || fileName.indexOf('/') >= 0 || fileName.indexOf(File.separatorChar) >= 0 ||
-            fileName.indexOf('\"') >= 0) {
+              fileName.indexOf('\"') >= 0) {
             // invalid path name passed by the server - fail to download
             FileUtil.delete(file);
             return null;
@@ -228,9 +269,10 @@ public class RepositoryHelper {
   {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     FileOutputStream fos = null;
+    ProgressStream ps = null;
     try {
       fos = new FileOutputStream(temp, false);
-      ProgressStream ps = new ProgressStream(is, pi);
+      ps = new ProgressStream(is, pi);
       byte [] buffer = new byte [1024];
       do {
         int size = ps.read(buffer);
@@ -244,6 +286,9 @@ public class RepositoryHelper {
     } finally {
       if( fos != null ) {
         fos.close();
+      }
+      if( ps != null )  {
+        ps.close();
       }
     }
   }

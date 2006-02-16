@@ -48,7 +48,6 @@ public class PluginTable <T> extends JTable {
     for (int i = 0; i < model.getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
       column.setCellRenderer(model.getColumnInfos() [i].getRenderer(null));
-      //column.setPreferredWidth(PluginManagerColumnInfo.PREFERRED_WIDTH [i]);
     }
 
     //  Specify columns widths for particular columns:

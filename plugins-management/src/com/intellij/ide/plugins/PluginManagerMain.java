@@ -171,7 +171,7 @@ public class PluginManagerMain
 
   private void loadAvailablePlugins( boolean checkLocal )
   {
-    ArrayList<IdeaPluginDescriptor> list = null;
+    ArrayList<IdeaPluginDescriptor> list;
     try
     {
       //  If we already have a file with downloaded plugins from the last time,
@@ -222,7 +222,7 @@ public class PluginManagerMain
       {
         try
         {
-          list = StatusProcess.Process( mySynchStatus );
+          list = RepositoryHelper.Process( mySynchStatus );
         }
         catch( Exception e )
         {

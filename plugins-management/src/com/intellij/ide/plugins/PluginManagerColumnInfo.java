@@ -43,7 +43,6 @@ class PluginManagerColumnInfo extends ColumnInfo {
   private static Date weekAgo;
 
   public static final String [] COLUMNS = {
-//      IdeBundle.message("column.plugins.status"),
     " ",
     IdeBundle.message("column.plugins.name"),
     IdeBundle.message("column.plugins.downloads"),

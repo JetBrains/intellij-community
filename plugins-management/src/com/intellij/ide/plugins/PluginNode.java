@@ -1,6 +1,5 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 
@@ -24,21 +23,6 @@ public class PluginNode implements IdeaPluginDescriptor
     public static final int STATUS_NEWEST = 4;
     public static final int STATUS_DOWNLOADED = 5;
     public static final int STATUS_DELETED = 6;
-
-    public static final String [] STATUS_NAMES = {
-//        IdeBundle.message("plugin.status.unknown"),
-        "?",
-        IdeBundle.message("plugin.status.out.of.date"),
-//        IdeBundle.message("plugin.status.not.installed"),
-        "-",
-//        IdeBundle.message("plugin.status.installed"),
-        "*",
-//        IdeBundle.message("plugin.status.newest"),
-        "!",
-//        IdeBundle.message("plugin.status.downloaded"),  // downloaded, but not activated
-        "+",     // downloaded, but not activated
-        IdeBundle.message("plugin.status.uninstalled")    // uninstalled, but not activated
-    };
 
     private PluginId id;
     private String name;
@@ -166,16 +150,6 @@ public class PluginNode implements IdeaPluginDescriptor
     public void setStatus(int status)
     {
         this.status = status;
-    }
-
-    public String getStatusName()
-    {
-        return STATUS_NAMES[status];
-    }
-
-    public static String getStatusName(int status)
-    {
-        return STATUS_NAMES[status];
     }
 
     public String toString()

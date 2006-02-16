@@ -123,24 +123,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
     }
   }
 
-  private class MyCartProvider implements SortableProvider {
-    public int getSortOrder() {
-      return CART_SORT_COLUMN_ORDER;
-    }
-
-    public int getSortColumn() {
-      return CART_SORT_COLUMN;
-    }
-
-    public void setSortOrder(int sortOrder) {
-      CART_SORT_COLUMN_ORDER = sortOrder;
-    }
-
-    public void setSortColumn(int sortColumn) {
-      CART_SORT_COLUMN = sortColumn;
-    }
-  }
-
   public Runnable showOption(String option) {
     return SearchUtil.lightOptions(this, myPluginManagerMain.getMainPanel(), option, myGlassPanel);
   }
