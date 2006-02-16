@@ -1,10 +1,10 @@
 package com.intellij.ide.todo;
 
-import java.util.ArrayList;
+import com.intellij.ui.HighlightedRegion;
 
 /**
  * @author Vladimir Kondratyev
  */
 public interface HighlightedRegionProvider{
-  public abstract ArrayList getHighlightedRegions();
+  Iterable<HighlightedRegion> getHighlightedRegions();
 }

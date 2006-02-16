@@ -38,7 +38,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   }
 
-  public ArrayList getHighlightedRegions(){
+  public ArrayList<HighlightedRegion> getHighlightedRegions(){
     return myHighlightedRegions;
   }
 

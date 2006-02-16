@@ -27,11 +27,11 @@ import java.util.Iterator;
 import org.jetbrains.annotations.NotNull;
 
 public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedRegionProvider {
-  private ArrayList myHighlightedRegions;
+  private ArrayList<HighlightedRegion> myHighlightedRegions;
 
   public ModuleToDoNode(Project project, Module value, TodoTreeBuilder builder) {
     super(project, value, builder);
-    myHighlightedRegions = new ArrayList(2);
+    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
   }
 
   @NotNull
@@ -91,7 +91,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     return "Module";
   }
 
-  public ArrayList getHighlightedRegions() {
+  public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 }

@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRegionProvider {
-  private final ArrayList myHighlightedRegions;
+  private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final TodoTreeBuilder myBuilder;
 
 
@@ -39,10 +39,10 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
                      TodoTreeBuilder builder) {
     super(project, directory, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList(2);
+    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
   }
 
-  public ArrayList getHighlightedRegions() {
+  public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 

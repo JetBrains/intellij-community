@@ -24,7 +24,7 @@ import java.util.Collections;
 
 public final class TodoFileNode extends PsiFileNode implements HighlightedRegionProvider{
   private final TodoTreeBuilder myBuilder;
-  private final ArrayList myHighlightedRegions;
+  private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final boolean mySingleFileMode;
 
   static private final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.nodes.TodoFileNode");
@@ -35,11 +35,11 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
                       boolean singleFileMode){
     super(project,file,ViewSettings.DEFAULT);
     myBuilder=treeBuilder;
-    myHighlightedRegions=new ArrayList(2);
+    myHighlightedRegions=new ArrayList<HighlightedRegion>(2);
     mySingleFileMode=singleFileMode;
   }
 
-  public ArrayList getHighlightedRegions(){
+  public ArrayList<HighlightedRegion> getHighlightedRegions(){
     return myHighlightedRegions;
   }
 
@@ -56,18 +56,17 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   private Collection<AbstractTreeNode> createListForSingleFile() {
     TodoItem[] items=myBuilder.getTodoTreeStructure().getSearchHelper().findTodoItems(getValue());
     ArrayList<AbstractTreeNode> children=new ArrayList<AbstractTreeNode>(items.length);
-    for(int i=0;i<items.length;i++){
-      TodoItem todoItem=items[i];
-      Document document=PsiDocumentManager.getInstance(getProject()).getDocument(getValue());
-      LOG.assertTrue(todoItem.getTextRange().getEndOffset()<document.getTextLength()+1);
-      SmartTodoItemPointer pointer=new SmartTodoItemPointer(todoItem,document);
+    for (TodoItem todoItem : items) {
+      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getValue());
+      LOG.assertTrue(todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1);
+      SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
       TodoFilter toDoFilter = getToDoFilter();
-      if(toDoFilter!=null){
+      if (toDoFilter != null) {
         TodoItemNode itemNode = new TodoItemNode(getProject(), pointer, myBuilder);
-        if(toDoFilter.contains(todoItem.getPattern())){
+        if (toDoFilter.contains(todoItem.getPattern())) {
           children.add(itemNode);
         }
-      }else{
+      } else {
         children.add(new TodoItemNode(getProject(), pointer, myBuilder));
       }
     }
@@ -80,8 +79,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
 
     PsiFile psiFile = getValue();
     final TodoItem[] items = myBuilder.getTodoTreeStructure().getSearchHelper().findTodoItems(psiFile);
-    for (int i = 0; i < items.length; i++) {
-      final TodoItem todoItem = items[i];
+    for (final TodoItem todoItem : items) {
       final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       LOG.assertTrue(todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1);
       final SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);

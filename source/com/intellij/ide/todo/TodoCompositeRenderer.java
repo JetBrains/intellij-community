@@ -12,7 +12,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Vladimir Kondratyev
@@ -37,13 +36,11 @@ final class TodoCompositeRenderer implements TreeCellRenderer{
       NodeDescriptor descriptor=(NodeDescriptor)userObject;
       HighlightedRegionProvider regionProvider=(HighlightedRegionProvider)userObject;
       myColorTreeCellRenderer.getTreeCellRendererComponent(tree,obj,selected,expanded,leaf,row,hasFocus);
-      ArrayList highlightedRegions=regionProvider.getHighlightedRegions();
-      for(Iterator i=highlightedRegions.iterator();i.hasNext();){
-        HighlightedRegion highlightedRegion=(HighlightedRegion)i.next();
+      for (HighlightedRegion highlightedRegion : regionProvider.getHighlightedRegions()) {
         myColorTreeCellRenderer.addHighlighter(
-          highlightedRegion.startOffset,
-          highlightedRegion.endOffset,
-          highlightedRegion.textAttributes
+            highlightedRegion.startOffset,
+            highlightedRegion.endOffset,
+            highlightedRegion.textAttributes
         );
       }
       myColorTreeCellRenderer.setIcon(descriptor.getOpenIcon());

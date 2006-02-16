@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public final class TodoPackageNode extends PackageElementNode implements HighlightedRegionProvider {
-  private final ArrayList myHighlightedRegions;
+  private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final TodoTreeBuilder myBuilder;
   @Nullable private String myPresentationName = null;
 
@@ -44,7 +44,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
                          TodoTreeBuilder builder) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList(2);
+    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
     if (element != null){
       final PsiPackage aPackage = element.getPackage();
       if (aPackage != null){
@@ -59,7 +59,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
                          @Nullable String name) {
     super(project, element, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList(2);
+    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
     if (element != null && name == null){
       final PsiPackage aPackage = element.getPackage();
       if (aPackage != null){
@@ -71,7 +71,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   }
 
 
-  public ArrayList getHighlightedRegions() {
+  public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 
