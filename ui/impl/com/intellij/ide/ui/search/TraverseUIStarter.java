@@ -12,7 +12,9 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
@@ -103,6 +105,8 @@ public class TraverseUIStarter implements ApplicationStarter {
       root.addContent(configurableElement);
     }
     JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
+
+    ((ApplicationEx)ApplicationManager.getApplication()).exit(true);
   }
 
   private static void processCodeStyleConfigurable(final CodeStyleSchemesConfigurable configurable, final Element configurableElement) {
