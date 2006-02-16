@@ -41,6 +41,7 @@ import java.util.Map;
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider");
   private static final char SEPARATOR = '.';
+  private static final char SEPARATOR2 = '$';
   public static final ReferenceType CLASS_REFERENCE_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   private @Nullable Map<CustomizationKey, Object> myOptions;
@@ -56,30 +57,30 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
-      String text = element.getText();
+    String text = element.getText();
 
-      if (element instanceof XmlAttributeValue) {
-          final String valueString = ((XmlAttributeValue) element).getValue();
-          int startOffset = StringUtil.startsWithChar(text, '"') ||
-                            StringUtil.startsWithChar(text, '\'') ? 1 : 0;
-          return getReferencesByString(valueString, element, type, startOffset);
-      } else if (element instanceof XmlTag) {
-        final XmlTagValue value = ((XmlTag)element).getValue();
+    if (element instanceof XmlAttributeValue) {
+        final String valueString = ((XmlAttributeValue) element).getValue();
+        int startOffset = StringUtil.startsWithChar(text, '"') ||
+                          StringUtil.startsWithChar(text, '\'') ? 1 : 0;
+        return getReferencesByString(valueString, element, type, startOffset);
+    } else if (element instanceof XmlTag) {
+      final XmlTagValue value = ((XmlTag)element).getValue();
 
-        if (value != null) {
-          text = value.getText();
-          final String trimmedText = text.trim();
+      if (value != null) {
+        text = value.getText();
+        final String trimmedText = text.trim();
 
-          return getReferencesByString(
-            trimmedText,
-            element,
-            type,
-            value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset()
-          );
-        }
+        return getReferencesByString(
+          trimmedText,
+          element,
+          type,
+          value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset()
+        );
       }
+    }
 
-      return getReferencesByString(text, element, type, 0);
+    return getReferencesByString(text, element, type, 0);
   }
 
   @NotNull
@@ -159,12 +160,16 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       int index = 0;
 
       while(true){
-        final int nextDot = str.indexOf(SEPARATOR, currentDot + 1);
-        final String subreferenceText = nextDot > 0 ? str.substring(currentDot + 1, nextDot) : str.substring(currentDot + 1);
-        TextRange textRange = new TextRange(myStartInElement + currentDot + 1, myStartInElement + (nextDot > 0 ? nextDot : str.length()));
+        int nextDotOrDollar = str.indexOf(SEPARATOR, currentDot + 1);
+        if (nextDotOrDollar == -1) {
+          nextDotOrDollar = str.indexOf(SEPARATOR2,currentDot + 1);
+        }
+        final String subreferenceText = nextDotOrDollar > 0 ? str.substring(currentDot + 1, nextDotOrDollar) : str.substring(currentDot + 1);
+
+        TextRange textRange = new TextRange(myStartInElement + currentDot + 1, myStartInElement + (nextDotOrDollar > 0 ? nextDotOrDollar : str.length()));
         JavaReference currentContextRef = new JavaReference(textRange, index++, subreferenceText, isStaticImport);
         referencesList.add(currentContextRef);
-        if ((currentDot = nextDot) < 0) {
+        if ((currentDot = nextDotOrDollar) < 0) {
           break;
         }
       }
@@ -316,10 +321,14 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         if (context instanceof PsiPackage){
           return processPackage((PsiPackage)context);
         }
-        if (myInStaticImport && context instanceof PsiClass) {
+        if (context instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)context;
 
-          return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
+          if (myInStaticImport) {
+            return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
+          } else if (getElement().getText().charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
+            return aClass.getInnerClasses();
+          }
         }
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
@@ -333,7 +342,20 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       @NotNull
       public JavaResolveResult advancedResolve(boolean incompleteCode) {
         if (!myElement.isValid()) return JavaResolveResult.EMPTY;
-        String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+
+        final String s = getElement().getText();
+
+        if (myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
+          final PsiElement psiElement = myReferences[myIndex - 1].resolve();
+
+          if (psiElement instanceof PsiClass) {
+            final PsiClass psiClass = ((PsiClass)psiElement).findInnerClassByName(getCanonicalText(), false);
+            if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, false, myElement);
+            return JavaResolveResult.EMPTY;
+          }
+        }
+
+        String qName = s.substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
 
         PsiManager manager = myElement.getManager();
         if (myIndex == myReferences.length - 1) {
