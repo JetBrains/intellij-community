@@ -6,6 +6,8 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.usageView.UsageViewUtil;
 
 public class SuperMethodWarningUtil {
+  private SuperMethodWarningUtil() {}
+
   public static PsiMethod checkSuperMethod(final PsiMethod method, String actionString) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
@@ -15,18 +17,19 @@ public class SuperMethodWarningUtil {
 
     PsiClass containingClass = superMethod.getContainingClass();
 
-    SuperMethodOrPointcutWarningDialog dialog =
-      new SuperMethodOrPointcutWarningDialog(method.getProject(),
-                                             UsageViewUtil.getDescriptiveName(method),
-                                             false, containingClass.getQualifiedName(),
-                                             actionString,
-                                             containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
-                                             containingClass.isInterface(),
-                                             aClass.isInterface());
+    SuperMethodWarningDialog dialog =
+        new SuperMethodWarningDialog(
+            method.getProject(),
+            UsageViewUtil.getDescriptiveName(method),
+            containingClass.getQualifiedName(),
+            actionString,
+            containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
+            containingClass.isInterface(),
+            aClass.isInterface());
     dialog.show();
 
-    if (dialog.getExitCode() == SuperMethodOrPointcutWarningDialog.OK_EXIT_CODE) return superMethod;
-    if (dialog.getExitCode() == SuperMethodOrPointcutWarningDialog.NO_EXIT_CODE) return method;
+    if (dialog.getExitCode() == SuperMethodWarningDialog.OK_EXIT_CODE) return superMethod;
+    if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) return method;
 
     return null;
   }

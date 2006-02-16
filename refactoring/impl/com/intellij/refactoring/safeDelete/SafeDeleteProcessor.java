@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -53,10 +54,6 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
-  }
-
-  void setElements(PsiElement[] elements) {
-    myElements = elements;
   }
 
   private static boolean isInside(PsiElement place, PsiElement[] ancestors) {
@@ -110,6 +107,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       else if (element instanceof PsiField) {
         findFieldUsages((PsiField)element, usages);
       }
+      else if (element instanceof PsiParameter) {
+        LOG.assertTrue(((PsiParameter) element).getDeclarationScope() instanceof PsiMethod);
+        findParameterUsages((PsiParameter)element, usages);
+      }
       else if (element instanceof PsiFile) {
         findFileUsages((PsiFile)element, usages);
       }
@@ -119,6 +120,24 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
     return UsageViewUtil.removeDuplicatedUsages(result);
+  }
+
+  private void findParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> usages) {
+    Collection<PsiReference> refs = ReferencesSearch.search(parameter).findAll();
+    for (PsiReference ref : refs) {
+      PsiElement element = ref.getElement();
+      boolean isSafeDelete = false;
+      if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression call = (PsiMethodCallExpression) element.getParent().getParent();
+        PsiReferenceExpression methodExpression = call.getMethodExpression();
+        if (methodExpression.getText().equals("super") || methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
+          isSafeDelete = true;
+        }
+      }
+      usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, parameter, isSafeDelete));
+    }
+
+    addNonCodeUsages(parameter, usages, myInsideDeletedElements);
   }
 
   private void findFileUsages(final PsiFile file, final ArrayList<UsageInfo> usages) {

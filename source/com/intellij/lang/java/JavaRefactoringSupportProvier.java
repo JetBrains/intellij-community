@@ -13,6 +13,7 @@ public class JavaRefactoringSupportProvier implements RefactoringSupportProvider
     return element instanceof PsiClass
            || element instanceof PsiMethod
            || element instanceof PsiField
+           || (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod)
            || element instanceof PsiPackage;
   }
 

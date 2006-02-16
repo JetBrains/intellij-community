@@ -7,12 +7,20 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Arrays;
@@ -45,26 +53,54 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         return;
       }
     }
-    final PsiElement[] elementsToDelete = DeleteUtil.filterElements(elements);
-    Set<PsiElement> elementsSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
+    final PsiElement[] temptoDelete = DeleteUtil.filterElements(elements);
+    Set<PsiElement> elementsSet = new HashSet<PsiElement>(Arrays.asList(temptoDelete));
+    Set<PsiElement> fullElementsSet = new HashSet<PsiElement>();
 
     if (checkSuperMethods) {
-      for (int i = 0; i < elementsToDelete.length; i++) {
-        PsiElement element = elementsToDelete[i];
+      for (PsiElement element : temptoDelete) {
         if (element instanceof PsiMethod) {
           final PsiMethod deepestSuperMethod = ((PsiMethod) element).findDeepestSuperMethod();
           if (!elementsSet.contains(deepestSuperMethod)) {
-            final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)element,
-                                                                             RefactoringBundle.message("to.delete.with.usage.search"));
+            final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod((PsiMethod) element,
+                RefactoringBundle.message("to.delete.with.usage.search"));
             if (method == null) return;
-            elementsToDelete[i] = method;
+            fullElementsSet.add(method);
           }
+        } else
+        if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
+          final Set<PsiParameter> parametersToDelete = new HashSet<PsiParameter>();
+          parametersToDelete.add((PsiParameter) element);
+          final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
+          SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+            public boolean process(MethodSignatureBackedByPsiMethod signature) {
+              parametersToDelete.add(signature.getMethod().getParameterList().getParameters()[parameterIndex]);
+              return true;
+            }
+          });
+
+          OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
+            public boolean process(PsiMethod overrider) {
+              parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
+              return true;
+            }
+          });
+          if (parametersToDelete.size() > 1) {
+            String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
+            if (Messages.showYesNoDialog(project, message, REFACTORING_NAME,
+                Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+          }
+          fullElementsSet.addAll(parametersToDelete);
+        } else {
+          fullElementsSet.add(element);
         }
       }
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elementsToDelete))) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
 
+    final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
     SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, new SafeDeleteDialog.Callback() {
       public void run(final SafeDeleteDialog dialog) {
         SafeDeleteProcessor.createInstance(project, new Runnable() {

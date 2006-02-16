@@ -12,28 +12,25 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 //TODO: review title and text!!!
-class SuperMethodOrPointcutWarningDialog extends DialogWrapper {
+class SuperMethodWarningDialog extends DialogWrapper {
   public static final int NO_EXIT_CODE=NEXT_USER_EXIT_CODE+1;
   private String myName;
-  private boolean myIsPointcut;
   private String myClassName;
   private String myActionString;
   private boolean myIsSuperAbstract;
   private boolean myIsParentInterface;
   private boolean myIsContainedInInterface;
 
-  public SuperMethodOrPointcutWarningDialog(Project project,
-                                            String name,
-                                            boolean isPointcut,
-                                            String className,
-                                            String actionString,
-                                            boolean isSuperAbstract,
-                                            boolean isParentInterface,
-                                            boolean isContainedInInterface
+  public SuperMethodWarningDialog(Project project,
+                                  String name,
+                                  String className,
+                                  String actionString,
+                                  boolean isSuperAbstract,
+                                  boolean isParentInterface,
+                                  boolean isContainedInInterface
   ) {
     super(project, true);
     myName = name;
-    myIsPointcut = isPointcut;
     myClassName = className;
     myActionString = actionString;
     myIsSuperAbstract = isSuperAbstract;
@@ -60,16 +57,16 @@ class SuperMethodOrPointcutWarningDialog extends DialogWrapper {
     JPanel labelsPanel = new JPanel(new GridLayout(3, 1, 0, 0));
     labelsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     String classType = (myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class"));
-    String methodOrPointcut = myIsPointcut ? IdeBundle.message("element.pointcut") : IdeBundle.message("element.method");
-    labelsPanel.add(new JLabel(myIsPointcut ? IdeBundle.message("label.pointcut", myName) : IdeBundle.message("label.method", myName)));
+    String methodString = IdeBundle.message("element.method");
+    labelsPanel.add(new JLabel(IdeBundle.message("label.method", myName)));
     if (myIsContainedInInterface || !myIsSuperAbstract){
-      labelsPanel.add(new JLabel(IdeBundle.message("label.overrides.method_or_pointcut.of_class_or_interface.name", methodOrPointcut, classType, myClassName)));
+      labelsPanel.add(new JLabel(IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, myClassName)));
     }
     else{
-      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method_or_pointcut.of_class_or_interface.name", methodOrPointcut, classType, myClassName)));
+      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, myClassName)));
     }
     String fromClassType = (myIsParentInterface ? IdeBundle.message("element.from.interface") : IdeBundle.message("element.from.base.class"));
-    String s = IdeBundle.message("prompt.do.you.want.to.action_verb.the.method_or_pointcut.from_class", myActionString, methodOrPointcut, fromClassType);
+    String s = IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, methodString, fromClassType);
     labelsPanel.add(new JLabel(s));
     panel.add(labelsPanel, BorderLayout.CENTER);
     return panel;
