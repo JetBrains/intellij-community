@@ -131,17 +131,10 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   protected void processMouseEvent(final MouseEvent e){
-    final int id = e.getID();
-   switch (id) {
-        case  MouseEvent.MOUSE_PRESSED:
-          processMousePressed(e);
-          break;
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+      final ComponentItem item = myPaletteManager.getActiveItem(ComponentItem.class);
+      processComponentInsert(e.getPoint(), null, item);
     }
-  }
-
-  private void processMousePressed(final MouseEvent e) {
-    final ComponentItem item = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
-    processComponentInsert(e.getPoint(), null, item);
   }
 
   // either point or targetContainer is null
@@ -161,17 +154,9 @@ public final class InsertComponentProcessor extends EventProcessor {
 
     final GridLocation location = (point != null)
       ? GridInsertProcessor.getGridInsertLocation(myEditor, point, item)
-      : new GridLocation(GridInsertMode.InCell);
-    boolean dropAllowed;
-    if (point != null) {
-      dropAllowed = FormEditingUtil.canDrop(myEditor, point.x, point.y, 1);
-    }
-    else {
-      assert targetContainer != null;
-      dropAllowed = targetContainer.canDrop(null, 1);
-    }
+      : new GridLocation(targetContainer, null, GridInsertMode.InCell);
 
-    if (dropAllowed || location.getMode() != GridInsertMode.InCell) {
+    if (location.canDrop(item)) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
