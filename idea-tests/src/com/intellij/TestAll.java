@@ -56,7 +56,7 @@ public class TestAll implements Test {
 
   public static int ourMode = SAVE_MEMORY_SNAPSHOT | START_GUARD | RUN_GC | CHECK_MEMORY | FILTER_CLASSES;
   private int myLastTestTestMethodCount = 0;
-  public static final int MAX_FAILURE_TEST_COUNT = 50;
+  public static final int MAX_FAILURE_TEST_COUNT = 150;
 
   public int countTestCases() {
     List classes = myTestCaseLoader.getClasses();
