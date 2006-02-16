@@ -16,13 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.NavigationItem;
 
 /**
  * Represents a file or directory which can be renamed.
  *
  * @author ven
  */
-public interface PsiFileSystemItem extends PsiNamedElement {
+public interface PsiFileSystemItem extends PsiNamedElement, NavigationItem {
   /**
    * Checks if it is possible to rename the element to the specified name,
    * and throws an exception if the rename is not possible. Does not actually modify anything.
