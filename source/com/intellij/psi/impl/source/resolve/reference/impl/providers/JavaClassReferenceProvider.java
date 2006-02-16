@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.xml.XMLLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,10 +159,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       final List<JavaReference> referencesList = new ArrayList<JavaReference>();
       int currentDot = -1;
       int index = 0;
+      boolean allowDollarInNames = element.getLanguage() instanceof XMLLanguage;
 
       while(true){
         int nextDotOrDollar = str.indexOf(SEPARATOR, currentDot + 1);
-        if (nextDotOrDollar == -1) {
+        if (nextDotOrDollar == -1 && allowDollarInNames) {
           nextDotOrDollar = str.indexOf(SEPARATOR2,currentDot + 1);
         }
         final String subreferenceText = nextDotOrDollar > 0 ? str.substring(currentDot + 1, nextDotOrDollar) : str.substring(currentDot + 1);
@@ -327,7 +329,15 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           if (myInStaticImport) {
             return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
           } else if (getElement().getText().charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
-            return aClass.getInnerClasses();
+            final PsiClass[] psiClasses = aClass.getInnerClasses();
+            final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
+
+            for(PsiClass c:psiClasses) {
+              if (c.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+                staticClasses.add(c);
+              }
+            }
+            return staticClasses.size() > 0 ? staticClasses.toArray(new PsiClass[staticClasses.size()]):PsiClass.EMPTY_ARRAY;
           }
         }
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -343,9 +353,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       public JavaResolveResult advancedResolve(boolean incompleteCode) {
         if (!myElement.isValid()) return JavaResolveResult.EMPTY;
 
-        final String s = getElement().getText();
+        final String elementText = getElement().getText();
 
-        if (myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
+        if (myIndex > 0 && elementText.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2) {
           final PsiElement psiElement = myReferences[myIndex - 1].resolve();
 
           if (psiElement instanceof PsiClass) {
@@ -355,7 +365,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           }
         }
 
-        String qName = s.substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+        String qName = elementText.substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
 
         PsiManager manager = myElement.getManager();
         if (myIndex == myReferences.length - 1) {
