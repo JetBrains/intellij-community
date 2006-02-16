@@ -209,6 +209,18 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
                     parent instanceof PsiReferenceExpression) {
                 return false;
             }
+            if (parent instanceof PsiTypeCastExpression) {
+                final PsiTypeCastExpression castExpression =
+                        (PsiTypeCastExpression)parent;
+                final PsiType castType = castExpression.getType();
+                if (castType instanceof PsiClassType) {
+                    final PsiClassType classType = (PsiClassType)castType;
+                    final PsiClass aClass = classType.resolve();
+                    if (aClass instanceof PsiTypeParameter) {
+                        return false;
+                    }
+                }
+            }
             final PsiMethodCallExpression containingMethodCallExpression =
                     getParentMethodCallExpression(expression);
             return !(containingMethodCallExpression != null &&
