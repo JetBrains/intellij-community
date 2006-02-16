@@ -35,6 +35,9 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
       public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
         return null;
       }
+
+      public void dragDropEnd() {
+      }
     }, source);
 
 

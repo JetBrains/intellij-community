@@ -277,6 +277,9 @@ public class ChangesListView extends TreeTable implements DataProvider {
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
       return new Pair<Image, Point>(DragImageFactory.createImage(ChangesListView.this, 0), new Point());
     }
+
+    public void dragDropEnd() {
+    }
   }
 
   private static class DragImageFactory {

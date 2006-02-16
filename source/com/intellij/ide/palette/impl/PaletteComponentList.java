@@ -353,5 +353,7 @@ public class PaletteComponentList extends JList {
       return null;
     }
 
+    public void dragDropEnd() {
+    }
   }
 }

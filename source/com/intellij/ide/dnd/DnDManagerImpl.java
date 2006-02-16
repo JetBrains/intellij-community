@@ -40,7 +40,6 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   private String myLastMessage;
   private DnDEvent myLastProcessedEvent;
 
-  private DragSourceListener myDragSourceListener = new MyDragSourceListener();
   private DragGestureListener myDragGestureListener = new MyDragGestureListnener();
   private DropTargetListener myDropTargetListener = new MyDropTargetListener();
 
@@ -448,7 +447,8 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
           }
 
           // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
-          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, myDragSourceListener);
+          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent,
+                        new MyDragSourceListener(source));
 
           // check if source is also a target
           //        DnDTarget target = getTarget(dge.getComponent());
@@ -481,6 +481,12 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   private class MyDragSourceListener implements DragSourceListener {
+    private final DnDSource mySource;
+
+    public MyDragSourceListener(final DnDSource source) {
+      mySource = source;
+    }
+
     public void dragEnter(DragSourceDragEvent dsde) {
       LOG.debug("dragEnter:" + dsde.getDragSourceContext().getComponent());
       myCurrentDragContext = dsde.getDragSourceContext();
@@ -495,6 +501,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     }
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
+      mySource.dragDropEnd();
       myLastProcessedTarget.cleanUpOnLeave();
       resetCurrentEvent("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
       Highlighters.hide(TEXT | ERROR_TEXT);

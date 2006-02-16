@@ -16,11 +16,10 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-
-import com.intellij.openapi.util.Pair;
 
 public interface DnDSource {
 
@@ -38,4 +37,5 @@ public interface DnDSource {
   @Nullable
   Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin);
 
+  void dragDropEnd();
 }
