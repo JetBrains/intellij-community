@@ -199,6 +199,8 @@ class DesignDropTargetListener implements DropTargetListener {
   public void drop(DropTargetDropEvent dtde) {
     try {
       myComponentTree.setDropTargetComponent(null);
+
+
       DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
@@ -240,7 +242,7 @@ class DesignDropTargetListener implements DropTargetListener {
       setDraggingState(dcl, false);
       return false;
     }
-    if (!GridInsertProcessor.isDropInsertAllowed(location, componentCount)) {
+    if (location != null && !location.canDrop(componentCount)) {
       location = null;
     }
 
@@ -285,18 +287,8 @@ class DesignDropTargetListener implements DropTargetListener {
     final RadComponent[] components = droppedComponents.toArray(new RadComponent[componentCount]);
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
 
-    if (location != null && location.getMode() != GridInsertMode.InCell) {
-      GridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
-    }
-    else {
-      FormEditingUtil.drop(
-        myEditor,
-        dropX,
-        dropY,
-        components,
-        dx,
-        dy
-      );
+    if (location != null) {
+      location.processDrop(myEditor, components, originalConstraints, dx, dy);
     }
 
     if (dropAction == DnDConstants.ACTION_COPY) {

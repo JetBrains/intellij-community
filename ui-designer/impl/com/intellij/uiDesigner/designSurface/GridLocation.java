@@ -1,15 +1,15 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 09.11.2005
- * Time: 14:41:14
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 class GridLocation {
   private RadContainer myContainer;
@@ -64,23 +64,63 @@ class GridLocation {
     return myCellRect;
   }
 
-  public boolean isColumnInsert() {
-    return getMode() == GridInsertMode.ColumnAfter || getMode() == GridInsertMode.ColumnBefore;
-  }
-
-  public boolean isRowInsert() {
-    return getMode() == GridInsertMode.RowAfter || getMode() == GridInsertMode.RowBefore;
-  }
-
-  public boolean isInsert() {
-    return isColumnInsert() || isRowInsert();
-  }
-
   public Point getTargetPoint() {
     return myTargetPoint;
   }
 
   public void rejectDrop() {
     myMode = GridInsertMode.NoDrop;
+  }
+
+  public boolean canDrop(final int componentCount) {
+    if (myMode == GridInsertMode.NoDrop) {
+      return false;
+    }
+    return myContainer.canDrop(myTargetPoint, componentCount);
+  }
+
+  public void placeFeedback(GuiEditor editor, int componentCount) {
+    Rectangle feedbackRect;
+    if (getContainer().isGrid()) {
+      feedbackRect = getGridFeedbackRect(componentCount);
+    }
+    else {
+      feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint.x, myTargetPoint.y, componentCount);
+    }
+    if (feedbackRect != null) {
+      final Rectangle rc = SwingUtilities.convertRectangle(getContainer().getDelegee(),
+                                                           feedbackRect,
+                                                           editor.getActiveDecorationLayer());
+      editor.getActiveDecorationLayer().putFeedback(rc);
+    }
+    else {
+      editor.getActiveDecorationLayer().removeFeedback();
+    }
+
+  }
+
+  protected Rectangle getGridFeedbackRect(final int componentCount) {
+    if (componentCount == 0) {
+      return null;
+    }
+    if (componentCount == 1) {
+      return getCellRect();
+    }
+    int insertCol = getColumn();
+    int lastCol = insertCol + componentCount - 1;
+    Rectangle cellRect = getCellRect();
+    final GridLayoutManager layoutManager = (GridLayoutManager) getContainer().getLayout();
+    int[] xs = layoutManager.getXs();
+    int[] widths = layoutManager.getWidths();
+    return new Rectangle(xs [insertCol], cellRect.y,
+                         xs [lastCol] + widths [lastCol] - xs [insertCol], cellRect.height);
+  }
+
+  public void processDrop(final GuiEditor editor,
+                          final RadComponent[] components,
+                          final GridConstraints[] originalConstraints,
+                          final int[] dx,
+                          final int[] dy) {
+    myContainer.drop(myTargetPoint, components, dx, dy);
   }
 }

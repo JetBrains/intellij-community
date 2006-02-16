@@ -37,7 +37,6 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private final GuiEditor myEditor;
   private boolean mySticky;
-  private RadContainer myTargetContainer;
   private RadComponent myInsertedComponent;
   private GridInsertProcessor myGridInsertProcessor;
 
@@ -178,27 +177,12 @@ public final class InsertComponentProcessor extends EventProcessor {
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            if (location.getMode() == GridInsertMode.InCell) {
-              if (point != null) {
-                myTargetContainer = FormEditingUtil.drop(myEditor, point.x, point.y, components, new int[]{0}, new int[]{0});
-              }
-              else {
-                assert targetContainer != null;
-                myTargetContainer = targetContainer;
-                myTargetContainer.drop(null, components, null, null);
-              }
-            }
-            else {
-              myTargetContainer = GridInsertProcessor.processGridInsertOnDrop(location, components, null);
-              if (myTargetContainer == null) {
-                return;
-              }
-            }
+            location.processDrop(myEditor, components, null, new int[]{0}, new int[]{0});
 
             FormEditingUtil.clearSelection(myEditor.getRootContainer());
             myInsertedComponent.setSelected(true);
 
-            if (myTargetContainer.isXY()) {
+            if (location.getContainer() != null && location.getContainer().isXY()) {
               Dimension newSize = myInsertedComponent.getPreferredSize();
               Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
               myInsertedComponent.setSize(newSize);
