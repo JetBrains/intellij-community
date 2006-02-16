@@ -23,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 public class CommonShortcuts {
+
   private CommonShortcuts() {}
 
   public static final ShortcutSet ALT_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK));
@@ -48,4 +49,10 @@ public class CommonShortcuts {
   public static ShortcutSet getNew() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_NEW_ELEMENT));
   }
+
+  public static ShortcutSet getMove() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_MOVE));
+  }
+
+
 }

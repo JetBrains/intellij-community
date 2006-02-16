@@ -280,6 +280,8 @@ public class ChangesListView extends TreeTable implements DataProvider {
   }
 
   private static class DragImageFactory {
+    private DragImageFactory() {}
+
     private static void drawSelection(JTable table, int column, Graphics g, final int width) {
       int y = 0;
       final int[] rows = table.getSelectedRows();

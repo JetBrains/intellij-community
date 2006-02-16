@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -31,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -108,12 +106,22 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final RemoveChangeListAction removeChangeListAction = new RemoveChangeListAction();
     removeChangeListAction.registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
 
+    final ShowDiffAction diffAction = new ShowDiffAction();
+    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
+                                                                                      SystemInfo.isMac
+                                                                                      ? KeyEvent.META_DOWN_MASK
+                                                                                      : KeyEvent.CTRL_DOWN_MASK)),
+                                         panel);
+
+    final MoveChangesToAnotherListAction toAnotherListAction = new MoveChangesToAnotherListAction();
+    toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
+
     group.add(refreshAction);
     group.add(newChangeListAction);
     group.add(removeChangeListAction);
     group.add(new SetDefaultChangeListAction());
-    group.add(new MoveChangesToAnotherListAction());
-    group.add(new ShowDiffAction());
+    group.add(toAnotherListAction);
+    group.add(diffAction);
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
@@ -134,18 +142,24 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
 
         final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
-        for (VcsDirtyScope scope : scopes) {
+        for (final VcsDirtyScope scope : scopes) {
           final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
           if (vcs != null) {
             final ChangeProvider changeProvider = vcs.getChangeProvider();
             if (changeProvider != null) {
-              final Collection<Change> changes = changeProvider.getChanges(scope);
-              List<Change> filteredChanges = new ArrayList<Change>();
-              for (Change change : changes) {
-                if (isUnder(change, scope)) {
-                  filteredChanges.add(change);
+              final List<Change> filteredChanges = new ArrayList<Change>();
+              changeProvider.getChanges(scope, new ChangelistBuilder() {
+                public void processChange(Change change) {
+                  if (isUnder(change, scope)) {
+                    filteredChanges.add(change);
+                  }
                 }
-              }
+
+                public void processUnversionedFile(VirtualFile file) {
+                  // TODO: process unknown files
+                }
+              }, null); // TODO: make real indicator
+
               udpateUI(scope, filteredChanges);
             }
           }

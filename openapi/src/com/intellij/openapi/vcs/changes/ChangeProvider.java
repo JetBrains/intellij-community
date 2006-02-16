@@ -1,10 +1,10 @@
 package com.intellij.openapi.vcs.changes;
 
-import java.util.Collection;
+import com.intellij.openapi.progress.ProgressIndicator;
 
 /**
  * @author max
  */
 public interface ChangeProvider {
-  Collection<Change> getChanges(final VcsDirtyScope dirtyScope);
+  void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress);
 }
