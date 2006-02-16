@@ -69,7 +69,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void initComponent() {}
-  public void disposeComponent() {}
+  public void disposeComponent() {
+    myIsDisposed = true;
+  }
 
   public void fileDirty(VirtualFile file) {
     fileDirty(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
