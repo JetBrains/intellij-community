@@ -498,7 +498,7 @@ public final class ComponentTree extends Tree implements DataProvider {
             container.drop(null, components, null, null);
           }
           else {
-            new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem, true);
+            new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem);
           }
         }
       }

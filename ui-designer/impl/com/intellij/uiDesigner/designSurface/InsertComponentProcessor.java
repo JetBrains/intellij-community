@@ -39,9 +39,6 @@ public final class InsertComponentProcessor extends EventProcessor {
   private boolean mySticky;
   private RadContainer myTargetContainer;
   private RadComponent myInsertedComponent;
-  private Point myInitialPoint;
-  private Dimension myInitialSize;
-  private boolean myShouldSetPreferredSizeIfNotResized;
   private GridInsertProcessor myGridInsertProcessor;
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
@@ -138,61 +135,16 @@ public final class InsertComponentProcessor extends EventProcessor {
         case  MouseEvent.MOUSE_PRESSED:
           processMousePressed(e);
           break;
-        case  MouseEvent.MOUSE_RELEASED:
-          processMouseReleased();
-          break;
-        case  MouseEvent.MOUSE_DRAGGED:
-          processMouseDragged(e);
-          break;
-    }
-  }
-
-  private void processMouseDragged(final MouseEvent e) {
-    if (myTargetContainer != null && myTargetContainer.isXY()) {
-      final int width = e.getX() - myInitialPoint.x;
-      final int height = e.getY() - myInitialPoint.y;
-
-      final Dimension newSize = myInsertedComponent.getSize();
-
-      if (width >= myInitialSize.width) {
-        newSize.width = width;
-      }
-      if (height >= myInitialSize.height) {
-        newSize.height = height;
-      }
-      myInsertedComponent.setSize(newSize);
-      myEditor.refresh();
-    }
-  }
-
-  private void processMouseReleased() {
-    if (!mySticky) {
-      PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
-    }
-
-    if (myTargetContainer != null) {
-      if (myTargetContainer.isXY()) {
-        Dimension newSize = myInsertedComponent.getSize();
-        if (newSize.equals(myInitialSize) && myShouldSetPreferredSizeIfNotResized) {
-          // if component dropped into XY and was not resized, make it preferred size
-          newSize = myInsertedComponent.getPreferredSize();
-        }
-        Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
-        myInsertedComponent.setSize(newSize);
-      }
-
-      myEditor.refreshAndSave(true);
     }
   }
 
   private void processMousePressed(final MouseEvent e) {
     final ComponentItem item = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
-    processComponentInsert(e.getPoint(), null, item, false);
+    processComponentInsert(e.getPoint(), null, item);
   }
 
   // either point or targetContainer is null
-  public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer,
-                                     final ComponentItem item, final boolean keepDefaultSize) {
+  public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
@@ -246,29 +198,10 @@ public final class InsertComponentProcessor extends EventProcessor {
             FormEditingUtil.clearSelection(myEditor.getRootContainer());
             myInsertedComponent.setSelected(true);
 
-            if (!keepDefaultSize) {
-              myInitialSize = null;
-              myShouldSetPreferredSizeIfNotResized = true;
-              if (myTargetContainer.isXY()) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-                myInitialSize = myInsertedComponent.getSize();
-                if (myInitialSize.width > 0 && myInitialSize.height > 0) {
-                  myShouldSetPreferredSizeIfNotResized = false;
-                }
-                else {
-                  // size was not specified as initial value
-                  myInitialSize = new Dimension(7, 7);
-                }
-                Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
-                myInsertedComponent.setSize(myInitialSize);
-              }
-            }
-            else {
-              if (myTargetContainer.isXY()) {
-                Dimension newSize = myInsertedComponent.getPreferredSize(); 
-                Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
-                myInsertedComponent.setSize(newSize);
-              }
+            if (myTargetContainer.isXY()) {
+              Dimension newSize = myInsertedComponent.getPreferredSize();
+              Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), newSize);
+              myInsertedComponent.setSize(newSize);
             }
 
             if (!GuiDesignerConfiguration.getInstance(myEditor.getProject()).IRIDA_LAYOUT_MODE &&
@@ -281,9 +214,11 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             checkBindTopLevelPanel();
 
-            myEditor.refreshAndSave(false);
+            if (!mySticky) {
+              PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+            }
 
-            myInitialPoint = point;
+            myEditor.refreshAndSave(false);
           }
 
         },
