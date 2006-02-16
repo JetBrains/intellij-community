@@ -66,14 +66,14 @@ class InlineMethodHandler {
     final boolean invokedOnReference = reference != null;
     if (!invokedOnReference) {
       final VirtualFile vFile = method.getContainingFile().getVirtualFile();
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {vFile});
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFile);
     }
     PsiJavaCodeReferenceElement refElement = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor);
     dialog.show();
   }
 
-  private boolean checkChainingConstructor(PsiMethod constructor) {
+  private static boolean checkChainingConstructor(PsiMethod constructor) {
     PsiCodeBlock body = constructor.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
@@ -81,23 +81,21 @@ class InlineMethodHandler {
         PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-          if (methodExpr != null) {
             if ("this".equals(methodExpr.getReferenceName())) {
               PsiElement resolved = methodExpr.resolve();
               return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor(); //delegated via "this" call
             }
-          }
         }
       }
     }
     return false;
   }
 
-  private boolean checkRecursive(PsiMethod method) {
+  private static boolean checkRecursive(PsiMethod method) {
     return checkCalls(method.getBody(), method);
   }
 
-  private boolean checkCalls(PsiElement scope, PsiMethod method) {
+  private static boolean checkCalls(PsiElement scope, PsiMethod method) {
     if (scope instanceof PsiMethodCallExpression){
       PsiMethod refMethod = (PsiMethod)((PsiMethodCallExpression)scope).getMethodExpression().resolve();
       if (method.equals(refMethod)) return true;
