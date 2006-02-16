@@ -97,15 +97,14 @@ final class FileTree{
 
     myFiles.remove(file);
     ArrayList<VirtualFile> dirsToBeRemoved=null;
-    for(Iterator<VirtualFile> i=myDirectory2Children.keySet().iterator();i.hasNext();){
-      VirtualFile _directory=i.next();
-      ArrayList<VirtualFile> children=myDirectory2Children.get(_directory);
-      LOG.assertTrue(children!=null);
-      if(children.contains(file)){
+    for (VirtualFile _directory : myDirectory2Children.keySet()) {
+      ArrayList<VirtualFile> children = myDirectory2Children.get(_directory);
+      LOG.assertTrue(children != null);
+      if (children.contains(file)) {
         children.remove(file);
-        if(children.size()==0){
-          if(dirsToBeRemoved==null){
-            dirsToBeRemoved=new ArrayList<VirtualFile>(2);
+        if (children.size() == 0) {
+          if (dirsToBeRemoved == null) {
+            dirsToBeRemoved = new ArrayList<VirtualFile>(2);
           }
           dirsToBeRemoved.add(_directory); // we have to remove empty _directory
         }
@@ -121,8 +120,8 @@ final class FileTree{
     // We have remove also all removed (empty) directories
     if(dirsToBeRemoved!=null){
       LOG.assertTrue(dirsToBeRemoved.size()>0);
-      for(int i=0;i<dirsToBeRemoved.size();i++){
-        removeDir(dirsToBeRemoved.get(i));
+      for (VirtualFile dirToBeRemoved : dirsToBeRemoved) {
+        removeDir(dirToBeRemoved);
       }
     }
   }
@@ -135,7 +134,7 @@ final class FileTree{
     if(!myDirectory2Children.containsKey(psiDirectory)){
       throw new IllegalArgumentException("directory is not in the tree: "+psiDirectory);
     }
-    ArrayList children=myDirectory2Children.remove(psiDirectory);
+    ArrayList<VirtualFile> children=myDirectory2Children.remove(psiDirectory);
     if(children==null){
       throw new IllegalArgumentException("directory has no children list: "+psiDirectory);
     }
@@ -144,16 +143,15 @@ final class FileTree{
     }
     //
     myStrictDirectory2Children.remove(psiDirectory);
-    ArrayList dirsToBeRemoved=null;
-    for(Iterator<VirtualFile> i=myDirectory2Children.keySet().iterator();i.hasNext();){
-      VirtualFile _directory=i.next();
-      children=myDirectory2Children.get(_directory);
-      LOG.assertTrue(children!=null);
-      if(children.contains(psiDirectory)){
+    ArrayList<VirtualFile> dirsToBeRemoved=null;
+    for (VirtualFile _directory : myDirectory2Children.keySet()) {
+      children = myDirectory2Children.get(_directory);
+      LOG.assertTrue(children != null);
+      if (children.contains(psiDirectory)) {
         children.remove(psiDirectory);
-        if(children.size()==0){
-          if(dirsToBeRemoved==null){
-            dirsToBeRemoved=new ArrayList(2);
+        if (children.size() == 0) {
+          if (dirsToBeRemoved == null) {
+            dirsToBeRemoved = new ArrayList<VirtualFile>(2);
           }
           dirsToBeRemoved.add(_directory); // we have remove empty _directory
         }
@@ -161,8 +159,8 @@ final class FileTree{
     }
     //
     if(dirsToBeRemoved!=null){
-      for(int i=0;i<dirsToBeRemoved.size();i++){
-        removeDir((VirtualFile)dirsToBeRemoved.get(i));
+      for (VirtualFile dirToBeRemoved : dirsToBeRemoved) {
+        removeDir(dirToBeRemoved);
       }
     }
   }
@@ -195,17 +193,14 @@ final class FileTree{
   }
 
   private void collectFiles(VirtualFile dir,ArrayList<VirtualFile> filesList){
-    ArrayList<VirtualFile> children=myDirectory2Children.get(dir);
-    if(children==null){
-      return;
-    }else{
-      for(int i=0;i<children.size();i++){
-        VirtualFile child=children.get(i);
-        if(!child.isDirectory()){
+    ArrayList<VirtualFile> children = myDirectory2Children.get(dir);
+    if (children!= null) {
+      for (VirtualFile child : children) {
+        if (!child.isDirectory()) {
           LOG.assertTrue(!filesList.contains(child));
           filesList.add(child);
-        }else{
-          collectFiles(child,filesList);
+        } else {
+          collectFiles(child, filesList);
         }
       }
     }
