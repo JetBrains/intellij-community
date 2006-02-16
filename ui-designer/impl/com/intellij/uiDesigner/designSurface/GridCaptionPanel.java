@@ -304,7 +304,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public void mouseDragged(MouseEvent e) {
       if (myResizeLine != -1) {
         final ActiveDecorationLayer layer = myEditor.getActiveDecorationLayer();
-        Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(), layer);
+        Point pnt = e.getPoint();
         Rectangle rc;
         if (myIsRow) {
           rc = new Rectangle(0, pnt.y, layer.getSize().width, 1);
@@ -312,7 +312,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         else {
           rc = new Rectangle(pnt.x, 0, 1, layer.getSize().height);
         }
-        layer.putFeedback(rc, myFeedbackPainter);
+        layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter);
       }
     }
   }

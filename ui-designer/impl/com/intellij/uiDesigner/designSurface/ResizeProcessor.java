@@ -218,8 +218,7 @@ public final class ResizeProcessor extends EventProcessor {
     Rectangle rcGrid = getGridSpanGridRect(grid, myOriginalConstraints, point, myResizeMask);
     if (rcGrid != null) {
       Rectangle rc = grid.getCellRangeRect(rcGrid.y, rcGrid.x, rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
-      rc = SwingUtilities.convertRectangle(myOriginalParent.getDelegee(), rc, myEditor.getActiveDecorationLayer());
-      myEditor.getActiveDecorationLayer().putFeedback(rc);
+      myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc);
       setCursor(isGridSpanDropAllowed(rcGrid) ? getResizeCursor() : FormEditingUtil.getMoveNoDropCursor());
     }
     else {

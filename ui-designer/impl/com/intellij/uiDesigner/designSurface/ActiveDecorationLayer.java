@@ -274,11 +274,12 @@ final class ActiveDecorationLayer extends JComponent{
     paintChildren(g);
   }
 
-  public void putFeedback(final Rectangle rc) {
-    putFeedback(rc, myRectangleFeedbackPainter);
+  public void putFeedback(Component relativeTo, final Rectangle rc) {
+    putFeedback(relativeTo, rc, myRectangleFeedbackPainter);
   }
 
-  public void putFeedback(final Rectangle rc, final FeedbackPainter feedbackPainter) {
+  public void putFeedback(Component relativeTo, Rectangle rc, final FeedbackPainter feedbackPainter) {
+    rc = SwingUtilities.convertRectangle(relativeTo, rc, this);
     myFeedbackPainterPanel.setBounds(rc);
     myFeedbackPainterPanel.setPainter(feedbackPainter != null ? feedbackPainter : myRectangleFeedbackPainter);
     if (myFeedbackPainterPanel.getParent() != this) {

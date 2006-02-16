@@ -4,14 +4,13 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.GridChangeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -137,18 +136,12 @@ class GridInsertLocation extends GridLocation {
 
         if (rcFeedback != null) {
           rcFeedback.translate(vGridLines [insertCol], hGridLines [insertRow]);
-          rcFeedback = SwingUtilities.convertRectangle(getContainer().getDelegee(),
-                                                       rcFeedback,
-                                                       editor.getActiveDecorationLayer());
-          editor.getActiveDecorationLayer().putFeedback(rcFeedback);
+          editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), rcFeedback);
           return;
         }
       }
     }
 
-    cellRect = SwingUtilities.convertRectangle(getContainer().getDelegee(),
-                                               cellRect,
-                                               editor.getActiveDecorationLayer());
     int w=4;
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (insertMode) {
@@ -176,7 +169,7 @@ class GridInsertLocation extends GridLocation {
         rc = cellRect;
         painter = null;
     }
-    editor.getActiveDecorationLayer().putFeedback(rc, painter);
+    editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), rc, painter);
   }
 
 

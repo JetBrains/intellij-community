@@ -57,7 +57,7 @@ public class GridInsertProcessor {
       container.getComponentAtGrid(0, 0) == null) {
       GridInsertMode mode = container.canDrop(targetPoint, dragObject.getComponentCount()) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
       final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
-      return new GridLocation(container, 0, 0, targetPoint, rc, mode);
+      return new FirstComponentInsertLocation(container, 0, 0, targetPoint, rc, mode);
     }
 
     int[] xs = grid.getXs();

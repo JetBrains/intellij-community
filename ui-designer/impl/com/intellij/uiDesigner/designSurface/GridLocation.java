@@ -1,22 +1,21 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author yole
  */
 class GridLocation {
-  private RadContainer myContainer;
+  protected RadContainer myContainer;
   private int myRow;
   private int myColumn;
-  private Point myTargetPoint;
-  private Rectangle myCellRect;
+  protected Point myTargetPoint;
+  protected Rectangle myCellRect;
   private GridInsertMode myMode;
 
   public GridLocation(final GridInsertMode mode) {
@@ -89,10 +88,7 @@ class GridLocation {
       feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint, componentCount);
     }
     if (feedbackRect != null) {
-      final Rectangle rc = SwingUtilities.convertRectangle(getContainer().getDelegee(),
-                                                           feedbackRect,
-                                                           editor.getActiveDecorationLayer());
-      editor.getActiveDecorationLayer().putFeedback(rc);
+      editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), feedbackRect);
     }
     else {
       editor.getActiveDecorationLayer().removeFeedback();

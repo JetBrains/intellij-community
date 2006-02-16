@@ -10,4 +10,6 @@ package com.intellij.uiDesigner.designSurface;
 public interface ComponentDragObject {
   int getComponentCount();
   int getDragRelativeColumn();
+  int getHSizePolicy();
+  int getVSizePolicy();
 }

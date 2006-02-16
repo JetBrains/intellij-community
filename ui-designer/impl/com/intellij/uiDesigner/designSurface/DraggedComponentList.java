@@ -191,6 +191,22 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return myDragRelativeColumn;
   }
 
+  public int getHSizePolicy() {
+    int result = 0;
+    for(GridConstraints c: myOriginalConstraints) {
+      result |= c.getHSizePolicy();
+    }
+    return result;
+  }
+
+  public int getVSizePolicy() {
+    int result = 0;
+    for(GridConstraints c: myOriginalConstraints) {
+      result |= c.getVSizePolicy();
+    }
+    return result;
+  }
+
   public RadContainer[] getOriginalParents() {
     return myOriginalParents;
   }

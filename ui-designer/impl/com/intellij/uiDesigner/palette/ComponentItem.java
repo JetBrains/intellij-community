@@ -343,6 +343,14 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     return 0;
   }
 
+  public int getHSizePolicy() {
+    return myDefaultConstraints.getHSizePolicy();
+  }
+
+  public int getVSizePolicy() {
+    return myDefaultConstraints.getVSizePolicy();
+  }
+
   private static final class MySmallIcon implements Icon{
     private final Image myImage;
 

@@ -139,6 +139,14 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   // either point or targetContainer is null
   public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
+    final GridLocation location = (point != null)
+      ? GridInsertProcessor.getGridInsertLocation(myEditor, point, item)
+      : new GridLocation(targetContainer, null, GridInsertMode.InCell);
+
+    processComponentInsert(item, location);
+  }
+
+  public void processComponentInsert(final ComponentItem item, final GridLocation location) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
@@ -151,10 +159,6 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
 
     myInsertedComponent = createInsertedComponent(myEditor, item);
-
-    final GridLocation location = (point != null)
-      ? GridInsertProcessor.getGridInsertLocation(myEditor, point, item)
-      : new GridLocation(targetContainer, null, GridInsertMode.InCell);
 
     if (location.canDrop(item)) {
       CommandProcessor.getInstance().executeCommand(
