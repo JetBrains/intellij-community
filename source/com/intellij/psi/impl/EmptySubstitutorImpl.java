@@ -46,10 +46,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return another;
   }
 
-  public PsiSubstitutor merge(PsiSubstitutor other){
-    return other;
-  }
-
   @NonNls
   public String toString() {
     return "EMPTY";

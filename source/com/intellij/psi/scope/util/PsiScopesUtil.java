@@ -22,6 +22,10 @@ import com.intellij.util.IncorrectOperationException;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
+
+  private PsiScopesUtil() {
+  }
+
   public static boolean treeWalkUp(PsiScopeProcessor processor, PsiElement entrance, PsiElement maxScope) {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
@@ -121,7 +125,7 @@ public class PsiScopesUtil {
             if(type instanceof PsiClassType){
               final JavaResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
               target = typeResult.getElement();
-              substitutor = substitutor.merge(typeResult.getSubstitutor());
+              substitutor = substitutor.putAll(typeResult.getSubstitutor());
             }
             else target = null;
           }
@@ -130,7 +134,7 @@ public class PsiScopesUtil {
             if(type instanceof PsiClassType){
               final JavaResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
               target = typeResult.getElement();
-              substitutor = substitutor.merge(typeResult.getSubstitutor());
+              substitutor = substitutor.putAll(typeResult.getSubstitutor());
             }
             else target = null;
           }
@@ -176,7 +180,7 @@ public class PsiScopesUtil {
           if (keyword.getTokenType() == JavaTokenType.THIS_KEYWORD){
             final PsiClass aClass = ResolveUtil.getContextClass(methodCall);
             if (aClass == null) {
-              throw new MethodProcessorSetupFailedException("Cant resolve class for this expression");
+              throw new MethodProcessorSetupFailedException("Can't resolve class for this expression");
             }
 
             processor.setIsConstructor(true);
@@ -190,13 +194,24 @@ public class PsiScopesUtil {
           else if (keyword.getTokenType() == JavaTokenType.SUPER_KEYWORD){
             PsiClass aClass = ResolveUtil.getContextClass(methodCall);
             if (aClass == null) {
-              throw new MethodProcessorSetupFailedException("Cant resolve class for super expression");
+              throw new MethodProcessorSetupFailedException("Can't resolve class for super expression");
             }
 
             final PsiClass superClass = aClass.getSuperClass();
-            if (superClass != null) {  //null for java.lang.Object only
-              PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-              LOG.assertTrue(substitutor != null);
+            if (superClass != null) {
+              PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+              PsiClass runSuper = superClass;
+              do {
+                if (runSuper != null) {
+                  PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(runSuper, aClass, PsiSubstitutor.EMPTY);
+                  LOG.assertTrue(superSubstitutor != null);
+                  substitutor = substitutor.putAll(superSubstitutor);
+                }
+                if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
+                aClass = ResolveUtil.getContextClass(aClass);
+                if (aClass != null) runSuper = aClass.getSuperClass();
+              } while (aClass != null);
+
               processor.setIsConstructor(true);
               processor.setAccessClass(superClass);
               processScope(superClass, processor, substitutor, null, call);

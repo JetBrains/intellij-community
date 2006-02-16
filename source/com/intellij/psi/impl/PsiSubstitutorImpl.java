@@ -63,7 +63,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
   }
 
-  private abstract class SubstitutionVisitor extends PsiTypeVisitorEx<PsiType> {
+  private abstract static class SubstitutionVisitor extends PsiTypeVisitorEx<PsiType> {
     public PsiType visitType(PsiType type) {
       LOG.assertTrue(false);
       return null;
@@ -287,14 +287,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return substitutor;
   }
 
-
-  public PsiSubstitutor merge(PsiSubstitutor other) {
-    if (other == PsiSubstitutor.EMPTY) return this;
-
-    PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
-    substitutor.mySubstitutionMap.putAll(((PsiSubstitutorImpl)other).mySubstitutionMap);
-    return substitutor;
-  }
 
   public String toString() {
     @NonNls StringBuffer buffer = new StringBuffer();

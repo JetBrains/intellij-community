@@ -103,11 +103,6 @@ public interface PsiSubstitutor {
   PsiSubstitutor putAll(PsiSubstitutor another);
 
   /**
-   * @deprecated use {@link #putAll(PsiSubstitutor)} instead.
-   */
-  PsiSubstitutor merge(PsiSubstitutor other);
-
-  /**
    * Returns the map from type parameters to types used for substution by this substitutor.
    *
    * @return the substitution map instance.
