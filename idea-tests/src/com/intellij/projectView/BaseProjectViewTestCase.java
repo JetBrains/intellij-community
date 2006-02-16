@@ -1,6 +1,5 @@
 package com.intellij.projectView;
 
-import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -11,6 +10,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +53,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected AbstractProjectViewPSIPane createPane() {
     final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject, SelectInManager.getInstance(myProject)) {
-      protected ProjectViewSelectInTarget createSelectInTarget() {
+      public SelectInTarget createSelectInTarget() {
         return null;
       }
 
@@ -78,7 +78,6 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
             postRunnable.run();
           }
         };
-
       }
 
       protected ProjectAbstractTreeStructureBase createStructure() {
@@ -103,6 +102,10 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
       public String getTitle() {
         return null;
+      }
+
+      public int getWeight() {
+        return 0;
       }
     };
     pane.createComponent();

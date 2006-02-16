@@ -43,6 +43,7 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
   @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
   @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
+  @NonNls public static final String SCOPE = IdeBundle.message("select.in.scope");
 
   private SelectInManager() {
   }

@@ -15,10 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
@@ -59,11 +56,11 @@ public abstract class PopupHandler extends MouseAdapter {
     installPopupHandler(component, group, place, ActionManager.getInstance());
   }
 
-  public static MouseListener installPopupHandler(JComponent component, ActionGroup group, String place, ActionManager actionManager) {
+  public static MouseListener installPopupHandler(JComponent component, final ActionGroup group, final String place, final ActionManager actionManager) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
-    final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
     PopupHandler popupHandler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
+        final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
         popupMenu.getComponent().show(comp, x, y);
       }
     };

@@ -8,19 +8,19 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
-import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -29,13 +29,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -54,13 +52,11 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane implements ProjectComponent {
   protected JScrollPane myComponent;
-  private MouseListener myTreePopupHandler;
 
   protected AbstractProjectViewPSIPane(Project project, SelectInManager selectInManager) {
     super(project);
@@ -78,27 +74,23 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTreeBuilder = createBuilder(treeModel);
 
     installComparator();
-    initPSITree();
+    initTree();
     restoreState();
     return myComponent;
   }
 
   public final void dispose() {
-    myTreePopupHandler = null;
     myComponent = null;
     super.dispose();
   }
 
-  protected final void initPSITree() {
+  protected final void initTree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
     myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
-
-    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
 
     EditSourceOnDoubleClickHandler.install(myTree);
 
@@ -135,7 +127,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
 
-          final DefaultMutableTreeNode selectedNode = myTree.getSelectedNode();
+          final DefaultMutableTreeNode selectedNode = ((ProjectViewTree)myTree).getSelectedNode();
           if (selectedNode != null && !selectedNode.isLeaf()) {
             return;
           }
@@ -154,30 +146,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         }
       }
     });
-  }
-
-
-  public final void expand(Object[] path) {
-    myTreeBuilder.buildNodeForPath(path);
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForPath(path);
-    if (node == null) {
-      if (path.length != 0) {
-        expand(path[path.length - 1]);
-      }
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
-  }
-
-  public final void expand(Object element) {
-    myTreeBuilder.buildNodeForElement(element);
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    if (node == null) {
-      return;
-    }
-    TreePath treePath = new TreePath(node.getPath());
-    myTree.expandPath(treePath);
+    installTreePopupHandler(ActionPlaces.PROJECT_VIEW_POPUP, IdeActions.GROUP_PROJECT_VIEW_POPUP);
   }
 
   public final void updateFromRoot(boolean restoreExpandedPaths) {
@@ -206,14 +175,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       }
     });
   }
-
-  public void updateTreePopupHandler() {
-    myTree.removeMouseListener(myTreePopupHandler);
-    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
-  }
-
-  protected abstract ProjectViewSelectInTarget createSelectInTarget();
 
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
@@ -255,7 +216,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
-    MySpeedSearch(Tree tree) {
+    MySpeedSearch(JTree tree) {
       super(tree);
     }
 

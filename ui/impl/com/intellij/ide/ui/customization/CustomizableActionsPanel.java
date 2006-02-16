@@ -2,11 +2,6 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.PackageViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.j2ee.module.view.J2EEProjectViewPane;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -89,7 +84,7 @@ public class CustomizableActionsPanel {
         boolean hasFocus
       ) {
         if (value instanceof CustomActionsSchema) {
-          final CustomActionsSchema schema = ((CustomActionsSchema)value);
+          final CustomActionsSchema schema = (CustomActionsSchema)value;
           append(schema.getName(),
                  schema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME)
                  ? SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -116,7 +111,7 @@ public class CustomizableActionsPanel {
         final boolean isSingleSelection = selectionPaths != null && selectionPaths.length == 1;
         myAddActionButton.setEnabled(isSingleSelection);
         if (isSingleSelection) {
-          final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)selectionPaths[0].getLastPathComponent());
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPaths[0].getLastPathComponent();
           String actionId = getActionId(node);
           if (actionId != null) {
             final AnAction action = actionManager.getAction(actionId);
@@ -283,10 +278,7 @@ public class CustomizableActionsPanel {
       .addRemoveAction(IdeBundle.message("action.remove.customization.schema"));
     removeActionDescription.setEnableCondition(new Condition<CustomActionsSchema>() {
       public boolean value(final CustomActionsSchema schema) {
-        if (schema.getName().equals(IdeBundle.message("customizations.schema.default"))) {
-          return false;
-        }
-        return true;
+        return !schema.getName().equals(IdeBundle.message("customizations.schema.default"));
       }
     });
     controller
@@ -386,13 +378,13 @@ public class CustomizableActionsPanel {
     myMoveActionUpButton.setEnabled(false);
   }
 
-  private boolean isMoveSupported(JTree tree, int dir) {
-    DefaultMutableTreeNode parent = null;
+  private static boolean isMoveSupported(JTree tree, int dir) {
     final TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {
-      for (TreePath treePath : selectionPaths) {
+      DefaultMutableTreeNode parent = null;
+      for (TreePath treePath : selectionPaths)
         if (treePath.getLastPathComponent() != null) {
-          final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
           if (parent == null) {
             parent = (DefaultMutableTreeNode)node.getParent();
           }
@@ -410,7 +402,6 @@ public class CustomizableActionsPanel {
             }
           }
         }
-      }
       return true;
     }
     return false;
@@ -470,19 +461,12 @@ public class CustomizableActionsPanel {
     return myPanel;
   }
 
-  private void setCustomizationSchemaForCurrentProjects() {
+  private static void setCustomizationSchemaForCurrentProjects() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(project);
       frame.updateToolbar();
       frame.updateMenuBar();
-      final ProjectView projectView = ProjectView.getInstance(project);
-      projectView.getProjectViewPaneById(ProjectViewPane.ID).updateTreePopupHandler();
-      projectView.getProjectViewPaneById(PackageViewPane.ID).updateTreePopupHandler();
-      final AbstractProjectViewPane pane = projectView.getProjectViewPaneById(J2EEProjectViewPane.ID);
-      if (pane != null) {
-        pane.updateTreePopupHandler();
-      }
 
       final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
       final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();
@@ -536,10 +520,7 @@ public class CustomizableActionsPanel {
 
   public boolean isModified() {
     if (mySelectedSchema == null) {
-      if (CustomizableActionsSchemas.ACTIVE_SCHEMA != CustomizableActionsSchemas.DEFAULT_SCHEMA) {
-        return true;
-      }
-      return false;
+      return CustomizableActionsSchemas.ACTIVE_SCHEMA != CustomizableActionsSchemas.DEFAULT_SCHEMA;
     }
     final CustomizableActionsSchemas allSchemas = CustomizableActionsSchemas.getInstance();
     if (!mySelectedSchema.getName().equals(allSchemas.getActiveSchema().getName())) {
@@ -610,9 +591,9 @@ public class CustomizableActionsPanel {
                                                   int row,
                                                   boolean hasFocus) {
       super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-      Icon icon = null;
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+        Icon icon = null;
         if (userObject instanceof Group) {
           Group group = (Group)userObject;
           String name = group.getName();
@@ -676,10 +657,9 @@ public class CustomizableActionsPanel {
   }
 
   @Nullable
-  private String getActionId(DefaultMutableTreeNode node) {
-    return (String)(node.getUserObject() instanceof String ? node.getUserObject() : (node.getUserObject() instanceof Pair
-                                                                                     ? ((Pair)node.getUserObject()).first
-                                                                                     : null));
+  private static String getActionId(DefaultMutableTreeNode node) {
+    return (String)(node.getUserObject() instanceof String ? node.getUserObject() :
+                    node.getUserObject() instanceof Pair ? ((Pair)node.getUserObject()).first : null);
   }
 
   protected void doSetIcon(DefaultMutableTreeNode node, String path) {
@@ -709,7 +689,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private TextFieldWithBrowseButton createBrowseField(){
+  private static TextFieldWithBrowseButton createBrowseField(){
     TextFieldWithBrowseButton textField = new TextFieldWithBrowseButton();
     textField.setPreferredSize(new Dimension(150, textField.getPreferredSize().height));
     textField.setMinimumSize(new Dimension(150, textField.getPreferredSize().height));
@@ -741,8 +721,8 @@ public class CustomizableActionsPanel {
     }
 
     protected JComponent createCenterPanel() {
-      JPanel northPanel = new JPanel(new BorderLayout());
       myTextField = createBrowseField();
+      JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myTextField, BorderLayout.NORTH);
       return northPanel;
     }
@@ -803,7 +783,6 @@ public class CustomizableActionsPanel {
       myTree.setModel(model);
       myTree.setCellRenderer(new MyTreeCellRenderer());
       final ActionManager actionManager = ActionManager.getInstance();
-      JPanel panel = new JPanel(new BorderLayout());
 
       mySetIconButton = new JButton(IdeBundle.message("button.set.icon"));
       mySetIconButton.setEnabled(false);
@@ -811,7 +790,7 @@ public class CustomizableActionsPanel {
         public void actionPerformed(ActionEvent e) {
           final TreePath selectionPath = myTree.getSelectionPath();
           if (selectionPath != null) {
-            doSetIcon(((DefaultMutableTreeNode)selectionPath.getLastPathComponent()), myTextField.getText());
+            doSetIcon((DefaultMutableTreeNode)selectionPath.getLastPathComponent(), myTextField.getText());
             myTree.repaint();
           }
         }
@@ -827,6 +806,7 @@ public class CustomizableActionsPanel {
       northPanel.add(new JLabel(IdeBundle.message("label.icon.path")), BorderLayout.WEST);
       northPanel.add(mySetIconButton, BorderLayout.EAST);
       northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      JPanel panel = new JPanel(new BorderLayout());
       panel.add(northPanel, BorderLayout.NORTH);
 
       panel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
@@ -852,7 +832,7 @@ public class CustomizableActionsPanel {
       TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
         public boolean accept(Object node) {
           if (node instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode mutableNode = ((DefaultMutableTreeNode)node);
+            final DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
             final Object userObject = mutableNode.getUserObject();
             if (userObject instanceof Pair) {
               String actionId = (String)((Pair)userObject).first;

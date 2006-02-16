@@ -75,7 +75,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     }
   }
 
-  private boolean isTopLevelClass(final PsiElement element) {
+  private static boolean isTopLevelClass(final PsiElement element) {
     if (!(element instanceof PsiClass))
     {
       return false;

@@ -3,14 +3,15 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -19,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,11 +37,15 @@ import java.util.List;
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider {
   protected final Project myProject;
   protected Runnable myTreeChangeListener;
-  protected ProjectViewTree myTree;
+  protected JTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   protected BaseProjectTreeBuilder myTreeBuilder;
   private TreeState myReadTreeState = new TreeState();
   private String mySubId;
+
+  protected AbstractProjectViewPane(Project project) {
+    myProject = project;
+  }
 
   protected final void fireTreeChangeListener() {
     if (myTreeChangeListener != null) myTreeChangeListener.run();
@@ -46,12 +54,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public final void setTreeChangeListener(Runnable listener) {
     myTreeChangeListener = listener;
   }
+
   public final void removeTreeChangeListener() {
     myTreeChangeListener = null;
-  }
-
-  protected AbstractProjectViewPane(Project project) {
-    myProject = project;
   }
 
   public abstract String getTitle();
@@ -75,11 +80,35 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public JComponent getComponentToFocus() {
     return myTree;
   }
-  public abstract void expand(final Object[] path);
-  public abstract void expand(final Object element);
+  public void expand(final Object[] path, final boolean requestFocus){
+    if (myTreeBuilder == null || path == null) return;
+    myTreeBuilder.buildNodeForPath(path);
+
+    DefaultMutableTreeNode node = myTreeBuilder.getNodeForPath(path);
+    if (node == null) {
+      return;
+    }
+    TreePath treePath = new TreePath(node.getPath());
+    myTree.expandPath(treePath);
+    if (requestFocus) {
+      myTree.requestFocus();
+    }
+    TreeUtil.selectPath(myTree, treePath);
+  }
+  public void expand(final Object element){
+    myTreeBuilder.buildNodeForElement(element);
+    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
+    if (node == null) {
+      return;
+    }
+    TreePath treePath = new TreePath(node.getPath());
+    myTree.expandPath(treePath);
+  }
   public void dispose() {
-    myTreeBuilder.dispose();
-    myTreeBuilder = null;
+    if (myTreeBuilder != null) {
+      myTreeBuilder.dispose();
+      myTreeBuilder = null;
+    }
     myTree = null;
     myTreeStructure = null;
   }
@@ -93,8 +122,6 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
   }
-
-  public abstract void updateTreePopupHandler();
 
   private List<AbstractTreeNode> getSelectedNodes(){
     TreePath[] paths = getSelectionPaths();
@@ -150,9 +177,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   // used for sorting tabs in the tabbed pane
-  public int getWeight() {
-    return 0;
-  }
+  public abstract int getWeight();
+
+  public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
     final TreePath[] paths = getSelectionPaths();
@@ -202,6 +229,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
+
   public final Object[] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
@@ -226,6 +254,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     return list.toArray(new Object[list.size()]);
   }
+
   public BaseProjectTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
@@ -263,4 +292,17 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }
     });
   }
+
+  protected void installTreePopupHandler(final String place, final String groupName) {
+    if (ApplicationManager.getApplication() == null) return;
+    PopupHandler popupHandler = new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(groupName);
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
+        popupMenu.getComponent().show(comp, x, y);
+      }
+    };
+    myTree.addMouseListener(popupHandler);
+  }
+
 }

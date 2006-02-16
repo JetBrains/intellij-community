@@ -18,16 +18,16 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   };
   private final Convertor<TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = new Convertor<TreePath, String>() {
-        public String convert(TreePath path) {
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof NodeDescriptor) {
-            NodeDescriptor descr = (NodeDescriptor) userObject;
-            return descr.toString();
-          }
-          return TO_STRING.convert(path);
-        }
-      };
+    public String convert(TreePath path) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof NodeDescriptor) {
+        NodeDescriptor descr = (NodeDescriptor)userObject;
+        return descr.toString();
+      }
+      return TO_STRING.convert(path);
+    }
+  };
 
   /**
    * @deprecated You should use {@link TreeSpeedSearch#TreeSpeedSearch(JTree)}

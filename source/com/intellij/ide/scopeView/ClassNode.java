@@ -1,7 +1,7 @@
 package com.intellij.ide.scopeView;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
@@ -16,14 +16,11 @@ import javax.swing.*;
  * Date: 30-Jan-2006
  */
 public class ClassNode extends PackageDependenciesNode {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ClassNode");
-
   private SmartPsiElementPointer myClassElementPointer;
   private PsiFile myFile;
 
   public ClassNode(final PsiClass aClass) {
-    myClassElementPointer =
-      SmartPointerManager.getInstance(aClass.getProject()).createLazyPointer(aClass);
+    myClassElementPointer = SmartPointerManager.getInstance(aClass.getProject()).createLazyPointer(aClass);
     myFile = aClass.getContainingFile();
   }
 
@@ -73,13 +70,14 @@ public class ClassNode extends PackageDependenciesNode {
 
     final ClassNode classNode = (ClassNode)o;
 
-    if (!myClassElementPointer.equals(classNode.myClassElementPointer)) return false;
+    if (!Comparing.equal(getPsiElement(), classNode.getPsiElement())) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myClassElementPointer.hashCode();
+    PsiElement psiElement = getPsiElement();
+    return psiElement == null ? 0 : psiElement.hashCode();
   }
 
   public PsiFile getContainingFile() {

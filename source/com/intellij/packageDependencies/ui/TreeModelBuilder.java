@@ -48,7 +48,7 @@ public class TreeModelBuilder {
   private Marker myMarker;
   private boolean myAddUnmarkedFiles;
   private PackageDependenciesNode myRoot;
-  private Map<ScopeType,Map<PsiDirectory,DirectoryNode>> myModuleDirNodes = new HashMap<ScopeType, Map<PsiDirectory, DirectoryNode>>();
+  private Map<ScopeType, Map<PsiDirectory,DirectoryNode>> myModuleDirNodes = new HashMap<ScopeType, Map<PsiDirectory, DirectoryNode>>();
   private Map<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>> myModulePackageNodes = new HashMap<ScopeType, Map<Pair<Module, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>> myLibraryPackageNodes = new HashMap<ScopeType, Map<Pair<OrderEntry, PsiPackage>, PackageNode>>();
   private Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<ScopeType, Map<Module, ModuleNode>>();
@@ -399,6 +399,12 @@ public class TreeModelBuilder {
     PackageDependenciesNode dirNode = getFileParentNode(file);
     dirNode.add(new FileNode(file, isMarked));
     return rootToReload;
+  }
+
+  public PackageDependenciesNode findNode(PsiFile file) {
+    PackageDependenciesNode parent = getFileParentNode(file);
+    PackageDependenciesNode[] nodes = findNodeForPsiElement(parent, file);
+    return nodes == null || nodes.length == 0 ? null : nodes[0];
   }
 
   private static PackageDependenciesNode[] findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){

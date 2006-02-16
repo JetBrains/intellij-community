@@ -256,6 +256,10 @@
       <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.scopeView.ScopeViewPane</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
 

@@ -47,7 +47,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
-import com.intellij.util.ui.EmptyIcon;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -140,12 +139,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   };
   private final Alarm initAlarm = new Alarm();
   private final FileEditorManager myFileEditorManager;
+  private final SelectInManager mySelectInManager;
   private MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsData();
+  private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
 
-  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager) {
+  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
+    mySelectInManager = selectInManager;
     myTreeChangeListener = new Runnable() {
       public void run() {
         updateToolWindowTitle();
@@ -223,13 +225,16 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   public synchronized void removeProjectPane(AbstractProjectViewPane pane) {
     //assume we are completely initialized here
     String idToRemove = pane.getId();
+
+    removeSelectInTargetsFor(pane);
+
     if (!myId2Pane.containsKey(idToRemove)) return;
     pane.removeTreeChangeListener();
-    myCombo.removeItem(Pair.create(idToRemove,null));
-    String[] subIds = pane.getSubIds();
-    if (subIds != null) {
-      for (String subId : subIds) {
-        myCombo.removeItem(Pair.create(idToRemove, subId));
+    for (int i = myCombo.getItemCount()-1; i>=0; i--) {
+      Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(i);
+      String id = ids.first;
+      if (id.equals(idToRemove)) {
+        myCombo.removeItemAt(i);
       }
     }
     myId2Pane.remove(idToRemove);
@@ -245,6 +250,16 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
+  private void removeSelectInTargetsFor(final AbstractProjectViewPane pane) {
+    SelectInTarget[] targets = mySelectInManager.getTargets();
+    for (SelectInTarget target : targets) {
+      if (target.getMinorViewId().equals(pane.getId())) {
+        mySelectInManager.removeTarget(target);
+        break;
+      }
+    }
+  }
+
   private synchronized void doAddUninitializedPanes() {
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
@@ -254,26 +269,30 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
-    int componentIndexToInsert = 0;
-    for (int i = 0; i < myCombo.getItemCount(); i++) {
+    int i;
+    for (i = 0; i < myCombo.getItemCount(); i++) {
       Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(i);
       String id = ids.first;
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
-      componentIndexToInsert = i+1;
       if (PANE_WEIGHT_COMPARATOR.compare(pane, newPane) > 0) {
         break;
       }
     }
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
-    int index = componentIndexToInsert;
+    int index = i;
     myCombo.insertItemAt(Pair.create(id, null), index);
     String[] subIds = newPane.getSubIds();
     if (subIds != null) {
       for (String subId : subIds) {
         myCombo.insertItemAt(Pair.create(id, subId), ++index);
       }
+    }
+    myCombo.setMaximumRowCount(myCombo.getItemCount());
+    SelectInTarget selectInTarget = newPane.createSelectInTarget();
+    if (selectInTarget != null) {
+      mySelectInManager.addTarget(selectInTarget);
     }
     requestToShowInitialPane(id, null);
   }
@@ -330,22 +349,19 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         AbstractProjectViewPane pane = getProjectViewPaneById(id);
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (subId == null) {
-          setIconTextGap(4);
           setText(pane.getTitle());
           setIcon(pane.getIcon());
         }
         else {
           String presentable = pane.getPresentableSubIdName(subId);
           if (index == -1) {
-            setIconTextGap(4);
             setText(pane.getTitle() + ": "+presentable);
             setIcon(pane.getIcon());
           }
           else {
             // indent sub id
-            setIconTextGap(30);
             setText(presentable);
-            setIcon(new EmptyIcon(getHeight()));
+            setIcon(BULLET_ICON);
           }
         }
         return this;
@@ -1213,7 +1229,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return;
       }
       final BaseProjectTreeBuilder treeBuilder = viewPane.myTreeBuilder;
-      final ProjectViewTree tree = viewPane.myTree;
+      final JTree tree = viewPane.myTree;
       final DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
       final List<TreePath> paths = new ArrayList<TreePath>(myElements.length);
       for (final Object element : myElements) {
@@ -1240,7 +1256,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           for (TreePath path : selectionPaths) {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
             final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-            selectedElements.add(descriptor.getElement());
+            if (descriptor != null) {
+              selectedElements.add(descriptor.getElement());
+            }
           }
         }
       }
@@ -1288,7 +1306,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
       final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
-      final SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
+      final SelectInTarget[] targets = mySelectInManager.getTargets();
       for (SelectInTarget target : targets) {
         if (!ToolWindowId.PROJECT_VIEW.equals(target.getToolWindowId())) continue;
         String compatiblePaneViewId = target.getMinorViewId();

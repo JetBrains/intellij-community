@@ -21,6 +21,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +33,28 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
 
-  public NamedScope[] getScopes() {
+  public static interface ScopeListener {
+    void scopesChanged();
+  }
+  private List<ScopeListener> myScopeListeners;
+  public synchronized void addScopeListener(ScopeListener scopeListener) {
+    if (myScopeListeners == null) {
+      myScopeListeners = new ArrayList<ScopeListener>();
+    }
+    myScopeListeners.add(scopeListener);
+  }
+  public synchronized void removeScopeListener(ScopeListener scopeListener) {
+    myScopeListeners.remove(scopeListener);
+  }
+  private synchronized void fireScopeListeners() {
+    if (myScopeListeners != null) {
+      for (ScopeListener listener : myScopeListeners) {
+        listener.scopesChanged();
+      }
+    }
+  }
+
+  @NotNull public NamedScope[] getScopes() {
     final List<NamedScope> scopes = new ArrayList<NamedScope>();
     List<NamedScope> list = getPredefinedScopes();
     if (list != null){
@@ -48,14 +70,17 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
 
   public void removeAllSets() {
     myScopes.clear();
+    fireScopeListeners();
   }
 
   public void setScopes(NamedScope[] scopes) {
     myScopes = new ArrayList<NamedScope>(Arrays.asList(scopes));
+    fireScopeListeners();
   }
 
   public void addScope(NamedScope scope) {
     myScopes.add(scope);
+    fireScopeListeners();
   }
 
   private static Element writeScope(NamedScope scope) {
@@ -81,6 +106,7 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
         // Skip damaged set
       }
     }
+    fireScopeListeners();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

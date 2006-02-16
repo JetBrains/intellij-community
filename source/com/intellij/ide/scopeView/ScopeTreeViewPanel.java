@@ -4,12 +4,14 @@ import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,16 +32,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -55,8 +55,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,15 +70,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
   private ModuleRootListener myModuleRootListener = new MyModuleRootListener();
 
-  private JTree myTree;
+  private JTree myTree = new JTree();
   private final Project myProject;
   private TreeModelBuilder myBuilder;
-  private JComboBox myScopesCombo;
-  private JPanel myPanel;
-
-  private JPanel myToolbar;
-
-  public String CURRENT_SCOPE;
+  public String CURRENT_SCOPE_NAME;
 
   private boolean myInitialized = false;
 
@@ -88,39 +81,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
+  private final DependencyValidationManager myDependencyValidationManager;
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
     myProject = project;
-    initScopes();
     initTree();
-    initToolbar();
-    add(myPanel, BorderLayout.CENTER);
-  }
 
-  private void initToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new CompactEmptyMiddlePackagesAction());
-    myToolbar.setLayout(new BorderLayout());
-    myToolbar.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.EAST);
-  }
-
-  private final class CompactEmptyMiddlePackagesAction extends ToggleAction {
-    CompactEmptyMiddlePackagesAction() {
-      super(IdeBundle.message("action.compact.empty.middle.packages"),
-            IdeBundle.message("action.compact.empty.middle.packages"), ScopeEditorPanel.COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
-      final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-      final NamedScope scope = (NamedScope)myScopesCombo.getSelectedItem();
-      refreshScope(scope, holder, true);
-    }
+    add(new JScrollPane(myTree), BorderLayout.CENTER);
+    myDependencyValidationManager = DependencyValidationManager.getInstance(myProject);
   }
 
   public void initListeners(){
@@ -138,30 +107,20 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return myInitialized;
   }
 
-  private void initScopes(){
-    final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-    reloadScopes(holder);
-    myScopesCombo.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component cellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof NamedScope){
-          setText(((NamedScope)value).getName());
-        }
-        return cellRendererComponent;
-      }
-    });
-    myScopesCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final Object selectedItem = myScopesCombo.getSelectedItem();
-        if (selectedItem instanceof NamedScope) {
-          final NamedScope scope = (NamedScope)selectedItem;
-          refreshScope(scope, holder, true);
-          if (scope != holder.getProjectScope()) {
-            CURRENT_SCOPE = scope.getName();
-          }
-        }
-      }
-    });
+  public PackageDependenciesNode findNode(PsiFile file) {
+    return myBuilder.findNode(file);
+  }
+
+  public void selectScope(final NamedScope scope) {
+    refreshScope(scope, myDependencyValidationManager, true);
+    if (scope != myDependencyValidationManager.getProjectScope()) {
+      CURRENT_SCOPE_NAME = scope.getName();
+    }
+  }
+
+  public void selectCurrentScope() {
+    final NamedScope scope = getCurrentScope();
+    refreshScope(scope, myDependencyValidationManager, true);
   }
 
   public JPanel getPanel() {
@@ -175,9 +134,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     UIUtil.setLineStyleAngled(myTree);
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
-    PopupHandler.installPopupHandler(myTree,
-                                     (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_SCOPE_VIEW_POPUP),
-                                     ActionPlaces.SCOPE_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(myTree);
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
       protected PsiElement[] getSelectedElements() {
@@ -210,7 +166,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     root.removeAllChildren();
     if (scope == null){ //was deleted
       scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
-      reloadScopes(holder);
     }
     final PackageSet packageSet = scope.getValue();
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
@@ -218,6 +173,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     settings.UI_SHOW_FILES = true;
     settings.UI_GROUP_BY_FILES = true;
+    settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = ProjectView.getInstance(myProject).isHideEmptyMiddlePackages(ScopeViewPane.ID);
     myBuilder = new TreeModelBuilder(myProject, false, new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
         return packageSet.contains(file, holder);
@@ -232,14 +188,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     myTreeExpansionMonitor.restore();
   }
 
-  public void reloadScopes(final NamedScopesHolder holder) {
-    myScopesCombo.setModel(new DefaultComboBoxModel());
-    final NamedScope[] scopes = holder.getScopes();
-    for (NamedScope scope : scopes) {
-      ((DefaultComboBoxModel)myScopesCombo.getModel()).addElement(scope);
-    }
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
@@ -248,11 +196,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public void selectCurrentScope() {
-    final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-    final NamedScope scope = CURRENT_SCOPE != null ? holder.getScope(CURRENT_SCOPE) : holder.getProjectScope();
-    myScopesCombo.setSelectedItem(scope);
-    refreshScope(scope, holder, true);
+  private NamedScope getCurrentScope() {
+    return CURRENT_SCOPE_NAME == null ? myDependencyValidationManager.getProjectScope() : myDependencyValidationManager.getScope(CURRENT_SCOPE_NAME);
   }
 
   @Nullable
@@ -360,10 +305,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
-
     public void beforeChildAddition(final PsiTreeChangeEvent event) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           final PsiElement element = event.getParent();
           if (element instanceof PsiDirectory || element instanceof PsiPackage) {
             final PsiElement child = event.getChild();
@@ -386,6 +331,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     public void beforeChildRemoval(final PsiTreeChangeEvent event) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           final PsiElement child = event.getChild();
           final PsiElement parent = event.getParent();
           if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
@@ -401,6 +347,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     public void beforeChildMovement(final PsiTreeChangeEvent event) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           final PsiElement oldParent = event.getOldParent();
           final PsiElement newParent = event.getNewParent();
           PsiElement child = event.getChild();
@@ -417,6 +364,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     public void beforeChildrenChange(final PsiTreeChangeEvent event) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           final PsiElement parent = event.getParent();
           PsiJavaFile file = PsiTreeUtil.getParentOfType(parent, PsiJavaFile.class, false);
           if (file != null) {
@@ -439,7 +387,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
     public void rootsChanged(ModuleRootEvent event) {
       final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-      refreshScope(CURRENT_SCOPE != null ? holder.getScope(CURRENT_SCOPE) : holder.getProjectScope(), holder, false);
+      refreshScope(CURRENT_SCOPE_NAME != null ? holder.getScope(CURRENT_SCOPE_NAME) : holder.getProjectScope(), holder, false);
     }
   }
 
@@ -514,5 +462,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
       }
     }
+  }
+
+  public JTree getTree() {
+    return myTree;
   }
 }

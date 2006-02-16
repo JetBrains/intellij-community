@@ -5,8 +5,8 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
-import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,6 +33,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane implements
     return IdeBundle.message("title.project");
   }
 
+  @NotNull
   public String getId() {
     return ID;
   }
@@ -41,7 +43,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane implements
   }
 
 
-  protected ProjectViewSelectInTarget createSelectInTarget() {
+  public SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
   }
 
