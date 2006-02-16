@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
-public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment, PsiImportHolder {
+public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment {
   private PsiElement myContext;
   private boolean myPhysical;
   private PsiType myThisType;

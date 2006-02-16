@@ -2,7 +2,6 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiBinaryFileImpl");
-
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
@@ -34,6 +31,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
   }
@@ -70,30 +68,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public long getModificationStamp() {
     return myModificationStamp;
-  }
-
-  @NotNull
-  public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
-    return PsiElement.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
-  }
-
-  @NotNull
-  public PsiClass[] getSingleClassImports(boolean checkIncludes) {
-    return PsiClass.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
-  }
-
-  @NotNull
-  public String[] getImplicitlyImportedPackages() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;// TODO throw new InsupportedOperationException()
-  }
-
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
-    return PsiJavaCodeReferenceElement.EMPTY_ARRAY; // TODO throw new InsupportedOperationException()
-  }
-
-  public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
-    return null;
   }
 
   @NotNull
@@ -218,10 +192,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   public boolean isPhysical() {
     return !isCopy();
-  }
-
-  public String getDetectedLineSeparator() {
-    throw new UnsupportedOperationException();
   }
 
   public PsiFile getOriginalFile() {

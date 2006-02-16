@@ -38,7 +38,7 @@ public class ChangeUtil implements Constants {
 
   public static void addChild(final CompositeElement parent, TreeElement child, final TreeElement anchorBefore) {
     LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
-    transformAll((TreeElement)parent.getFirstChildNode());
+    transformAll(parent.getFirstChildNode());
     final TreeElement last = child.getTreeNext();
     final TreeElement first = transformAll(child);
 
@@ -95,7 +95,7 @@ public class ChangeUtil implements Constants {
   }
 
   public static void replaceAllChildren(final CompositeElement parent, final ASTNode newChildrenParent) {
-    transformAll((TreeElement)parent.getFirstChildNode());
+    transformAll(parent.getFirstChildNode());
     transformAll((TreeElement)newChildrenParent.getFirstChildNode());
 
     final CharTable newCharTab = SharedImplUtil.findCharTableByTree(parent);
@@ -117,11 +117,11 @@ public class ChangeUtil implements Constants {
             final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, parent);
             changeInfo.setOldLength(parent.getTextLength());
             destinationTreeChange.addElementaryChange(parent, changeInfo);
-            TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
+            TreeUtil.removeRange(parent.getFirstChildNode(), null);
             TreeUtil.addChildren(parent, (TreeElement)firstChild);
           }
           else{
-            final TreeElement first = (TreeElement)parent.getFirstChildNode();
+            final TreeElement first = parent.getFirstChildNode();
             remove(destinationTreeChange, first, null);
             add(destinationTreeChange, parent, (TreeElement)firstChild);
             repairRemovedElement(parent, newCharTab, first);
@@ -130,7 +130,7 @@ public class ChangeUtil implements Constants {
       }, parent);
     }
     else {
-      removeChildren(parent, (TreeElement)parent.getFirstChildNode(), null);
+      removeChildren(parent, parent.getFirstChildNode(), null);
     }
   }
 
@@ -242,7 +242,7 @@ public class ChangeUtil implements Constants {
   }
 
   private static interface ChangeAction{
-    public void makeChange(TreeChangeEvent destinationTreeChange);
+    void makeChange(TreeChangeEvent destinationTreeChange);
   }
 
   private static void prepareAndRunChangeAction(final ChangeAction action, final CompositeElement changedElement){
@@ -299,7 +299,7 @@ public class ChangeUtil implements Constants {
 
       ChameleonTransforming.transformChildren(element);
       ChameleonTransforming.transformChildren(original);
-      TreeElement child = (TreeElement)element.getFirstChildNode();
+      TreeElement child = element.getFirstChildNode();
       ASTNode child1 = original.getFirstChildNode();
       while (child != null) {
         encodeInformation(child, child1);
@@ -341,14 +341,13 @@ public class ChangeUtil implements Constants {
     }
     else {
       LOG.assertTrue(false, "Wrong element type: " + original.getElementType());
-      return;
     }
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
     if (element instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(element);
-      TreeElement child = (TreeElement)element.getFirstChildNode();
+      TreeElement child = element.getFirstChildNode();
       while (child != null) {
         child = decodeInformation(child);
         child = child.getTreeNext();
@@ -377,7 +376,7 @@ public class ChangeUtil implements Constants {
             element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
           }
           catch (IncorrectOperationException e) {
-            codeStyleManager.addImport(ref.getContainingFile(), refClass); // it may fail for local class, let's try for DummyHolder
+            ((PsiImportHolder) ref.getContainingFile()).importClass(refClass);
           }
         }
       }

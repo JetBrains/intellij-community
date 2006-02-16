@@ -25,7 +25,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.ProgressManager");
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
-  private HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
+  private final HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
 
   private static volatile boolean ourNeedToCheckCancel = false;
   private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
@@ -104,13 +104,13 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   }
 
   public boolean hasProgressIndicator() {
-    synchronized (this) {
+    synchronized (myThreadToIndicatorMap) {
       return myThreadToIndicatorMap.size() != 0;
     }
   }
 
   public boolean hasModalProgressIndicator() {
-    synchronized (this) {
+    synchronized (myThreadToIndicatorMap) {
       for (ProgressIndicator indicator : myThreadToIndicatorMap.values()) {
         if (indicator.isModal()) {
           return true;
@@ -126,7 +126,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     Thread currentThread = Thread.currentThread();
 
     ProgressIndicator oldIndicator;
-    synchronized (this) {
+    synchronized (myThreadToIndicatorMap) {
       oldIndicator = myThreadToIndicatorMap.get(currentThread);
       if (progress != null) {
         myThreadToIndicatorMap.put(currentThread, progress);
@@ -148,7 +148,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
       if (progress != null && progress.isRunning()) {
         progress.stop();
       }
-      synchronized (this) {
+      synchronized (myThreadToIndicatorMap) {
         if (oldIndicator != null) {
           myThreadToIndicatorMap.put(currentThread, oldIndicator);
         }
@@ -160,7 +160,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   }
 
   public ProgressIndicator getProgressIndicator() {
-    synchronized (this) {
+    synchronized (myThreadToIndicatorMap) {
       return myThreadToIndicatorMap.get(Thread.currentThread());
     }
   }

@@ -147,6 +147,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return null;
   }
 
+  public boolean importClass(PsiClass aClass) {
+    throw new UnsupportedOperationException("Cannot add imports to compiled classes");
+  }
+
   @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;

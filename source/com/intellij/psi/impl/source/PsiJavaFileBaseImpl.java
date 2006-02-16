@@ -7,6 +7,8 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -438,5 +440,9 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @NotNull
   public Language getLanguage() {
     return StdLanguages.JAVA;
+  }
+
+  public boolean importClass(PsiClass aClass) {
+    return ((CodeStyleManagerEx) getManager().getCodeStyleManager()).addImport(this, aClass);
   }
 }

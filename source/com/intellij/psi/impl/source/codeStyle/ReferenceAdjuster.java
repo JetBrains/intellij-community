@@ -73,10 +73,10 @@ class ReferenceAdjuster implements Constants {
             if (makeFQ(isInsideDocComment)) {
               String qName = ((PsiClass)refElement).getQualifiedName();
               if (qName == null) return element;
-              PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+              PsiImportHolder file = (PsiImportHolder) SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
               if (ImportHelper.isImplicitlyImported(qName, file)) {
                 if (isShort) return element;
-                return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
+                return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
               }
               if (file instanceof PsiJavaFile) {
                 String thisPackageName = ((PsiJavaFile)file).getPackageName();
@@ -85,16 +85,14 @@ class ReferenceAdjuster implements Constants {
                     return (TreeElement)makeShortReference(
                       (CompositeElement)element,
                       (PsiClass)refElement,
-                      addImports,
-                      uncompleteCode
-                    );
+                      addImports);
                   }
                 }
               }
               return (TreeElement)replaceReferenceWithFQ(element, (PsiClass)refElement);
             }
             else {
-              return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports, uncompleteCode);
+              return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
             }
           }
         }
@@ -158,11 +156,10 @@ class ReferenceAdjuster implements Constants {
   }
 
   private ASTNode makeShortReference(
-    CompositeElement reference,
-    PsiClass refClass,
-    boolean addImports,
-    boolean uncompleteCode
-    ) {
+      CompositeElement reference,
+      PsiClass refClass,
+      boolean addImports
+  ) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
       PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(reference);
@@ -179,17 +176,17 @@ class ReferenceAdjuster implements Constants {
         final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
         if (qualifier != null) {
 
-          makeShortReference((CompositeElement)qualifier, parentClass, addImports, uncompleteCode);
+          makeShortReference((CompositeElement)qualifier, parentClass, addImports);
         }
         return reference;
       }
     }
 
-    PsiFile file = SourceTreeToPsiMap.treeElementToPsi(reference).getContainingFile();
+    PsiImportHolder file = (PsiImportHolder) SourceTreeToPsiMap.treeElementToPsi(reference).getContainingFile();
     PsiManager manager = file.getManager();
     PsiResolveHelper helper = manager.getResolveHelper();
     if (addImports) {
-      if (!myImportHelper.addImport(file, refClass)) {
+      if (!file.importClass(refClass)) {
         return reference;
       }
       if (isSafeToShortenReference(reference, refClass, helper)) {

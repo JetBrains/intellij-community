@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java or JSP file.
  */
-public interface PsiJavaFile extends PsiFile {
+public interface PsiJavaFile extends PsiImportHolder {
   /**
    * Returns the list of classes contained in the file.
    *

@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -277,7 +276,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new ImportHelper(getSettings()).prepareOptimizeImportsResult(this, file);
   }
 
-  public boolean addImport(PsiFile file, PsiClass refClass) {
+  public boolean addImport(PsiJavaFile file, PsiClass refClass) {
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
