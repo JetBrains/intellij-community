@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -357,4 +358,5 @@ public abstract class PsiManager implements UserDataHolder {
    * @param r the operation to run.
    */
   public abstract void performActionWithFormatterDisabled(Runnable r);
+  public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 }

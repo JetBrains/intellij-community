@@ -3,6 +3,7 @@ package com.intellij.mock;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -196,6 +197,10 @@ public class MockPsiManager extends PsiManager {
 
   public void performActionWithFormatterDisabled(Runnable r) {
     r.run();
+  }
+
+  public <T> T performActionWithFormatterDisabled(Computable<T> r) {
+    return r.compute();
   }
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {

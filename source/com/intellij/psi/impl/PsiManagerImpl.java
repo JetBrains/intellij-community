@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -288,6 +289,20 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
     }
+  }
+
+  public <T> T performActionWithFormatterDisabled(Computable<T> r) {
+    T result;
+
+    ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
+    try {
+      result = r.compute();
+    }
+    finally {
+      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
+    }
+
+    return result;
   }
 
   public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
