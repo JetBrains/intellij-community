@@ -158,9 +158,9 @@ public final class InsertComponentProcessor extends EventProcessor {
 
     myInsertedComponent = createInsertedComponent(myEditor, item);
 
-    final GridInsertLocation location = (point != null)
+    final GridLocation location = (point != null)
       ? GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0, 1)
-      : new GridInsertLocation(GridInsertMode.InCell);
+      : new GridLocation(GridInsertMode.InCell);
     boolean dropAllowed;
     if (point != null) {
       dropAllowed = FormEditingUtil.canDrop(myEditor, point.x, point.y, 1);

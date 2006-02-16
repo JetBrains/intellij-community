@@ -128,7 +128,7 @@ class DesignDropTargetListener implements DropTargetListener {
       myLastPoint = dtde.getLocation();
       myEditor.getDragLayer().repaint();
 
-      GridInsertLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
+      GridLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
                                                                            dtde.getLocation().y,
                                                                            dragSize,
                                                                            dragCol);
@@ -148,7 +148,7 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   private static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                final GridInsertLocation location) {
+                                final GridLocation location) {
     if (location.getContainer() == null) {
       return false;
     }
@@ -234,7 +234,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final int dropX = dropPoint.x;
     final int dropY = dropPoint.y;
     final int componentCount = dcl.getComponents().size();
-    GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(
+    GridLocation location = GridInsertProcessor.getGridInsertLocation(
       myEditor, dropX, dropY, dcl.getDragRelativeColumn(), componentCount);
     if (isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
