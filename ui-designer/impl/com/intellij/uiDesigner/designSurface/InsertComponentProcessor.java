@@ -35,6 +35,7 @@ import java.awt.event.MouseEvent;
 public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.InsertComponentProcessor");
 
+  private PaletteManager myPaletteManager;
   private final GuiEditor myEditor;
   private boolean mySticky;
   private RadComponent myInsertedComponent;
@@ -43,6 +44,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
+    myPaletteManager = PaletteManager.getInstance(editor.getProject());
   }
 
   public boolean isSticky() {
@@ -158,7 +160,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     myInsertedComponent = createInsertedComponent(myEditor, item);
 
     final GridLocation location = (point != null)
-      ? GridInsertProcessor.getGridInsertLocation(myEditor, point.x, point.y, 0, 1)
+      ? GridInsertProcessor.getGridInsertLocation(myEditor, point, item)
       : new GridLocation(GridInsertMode.InCell);
     boolean dropAllowed;
     if (point != null) {
@@ -319,6 +321,10 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   public Cursor processMouseMoveEvent(final MouseEvent e) {
-    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), false, 1, 0);
+    final ComponentItem componentItem = myPaletteManager.getActiveItem(ComponentItem.class);
+    if (componentItem != null) {
+      return myGridInsertProcessor.processMouseMoveEvent(e.getPoint(), false, componentItem);
+    }
+    return FormEditingUtil.getMoveNoDropCursor();
   }
 }

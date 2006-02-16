@@ -430,14 +430,12 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @param x in delegee coordinates
-   * @param y in delegee coordinates
    * @param componentCount number of components to be dropped; always > 0
    */
   public abstract boolean canDrop(@Nullable Point location, int componentCount);
 
   @Nullable
-  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
     return null;
   }
 

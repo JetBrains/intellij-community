@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import java.util.HashMap;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ComponentItem implements Cloneable, PaletteItem {
+public final class ComponentItem implements Cloneable, PaletteItem, ComponentDragObject {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
 
   private String myClassName;
@@ -332,6 +333,14 @@ public final class ComponentItem implements Cloneable, PaletteItem {
       return boundForms [0];
     }
     return null;
+  }
+
+  public int getComponentCount() {
+    return 1;
+  }
+
+  public int getDragRelativeColumn() {
+    return 0;
   }
 
   private static final class MySmallIcon implements Icon{

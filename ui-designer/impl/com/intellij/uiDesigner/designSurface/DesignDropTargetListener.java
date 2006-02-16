@@ -25,6 +25,7 @@ class DesignDropTargetListener implements DropTargetListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DesignDropTargetListener");
 
   private DraggedComponentList myDraggedComponentList;
+  private ComponentDragObject myComponentDragObject;
   private List<RadComponent> myDraggedComponentsCopy;
   private Point myLastPoint;
   private final GuiEditor myEditor;
@@ -43,6 +44,7 @@ class DesignDropTargetListener implements DropTargetListener {
       DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         myDraggedComponentList = dcl;
+        myComponentDragObject = dcl;
         processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
         dtde.acceptDrag(dtde.getDropAction());
         myLastPoint = dtde.getLocation();
@@ -50,6 +52,7 @@ class DesignDropTargetListener implements DropTargetListener {
       else {
         ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
         if (componentItem != null) {
+          myComponentDragObject = componentItem;
           dtde.acceptDrag(dtde.getDropAction());
           myLastPoint = dtde.getLocation();
         }
@@ -112,26 +115,23 @@ class DesignDropTargetListener implements DropTargetListener {
 
   public void dragOver(DropTargetDragEvent dtde) {
     try {
+      if (myComponentDragObject == null) {
+        dtde.rejectDrag();
+        return;
+      }
       final int dx = dtde.getLocation().x - myLastPoint.x;
       final int dy = dtde.getLocation().y - myLastPoint.y;
 
-      int dragSize = 1;
-      int dragCol = 0;
       if (myDraggedComponentsCopy != null && myDraggedComponentList != null) {
         for (RadComponent aMySelection : myDraggedComponentsCopy) {
           aMySelection.shift(dx, dy);
         }
-        dragSize = myDraggedComponentList.getComponents().size();
-        dragCol = myDraggedComponentList.getDragRelativeColumn();
       }
 
       myLastPoint = dtde.getLocation();
       myEditor.getDragLayer().repaint();
 
-      GridLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation().x,
-                                                                           dtde.getLocation().y,
-                                                                           dragSize,
-                                                                           dragCol);
+      GridLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
       if (location.getMode() == GridInsertMode.NoDrop ||
           (myDraggedComponentList != null && isDropOnChild(myDraggedComponentList, location))) {
         myComponentTree.setDropTargetComponent(null);
@@ -236,13 +236,12 @@ class DesignDropTargetListener implements DropTargetListener {
     final int dropX = dropPoint.x;
     final int dropY = dropPoint.y;
     final int componentCount = dcl.getComponents().size();
-    GridLocation location = GridInsertProcessor.getGridInsertLocation(
-      myEditor, dropX, dropY, dcl.getDragRelativeColumn(), componentCount);
+    GridLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, dropPoint, dcl);
     if (isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
       return false;
     }
-    if (location != null && !location.canDrop(componentCount)) {
+    if (location != null && !location.canDrop(dcl)) {
       location = null;
     }
 

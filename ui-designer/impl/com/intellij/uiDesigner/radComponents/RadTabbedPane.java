@@ -58,7 +58,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   @Nullable
-  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
     final JTabbedPane tabbedPane = getTabbedPane();
     final TabbedPaneUI ui = tabbedPane.getUI();
     if (tabbedPane.getTabCount() > 0) {

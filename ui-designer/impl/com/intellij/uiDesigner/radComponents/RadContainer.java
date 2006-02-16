@@ -239,10 +239,6 @@ public class RadContainer extends RadComponent implements IContainer {
     }
     else if (isGrid()) {
       // Do not allow to drop more then one component into grid
-      if (componentCount > 1) {
-        return false;
-      }
-
       final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
       final int row = gridLayout.getRowAt(location.y);
       final int column = gridLayout.getColumnAt(location.x);
@@ -252,7 +248,13 @@ public class RadContainer extends RadComponent implements IContainer {
         return false;
       }
 
-      return getComponentAtGrid(row, column) == null;
+      for(int c=column; c<column+componentCount; c++) {
+        if (c >= gridLayout.getColumnCount() || getComponentAtGrid(row, c) != null) {
+          return false;
+        }
+      }
+
+      return true;
     }
     else {
       //noinspection HardCodedStringLiteral

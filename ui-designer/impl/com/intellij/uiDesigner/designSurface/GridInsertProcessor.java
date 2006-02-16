@@ -24,9 +24,9 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  static GridLocation getGridInsertLocation(GuiEditor editor, int x, int y, int dragColumnDelta, int componentCount) {
+  static GridLocation getGridInsertLocation(GuiEditor editor, Point aPoint, ComponentDragObject dragObject) {
     int EPSILON = 4;
-    RadContainer container = FormEditingUtil.getRadContainerAt(editor, x, y, EPSILON);
+    RadContainer container = FormEditingUtil.getRadContainerAt(editor, aPoint.x, aPoint.y, EPSILON);
     // to facilitate initial component adding, increase stickiness if there is one container at top level
     if (container instanceof RadRootContainer && editor.getRootContainer().getComponentCount() == 1) {
       final RadComponent singleComponent = editor.getRootContainer().getComponents()[0];
@@ -34,7 +34,7 @@ public class GridInsertProcessor {
         Rectangle rc = singleComponent.getDelegee().getBounds();
         rc.grow(EPSILON*2, EPSILON*2);
         final Point pnt = SwingUtilities.convertPoint(editor.getDragLayer(),
-                                                              x, y, editor.getRootContainer().getDelegee());
+                                                      aPoint, editor.getRootContainer().getDelegee());
         if (rc.contains(pnt)) {
           container = (RadContainer) singleComponent;
           EPSILON *= 2;
@@ -46,16 +46,16 @@ public class GridInsertProcessor {
       return new GridLocation(GridInsertMode.NoDrop);
     }
 
-    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, container.getDelegee());
+    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), aPoint, container.getDelegee());
     if (!container.isGrid()) {
-      GridInsertMode mode = container.canDrop(targetPoint, componentCount) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      GridInsertMode mode = container.canDrop(targetPoint, dragObject.getComponentCount()) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
       return new GridLocation(container, targetPoint, mode);
     }
 
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
       container.getComponentAtGrid(0, 0) == null) {
-      GridInsertMode mode = container.canDrop(targetPoint, componentCount) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      GridInsertMode mode = container.canDrop(targetPoint, dragObject.getComponentCount()) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
       final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
       return new GridLocation(container, 0, 0, targetPoint, rc, mode);
     }
@@ -134,11 +134,11 @@ public class GridInsertProcessor {
     // if a number of adjacent components have been selected and the component being dragged
     // is not the leftmost, we return the column in which the leftmost component should be dropped
     if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
-        col >= dragColumnDelta) {
-      col -= dragColumnDelta;
+        col >= dragObject.getDragRelativeColumn()) {
+      col -= dragObject.getDragRelativeColumn();
     }
 
-    if (mode == GridInsertMode.InCell && !container.canDrop(targetPoint, componentCount)) {
+    if (mode == GridInsertMode.InCell && !container.canDrop(targetPoint, dragObject.getComponentCount())) {
       mode = GridInsertMode.NoDrop;
     }
 
@@ -149,10 +149,10 @@ public class GridInsertProcessor {
     return new GridLocation(container, row, col, targetPoint, cellRect, mode);
   }
 
-  public GridLocation processDragEvent(int x, int y, int componentCount, int dragColumnDelta) {
-    final GridLocation insertLocation = getGridInsertLocation(myEditor, x, y, dragColumnDelta, componentCount);
-    if (insertLocation.canDrop(componentCount)) {
-      insertLocation.placeFeedback(myEditor, componentCount);
+  public GridLocation processDragEvent(Point pnt, ComponentDragObject dragObject) {
+    final GridLocation insertLocation = getGridInsertLocation(myEditor, pnt, dragObject);
+    if (insertLocation.canDrop(dragObject)) {
+      insertLocation.placeFeedback(myEditor, dragObject);
     }
     else {
       myEditor.getActiveDecorationLayer().removeFeedback();
@@ -161,10 +161,9 @@ public class GridInsertProcessor {
     return insertLocation;
   }
 
-  public Cursor processMouseMoveEvent(final int x, final int y, final boolean copyOnDrop,
-                                      final int componentCount, final int dragColumnDelta) {
-    GridLocation location = processDragEvent(x, y, componentCount, dragColumnDelta);
-    if (!location.canDrop(componentCount)) {
+  public Cursor processMouseMoveEvent(final Point pnt, final boolean copyOnDrop, final ComponentDragObject dragObject) {
+    GridLocation location = processDragEvent(pnt, dragObject);
+    if (!location.canDrop(dragObject)) {
       return FormEditingUtil.getMoveNoDropCursor();
     }
     return copyOnDrop ? FormEditingUtil.getCopyDropCursor() : FormEditingUtil.getMoveDropCursor();

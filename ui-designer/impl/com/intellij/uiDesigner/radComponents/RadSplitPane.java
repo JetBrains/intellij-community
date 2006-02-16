@@ -40,7 +40,7 @@ public final class RadSplitPane extends RadContainer {
     }
 
     final Component component;
-    if (isLeft(location.x, location.y)) {
+    if (isLeft(location)) {
       component = getSplitPane().getLeftComponent();
     }
     else {
@@ -54,12 +54,12 @@ public final class RadSplitPane extends RadContainer {
     return component == null || ((JComponent)component).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT) == null;
   }
 
-  private boolean isLeft(final int x, final int y) {
+  private boolean isLeft(Point pnt) {
     if (getSplitPane().getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-      return y < getDividerPos();
+      return pnt.y < getDividerPos();
     }
     else {
-      return x < getDividerPos();
+      return pnt.x < getDividerPos();
     }
   }
 
@@ -82,7 +82,7 @@ public final class RadSplitPane extends RadContainer {
   public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy) {
     boolean dropToLeft;
     if (location != null) {
-      dropToLeft = isLeft(location.x, location.y);
+      dropToLeft = isLeft(location);
     }
     else {
       dropToLeft = isEmptySplitComponent(getSplitPane().getLeftComponent());
@@ -93,18 +93,18 @@ public final class RadSplitPane extends RadContainer {
   }
 
   @Nullable
-  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
     final JSplitPane splitPane = getSplitPane();
     int dividerPos = getDividerPos();
     int dividerLeftPos = dividerPos - splitPane.getDividerSize()/2;
     int dividerRightPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
     if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-      return isLeft(x, y)
+      return isLeft(location)
              ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
              : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
     }
     else {
-      return isLeft(x, y)
+      return isLeft(location)
              ? new Rectangle(0, 0, dividerLeftPos, getHeight())
              : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
     }

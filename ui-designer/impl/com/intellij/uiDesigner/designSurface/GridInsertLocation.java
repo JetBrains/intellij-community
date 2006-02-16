@@ -47,16 +47,16 @@ class GridInsertLocation extends GridLocation {
     return isColumnInsert() || isRowInsert();
   }
 
-  @Override public boolean canDrop(final int componentCount) {
+  @Override public boolean canDrop(ComponentDragObject dragObject) {
     final GridLayoutManager grid = ((GridLayoutManager) getContainer().getLayout());
     if (isInsertInsideComponent()) {
       return false;
     }
 
     if (isColumnInsert()) {
-      return componentCount == 1;
+      return dragObject.getComponentCount() == 1;
     }
-    return getColumn() + componentCount - 1 < grid.getColumnCount();
+    return getColumn() + dragObject.getComponentCount() - 1 < grid.getColumnCount();
   }
 
   private boolean isInsertInsideComponent() {
@@ -95,12 +95,12 @@ class GridInsertLocation extends GridLocation {
     return false;
   }
 
-  @Override public void placeFeedback(GuiEditor editor, int componentCount) {
+  @Override public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
     final int insertCol = getColumn();
     final int insertRow = getRow();
     final GridInsertMode insertMode = getMode();
 
-    Rectangle cellRect = getGridFeedbackRect(componentCount);
+    Rectangle cellRect = getGridFeedbackRect(dragObject.getComponentCount());
 
     FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
                                insertMode == GridInsertMode.ColumnAfter)
@@ -109,7 +109,7 @@ class GridInsertLocation extends GridLocation {
     Rectangle rc;
 
     Rectangle rcFeedback = null;
-    if (componentCount == 1 && insertMode != GridInsertMode.InCell) {
+    if (dragObject.getComponentCount() == 1 && insertMode != GridInsertMode.InCell) {
       RadComponent component = getContainer().getComponentAtGrid(insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();

@@ -72,20 +72,21 @@ class GridLocation {
     myMode = GridInsertMode.NoDrop;
   }
 
-  public boolean canDrop(final int componentCount) {
+  public boolean canDrop(final ComponentDragObject dragObject) {
     if (myMode == GridInsertMode.NoDrop) {
       return false;
     }
-    return myContainer.canDrop(myTargetPoint, componentCount);
+    return myContainer.canDrop(myTargetPoint, dragObject.getComponentCount());
   }
 
-  public void placeFeedback(GuiEditor editor, int componentCount) {
+  public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
+    int componentCount = dragObject.getComponentCount();
     Rectangle feedbackRect;
     if (getContainer().isGrid()) {
       feedbackRect = getGridFeedbackRect(componentCount);
     }
     else {
-      feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint.x, myTargetPoint.y, componentCount);
+      feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint, componentCount);
     }
     if (feedbackRect != null) {
       final Rectangle rc = SwingUtilities.convertRectangle(getContainer().getDelegee(),
@@ -110,6 +111,9 @@ class GridLocation {
     int lastCol = insertCol + componentCount - 1;
     Rectangle cellRect = getCellRect();
     final GridLayoutManager layoutManager = (GridLayoutManager) getContainer().getLayout();
+    if (lastCol >= layoutManager.getColumnCount()) {
+      lastCol = layoutManager.getColumnCount()-1;
+    }
     int[] xs = layoutManager.getXs();
     int[] widths = layoutManager.getWidths();
     return new Rectangle(xs [insertCol], cellRect.y,

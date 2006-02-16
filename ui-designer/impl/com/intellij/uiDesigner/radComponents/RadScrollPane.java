@@ -33,7 +33,7 @@ public final class RadScrollPane extends RadContainer {
   }
 
   @Nullable
-  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
     return new Rectangle(0, 0, getWidth(), getHeight());
   }
 

@@ -20,7 +20,7 @@ import java.util.Comparator;
 /**
  * @author yole
  */
-public class DraggedComponentList implements Transferable {
+public class DraggedComponentList implements Transferable, ComponentDragObject {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.DraggedComponentList");
 
   private static DataFlavor ourDataFlavor;
@@ -149,6 +149,10 @@ public class DraggedComponentList implements Transferable {
 
   public ArrayList<RadComponent> getComponents() {
     return mySelection;
+  }
+
+  public int getComponentCount() {
+    return mySelection.size();
   }
 
   public RadContainer getOriginalParent(final RadComponent c) {

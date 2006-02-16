@@ -36,7 +36,7 @@ public class RadToolBar extends RadContainer {
     }
   }
 
-  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
     JComponent component = getDelegee();
     int maxX = 0;
     for(Component child: component.getComponents()) {
