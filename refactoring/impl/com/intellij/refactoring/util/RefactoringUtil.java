@@ -34,6 +34,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -511,20 +512,15 @@ public class RefactoringUtil {
     return parent instanceof PsiNewExpression ? (PsiNewExpression)parent : null;
   }
 
-  public static final PsiMethod getEnclosingMethod (PsiElement element) {
+  public static PsiMethod getEnclosingMethod (PsiElement element) {
     final PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     return container instanceof PsiMethod ? ((PsiMethod)container) : null;
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope)
     throws IncorrectOperationException {
-    PsiManager manager = variable.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
-    PsiReference[] refs = helper.findReferences(variable, scope, false);
-    for (PsiReference reference : refs) {
-      if (reference != null) {
-        reference.handleElementRename(newName);
-      }
+    for (PsiReference reference : ReferencesSearch.search(variable, scope).findAll()) {
+      reference.handleElementRename(newName);
     }
   }
 
@@ -547,7 +543,9 @@ public class RefactoringUtil {
     PsiType exprType = expr.getType();
     if (exprType != null && !variable.getType().equals(exprType)) {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)manager.getElementFactory().createExpressionFromText("(t)a", null);
-      cast.getCastType().replace(variable.getTypeElement());
+      PsiTypeElement castTypeElement = cast.getCastType();
+      LOG.assertTrue(castTypeElement != null);
+      castTypeElement.replace(variable.getTypeElement());
       cast.getOperand().replace(expr);
       PsiExpression exprCopy = (PsiExpression)expr.copy();
       cast = (PsiTypeCastExpression)expr.replace(cast);
@@ -583,7 +581,9 @@ public class RefactoringUtil {
     if (qualifierClass != null) {
       PsiThisExpression qualifiedThis = (PsiThisExpression)factory.createExpressionFromText("q.this", null);
       qualifiedThis = (PsiThisExpression)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
-      qualifiedThis.getQualifier().bindToElement(qualifierClass);
+      PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+      LOG.assertTrue(thisQualifier != null);
+      thisQualifier.bindToElement(qualifierClass);
       return qualifiedThis;
     }
     else {
@@ -949,7 +949,9 @@ public class RefactoringUtil {
     PsiNewExpression result =
       (PsiNewExpression)factory.createExpressionFromText("new " + initializerType.getPresentableText() + "{}", null);
     result = (PsiNewExpression)CodeStyleManager.getInstance(initializer.getProject()).reformat(result);
-    result.getArrayInitializer().replace(initializer);
+    PsiArrayInitializerExpression arrayInitializer = result.getArrayInitializer();
+    LOG.assertTrue(arrayInitializer != null);
+    arrayInitializer.replace(initializer);
     return result;
   }
 
