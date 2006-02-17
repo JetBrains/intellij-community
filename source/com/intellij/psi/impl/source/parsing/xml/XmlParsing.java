@@ -759,8 +759,10 @@ public class XmlParsing implements ElementType {
 
   private TreeElement addToken(CompositeElement decl, Lexer lexer) {
     final TreeElement element = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
-    TreeUtil.addChildren(decl, element);
-    lexer.advance();
+    if (element != null) {
+      TreeUtil.addChildren(decl, element);
+      lexer.advance();
+    }
     return element;
   }
 
