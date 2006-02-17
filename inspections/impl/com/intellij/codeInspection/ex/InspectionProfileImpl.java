@@ -58,10 +58,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
-  private UnusedSymbolSettings myUnusedSymbolSettings = new UnusedSymbolSettings();
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String INSPECTION_TOOL_TAG = "inspection_tool";
-  @NonNls private static final String UNUSED_SYMBOL_SETTINGS_TAG = "UNUSED_SYMBOL_SETTINGS";
   @NonNls private static final String ENABLED_TAG = "enabled";
   @NonNls private static final String LEVEL_TAG = "level";
   @NonNls private static final String CLASS_TAG = "class";
@@ -86,7 +84,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myTools = new HashMap<String, InspectionTool>();
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
-    myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.isLocal();
     myFile = inspectionProfile.myFile;
@@ -153,9 +150,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile == null) {
       return false;
     }
-    if (key == HighlightDisplayKey.UNUSED_SYMBOL && !myBaseProfile.getUnusedSymbolSettings().equals(getUnusedSymbolSettings())){
-      return true;
-    }
     final boolean toolsSettings = toolSettingsAreEqual(key, this, myBaseProfile);
     if (myDisplayLevelMap.keySet().contains(key)) {
       if (toolsSettings && myDisplayLevelMap.get(key).equals(myBaseProfile.getToolState(key))) {
@@ -183,13 +177,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private void setDefaultErrorLevels() {
     myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_IMPORT, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_SYMBOL, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
   }
 
   protected static boolean isNonInspectionHighlighting(HighlightDisplayKey key){
     return key == HighlightDisplayKey.UNUSED_IMPORT ||
-           key == HighlightDisplayKey.UNUSED_SYMBOL ||
            key == HighlightDisplayKey.UNCHECKED_WARNING;                                          
   }
 
@@ -262,9 +254,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
     }
 
-    final Element unusedSymbolSettings = element.getChild(UNUSED_SYMBOL_SETTINGS_TAG);
-    myUnusedSymbolSettings.readExternal(unusedSymbolSettings);
-
     myBaseProfile = InspectionProfileImpl.DEFAULT_PROFILE;
   }
 
@@ -285,9 +274,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       element.addContent(inspectionElement);
     }
-    final Element unusedSymbolSettings = new Element(UNUSED_SYMBOL_SETTINGS_TAG);
-    myUnusedSymbolSettings.writeExternal(unusedSymbolSettings);
-    element.addContent(unusedSymbolSettings);
   }
 
   public InspectionProfileEntry getInspectionTool(String shortName) {
@@ -338,14 +324,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  public UnusedSymbolSettings getUnusedSymbolSettings() {
-    return myUnusedSymbolSettings;
-  }
-
-  public void setUnusedSymbolSettings(UnusedSymbolSettings settings) {
-    myUnusedSymbolSettings = settings;
-  }
-
   public boolean isDefault() {
     return myDisplayLevelMap.isEmpty();
   }
@@ -393,7 +371,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
-    myUnusedSymbolSettings = profile.myUnusedSymbolSettings.copySettings();
     try {
       if (!profile.myTools.isEmpty()) {
         final InspectionProfileEntry[] inspectionTools = getInspectionTools();
@@ -500,7 +477,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
 
-    myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     save();
   }
 

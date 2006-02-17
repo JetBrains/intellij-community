@@ -53,10 +53,6 @@ public interface ModifiableModel extends Profile {
 
   void inheritFrom(InspectionProfile profile);
 
-  UnusedSymbolSettings getUnusedSymbolSettings();
-
-  void setUnusedSymbolSettings(UnusedSymbolSettings settings);
-
   boolean isDefault();
 
   void initInspectionTools();

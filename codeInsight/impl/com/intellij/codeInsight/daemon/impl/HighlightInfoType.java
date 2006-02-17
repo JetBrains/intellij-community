@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -25,7 +26,9 @@ public interface HighlightInfoType {
 
   HighlightInfoType WRONG_ELEMENT_NAME = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
-  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.UNUSED_SYMBOL, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME) == null ?
+                                                                       HighlightDisplayKey.register(UnusedSymbolLocalInspection.SHORT_NAME, UnusedSymbolLocalInspection.DISPLAY_NAME) : HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME),
+                                                                       CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
   HighlightInfoType UNUSED_IMPORT = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.UNUSED_IMPORT, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(DeprecationInspection.SHORT_NAME) == null ?
                                                                     HighlightDisplayKey.register(DeprecationInspection.SHORT_NAME, DeprecationInspection.DISPLAY_NAME) : HighlightDisplayKey.find(DeprecationInspection.SHORT_NAME), CodeInsightColors.DEPRECATED_ATTRIBUTES);

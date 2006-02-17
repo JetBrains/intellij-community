@@ -4,16 +4,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,8 +22,8 @@ public class Descriptor {
   static {
     //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.DEPRECATED_SYMBOL, "Local_DeprecatedSymbol.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_IMPORT, "Local_UnusedImport.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_SYMBOL,  "Local_UnusedSymbol.html");
-    /*ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_THROWS_DECL, "Local_UnusedThrowsDeclaration.html");
+    /*ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_SYMBOL,  "Local_UnusedSymbol.html");
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_THROWS_DECL, "Local_UnusedThrowsDeclaration.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.SILLY_ASSIGNMENT, "Local_SillyAssignment.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, "Local_StaticViaInstance.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, "Local_WrongPackage.html");
@@ -130,10 +126,6 @@ public class Descriptor {
       }
       return myAdditionalConfigPanel;
     }
-
-    if (myKey.equals(HighlightDisplayKey.UNUSED_SYMBOL)){
-      myAdditionalConfigPanel = createUnusedSymbolSettingsPanel(inspectionProfile);
-    }
     return myAdditionalConfigPanel;
   }
 
@@ -168,45 +160,4 @@ public class Descriptor {
     return myGroup;
   }
 
-
-  public static JPanel createUnusedSymbolSettingsPanel(final ModifiableModel inspectionProfile){
-    JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
-    final JCheckBox local = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option"));
-    final JCheckBox field = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option1"));
-    final JCheckBox method = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option2"));
-    final JCheckBox classes = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option3"));
-    final JCheckBox parameters = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option4"));
-    ChangeListener listener = new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        UnusedSymbolSettings settings = new UnusedSymbolSettings();
-        settings.LOCAL_VARIABLE = local.isSelected();
-        settings.CLASS = classes.isSelected();
-        settings.FIELD = field.isSelected();
-        settings.PARAMETER = parameters.isSelected();
-        settings.METHOD = method.isSelected();
-        inspectionProfile.setUnusedSymbolSettings(settings);
-      }
-    };
-    local.addChangeListener(listener);
-    field.addChangeListener(listener);
-    method.addChangeListener(listener);
-    classes.addChangeListener(listener);
-    parameters.addChangeListener(listener);
-    panel.add(local);
-    panel.add(field);
-    panel.add(method);
-    panel.add(classes);
-    panel.add(parameters);
-    if (inspectionProfile != null){
-      final UnusedSymbolSettings unusedSymbolSettings = inspectionProfile.getUnusedSymbolSettings();
-      local.setSelected(unusedSymbolSettings.LOCAL_VARIABLE);
-      field.setSelected(unusedSymbolSettings.FIELD);
-      method.setSelected(unusedSymbolSettings.METHOD);
-      classes.setSelected(unusedSymbolSettings.CLASS);
-      parameters.setSelected(unusedSymbolSettings.PARAMETER);
-    }
-    JPanel doNotExpand = new JPanel(new BorderLayout());
-    doNotExpand.add(panel, BorderLayout.NORTH);
-    return doNotExpand;
-  }
 }

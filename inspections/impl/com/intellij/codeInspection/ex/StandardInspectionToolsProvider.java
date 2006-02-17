@@ -4,7 +4,6 @@ import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
-import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
@@ -24,6 +23,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
@@ -38,6 +38,7 @@ import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
 import com.intellij.codeInspection.unnessecaryModuleDependency.UnnessecaryModuleDependencyInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
@@ -112,6 +113,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UnnessecaryModuleDependencyInspection.class,
       UnhandledExceptionInJSP.class,
       RedundantSuppressInspection.class,
+      UnusedSymbolLocalInspection.class,
       };
   }
 }

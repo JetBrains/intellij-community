@@ -11,7 +11,6 @@ public class HighlightDisplayKey {
   private static final Map<HighlightDisplayKey, String>  ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
 
   public static final HighlightDisplayKey UNUSED_IMPORT = register("UNUSED_IMPORT", InspectionsBundle.message("unused.import"));  //no suppress
-  public static final HighlightDisplayKey UNUSED_SYMBOL = register("UNUSED_SYMBOL", InspectionsBundle.message("unused.symbol"));           
   public static final HighlightDisplayKey UNCHECKED_WARNING = register("UNCHECKED_WARNING", InspectionsBundle.message("unchecked.warning"), "unchecked");//todo
 
 

@@ -17,7 +17,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.UnusedSymbolSettings;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -235,27 +236,28 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
-    if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
-    if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return null;
+    final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
+    if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection.getID())) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
-    List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_SYMBOL, identifier);
-    String displayName  = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL);
+    List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), identifier);
+    String displayName  = UnusedSymbolLocalInspection.DISPLAY_NAME;
     HighlightInfo info;
-    UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
-    if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {
+
+    if (parent instanceof PsiLocalVariable && unusedSymbolInspection.LOCAL_VARIABLE) {
       info = processLocalVariable((PsiLocalVariable)parent, options, displayName);
     }
-    else if (parent instanceof PsiField && unusedSymbolSettings.FIELD) {
+    else if (parent instanceof PsiField && unusedSymbolInspection.FIELD) {
       info = processField((PsiField)parent, options, displayName);
     }
-    else if (parent instanceof PsiParameter && unusedSymbolSettings.PARAMETER) {
+    else if (parent instanceof PsiParameter && unusedSymbolInspection.PARAMETER) {
       info = processParameter((PsiParameter)parent, options, displayName);
     }
-    else if (parent instanceof PsiMethod && unusedSymbolSettings.METHOD) {
+    else if (parent instanceof PsiMethod && unusedSymbolInspection.METHOD) {
       info = processMethod((PsiMethod)parent, options, displayName);
     }
-    else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolSettings.CLASS) {
+    else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolInspection.CLASS) {
       info = processClass((PsiClass)parent, options, displayName);
     }
     else {
@@ -287,7 +289,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (!referenced) {
         String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_ASSIGNED, identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options, displayName);
+        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME, options), options, displayName);
         return unusedSymbolInfo;
       }
     }
@@ -371,7 +373,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         PsiIdentifier identifier = parameter.getNameIdentifier();
         String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options, displayName);
+        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME, options), options, displayName);
         return unusedSymbolInfo;
       }
     }
