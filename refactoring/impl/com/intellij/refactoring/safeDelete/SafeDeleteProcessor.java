@@ -17,6 +17,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
@@ -131,7 +132,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         PsiMethodCallExpression call = (PsiMethodCallExpression) element.getParent().getParent();
         PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.getText().equals("super") || methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
-          isSafeDelete = true;
+          final PsiMethod superMethod = call.resolveMethod();
+          if (superMethod != null && MethodSignatureUtil.isSuperMethod(superMethod, ((PsiMethod)parameter.getDeclarationScope()))) {
+            isSafeDelete = true;
+          }
         }
       }
       usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, parameter, isSafeDelete));

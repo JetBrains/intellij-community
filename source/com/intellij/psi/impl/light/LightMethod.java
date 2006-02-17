@@ -99,7 +99,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @NotNull
-  public MethodSignature getSignature(PsiSubstitutor substitutor) {
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
 

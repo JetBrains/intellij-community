@@ -338,7 +338,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   @NotNull
-  public MethodSignature getSignature(PsiSubstitutor substitutor){
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor){
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 

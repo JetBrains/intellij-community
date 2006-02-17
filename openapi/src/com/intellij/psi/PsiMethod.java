@@ -90,7 +90,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * @param substitutor the substitutor.
    * @return the method signature instance.
    */
-  @NotNull MethodSignature getSignature(PsiSubstitutor substitutor);
+  @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor);
 
   /**
    * Returns the name identifier for the method.

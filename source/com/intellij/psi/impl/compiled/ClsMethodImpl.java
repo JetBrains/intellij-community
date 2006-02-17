@@ -678,7 +678,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
 
   @NotNull
-  public MethodSignature getSignature(PsiSubstitutor substitutor) {
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 

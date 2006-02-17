@@ -119,6 +119,16 @@ public class MethodSignatureUtil {
     return result;
   }
 
+  public static boolean isSuperMethod(final PsiMethod superMethodCandidate, final PsiMethod derivedMethod) {
+    PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
+    PsiClass derivedClass = derivedMethod.getContainingClass();
+    final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClassCandidate, derivedClass, PsiSubstitutor.EMPTY);
+    if (superSubstitutor == null) return false;
+    final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
+    final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
+    return MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
+  }
+
   public static class MethodSignatureToMethods {
     private Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> myMap;
 
