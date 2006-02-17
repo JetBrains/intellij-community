@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -203,16 +204,6 @@ public final class FormEditingUtil {
     return result.get();
   }
 
-  /**
-   * @param x in editor pane coordinates
-   * @param y in editor pane coordinates
-   */
-  public static Cursor getDropCursor(final GuiEditor editor, final int x, final int y, final int componentCount){
-    if (canDrop(editor, x, y, componentCount)) {
-      return getMoveDropCursor();
-    }
-    return getMoveNoDropCursor();
-  }
 
   public static Cursor getMoveDropCursor() {
     try {
@@ -248,8 +239,8 @@ public final class FormEditingUtil {
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
-  public static boolean canDrop(final GuiEditor editor, final int x, final int y, final int componentCount){
-    if (componentCount == 0) {
+  public static boolean canDrop(final GuiEditor editor, final int x, final int y, final ComponentDragObject dragObject){
+    if (dragObject.getComponentCount() == 0) {
       return false;
     }
 
@@ -259,7 +250,7 @@ public final class FormEditingUtil {
     }
 
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, componentAt.getDelegee());
-    return componentAt.canDrop(targetPoint, componentCount);
+    return componentAt.canDrop(targetPoint, dragObject);
   }
 
   /**
@@ -270,10 +261,12 @@ public final class FormEditingUtil {
    * @param dx shift of component relative to y
    */
   public static RadContainer drop(final GuiEditor editor, final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
+    /*
     if (!canDrop(editor, x, y, components.length)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot drop");
     }
+    */
 
     final RadContainer targetContainer = getRadContainerAt(editor, x, y, 0);
     assert targetContainer != null;

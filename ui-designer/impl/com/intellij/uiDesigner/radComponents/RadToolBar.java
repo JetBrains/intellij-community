@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class RadToolBar extends RadContainer {
     return null;
   }
 
-  public boolean canDrop(@Nullable Point location, final int componentCount) {
+  @Override public boolean canDrop(@Nullable Point location, ComponentDragObject dragObject) {
     return true;
   }
 

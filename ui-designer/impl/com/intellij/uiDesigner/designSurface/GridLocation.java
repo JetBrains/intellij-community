@@ -75,7 +75,7 @@ class GridLocation {
     if (myMode == GridInsertMode.NoDrop) {
       return false;
     }
-    return myContainer.canDrop(myTargetPoint, dragObject.getComponentCount());
+    return myContainer.canDrop(myTargetPoint, dragObject);
   }
 
   public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {

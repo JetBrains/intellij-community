@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +23,8 @@ public final class RadSplitPane extends RadContainer {
     return null;
   }
 
-  public boolean canDrop(@Nullable Point location, final int componentCount) {
-    if (componentCount != 1) {
+  @Override public boolean canDrop(@Nullable Point location, ComponentDragObject dragObject) {
+    if (dragObject.getComponentCount() != 1) {
       return false;
     }
 

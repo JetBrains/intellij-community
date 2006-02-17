@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlReader;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -54,7 +55,7 @@ public class RadNestedForm extends RadComponent {
     }
   }
 
-  public boolean canDrop(@Nullable Point location, int componentCount) {
+  @Override public boolean canDrop(@Nullable Point location, ComponentDragObject dragObject) {
     return false;
   }
 

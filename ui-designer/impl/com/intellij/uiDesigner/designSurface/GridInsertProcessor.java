@@ -48,14 +48,14 @@ public class GridInsertProcessor {
 
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), aPoint, container.getDelegee());
     if (!container.isGrid()) {
-      GridInsertMode mode = container.canDrop(targetPoint, dragObject.getComponentCount()) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      GridInsertMode mode = container.canDrop(targetPoint, dragObject) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
       return new GridLocation(container, targetPoint, mode);
     }
 
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     if (grid.getRowCount() == 1 && grid.getColumnCount() == 1 &&
       container.getComponentAtGrid(0, 0) == null) {
-      GridInsertMode mode = container.canDrop(targetPoint, dragObject.getComponentCount()) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
+      GridInsertMode mode = container.canDrop(targetPoint, dragObject) ? GridInsertMode.InCell : GridInsertMode.NoDrop;
       final Rectangle rc = grid.getCellRangeRect(0, 0, 0, 0);
       return new FirstComponentInsertLocation(container, 0, 0, targetPoint, rc, mode);
     }
@@ -138,7 +138,7 @@ public class GridInsertProcessor {
       col -= dragObject.getDragRelativeColumn();
     }
 
-    if (mode == GridInsertMode.InCell && !container.canDrop(targetPoint, dragObject.getComponentCount())) {
+    if (mode == GridInsertMode.InCell && !container.canDrop(targetPoint, dragObject)) {
       mode = GridInsertMode.NoDrop;
     }
 

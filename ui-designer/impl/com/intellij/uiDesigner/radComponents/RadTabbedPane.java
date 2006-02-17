@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.ITabbedPane;
@@ -49,8 +50,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return null;
   }
 
-  public boolean canDrop(@Nullable Point location, final int componentCount) {
-    return componentCount == 1;
+  @Override public boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
+    return dragObject.getComponentCount() == 1;
   }
 
   public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy){

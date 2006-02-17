@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -459,14 +460,24 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final class MyDropTargetListener extends DropTargetAdapter {
     public void dragOver(DropTargetDragEvent dtde) {
       RadComponent dropTargetComponent = null;
+      ComponentDragObject dragObject = null;
+
       final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-      if (dcl != null || componentItem != null) {
+      if (dcl != null) {
+        dragObject = dcl;
+      }
+      else {
+        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (componentItem != null) {
+          dragObject = componentItem;
+        }
+      }
+
+      if (dragObject != null) {
         final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
-        int dropCount = (dcl != null) ? dcl.getComponents().size() : 1;
-        if (path != null && targetComponent != null && targetComponent.canDrop(null, dropCount)) {
+        if (path != null && targetComponent != null && targetComponent.canDrop(null, dragObject)) {
           dropTargetComponent = targetComponent;
           dtde.acceptDrag(dtde.getDropAction());
         }

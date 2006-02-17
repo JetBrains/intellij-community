@@ -245,7 +245,7 @@ class DesignDropTargetListener implements DropTargetListener {
       location = null;
     }
 
-    if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, componentCount) &&
+    if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, dcl) &&
         (location == null || location.getMode() == GridInsertMode.InCell)) {
       setDraggingState(dcl, false);
       return false;

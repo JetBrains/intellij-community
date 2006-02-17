@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -226,9 +227,9 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.toArray(new RadComponent[myComponents.size()]);
   }
 
-  public boolean canDrop(@Nullable Point location, final int componentCount) {
+  @Override public boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
     if (location == null) {
-      if (isXY() || componentCount > 1) {
+      if (isXY() || dragObject.getComponentCount() > 1) {
         return false;
       }
       return getComponentAtGrid(0, 0) == null;
@@ -248,7 +249,7 @@ public class RadContainer extends RadComponent implements IContainer {
         return false;
       }
 
-      for(int c=column; c<column+componentCount; c++) {
+      for(int c=column; c<column+dragObject.getComponentCount(); c++) {
         if (c >= gridLayout.getColumnCount() || getComponentAtGrid(row, c) != null) {
           return false;
         }

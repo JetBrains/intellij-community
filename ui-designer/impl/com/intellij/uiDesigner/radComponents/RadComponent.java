@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -429,10 +430,7 @@ public abstract class RadComponent implements IComponent {
     myModifiedPropertyNames.remove(property.getName());
   }
 
-  /**
-   * @param componentCount number of components to be dropped; always > 0
-   */
-  public abstract boolean canDrop(@Nullable Point location, int componentCount);
+  public abstract boolean canDrop(@Nullable Point location, ComponentDragObject dragObject);
 
   @Nullable
   public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
