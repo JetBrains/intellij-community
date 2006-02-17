@@ -53,7 +53,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
         if (key == null) return false;
-        return myAvailableTools.containsKey(key.toString()) || isNonInspectionHighlighting(key);
+        return myAvailableTools.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {

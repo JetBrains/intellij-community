@@ -10,14 +10,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -436,7 +435,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
-    if (!InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
+    if (!InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME))) return null;
 
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;
@@ -478,8 +477,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                            importStatement,
                                                            InspectionsBundle.message("unused.import.statement"));
     List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNUSED_IMPORT));
-    String displayName = HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_IMPORT);
+    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME)));
+    options.add(new DisableInspectionToolAction(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME)));
+    String displayName = UnusedImportLocalInspection.DISPLAY_NAME;
     QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), options, displayName);
     QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), options, displayName);
     myHasRedundantImports = true;

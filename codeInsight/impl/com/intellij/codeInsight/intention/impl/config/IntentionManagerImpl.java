@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.psi.PsiElement;
 
@@ -78,6 +79,7 @@ public class IntentionManagerImpl extends IntentionManager {
     options.add(new AddSuppressWarningsAnnotationAction(displayKey, context));
     options.add(new AddSuppressWarningsAnnotationForClassAction(displayKey, context));
     options.add(new AddSuppressWarningsAnnotationForAllAction(context));
+    options.add(new DisableInspectionToolAction(displayKey));
     return options;
   }
 

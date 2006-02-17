@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -15,6 +16,10 @@ public class DisableInspectionToolAction implements IntentionAction {
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
     myToolId = tool.getID();
+  }
+
+  public DisableInspectionToolAction(final HighlightDisplayKey key) {
+    myToolId = key.getID();
   }
 
   public String getText() {

@@ -97,7 +97,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public InspectionProfileImpl(@NonNls String name) {
     super(name);
     myInitialized = true;
-    setDefaultErrorLevels();
   }
 
   public InspectionProfile getParentProfile() {
@@ -173,16 +172,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myDisplayLevelMap.clear();
     copyToolsConfigurations(myBaseProfile);
     myInitialized = true;
-  }
-
-  private void setDefaultErrorLevels() {
-    myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_IMPORT, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
-  }
-
-  protected static boolean isNonInspectionHighlighting(HighlightDisplayKey key){
-    return key == HighlightDisplayKey.UNUSED_IMPORT ||
-           key == HighlightDisplayKey.UNCHECKED_WARNING;                                          
   }
 
   public String getName() {

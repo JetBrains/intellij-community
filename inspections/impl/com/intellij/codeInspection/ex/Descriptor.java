@@ -21,7 +21,7 @@ public class Descriptor {
   @NonNls private static Map<HighlightDisplayKey, String> ourHighlightDisplayKeyToDescriptionsMap = new HashMap<HighlightDisplayKey, String>();
   static {
     //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.DEPRECATED_SYMBOL, "Local_DeprecatedSymbol.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_IMPORT, "Local_UnusedImport.html");
+    //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_IMPORT, "Local_UnusedImport.html");
     /*ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_SYMBOL,  "Local_UnusedSymbol.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_THROWS_DECL, "Local_UnusedThrowsDeclaration.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.SILLY_ASSIGNMENT, "Local_SillyAssignment.html");
@@ -35,7 +35,7 @@ public class Descriptor {
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, "Local_NotRequiredHtmlAttributes.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_ERROR,  "Local_EJBErrors.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_WARNING, "Local_EJBWarnings.html");*/
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNCHECKED_WARNING, "Local_UncheckedWarning.html");
+    //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNCHECKED_WARNING, "Local_UncheckedWarning.html");
   }
 
   private String myText;

@@ -265,7 +265,7 @@ import java.util.Map;
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
         if (key == null) return false;
-        return availableToolsMap.containsKey(key.toString()) || isNonInspectionHighlighting(key);
+        return availableToolsMap.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {

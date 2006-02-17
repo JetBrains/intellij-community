@@ -33,9 +33,11 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.codeInspection.unchekedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.UnneededThrows;
 import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
 import com.intellij.codeInspection.unnessecaryModuleDependency.UnnessecaryModuleDependencyInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.codeInspection.unussedSymbol.UnusedSymbolLocalInspection;
@@ -114,6 +116,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UnhandledExceptionInJSP.class,
       RedundantSuppressInspection.class,
       UnusedSymbolLocalInspection.class,
+      UnusedImportLocalInspection.class,
+      UncheckedWarningLocalInspection.class
       };
   }
 }
