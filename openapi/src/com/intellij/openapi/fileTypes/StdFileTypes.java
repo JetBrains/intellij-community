@@ -21,6 +21,7 @@ public class StdFileTypes {
   public static LanguageFileType JSP;
   public static LanguageFileType JSPX;
   public static LanguageFileType XML;
+  public static LanguageFileType ANT;
   public static LanguageFileType DTD;
   public static LanguageFileType HTML;
   public static LanguageFileType XHTML;

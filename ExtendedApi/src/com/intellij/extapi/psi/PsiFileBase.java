@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
@@ -23,13 +24,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class PsiFileBase extends PsiFileImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiFileBase");
+  private final Language myLanguage;
 
-  private final static IElementType FILE_TEXT_CHAMELEON = new IElementType("FILE_TEXT_CHAMELEON",
-                                                                           Language.ANY); // Shouldn't happen to be used.
-  @NotNull private final Language myLanguage;
-
-  protected PsiFileBase(FileViewProvider viewProvider, final Language language) {
-    super(language.getParserDefinition().getFileNodeType(), FILE_TEXT_CHAMELEON, viewProvider);
+  protected PsiFileBase(FileViewProvider viewProvider, @NotNull Language language) {
+    super(language.getParserDefinition().getFileNodeType(), language.getParserDefinition().getFileNodeType(), viewProvider);
     myLanguage = language;
   }
 
@@ -43,7 +41,11 @@ public abstract class PsiFileBase extends PsiFileImpl {
   }
 
   protected final FileElement createFileElement(final CharSequence docText) {
-    return _createFileElement(docText, myLanguage, getProject());
+    final ParserDefinition parserDefinition = myLanguage.getParserDefinition();
+    if(parserDefinition != null && parserDefinition.createParser(getProject()) != PsiUtil.NULL_PARSER) {
+      return _createFileElement(docText, myLanguage, getProject());
+    }
+    return super.createFileElement(docText);
   }
 
   private static FileElement _createFileElement(final CharSequence docText, final Language language, Project project) {

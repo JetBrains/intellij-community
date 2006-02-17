@@ -15,7 +15,7 @@ public class PropertiesParsingTest extends ParsingTestCase {
     super("", "properties");
   }
 
-  protected String testDataPath() {
+  protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/propertiesFile";
   }
 

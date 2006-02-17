@@ -51,6 +51,11 @@ public class StdLanguages {
   public static Language XML;
 
   /**
+   * The definition for the ANT language.
+   */
+  public static Language ANT;
+
+  /**
    * The definition for the HTML language.
    */
   public static Language HTML;

@@ -47,7 +47,6 @@ public interface ParserDefinition {
    * @param project the project to which the parser is connected.
    * @return the parser instance.
    */
-  @NotNull
   PsiParser createParser(Project project);
 
   /**

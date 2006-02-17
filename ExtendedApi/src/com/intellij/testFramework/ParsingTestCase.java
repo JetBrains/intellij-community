@@ -22,13 +22,14 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   private final String myFullDataPath;
   protected PsiFile myFile;
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public ParsingTestCase(String dataPath, String fileExt) {
     myDataPath = dataPath;
-    myFullDataPath = testDataPath() + "/psi/" + myDataPath;
+    myFullDataPath = getTestDataPath() + "/psi/" + myDataPath;
     myFileExt = fileExt;
   }
 
-  protected String testDataPath() {
+  protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
 
