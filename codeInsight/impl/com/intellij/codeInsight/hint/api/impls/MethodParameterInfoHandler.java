@@ -24,10 +24,16 @@ import java.util.ArrayList;
  */
 public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpressionList,Object> {
   public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
-    PsiElement[] allElements = LookupManager.getInstance(context.getProject()).getAllElementsForItem(item);
-    PsiMethod[] allMethods = new PsiMethod[allElements.length];
-    System.arraycopy(allElements, 0, allMethods, 0, allElements.length);
-    return allMethods;
+    final PsiElement[] allElements = LookupManager.getInstance(context.getProject()).getAllElementsForItem(item);
+
+    if (allElements != null &&
+        allElements.length > 0 &&
+        allElements[0] instanceof PsiMethod) {
+      PsiMethod[] allMethods = new PsiMethod[allElements.length];
+      System.arraycopy(allElements, 0, allMethods, 0, allElements.length);
+      return allMethods;
+    }
+    return null;
   }
 
   public boolean couldShowInLookup() {
