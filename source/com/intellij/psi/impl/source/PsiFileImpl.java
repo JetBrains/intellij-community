@@ -163,26 +163,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return getViewProvider().getModificationStamp();
   }
 
-  @NotNull
-  public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
-    return PsiElement.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public PsiClass[] getSingleClassImports(boolean checkIncludes) {
-    return PsiClass.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public String[] getImplicitlyImportedPackages() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
-    return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
-  }
-
   public void subtreeChanged() {
     super.subtreeChanged();
     clearCaches();

@@ -17,13 +17,11 @@ import java.util.ArrayList;
 
 class ReferenceAdjuster implements Constants {
   private final CodeStyleSettings mySettings;
-  private final ImportHelper myImportHelper;
   private final boolean myUseFqClassnamesInJavadoc;
   private final boolean myUseFqClassNames;
 
   public ReferenceAdjuster(CodeStyleSettings settings, boolean useFqInJavadoc, boolean useFqInCode) {
     mySettings = settings;
-    myImportHelper = new ImportHelper(mySettings);
     myUseFqClassnamesInJavadoc = useFqInJavadoc;
     myUseFqClassNames = useFqInCode;
   }
@@ -74,7 +72,7 @@ class ReferenceAdjuster implements Constants {
               String qName = ((PsiClass)refElement).getQualifiedName();
               if (qName == null) return element;
               PsiImportHolder file = (PsiImportHolder) SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-              if (ImportHelper.isImplicitlyImported(qName, file)) {
+              if (file instanceof PsiJavaFile && ImportHelper.isImplicitlyImported(qName, (PsiJavaFile) file)) {
                 if (isShort) return element;
                 return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
               }

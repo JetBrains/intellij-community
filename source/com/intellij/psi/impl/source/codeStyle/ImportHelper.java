@@ -619,7 +619,7 @@ public class ImportHelper{
     }
   }
 
-  public static boolean isImplicitlyImported(String className, PsiImportHolder file) {
+  public static boolean isImplicitlyImported(String className, PsiJavaFile file) {
     String[] packageNames = file.getImplicitlyImportedPackages();
     for (String packageName : packageNames) {
       if (hasPackage(className, packageName)) return true;

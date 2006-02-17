@@ -50,4 +50,48 @@ public interface PsiJavaFile extends PsiImportHolder {
    * @return the import list, or null if this element represents a compiled class.
    */
   @Nullable PsiImportList getImportList();
+
+  /**
+   * Returns the list of classes or packages which have been
+   * imported on demand (for example, javax.swing.*)
+   *
+   * @param includeImplicit if true, implicitly imported packages (like java.lang) are included.
+   * @param checkIncludes   deprecated, no longer used
+   * @return the list of PsiClass or PsiPackage elements for the imports.
+   */
+  @NotNull PsiElement[] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
+
+  /**
+   * Returns the list of classs which have been imported as
+   * single-class imports.
+   *
+   * @param checkIncludes deprecated, no longer used.
+   * @return the list of PsiClass elements for the import.
+   */
+  @NotNull PsiClass[] getSingleClassImports(@Deprecated boolean checkIncludes);
+
+  /**
+   * Returns the list of names of implicitly imported packages
+   * (for example, java.lang).
+   *
+   * @return the list of implicitly imported package names.
+   */
+  @NotNull String[] getImplicitlyImportedPackages();
+
+  /**
+   * returns the list of reference elements for the
+   * implicitly imported packages (for example, java.lang).
+   *
+   * @return the list of implicitly imported package reference elements.
+   */
+  @NotNull PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences();
+
+  /**
+   * Returns the single-class import statement which references
+   * the specified class, or null if there is no such statement.
+   *
+   * @param aClass the class to return the import statement for.
+   * @return the Java code reference under the import statement, or null if there is no such statement.
+   */
+  @Nullable PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass);
 }
