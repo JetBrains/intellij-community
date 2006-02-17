@@ -358,6 +358,12 @@ public class ImportHelper{
         return ref;
       }
     }
+    for (PsiClass aClass : file.getClasses()) {
+      String className = aClass.getQualifiedName();
+      if (PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
+        return aClass;
+      }
+    }
     return null;
   }
 
