@@ -202,10 +202,6 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return "PsiBinaryFile:" + getName();
   }
 
-  public boolean canContainJavaCode() {
-    return false;
-  }
-
   @NotNull
   public FileType getFileType() {
     return myFileType;

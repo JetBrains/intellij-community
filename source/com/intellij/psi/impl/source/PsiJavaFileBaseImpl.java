@@ -7,7 +7,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -204,10 +203,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
     return PsiImplUtil.namesToPackageReferences(myManager, IMPLICIT_IMPORTS);
-  }
-
-  public boolean canContainJavaCode() {
-    return true;
   }
 
   public static class StaticImportFilteringProcessor implements PsiScopeProcessor {

@@ -62,13 +62,6 @@ public interface PsiFile extends PsiFileSystemItem {
   @Nullable PsiFile getOriginalFile();
 
   /**
-   * Checks if the file is a Java source file or Java code fragment.
-   *
-   * @return true if the file is a Java source file or Java code fragment, false otherwise
-   */
-  boolean canContainJavaCode();
-
-  /**
    * Returns the file type for the file.
    *
    * @return the file type instance.

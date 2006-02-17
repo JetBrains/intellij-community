@@ -78,10 +78,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     return true;
   }
 
-  public boolean canContainJavaCode() {
-    return true;
-  }
-
   @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;

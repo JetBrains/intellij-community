@@ -259,20 +259,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     visitor.visitJavaFile(this);
   }
 
-  public String getDetectedLineSeparator() {
-    throw new UnsupportedOperationException();
-  }
-
   public String toString() {
     return "PsiFile:" + getName();
   }
 
   public PsiFile getOriginalFile() {
     return null;
-  }
-
-  public boolean canContainJavaCode() {
-    return true;
   }
 
   @NotNull

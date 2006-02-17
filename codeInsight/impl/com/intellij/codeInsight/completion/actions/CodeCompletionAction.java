@@ -28,15 +28,6 @@ public class CodeCompletionAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    /*
-    boolean result = file.canContainJavaCode() || file instanceof XmlFile;
-    if (!result) {
-      FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
-
-      if (supportCapabilities!=null) result = supportCapabilities.hasCompletion();
-    }
-    return  result;
-    */
     return true;
   }
 
