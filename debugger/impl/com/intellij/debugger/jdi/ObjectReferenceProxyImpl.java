@@ -5,13 +5,12 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ObjectReferenceProxyImpl extends JdiProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ObjectReferenceProxyImpl");
@@ -20,7 +19,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   //caches
   private ReferenceType myReferenceType;
   private Type myType;
-  private boolean myIsCollected = false;
+  private Boolean myIsCollected = null;
 
   public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, ObjectReference objectReference) {
     super(virtualMachineProxy);
@@ -67,7 +66,15 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public boolean isCollected() {
     checkValid();
-    return myIsCollected;
+    if (myIsCollected == null || Boolean.FALSE.equals(myIsCollected)) {
+      try {
+        myIsCollected = Boolean.valueOf(VirtualMachineProxyImpl.isCollected(myObjectReference));
+      }
+      catch (VMDisconnectedException e) {
+        myIsCollected = Boolean.TRUE;
+      }
+    }
+    return myIsCollected.booleanValue();
   }
 
   public long uniqueID() {
@@ -117,10 +124,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    * The advice to the proxy to clear cached data.
    */
   protected void clearCaches() {
-    try {
-      myIsCollected = VirtualMachineProxyImpl.isCollected(myObjectReference);
-    }
-    catch (VMDisconnectedException e) {
+    if (Boolean.FALSE.equals(myIsCollected)) {
+      // clearing cache makes sence only if the object has not been collected yet
+      myIsCollected = null;
     }
   }
 }
