@@ -40,6 +40,7 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.PsiElement;
@@ -240,6 +241,7 @@ public class FormatterUtil {
 
   private static boolean isInsideTagBody(ASTNode place) {
     final ASTNode treeParent = place.getTreeParent();
+    if(treeParent instanceof JspXmlRootTag) return true;
     if(treeParent.getElementType() != ElementType.XML_TAG
        && treeParent.getElementType() != ElementType.HTML_TAG) return false;
     while(place != null){
