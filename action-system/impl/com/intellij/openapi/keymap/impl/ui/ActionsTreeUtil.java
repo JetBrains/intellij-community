@@ -15,9 +15,12 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -57,7 +60,7 @@ public class ActionsTreeUtil {
 
   private ActionsTreeUtil() {}
 
-  private static Group createPluginsActionsGroup(final String filter, final boolean forceFiltering) {
+  private static Group createPluginsActionsGroup(Condition<AnAction> filtered) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
@@ -71,7 +74,7 @@ public class ActionsTreeUtil {
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
         final AnAction anAction = managerEx.getAction(pluginAction);
-        if (isActionFiltered(filter, anAction, forceFiltering)){
+        if (filtered == null || filtered.value(anAction)){
           pluginGroup.addActionId(pluginAction);
         }
       }
@@ -82,11 +85,11 @@ public class ActionsTreeUtil {
     return pluginsGroup;
   }
 
-  private static Group createBookmarksActionsGroup(final String filter, final boolean forceFiltering) {
-    return createGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_BOOKMARKS), true, filter, forceFiltering);
+  private static Group createBookmarksActionsGroup(Condition<AnAction> filtered) {
+    return createGroup((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_BOOKMARKS), true, filtered);
   }
 
-  private static Group createGuiDesignerActionsGroup(final String filter, final boolean forceFiltering, Group mainGroup) {
+  private static Group createGuiDesignerActionsGroup(Condition<AnAction> filtered, Group mainGroup) {
     mainGroup.initIds();
     Group group = new Group(KeyMapBundle.message("gui.designer.group.title"), IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
     ActionManager actionManager = ActionManager.getInstance();
@@ -95,40 +98,40 @@ public class ActionsTreeUtil {
     for (AnAction action : actions) {
       String actionId = actionManager.getId(action);
       if (actionId == null || mainGroup.containsId(actionId)) continue;
-      if (isActionFiltered(filter, action, forceFiltering)) {
+      if (filtered == null || filtered.value(action)) {
         group.addActionId(actionId);
       }
     }
     return group;
   }
 
-  private static Group createVcsGroup(final String filter, final boolean forceFiltering) {
+  private static Group createVcsGroup(Condition<AnAction> filtered) {
     Group group = new Group(KeyMapBundle.message("version.control.group.title"), VCS_GROUP_ID, null, null);
     ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getAction(VCS_GROUP_ID);
-    fillGroupIgnorePopupFlag(versionControls, group, false, filter, forceFiltering);
+    fillGroupIgnorePopupFlag(versionControls, group, false, filtered);
     return group;
   }
 
-  public static Group createMainMenuGroup(final String filter, final boolean forceFiltering, boolean ignore) {
+  public static Group createMainMenuGroup(Condition<AnAction> filtered, boolean ignore) {
     Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, MAIN_MENU_ICON, MAIN_MENU_ICON);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU);
-    fillGroupIgnorePopupFlag(mainMenuGroup, group, ignore, filter, forceFiltering);
+    fillGroupIgnorePopupFlag(mainMenuGroup, group, ignore, filtered);
     return group;
   }
 
-  public static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, boolean ignore, String filter, boolean forceFiltering) {
+  public static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, boolean ignore, Condition<AnAction> filtered) {
     AnAction[] mainMenuTopGroups = actionGroup.getChildren(null);
     for (AnAction action : mainMenuTopGroups) {
-      Group subGroup = createGroup((ActionGroup)action, ignore, filter, forceFiltering);
+      Group subGroup = createGroup((ActionGroup)action, ignore, filtered);
       if (subGroup.getSize() > 0) {
         group.addGroup(subGroup);
       }
     }
   }
 
-  public static Group createGroup(ActionGroup actionGroup, boolean ignore, final String filter, final boolean forceFiltering) {
+  public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
     final String name = actionGroup.getTemplatePresentation().getText();
-    return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore, filter, forceFiltering);
+    return createGroup(actionGroup, name != null ? name : ActionManager.getInstance().getId(actionGroup), null, null, ignore, filtered);
   }
 
   public static Group createGroup(ActionGroup actionGroup,
@@ -136,8 +139,7 @@ public class ActionsTreeUtil {
                                   Icon icon,
                                   Icon openIcon,
                                   boolean ignore,
-                                  final String filter,
-                                  final boolean forceFiltering) {
+                                  Condition<AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
     AnAction[] children = actionGroup.getChildren(null);
@@ -146,7 +148,7 @@ public class ActionsTreeUtil {
       AnAction action = children[i];
 
       if (action instanceof ActionGroup) {
-        Group subGroup = createGroup((ActionGroup)action, ignore, filter, forceFiltering);
+        Group subGroup = createGroup((ActionGroup)action, ignore, filtered);
         if (subGroup.getSize() > 0) {
           if (!ignore && !((ActionGroup)action).isPopup()) {
             group.addAll(subGroup);
@@ -169,7 +171,7 @@ public class ActionsTreeUtil {
         if (id != null) {
           if (id.startsWith(TargetAction.ACTION_ID_PREFIX)) continue;
           if (id.startsWith(Tool.ACTION_ID_PREFIX)) continue;
-          if (isActionFiltered(filter, action, forceFiltering)) {
+          if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
           }
         }
@@ -179,7 +181,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createDebuggerActionsGroup(final String filter, final boolean forceFiltering) {
+  private static Group createDebuggerActionsGroup(Condition<AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup debuggerGroup = (ActionGroup) actionManager.getAction(IdeActions.GROUP_DEBUGGER);
     AnAction[] debuggerActions = debuggerGroup.getChildren(null);
@@ -187,7 +189,7 @@ public class ActionsTreeUtil {
     ArrayList<String> ids = new ArrayList<String>();
     for (AnAction editorAction : debuggerActions) {
       String actionId = actionManager.getId(editorAction);
-      if (isActionFiltered(filter, editorAction, forceFiltering)) {
+      if (filtered == null || filtered.value(editorAction)) {
         ids.add(actionId);
       }
     }
@@ -201,7 +203,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createEditorActionsGroup(final String filter, final boolean forceFiltering) {
+  private static Group createEditorActionsGroup(Condition<AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup editorGroup = (ActionGroup) actionManager.getAction(IdeActions.GROUP_EDITOR);
     AnAction[] editorActions = editorGroup.getChildren(null);
@@ -214,7 +216,7 @@ public class ActionsTreeUtil {
         AnAction action = actionManager.getAction('$' + actionId.substring(6));
         if (action != null) continue;
       }
-      if (isActionFiltered(filter, editorAction, forceFiltering)) {
+      if (filtered == null || filtered.value(editorAction)) {
         ids.add(actionId);
       }
     }
@@ -228,7 +230,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createAntGroup(final String filter, final boolean forceFiltering, final Project project) {
+  private static Group createAntGroup(Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(TargetAction.ACTION_ID_PREFIX);
     Arrays.sort(ids);
@@ -239,7 +241,7 @@ public class ActionsTreeUtil {
 
       HashMap<BuildFile,Group> buildFileToGroup = new HashMap<BuildFile, Group>();
       for (String id : ids) {
-        if (!isActionFiltered(filter, actionManager.getAction(id), forceFiltering)) continue;
+        if (filtered == null || !filtered.value(actionManager.getAction(id))) continue;
         BuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
         if (buildFile == null) {
           LOG.info("no buildfile found for actionId=" + id);
@@ -259,13 +261,13 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createMacrosGroup(final String filter, final boolean forceFiltering) {
+  private static Group createMacrosGroup(Condition<AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
     Arrays.sort(ids);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
     for (String id : ids) {
-      if (isActionFiltered(filter, actionManager.getAction(id), forceFiltering)) {
+      if (filtered == null || filtered.value(actionManager.getAction(id))) {
         group.addActionId(id);
       }
     }
@@ -281,7 +283,7 @@ public class ActionsTreeUtil {
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
     for (QuickList quickList : quickLists) {
-      if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+      if (filter == null || SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
         group.addQuickList(quickList);
       }
     }
@@ -289,7 +291,7 @@ public class ActionsTreeUtil {
   }
 
 
-  private static Group createExternalToolsGroup(final String filter, final boolean forceFiltering) {
+  private static Group createExternalToolsGroup(Condition<AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
     Arrays.sort(ids);
@@ -300,7 +302,7 @@ public class ActionsTreeUtil {
     HashMap<String,Group> toolGroupNameToGroup = new HashMap<String, Group>();
 
     for (String id : ids) {
-      if (!isActionFiltered(filter, actionManager.getAction(id), forceFiltering)) continue;
+      if (filtered == null || !filtered.value(actionManager.getAction(id))) continue;
       String groupName = toolManager.getGroupByActionId(id);
 
       if (groupName != null && groupName.trim().length() == 0) {
@@ -327,7 +329,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createOtherGroup(final String filter, final boolean forceFiltering, Group addedActions, final Keymap keymap) {
+  private static Group createOtherGroup(Condition<AnAction> filtered, Group addedActions, final Keymap keymap) {
     addedActions.initIds();
     ArrayList<String> result = new ArrayList<String>();
 
@@ -382,7 +384,7 @@ public class ActionsTreeUtil {
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), OTHER_ICON, OTHER_ICON);
     for (String id : result) {
-      if (isActionFiltered(filter, actionManager.getAction(id), forceFiltering))
+      if (filtered == null || filtered.value(actionManager.getAction(id)))
       group.addActionId(id);
     }
     return group;
@@ -435,43 +437,77 @@ public class ActionsTreeUtil {
 
   public static Group createMainGroup(final Project project,
                                       final Keymap keymap,
+                                      final QuickList[] quickLists){
+    return createMainGroup(project, keymap, quickLists, null, false, null);
+  }
+
+  public static Group createMainGroup(final Project project,
+                                      final Keymap keymap,
                                       final QuickList[] quickLists,
                                       final String filter,
-                                      final boolean forceFiltering) {
+                                      final boolean forceFiltering,
+                                      final Condition<AnAction> filtered) {
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
-    mainGroup.addGroup(createEditorActionsGroup(filter, forceFiltering));
-    mainGroup.addGroup(createMainMenuGroup(filter, forceFiltering, false));
-    mainGroup.addGroup(createVcsGroup(filter, forceFiltering));
-    mainGroup.addGroup(createAntGroup(filter, forceFiltering, project));
-    mainGroup.addGroup(createDebuggerActionsGroup(filter, forceFiltering));
-    mainGroup.addGroup(createGuiDesignerActionsGroup(filter, forceFiltering, mainGroup));
-    mainGroup.addGroup(createBookmarksActionsGroup(filter, forceFiltering));
-    mainGroup.addGroup(createExternalToolsGroup(filter, forceFiltering));
-    mainGroup.addGroup(createMacrosGroup(filter, forceFiltering));
+    mainGroup.addGroup(createEditorActionsGroup(filtered));
+    mainGroup.addGroup(createMainMenuGroup(filtered, false));
+    mainGroup.addGroup(createVcsGroup(filtered));
+    mainGroup.addGroup(createAntGroup(filtered, project));
+    mainGroup.addGroup(createDebuggerActionsGroup(filtered));
+    mainGroup.addGroup(createGuiDesignerActionsGroup(filtered, mainGroup));
+    mainGroup.addGroup(createBookmarksActionsGroup(filtered));
+    mainGroup.addGroup(createExternalToolsGroup(filtered));
+    mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filter, forceFiltering, quickLists));
 
-    Group otherGroup = createOtherGroup(filter, forceFiltering, mainGroup, keymap);
+    Group otherGroup = createOtherGroup(filtered, mainGroup, keymap);
     mainGroup.addGroup(otherGroup);
 
-    mainGroup.addGroup(createPluginsActionsGroup(filter, forceFiltering));
+    mainGroup.addGroup(createPluginsActionsGroup(filtered));
     return mainGroup;
   }
 
-  private static boolean isActionFiltered(String filter, AnAction action, boolean force){
-    if (filter == null) return true;
-    if (action == null) return false;
-    final String text = action.getTemplatePresentation().getText();
-    if (text != null){
-      if (SearchUtil.isComponentHighlighted(text, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))){
-        return true;
+  public static Condition<AnAction> isActionFiltered(final String filter, final boolean force){
+    return new Condition<AnAction>() {
+      public boolean value(final AnAction action) {
+        if (filter == null) return true;
+        if (action == null) return false;
+        final String text = action.getTemplatePresentation().getText();
+        if (text != null){
+          if (SearchUtil.isComponentHighlighted(text, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))){
+            return true;
+          }
+        }
+        final String description = action.getTemplatePresentation().getDescription();
+        if (description != null){
+          if (SearchUtil.isComponentHighlighted(description, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))){
+            return true;
+          }
+        }
+        return false;
       }
-    }
-    final String description = action.getTemplatePresentation().getDescription();
-    if (description != null){
-      if (SearchUtil.isComponentHighlighted(description, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))){
-        return true;
+    };
+  }
+
+  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager, final Keymap keymap, final KeyboardShortcut keyboardShortcut, final boolean force){
+    return new Condition<AnAction>() {
+      public boolean value(final AnAction action) {
+        if (keyboardShortcut == null) return true;
+        if (action == null) return false;
+        final Shortcut [] actionShortcuts =  keymap.getShortcuts(actionManager.getId(action));
+        for (Shortcut shortcut : actionShortcuts) {
+          if (shortcut instanceof KeyboardShortcut){
+            final KeyboardShortcut keyboardActionShortcut = (KeyboardShortcut)shortcut;
+            if (Comparing.equal(keyboardActionShortcut, keyboardShortcut)){
+              return true;
+            }
+            if (!force){
+              KeyStroke [] array = new KeyStroke[] {keyboardActionShortcut.getFirstKeyStroke(), keyboardActionShortcut.getSecondKeyStroke()};
+              if ((keyboardShortcut.getSecondKeyStroke() != null && ArrayUtil.find(array, keyboardShortcut.getSecondKeyStroke()) != -1) || (keyboardShortcut.getFirstKeyStroke() != null && ArrayUtil.find(array, keyboardShortcut.getFirstKeyStroke()) != -1)) return true;
+            }
+          }
+        }
+        return false;
       }
-    }
-    return false;
+    };
   }
 }

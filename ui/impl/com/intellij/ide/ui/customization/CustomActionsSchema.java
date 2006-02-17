@@ -142,7 +142,7 @@ public class CustomActionsSchema implements JDOMExternalizable {
   public void fillActionGroups(DefaultMutableTreeNode root){
     final ActionManager actionManager = ActionManager.getInstance();
     for (Pair pair : myIdToNameList) {
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup((ActionGroup)actionManager.getAction(pair.first), pair.second, null, null, true, null, false)));
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup((ActionGroup)actionManager.getAction(pair.first), pair.second, null, null, true, null)));
     }
   }
 

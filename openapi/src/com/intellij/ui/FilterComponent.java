@@ -35,8 +35,14 @@ public abstract class FilterComponent extends JPanel {
   private final TextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
   public FilterComponent(@NonNls String propertyName, int historySize) {
+    this(propertyName, historySize, true, true);
+  }
+
+  public FilterComponent(@NonNls String propertyName, int historySize, boolean showButton, boolean showLabel) {
     super(new BorderLayout());
-    add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
+    if (showLabel) {
+      add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
+    }
     myFilter = new TextFieldWithStoredHistory(propertyName);
     myFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
@@ -66,7 +72,13 @@ public abstract class FilterComponent extends JPanel {
         filter();
       }
     });
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.EAST);
+    if (showButton) {
+      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.EAST);
+    }
+  }
+
+  public void setHistorySize(int historySize){
+    myFilter.setHistorySize(historySize);
   }
 
   public void reset(){

@@ -1,6 +1,9 @@
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -15,21 +18,23 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListUtil;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -59,6 +64,8 @@ public class KeymapPanel extends JPanel {
   private JCheckBox myDisableMnemonicsCheckbox;
   private ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
+  private JBPopup myPopup = null;
+  private boolean myTextFilterUsed = true;
 
   private final DocumentListener myKeymapNameListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
@@ -428,14 +435,152 @@ public class KeymapPanel extends JPanel {
     });
     panel.add(myDisableMnemonicsCheckbox, new GridBagConstraints(3,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 0, 0, 0),0,0));
 
-    myFilterComponent = new FilterComponent("KEYMAP", 5){
+
+
+    /* Icon collapseIcon = IconLoader.getIcon("/actions/collapsePanel.png");
+    Icon expandIcon = IconLoader.getIcon("/actions/expandPanel.png");
+   final CollapsiblePanel filteringComponent = new CollapsiblePanel(createFilteringPanel(), true, false, collapseIcon, expandIcon, null);
+    filteringComponent.setBorder(IdeBorderFactory.createTitledBorder("Filter"));
+    filteringComponent.setMaximumSize(new Dimension(50, -1));
+    filteringComponent.addCollapsingListener(new CollapsingListener() {
+      public void onCollapsingChanged(CollapsiblePanel panel, boolean newValue) {
+        if (filteringComponent.isCollapsed()){
+          myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
+        }
+      }
+    });
+    panel.add(filteringComponent, new GridBagConstraints(0,1,4,1,1,1, GridBagConstraints.EAST, GridBagConstraints.VERTICAL, new Insets(8,8,0,10), 0,0));
+*/
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
+    final TreeExpander treeExpander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myActionsTree.getTree());
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myActionsTree.getTree(), 0);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    group.add(commonActionsManager.createCollapseAllAction(treeExpander));
+    group.add(commonActionsManager.createExpandAllAction(treeExpander));
+    group.add(new AnAction(InspectionsBundle.message("inspection.tools.action.filter"), InspectionsBundle.message("inspection.tools.action.filter"), IconLoader.getIcon("/ant/filter.png")) {
+      public void actionPerformed(AnActionEvent e) {
+        if (myPopup == null || myPopup.getContent() == null){
+          myPopup = JBPopupFactory.getInstance().createComponentPopup(createFilteringPanel(), null, true);
+        }
+        myPopup.showUnderneathOf(toolbar);
+      }
+    });
+    group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
+                           KeyMapBundle.message("filter.clear.action.text"), IconLoader.getIcon("/actions/gc.png")) {
+      public void actionPerformed(AnActionEvent e) {
+        myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
+      }
+    });
+    panel.add(toolbar, new GridBagConstraints(0,1,4,1,1,1, GridBagConstraints.EAST, GridBagConstraints.VERTICAL, new Insets(8,8,0,10), 0,0));
+
+    return panel;
+  }
+
+
+  private JPanel createFilteringPanel() {
+    JPanel filterComponent = new JPanel(new GridBagLayout());
+    filterComponent.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
+    final JLabel titleLabel = new JLabel(KeyMapBundle.message("filter.settings.popup.title"));
+    titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    titleLabel.setOpaque(true);
+    titleLabel.setBackground(UIUtil.getListBackground());
+    filterComponent.add(titleLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, -2, 8, -2), 0,0));
+
+    final JRadioButton textFilter = new JRadioButton(KeyMapBundle.message("filter.text.title"));
+    filterComponent.add(textFilter, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
+
+    myFilterComponent = new FilterComponent("KEYMAP", 5, false, false){
       protected void filter() {
         myActionsTree.filter(getFilter(), getCurrentQuickListIds());
       }
     };
-    panel.add(myFilterComponent, new GridBagConstraints(0,1,4,1,1,0,GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8,8,0,0), 0,0));
+    filterComponent.add(myFilterComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
 
-    return panel;
+    JRadioButton shortcutFilter = new JRadioButton(KeyMapBundle.message("filter.shortcut.title"));
+    filterComponent.add(shortcutFilter, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
+
+    final ShortcutTextField firstShortcut = new ShortcutTextField();
+    final ShortcutTextField secondShortcut = new ShortcutTextField();
+    final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
+    firstShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
+      }
+    });
+    secondShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
+      }
+    });
+    final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
+    filterComponent.add(firstLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(5,20,0,0),0,0));
+    filterComponent.add(firstShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
+    enable2Shortcut.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        secondShortcut.setEnabled(enable2Shortcut.isSelected());
+      }
+    });
+    filterComponent.add(enable2Shortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,15,0,0),0,0));
+    final JLabel secondLabel = new JLabel(KeyMapBundle.message("filter.second.stroke.input"));
+    filterComponent.add(secondLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
+    filterComponent.add(secondShortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,20,0,0),0,0));
+    enable2Shortcut.setSelected(false);
+    secondShortcut.setEnabled(false);
+    ActionListener enabledListener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        enableFilterComponents(textFilter.isSelected(), firstShortcut, secondShortcut, enable2Shortcut, secondLabel, firstLabel);
+      }
+    };
+    ButtonGroup group = new ButtonGroup();
+    group.add(textFilter);
+    group.add(shortcutFilter);
+    textFilter.setSelected(myTextFilterUsed);
+    shortcutFilter.setSelected(!myTextFilterUsed);
+    textFilter.addActionListener(enabledListener);
+    shortcutFilter.addActionListener(enabledListener);
+    enableFilterComponents(myTextFilterUsed, firstShortcut, secondShortcut, enable2Shortcut, secondLabel, firstLabel);
+    return filterComponent;
+  }
+
+  private void enableFilterComponents(final boolean textFilterSelected,
+                                      final ShortcutTextField firstShortcut,
+                                      final ShortcutTextField secondShortcut,
+                                      final JCheckBox enable2Shortcut,
+                                      final JLabel secondLabel,
+                                      final JLabel firstLabel) {
+    myTextFilterUsed = textFilterSelected;
+    GuiUtils.enableChildren(myFilterComponent, textFilterSelected);
+    firstShortcut.setEnabled(!textFilterSelected);
+    secondShortcut.setEnabled(!textFilterSelected && enable2Shortcut.isSelected());
+    enable2Shortcut.setEnabled(!textFilterSelected);
+    secondLabel.setEnabled(!textFilterSelected && enable2Shortcut.isSelected());
+    firstLabel.setEnabled(!textFilterSelected);
+  }
+
+  private void filterTreeByShortcut(final ShortcutTextField firstShortcut,
+                                    final JCheckBox enable2Shortcut,
+                                    final ShortcutTextField secondShortcut) {
+    final KeyStroke keyStroke = firstShortcut.getKeyStroke();
+    if (keyStroke != null){
+      myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null), getCurrentQuickListIds());
+    }
   }
 
   public void showOption(String option){
@@ -951,6 +1096,32 @@ public class KeymapPanel extends JPanel {
       QuickList quickList = (QuickList)value;
       setText(quickList.getDisplayName());
       return this;
+    }
+  }
+
+  public class ShortcutTextField extends JTextField {
+    private KeyStroke myKeyStroke;
+
+    public ShortcutTextField() {
+      enableEvents(KeyEvent.KEY_EVENT_MASK);
+      setFocusTraversalKeysEnabled(false);
+    }
+
+    protected void processKeyEvent(KeyEvent e) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_SHIFT || keyCode == KeyEvent.VK_ALT || keyCode == KeyEvent.VK_CONTROL ||
+            keyCode == KeyEvent.VK_ALT_GRAPH || keyCode == KeyEvent.VK_META) {
+          return;
+        }
+
+        myKeyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiers());
+        setText(KeymapUtil.getKeystrokeText(myKeyStroke));
+      }
+    }
+
+    public KeyStroke getKeyStroke() {
+      return myKeyStroke;
     }
   }
 }

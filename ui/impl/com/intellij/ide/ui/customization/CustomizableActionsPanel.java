@@ -776,7 +776,7 @@ public class CustomizableActionsPanel {
 
     protected JComponent createCenterPanel() {
       final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
-      Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().getAllQuickLists(), null, false);
+      Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().getAllQuickLists());
       DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
       DefaultTreeModel model = new DefaultTreeModel(root);
       myTree = new JTree();

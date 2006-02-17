@@ -173,18 +173,22 @@ public class ActionsTree {
   }
 
   public void reset(Keymap keymap, final QuickList[] allQuickLists) {
-    reset(keymap, allQuickLists, null);
+    reset(keymap, allQuickLists, null, null);
   }
 
   public Group getMainGroup() {
     return myMainGroup;
   }
 
-  public void filter(final String filter, final QuickList[] currentQuickListIds) {
-    reset(myKeymap, currentQuickListIds, filter);
+  public JTree getTree(){
+    return myTreeTable.getTree();
   }
 
-  private void reset(final Keymap keymap, final QuickList[] allQuickLists, final String filter) {
+  public void filter(final String filter, final QuickList[] currentQuickListIds) {
+    reset(myKeymap, currentQuickListIds, filter, null);
+  }
+
+  private void reset(final Keymap keymap, final QuickList[] allQuickLists, String filter, KeyboardShortcut shortcut) {
     myKeymap = keymap;
 
     final PathsKeeper pathsKeeper = new PathsKeeper();
@@ -192,10 +196,15 @@ public class ActionsTree {
 
     myRoot.removeAllChildren();
 
+    ActionManager actionManager = ActionManager.getInstance();
     Project project = (Project)DataManager.getInstance().getDataContext(getComponent()).getData(DataConstants.PROJECT);
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true);
-    if (filter != null && mainGroup.initIds().isEmpty()){
-      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false);
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null ?
+                                                                                                      ActionsTreeUtil.isActionFiltered(filter, true) :
+                                                                                                      (shortcut != null ? ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, true) : null));
+    if ((filter != null || shortcut != null) && mainGroup.initIds().isEmpty()){
+      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false, filter != null ?
+                                                                                                   ActionsTreeUtil.isActionFiltered(filter, false) :
+                                                                                                    ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, false));
     }
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
@@ -204,6 +213,10 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
+  }
+
+  public void filterTree(final KeyboardShortcut keyboardShortcut, final QuickList [] currentQuickListIds) {
+    reset(myKeymap, currentQuickListIds, null, keyboardShortcut);
   }
 
   private class MyModel extends DefaultTreeModel implements TreeTableModel {

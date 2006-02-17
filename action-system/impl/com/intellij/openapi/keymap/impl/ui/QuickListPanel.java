@@ -40,7 +40,7 @@ public class QuickListPanel {
   private JButton myAddSeparatorButton;
 
   public QuickListPanel(QuickList origin, final QuickList[] allQuickLists, Project project) {
-    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists, null, false);
+    Group rootGroup = ActionsTreeUtil.createMainGroup(project, null, allQuickLists);
     DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
