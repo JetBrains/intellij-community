@@ -86,6 +86,11 @@ public class RefManagerImpl extends RefManager {
         refModule.accept(visitor);
       }
     }
+    if (myPackages != null) {
+      for (RefPackage refPackage : myPackages.values()) {
+        refPackage.accept(visitor);
+      }
+    }
   }
 
   public void cleanup() {
