@@ -1,17 +1,17 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.engine.SuspendManagerUtil;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.ThreadDescriptor;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.util.IconLoader;
 import com.sun.jdi.ThreadReference;
 
@@ -73,33 +73,28 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     return myIsFrozen;
   }
 
-  private boolean calcIsCurrent(EvaluationContextImpl evaluationContext) {
-    ThreadReferenceProxyImpl currentThread = evaluationContext.getSuspendContext().getThread();
-    return currentThread == getThreadReference();
-  }
-
   public boolean isExpandable() {
     return myIsExpandable;
   }
 
   public void setContext(EvaluationContextImpl context) {
-    ThreadReferenceProxyImpl thread = getThreadReference();
+    final ThreadReferenceProxyImpl thread = getThreadReference();
+    final SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
+    final SuspendContextImpl suspendContext = context.getSuspendContext();
 
-    SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
     myIsSuspended    = suspendManager.isSuspended(thread);
-    myIsExpandable   = calcExpandable(suspendManager);
-    mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), thread);
+    myIsExpandable   = calcExpandable(myIsSuspended);
+    mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, thread);
     myIsAtBreakpoint = SuspendManagerUtil.findContextByThread(suspendManager, thread) != null;
-    myIsCurrent      = calcIsCurrent(context);
-    myIsFrozen       = suspendManager.isFrozen(getThreadReference());
+    myIsCurrent      = suspendContext.getThread() == thread;
+    myIsFrozen       = suspendManager.isFrozen(thread);
   }
 
-  private boolean calcExpandable(SuspendManager manager) {
-    ThreadReferenceProxyImpl threadProxy = getThreadReference();
-    if (threadProxy.isCollected() || !manager.isSuspended(myThread)) {
+  private boolean calcExpandable(final boolean isSuspended) {
+    if (!isSuspended) {
       return false;
     }
-    int status = threadProxy.status();
+    final int status = getThreadReference().status();
     if (status == ThreadReference.THREAD_STATUS_UNKNOWN ||
         status == ThreadReference.THREAD_STATUS_NOT_STARTED ||
         status == ThreadReference.THREAD_STATUS_ZOMBIE) {
@@ -140,21 +135,18 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
   }
 
   public Icon getIcon() {
-    Icon nodeIcon;
     if(isCurrent()) {
-      nodeIcon = myCurrentThreadIcon;
+      return myCurrentThreadIcon;
     }
-    else if(isFrozen()) {
-      nodeIcon = myFrozenThreadIcon;
+    if(isFrozen()) {
+      return myFrozenThreadIcon;
     }
-    else if(isAtBreakpoint()) {
-      nodeIcon = myThreadAtBreakpointIcon;
+    if(isAtBreakpoint()) {
+      return myThreadAtBreakpointIcon;
     }
-    else if(isSuspended()) {
-      nodeIcon = mySuspendedThreadIcon;
-    } else {
-      nodeIcon = myRunningThreadIcon;
+    if(isSuspended()) {
+      return mySuspendedThreadIcon;
     }
-    return nodeIcon;
+    return myRunningThreadIcon;
   }
 }
