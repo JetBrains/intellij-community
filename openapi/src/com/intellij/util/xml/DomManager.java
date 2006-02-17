@@ -39,7 +39,7 @@ public abstract class DomManager {
 
   public abstract void registerPresentationFactory(DomElementPresentationFactory factory);
 
-  @Nullable
+  @NotNull
   public abstract DomElementPresentation getDomElementPresentation(final DomElement element);
 
 }

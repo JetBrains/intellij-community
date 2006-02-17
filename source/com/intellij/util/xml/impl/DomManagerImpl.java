@@ -186,10 +186,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myPresentationFactories.add(factory);
   }
 
-  @Nullable
+  @NotNull
   public DomElementPresentation getDomElementPresentation(final DomElement element) {
     for (DomElementPresentationFactory presentationFactory : myPresentationFactories) {
-      if (presentationFactory.canCreatePresentation(element)) return presentationFactory.createDomElementPresentation(element);
+      final DomElementPresentation presentation = presentationFactory.createDomElementPresentation(element);
+      if (presentation != null) {
+        return presentation;
+      }
     }
 
     return new BasicDomElementPresentation(element);
@@ -199,7 +202,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return myProject;
   }
 
-  public final void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
+  public static final void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
     file.putUserData(NAME_STRATEGY_KEY, strategy);
   }
 
