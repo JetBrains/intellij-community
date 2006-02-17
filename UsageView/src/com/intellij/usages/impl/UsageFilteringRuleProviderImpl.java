@@ -22,44 +22,27 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.usages.UsageView;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
-import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
-import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 27, 2004
- * Time: 8:20:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
-  public boolean SHOW_READ_ACCESS = true;
-  public boolean SHOW_WRITE_ACCESS = true;
 
   public UsageFilteringRule[] getActiveRules(Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
     if (!SHOW_IMPORTS) {
-      rules.add(new ImportFilteringRule());
+      return new UsageFilteringRule[] {new ImportFilteringRule()};
     }
-    if (!SHOW_READ_ACCESS) {
-      rules.add(new ReadAccessFilteringRule());
-    }
-    if (!SHOW_WRITE_ACCESS) {
-      rules.add(new WriteAccessFilteringRule());
-    }
-    return rules.toArray(new UsageFilteringRule[rules.size()]);
+    return UsageFilteringRule.EMPTY_ARRAY;
   }
 
   public AnAction[] createFilteringActions(UsageView view) {
@@ -106,9 +89,9 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private final class ReadWriteState {
-    private boolean myShowReadAccess = SHOW_READ_ACCESS;
-    private boolean myShowWriteAccess = SHOW_WRITE_ACCESS;
+  private static final class ReadWriteState {
+    private boolean myShowReadAccess = true;
+    private boolean myShowWriteAccess = true;
 
     public boolean isShowReadAccess() {
       return myShowReadAccess;
@@ -119,7 +102,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       if (!showReadAccess) {
         myShowWriteAccess = true;
       }
-      flushStateToGlobalSettings();
     }
 
     public boolean isShowWriteAccess() {
@@ -131,16 +113,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       if (!showWriteAccess) {
         myShowReadAccess = true;
       }
-      flushStateToGlobalSettings();
-    }
-
-    private void flushStateToGlobalSettings() {
-      SHOW_READ_ACCESS = myShowReadAccess;
-      SHOW_WRITE_ACCESS = myShowWriteAccess;
     }
   }
 
-  private class ShowReadAccessUsagesAction extends ToggleAction {
+  private static class ShowReadAccessUsagesAction extends ToggleAction {
     private final UsageViewImpl myView;
     private final ReadWriteState myState;
 
@@ -160,7 +136,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private class ShowWriteAccessUsagesAction extends ToggleAction {
+  private static class ShowWriteAccessUsagesAction extends ToggleAction {
     private final UsageViewImpl myView;
     private final ReadWriteState myState;
 
