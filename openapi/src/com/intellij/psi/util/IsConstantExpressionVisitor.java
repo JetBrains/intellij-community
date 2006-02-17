@@ -34,10 +34,10 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
   }
 
   public void visitLiteralExpression(PsiLiteralExpression expression) {
-    myIsConstant = true;
+    myIsConstant = !"null".equals(expression.getText());
   }
 
-  /**/public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     myIsConstant = true;
   }
 
