@@ -486,6 +486,7 @@ public final class TreeUtil {
       for (int i = 0; i < pathToSelect.length; i++) {
         pathToSelect[i] = path[i];
       }
+      if (pathToSelect.length == 0) return;
       selectPath(tree, new TreePath(pathToSelect));
     }
   }
