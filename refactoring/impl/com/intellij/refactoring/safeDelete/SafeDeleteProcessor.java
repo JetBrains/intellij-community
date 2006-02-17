@@ -134,7 +134,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         if (argList != null) {
           final PsiExpression[] args = argList.getExpressions();
           if (index < args.length) {
-            usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[index], parameter, true));
+            if (!parameter.isVarArgs()) {
+              usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[index], parameter, true));
+            }
+            else {
+              for (int i = index; i < args.length; i++) {
+                usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[i], parameter, true));
+              }
+            }
           }
         }
       }
