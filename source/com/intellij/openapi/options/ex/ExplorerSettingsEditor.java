@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FilterComponent;
 import com.intellij.ui.HorizontalLabeledIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -27,7 +27,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -56,7 +55,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private final Map<Configurable, Dimension> myConfigurable2PrefSize;
   private JButton myHelpButton;
   private JPanel myComponentPanel;
-  private JTextField mySearchField = new JTextField();
+  private FilterComponent mySearchField;
   private Set<Configurable> myOptionContainers = null;
   private JPanel myLeftPane;
 
@@ -250,10 +249,10 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+    mySearchField = new FilterComponent("SEARCH_OPTION", 5, false, false) {
+      protected void filter() {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final @NonNls String searchPattern = mySearchField.getText();
+        final @NonNls String searchPattern = mySearchField.getFilter();
         if (searchPattern != null && searchPattern.length() > 0) {
           myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
@@ -266,7 +265,8 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         myComponentPanel.revalidate();
         myComponentPanel.repaint();
       }
-    });
+    };
+    mySearchField.reset();
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
 
@@ -436,7 +436,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private void selectOption(final SearchableConfigurable searchableConfigurable) {
     searchableConfigurable.clearSearch();
     if (myOptionContainers == null || myOptionContainers.isEmpty()) return; //do not highlight current editor when nothing can be selected
-    @NonNls final String filter = mySearchField.getText();
+    @NonNls final String filter = mySearchField.getFilter();
     if (filter != null && filter.length() > 0 ){
       final Runnable runnable = searchableConfigurable.showOption(filter);
       if (runnable != null){

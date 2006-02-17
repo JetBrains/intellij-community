@@ -15,14 +15,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FilterComponent;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   private int mySelectedGroup = 0;
 
   private Set<Configurable> myOptionContainers = null;
-  private JTextField mySearchField = new JTextField();
+  private FilterComponent mySearchField;
   private GlassPanel myGlassPanel;
 
   public ControlPanelSettingsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
@@ -288,7 +287,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
     if (configurable instanceof SearchableConfigurable){
       ((SearchableConfigurable)configurable).clearSearch();
-      @NonNls final String filter = mySearchField.getText();
+      @NonNls final String filter = mySearchField.getFilter();
       if (filter != null && filter.length() > 0 ){
         final Runnable runnable = ((SearchableConfigurable)configurable).showOption(filter);
         if (runnable != null){
@@ -308,11 +307,11 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+    mySearchField = new FilterComponent("SEARCH_OPTION", 5, false, false) {
+      protected void filter() {
         myGlassPanel.clear();
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final @NonNls String searchPattern = mySearchField.getText();
+        final @NonNls String searchPattern = mySearchField.getFilter();
         if (searchPattern != null && searchPattern.length() > 0) {
           myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
@@ -320,7 +319,8 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
         }
         myPanel.repaint();
       }
-    });
+    };
+    mySearchField.reset();
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
 
