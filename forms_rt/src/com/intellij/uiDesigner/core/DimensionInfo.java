@@ -219,7 +219,7 @@ public abstract class DimensionInfo {
           }
         }
       }
-      else if (getOriginalCell(c) == cellIndex && getOriginalSpan(c) == 1) {
+      else if (getOriginalCell(c) == cellIndex && getOriginalSpan(c) == 1 && !(child instanceof Spacer)) {
         nonInheritingComponentsInCell++;
       }
     }
