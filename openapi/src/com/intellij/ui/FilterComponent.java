@@ -97,6 +97,11 @@ public abstract class FilterComponent extends JPanel {
     myFilter.setText(filter);
   }
 
+
+  public boolean requestFocusInWindow() {
+    return myFilter.requestFocusInWindow();
+  }
+
   protected abstract void filter();
 
   protected void onlineFilter(){

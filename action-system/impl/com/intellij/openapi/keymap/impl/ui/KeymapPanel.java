@@ -497,11 +497,9 @@ public class KeymapPanel extends JPanel {
   private JPanel createFilteringPanel() {
     JPanel filterComponent = new JPanel(new GridBagLayout());
     filterComponent.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    final JLabel titleLabel = new JLabel(KeyMapBundle.message("filter.settings.popup.title"));
-    titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    titleLabel.setOpaque(true);
-    titleLabel.setBackground(UIUtil.getListBackground());
-    filterComponent.add(titleLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, -2, 8, -2), 0,0));
+    final TitlePanel captionPanel = new TitlePanel();
+    captionPanel.setText(KeyMapBundle.message("filter.settings.popup.title"));
+    filterComponent.add(captionPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, -2, 8, -2), 0,0));
 
     final JRadioButton textFilter = new JRadioButton(KeyMapBundle.message("filter.text.title"));
     filterComponent.add(textFilter, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
@@ -511,6 +509,7 @@ public class KeymapPanel extends JPanel {
         myActionsTree.filter(getFilter(), getCurrentQuickListIds());
       }
     };
+    myFilterComponent.reset();
     filterComponent.add(myFilterComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
 
     JRadioButton shortcutFilter = new JRadioButton(KeyMapBundle.message("filter.shortcut.title"));
@@ -535,6 +534,9 @@ public class KeymapPanel extends JPanel {
     enable2Shortcut.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         secondShortcut.setEnabled(enable2Shortcut.isSelected());
+        if (enable2Shortcut.isSelected()){
+          secondShortcut.requestFocusInWindow();
+        }
       }
     });
     filterComponent.add(enable2Shortcut, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,15,0,0),0,0));
@@ -572,6 +574,11 @@ public class KeymapPanel extends JPanel {
     enable2Shortcut.setEnabled(!textFilterSelected);
     secondLabel.setEnabled(!textFilterSelected && enable2Shortcut.isSelected());
     firstLabel.setEnabled(!textFilterSelected);
+    if (textFilterSelected) {
+      myFilterComponent.requestFocusInWindow();
+    } else {
+      firstShortcut.requestFocusInWindow();
+    }
   }
 
   private void filterTreeByShortcut(final ShortcutTextField firstShortcut,
