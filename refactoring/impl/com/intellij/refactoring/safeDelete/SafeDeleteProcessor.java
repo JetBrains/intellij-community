@@ -124,8 +124,23 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private void findParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> usages) {
-    Collection<PsiReference> refs = ReferencesSearch.search(parameter).findAll();
-    for (PsiReference ref : refs) {
+    final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    final int index = method.getParameterList().getParameterIndex(parameter);
+    //search for refs to current method only, do not search for refs to overriding methods, they'll be searched separately
+    for (PsiReference ref : ReferencesSearch.search(method).findAll()) {
+      final PsiElement element = ref.getElement();
+      if (element.getParent() instanceof PsiCall) {
+        final PsiExpressionList argList = ((PsiCall)element.getParent()).getArgumentList();
+        if (argList != null) {
+          final PsiExpression[] args = argList.getExpressions();
+          if (index < args.length) {
+            usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[index], parameter, true));
+          }
+        }
+      }
+    }
+
+    for (PsiReference ref : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = ref.getElement();
       boolean isSafeDelete = false;
       if (element.getParent().getParent() instanceof PsiMethodCallExpression) {
@@ -133,7 +148,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.getText().equals("super") || methodExpression.getQualifierExpression() instanceof PsiSuperExpression) {
           final PsiMethod superMethod = call.resolveMethod();
-          if (superMethod != null && MethodSignatureUtil.isSuperMethod(superMethod, ((PsiMethod)parameter.getDeclarationScope()))) {
+          if (superMethod != null && MethodSignatureUtil.isSuperMethod(superMethod, method)) {
             isSafeDelete = true;
           }
         }
