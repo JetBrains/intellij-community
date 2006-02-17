@@ -1,14 +1,15 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
-import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.ide.palette.impl.PaletteManager;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public final class MainProcessor extends EventProcessor{
   @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
   @NotNull private final GuiEditor myEditor;
   private boolean myInsertFeedbackEnabled = true;
+  private Point myLastMousePosition;
 
   public MainProcessor(@NotNull final GuiEditor editor){
     myEditor = editor;
@@ -71,6 +73,8 @@ public final class MainProcessor extends EventProcessor{
   }
 
   protected void processMouseEvent(final MouseEvent e){
+    myLastMousePosition = e.getPoint();
+
     if (myCurrentProcessor != null && myCurrentProcessor.isDragActive()) {
       return;
     }
@@ -123,6 +127,9 @@ public final class MainProcessor extends EventProcessor{
         if (myInsertFeedbackEnabled) {
           cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
         }
+      }
+      else if (myCurrentProcessor != null) {
+        myCurrentProcessor.processMouseEvent(e);
       }
       else {
         final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
@@ -216,6 +223,16 @@ public final class MainProcessor extends EventProcessor{
   }
 
   private void processMousePressed(final MouseEvent e){
+    if(myCurrentProcessor != null){
+      if (myCurrentProcessor.needMousePressed()) {
+        myCurrentProcessor.processMouseEvent(e);
+        return;
+      }
+      // Sun sometimes skips mouse released events...
+      myCurrentProcessor.cancelOperation();
+      myCurrentProcessor = null;
+    }
+
     RadComponent component = null;
     final RadComponent draggerHost = FormEditingUtil.getDraggerHost(myEditor);
     // Try to understand whether we pressed inside dragger area
@@ -239,12 +256,6 @@ public final class MainProcessor extends EventProcessor{
       return;
     }
 
-    /*
-    if (!myEditor.ensureEditable()) {
-      return;
-    }
-    */
-
     final ComponentItem selectedItem = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
     if (selectedItem != null) {
       myInsertComponentProcessor.setSticky(e.isControlDown());
@@ -263,12 +274,6 @@ public final class MainProcessor extends EventProcessor{
         FormEditingUtil.clearSelection(myEditor.getRootContainer());
         component.setSelected(true);
       }
-    }
-
-    if(myCurrentProcessor != null){
-      // Sun sometimes skips mouse released events...
-      myCurrentProcessor.cancelOperation();
-      myCurrentProcessor = null;
     }
 
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());
@@ -312,6 +317,18 @@ public final class MainProcessor extends EventProcessor{
 
   public void setInsertFeedbackEnabled(final boolean enabled) {
     myInsertFeedbackEnabled = enabled;
+  }
+
+  public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final TIntArrayList xs, final TIntArrayList ys) {
+    myCurrentProcessor = new PasteProcessor(myEditor, componentsToPaste, xs, ys);
+    myCurrentProcessor.processMouseEvent(new MouseEvent(myEditor, MouseEvent.MOUSE_MOVED, 0, 0,
+                                                        myLastMousePosition.x, myLastMousePosition.y,
+                                                        1, false));
+  }
+
+  public void stopCurrentProcessor() {
+    myCurrentProcessor = null;
+    myEditor.getLayeredPane().setCursor(null);
   }
 
   private final class MyComponentSelectionListener implements ComponentSelectionListener{

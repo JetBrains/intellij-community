@@ -31,4 +31,8 @@ public abstract class EventProcessor {
   public boolean isDragActive() {
     return false;
   }
+
+  public boolean needMousePressed() {
+    return false;
+  }
 }

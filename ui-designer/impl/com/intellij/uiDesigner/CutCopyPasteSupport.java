@@ -7,18 +7,16 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import gnu.trove.TIntArrayList;
-import org.jdom.Element;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,34 +107,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final TIntArrayList ys = new TIntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
 
-    final RadRootContainer rootContainer = myEditor.getRootContainer();
-    final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
-
-    if (selectedComponents.size() == 1 && selectedComponents.get(0).canDrop(null, selectedComponents.size())) {
-      RadComponent component = selectedComponents.get(0);
-      if (component instanceof RadContainer) {
-        RadContainer container = (RadContainer) component;
-        container.drop(null, componentsToPaste.toArray(new RadComponent[componentsToPaste.size()]), null, null);
-      }
-    }
-    else {
-      FormEditingUtil.clearSelection(rootContainer);
-      for (int i = 0; i < componentsToPaste.size(); i++) {
-        final RadComponent component = componentsToPaste.get(i);
-        final int delta = myRecentyCopiedStringCount * 10;
-        component.setLocation(new Point(xs.get(i) + delta, ys.get(i) + delta));
-        rootContainer.addComponent(component);
-
-        FormEditingUtil.iterate(component, new FormEditingUtil.ComponentVisitor<RadComponent>() {
-          public boolean visit(final RadComponent c) {
-            c.setSelected(true);
-            return true;
-          }
-        });
-      }
-    }
-
-    myEditor.refreshAndSave(true);
+    myEditor.getMainProcessor().startPasteProcessor(componentsToPaste, xs, ys);
   }
 
   @Nullable
