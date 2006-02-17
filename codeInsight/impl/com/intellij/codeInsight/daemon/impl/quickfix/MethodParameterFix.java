@@ -98,12 +98,13 @@ public class MethodParameterFix implements IntentionAction {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       if (i == myIndex) {
+        newParameter.setName(parameter.getName());
         parameter = newParameter;
       }
       result.add(new ParameterInfo(i, parameter.getName(), parameter.getType()));
     }
     if (parameters.length == myIndex) {
-      result.add(new ParameterInfo(myIndex, newParameter.getName(), newParameter.getType()));
+      result.add(new ParameterInfo(-1, newParameter.getName(), newParameter.getType()));
     }
     return result.toArray(new ParameterInfo[result.size()]);
   }
