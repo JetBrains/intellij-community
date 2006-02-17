@@ -7,6 +7,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 
 /**
  *
@@ -26,7 +27,7 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode();
+    return file instanceof PsiJavaFile;
   }
 
   protected boolean isValidForLookup() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -17,7 +18,7 @@ public class GenerateSuperMethodCallAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    if (!file.canContainJavaCode()) {
+    if (!(file instanceof PsiJavaFile)) {
       return false;
     }
     PsiMethod method = GenerateSuperMethodCallHandler.canInsertSuper(project, editor, file);

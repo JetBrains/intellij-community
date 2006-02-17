@@ -44,7 +44,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
       if (container == null) return;
     }
 
-    if (file.canContainJavaCode() || file instanceof XmlFile) {
+    if (file instanceof PsiJavaFile || file instanceof XmlFile) {
       while(true){
         container = findContainer(container);
         if (container == null) return;

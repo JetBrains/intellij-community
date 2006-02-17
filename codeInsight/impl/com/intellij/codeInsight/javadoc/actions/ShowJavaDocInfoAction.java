@@ -33,7 +33,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode(); // && !(file instanceof PsiCodeFragment);
+    return file instanceof PsiJavaFile;
   }
 
   protected boolean isValidForLookup() {

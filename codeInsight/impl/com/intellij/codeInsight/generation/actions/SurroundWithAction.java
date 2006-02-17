@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 
 public class SurroundWithAction extends BaseCodeInsightAction{
   public SurroundWithAction() {
@@ -18,7 +19,7 @@ public class SurroundWithAction extends BaseCodeInsightAction{
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    if (file.canContainJavaCode()) return true;
+    if (file instanceof PsiJavaFile) return true;
     final Language language = file.getLanguage();
     return language.getSurroundDescriptors().length > 0;
   }

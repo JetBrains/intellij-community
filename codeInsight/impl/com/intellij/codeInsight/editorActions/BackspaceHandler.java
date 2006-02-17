@@ -12,12 +12,9 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private EditorActionHandler myOriginalHandler;
@@ -41,11 +38,8 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (file == null) return false;
 
     FileType fileType = file.getFileType();
-    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(
-      file.canContainJavaCode() && fileType != StdFileTypes.JSP && fileType != StdFileTypes.JSPX? StdFileTypes.JAVA:
-      fileType
-    );
-    if (quoteHandler==null) return false;
+    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(fileType);
+    if (quoteHandler == null) return false;
 
     if (editor.getSelectionModel().hasSelection()) return false;
 
@@ -97,7 +91,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       if (!quoteHandler.isOpeningQuote(iterator,offset)) return true;
 
-      if (file.canContainJavaCode()) {
+      if (file instanceof PsiJavaFile) {
         // TODO: does this mean == quoteHandler.isClosingQuote(....)
         char lastChar = chars.charAt(iterator.getEnd() - 1);
         boolean isClosed = iterator.getEnd() - iterator.getStart() > 1 && lastChar == c;
@@ -111,7 +105,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
 
   //need custom handler since cannot use brace matcher
-  private boolean handleLTDeletion(final Editor editor, final int offset) {
+  private static boolean handleLTDeletion(final Editor editor, final int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
       iterator.retreat();

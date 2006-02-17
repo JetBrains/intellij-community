@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
 
 /**
  *
@@ -19,7 +20,7 @@ public class ImplementMethodsAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    if (!file.canContainJavaCode()) {
+    if (!(file instanceof PsiJavaFile)) {
       return false;
     }
 

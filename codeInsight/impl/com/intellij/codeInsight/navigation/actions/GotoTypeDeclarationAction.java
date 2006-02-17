@@ -20,7 +20,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode();
+    return file instanceof PsiJavaFile;
   }
 
   protected boolean isValidForLookup() {
@@ -31,7 +31,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = getOffset(editor);
-    PsiElement symbolType = findSymbolType(project, editor, offset);
+    PsiElement symbolType = findSymbolType(editor, offset);
     if (symbolType == null) return;
     symbolType = symbolType.getNavigationElement();
     OpenFileDescriptor descriptor=new OpenFileDescriptor(project, symbolType.getContainingFile().getVirtualFile(), symbolType.getTextOffset());
@@ -42,14 +42,14 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     return false;
   }
 
-  public static PsiElement findSymbolType(Project project, Editor editor, int offset) {
+  public static PsiElement findSymbolType(Editor editor, int offset) {
     PsiElement targetElement = TargetElementUtil.findTargetElement(editor,
       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
       TargetElementUtil.ELEMENT_NAME_ACCEPTED |
       TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
       offset
     );
-    PsiType type = null;
+    PsiType type;
     if (targetElement instanceof PsiVariable){
       type = ((PsiVariable)targetElement).getType();
     }

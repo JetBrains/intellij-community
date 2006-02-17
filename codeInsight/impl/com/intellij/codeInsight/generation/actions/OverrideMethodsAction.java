@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.OverrideMethodsHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 
 /**
  *
@@ -18,6 +19,6 @@ public class OverrideMethodsAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode() && OverrideImplementUtil.getContextClass(project, editor, file, true) != null;
+    return file instanceof PsiJavaFile && OverrideImplementUtil.getContextClass(project, editor, file, true) != null;
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.ant.PsiAntElement;
 import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -576,7 +575,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     PsiElement targetElement;
     if (browseType) {
-      targetElement = GotoTypeDeclarationAction.findSymbolType(myProject, editor, offset);
+      targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
     } else {
       PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {

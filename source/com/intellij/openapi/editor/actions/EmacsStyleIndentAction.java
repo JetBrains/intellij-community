@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
@@ -24,12 +25,8 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction{
     return new Handler();
   }
 
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   protected boolean isValidForFile(final Project project, final Editor editor, final PsiFile file) {
-    return file.canContainJavaCode() || file instanceof XmlFile;
+    return file instanceof PsiJavaFile || file instanceof XmlFile;
   }
 
   //----------------------------------------------------------------------
