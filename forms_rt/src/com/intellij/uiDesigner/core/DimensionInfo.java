@@ -43,7 +43,7 @@ public abstract class DimensionInfo {
 
     myCell = new int[layoutState.getComponentCount()];
     mySpan = new int[layoutState.getComponentCount()];
-    
+
     for (int i = 0; i < layoutState.getComponentCount(); i++) {
       final GridConstraints c = layoutState.getConstraints(i);
       myCell[i] = getOriginalCell(c);
@@ -55,11 +55,11 @@ public abstract class DimensionInfo {
       myStretches[i] = 1;
     }
     //TODO[anton,vova] handle stretches
-    
+
     final ArrayList elimitated = new ArrayList();
     mySpansAfterElimination = (int[])mySpan.clone();
     Util.eliminate((int[])myCell.clone(), mySpansAfterElimination, elimitated);
-    
+
     myCellSizePolicies = new int[getCellCount()];
     for (int i = 0; i < myCellSizePolicies.length; i++) {
       myCellSizePolicies[i] = getCellSizePolicyImpl(i, elimitated);
@@ -117,34 +117,42 @@ public abstract class DimensionInfo {
   }
   
   private int getCellSizePolicyImpl(final int cellIndex, final ArrayList eliminatedCells){
+    int policyFromChild = getCellSizePolicyFromInheriting(cellIndex);
+    if (policyFromChild != -1) {
+      return policyFromChild;
+    }
     for (int i = eliminatedCells.size() - 1; i >= 0; i--) {
       if (cellIndex == ((Integer)eliminatedCells.get(i)).intValue()) {
         return GridConstraints.SIZEPOLICY_CAN_SHRINK;
       }
     }
-    
+
+    return calcCellSizePolicy(cellIndex);
+  }
+
+  private int calcCellSizePolicy(final int cellIndex) {
     boolean canShrink = true;
     boolean canGrow = false;
     boolean wantGrow = false;
 
     boolean weakCanGrow = true;
     boolean weakWantGrow = true;
-    
+
     int countOfBelongingComponents = 0;
-    
+
     for (int i = 0; i < getComponentCount(); i++) {
       if (!componentBelongsCell(i, cellIndex)){
         continue;
       }
-      
+
       countOfBelongingComponents++;
-      
+
       final int p = getSizePolicy(i);
 
       final boolean thisCanShrink = (p & GridConstraints.SIZEPOLICY_CAN_SHRINK) != 0;
       final boolean thisCanGrow = (p & GridConstraints.SIZEPOLICY_CAN_GROW) != 0;
       final boolean thisWantGrow = (p & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
-      
+
       if (getCell(i) == cellIndex && mySpansAfterElimination[i] == 1) {
         canShrink &= thisCanShrink;
         canGrow |= thisCanGrow;
@@ -163,6 +171,62 @@ public abstract class DimensionInfo {
       (canShrink ? GridConstraints.SIZEPOLICY_CAN_SHRINK : 0) |
       (canGrow || (countOfBelongingComponents > 0 && weakCanGrow) ? GridConstraints.SIZEPOLICY_CAN_GROW : 0) |
       (wantGrow || (countOfBelongingComponents > 0 && weakWantGrow) ? GridConstraints.SIZEPOLICY_WANT_GROW : 0);
+  }
+
+  private int getCellSizePolicyFromInheriting(final int cellIndex) {
+    int nonInheritingComponentsInCell = 0;
+    int policyFromInheriting = -1;
+    for(int i=getComponentCount() - 1; i >= 0; i--) {
+      if (!componentBelongsCell(i, cellIndex)) {
+        continue;
+      }
+      Component child = getComponent(i);
+      GridConstraints c = getConstraints(i);
+      if (c.isUseParentLayout() && child instanceof Container) {
+        Container container = (Container) child;
+        if (container.getLayout() instanceof GridLayoutManager) {
+          GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+          grid.validateInfos(container);
+          DimensionInfo info = (this instanceof HorizontalInfo)
+                               ? grid.myHorizontalInfo
+                               : grid.myVerticalInfo;
+
+          final int policy = info.calcCellSizePolicy(cellIndex - getOriginalCell(c));
+          if (policyFromInheriting == -1) {
+            policyFromInheriting = policy;
+          }
+          else {
+            policyFromInheriting |= policy;
+          }
+        }
+        else if (container.getComponentCount() == 1 && container.getComponent(0) instanceof Container) {
+          // "use parent layout" also needs to work in cases where a grid is the only control in a non-grid panel
+          // which is contained in a grid
+          Container childContainer = (Container) container.getComponent(0);
+          if (childContainer.getLayout() instanceof GridLayoutManager) {
+            GridLayoutManager grid = (GridLayoutManager) childContainer.getLayout();
+            grid.validateInfos(childContainer);
+            DimensionInfo info = (this instanceof HorizontalInfo)
+                                 ? grid.myHorizontalInfo
+                                 : grid.myVerticalInfo;
+            final int policy = info.calcCellSizePolicy(cellIndex - getOriginalCell(c));
+            if (policyFromInheriting == -1) {
+              policyFromInheriting = policy;
+            }
+            else {
+              policyFromInheriting |= policy;
+            }
+          }
+        }
+      }
+      else if (getOriginalCell(c) == cellIndex && getOriginalSpan(c) == 1) {
+        nonInheritingComponentsInCell++;
+      }
+    }
+    if (nonInheritingComponentsInCell > 0) {
+      return -1;
+    }
+    return policyFromInheriting;
   }
 
   protected final Dimension getPreferredSize(final int componentIndex){

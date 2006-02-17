@@ -572,7 +572,7 @@ public final class GridLayoutManager extends AbstractLayout {
     myVerticalInfo = null;
   }
 
-  private void validateInfos(final Container container) {
+  void validateInfos(final Container container) {
     if (myLayoutState == null) {
       // TODO[yole]: Implement cleaner way of determining whether invisible components should be ignored
       myLayoutState = new LayoutState(this, getDesignTimeInsets(container) == 0);
