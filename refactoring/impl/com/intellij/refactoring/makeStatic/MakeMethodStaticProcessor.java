@@ -3,6 +3,8 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.usageView.UsageInfo;
@@ -144,9 +146,10 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
   protected void changeExternalUsage(UsageInfo usage, PsiElementFactory factory)
           throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof PsiReferenceExpression)) return;
+    final PsiElement element = usage.getElement();
+    if (!(element instanceof PsiReferenceExpression)) return;
 
-    PsiReferenceExpression methodRef = (PsiReferenceExpression) usage.getElement();
+    PsiReferenceExpression methodRef = (PsiReferenceExpression) element;
     PsiElement parent = methodRef.getParent();
     LOG.assertTrue(parent instanceof PsiMethodCallExpression);
 
@@ -156,12 +159,18 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     instanceRef = methodRef.getQualifierExpression();
     PsiElement newQualifier;
 
+    final PsiClass memberClass = myMember.getContainingClass();
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
-      instanceRef = factory.createExpressionFromText("this", null);
+      PsiClass contextClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (!InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+        instanceRef = factory.createExpressionFromText(memberClass.getQualifiedName() + ".this", null);
+      } else {
+        instanceRef = factory.createExpressionFromText("this", null);
+      }
       newQualifier = null;
     }
     else {
-      newQualifier = factory.createReferenceExpression(myMember.getContainingClass());
+      newQualifier = factory.createReferenceExpression(memberClass);
     }
 
     if (mySettings.getNewParametersNumber() > 1) {

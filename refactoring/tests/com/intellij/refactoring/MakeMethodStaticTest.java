@@ -151,6 +151,12 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after20.java");
   }
 
+  public void testQualifiedThisAdded() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/before22.java");
+    performWithFields();
+    checkResultByFile("/refactoring/makeMethodStatic/after22.java");
+  }
+
   private void perform(boolean addClassParameter) {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
