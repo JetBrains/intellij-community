@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
 
@@ -118,8 +119,10 @@ public class FileStatusMap {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
-      status.dirtyScope = combineScopes(status.dirtyScope, scope);
-      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope);
+      final PsiElement combined1 = combineScopes(status.dirtyScope, scope);
+      status.dirtyScope = combined1 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined1;
+      final PsiElement combined2 = combineScopes(status.localInspectionsDirtyScope, scope);
+      status.localInspectionsDirtyScope = combined2 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined2;
       //status.overridenDirtyScope = combineScopes(status.overridenDirtyScope, scope);
     }
   }
@@ -127,7 +130,9 @@ public class FileStatusMap {
   private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
-    return PsiTreeUtil.findCommonParent(scope1, scope2);
+    final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
+    if (commonParent instanceof PsiDirectory) return null;
+    return commonParent;
   }
 
   public RefCountHolder getRefCountHolder(Document document, PsiFile file) {
