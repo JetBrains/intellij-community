@@ -354,7 +354,7 @@ public class ImportHelper{
     PsiClass[] refs = file.getSingleClassImports(true);
     for (PsiClass ref : refs) {
       String className = ref.getQualifiedName();
-      if (PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
+      if (className != null && PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
         return ref;
       }
     }
