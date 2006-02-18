@@ -360,7 +360,7 @@ public class ImportHelper{
     }
     for (PsiClass aClass : file.getClasses()) {
       String className = aClass.getQualifiedName();
-      if (PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
+      if (className != null && PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
         return aClass;
       }
     }
