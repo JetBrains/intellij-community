@@ -68,6 +68,9 @@ public class ChangesListView extends TreeTable implements DataProvider {
       if (object instanceof Change) {
         return getFilePath((Change)object).getPath();
       }
+      if (object instanceof VirtualFile) {
+        return ((VirtualFile)object).getPresentableUrl();
+      }
 
       return "";
     }
@@ -83,6 +86,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
       return "";
     }
   };
+
   private ChangesListView.DragSource myDragSource;
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
@@ -128,6 +132,14 @@ public class ChangesListView extends TreeTable implements DataProvider {
           append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
           setIcon(filePath.getFileType().getIcon());
         }
+        else if (object instanceof VirtualFile) {
+          final VirtualFile file = (VirtualFile)object;
+          append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
+          setIcon(file.getFileType().getIcon());
+        }
+        else {
+          append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
       }
 
       // TODO: take real statuses like merged into an account
@@ -171,13 +183,21 @@ public class ChangesListView extends TreeTable implements DataProvider {
     }
   }
 
-  public void updateModel(java.util.List<ChangeList> changeLists) {
+  public void updateModel(java.util.List<ChangeList> changeLists, java.util.List<VirtualFile> unversionedFiles) {
     myRoot.removeAllChildren();
     for (ChangeList list : changeLists) {
       DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
       myRoot.add(listNode);
       for (Change change : list.getChanges()) {
         listNode.add(new DefaultMutableTreeNode(change));
+      }
+    }
+
+    if (!unversionedFiles.isEmpty()) {
+      DefaultMutableTreeNode unversionedNode = new DefaultMutableTreeNode("Unversioned Files");
+      myRoot.add(unversionedNode);
+      for (VirtualFile file : unversionedFiles) {
+        unversionedNode.add(new DefaultMutableTreeNode(file));
       }
     }
 
@@ -221,6 +241,21 @@ public class ChangesListView extends TreeTable implements DataProvider {
         }
       }
     }
+
+    final TreePath[] paths = getTree().getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof VirtualFile) {
+          final VirtualFile file = (VirtualFile)userObject;
+          if (file.isValid()) {
+            files.add(file);
+          }
+        }
+      }
+    }
+
     return files.toArray(new VirtualFile[files.size()]);
   }
 

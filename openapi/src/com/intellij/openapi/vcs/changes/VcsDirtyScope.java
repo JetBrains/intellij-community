@@ -1,8 +1,8 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,6 +63,30 @@ public class VcsDirtyScope {
     return myDirtyDirectoriesRecursively;
   }
 
+  public void iterate(ContentIterator iterator) {
+    final Module module = myIndex.getModuleForFile(myScopeRoot);
+    final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+
+    for (FilePath dir : myDirtyDirectoriesRecursively) {
+      final VirtualFile vFile = dir.getVirtualFile();
+      if (vFile != null && vFile.isValid()) {
+        index.iterateContentUnderDirectory(vFile, iterator);
+      }
+    }
+
+    for (FilePath file : myDirtyFiles) {
+      final VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && vFile.isValid()) {
+        iterator.processFile(vFile);
+        if (vFile.isDirectory()) {
+          for (VirtualFile child : vFile.getChildren()) {
+            iterator.processFile(child);
+          }
+        }
+      }
+    }
+  }
+
   public boolean belongsTo(FilePath path) {
     if (getRootFor(myIndex, path) != myScopeRoot) return false;
 
@@ -79,7 +103,10 @@ public class VcsDirtyScope {
   }
 
   public static VirtualFile getRootFor(ProjectFileIndex index, FilePath file) {
-    VirtualFile parent = file.getVirtualFileParent();
+    VirtualFile parent = file.getVirtualFile();
+    if (parent == null) {
+      parent = file.getVirtualFileParent();
+    }
     if (parent == null) {
       File ioFile = file.getIOFile();
       do {

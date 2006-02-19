@@ -15,7 +15,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  *  @author dsl
@@ -119,7 +122,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     if (outputPath == null) return;
     final VirtualFile outputPathFile = outputPath.getFile();
     final VirtualFile file = myRoot.getFile();
-    if (outputPathFile != null && file != null && VfsUtil.isAncestor(file, outputPathFile, false)) {
+    if (outputPathFile != null && file != null /* TODO: ??? && VfsUtil.isAncestor(file, outputPathFile, false) */) {
       result.add(new ExcludedOutputFolderImpl(this, outputPath));
     }
   }

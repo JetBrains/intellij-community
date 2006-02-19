@@ -30,7 +30,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -47,9 +48,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private boolean myInitilized = false;
   private boolean myDisposed = false;
 
+  private final UnversionedFilesHolder myUnversionedFilesHolder = new UnversionedFilesHolder();
   private final List<ChangeList> myChangeLists = new ArrayList<ChangeList>();
   private ChangeList myDefaultChangelist;
   private ChangesListView myView;
+  private JLabel myProgressLabel;
 
   public ChangeListManagerImpl(final Project project, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -77,6 +80,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void projectClosed() {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       myDisposed = true;
+      myUpdateAlarm.cancelAllRequests();
+      myRepaintAlarm.cancelAllRequests();
+
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
       myView.dispose();
     }
@@ -127,8 +133,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
 
+    myProgressLabel = new JLabel();
+    panel.add(myProgressLabel, BorderLayout.NORTH);
+
     myView.installDndSupport(this);
     return panel;
+  }
+
+  private void updateProgressText(final String text) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myProgressLabel.setText(text);
+      }
+    });
   }
 
   public void scheduleUpdate() {
@@ -143,27 +160,49 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
         for (final VcsDirtyScope scope : scopes) {
+          updateProgressText(" Updating: " + scope.getScopeRoot().getPresentableUrl());
+          for (ChangeList list : getChangeLists()) {
+            if (myDisposed) return;
+            list.removeChangesInScope(scope);
+          }
+          myUnversionedFilesHolder.cleanScope(scope);
+          scheduleRefresh();
+
           final AbstractVcs vcs = myVcsManager.getVcsFor(scope.getScopeRoot());
           if (vcs != null) {
             final ChangeProvider changeProvider = vcs.getChangeProvider();
             if (changeProvider != null) {
-              final List<Change> filteredChanges = new ArrayList<Change>();
               changeProvider.getChanges(scope, new ChangelistBuilder() {
                 public void processChange(Change change) {
                   if (isUnder(change, scope)) {
-                    filteredChanges.add(change);
+                    try {
+                      synchronized (myChangeLists) {
+                        for (ChangeList list : myChangeLists) {
+                          if (list == myDefaultChangelist) continue;
+                          if (list.processChange(change)) return;
+                        }
+
+                        myDefaultChangelist.processChange(change);
+                      }
+                    }
+                    finally {
+                      scheduleRefresh();
+                    }
                   }
                 }
 
                 public void processUnversionedFile(VirtualFile file) {
-                  // TODO: process unknown files
+                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                    myUnversionedFilesHolder.addFile(file);
+                    scheduleRefresh();
+                  }
                 }
               }, null); // TODO: make real indicator
-
-              udpateUI(scope, filteredChanges);
             }
           }
         }
+
+        updateProgressText("");
       }
 
       private boolean isUnder(final Change change, final VcsDirtyScope scope) {
@@ -174,19 +213,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }, 300);
   }
 
-  private void udpateUI(VcsDirtyScope scope, final Collection<Change> changes) {
-    synchronized (myChangeLists) {
-      Set<Change> allChanges = new HashSet<Change>(changes);
-      for (ChangeList list : myChangeLists) {
-        if (list == myDefaultChangelist) continue;
-        list.updateChangesIn(scope, allChanges);
-        allChanges.removeAll(list.getChanges());
-      }
-      myDefaultChangelist.updateChangesIn(scope, allChanges);
-      scheduleRefresh();
-    }
-  }
-
   private void scheduleRefresh() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -194,7 +220,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         myRepaintAlarm.addRequest(new Runnable() {
           public void run() {
             if (myDisposed) return;
-            myView.updateModel(getChangeLists());
+            myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
           }
         }, 100);
       }
@@ -412,7 +438,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       ChangeList list = addChangeList(listNode.getAttributeValue("name"));
       final List<Element> changeNodes = (List<Element>)listNode.getChildren("change");
       for (Element changeNode : changeNodes) {
-        list.addChange(readChange(changeNode));
+        try {
+          list.addChange(readChange(changeNode));
+        }
+        catch (OutdatedFakeRevisionException e) {
+          // Do nothing. Just skip adding outdated revisions to the list.
+        }
       }
 
       if ("true".equals(listNode.getAttributeValue("default"))) {
@@ -452,17 +483,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     changeNode.setAttribute("afterPath", aRev != null ? aRev.getFile().getPath() : "");
   }
 
-  private Change readChange(Element changeNode) {
+  private Change readChange(Element changeNode) throws OutdatedFakeRevisionException {
     String bRev = changeNode.getAttributeValue("beforePath");
     String aRev = changeNode.getAttributeValue("afterPath");
     return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
   }
 
-  private static class FakeRevision implements ContentRevision {
-    private FilePath myFile;
+  private static final class OutdatedFakeRevisionException extends Exception {}
 
-    public FakeRevision(String path) {
-      myFile = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+  private static class FakeRevision implements ContentRevision {
+    private final FilePath myFile;
+
+    public FakeRevision(String path) throws OutdatedFakeRevisionException {
+      final FilePath file = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+      if (file == null) throw new OutdatedFakeRevisionException();
+      myFile = file;
     }
 
     @Nullable

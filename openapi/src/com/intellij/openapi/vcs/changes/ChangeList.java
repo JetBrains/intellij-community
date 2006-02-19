@@ -15,6 +15,7 @@ public class ChangeList {
   private Collection<Change> myChanges = new ArrayList<Change>();
   private String myDescription;
   private boolean myIsDefault = false;
+  private List<Change> myOutdatedChanges;
 
   public static ChangeList createEmptyChangeList(String description) {
     return new ChangeList(description);
@@ -49,30 +50,32 @@ public class ChangeList {
     myIsDefault = isDefault;
   }
 
-  public void updateChangesIn(VcsDirtyScope scope, Collection<Change> newChanges) {
-    List<Change> outdatedChanges = new ArrayList<Change>();
+  public void removeChangesInScope(final VcsDirtyScope scope) {
+    myOutdatedChanges = new ArrayList<Change>();
     final Collection<Change> currentChanges = new ArrayList<Change>(myChanges);
     for (Change oldBoy : currentChanges) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
         myChanges.remove(oldBoy);
-        outdatedChanges.add(oldBoy);
+        myOutdatedChanges.add(oldBoy);
       }
+    }
+  }
+
+  public boolean processChange(Change change) {
+    if (myIsDefault) {
+      myChanges.add(change);
+      return true;
     }
 
-    if (myIsDefault) {
-      myChanges.addAll(newChanges);
-    }
-    else {
-      for (Change oldChange : outdatedChanges) {
-        for (Change newChange : newChanges) {
-          if (changesEqual(oldChange, newChange)) {
-            myChanges.add(newChange);
-          }
-        }
+    for (Change oldChange : myOutdatedChanges) {
+      if (changesEqual(oldChange, change)) {
+        myChanges.add(change);
+        return true;
       }
     }
+    return false;
   }
 
   private static boolean changesEqual(Change c1, Change c2) {
