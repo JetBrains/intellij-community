@@ -16,7 +16,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     super(project);
   }
 
-  protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
+  protected final void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     final ProjectView projectView = ProjectView.getInstance(myProject);
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
     final Runnable runnable = new Runnable() {
@@ -36,7 +36,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   }
 
-  public void select(PsiElement element, final boolean requestFocus) {
+  public final void select(PsiElement element, final boolean requestFocus) {
     while (true) {
       if (element instanceof PsiFile)
       {
@@ -93,7 +93,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS;
   }
 
-  public String getToolWindowId() {
+  public final String getToolWindowId() {
     return ToolWindowId.PROJECT_VIEW;
   }
 

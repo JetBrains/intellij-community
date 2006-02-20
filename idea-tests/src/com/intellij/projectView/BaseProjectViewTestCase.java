@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -52,7 +51,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject, SelectInManager.getInstance(myProject)) {
+    final AbstractProjectViewPSIPane pane = new AbstractProjectViewPSIPane(myProject) {
       public SelectInTarget createSelectInTarget() {
         return null;
       }

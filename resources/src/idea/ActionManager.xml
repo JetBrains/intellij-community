@@ -915,7 +915,10 @@
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
       <separator/>
+      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.RenameFavoritesListAction"/>
       <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction"/>
+      <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.DeleteFavoritesListAction"/>
+      <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.DeleteAllFavoritesListsButThisAction"/>
       <reference ref="SendToFavoritesGroup"/>
       <separator />
       <reference ref="FindUsages"/>

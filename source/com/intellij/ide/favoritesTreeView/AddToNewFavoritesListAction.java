@@ -18,9 +18,9 @@ class AddToNewFavoritesListAction extends AnAction {
 
  public void actionPerformed(AnActionEvent e) {
    final DataContext dataContext = e.getDataContext();
-   final FavoritesTreeViewPanel favoritesTreeViewPanel = AddNewFavoritesListAction.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
-   if (favoritesTreeViewPanel != null) {
-     new AddToFavoritesAction(favoritesTreeViewPanel.getName()).actionPerformed(e);
+   final String newName = AddNewFavoritesListAction.doAddNewFavoritesList((Project)dataContext.getData(DataConstants.PROJECT));
+   if (newName != null) {
+     new AddToFavoritesAction(newName).actionPerformed(e);
    }
  }
 

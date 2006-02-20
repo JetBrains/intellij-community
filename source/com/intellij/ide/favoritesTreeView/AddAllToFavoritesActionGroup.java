@@ -15,7 +15,7 @@ public class AddAllToFavoritesActionGroup extends ActionGroup {
     if (project == null){
       return AnAction.EMPTY_ARRAY;
     }
-    final String[] availableFavoritesLists = FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists();
+    final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
     if (availableFavoritesLists == null) return AnAction.EMPTY_ARRAY;
     AnAction[] actions = new AnAction[availableFavoritesLists.length + 2];
     int idx = 0;

@@ -6,6 +6,8 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -38,6 +40,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   private ScopeTreeViewPanel myViewPanel;
   private final DependencyValidationManager myDependencyValidationManager;
   private NamedScopesHolder.ScopeListener myScopeListener;
+  public static final Icon ICON = IconLoader.getIcon("/general/ideOptions.png");
 
   public static ScopeViewPane getInstance(Project project) {
     return project.getComponent(ScopeViewPane.class);
@@ -68,7 +71,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/ideOptions.png");
+    return ICON;
   }
 
   @NotNull
@@ -107,6 +110,10 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   @NotNull
   public String getPresentableSubIdName(@NotNull final String subId) {
     return subId;
+  }
+
+  public void addToolbarActions(DefaultActionGroup actionGroup) {
+    actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
   }
 
   public void updateFromRoot(boolean restoreExpandedPaths) {
@@ -159,7 +166,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   }
 
   public void projectClosed() {
-    myProjectView.removeProjectPane(this);
+    //myProjectView.removeProjectPane(this);
   }
 
   @NonNls

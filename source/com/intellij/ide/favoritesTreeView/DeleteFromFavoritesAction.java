@@ -3,7 +3,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.IdeBundle;
 
 /**
@@ -22,25 +21,13 @@ public class DeleteFromFavoritesAction extends AnAction {
     if (project == null) {
       return;
     }
-    final FavoritesTreeViewPanel currentTreeViewPanel = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel();
-    FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = currentTreeViewPanel
-        .getSelectedNodeDescriptors();
-    removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
-  }
-
-  public static void removeNodes(final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors, final Project project, String favoritesViewPane) {
-    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
-    if (selectedNodeDescriptors != null) {
-      for (FavoritesTreeNodeDescriptor selectedNodeDescriptor : selectedNodeDescriptors) {
-        selectedNodeDescriptor = FavoritesTreeNodeDescriptor.getFavoritesRoot(selectedNodeDescriptor, project, favoritesViewPane);
-        if (selectedNodeDescriptor != null) {
-          favoritesTreeViewPanel.removeFromFavorites(selectedNodeDescriptor.getElement());
-        }
-      }
+    FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
+    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    for (FavoritesTreeNodeDescriptor root : roots) {
+      favoritesManager.removeRoot(listName, root.getElement().getValue());
     }
   }
-
-
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -49,15 +36,7 @@ public class DeleteFromFavoritesAction extends AnAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesViewImpl.getInstance(project).getCurrentTreeViewPanel()
-        .getSelectedNodeDescriptors();
-    if (selectedNodeDescriptors == null || selectedNodeDescriptors.length == 0){
-      e.getPresentation().setEnabled(false);
-    } else {
-      final AbstractTreeNode node = selectedNodeDescriptors[0].getElement();
-      e.getPresentation().setEnabled(node != null && !(node.getValue() instanceof String));
-    }
+    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
+    e.getPresentation().setEnabled(roots != null && roots.length != 0);
   }
-
-
 }

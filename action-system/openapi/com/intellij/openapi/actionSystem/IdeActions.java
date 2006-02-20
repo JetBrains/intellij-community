@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Identifiers for standard actions and action groups supported by IDEA.
  */
-
-@SuppressWarnings({"HardCodedStringLiteral"})
+@NonNls  
 public interface IdeActions {
   String ACTION_EDITOR_CUT = "EditorCut";
   String ACTION_EDITOR_COPY = "EditorCopy";
@@ -47,7 +48,7 @@ public interface IdeActions {
   String ACTION_COMMENT_LINE = "CommentByLineComment";
   String ACTION_REMOVE_ENCLOSING_TAG = "RemoveEnclosingTag";
   String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
-  
+
   String ACTION_COPY = "$Copy";
   String ACTION_DELETE = "$Delete";
   String ACTION_PASTE = "$Paste";
@@ -129,7 +130,9 @@ public interface IdeActions {
   String ADD_TO_FAVORITES = "AddToFavorites";
   String REMOVE_FROM_FAVORITES = "RemoveFromFavorites";
   String ADD_NEW_FAVORITES_LIST = "AddNewFavoritesList";
+  String RENAME_FAVORITES_LIST = "RenameFavoritesList";
   String REMOVE_FAVORITES_LIST = "RemoveFavoritesList";
+  String REMOVE_ALL_FAVORITES_LISTS_BUT_THIS = "RemoveAllFavoritesListsButThis";
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 

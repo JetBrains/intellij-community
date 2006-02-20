@@ -16,6 +16,10 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 public class EditScopesAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.EditScopesAction");
 
+  public EditScopesAction() {
+    getTemplatePresentation().setIcon(ScopeViewPane.ICON);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);

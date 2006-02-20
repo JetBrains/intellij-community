@@ -6,10 +6,13 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -26,7 +29,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane implements
   public static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 
   public ProjectViewPane(Project project, SelectInManager selectInManager) {
-    super(project, selectInManager);
+    super(project);
   }
 
   public String getTitle() {
@@ -52,7 +55,11 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane implements
   }
 
   protected ProjectAbstractTreeStructureBase createStructure() {
-    return new ProjectTreeStructure(myProject, ID);
+    return new ProjectTreeStructure(myProject, ID){
+      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+        return new ProjectViewProjectNode(project, settings);
+      }
+    };
   }
 
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {

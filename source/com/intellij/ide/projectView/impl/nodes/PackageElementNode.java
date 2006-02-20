@@ -39,20 +39,19 @@ import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Arrays;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(final Project project,
@@ -72,8 +71,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
 
     final PsiDirectory[] directories = getValue().getPackage().getDirectories();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       if (VfsUtil.isAncestor(directory.getVirtualFile(), file, false)) return true;
     }
     return false;
@@ -104,15 +102,14 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (!getSettings().isFlattenPackages()) {
 
       final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, myProject, isLibraryElement());
-      for (int idx = 0; idx < subpackages.length; idx++) {
-        PackageUtil.addPackageAsChild(children, subpackages[idx], module, getSettings(), isLibraryElement());
+      for (PsiPackage subpackage : subpackages) {
+        PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
       }
     }
     // process only files in package's drectories
     final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myProject, module, isLibraryElement());
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
-    for (int idx = 0; idx < dirs.length; idx++) {
-      final PsiDirectory dir = dirs[idx];
+    for (final PsiDirectory dir : dirs) {
       children.addAll(PackageUtil.getDirectoryChildren(dir, getSettings(), false));
     }
     return children;
@@ -185,7 +182,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   public boolean isFQNameShown() {
-    return getValue() == null ? false : showFwName(getValue().getPackage());
+    return getValue() != null && showFwName(getValue().getPackage());
   }
 
   public boolean valueIsCut() {
@@ -215,7 +212,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     if (getValue() == null) return true;
     if (element instanceof PsiDirectory) {
-      return Arrays.asList(getValue().getPackage().getDirectories()).contains((PsiDirectory)element);
+      final PsiDirectory directory = (PsiDirectory)element;
+      return Arrays.asList(getValue().getPackage().getDirectories()).contains(directory);
     }
     return false;
   }

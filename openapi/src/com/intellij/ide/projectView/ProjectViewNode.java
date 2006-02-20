@@ -25,7 +25,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -88,8 +87,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
                                             ViewSettings settings) {
     try {
       ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-      for (int i = 0; i < objects.size(); i++) {
-        result.add(createTreeNode(nodeClass, project, objects.get(i), settings));
+      for (Object object : objects) {
+        result.add(createTreeNode(nodeClass, project, object, settings));
       }
       return result;
     }
@@ -107,14 +106,14 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
                                                                               IllegalAccessException,
                                                                               InvocationTargetException {
     Constructor<? extends AbstractTreeNode> constructor = nodeClass.getConstructor(
-      new Class[]{Project.class, Object.class, ViewSettings.class});
-    return constructor.newInstance(new Object[]{project, value, settings});
+      Project.class, Object.class, ViewSettings.class);
+    return constructor.newInstance(project, value, settings);
   }
 
   protected boolean someChildContainsFile(final VirtualFile file) {
     Collection<AbstractTreeNode> kids = getChildren();
-    for (Iterator<AbstractTreeNode> iterator = kids.iterator(); iterator.hasNext();) {
-      ProjectViewNode node = (ProjectViewNode)iterator.next();
+    for (final AbstractTreeNode kid : kids) {
+      ProjectViewNode node = (ProjectViewNode)kid;
       if (node.contains(file)) return true;
     }
     return false;

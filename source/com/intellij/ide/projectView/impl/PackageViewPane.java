@@ -8,11 +8,14 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackageViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
+import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -41,7 +44,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
   public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 
   public PackageViewPane(Project project, SelectInManager selectInManager) {
-    super(project, selectInManager);
+    super(project);
   }
 
   public String getTitle() {
@@ -118,7 +121,11 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
   }
 
   protected ProjectAbstractTreeStructureBase createStructure() {
-    return new ProjectTreeStructure(myProject, ID);
+    return new ProjectTreeStructure(myProject, ID){
+      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+        return new PackageViewProjectNode(project, settings);
+      }
+    };
   }
 
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {

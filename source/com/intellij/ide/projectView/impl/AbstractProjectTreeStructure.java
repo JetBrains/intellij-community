@@ -7,21 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
 public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeStructureBase implements ViewSettings {
-
-  private AbstractTreeNode myRoot;
+  private final AbstractTreeNode myRoot;
 
   public AbstractProjectTreeStructure(Project project) {
     super(project);
-    myRoot = new ProjectViewProjectNode(myProject, this);
+    myRoot = createRoot(project, this);
   }
 
-  interface RootCreator {
-    AbstractTreeNode createRoot(Project project, ViewSettings settings);
-  }
-
-  protected AbstractProjectTreeStructure(Project project, final RootCreator rootCreator) {
-    super(project);
-    myRoot = rootCreator.createRoot(project, this);
+  protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+    return new ProjectViewProjectNode(myProject, this);
   }
 
   public abstract boolean isShowMembers();
@@ -29,7 +23,6 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   public final Object getRootElement() {
     return myRoot;
   }
-
 
   public final void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();

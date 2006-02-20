@@ -31,14 +31,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements NavigationItem {
+public abstract class AbstractTreeNode<T> extends NodeDescriptor implements NavigationItem {
   private AbstractTreeNode myParent;
-  private Value myValue;
+  private T myValue;
   private NodeDescriptor myParentDescriptor;
   protected String myLocationString;
   private TextAttributesKey myAttributesKey;
 
-  protected AbstractTreeNode(Project project, Value value) {
+  protected AbstractTreeNode(Project project, T value) {
     super(project, null);
     setValue(value);
   }
@@ -130,7 +130,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     return myParentDescriptor;
   }
 
-  public final Value getValue() {
+  public final T getValue() {
     return myValue;
   }
 
@@ -138,7 +138,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     return myProject;
   }
 
-  public final void setValue(Value value) {
+  public final void setValue(T value) {
     myValue = value;
   }
 

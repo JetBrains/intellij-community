@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.navigation.ItemPresentation;
 
 /**
  * User: anna
@@ -17,6 +18,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
  */
 public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode> {
   private AbstractTreeNode myElement;
+  public static final FavoritesTreeNodeDescriptor[] EMPTY_ARRAY = new FavoritesTreeNodeDescriptor[0];
 
   public FavoritesTreeNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AbstractTreeNode element) {
     super(project, parentDescriptor);
@@ -25,9 +27,10 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
 
   public boolean update() {
     myElement.update();
-    myOpenIcon = myElement.getPresentation().getIcon(true);
-    myClosedIcon = myElement.getPresentation().getIcon(false);
-    myName = myElement.getPresentation().getPresentableText();
+    ItemPresentation presentation = myElement.getPresentation();
+    myOpenIcon = presentation.getIcon(true);
+    myClosedIcon = presentation.getIcon(false);
+    myName = presentation.getPresentableText();
     myColor = myElement.getFileStatus().getColor();
     return true;
   }
@@ -89,15 +92,15 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     return myElement.hashCode();
   }
 
-  public static FavoritesTreeNodeDescriptor getFavoritesRoot(FavoritesTreeNodeDescriptor node, Project project, String favoritesViewPane) {
-    final FavoritesTreeViewPanel favoritesTreeViewPanel = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(favoritesViewPane);
-    while (node.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
-      FavoritesTreeNodeDescriptor favoritesDescriptor = (FavoritesTreeNodeDescriptor)node.getParentDescriptor();
-      if (favoritesDescriptor.getElement() == favoritesTreeViewPanel.getFavoritesTreeStructure().getRootElement()) {
-        return node;
+  public FavoritesTreeNodeDescriptor getFavoritesRoot() {
+    FavoritesTreeNodeDescriptor descriptor = this;
+    while (descriptor.getParentDescriptor() instanceof FavoritesTreeNodeDescriptor) {
+      FavoritesTreeNodeDescriptor parent = (FavoritesTreeNodeDescriptor)descriptor.getParentDescriptor();
+      if (parent != null && parent.getParentDescriptor() == null) {
+        return descriptor;
       }
-      node = favoritesDescriptor;
+      descriptor = parent;
     }
-    return node;
+    return descriptor;
   }
 }

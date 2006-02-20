@@ -1,6 +1,5 @@
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -11,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * User: anna
@@ -30,22 +28,12 @@ public class AddAllOpenFilesToFavorites extends AnAction{
       return;
     }
 
-    final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
-    final AddToFavoritesAction addToFavoritesAction = favoritesView.getAddToFavoritesAction(myFavoritesName);
+    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
 
     final ArrayList<PsiFile> filesToAdd = getFilesToAdd(project);
-
-    final ArrayList<AbstractTreeNode> nodesToAdd = new ArrayList<AbstractTreeNode>();
-    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesName).getFavoritesTreeStructure().getFavoritesConfiguration();
-    for (Iterator<PsiFile> iterator = filesToAdd.iterator(); iterator.hasNext();) {
-      //module needs for psi packages only
-      AddToFavoritesAction.addPsiElementNode(iterator.next(),
-                                             project,
-                                             nodesToAdd,
-                                             favoritesConfig,
-                                             null);
+    for (PsiFile file : filesToAdd) {
+      favoritesManager.addRoots(myFavoritesName, null, file);
     }
-    addToFavoritesAction.addNodes(project, nodesToAdd.toArray(new AbstractTreeNode[nodesToAdd.size()]));
   }
 
   static ArrayList<PsiFile> getFilesToAdd (Project project) {
@@ -53,8 +41,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (int i = 0; i < openFiles.length; i++) {
-      VirtualFile openFile = openFiles[i];
+    for (VirtualFile openFile : openFiles) {
       result.add(psiManager.findFile(openFile));
     }
     return result;

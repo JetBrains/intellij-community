@@ -33,17 +33,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.Set;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
   private ModuleRootListener myModuleRootListener;
   private FileStatusListener myFileStatusListener;
   private CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
+  private final FavoritesManager.FavoritesListener myFavoritesListener;
+  private final String myListName;
 
-  public FavoritesViewTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure) {
+  public FavoritesViewTreeBuilder(Project project,
+                                  JTree tree,
+                                  DefaultTreeModel treeModel,
+                                  ProjectAbstractTreeStructureBase treeStructure,
+                                  final String name) {
     super(project, tree, treeModel, treeStructure, null);
+    myListName = name;
     setNodeDescriptorComparator(new Comparator<NodeDescriptor>(){
       private int getWeight(NodeDescriptor descriptor) {
         FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;
@@ -124,7 +131,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
 
       protected boolean isFlattenPackages() {
-        return ((FavoritesTreeStructure)myTreeStructure).getFavoritesConfiguration().IS_FLATTEN_PACKAGES;
+        return ((FavoritesTreeStructure)myTreeStructure).isFlattenPackages();
       }
 
       protected void childrenChanged(PsiElement parent) {
@@ -149,20 +156,40 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+
+    myFavoritesListener = new FavoritesManager.FavoritesListener() {
+      public void rootsChanged(String listName) {
+        if (myListName.equals(listName)) {
+          updateFromRoot();
+        }
+      }
+
+      public void listAdded(String listName) {
+        updateFromRoot();
+      }
+
+      public void listRemoved(String listName) {
+        updateFromRoot();
+      }
+    };
+    FavoritesManager.getInstance(myProject).addFavoritesListener(myFavoritesListener);
     initRootNode();
   }
 
 
   public void updateFromRoot() {
+    if (isDisposed()) return;
     myUpdater.cancelAllRequests();
     super.updateFromRoot();
   }
 
   public void updateTree() {
+    if (isDisposed()) return;
     myUpdater.addSubtreeToUpdate(myRootNode);
   }
 
   public void updateTree(Runnable runAferUpdate) {
+    if (isDisposed()) return;
     myUpdater.runAfterUpdate(runAferUpdate);
     updateTree();
   }
@@ -197,8 +224,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   @Nullable
-  private DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
-    final Set<AbstractTreeNode> favorites = ((FavoritesTreeStructure)getTreeStructure()).getFavorites();
+  DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
+    final Collection<AbstractTreeNode> favorites = ((FavoritesTreeStructure)getTreeStructure()).getFavoritesRoots();
     for (AbstractTreeNode favorite : favorites) {
       Object currentValue = favorite.getValue();
       if (currentValue instanceof SmartPsiElementPointer){
@@ -221,6 +248,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   public final void dispose() {
     super.dispose();
+    FavoritesManager.getInstance(myProject).removeFavoritesListener(myFavoritesListener);
+
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
@@ -229,7 +258,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object[] childElements = myTreeStructure.getChildElements(nodeDescriptor);
-    return childElements != null ? childElements.length > 0 : false;
+    return childElements != null && childElements.length > 0;
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {

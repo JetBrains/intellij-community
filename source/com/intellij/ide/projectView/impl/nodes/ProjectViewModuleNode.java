@@ -10,12 +10,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ProjectViewModuleNode extends AbstractModuleNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
@@ -36,9 +35,7 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     final VirtualFile[] contentRoots = rootManager.getContentRoots();
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
     final PsiManager psiManager = PsiManager.getInstance(getProject());
-    for (int idx = 0; idx < contentRoots.length; idx++) {
-      final VirtualFile contentRoot = contentRoots[idx];
-
+    for (final VirtualFile contentRoot : contentRoots) {
       LOG.assertTrue(contentRoot.isDirectory());
 
       if (!moduleFileIndex.isInContent(contentRoot)) continue;

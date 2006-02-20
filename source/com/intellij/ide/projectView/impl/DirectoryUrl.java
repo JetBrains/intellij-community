@@ -22,7 +22,6 @@ public class DirectoryUrl extends AbstractUrl {
   public static DirectoryUrl create(PsiDirectory directory) {
     Project project = directory.getProject();
     final VirtualFile virtualFile = directory.getVirtualFile();
-    if (virtualFile == null) return null;
     final Module module = VfsUtil.getModuleForFile(project, virtualFile);
     return new DirectoryUrl(virtualFile.getUrl(), module != null ? module.getName() : null);
   }

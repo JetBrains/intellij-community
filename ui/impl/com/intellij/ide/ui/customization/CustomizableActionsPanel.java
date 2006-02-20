@@ -1,7 +1,6 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -468,11 +467,11 @@ public class CustomizableActionsPanel {
       frame.updateToolbar();
       frame.updateMenuBar();
 
-      final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
-      final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();
-      for (String favoritesList : availableFavoritesLists) {
-        favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopoupHandler();
-      }
+      //final FavoritesManager favoritesView = FavoritesManager.getInstance(project);
+      //final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();
+      //for (String favoritesList : availableFavoritesLists) {
+      //  favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopoupHandler();
+      //}
     }
     final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
