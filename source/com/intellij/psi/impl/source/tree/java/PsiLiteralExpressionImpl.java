@@ -1,6 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -8,6 +14,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final @NonNls String QUOT = "&quot;";
@@ -394,6 +401,24 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
+  }
+
+  @Nullable
+  public PsiElement getInjectedPsi() {
+    final Language language = getManager().getInjectedLanguage(this);
+    if (language == null) return null;
+
+    final Project project = getProject();
+    final ParserDefinition parserDefinition = language.getParserDefinition();
+    if (parserDefinition == null) return null;
+
+    final PsiParser parser = parserDefinition.createParser(project);
+    final IElementType root = parserDefinition.getFileNodeType();
+
+    final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, (String)getValue());
+    final ASTNode parsedNode = parser.parse(root, builder);
+
+    return parsedNode.getPsi();
   }
 }
 

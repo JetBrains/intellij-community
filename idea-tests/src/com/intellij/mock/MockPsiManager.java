@@ -1,9 +1,10 @@
 package com.intellij.mock;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -16,9 +17,11 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public class MockPsiManager extends PsiManager {
   public Project getProject() {
@@ -201,6 +204,13 @@ public class MockPsiManager extends PsiManager {
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     return r.compute();
+  }
+
+  public void registerLanguageInjector(LanguageInjector injector) {
+  }
+
+  public List<LanguageInjector> getLanguageInjectors() {
+    return Collections.emptyList();
   }
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {

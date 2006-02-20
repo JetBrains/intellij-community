@@ -8,7 +8,6 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +18,8 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -119,6 +118,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private PsiMigrationImpl myCurrentMigration;
   private LanguageLevel myLanguageLevel;
   private PsiElementFinder[] myElementFinders;
+
+  private List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
 
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
@@ -303,6 +304,14 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
 
     return result;
+  }
+
+  public void registerLanguageInjector(LanguageInjector injector) {
+    myLanguageInjectors.add(injector);
+  }
+
+  public List<LanguageInjector> getLanguageInjectors() {
+    return Collections.unmodifiableList(myLanguageInjectors);
   }
 
   public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
