@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -329,11 +330,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     showOrHideStructureView(isShowStructure());
 
     if (selectedPsiElement != null) {
-      PsiFile containingFile = selectedPsiElement.getContainingFile();
-      VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
-      if (selectedPsiElement instanceof PsiDirectory) {
-        virtualFile = ((PsiDirectory)selectedPsiElement).getVirtualFile();
-      }
+      VirtualFile virtualFile = PsiUtil.getVirtualFile(selectedPsiElement);
       newPane.select(selectedPsiElement, virtualFile, true);
     }
   }
@@ -1018,16 +1015,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void selectPsiElement(PsiElement element, boolean requestFocus) {
     if (element == null) return;
-    if (element instanceof PsiDirectory) {
-       select(element, ((PsiDirectory)element).getVirtualFile() , requestFocus);
-    }
-    else {
-      final PsiFile containingFile = element.getContainingFile();
-      if (containingFile != null) {
-        select(element, containingFile.getVirtualFile(), requestFocus);
-      }
-    }
-
+    VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    select(element, virtualFile, requestFocus);
   }
 
 

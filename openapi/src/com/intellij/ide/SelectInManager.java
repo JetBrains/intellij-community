@@ -31,12 +31,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class SelectInManager implements JDOMExternalizable, ProjectComponent {
-  private ArrayList<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
-  private ArrayList<String> myOrder = new ArrayList<String>();
-  @NonNls
-  private static final String ELEMENT_TARGET = "target";
-  @NonNls
-  private static final String ATTRIBUTE_NAME = "name";
+  private List<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
+  private List<String> myOrder = new ArrayList<String>();
+  @NonNls private static final String ELEMENT_TARGET = "target";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
   @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
   @NonNls public static final String ASPECTS = IdeBundle.message("select.in.aspects");

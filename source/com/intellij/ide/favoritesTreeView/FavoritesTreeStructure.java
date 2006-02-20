@@ -135,6 +135,9 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   public Object getParentElement(Object element) {
     AbstractTreeNode parent = null;
+    if (element == getRootElement()) {
+      return null;
+    }
     if (element instanceof AbstractTreeNode) {
       parent = ((AbstractTreeNode)element).getParent();
     }

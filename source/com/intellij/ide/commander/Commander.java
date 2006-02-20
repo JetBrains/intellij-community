@@ -4,7 +4,6 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.actionSystem.*;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
@@ -137,7 +137,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myLeftPanel.getBuilder().enterElement(parentElement, BasePsiNode.getVirtualFile(parentElement));
+        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtil.getVirtualFile(parentElement));
       }
     }
 
@@ -145,7 +145,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myRightPanel.getBuilder().enterElement(parentElement, BasePsiNode.getVirtualFile(parentElement));
+        myRightPanel.getBuilder().enterElement(parentElement, PsiUtil.getVirtualFile(parentElement));
       }
     }
 
@@ -406,7 +406,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     } else {
       activePanel = myRightPanel;
     }
-    activePanel.getBuilder().enterElement(element, BasePsiNode.getVirtualFile(element));
+    activePanel.getBuilder().enterElement(element, PsiUtil.getVirtualFile(element));
   }
 
   public void swapPanels() {

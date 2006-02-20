@@ -1420,13 +1420,7 @@ public class RefactoringUtil {
                                             PsiElement target,
                                             final Collection<String> conflicts) {
     if (scope == null) return;
-    final VirtualFile vFile;
-    if (!(target instanceof PsiDirectory)) {
-      vFile = target.getContainingFile().getVirtualFile();
-    }
-    else {
-      vFile = ((PsiDirectory)target).getVirtualFile();
-    }
+    final VirtualFile vFile = PsiUtil.getVirtualFile(target);
     if (vFile == null) return;
     analyzeModuleConflicts(project, scope, usages, vFile, conflicts);
   }

@@ -1,5 +1,6 @@
 package com.intellij.projectView;
 
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -9,13 +10,12 @@ import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
-import com.intellij.ide.SelectInTarget;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,7 +24,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected AbstractTreeStructure myStructure;
@@ -123,14 +126,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   static VirtualFile[] getFiles(AbstractTreeNode kid) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
-      if (value instanceof PsiDirectory) {
-        return new VirtualFile[]{((PsiDirectory)value).getVirtualFile()};
-      }
-      else {
-        PsiFile containingFile = ((PsiElement)value).getContainingFile();
-        assertNotNull(value.toString(), containingFile);
-        return new VirtualFile[]{containingFile.getVirtualFile()};
-      }
+      VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)value);
+      return new VirtualFile[]{virtualFile};
     } else if (kid instanceof PackageElementNode) {
         return ((PackageElementNode)kid).getVirtualFiles();
     } else {

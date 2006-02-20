@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author mike
@@ -23,6 +24,14 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createConfirmation(String title, Runnable onYes, int defaultOptionIndex);
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, int defaultOptionIndex);
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, Runnable onNo, int defaultOptionIndex);
+
+  public abstract ListPopupStep createActionsStep(ActionGroup actionGroup,
+                                                              DataContext dataContext,
+                                                              boolean showNumbers,
+                                                              boolean showDisabledActions,
+                                                              String title,
+                                                              Component component,
+                                                              boolean honorActionMnemonics);
 
   public enum ActionSelectionAid {
     NUMBERING,

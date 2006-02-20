@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -228,9 +229,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
     PsiFileSystemItem fileSystemItem = (PsiFileSystemItem) element;
-    VirtualFile dstVFile = null;
-    if (fileSystemItem instanceof PsiFile) dstVFile = ((PsiFile)fileSystemItem).getVirtualFile();
-    else if (fileSystemItem instanceof PsiDirectory) dstVFile = ((PsiDirectory)fileSystemItem).getVirtualFile();
+    VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
 
     final PsiFile file = getElement().getContainingFile();
     final String newName;

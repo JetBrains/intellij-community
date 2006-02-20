@@ -6,7 +6,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.impl.PackageViewSelectInTarget;
+import com.intellij.ide.impl.PackagesPaneSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -117,7 +117,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
   }
 
   public SelectInTarget createSelectInTarget() {
-    return new PackageViewSelectInTarget(myProject);
+    return new PackagesPaneSelectInTarget(myProject);
   }
 
   protected ProjectAbstractTreeStructureBase createStructure() {

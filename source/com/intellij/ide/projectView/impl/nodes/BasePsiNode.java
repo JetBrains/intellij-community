@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,18 +65,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   private VirtualFile getVirtualFileForValue() {
     T value = getValue();
     if (value == null) return null;
-    if (value instanceof PsiDirectory) {
-      return ((PsiDirectory)value).getVirtualFile();
-    }
-    else {
-      PsiFile containingFile = value.getContainingFile();
-      if (containingFile == null) {
-        return null;
-      }
-      else {
-        return containingFile.getVirtualFile();
-      }
-    }
+    return PsiUtil.getVirtualFile(value);
   }
   // Should be called in atomic action
 
@@ -147,20 +137,4 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigateToSource();
   }
 
-  public static VirtualFile getVirtualFile(PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-
-    if (element instanceof PsiDirectory) {
-      return ((PsiDirectory)element).getVirtualFile();
-    }
-
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      return null;
-    }
-
-    return containingFile.getVirtualFile();
-  }
 }

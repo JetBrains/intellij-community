@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
@@ -281,7 +281,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;
-        final VirtualFile vFile = BasePsiNode.getVirtualFile(element);
+        final VirtualFile vFile = PsiUtil.getVirtualFile(element);
         myBuilder.select(element, vFile, false);
       }
     }, getModalityState());

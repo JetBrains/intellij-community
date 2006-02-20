@@ -13,6 +13,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -265,7 +266,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
       Object element = path[path.length - 1];
       if (element instanceof SmartPsiElementPointer) {
-        final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((SmartPsiElementPointer)element).getElement());
+        final VirtualFile virtualFile = PsiUtil.getVirtualFile(((SmartPsiElementPointer)element).getElement());
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())) {
           return true;
@@ -285,7 +286,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         }
       }
       if (element instanceof PsiElement) {
-        final VirtualFile virtualFile = BasePsiNode.getVirtualFile((PsiElement)element);
+        final VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)element);
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())){
           return true;

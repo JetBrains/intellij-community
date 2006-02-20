@@ -398,7 +398,7 @@ public class PackageUtil {
         if (withSubDirectories) {
           PsiDirectory dir = (PsiDirectory)child;
           vFile = dir.getVirtualFile();
-          if (vFile != null && !vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
+          if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
             if (viewSettings.isHideEmptyMiddlePackages() && dir.getPackage() != null && TreeViewUtil.isEmptyMiddlePackage(dir, true)) {
               processPsiDirectoryChildren(dir, dir.getChildren(), container, projectFileIndex, moduleFileIndex, viewSettings,
                                           withSubDirectories); // expand it recursively
@@ -410,7 +410,6 @@ public class PackageUtil {
       }
       else {
         LOG.assertTrue(false, "Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
-        continue;
       }
     }
   }

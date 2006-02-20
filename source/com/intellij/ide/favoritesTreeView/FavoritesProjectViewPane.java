@@ -4,7 +4,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -16,6 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +58,9 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane implements
       }
     };
     myFavoritesManager.addFavoritesListener(myFavoritesListener);
+  }
+  public static FavoritesProjectViewPane getInstance(Project project) {
+    return project.getComponent(FavoritesProjectViewPane.class);
   }
 
   public String getTitle() {
@@ -115,14 +118,14 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane implements
       }
     }
 
-    final PsiElement _element = element.getOriginalElement();
-    final VirtualFile virtualFile = BasePsiNode.getVirtualFile(_element);
-    final String list = FavoritesViewSelectInTarget.findSuitableFavoritesList(virtualFile, myProject);
+    final PsiElement originalElement = element.getOriginalElement();
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
+    final String list = FavoritesViewSelectInTarget.findSuitableFavoritesList(virtualFile, myProject, getSubId());
     if (list == null) return;
     if (!list.equals(getSubId())) {
       ProjectView.getInstance(myProject).changeView(ID, list);
     }
-    myViewPanel.selectElement(_element, virtualFile);
+    myViewPanel.selectElement(originalElement, virtualFile);
   }
 
   public int getWeight() {

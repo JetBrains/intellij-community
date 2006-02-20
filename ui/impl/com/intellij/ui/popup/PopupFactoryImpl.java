@@ -113,7 +113,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS);
   }
 
-  private static ListPopupStep<ActionItem> createActionsStep(final ActionGroup actionGroup,
+  public ListPopupStep createActionsStep(final ActionGroup actionGroup,
                                                              final DataContext dataContext,
                                                              final boolean showNumbers,
                                                              final boolean showDisabledActions,
@@ -427,7 +427,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
       final AnAction action = actionChoice.getAction();
       final DataContext dataContext = DataManager.getInstance().getDataContext(myContext);
       if (action instanceof ActionGroup) {
-        return createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
+        return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
       }
       else {
         // invokeLater is required to get a chance for the popup to hide in case the action called displays modal dialog

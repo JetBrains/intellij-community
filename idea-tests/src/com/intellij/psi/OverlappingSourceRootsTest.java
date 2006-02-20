@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.psi.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +95,7 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
   }
 
   private PsiDirectory findSourceRootDirectory(PsiElement element) {
-    final VirtualFile virtualFile = element instanceof PsiDirectory ? ((PsiDirectory) element).getVirtualFile() : element.getContainingFile().getVirtualFile();
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(virtualFile);
     return myPsiManager.findDirectory(sourceRoot);
   }

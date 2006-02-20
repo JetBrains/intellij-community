@@ -4,8 +4,10 @@ import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -42,5 +44,22 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   protected boolean canWorkWithCustomObjects() {
     return false;
+  }
+
+  public String[] getSubIds() {
+    return ScopeViewPane.getInstance(myProject).getSubIds();
+  }
+
+  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+    NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
+    NamedScope scope = scopesHolder.getScope(subId);
+    PackageSet packageSet = scope.getValue();
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+
+    return packageSet.contains(psiFile, scopesHolder);
+  }
+
+  public String getSubIdPresentableName(String subId) {
+    return ScopeViewPane.getInstance(myProject).getPresentableSubIdName(subId);
   }
 }

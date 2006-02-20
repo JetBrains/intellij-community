@@ -5,7 +5,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.commander.Commander;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.EditorHelper;
@@ -21,7 +20,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -301,7 +299,7 @@ public class CopyHandler {
     if (ToolWindowId.COMMANDER.equals(id)) {
       Commander commander = Commander.getInstance(project);
       CommanderPanel panel = selectInActivePanel ? commander.getActivePanel() : commander.getInactivePanel();
-      panel.getBuilder().selectElement(newElement,BasePsiNode.getVirtualFile(newElement));
+      panel.getBuilder().selectElement(newElement,PsiUtil.getVirtualFile(newElement));
     } else if (ToolWindowId.PROJECT_VIEW.equals(id)) {
       ProjectView.getInstance(project).selectPsiElement(newElement, true);
     } else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {

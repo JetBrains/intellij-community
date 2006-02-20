@@ -978,6 +978,23 @@ public final class PsiUtil {
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
   }
 
+  public static VirtualFile getVirtualFile(PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+
+    if (element instanceof PsiDirectory) {
+      return ((PsiDirectory)element).getVirtualFile();
+    }
+
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
+      return null;
+    }
+
+    return containingFile.getVirtualFile();
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

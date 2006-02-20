@@ -21,11 +21,12 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   protected boolean canSelect(final PsiFile file) {
-    return findSuitableFavoritesList(file.getVirtualFile(), myProject) != null;
+    return findSuitableFavoritesList(file.getVirtualFile(), myProject, null) != null;
   }
 
-  public static String findSuitableFavoritesList(VirtualFile file, Project project){
+  public static String findSuitableFavoritesList(VirtualFile file, Project project, final String currentSubId) {
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+    if (currentSubId != null && favoritesManager.contains(currentSubId, file)) return currentSubId;
     final String[] lists = favoritesManager.getAvailableFavoritesLists();
     for (String name : lists) {
       if (favoritesManager.contains(name, file)) return name;
@@ -41,4 +42,22 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
     return StandardTargetWeights.FAVORITES_WEIGHT;
   }
 
+  protected boolean canWorkWithCustomObjects() {
+    return false;
+  }
+
+  public String[] getSubIds() {
+    final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
+    return favoritesManager.getAvailableFavoritesLists();
+  }
+
+
+  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+    final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
+    return favoritesManager.contains(subId, file);
+  }
+
+  public String getSubIdPresentableName(String subId) {
+    return FavoritesProjectViewPane.getInstance(myProject).getPresentableSubIdName(subId);
+  }
 }

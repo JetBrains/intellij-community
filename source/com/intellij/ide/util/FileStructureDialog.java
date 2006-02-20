@@ -4,7 +4,6 @@ package com.intellij.ide.util;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +64,7 @@ public class FileStructureDialog extends DialogWrapper {
         myCommanderPanel.getBuilder().enterElement(elementAtCursor, elementAtCursor.getContainingFile().getVirtualFile());
       }
       else {
-        myCommanderPanel.getBuilder().selectElement(elementAtCursor,BasePsiNode.getVirtualFile(elementAtCursor));
+        myCommanderPanel.getBuilder().selectElement(elementAtCursor, PsiUtil.getVirtualFile(elementAtCursor));
       }
     }
   }

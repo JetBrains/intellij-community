@@ -3,7 +3,6 @@ package com.intellij.ide.commander;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -12,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiUtil;
 
 final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   public CommanderSelectInTarget(final Project project) {
@@ -48,7 +48,7 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
     selectElementInCommander(new Runnable() {
       public void run() {
-        Commander.getInstance(myProject).selectElementInLeftPanel(_element, BasePsiNode.getVirtualFile(_element));
+        Commander.getInstance(myProject).selectElementInLeftPanel(_element, PsiUtil.getVirtualFile(_element));
       }
     }, requestFocus);
   }
@@ -74,7 +74,7 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   protected boolean canWorkWithCustomObjects() {
-    return true;
+    return false;
   }
 
   public String getToolWindowId() {

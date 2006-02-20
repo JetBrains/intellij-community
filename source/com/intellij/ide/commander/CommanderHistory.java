@@ -4,8 +4,8 @@
  */
 package com.intellij.ide.commander;
 
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,10 +79,10 @@ public class CommanderHistory {
         }
         else {
           if (shouldOpenInLeftPanel) {
-            myCommander.selectElementInLeftPanel(element,BasePsiNode.getVirtualFile(element));
+            myCommander.selectElementInLeftPanel(element,PsiUtil.getVirtualFile(element));
           }
           else {
-            myCommander.selectElementInRightPanel(element, BasePsiNode.getVirtualFile(element));
+            myCommander.selectElementInRightPanel(element, PsiUtil.getVirtualFile(element));
           }
         }
         return true;

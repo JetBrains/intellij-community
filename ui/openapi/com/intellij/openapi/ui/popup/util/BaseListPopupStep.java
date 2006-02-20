@@ -50,7 +50,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   protected BaseListPopupStep() {
   }
 
-  protected final void init(@Nullable String aTitle, List<T> aValues, List<Icon> aIcons) {
+  protected final void init(@Nullable String aTitle, List<T> aValues, @Nullable List<Icon> aIcons) {
     myTitle = aTitle;
     myValues = aValues;
     myIcons = aIcons;
@@ -71,7 +71,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   public Icon getIconFor(T aValue) {
     int index = myValues.indexOf(aValue);
-    if (index != -1 && index < myIcons.size()) {
+    if (index != -1 && myIcons != null && index < myIcons.size()) {
       return myIcons.get(index);
     }
     else {

@@ -5,7 +5,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.Form;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -543,7 +543,7 @@ public class CommanderPanel extends JPanel {
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myBuilder.selectElement(psiElement, BasePsiNode.getVirtualFile(psiElement));
+            myBuilder.selectElement(psiElement, PsiUtil.getVirtualFile(psiElement));
             if (!isDirectory) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {

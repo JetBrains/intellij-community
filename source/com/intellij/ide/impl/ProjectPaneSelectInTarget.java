@@ -42,4 +42,7 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget {
     return StandardTargetWeights.PROJECT_WEIGHT;
   }
 
+  protected boolean canWorkWithCustomObjects() {
+    return false;
+  }
 }

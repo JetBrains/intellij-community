@@ -6,12 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
+  private String mySubId;
+
   public ProjectViewSelectInTarget(Project project) {
     super(project);
   }
@@ -22,7 +22,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     final Runnable runnable = new Runnable() {
       public void run() {
         if (requestFocus) {
-          projectView.changeView(getMinorViewId());
+          projectView.changeView(getMinorViewId(), mySubId);
         }
         projectView.select(selector, virtualFile, requestFocus);
       }
@@ -33,17 +33,24 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     else {
       runnable.run();
     }
+  }
 
+  public String[] getSubIds() {
+    return new String[0];
+  }
+  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+    return false;
+  }
+  public String getSubIdPresentableName(String subId) {
+    return null;
   }
 
   public final void select(PsiElement element, final boolean requestFocus) {
     while (true) {
-      if (element instanceof PsiFile)
-      {
+      if (element instanceof PsiFile) {
         break;
       }
-      if (isTopLevelClass(element))
-      {
+      if (isTopLevelClass(element)) {
         break;
       }
       element = element.getParent();
@@ -55,24 +62,9 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
         element = classes[0];
       }
     }
-
-    final ProjectView projectView = ProjectView.getInstance(myProject);
-    final PsiElement _element1 = element.getOriginalElement();
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (requestFocus) {
-          projectView.changeView(getMinorViewId());
-        }
-        projectView.selectPsiElement(_element1, requestFocus);
-      }
-    };
-    if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    final PsiElement originalElement = element.getOriginalElement();
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
+    select(originalElement, virtualFile,requestFocus);
   }
 
   private static boolean isTopLevelClass(final PsiElement element) {
@@ -99,5 +91,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   protected boolean canWorkWithCustomObjects() {
     return true;
+  }
+  public final void setSubId(String subId) {
+    mySubId = subId;
   }
 }

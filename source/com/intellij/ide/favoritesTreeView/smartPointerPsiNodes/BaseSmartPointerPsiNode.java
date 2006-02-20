@@ -1,6 +1,5 @@
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -8,18 +7,18 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
@@ -127,12 +126,6 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
   public boolean canNavigateToSource() {
     return getPsiElement() instanceof NavigationItem && ((NavigationItem)getPsiElement()).canNavigateToSource();
-  }
-
-  public static VirtualFile getVirtualFile(PsiElement element) {
-    return element instanceof PsiDirectory
-           ? ((PsiDirectory)element).getVirtualFile()
-           : element.getContainingFile().getVirtualFile();
   }
 
   protected PsiElement getPsiElement(){
