@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -151,6 +152,11 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public EditFileProvider getEditFileProvider() {
     return myEditFilesProvider;
+  }
+
+
+  public ChangeProvider getChangeProvider() {
+    return new SvnChangeProvider(this);
   }
 
   public SVNRepository createRepository(String url) throws SVNException {

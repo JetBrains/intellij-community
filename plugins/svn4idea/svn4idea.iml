@@ -24,7 +24,9 @@
           <root url="jar://$MODULE_DIR$/lib/javasvn.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/javasvnsrc.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="action-system-openapi" />
