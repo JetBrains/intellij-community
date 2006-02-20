@@ -1093,30 +1093,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   public PsiClass getSourceMirrorClass() {
     PsiElement parent = getParent();
     if (parent instanceof PsiFile) {
-      String packageName = ((ClsFileImpl)parent).getPackageName();
-      String sourceFileName = getSourceFileName();
-      String relativeFilePath = packageName.length() == 0 ?
-                                sourceFileName :
-                                packageName.replace('.', '/') + '/' + sourceFileName;
-
-      final VirtualFile vFile = getContainingFile().getVirtualFile();
-      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-      for (OrderEntry orderEntry : orderEntries) {
-        VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
-        for (VirtualFile file : files) {
-          VirtualFile source = file.findFileByRelativePath(relativeFilePath);
-          if (source != null) {
-            PsiFile psiSource = getManager().findFile(source);
-            if (psiSource instanceof PsiJavaFile) {
-              PsiJavaFile psiJavaFile = (PsiJavaFile)psiSource;
-              PsiClass[] classes = psiJavaFile.getClasses();
-              for (PsiClass aClass : classes) {
-                if (aClass.getName().equals(getName())) return aClass;
-              }
-            }
-          }
-        }
+      PsiJavaFile fileNavigationElement = (PsiJavaFile) parent.getNavigationElement();
+      for (PsiClass aClass : fileNavigationElement.getClasses()) {
+        if (aClass.getName().equals(getName())) return aClass;
       }
     }
     else {

@@ -8,6 +8,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -17,6 +21,8 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
@@ -229,27 +235,52 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return myMirror.textToCharArray();
   }
 
-  private void initializeMirror() {
-    if (myMirror == null) {
-      FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      Document document = documentManager.getDocument(getVirtualFile());
-      String text = document.getText();
-      String ext = StdFileTypes.JAVA.getDefaultExtension();
-      PsiClass aClass = getClasses()[0];
-      String fileName = aClass.getName() + "." + ext;
-      PsiManager manager = getManager();
-      PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
-        ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+    public PsiElement getNavigationElement() {
+      String packageName = getPackageName();
+      String sourceFileName = myClass.getSourceFileName();
+      String relativeFilePath = packageName.length() == 0 ?
+          sourceFileName :
+          packageName.replace('.', '/') + '/' + sourceFileName;
 
-      //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
-      synchronized (PsiLock.LOCK) {
-        if (myMirror == null) {
-          setMirror((TreeElement)mirrorTreeElement);
-          myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
+      final VirtualFile vFile = getContainingFile().getVirtualFile();
+      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+      final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+      for (OrderEntry orderEntry : orderEntries) {
+        VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
+        for (VirtualFile file : files) {
+          VirtualFile source = file.findFileByRelativePath(relativeFilePath);
+          if (source != null) {
+            PsiFile psiSource = getManager().findFile(source);
+            if (psiSource instanceof PsiJavaFile) {
+              return psiSource;
+            }
+          }
+        }
+      }
+      return this;
+    }
+
+    private void initializeMirror() {
+      if (myMirror == null) {
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        Document document = documentManager.getDocument(getVirtualFile());
+        String text = document.getText();
+        String ext = StdFileTypes.JAVA.getDefaultExtension();
+        PsiClass aClass = getClasses()[0];
+        String fileName = aClass.getName() + "." + ext;
+        PsiManager manager = getManager();
+        PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
+          ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
+
+        //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
+        synchronized (PsiLock.LOCK) {
+          if (myMirror == null) {
+            setMirror((TreeElement)mirrorTreeElement);
+            myMirror.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
+          }
         }
       }
     }
-  }
 
   public long getModificationStamp() {
     return getVirtualFile().getModificationStamp();
