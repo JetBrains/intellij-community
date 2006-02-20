@@ -65,7 +65,7 @@ public class FilePathImpl implements FilePath {
       return myVirtualFile.getPath();
     }
     else {
-      return myFile.getParent();
+      return myFile.getPath();
     }
   }
 
