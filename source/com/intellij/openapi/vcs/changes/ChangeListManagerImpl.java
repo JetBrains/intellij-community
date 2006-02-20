@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.*;
@@ -214,17 +215,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   private void scheduleRefresh() {
-    SwingUtilities.invokeLater(new Runnable() {
+    myRepaintAlarm.cancelAllRequests();
+    myRepaintAlarm.addRequest(new Runnable() {
       public void run() {
-        myRepaintAlarm.cancelAllRequests();
-        myRepaintAlarm.addRequest(new Runnable() {
-          public void run() {
-            if (myDisposed) return;
-            myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
-          }
-        }, 100);
+        if (myDisposed) return;
+        myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
       }
-    });
+    }, 100, ModalityState.NON_MMODAL);
   }
 
   @NotNull
