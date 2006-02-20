@@ -105,7 +105,7 @@
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.j2ee.ExternalResourceManager</interface-class>
+      <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
       <implementation-class>com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl</implementation-class>
     </component>
     <component>

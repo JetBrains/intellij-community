@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
-import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,6 +29,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.javaee.ExternalResourceManager;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 

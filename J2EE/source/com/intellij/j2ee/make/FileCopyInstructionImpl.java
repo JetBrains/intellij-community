@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.j2ee.J2EEBundle;
+import com.intellij.javaee.J2EEBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     if (!relativePath.startsWith(getOutputRelativePath())) return null;
     final String pathFromFile = relativePath.substring(getOutputRelativePath().length());
     if (!myIsDirectory) {
-      return pathFromFile.equals("") ? myFile : null;
+      return "".equals(pathFromFile) ? myFile : null;
     }
     final File file = MakeUtil.canonicalRelativePath(myFile, pathFromFile);
 

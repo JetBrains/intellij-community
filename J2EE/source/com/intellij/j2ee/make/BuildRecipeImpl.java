@@ -3,8 +3,8 @@
  */
 package com.intellij.j2ee.make;
 
-import com.intellij.j2ee.J2EEBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.javaee.J2EEBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

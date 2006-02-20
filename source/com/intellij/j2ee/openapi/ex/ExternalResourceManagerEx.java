@@ -1,7 +1,7 @@
 package com.intellij.j2ee.openapi.ex;
 
-import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
+import com.intellij.javaee.ExternalResourceManager;
 
 /**
  * author: lesya

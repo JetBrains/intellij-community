@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.extResources.ExternalResourceConfigurable;
-import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -12,12 +11,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.javaee.ExternalResourceManager;
 
 /**
  * @author mike
  */
 public class ManuallySetupExtResourceAction extends BaseIntentionAction {
-  
+
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 

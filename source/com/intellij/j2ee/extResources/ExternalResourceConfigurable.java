@@ -1,7 +1,6 @@
 package com.intellij.j2ee.extResources;
 
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.j2ee.J2EEBundle;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -9,6 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.javaee.J2EEBundle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

@@ -1,19 +1,18 @@
 package com.intellij.j2ee.run.localRun;
 
+import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.j2ee.J2EEBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();

@@ -1,6 +1,5 @@
 package com.intellij.j2ee.openapi.impl;
 
-import com.intellij.j2ee.LibrariesManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -8,6 +7,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.javaee.LibrariesManager;
 import org.jetbrains.annotations.NonNls;
 
 /**

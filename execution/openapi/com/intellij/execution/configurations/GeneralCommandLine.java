@@ -16,16 +16,17 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.j2ee.J2EEBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 public class GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
@@ -72,14 +71,14 @@ public class GeneralCommandLine {
   }
 
   public void addParameters(final String[] parameters) {
-    for (int i = 0; i < parameters.length; i++) {
-      addParameter(parameters[i]);
+    for (String parameter : parameters) {
+      addParameter(parameter);
     }
   }
 
   public void addParameters(final List<String> parameters) {
-    for (Iterator<String> it = parameters.iterator(); it.hasNext();) {
-      addParameter(it.next());
+    for (final String parameter : parameters) {
+      addParameter(parameter);
     }
   }
 
@@ -90,9 +89,9 @@ public class GeneralCommandLine {
 
   public String getCommandLineString() {
     final StringBuffer buffer = new StringBuffer(myExePath);
-    for (Iterator<String> iterator = myProgramParams.getList().iterator(); iterator.hasNext();) {
+    for (final String s : myProgramParams.getList()) {
       buffer.append(" ");
-      buffer.append(iterator.next());
+      buffer.append(s);
     }
     return buffer.toString();
   }
@@ -135,8 +134,7 @@ public class GeneralCommandLine {
     }
     final String[] result = new String[myEnvParams.size()];
     int i=0;
-    for (Iterator<String> it = myEnvParams.keySet().iterator(); it.hasNext();) {
-      final String key = it.next();
+    for (final String key : myEnvParams.keySet()) {
       result[i++] = key + "=" + myEnvParams.get(key).trim();
     }
     return result;
@@ -148,8 +146,7 @@ public class GeneralCommandLine {
     result[0] = myExePath;
     int index = 1;
     for (Iterator<String> iterator = parameters.iterator(); iterator.hasNext(); index++) {
-      final String param = iterator.next();
-      result[index] = param;
+      result[index] = iterator.next();
     }
     return result;
   }

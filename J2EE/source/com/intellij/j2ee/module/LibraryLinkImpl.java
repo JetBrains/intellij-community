@@ -33,7 +33,6 @@ package com.intellij.j2ee.module;
 
 import com.intellij.j2ee.make.MakeUtil;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
-import com.intellij.j2ee.J2EEBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -49,6 +48,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import com.intellij.javaee.J2EEBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;

@@ -4,8 +4,8 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
-import com.intellij.j2ee.J2EEModuleUtil;
 import com.intellij.j2ee.module.J2EEModuleUtilEx;
+import com.intellij.javaee.J2EEModuleUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -45,8 +46,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev

@@ -3,7 +3,6 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.j2ee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.javaee.J2EEFileTemplateNames;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

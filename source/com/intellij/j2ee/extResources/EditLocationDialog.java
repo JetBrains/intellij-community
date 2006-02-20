@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.j2ee.J2EEBundle;
+import com.intellij.javaee.J2EEBundle;
 
 import javax.swing.*;
 import java.awt.*;
