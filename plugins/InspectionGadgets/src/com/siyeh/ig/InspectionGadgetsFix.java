@@ -21,13 +21,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
+    private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
 
     //to appear in "Apply Fix" statement when multiple Quick Fixes exist
     public String getFamilyName() {
@@ -99,16 +106,41 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     }
 
     protected static void replaceStatementAndShortenClassNames(
-            PsiStatement statement, String newStatement)
+            PsiStatement statement, String newStatementText)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiStatement newExp =
-                factory.createStatementFromText(newStatement, statement);
-        final PsiElement replacementStatement = statement.replace(newExp);
+        PsiStatement newStatement;
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
-        styleManager.shortenClassReferences(replacementStatement);
-        styleManager.reformat(replacementStatement);
+        if (PsiUtil.isInJspFile(statement)) {
+            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiManager.getProject());
+            JspFile file = PsiUtil.getJspFile(statement);
+            Document document = documentManager.getDocument(file);
+            TextRange textRange = statement.getTextRange();
+            document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), newStatementText);
+            documentManager.commitDocument(document);
+          JspxFileViewProvider viewProvider = file.getViewProvider();
+          PsiElement elementAt = viewProvider.findElementAt(textRange.getStartOffset(), StdLanguages.JAVA);
+            int endOffset = textRange.getStartOffset() + newStatementText.length();
+            while(elementAt.getTextRange().getEndOffset() < endOffset ||
+                    !(elementAt instanceof PsiStatement)) {
+                elementAt = elementAt.getParent();
+                if (elementAt == null) {
+                    LOG.error("Cannot decode statement");
+                    return;
+                }
+            }
+            newStatement = (PsiStatement) elementAt;
+            styleManager.shortenClassReferences(newStatement);
+            styleManager.reformatRange(viewProvider.getPsi(viewProvider.getBaseLanguage()),
+                newStatement.getTextRange().getStartOffset(),
+                newStatement.getTextRange().getEndOffset());
+        } else {
+            final PsiElementFactory factory = psiManager.getElementFactory();
+            newStatement = factory.createStatementFromText(newStatementText, statement);
+            newStatement = (PsiStatement) statement.replace(newStatement);
+            styleManager.shortenClassReferences(newStatement);
+            styleManager.reformat(newStatement);
+        }
     }
 
     private static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement){
