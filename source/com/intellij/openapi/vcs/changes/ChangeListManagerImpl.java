@@ -102,7 +102,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private JComponent createChangeViewComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    DefaultActionGroup group = new DefaultActionGroup();
+    DefaultActionGroup toolBarGroup = new DefaultActionGroup();
 
     RefreshAction refreshAction = new RefreshAction();
     refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
@@ -123,16 +123,32 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final MoveChangesToAnotherListAction toAnotherListAction = new MoveChangesToAnotherListAction();
     toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
 
-    group.add(refreshAction);
-    group.add(newChangeListAction);
-    group.add(removeChangeListAction);
-    group.add(new SetDefaultChangeListAction());
-    group.add(toAnotherListAction);
-    group.add(diffAction);
+    final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", group, false);
+    toolBarGroup.add(refreshAction);
+    toolBarGroup.add(newChangeListAction);
+    toolBarGroup.add(removeChangeListAction);
+    toolBarGroup.add(setDefaultChangeListAction);
+    toolBarGroup.add(toAnotherListAction);
+    toolBarGroup.add(diffAction);
+
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangeView", toolBarGroup, false);
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(new JScrollPane(myView), BorderLayout.CENTER);
+
+    DefaultActionGroup menuGroup = new DefaultActionGroup();
+    menuGroup.add(refreshAction);
+    menuGroup.add(newChangeListAction);
+    menuGroup.add(removeChangeListAction);
+    menuGroup.add(setDefaultChangeListAction);
+    menuGroup.add(toAnotherListAction);
+    menuGroup.add(diffAction);
+    menuGroup.addSeparator();
+    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
+    menuGroup.addSeparator();
+    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+
+    myView.setMenuActions(menuGroup);
 
     myProgressLabel = new JLabel();
     panel.add(myProgressLabel, BorderLayout.NORTH);

@@ -1,6 +1,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -296,6 +299,10 @@ public class ChangesListView extends TreeTable implements DataProvider {
     }
 
     return lists.toArray(new ChangeList[lists.size()]);
+  }
+
+  public void setMenuActions(final ActionGroup menuGroup) {
+    PopupHandler.installUnknownPopupHandler(this, menuGroup, ActionManager.getInstance());
   }
 
   public class DragSource implements DnDSource {
