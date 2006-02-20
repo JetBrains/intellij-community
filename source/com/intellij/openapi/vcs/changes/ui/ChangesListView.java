@@ -21,6 +21,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -303,6 +304,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
 
   public void setMenuActions(final ActionGroup menuGroup) {
     PopupHandler.installUnknownPopupHandler(this, menuGroup, ActionManager.getInstance());
+    EditSourceOnDoubleClickHandler.install(this);
   }
 
   public class DragSource implements DnDSource {
