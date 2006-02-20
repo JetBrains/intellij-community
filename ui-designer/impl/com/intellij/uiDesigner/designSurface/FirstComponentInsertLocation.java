@@ -17,14 +17,14 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class FirstComponentInsertLocation extends GridLocation {
+public class FirstComponentInsertLocation extends DropLocation {
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
                                       final int column,
                                       final Point targetPoint,
                                       final Rectangle cellRect,
-                                      final GridInsertMode mode) {
-    super(container, row, column, targetPoint, cellRect, mode);
+                                      final boolean dropAllowed) {
+    super(container, row, column, targetPoint, cellRect, dropAllowed);
   }
 
   @Override public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {

@@ -131,8 +131,8 @@ class DesignDropTargetListener implements DropTargetListener {
       myLastPoint = dtde.getLocation();
       myEditor.getDragLayer().repaint();
 
-      GridLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
-      if (location.getMode() == GridInsertMode.NoDrop ||
+      DropLocation location = myGridInsertProcessor.processDragEvent(dtde.getLocation(), myComponentDragObject);
+      if (!location.canDrop(myComponentDragObject) ||
           (myDraggedComponentList != null && isDropOnChild(myDraggedComponentList, location))) {
         myComponentTree.setDropTargetComponent(null);
         dtde.rejectDrag();
@@ -148,7 +148,7 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   private static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                final GridLocation location) {
+                                final DropLocation location) {
     if (location.getContainer() == null) {
       return false;
     }
@@ -236,17 +236,12 @@ class DesignDropTargetListener implements DropTargetListener {
     final int dropX = dropPoint.x;
     final int dropY = dropPoint.y;
     final int componentCount = dcl.getComponents().size();
-    GridLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, dropPoint, dcl);
+    DropLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, dropPoint, dcl);
     if (isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
       return false;
     }
     if (location != null && !location.canDrop(dcl)) {
-      location = null;
-    }
-
-    if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, dcl) &&
-        (location == null || location.getMode() == GridInsertMode.InCell)) {
       setDraggingState(dcl, false);
       return false;
     }

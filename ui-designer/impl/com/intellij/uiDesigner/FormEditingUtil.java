@@ -1,10 +1,12 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,26 +14,25 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.util.containers.HashSet;
-import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -233,24 +234,6 @@ public final class FormEditingUtil {
     catch (Exception ex) {
       return Cursor.getDefaultCursor();
     }
-  }
-
-  /**
-   * @param x in editor pane coordinates
-   * @param y in editor pane coordinates
-   */
-  public static boolean canDrop(final GuiEditor editor, final int x, final int y, final ComponentDragObject dragObject){
-    if (dragObject.getComponentCount() == 0) {
-      return false;
-    }
-
-    final RadComponent componentAt = getRadContainerAt(editor, x, y, 0);
-    if (componentAt == null) {
-      return false;
-    }
-
-    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, componentAt.getDelegee());
-    return componentAt.canDrop(targetPoint, dragObject);
   }
 
   /**

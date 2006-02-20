@@ -10,41 +10,37 @@ import java.awt.*;
 /**
  * @author yole
  */
-class GridLocation {
+class DropLocation {
   protected RadContainer myContainer;
   private int myRow;
   private int myColumn;
   protected Point myTargetPoint;
   protected Rectangle myCellRect;
-  private GridInsertMode myMode;
+  private boolean myDropAllowed;
 
-  public GridLocation(final GridInsertMode mode) {
-    myMode = mode;
+  public DropLocation(final boolean dropAllowed) {
+    myDropAllowed = dropAllowed;
   }
 
 
-  public GridLocation(final RadContainer container, final Point targetPoint, final GridInsertMode mode) {
+  public DropLocation(final RadContainer container, final Point targetPoint, final boolean dropAllowed) {
     myContainer = container;
     myTargetPoint = targetPoint;
-    myMode = mode;
+    myDropAllowed = dropAllowed;
   }
 
-  public GridLocation(final RadContainer container,
+  public DropLocation(final RadContainer container,
                       final int row,
                       final int column,
                       final Point targetPoint,
                       final Rectangle cellRect,
-                      final GridInsertMode mode) {
+                      final boolean dropAllowed) {
     myContainer = container;
     myRow = row;
     myColumn = column;
     myTargetPoint = targetPoint;
     myCellRect = cellRect;
-    myMode = mode;
-  }
-
-  public GridInsertMode getMode() {
-    return myMode;
+    myDropAllowed = dropAllowed;
   }
 
   public int getRow() {
@@ -68,11 +64,11 @@ class GridLocation {
   }
 
   public void rejectDrop() {
-    myMode = GridInsertMode.NoDrop;
+    myDropAllowed = false;
   }
 
   public boolean canDrop(final ComponentDragObject dragObject) {
-    if (myMode == GridInsertMode.NoDrop) {
+    if (!myDropAllowed) {
       return false;
     }
     return myContainer.canDrop(myTargetPoint, dragObject);

@@ -16,12 +16,13 @@ import java.awt.*;
 /**
  * @author yole
  */
-class GridInsertLocation extends GridLocation {
+class GridInsertLocation extends DropLocation {
   private static final int INSERT_ARROW_SIZE = 3;
   public static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift
 
   private FeedbackPainter myHorzInsertFeedbackPainter = new HorzInsertFeedbackPainter();
   private FeedbackPainter myVertInsertFeedbackPainter = new VertInsertFeedbackPainter();
+  private GridInsertMode myMode;
 
   public GridInsertLocation(@NotNull final RadContainer container,
                             final int row,
@@ -29,17 +30,18 @@ class GridInsertLocation extends GridLocation {
                             final Point targetPoint,
                             final Rectangle cellRect,
                             final GridInsertMode mode) {
-    super(container, row, column, targetPoint, cellRect, mode);
+    super(container, row, column, targetPoint, cellRect, (mode != GridInsertMode.NoDrop));
+    myMode = mode;
     assert container.isGrid();
   }
 
 
   public boolean isColumnInsert() {
-    return getMode() == GridInsertMode.ColumnAfter || getMode() == GridInsertMode.ColumnBefore;
+    return myMode == GridInsertMode.ColumnAfter || myMode == GridInsertMode.ColumnBefore;
   }
 
   public boolean isRowInsert() {
-    return getMode() == GridInsertMode.RowAfter || getMode() == GridInsertMode.RowBefore;
+    return myMode == GridInsertMode.RowAfter || myMode == GridInsertMode.RowBefore;
   }
 
   public boolean isInsert() {
@@ -60,7 +62,7 @@ class GridInsertLocation extends GridLocation {
 
   private boolean isInsertInsideComponent() {
     if (isColumnInsert()) {
-      int endColumn = (getMode() == GridInsertMode.ColumnAfter)
+      int endColumn = (myMode == GridInsertMode.ColumnAfter)
                       ? getColumn()+1 : getColumn();
       int row = getRow();
       for(int col = 0; col<endColumn; col++) {
@@ -76,7 +78,7 @@ class GridInsertLocation extends GridLocation {
       return false;
     }
     else if (isRowInsert()) {
-      int endRow = (getMode() == GridInsertMode.RowAfter)
+      int endRow = (myMode == GridInsertMode.RowAfter)
                     ? getRow()+1 : getRow();
       int col = getColumn();
       for(int row = 0; row<endRow; row++) {
@@ -97,7 +99,7 @@ class GridInsertLocation extends GridLocation {
   @Override public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
     final int insertCol = getColumn();
     final int insertRow = getRow();
-    final GridInsertMode insertMode = getMode();
+    final GridInsertMode insertMode = myMode;
 
     Rectangle cellRect = getGridFeedbackRect(dragObject.getComponentCount());
 
@@ -183,7 +185,7 @@ class GridInsertLocation extends GridLocation {
     int col = getColumn();
     RadContainer container = getContainer();
     //noinspection EnumSwitchStatementWhichMissesCases
-    switch(getMode()) {
+    switch(myMode) {
       case RowBefore:
         GridChangeUtil.insertRowBefore(container, row);
         checkAdjustConstraints(constraintsToAdjust, true, row);
