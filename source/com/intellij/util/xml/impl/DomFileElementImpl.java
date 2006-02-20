@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.javaee.model.ElementPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,11 +130,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return getRootHandler().getNameStrategy();
   }
 
-  @Nullable
-  public DomElementPresentation getPresentation() {
+  @NotNull
+  public ElementPresentation getPresentation() {
     return new DomElementPresentation() {
 
-      public String getPresentationName() {
+      public String getElementName() {
         return "<ROOT>";
       }
 

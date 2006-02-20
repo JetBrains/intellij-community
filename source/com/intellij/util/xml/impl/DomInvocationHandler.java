@@ -5,7 +5,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -16,13 +15,15 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.javaee.model.ElementPresentationManager;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -250,9 +251,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
-  @Nullable
-  public DomElementPresentation getPresentation() {
-    return getManager().getDomElementPresentation(getProxy());
+  @NotNull
+  public ElementPresentation getPresentation() {
+    final ElementPresentation presentation = ElementPresentationManager.getElementPresentation(getProxy());
+    if (presentation != null) {
+      return presentation;
+    }
+    return new BasicDomElementPresentation(getProxy());
   }
 
   public final GlobalSearchScope getResolveScope() {

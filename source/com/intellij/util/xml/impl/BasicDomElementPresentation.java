@@ -23,7 +23,7 @@ public class BasicDomElementPresentation implements DomElementPresentation {
     return myElement;
   }
 
-  public String getPresentationName() {
+  public String getElementName() {
     return getTypeName();
   }
 

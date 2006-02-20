@@ -3,11 +3,10 @@ package com.intellij.util.xml.tree;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.DomElementPresentation;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   protected boolean showGenericValues() {
     final Boolean showProperties = myDomElement.getRoot().getUserData(SHOW_PROPERTIES_KEY);
-    return showProperties == null ? false: showProperties;
+    return showProperties != null && showProperties;
   }
 
   public Object[] getEqualityObjects() {
@@ -99,11 +98,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
-    final DomElementPresentation presentation = myDomElement.getPresentation();
-    if (presentation != null && presentation.getPresentationName() != null) {
-      return presentation.getPresentationName();
-    }
-    return getPropertyName();
+    final String name = myDomElement.getPresentation().getElementName();
+    return name != null ? name : getPropertyName();
   }
 
   public String getTagName() {

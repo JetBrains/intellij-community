@@ -37,9 +37,4 @@ public abstract class DomManager {
   @Nullable
   public abstract DomElement getDomElement(final XmlTag tag);
 
-  public abstract void registerPresentationFactory(DomElementPresentationFactory factory);
-
-  @NotNull
-  public abstract DomElementPresentation getDomElementPresentation(final DomElement element);
-
 }

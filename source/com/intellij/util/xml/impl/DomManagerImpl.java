@@ -37,7 +37,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
-  private final List<DomElementPresentationFactory> myPresentationFactories = new ArrayList<DomElementPresentationFactory>();
+  
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
@@ -181,28 +181,11 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return null;
   }
 
-
-  public void registerPresentationFactory(DomElementPresentationFactory factory) {
-    myPresentationFactories.add(factory);
-  }
-
-  @NotNull
-  public DomElementPresentation getDomElementPresentation(final DomElement element) {
-    for (DomElementPresentationFactory presentationFactory : myPresentationFactories) {
-      final DomElementPresentation presentation = presentationFactory.createDomElementPresentation(element);
-      if (presentation != null) {
-        return presentation;
-      }
-    }
-
-    return new BasicDomElementPresentation(element);
-  }
-
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
-  public static final void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
+  public static void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
     file.putUserData(NAME_STRATEGY_KEY, strategy);
   }
 
@@ -280,7 +263,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   @Nullable
-  private DomInvocationHandler _getDomElement(final XmlTag tag) {
+  private static DomInvocationHandler _getDomElement(final XmlTag tag) {
     if (tag == null) return null;
 
     DomInvocationHandler invocationHandler = getCachedElement(tag);

@@ -1,11 +1,7 @@
 package com.intellij.util.xml;
 
-import javax.swing.*;
+import com.intellij.javaee.model.ElementPresentation;
 
-public interface DomElementPresentation {
-  String getPresentationName();
-
-  String getTypeName();
-
-  Icon getIcon();
+public interface DomElementPresentation extends ElementPresentation {
+  
 }

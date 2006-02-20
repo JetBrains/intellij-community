@@ -6,7 +6,9 @@ package com.intellij.util.xml;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.javaee.model.ElementPresentation;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
@@ -42,8 +44,8 @@ public interface DomElement {
 
   DomNameStrategy getNameStrategy();
 
-  @Nullable
-  DomElementPresentation getPresentation();
+  @NotNull
+  ElementPresentation getPresentation();
 
   GlobalSearchScope getResolveScope();
 
