@@ -802,7 +802,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression condition = forStatement.getCondition();
-        if(!isListSizeComparison(condition, indexVar)){
+        if(condition == null || !isListSizeComparison(condition, indexVar)){
             return false;
         }
         final PsiStatement update = forStatement.getUpdate();

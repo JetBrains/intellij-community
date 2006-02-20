@@ -249,7 +249,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 }
             }
             final PsiExpression condition = forStatement.getCondition();
-            if (!isComparison(condition, var)) {
+            if (condition == null || !isComparison(condition, var)) {
                 return;
             }
             final PsiStatement update = forStatement.getUpdate();
