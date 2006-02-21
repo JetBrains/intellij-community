@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -28,12 +29,11 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.testFramework.MockVirtualFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Set;
-import java.lang.ref.WeakReference;
 
 public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
@@ -289,8 +289,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public PsiElement findElementAt(final int offset) {
-    final PsiFileImpl psiFile = (PsiFileImpl)getPsi(getBaseLanguage());
-    return findElementAt(psiFile, offset);
+    return findElementAt(getPsi(getBaseLanguage()), offset);
   }
 
   protected PsiElement findElementAt(final PsiElement psiFile, final int offset) {
