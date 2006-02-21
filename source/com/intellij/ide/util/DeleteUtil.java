@@ -75,12 +75,14 @@ public class DeleteUtil {
     int packages = 0;
     int packageDirectories = 0;
     int customElements = 0;
+    int properties = 0;
     String[] objName = new String[] { "", "", "" };
 
     for (final PsiElement elementToDelete : elements) {
       if (elementToDelete instanceof Property) {
         objName[0] = ((Property)elementToDelete).getName();
         objName[1] = IdeBundle.message("prompt.delete.property", 1);
+        properties++;
       }
       else if (elementToDelete instanceof PsiMethod) {
         objName[0] = ((PsiMethod)elementToDelete).getName();
@@ -141,6 +143,7 @@ public class DeleteUtil {
       appendMessage(interfaces, "prompt.delete.interface", buffer);
       appendMessage(methods, "prompt.delete.method", buffer);
       appendMessage(fields, "prompt.delete.field", buffer);
+      appendMessage(properties, "prompt.delete.property", buffer);
       if (packages > 0) {
         appendMessage(packages, "prompt.delete.package", buffer);
         buffer.append(' ');
