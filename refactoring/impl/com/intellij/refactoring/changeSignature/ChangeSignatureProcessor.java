@@ -324,7 +324,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         method,
         prototype, conflicts);
     }
-    catch (IncorrectOperationException e) {}
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
 
@@ -497,7 +499,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
 
       for (UsageInfo usageInfo : postponedUsages) {
-        PsiReference reference = usageInfo.getElement().getReference();
+        PsiElement element = usageInfo.getElement();
+        if (element == null) continue;
+        PsiReference reference = element.getReference();
         if (reference != null) {
           PsiElement target = null;
           if (usageInfo instanceof MyParameterUsageInfo) {
@@ -551,8 +555,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void makeEmptyBody(final PsiMethod delegate) throws IncorrectOperationException {
-    if (delegate.getBody() != null) {
-      delegate.getBody().replace(myFactory.createCodeBlock());
+    PsiCodeBlock body = delegate.getBody();
+    if (body != null) {
+      body.replace(myFactory.createCodeBlock());
     }
     else {
       delegate.add(myFactory.createCodeBlock());
@@ -562,22 +567,24 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate) throws IncorrectOperationException {
     final PsiCallExpression callExpression;
+    PsiCodeBlock body = delegate.getBody();
+    assert body != null;
     if (delegate.isConstructor()) {
       PsiElement callStatement = myFactory.createStatementFromText("this();", null);
       callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
-      callStatement = delegate.getBody().add(callStatement);
+      callStatement = body.add(callStatement);
       callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
     } else {
       if (PsiType.VOID.equals(delegate.getReturnType())) {
         PsiElement callStatement = myFactory.createStatementFromText(myChangeInfo.newName + "();", null);
         callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
-        callStatement = delegate.getBody().add(callStatement);
+        callStatement = body.add(callStatement);
         callExpression = (PsiCallExpression)((PsiExpressionStatement) callStatement).getExpression();
       }
       else {
         PsiElement callStatement = myFactory.createStatementFromText("return " + myChangeInfo.newName + "();", null);
         callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
-        callStatement = delegate.getBody().add(callStatement);
+        callStatement = body.add(callStatement);
         callExpression = (PsiCallExpression)((PsiReturnStatement) callStatement).getReturnValue();
       }
     }
@@ -602,11 +609,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private void addSuperCall(PsiMethod constructor, PsiMethod callee) throws IncorrectOperationException {
     PsiExpressionStatement superCall = (PsiExpressionStatement) myFactory.createStatementFromText("super();", constructor);
-    PsiStatement[] statements = constructor.getBody().getStatements();
+    PsiCodeBlock body = constructor.getBody();
+    assert body != null;
+    PsiStatement[] statements = body.getStatements();
     if (statements.length > 0) {
-      superCall = (PsiExpressionStatement) constructor.getBody().addBefore(superCall, statements[0]);
+      superCall = (PsiExpressionStatement) body.addBefore(superCall, statements[0]);
     } else {
-      superCall = (PsiExpressionStatement) constructor.getBody().add(superCall);
+      superCall = (PsiExpressionStatement) body.add(superCall);
     }
     PsiMethodCallExpression callExpression = (PsiMethodCallExpression) superCall.getExpression();
     processMethodUsage(callExpression.getMethodExpression(), myChangeInfo, true, false, callee);
@@ -1105,7 +1114,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private static class ExpressionList implements ChangeSignatureUtil.ChildrenGenerator<PsiExpressionList, PsiExpression> {
     public static final ExpressionList INSTANCE = new ExpressionList();
-    private ExpressionList() {}
     public List<PsiExpression> getChildren(PsiExpressionList psiExpressionList) {
       return Arrays.asList(psiExpressionList.getExpressions());
     }
@@ -1113,7 +1121,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private static class ParameterList implements ChangeSignatureUtil.ChildrenGenerator<PsiParameterList, PsiParameter> {
     public static final ParameterList INSTANCE = new ParameterList();
-    private ParameterList() {}
     public List<PsiParameter> getChildren(PsiParameterList psiParameterList) {
       return Arrays.asList(psiParameterList.getParameters());
     }
@@ -1121,7 +1128,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private static class ThrowsList implements ChangeSignatureUtil.ChildrenGenerator<PsiReferenceList, PsiJavaCodeReferenceElement> {
     public static final ThrowsList INSTANCE = new ThrowsList();
-    private ThrowsList() {}
     public List<PsiJavaCodeReferenceElement> getChildren(PsiReferenceList throwsList) {
       return Arrays.asList(throwsList.getReferenceElements());
     }
