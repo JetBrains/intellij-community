@@ -15,10 +15,13 @@ import java.util.ArrayList;
  */
 public class DeleteUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DeleteUtil");
+
+  private DeleteUtil() {}
+
   public static void appendMessage(int count, @NonNls String propertyKey, StringBuffer buffer) {
     if (count > 0) {
       if (buffer.length() > 0) {
-        buffer.append(" " + IdeBundle.message("prompt.delete.and") + " ");
+        buffer.append(" ").append(IdeBundle.message("prompt.delete.and")).append(" ");
       }
       buffer.append(count);
       buffer.append(' ');
