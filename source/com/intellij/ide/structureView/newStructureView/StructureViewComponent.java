@@ -605,7 +605,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public Object getData(String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      TreePath path = getSelectedPath();
+      TreePath path = getSelectedUniquePath();
       if (path == null) return null;
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       AbstractTreeNode descriptor = (AbstractTreeNode)node.getUserObject();
@@ -653,8 +653,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
-  private TreePath getSelectedPath() {
-    return getTree().getSelectionPath();
+  private TreePath getSelectedUniquePath() {
+    JTree tree = getTree();
+    if (tree == null) return null;
+    TreePath[] paths = tree.getSelectionPaths();
+    return paths == null || paths.length != 1 ? null : paths[0];
   }
 
   public StructureViewModel getTreeModel() {
