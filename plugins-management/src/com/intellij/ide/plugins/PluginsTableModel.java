@@ -122,4 +122,25 @@ public class PluginsTableModel extends PluginTableModel<IdeaPluginDescriptor>
   {
     return NewVersions2Plugins.containsKey( descr );
   }
+
+  public ArrayList<IdeaPluginDescriptorImpl> dependent( IdeaPluginDescriptorImpl plugin )
+  {
+    ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
+    for (IdeaPluginDescriptor any : view)
+    {
+      if( any instanceof IdeaPluginDescriptorImpl )
+      {
+        PluginId[] dep = any.getDependentPluginIds();
+        for( PluginId id : dep )
+        {
+          if( id == plugin.getPluginId() )
+          {
+            list.add( (IdeaPluginDescriptorImpl)any );
+            break;
+          }
+        }
+      }
+    }
+    return list;
+  }
 }

@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
@@ -227,7 +228,7 @@ public class PluginManagerMain
         catch( Exception e )
         {
           Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
-                                                   IdeBundle.message("title.plugins"));
+                                   IdeBundle.message("title.plugins"));
         }
         return list;
       }
@@ -311,7 +312,7 @@ public class PluginManagerMain
                 final String message = isUpdate ? updateMessage : installTitle;
                 if (Messages.showYesNoDialog(main,
                                              (isUpdate ? IdeBundle.message("prompt.update.plugin", pluginNode.getName()) :
-                                                         IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName()) ),
+                                              IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName()) ),
                                              message,
                                              Messages.getQuestionIcon()) == 0) {
                   if (downloadPlugin(pluginNode)) {
@@ -341,43 +342,34 @@ public class PluginManagerMain
           public void update(AnActionEvent e)
           {
             Presentation presentation = e.getPresentation();
-            boolean enabled = false;
-
-            if( pluginTable != null )
-            {
-                Object descr = pluginTable.getSelectedObject();
-                enabled = (descr instanceof IdeaPluginDescriptorImpl) && !((IdeaPluginDescriptorImpl)descr).isDeleted();
-            }
+            Object descr = pluginTable.getSelectedObject();
+            boolean enabled = (descr instanceof IdeaPluginDescriptorImpl) && !((IdeaPluginDescriptorImpl)descr).isDeleted();
             presentation.setEnabled(enabled);
           }
 
           public void actionPerformed(AnActionEvent e)
           {
-            PluginId pluginId = null;
+            String  message;
+            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl) pluginTable.getSelectedObject();
 
-            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)pluginTable.getSelectedObject();
-            if (Messages.showYesNoDialog(main, IdeBundle.message("prompt.uninstall.plugin", pluginDescriptor.getName()),
-                                         IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == 0) {
-              pluginId = pluginDescriptor.getPluginId();
-              pluginDescriptor.setDeleted( true );
-            }
+            //  Get the list of plugins which depend on this one. If this list is
+            //  not empty - issue warning instead of simple prompt.
+            ArrayList<IdeaPluginDescriptorImpl> dependant = genericModel.dependent( pluginDescriptor );
+            if( dependant.size() == 0 )
+              message = IdeBundle.message( "prompt.uninstall.plugin", pluginDescriptor.getName() );
+            else
+              message = MessageFormat.format(IdeBundle.message("several.plugins.depend.on.0.continue.to.remove"), pluginDescriptor.getName());
 
-            if( pluginId != null )
+            if( Messages.showYesNoDialog( main, message, IdeBundle.message( "title.plugin.uninstall" ), Messages.getQuestionIcon()) == 0 )
             {
+              PluginId pluginId = pluginDescriptor.getPluginId();
+              pluginDescriptor.setDeleted( true );
+
               try {
-                PluginInstaller.prepareToUninstall(pluginId);
+                PluginInstaller.prepareToUninstall( pluginId );
 
                 requireShutdown = true;
                 pluginTable.updateUI();
-
-                /*
-                Messages.showMessageDialog(main,
-                                              "Plugin \'" + pluginId +
-                                              "\' is uninstalled but still running. You will " +
-                                              "need to restart IDEA to deactivate it.",
-                                              "Plugin Uninstalled",
-                                              Messages.getInformationIcon());
-                */
               }
               catch (IOException e1) {
                 LOG.equals(e1);
