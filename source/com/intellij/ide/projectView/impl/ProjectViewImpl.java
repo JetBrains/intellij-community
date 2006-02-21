@@ -116,7 +116,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private DefaultActionGroup myActionGroup;
   private final Runnable myTreeChangeListener;
   private final ModuleListener myModulesListener;
-  private String mySavedPaneId;
+  private String mySavedPaneId = ProjectViewPane.ID;
   private String mySavedPaneSubId;
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
