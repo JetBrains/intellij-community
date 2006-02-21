@@ -421,4 +421,9 @@ public final class GridConstraints implements Cloneable {
     }
     return cell >= myColumn && cell < myColumn + myColSpan;
   }
+
+  public String toString() {
+    //noinspection HardCodedStringLiteral
+    return "GridConstraints (row=" + myRow + ", col=" + myColumn + ", rowspan=" + myRowSpan + ", colspan=" + myColSpan + ")";
+  }
 }

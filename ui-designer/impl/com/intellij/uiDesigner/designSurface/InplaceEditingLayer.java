@@ -111,7 +111,7 @@ public final class InplaceEditingLayer extends JComponent{
    * @param y y coordinate in the editor coordinate system
    */
   public void startInplaceEditing(final int x, final int y){
-    final RadComponent inplaceComponent = FormEditingUtil.getRadComponentAt(myEditor, x, y);
+    final RadComponent inplaceComponent = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), x, y);
     if(inplaceComponent == null){ // nothing to edit
       return;
     }

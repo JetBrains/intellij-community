@@ -22,12 +22,11 @@ public class FirstComponentInsertLocation extends DropLocation {
                                       final int row,
                                       final int column,
                                       final Point targetPoint,
-                                      final Rectangle cellRect,
-                                      final boolean dropAllowed) {
-    super(container, row, column, targetPoint, cellRect, dropAllowed);
+                                      final Rectangle cellRect) {
+    super(container, row, column, targetPoint, cellRect);
   }
 
-  @Override public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
+  @Override public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     int midX1 = myCellRect.x + myCellRect.width / 3;
     int midX2 = myCellRect.x + (myCellRect.width*2) / 3;
     int midY1 = myCellRect.y + myCellRect.height / 3;
@@ -72,16 +71,15 @@ public class FirstComponentInsertLocation extends DropLocation {
       rc.height = myCellRect.height - (midY2 - myCellRect.y);
     }
 
-    editor.getActiveDecorationLayer().putFeedback(myContainer.getDelegee(), rc);
+    feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
   }
 
 
   @Override public void processDrop(final GuiEditor editor,
                                     final RadComponent[] components,
-                                    final GridConstraints[] originalConstraints,
-                                    final int[] dx,
-                                    final int[] dy) {
-    super.processDrop(editor, components, originalConstraints, dx, dy);
+                                    final GridConstraints[] constraintsToAdjust,
+                                    final ComponentDragObject dragObject) {
+    super.processDrop(editor, components, constraintsToAdjust, dragObject);
 
     Palette palette = Palette.getInstance(editor.getProject());
     ComponentItem hSpacerItem = palette.getItem(HSpacer.class.getName());

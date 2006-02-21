@@ -110,7 +110,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       }
 
       protected Transferable createTransferable(JComponent c) {
-        return DraggedComponentList.pickupSelection(myEditor);
+        return DraggedComponentList.pickupSelection(myEditor, null);
       }
     });
     setDropTarget(new DropTarget(this, new MyDropTargetListener()));
@@ -506,7 +506,7 @@ public final class ComponentTree extends Tree implements DataProvider {
           RadContainer container = (RadContainer)targetComponent;
           if (dcl != null) {
             RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-            container.drop(null, components, null, null);
+            container.drop(null, components, dcl);
           }
           else {
             new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem);

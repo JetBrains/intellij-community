@@ -154,8 +154,7 @@ public final class FormEditingUtil {
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
-  public static RadComponent getRadComponentAt(final GuiEditor editor, final int x, final int y){
-    final RadContainer rootContainer = editor.getRootContainer();
+  public static RadComponent getRadComponentAt(final RadRootContainer rootContainer, final int x, final int y){
     Component c = SwingUtilities.getDeepestComponentAt(rootContainer.getDelegee(), x, y);
 
     RadComponent result = null;
@@ -234,28 +233,6 @@ public final class FormEditingUtil {
     catch (Exception ex) {
       return Cursor.getDefaultCursor();
     }
-  }
-
-  /**
-   * @param x in editor pane coordinates
-   * @param y in editor pane coordinates
-   * @param dx x coordinate of components relative to x
-   * @param dx shift of component relative to x
-   * @param dx shift of component relative to y
-   */
-  public static RadContainer drop(final GuiEditor editor, final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
-    /*
-    if (!canDrop(editor, x, y, components.length)) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("cannot drop");
-    }
-    */
-
-    final RadContainer targetContainer = getRadContainerAt(editor, x, y, 0);
-    assert targetContainer != null;
-    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, targetContainer.getDelegee());
-    targetContainer.drop(targetPoint, components, dx, dy);
-    return targetContainer;
   }
 
   /**
@@ -356,15 +333,15 @@ public final class FormEditingUtil {
   }
 
   @Nullable
-  public static RadContainer getRadContainerAt(final GuiEditor editor, final int x, final int y,
+  public static RadContainer getRadContainerAt(final RadRootContainer rootContainer, final int x, final int y,
                                                int epsilon) {
-    RadComponent component = getRadComponentAt(editor, x, y);
+    RadComponent component = getRadComponentAt(rootContainer, x, y);
     if (isNullOrRoot(component) && epsilon > 0) {
       // try to find component near specified location
-      component = getRadComponentAt(editor, x-epsilon, y-epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x-epsilon, y+epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x+epsilon, y-epsilon);
-      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x+epsilon, y+epsilon);
+      component = getRadComponentAt(rootContainer, x-epsilon, y-epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x-epsilon, y+epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x+epsilon, y-epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(rootContainer, x+epsilon, y+epsilon);
     }
 
     if (component != null) {

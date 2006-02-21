@@ -17,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -148,7 +149,7 @@ class DesignDropTargetListener implements DropTargetListener {
   }
 
   private static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                final DropLocation location) {
+                                       final DropLocation location) {
     if (location.getContainer() == null) {
       return false;
     }
@@ -235,8 +236,9 @@ class DesignDropTargetListener implements DropTargetListener {
     myEditor.getActiveDecorationLayer().removeFeedback();
     final int dropX = dropPoint.x;
     final int dropY = dropPoint.y;
-    final int componentCount = dcl.getComponents().size();
-    DropLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, dropPoint, dcl);
+    final ArrayList<RadComponent> dclComponents = dcl.getComponents();
+    final int componentCount = dclComponents.size();
+    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), dropPoint, dcl);
     if (isDropOnChild(dcl, location)) {
       setDraggingState(dcl, false);
       return false;
@@ -264,10 +266,11 @@ class DesignDropTargetListener implements DropTargetListener {
       }
     }
     else {
-      for(int i=0; i<dcl.getComponents().size(); i++) {
-        originalParents [i].removeComponent(dcl.getComponents().get(i));
+      for(int i=0; i<dclComponents.size(); i++) {
+        LOG.info("Removing component " + dclComponents.get(i).getId() + " with constraints " + dcl.getOriginalConstraints() [i]);
+        originalParents [i].removeComponent(dclComponents.get(i));
       }
-      droppedComponents = dcl.getComponents();
+      droppedComponents = dclComponents;
     }
 
     final int[] dx = new int[componentCount];
@@ -282,7 +285,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
 
     if (location != null) {
-      location.processDrop(myEditor, components, originalConstraints, dx, dy);
+      location.processDrop(myEditor, components, originalConstraints, dcl);
     }
 
     if (dropAction == DnDConstants.ACTION_COPY) {

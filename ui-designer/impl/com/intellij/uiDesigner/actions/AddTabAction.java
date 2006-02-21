@@ -27,7 +27,7 @@ public class AddTabAction extends AbstractGuiEditorAction {
     RadTabbedPane tabbedPane = (RadTabbedPane) selection.get(0);
     Palette palette = Palette.getInstance(editor.getProject());
     final RadComponent radComponent = InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
-    tabbedPane.drop(null, new RadComponent[] { radComponent }, null, null);
+    tabbedPane.drop(null, new RadComponent[] { radComponent }, null);
   }
 
   @Override protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {

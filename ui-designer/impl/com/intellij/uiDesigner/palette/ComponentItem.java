@@ -339,16 +339,32 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     return 1;
   }
 
-  public int getDragRelativeColumn() {
-    return 0;
-  }
-
   public int getHSizePolicy() {
     return myDefaultConstraints.getHSizePolicy();
   }
 
   public int getVSizePolicy() {
     return myDefaultConstraints.getVSizePolicy();
+  }
+
+  public int getRelativeRow(int componentIndex) {
+    return 0;
+  }
+
+  public int getRelativeCol(int componentIndex) {
+    return 0;
+  }
+
+  public int getRowSpan(int componentIndex) {
+    return 1;
+  }
+
+  public int getColSpan(int componentIndex) {
+    return 1;
+  }
+
+  public Point getDelta(int componentIndex) {
+    return null;
   }
 
   private static final class MySmallIcon implements Icon{

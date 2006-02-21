@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.core.AbstractLayout;
@@ -30,6 +31,8 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public class RadContainer extends RadComponent implements IContainer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadContainer");
+
   /**
    * value: RadComponent[]
    */
@@ -239,18 +242,36 @@ public class RadContainer extends RadComponent implements IContainer {
       return true;
     }
     else if (isGrid()) {
-      // Do not allow to drop more then one component into grid
       final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
       final int row = gridLayout.getRowAt(location.y);
       final int column = gridLayout.getColumnAt(location.x);
 
       // If target point doesn't belong to any cell and column then do not allow drop. 
       if (row == -1 || column == -1) {
+        LOG.debug("RadContainer.canDrop=false because no cell at mouse position");
         return false;
       }
 
-      for(int c=column; c<column+dragObject.getComponentCount(); c++) {
-        if (c >= gridLayout.getColumnCount() || getComponentAtGrid(row, c) != null) {
+      for(int i=0; i<dragObject.getComponentCount(); i++) {
+        int relativeCol = dragObject.getRelativeCol(i);
+        int relativeRow = dragObject.getRelativeRow(i);
+        int colSpan = dragObject.getColSpan(i);
+        int rowSpan = dragObject.getRowSpan(i);
+
+        if (row + relativeRow < 0 ||
+            column + relativeCol < 0 ||
+            relativeRow + rowSpan > gridLayout.getRowCount() ||
+            relativeCol + colSpan > gridLayout.getColumnCount()) {
+          LOG.debug("RadContainer.canDrop=false because range is outside grid: row=" + (row+relativeRow) +
+            ", col=" + (column+relativeCol) + ", colSpan=" + colSpan + ", rowSpan=" + rowSpan);
+          return false;
+        }
+
+        final RadComponent componentInRect = findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
+        if (componentInRect != null) {
+          LOG.debug("RadContainer.canDrop=false because found component " + componentInRect.getId() +
+                    " in rect (row=" + (row+relativeRow) + ", col=" + (column+relativeCol) +
+                    ", rowSpan=" + rowSpan + ", colSpan=" + colSpan + ")");
           return false;
         }
       }
@@ -261,6 +282,18 @@ public class RadContainer extends RadComponent implements IContainer {
       //noinspection HardCodedStringLiteral
       throw new IllegalStateException("unknown layout:" + getLayout());
     }
+  }
+
+  private RadComponent findComponentInRect(final int startRow, final int startCol, final int rowSpan, final int colSpan) {
+    for(int r=startRow; r < startRow + rowSpan; r++) {
+      for(int c=startCol; c < startCol + colSpan; c++) {
+        final RadComponent result = getComponentAtGrid(r, c);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -290,14 +323,12 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * @param location in delegee coordinates
    * @param components components to be dropped; length is always > 0. Location
-   * @param dx shift of component relative to x
-   * @param dx shift of component relative to y
    */
-  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy){
+  public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
     if (location == null) {
       assert isGrid() && components.length == 1;
       assert getComponentAtGrid(0, 0) == null;
-      dropIntoGrid(components, 0, 0);
+      dropIntoGrid(components, 0, 0, dragObject);
       return;
     }
 
@@ -308,7 +339,11 @@ public class RadContainer extends RadComponent implements IContainer {
       for (int i = 0; i < components.length; i++) {
         final RadComponent c = components[i];
 
-        final Point p = new Point(location.x + dx[i], location.y + dy[i]);
+        final Point p = new Point(location);
+        Point delta = dragObject.getDelta(i);
+        if (delta != null) {
+          p.translate(delta.x, delta.y);
+        }
         c.setLocation(p);
 
         patchX = Math.min(patchX, p.x);
@@ -334,7 +369,7 @@ public class RadContainer extends RadComponent implements IContainer {
       final int row = gridLayout.getRowAt(location.y);
       final int column = gridLayout.getColumnAt(location.x);
 
-      dropIntoGrid(components, row, column);
+      dropIntoGrid(components, row, column, dragObject);
     }
     else {
       //noinspection HardCodedStringLiteral
@@ -342,12 +377,12 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public final void dropIntoGrid(final RadComponent[] components, int row, int column) {
+  public final void dropIntoGrid(final RadComponent[] components, int row, int column, final ComponentDragObject dragObject) {
     final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
     assert components.length > 0;
-    assert column + components.length <= gridLayout.getColumnCount();
 
-    for (RadComponent c : components) {
+    for(int i=0; i<components.length; i++) {
+      RadComponent c = components [i];
       if (c instanceof RadContainer) {
         final LayoutManager layout = ((RadContainer)c).getLayout();
         if (layout instanceof XYLayoutManager) {
@@ -355,16 +390,33 @@ public class RadContainer extends RadComponent implements IContainer {
         }
       }
 
+      int relativeCol = dragObject.getRelativeCol(i);
+      int relativeRow = dragObject.getRelativeRow(i);
+      LOG.debug("dropIntoGrid: relativeRow=" + relativeRow + ", relativeCol=" + relativeCol);
+      int colSpan = dragObject.getColSpan(i);
+      int rowSpan = dragObject.getRowSpan(i);
+
+      assert row + relativeRow >= 0;
+      assert column + relativeCol >= 0;
+      assert relativeRow + rowSpan <= gridLayout.getRowCount();
+      assert relativeCol + colSpan <= gridLayout.getColumnCount();
+
+      RadComponent old = findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
+      if (old != null) {
+        LOG.assertTrue(false,
+                       "Drop rectangle not empty: (" + (row + relativeRow) + ", " + (column + relativeCol)
+                       + ", " + rowSpan + ", " + colSpan + "), component ID=" + old.getId());
+      }
+
       final GridConstraints constraints = c.getConstraints();
-      constraints.setRow(row);
-      constraints.setColumn(column);
-      constraints.setRowSpan(1);
-      constraints.setColSpan(1);
+      constraints.setRow(row + relativeRow);
+      constraints.setColumn(column + relativeCol);
+      constraints.setRowSpan(colSpan);
+      constraints.setColSpan(rowSpan);
       addComponent(c);
 
       // Fill DropInfo
       c.revalidate();
-      column++;
     }
 
     revalidate();

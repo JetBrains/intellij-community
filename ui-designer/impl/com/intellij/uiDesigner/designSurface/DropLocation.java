@@ -4,6 +4,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -11,8 +13,10 @@ import java.awt.*;
  * @author yole
  */
 class DropLocation {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DropLocation");
+
   protected RadContainer myContainer;
-  private int myRow;
+  protected int myRow;
   private int myColumn;
   protected Point myTargetPoint;
   protected Rectangle myCellRect;
@@ -33,14 +37,13 @@ class DropLocation {
                       final int row,
                       final int column,
                       final Point targetPoint,
-                      final Rectangle cellRect,
-                      final boolean dropAllowed) {
+                      final Rectangle cellRect) {
     myContainer = container;
     myRow = row;
     myColumn = column;
     myTargetPoint = targetPoint;
     myCellRect = cellRect;
-    myDropAllowed = dropAllowed;
+    myDropAllowed = true;
   }
 
   public int getRow() {
@@ -69,54 +72,75 @@ class DropLocation {
 
   public boolean canDrop(final ComponentDragObject dragObject) {
     if (!myDropAllowed) {
+      LOG.debug("drop not allowed");
       return false;
     }
     return myContainer.canDrop(myTargetPoint, dragObject);
   }
 
-  public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
+  public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     int componentCount = dragObject.getComponentCount();
     Rectangle feedbackRect;
     if (getContainer().isGrid()) {
-      feedbackRect = getGridFeedbackRect(componentCount);
+      feedbackRect = getGridFeedbackRect(dragObject);
     }
     else {
       feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint, componentCount);
     }
     if (feedbackRect != null) {
-      editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), feedbackRect);
+      feedbackLayer.putFeedback(getContainer().getDelegee(), feedbackRect);
     }
     else {
-      editor.getActiveDecorationLayer().removeFeedback();
+      feedbackLayer.removeFeedback();
     }
-
   }
 
-  protected Rectangle getGridFeedbackRect(final int componentCount) {
-    if (componentCount == 0) {
+  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject) {
+    if (dragObject.getComponentCount() == 0) {
+      LOG.debug("no feedback rect because component count=0");
       return null;
     }
-    if (componentCount == 1) {
-      return getCellRect();
+
+    int firstRow = getRow();
+    int lastRow = getRow();
+    int firstCol = getColumn();
+    int lastCol = getColumn();
+    for(int i=0; i<dragObject.getComponentCount(); i++) {
+      final int relRow = dragObject.getRelativeRow(i);
+      final int relCol = dragObject.getRelativeCol(i);
+      firstRow = Math.min(firstRow, getRow() + relRow);
+      firstCol = Math.min(firstCol, getColumn() + relCol);
+      lastRow = Math.max(lastRow, getRow() + relRow + dragObject.getRowSpan(i) - 1);
+      lastCol = Math.max(lastCol, getColumn() + relCol + dragObject.getColSpan(i) - 1);
     }
-    int insertCol = getColumn();
-    int lastCol = insertCol + componentCount - 1;
-    Rectangle cellRect = getCellRect();
+
     final GridLayoutManager layoutManager = (GridLayoutManager) getContainer().getLayout();
-    if (lastCol >= layoutManager.getColumnCount()) {
-      lastCol = layoutManager.getColumnCount()-1;
+
+    if (firstRow < 0 || firstCol < 0 ||
+        lastRow >= layoutManager.getRowCount() || lastCol >= layoutManager.getColumnCount()) {
+      LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + firstRow +
+                ", firstCol=" + firstCol + ", lastRow=" + lastRow + ", lastCol=" + lastCol);
+      return null;
     }
+
     int[] xs = layoutManager.getXs();
     int[] widths = layoutManager.getWidths();
-    return new Rectangle(xs [insertCol], cellRect.y,
-                         xs [lastCol] + widths [lastCol] - xs [insertCol], cellRect.height);
+    int[] ys = layoutManager.getYs();
+    int[] heights = layoutManager.getHeights();
+    return new Rectangle(xs [firstCol],
+                         ys [firstRow],
+                         xs [lastCol] + widths [lastCol] - xs [firstCol],
+                         ys [lastRow] + heights [lastRow] - ys [firstRow]);
   }
 
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
-                          final GridConstraints[] originalConstraints,
-                          final int[] dx,
-                          final int[] dy) {
-    myContainer.drop(myTargetPoint, components, dx, dy);
+                          final GridConstraints[] constraintsToAdjust,
+                          final ComponentDragObject dragObject) {
+    myContainer.drop(myTargetPoint, components, dragObject);
+  }
+
+  @NonNls @Override public String toString() {
+    return "DropLocation(row=" + myRow + ",col=" + myColumn + ")";
   }
 }

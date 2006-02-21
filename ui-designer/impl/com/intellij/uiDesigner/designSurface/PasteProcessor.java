@@ -13,6 +13,7 @@ import gnu.trove.TIntArrayList;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -26,6 +27,8 @@ public class PasteProcessor extends EventProcessor {
   private DropLocation myLastLocation;
   private int[] myDX;
   private int[] myDY;
+  private int myMinRow;
+  private int myMinCol;
 
   public PasteProcessor(GuiEditor editor, final ArrayList<RadComponent> componentsToPaste,
                         final TIntArrayList xs, final TIntArrayList ys) {
@@ -52,6 +55,13 @@ public class PasteProcessor extends EventProcessor {
     }
     for(int i=0; i<ys.size(); i++) {
       myDY [i] = ys.get(i) - minY;
+    }
+
+    myMinRow = Integer.MAX_VALUE;
+    myMinCol = Integer.MAX_VALUE;
+    for(RadComponent component: myComponentsToPaste) {
+      myMinRow = Math.min(myMinRow, component.getConstraints().getRow());
+      myMinCol = Math.min(myMinCol, component.getConstraints().getColumn());
     }
 
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
@@ -83,15 +93,15 @@ public class PasteProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
-    DropLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, e.getPoint(),
-                                                                      myPastedComponentList);
+    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint(),
+                                                                myPastedComponentList);
     doPaste(location);
   }
 
   private void doPaste(final DropLocation location) {
     if (location.canDrop(myPastedComponentList)) {
       RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
-      location.processDrop(myEditor, componentsToPaste, null, myDX, myDY);
+      location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
       FormEditingUtil.clearSelection(myEditor.getRootContainer());
       for(RadComponent c: myComponentsToPaste) {
         c.setSelected(true);
@@ -119,16 +129,32 @@ public class PasteProcessor extends EventProcessor {
       return myComponentsToPaste.size();
     }
 
-    public int getDragRelativeColumn() {
-      return 0;
-    }
-
     public int getHSizePolicy() {
       return 0;
     }
 
     public int getVSizePolicy() {
       return 0;
+    }
+
+    public int getRelativeRow(int componentIndex) {
+      return myComponentsToPaste.get(componentIndex).getConstraints().getRow() - myMinRow;
+    }
+
+    public int getRelativeCol(int componentIndex) {
+      return myComponentsToPaste.get(componentIndex).getConstraints().getColumn() - myMinCol;
+    }
+
+    public int getRowSpan(int componentIndex) {
+      return myComponentsToPaste.get(componentIndex).getConstraints().getRowSpan();
+    }
+
+    public int getColSpan(int componentIndex) {
+      return myComponentsToPaste.get(componentIndex).getConstraints().getColSpan();
+    }
+
+    public Point getDelta(int componentIndex) {
+      return new Point(myDX [componentIndex], myDY [componentIndex]);
     }
   }
 }

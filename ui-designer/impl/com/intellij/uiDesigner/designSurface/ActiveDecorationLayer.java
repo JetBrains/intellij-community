@@ -23,7 +23,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ActiveDecorationLayer extends JComponent{
+final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ActiveDecorationLayer");
 
   private final GuiEditor myEditor;

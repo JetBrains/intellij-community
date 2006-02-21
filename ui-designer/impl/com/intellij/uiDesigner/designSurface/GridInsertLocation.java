@@ -9,7 +9,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -17,6 +19,8 @@ import java.awt.*;
  * @author yole
  */
 class GridInsertLocation extends DropLocation {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
+
   private static final int INSERT_ARROW_SIZE = 3;
   public static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift
 
@@ -30,17 +34,20 @@ class GridInsertLocation extends DropLocation {
                             final Point targetPoint,
                             final Rectangle cellRect,
                             final GridInsertMode mode) {
-    super(container, row, column, targetPoint, cellRect, (mode != GridInsertMode.NoDrop));
+    super(container, row, column, targetPoint, cellRect);
     myMode = mode;
     assert container.isGrid();
   }
 
+  public GridInsertMode getMode() {
+    return myMode;
+  }
 
-  public boolean isColumnInsert() {
+  private boolean isColumnInsert() {
     return myMode == GridInsertMode.ColumnAfter || myMode == GridInsertMode.ColumnBefore;
   }
 
-  public boolean isRowInsert() {
+  private boolean isRowInsert() {
     return myMode == GridInsertMode.RowAfter || myMode == GridInsertMode.RowBefore;
   }
 
@@ -49,15 +56,35 @@ class GridInsertLocation extends DropLocation {
   }
 
   @Override public boolean canDrop(ComponentDragObject dragObject) {
-    final GridLayoutManager grid = ((GridLayoutManager) getContainer().getLayout());
     if (isInsertInsideComponent()) {
+      LOG.debug("GridInsertLocation.canDrop()=false because insert inside component");
       return false;
     }
 
-    if (isColumnInsert()) {
-      return dragObject.getComponentCount() == 1;
+    if (isColumnInsert() && !isSameCell(dragObject, false)) {
+      LOG.debug("GridInsertLocation.canDrop()=false because column insert and columns are different");
+      return false;
     }
-    return getColumn() + dragObject.getComponentCount() - 1 < grid.getColumnCount();
+    if (isRowInsert() && !isSameCell(dragObject, true)) {
+      LOG.debug("GridInsertLocation.canDrop()=false because column insert and columns are different");
+      return false;
+    }
+
+    return getGridFeedbackRect(dragObject) != null;
+  }
+
+  private static boolean isSameCell(final ComponentDragObject dragObject, boolean isRow) {
+    if (dragObject.getComponentCount() == 0) {
+      return true;
+    }
+    int cell = isRow ? dragObject.getRelativeRow(0) : dragObject.getRelativeCol(0);
+    for(int i=1; i<dragObject.getComponentCount(); i++) {
+      int cell2 = isRow ? dragObject.getRelativeRow(i) : dragObject.getRelativeCol(i);
+      if (cell2 != cell) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean isInsertInsideComponent() {
@@ -79,7 +106,7 @@ class GridInsertLocation extends DropLocation {
     }
     else if (isRowInsert()) {
       int endRow = (myMode == GridInsertMode.RowAfter)
-                    ? getRow()+1 : getRow();
+                   ? getRow()+1 : getRow();
       int col = getColumn();
       for(int row = 0; row<endRow; row++) {
         RadComponent component = getContainer().getComponentAtGrid(row, col);
@@ -96,12 +123,16 @@ class GridInsertLocation extends DropLocation {
     return false;
   }
 
-  @Override public void placeFeedback(GuiEditor editor, ComponentDragObject dragObject) {
+  @Override public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     final int insertCol = getColumn();
     final int insertRow = getRow();
     final GridInsertMode insertMode = myMode;
 
-    Rectangle cellRect = getGridFeedbackRect(dragObject.getComponentCount());
+    Rectangle cellRect = getGridFeedbackRect(dragObject);
+    if (cellRect == null) {
+      feedbackLayer.removeFeedback();
+      return;
+    }
 
     FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
                                insertMode == GridInsertMode.ColumnAfter)
@@ -138,7 +169,7 @@ class GridInsertLocation extends DropLocation {
 
         if (rcFeedback != null) {
           rcFeedback.translate(vGridLines [insertCol], hGridLines [insertRow]);
-          editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), rcFeedback);
+          feedbackLayer.putFeedback(getContainer().getDelegee(), rcFeedback);
           return;
         }
       }
@@ -171,7 +202,7 @@ class GridInsertLocation extends DropLocation {
         rc = cellRect;
         painter = null;
     }
-    editor.getActiveDecorationLayer().putFeedback(getContainer().getDelegee(), rc, painter);
+    feedbackLayer.putFeedback(getContainer().getDelegee(), rc, painter);
   }
 
 
@@ -179,8 +210,7 @@ class GridInsertLocation extends DropLocation {
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
                           final GridConstraints[] constraintsToAdjust,
-                          final int[] dx,
-                          final int[] dy) {
+                          final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
     RadContainer container = getContainer();
@@ -208,7 +238,7 @@ class GridInsertLocation extends DropLocation {
         checkAdjustConstraints(constraintsToAdjust, false, col);
         break;
     }
-    container.dropIntoGrid(components, row, col);
+    container.dropIntoGrid(components, row, col, dragObject);
   }
 
   private static void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
@@ -219,6 +249,11 @@ class GridInsertLocation extends DropLocation {
         GridChangeUtil.adjustConstraintsOnInsert(constraints, isRow, index);
       }
     }
+  }
+
+
+  @NonNls @Override public String toString() {
+    return "GridInsertLocation(" + myMode.toString() + ", row=" + getRow() + ", col=" + getColumn() + ")";
   }
 
   private static class HorzInsertFeedbackPainter implements FeedbackPainter {

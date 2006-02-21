@@ -140,7 +140,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   // either point or targetContainer is null
   public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
     final DropLocation location = (point != null)
-      ? GridInsertProcessor.getGridInsertLocation(myEditor, point, item)
+      ? GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point, item)
       : new DropLocation(targetContainer, null, true);
 
     processComponentInsert(item, location);
@@ -168,7 +168,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            location.processDrop(myEditor, components, null, new int[]{0}, new int[]{0});
+            location.processDrop(myEditor, components, null, item);
 
             FormEditingUtil.clearSelection(myEditor.getRootContainer());
             myInsertedComponent.setSelected(true);

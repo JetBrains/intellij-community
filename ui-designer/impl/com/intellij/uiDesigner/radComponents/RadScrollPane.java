@@ -29,7 +29,7 @@ public final class RadScrollPane extends RadContainer {
     return dragObject.getComponentCount() == 1 && getComponentCount() == 0;
   }
 
-  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy){
+  @Override public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
     addComponent(components[0]);
   }
 

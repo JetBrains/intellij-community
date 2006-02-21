@@ -7,4 +7,4 @@ package com.intellij.uiDesigner.designSurface;
  * Time: 13:38:43
  * To change this template use File | Settings | File Templates.
  */
-enum GridInsertMode { InCell, RowBefore, RowAfter, ColumnBefore, ColumnAfter, NoDrop }
+enum GridInsertMode { InCell, RowBefore, RowAfter, ColumnBefore, ColumnAfter }

@@ -66,7 +66,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       if (!myDragStarted && e.isControlDown()) {
-        RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+        RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
         if (component != null) {
           component.setSelected(!component.isSelected());
         }
@@ -85,7 +85,7 @@ public final class DragSelectionProcessor extends EventProcessor {
           myDragStarted = true;
           myEditor.getDropTargetListener().setUseDragDelta(true);
           dge.startDrag(null,
-                        DraggedComponentList.pickupSelection(myEditor, e.getX(), e.getY()),
+                        DraggedComponentList.pickupSelection(myEditor, e.getPoint()),
                         myDragSourceListener);
         }
       }

@@ -38,53 +38,61 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private Rectangle[] myOriginalBounds;
   private RadContainer[] myOriginalParents;
   private int myDragRelativeColumn = 0;
+  private int myComponentUnderMouseColumn;
+  private int myComponentUnderMouseRow;
   private int myDragDeltaX = 0;
   private int myDragDeltaY = 0;
   private boolean myHasDragDelta = false;
 
-  private DraggedComponentList(final GuiEditor editor) {
-    getlSelectionFromEditor(editor);
-  }
-
-  private DraggedComponentList(final GuiEditor editor, final int x, final int y) {
-    getlSelectionFromEditor(editor);
+  private DraggedComponentList(final GuiEditor editor, final Point pnt) {
+    getSelectionFromEditor(editor);
 
     // It's very important to get component under mouse before the components are
     // removed from their parents.
-    final RadComponent componentUnderMouse = FormEditingUtil.getRadComponentAt(editor, x, y);
 
-    if (mySelection.size() > 1) {
-      boolean sameRow = true;
-      for(int i=1; i<myOriginalParents.length; i++) {
-        if (myOriginalParents [i] != myOriginalParents [0] ||
-            myOriginalConstraints [i].getRow() != myOriginalConstraints [0].getRow()) {
-          sameRow = false;
-          break;
+    RadComponent componentUnderMouse = null;
+    if (mySelection.size() > 0) {
+      int componentUnderMouseIndex = 0;
+      if (pnt != null) {
+        for(int i=0; i<mySelection.size(); i++) {
+          Point aPoint = SwingUtilities.convertPoint(editor.getRootContainer().getDelegee(), pnt,
+                                                  myOriginalParents [i].getDelegee());
+          if (myOriginalBounds [i].contains(aPoint)) {
+            componentUnderMouseIndex = i;
+          }
         }
       }
-      if (sameRow) {
-        for(GridConstraints constraints: myOriginalConstraints) {
-          myDragRelativeColumn = Math.max(myDragRelativeColumn,
-                                          componentUnderMouse.getConstraints().getColumn() - constraints.getColumn());
-        }
+
+      componentUnderMouse = mySelection.get(componentUnderMouseIndex);
+      myComponentUnderMouseColumn = myOriginalConstraints [componentUnderMouseIndex].getColumn();
+      myComponentUnderMouseRow = myOriginalConstraints [componentUnderMouseIndex].getRow();
+    }
+
+    LOG.debug("myComponentUnderMouseColumn=" + myComponentUnderMouseColumn +
+              ", myComponentUnderMouseRow=" + myComponentUnderMouseRow);
+
+    if (mySelection.size() > 1 && componentUnderMouse != null) {
+      for(GridConstraints constraints: myOriginalConstraints) {
+        myDragRelativeColumn = Math.max(myDragRelativeColumn,
+                                        componentUnderMouse.getConstraints().getColumn() - constraints.getColumn());
       }
     }
 
-    for(RadComponent c: mySelection) {
+     for(RadComponent c: mySelection) {
       JComponent delegee = c.getDelegee();
-      if (c == componentUnderMouse) {
-        if (delegee.getX() > x && delegee.getX() + delegee.getWidth() < x) {
-          myDragDeltaX = x - (delegee.getX() + delegee.getWidth() / 2);
+      if (c == componentUnderMouse && pnt != null) {
+        if (delegee.getX() > pnt.x && delegee.getX() + delegee.getWidth() < pnt.x) {
+          myDragDeltaX = pnt.x - (delegee.getX() + delegee.getWidth() / 2);
         }
-        if (delegee.getY() > y && delegee.getY() + delegee.getHeight() < y) {
-          myDragDeltaY = y - (delegee.getY() + delegee.getHeight() / 2);
+        if (delegee.getY() > pnt.y && delegee.getY() + delegee.getHeight() < pnt.y) {
+          myDragDeltaY = pnt.y - (delegee.getY() + delegee.getHeight() / 2);
         }
         myHasDragDelta = true;
       }
     }
   }
 
-  private void getlSelectionFromEditor(final GuiEditor editor) {
+  private void getSelectionFromEditor(final GuiEditor editor) {
     // Store selected components
     mySelection = FormEditingUtil.getSelectedComponents(editor);
     // sort selection in correct grid order
@@ -114,12 +122,8 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     }
   }
 
-  public static DraggedComponentList pickupSelection(final GuiEditor editor) {
-    return new DraggedComponentList(editor);
-  }
-
-  public static DraggedComponentList pickupSelection(final GuiEditor editor, final int x, final int y) {
-    return new DraggedComponentList(editor, x, y);
+  public static DraggedComponentList pickupSelection(final GuiEditor editor, @Nullable Point pnt) {
+    return new DraggedComponentList(editor, pnt);
   }
 
   @Nullable
@@ -159,12 +163,15 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return myOriginalParents [mySelection.indexOf(c)];
   }
 
+  /**
+   * Returns a copy of the original constraints array.
+   */
   public GridConstraints[] getOriginalConstraints() {
-    return myOriginalConstraints;
-  }
-
-  public GridConstraints getOriginalConstraints(final RadComponent c) {
-    return myOriginalConstraints [mySelection.indexOf(c)];
+    GridConstraints[] result = new GridConstraints[myOriginalConstraints.length];
+    for(int i=0; i<myOriginalConstraints.length; i++) {
+      result [i] = myOriginalConstraints [i].store();
+    }
+    return result;
   }
 
   public Rectangle[] getOriginalBounds() {
@@ -187,10 +194,6 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return this;
   }
 
-  public int getDragRelativeColumn() {
-    return myDragRelativeColumn;
-  }
-
   public int getHSizePolicy() {
     int result = 0;
     for(GridConstraints c: myOriginalConstraints) {
@@ -205,6 +208,26 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
       result |= c.getVSizePolicy();
     }
     return result;
+  }
+
+  public int getRelativeRow(int componentIndex) {
+    return myOriginalConstraints [componentIndex].getRow() - myComponentUnderMouseRow;
+  }
+
+  public int getRelativeCol(int componentIndex) {
+    return myOriginalConstraints [componentIndex].getColumn() - myComponentUnderMouseColumn;
+  }
+
+  public int getRowSpan(int componentIndex) {
+    return myOriginalConstraints [componentIndex].getRowSpan();
+  }
+
+  public int getColSpan(int componentIndex) {
+    return myOriginalConstraints [componentIndex].getColSpan();
+  }
+
+  public Point getDelta(int componentIndex) {
+    return null;
   }
 
   public RadContainer[] getOriginalParents() {

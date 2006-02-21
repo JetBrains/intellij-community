@@ -31,7 +31,7 @@ public class RadToolBar extends RadContainer {
     return true;
   }
 
-  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy) {
+  @Override public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
     for(RadComponent component: components) {
       addComponent(component);
     }

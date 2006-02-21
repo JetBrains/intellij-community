@@ -80,7 +80,7 @@ public final class RadSplitPane extends RadContainer {
     return (JSplitPane)getDelegee();
   }
 
-  public void drop(@Nullable Point location, final RadComponent[] components, final int[] dx, final int[] dy) {
+  @Override public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
     boolean dropToLeft;
     if (location != null) {
       dropToLeft = isLeft(location);

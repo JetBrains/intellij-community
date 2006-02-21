@@ -102,7 +102,7 @@ public final class MainProcessor extends EventProcessor{
     }
 
     // Handle all left mouse events and all motion events
-    final RadComponent componentAt = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+    final RadComponent componentAt = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
     if (componentAt != null) {
       final Point p1 = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), componentAt.getDelegee());
       final Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(componentAt.getDelegee(), p1.x, p1.y);
@@ -132,7 +132,7 @@ public final class MainProcessor extends EventProcessor{
         myCurrentProcessor.processMouseEvent(e);
       }
       else {
-        final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+        final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
         if (component != null) {
           final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());
           final int resizeMask = Painter.getResizeMask(component, point.x, point.y);
@@ -176,7 +176,7 @@ public final class MainProcessor extends EventProcessor{
   }
 
   private void updateDragger(final MouseEvent e){
-    final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+    final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
 
     LOG.assertTrue(component != null);
 
@@ -249,7 +249,7 @@ public final class MainProcessor extends EventProcessor{
 
     // If user clicked not inside dragger then we have find RadComponent at the click point
     if(component == null){
-      component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+      component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
     }
 
     if (component == null) {
