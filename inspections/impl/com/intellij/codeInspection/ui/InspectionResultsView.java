@@ -762,17 +762,18 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
     private void rerun() {
       if (myScope.isValid()) {
-        if (myInspectionProfile == null) {
+        final InspectionProfile profile = myInspectionProfile;
+        if (profile == null) {
           final Set<String> profiles = myScope.getActiveInspectionProfiles();
           InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
           for (String profileName : profiles) {
             ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
           }
         } else {
-          InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myInspectionProfile.getName()).getInspectionProfile().cleanup();
+          InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionProfile().cleanup();
         }
         final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-        inspectionManagerEx.setExternalProfile(myInspectionProfile);
+        inspectionManagerEx.setExternalProfile(profile);
         inspectionManagerEx.doInspections(myScope);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
