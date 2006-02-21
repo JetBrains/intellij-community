@@ -43,7 +43,6 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspectionOptions {
-
   private JPanel myPanel;
   private JList myTemplatesList;
   private JButton myAddSearchButton;
@@ -127,9 +126,7 @@ public class SSBasedInspectionOptions {
         dialog.setValuesFromConfig(configuration);
         dialog.setUseLastConfiguration(true);
         dialog.show();
-        if (!dialog.isOK()) {
-          return;
-        }
+        if (!dialog.isOK()) return;
         Configuration newConfiguration = dialog.getConfiguration();
         copyConfiguration(newConfiguration, configuration);
         configurationsChanged(dialog.getSearchContext());
@@ -192,8 +189,7 @@ public class SSBasedInspectionOptions {
          
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
     SearchContext searchContext = createSearchContext();
-    SearchDialog dialog = searchDialogFactory.createDialog(searchContext);
-    return dialog;
+    return searchDialogFactory.createDialog(searchContext);
   }
 
   private static SearchContext createSearchContext() {

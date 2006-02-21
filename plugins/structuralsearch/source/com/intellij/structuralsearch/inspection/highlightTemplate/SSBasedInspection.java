@@ -49,11 +49,6 @@ import java.util.List;
 public class SSBasedInspection extends LocalInspectionTool {
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
   private MatcherImpl.CompiledOptions compiledConfigurations;
-  private final SSRInspectionsPrecompiler myInspectionsPrecompiler;
-
-  public SSBasedInspection() {
-    myInspectionsPrecompiler = SSRInspectionsPrecompiler.getInstance();
-  }
 
   public void writeSettings(Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
@@ -81,13 +76,6 @@ public class SSBasedInspection extends LocalInspectionTool {
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     Project project = file.getProject();
 
-    if (compiledConfigurations == null) {
-      compiledConfigurations = myInspectionsPrecompiler.getCompiledConfigurations(myConfigurations);
-    }
-    if (compiledConfigurations == null) {
-      precompileConfigurations();
-      return null;
-    }
     Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
 
     List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
@@ -136,6 +124,15 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   // must be inside event dispatch
   private void precompileConfigurations() {
-    myInspectionsPrecompiler.setChangedConfigurations(myConfigurations);
+  }
+
+  public void projectOpened(Project project) {
+    Matcher matcher = new Matcher(project);
+    compiledConfigurations = matcher.precompileOptions(myConfigurations);
+  }
+
+  // tests only
+  public void setConfigurations(final List<Configuration> configurations) {
+    myConfigurations = configurations;
   }
 }
