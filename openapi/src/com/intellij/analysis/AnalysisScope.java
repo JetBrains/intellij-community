@@ -29,17 +29,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -56,6 +54,7 @@ public class AnalysisScope {
   public static final int MODULES = 7;
 
   public static final int CUSTOM = 8;
+  public static final int VIRTUAL_FILES = 9;
 
   private final Project myProject;
   private final List<Module> myModules;
@@ -63,6 +62,7 @@ public class AnalysisScope {
   private final PsiElement myElement;
   private final SearchScope myScope;
   private final int myType;
+
   private HashSet<VirtualFile> myFilesSet;
 
   private boolean myIncludeTestSource = true;
@@ -133,6 +133,17 @@ public class AnalysisScope {
     myModules = null;
     myScope = scope;
     myType = CUSTOM;
+  }
+
+
+  public AnalysisScope(Project project, Set<VirtualFile> virtualFiles) {
+    myProject = project;
+    myElement = null;
+    myModule = null;
+    myModules = null;
+    myScope = null;
+    myFilesSet = new HashSet<VirtualFile>(virtualFiles);
+    myType = VIRTUAL_FILES;
   }
 
   public void setIncludeTestSource(final boolean includeTestSource) {
@@ -292,27 +303,42 @@ public class AnalysisScope {
 
 
   public void accept(final PsiElementVisitor visitor) {
-    if (myScope instanceof GlobalSearchScope) {
+    if (myType == VIRTUAL_FILES) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (VirtualFile file : myFilesSet) {
+        final PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null){
+          psiFile.accept(visitor);
+        }
+      }
+    } else if (myScope instanceof GlobalSearchScope) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
           if (((GlobalSearchScope)myScope).contains(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
-            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
+            PsiFile psiFile = psiManager.findFile(fileOrDir);
             if (psiFile == null) return true; //skip .class files under src directory
-            if (!(psiFile instanceof PsiJavaFile)) return true; 
+            if (!(psiFile instanceof PsiJavaFile)) return true;
             psiFile.accept(visitor);
           }
           return true;
         }
       });
+    } else if (myScope instanceof LocalSearchScope) {
+      final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+      for (PsiElement element : psiElements) {
+        element.accept(visitor);
+      }
     } else if (myProject != null) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
           if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
-            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
+            PsiFile psiFile = psiManager.findFile(fileOrDir);
             if (psiFile == null) return true; //skip .class files under src directory
             psiFile.accept(visitor);
           }
@@ -371,6 +397,7 @@ public class AnalysisScope {
       }
       return true;
     }
+    if (myType == VIRTUAL_FILES || myType == CUSTOM) return true;
     return myElement != null && myElement.isValid();
   }
 
@@ -460,7 +487,16 @@ public class AnalysisScope {
   }
 
   public void invalidate(){
-    myFilesSet = null;
+    if (myType != VIRTUAL_FILES) {
+      myFilesSet = null;
+    } else {
+      for (Iterator<VirtualFile> i = myFilesSet.iterator(); i.hasNext();) {
+        final VirtualFile virtualFile = i.next();
+        if (virtualFile == null || !virtualFile.isValid()) {
+          i.remove();
+        }
+      }
+    }
   }
 
   public Set<String> getActiveInspectionProfiles() {

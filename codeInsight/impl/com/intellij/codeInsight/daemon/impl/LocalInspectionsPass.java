@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.actions.RunInspectionOnFileIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -313,6 +314,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, final PsiElement psiElement) {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new EditInspectionToolsSettingsAction(tool));
+    options.add(new RunInspectionOnFileIntention(tool));
     options.add(new AddNoInspectionCommentAction(tool, psiElement));
     options.add(new AddNoInspectionDocTagAction(tool, psiElement));
     options.add(new AddNoInspectionForClassAction(tool, psiElement));

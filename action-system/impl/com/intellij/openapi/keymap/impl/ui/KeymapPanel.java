@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -23,11 +24,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -66,6 +69,7 @@ public class KeymapPanel extends JPanel {
   private FilterComponent myFilterComponent;
   private JBPopup myPopup = null;
   private boolean myTextFilterUsed = true;
+  private TreeExpansionMonitor myTreeExpansionMonitor;
 
   private final DocumentListener myKeymapNameListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
@@ -104,9 +108,8 @@ public class KeymapPanel extends JPanel {
   }
 
   private JPanel createKeymapListPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymaps.border.factory.title")));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymaps.border.factory.title")));
     panel.setLayout(new BorderLayout());
     myKeymapList = new JList(myKeymapListModel);
     myKeymapList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -366,9 +369,8 @@ public class KeymapPanel extends JPanel {
   }
 
   private JPanel createKeymapSettingsPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymap.settings.ide.border.factory.title")));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymap.settings.ide.border.factory.title")));
     panel.setLayout(new GridBagLayout());
 
     panel.add(createKeymapNamePanel(), new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(5,0,0,0),0,0));
@@ -392,13 +394,13 @@ public class KeymapPanel extends JPanel {
 
     panel.add(createDescriptionPanel(), new GridBagConstraints(0,5,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(5,0,0,0),0,0));
 
+    myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
     return panel;
   }
 
   private JPanel createDescriptionPanel() {
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("action.description.ide.border.factory.title")));
-    JPanel panel = panel1;
+    JPanel panel = new JPanel();
+    panel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("action.description.ide.border.factory.title")));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -434,24 +436,6 @@ public class KeymapPanel extends JPanel {
       }
     });
     panel.add(myDisableMnemonicsCheckbox, new GridBagConstraints(3,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 0, 0, 0),0,0));
-
-
-
-    /* Icon collapseIcon = IconLoader.getIcon("/actions/collapsePanel.png");
-    Icon expandIcon = IconLoader.getIcon("/actions/expandPanel.png");
-   final CollapsiblePanel filteringComponent = new CollapsiblePanel(createFilteringPanel(), true, false, collapseIcon, expandIcon, null);
-    filteringComponent.setBorder(IdeBorderFactory.createTitledBorder("Filter"));
-    filteringComponent.setMaximumSize(new Dimension(50, -1));
-    filteringComponent.addCollapsingListener(new CollapsingListener() {
-      public void onCollapsingChanged(CollapsiblePanel panel, boolean newValue) {
-        if (filteringComponent.isCollapsed()){
-          myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
-        }
-      }
-    });
-    panel.add(filteringComponent, new GridBagConstraints(0,1,4,1,1,1, GridBagConstraints.EAST, GridBagConstraints.VERTICAL, new Insets(8,8,0,10), 0,0));
-*/
-
     DefaultActionGroup group = new DefaultActionGroup();
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
@@ -486,6 +470,8 @@ public class KeymapPanel extends JPanel {
                            KeyMapBundle.message("filter.clear.action.text"), IconLoader.getIcon("/actions/gc.png")) {
       public void actionPerformed(AnActionEvent e) {
         myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
+        TreeUtil.collapseAll(myActionsTree.getTree(), 0);
+        myTreeExpansionMonitor.restore();
       }
     });
     panel.add(toolbar, new GridBagConstraints(0,1,4,1,1,1, GridBagConstraints.EAST, GridBagConstraints.VERTICAL, new Insets(8,8,0,10), 0,0));
@@ -505,8 +491,16 @@ public class KeymapPanel extends JPanel {
     filterComponent.add(textFilter, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0));
 
     myFilterComponent = new FilterComponent("KEYMAP", 5, false, false){
-      protected void filter() {
-        myActionsTree.filter(getFilter(), getCurrentQuickListIds());
+      public void filter() {
+        if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+        final String filter = getFilter();
+        myActionsTree.filter(filter, getCurrentQuickListIds());
+        final JTree tree = myActionsTree.getTree();
+        TreeUtil.expandAll(tree);
+        if (filter == null || filter.length() == 0){
+          TreeUtil.collapseAll(tree, 0);
+          myTreeExpansionMonitor.restore();
+        }
       }
     };
     myFilterComponent.reset();
@@ -586,7 +580,10 @@ public class KeymapPanel extends JPanel {
                                     final ShortcutTextField secondShortcut) {
     final KeyStroke keyStroke = firstShortcut.getKeyStroke();
     if (keyStroke != null){
+      if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
       myActionsTree.filterTree(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null), getCurrentQuickListIds());
+      final JTree tree = myActionsTree.getTree();
+      TreeUtil.expandAll(tree);      
     }
   }
 
@@ -670,11 +667,9 @@ public class KeymapPanel extends JPanel {
         Messages.getWarningIcon());
 
       if(result == 0) {
-        for(Iterator<String> actionIds = conflicts.keySet().iterator(); actionIds.hasNext(); ) {
-          String id = actionIds.next();
+        for (String id : conflicts.keySet()) {
           ArrayList<KeyboardShortcut> list = conflicts.get(id);
-          for (Iterator<KeyboardShortcut> iterator = list.iterator(); iterator.hasNext();) {
-            KeyboardShortcut shortcut = iterator.next();
+          for (KeyboardShortcut shortcut : list) {
             mySelectedKeymap.removeShortcut(id, shortcut);
           }
         }
@@ -745,8 +740,7 @@ public class KeymapPanel extends JPanel {
         Messages.getWarningIcon());
 
       if(result == 0) {
-        for(int i = 0; i < actionIds.length; i++) {
-          String id = actionIds[i];
+        for (String id : actionIds) {
           mySelectedKeymap.removeShortcut(id, mouseShortcut);
         }
       }
@@ -898,7 +892,7 @@ public class KeymapPanel extends JPanel {
       if (action != null) {
         String description = action.getTemplatePresentation().getDescription();
         if (description != null && description.trim().length() > 0) {
-          myDescriptionLabel.setText(description);
+          myDescriptionLabel.setText(prepareDescription(description));
         }
       }
       else {
@@ -906,7 +900,7 @@ public class KeymapPanel extends JPanel {
         if (list != null) {
           String description = list.getDescription().trim();
           if (description.length() > 0) {
-            myDescriptionLabel.setText(description);
+            myDescriptionLabel.setText(prepareDescription(description));
           }
         }
       }
@@ -928,6 +922,10 @@ public class KeymapPanel extends JPanel {
       myAddMouseShortcutButton.setEnabled(false);
       myRemoveShortcutButton.setEnabled(false);
     }
+  }
+
+  private @NonNls String prepareDescription(final String description) {
+    return myFilterComponent != null ? "<html><body>" + SearchUtil.markup(description, myFilterComponent.getFilter()) + "</body></html>" : description;
   }
 
   private final class MyKeymapRenderer extends DefaultListCellRenderer {

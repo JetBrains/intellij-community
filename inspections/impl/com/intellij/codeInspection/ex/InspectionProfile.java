@@ -26,4 +26,7 @@ public interface InspectionProfile extends Profile {
   boolean isExecutable();
 
   void save();
+
+  boolean isEditable();  
+
 }

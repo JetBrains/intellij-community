@@ -26,6 +26,7 @@ import java.util.*;
  */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  implements ApplicationComponent {
   private Map<String, Set<String>> myOption2HelpId = new HashMap<String, Set<String>>();
+  private Set<String> myHints = new HashSet<String>();
   private Map<Pair<String, String>, String> myHelpIdWithOption2Path = new HashMap<Pair<String, String>, String>();
   private Set<String> myStopWords = new HashSet<String>();
   private Map<Pair<String,String>, String> myHighlightSynonym2Option = new HashMap<Pair<String, String>, String>();
@@ -92,7 +93,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     }
   }
 
-  private void putOptionWithHelpId(final String option, final String id) {
+  private void putOptionWithHelpId(String option, final String id) {
+    myHints.add(option);
+    option = PorterStemmerUtil.stem(option);
     Set<String> helpIds = myOption2HelpId.get(option);
     if (helpIds == null) {
       helpIds = new HashSet<String>();
@@ -146,8 +149,19 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     return myHighlightSynonym2Option.get(Pair.create(option, configurable.getId()));
   }
 
+  public List<String> findPossibleExtension(String prefix) {
+    prefix = prefix.toLowerCase();
+    final Set<String> result = new TreeSet<String>();
+    for (String option : myHints) {
+      if (option.startsWith(prefix)){
+        result.add(option);
+      }
+    }
+    return new ArrayList<String>(result);
+  }
+
   public void addOption(SearchableConfigurable configurable, String option, String path) {
-    myHelpIdWithOption2Path.put(Pair.create(configurable.getId(), option), path);
+    myHelpIdWithOption2Path.put(Pair.create(configurable.getId(), PorterStemmerUtil.stem(option)), path);
     putOptionWithHelpId(option, configurable.getId());
   }
 

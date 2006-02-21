@@ -185,7 +185,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
-    final Set<String> words = SearchUtil.getProcessedWords(descriptionText);
+    final Set<String> words = SearchUtil.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
       ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
       if (descriptors == null) {

@@ -58,4 +58,6 @@ public interface ModifiableModel extends Profile {
   void initInspectionTools();
 
   boolean isExecutable();
+
+  void setEditable(boolean isEditable);
 }

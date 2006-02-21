@@ -77,7 +77,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     return InspectionsBundle.message("inspection.profiles.presentable.name");
   }
 
-  void initProfiles() {
+  public void initProfiles() {
     File dir = getProfileDirectory();
     File[] files = dir.listFiles(new FileFilter() {
       public boolean accept(File pathname) {

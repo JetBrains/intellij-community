@@ -1,7 +1,7 @@
 package com.intellij.ui;
 
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -98,7 +98,7 @@ public class CheckboxTree extends Tree {
     private final ColoredTreeCellRenderer myTextRenderer;
     public final JCheckBox myCheckbox;
 
-    public CheckboxTreeCellRenderer() {
+    public CheckboxTreeCellRenderer(boolean opaque) {
       super(new BorderLayout());
       myCheckbox = new JCheckBox();
       myTextRenderer = new ColoredTreeCellRenderer() {
@@ -111,8 +111,13 @@ public class CheckboxTree extends Tree {
                                           boolean hasFocus) {
         }
       };
+      myTextRenderer.setOpaque(opaque);
       add(myCheckbox, BorderLayout.WEST);
       add(myTextRenderer, BorderLayout.CENTER);
+    }
+
+    public CheckboxTreeCellRenderer() {
+      this(false);
     }
 
     public final Component getTreeCellRendererComponent(JTree tree,

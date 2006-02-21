@@ -75,13 +75,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public void updateProfile(Profile profile) {
     super.updateProfile(profile);
-    initProfile(profile);
+    initProfileWrapper(profile);
   }
 
 
   public void updateProjectProfile(Profile profile) {
     super.updateProjectProfile(profile);
-    initProfile(profile);
+    initProfileWrapper(profile);
   }
 
   public void deleteProfile(String name) {
@@ -108,13 +108,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
         profiles.addAll(getProfiles());
         profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
         for (Profile profile : profiles) {
-          initProfile(profile);
+          initProfileWrapper(profile);
         }
       }
     });
   }
 
-  private void initProfile(final Profile profile) {
+  public void initProfileWrapper(final Profile profile) {
     final InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
     wrapper.init(myProject);
     myName2Profile.put(profile.getName(), wrapper);

@@ -13,6 +13,10 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
@@ -31,6 +35,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +63,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private FilterComponent mySearchField;
   private Set<Configurable> myOptionContainers = null;
   private JPanel myLeftPane;
+  private Alarm myShowHintAlarm = new Alarm();
 
   public ExplorerSettingsEditor(Project project, ConfigurableGroup[] group) {
     super(project, true);
@@ -250,13 +256,39 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     mySearchField = new FilterComponent("SEARCH_OPTION", 5, false, false) {
-      protected void filter() {
+      public void filter() {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
         final @NonNls String searchPattern = mySearchField.getFilter();
         if (searchPattern != null && searchPattern.length() > 0) {
           myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
           myOptionContainers = null;
+        }
+        if (myOptionContainers != null && myOptionContainers.isEmpty()){
+          myShowHintAlarm.cancelAllRequests();
+          myShowHintAlarm.addRequest(new Runnable() {
+            public void run() {
+              final String filter = mySearchField.getFilter();
+              if (filter == null || filter.length() == 0) return;
+              final List<String> hints = optionsRegistrar.findPossibleExtension(filter);
+              if (hints.size() > 0) {
+                final ListPopup listPopup = JBPopupFactory.getInstance()
+                  .createWizardStep(new BaseListPopupStep<String>("", hints) {
+                    public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+                      mySearchField.setFilter(selectedValue);
+                      mySearchField.filter();
+                      return FINAL_CHOICE;
+                    }
+                  });
+                listPopup.showUnderneathOf(mySearchField);
+                SwingUtilities.invokeLater(new Runnable(){
+                  public void run() {
+                    mySearchField.requestFocusInWindow();
+                  }
+                });
+              }
+            }
+          }, 300, ModalityState.defaultModalityState());
         }
         initToolbar();
         if (mySelectedConfigurable instanceof SearchableConfigurable){

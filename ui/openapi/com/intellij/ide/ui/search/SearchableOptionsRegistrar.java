@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,4 +44,6 @@ public abstract class SearchableOptionsRegistrar{
   public abstract boolean isStopWord(String word);
 
   public abstract String getSynonym(final String option, @NotNull final SearchableConfigurable configurable);
+
+  public abstract List<String> findPossibleExtension(@NotNull String prefix);
 }

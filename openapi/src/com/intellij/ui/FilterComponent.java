@@ -102,7 +102,7 @@ public abstract class FilterComponent extends JPanel {
     return myFilter.requestFocusInWindow();
   }
 
-  protected abstract void filter();
+  public abstract void filter();
 
   protected void onlineFilter(){
     filter();

@@ -273,6 +273,26 @@ public class SimpleColoredComponent extends JComponent {
     // Paint text
     for(int i=0;i<myFragments.size();i++){
       final SimpleTextAttributes attributes=getAttributes().get(i);
+      Font font=getFont();
+      if(font.getStyle()!=attributes.getStyle()){ // derive font only if it is necessary
+        font=font.deriveFont(attributes.getStyle());
+      }
+      g.setFont(font);
+      final FontMetrics metrics=getFontMetrics(font);
+
+      final String fragment=myFragments.get(i);
+      final int fragmentWidth = metrics.stringWidth(fragment);
+
+      final Color bgColor = attributes.getBgColor();
+      if (isOpaque() && bgColor != null){
+        g.setColor(bgColor);
+        g.fillRect(
+          xOffset,
+          0,
+          xOffset + fragmentWidth,
+          getHeight()
+        );
+      }
 
       Color color = attributes.getFgColor();
       if(color == null){ // in case if color is not defined we have to get foreground color from Swing hierarchy
@@ -283,18 +303,8 @@ public class SimpleColoredComponent extends JComponent {
       }
       g.setColor(color);
 
-      Font font=getFont();
-      if(font.getStyle()!=attributes.getStyle()){ // derive font only if it is necessary
-        font=font.deriveFont(attributes.getStyle());
-      }
-      g.setFont(font);
-      final FontMetrics metrics=getFontMetrics(font);
-
-      final String fragment=myFragments.get(i);
       final int textBaseline=(getHeight()-metrics.getHeight())/2 + metrics.getAscent();
       g.drawString(fragment,xOffset,textBaseline);
-
-      final int fragmentWidth = metrics.stringWidth(fragment);
 
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
@@ -312,6 +322,7 @@ public class SimpleColoredComponent extends JComponent {
           UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
         }
       }
+
 
       xOffset+=fragmentWidth;
     }

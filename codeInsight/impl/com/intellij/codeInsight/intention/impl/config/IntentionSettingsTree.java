@@ -5,17 +5,21 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Ref;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -25,30 +29,7 @@ import java.util.List;
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
-  private FilterComponent myFilter = new FilterComponent("INTENTION_FILTER_HISTORY", 10){
-    protected void filter() {
-      final String filter = getFilter();
-      IntentionSettingsTree.this.reset(filterModel(filter, true));
-      if (myTree != null) {
-        List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-        ((DefaultTreeModel)myTree.getModel()).reload();
-        TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
-      }
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myTree.setSelectionRow(0);
-          myTree.requestFocus();
-        }
-      });
-    }
-
-
-    protected void onlineFilter() {
-      final String filter = getFilter();
-      IntentionSettingsTree.this.reset(filterModel(filter, true));
-    }
-  };
-
+  private FilterComponent myFilter;
   protected IntentionSettingsTree() {
     initTree();
   }
@@ -62,11 +43,19 @@ public abstract class IntentionSettingsTree {
   }
 
   private void initTree() {
-    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
+    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         CheckedTreeNode node = (CheckedTreeNode)value;
         SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-        getTextRenderer().append(getNodeText(node), attributes);
+        final String text = getNodeText(node);
+        if (text != null) {
+          SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
+                                     text,
+                                     attributes.getStyle(),
+                                     attributes.getFgColor(),
+                                     selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(),
+                                     getTextRenderer());
+        }
       }
     }, new CheckedTreeNode(null)){
       protected void checkNode(CheckedTreeNode node, boolean checked) {
@@ -84,6 +73,7 @@ public abstract class IntentionSettingsTree {
       }
     });
 
+    myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
     JScrollPane scrollPane = new JScrollPane(myTree);
     JPanel toolbarPanel = new JPanel(new BorderLayout());
@@ -289,6 +279,10 @@ public abstract class IntentionSettingsTree {
     myFilter.setFilter(filter);
   }
 
+  public String getFilter() {
+    return myFilter.getFilter();
+  }
+
   interface CheckedNodeVisitor {
     void visit(CheckedTreeNode node);
   }
@@ -297,6 +291,55 @@ public abstract class IntentionSettingsTree {
     while (children.hasMoreElements()) {
       final CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
       visitor.visit(child);
+    }
+  }
+
+  private class MyFilterComponent extends FilterComponent {
+    private TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
+
+    public MyFilterComponent() {
+      super("INTENTION_FILTER_HISTORY", 10);
+    }
+
+    public void filter() {
+      final String filter = getFilter();
+      if (filter != null && filter.length() > 0) {
+        if (!myExpansionMonitor.isFreeze()) {
+          myExpansionMonitor.freeze();
+        }
+      }
+      IntentionSettingsTree.this.reset(filterModel(filter, true));
+      if (myTree != null) {
+        List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+        ((DefaultTreeModel)myTree.getModel()).reload();
+        TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
+      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTree.setSelectionRow(0);
+          myTree.requestFocus();
+        }
+      });
+      TreeUtil.expandAll(myTree);
+      if (filter == null || filter.length() == 0) {
+        TreeUtil.collapseAll(myTree, 0);
+        myExpansionMonitor.restore();
+      }
+    }
+
+    protected void onlineFilter() {
+      final String filter = getFilter();
+      if (filter != null && filter.length() > 0) {
+        if (!myExpansionMonitor.isFreeze()) {
+          myExpansionMonitor.freeze();
+        }
+      }
+      IntentionSettingsTree.this.reset(filterModel(filter, true));
+      TreeUtil.expandAll(myTree);
+      if (filter == null || filter.length() == 0) {
+        TreeUtil.collapseAll(myTree, 0);
+        myExpansionMonitor.restore();
+      }
     }
   }
 }

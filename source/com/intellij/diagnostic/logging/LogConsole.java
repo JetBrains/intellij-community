@@ -45,7 +45,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
   private String myPrevType = null;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
-    protected void filter() {
+    public void filter() {
       LogConsolePreferences.getInstance().updateCustomFilter(getFilter());
       filterConsoleOutput();
     }

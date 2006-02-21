@@ -10,34 +10,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * User: anna
  * Date: Dec 8, 2004
  */
 public class Descriptor {
-  @NonNls private static Map<HighlightDisplayKey, String> ourHighlightDisplayKeyToDescriptionsMap = new HashMap<HighlightDisplayKey, String>();
-  static {
-    //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.DEPRECATED_SYMBOL, "Local_DeprecatedSymbol.html");
-    //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_IMPORT, "Local_UnusedImport.html");
-    /*ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_SYMBOL,  "Local_UnusedSymbol.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_THROWS_DECL, "Local_UnusedThrowsDeclaration.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.SILLY_ASSIGNMENT, "Local_SillyAssignment.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, "Local_StaticViaInstance.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, "Local_WrongPackage.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, "Local_IllegalDependencies.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.JAVADOC_ERROR, "Local_JavaDoc.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, "Local_UnknownJavaDocTags.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, "Local_CustomHtmlTags.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, "Local_CustomHtmlAttributes.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, "Local_NotRequiredHtmlAttributes.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_ERROR,  "Local_EJBErrors.html");
-    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_WARNING, "Local_EJBWarnings.html");*/
-    //ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNCHECKED_WARNING, "Local_UncheckedWarning.html");
-  }
-
   private String myText;
   private String myGroup;
   private String myDescriptorFileName;
@@ -150,9 +128,6 @@ public class Descriptor {
   }
 
   public String getDescriptorFileName() {
-    if (myDescriptorFileName == null){
-      return ourHighlightDisplayKeyToDescriptionsMap.get(myKey);
-    }
     return myDescriptorFileName;
   }
 

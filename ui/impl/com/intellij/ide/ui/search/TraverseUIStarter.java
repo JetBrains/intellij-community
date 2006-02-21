@@ -131,7 +131,7 @@ public class TraverseUIStarter implements ApplicationStarter {
     final Map<String, String> result = new TreeMap<String, String>();
     for (String opt : optionsPath.keySet()) {
       final String path = optionsPath.get(opt);
-      final Set<String> words = SearchUtil.getProcessedWords(opt);
+      final Set<String> words = SearchUtil.getProcessedWordsWithoutStemming(opt);
       for (String word : words) {
         if (word != null){
           result.put(word, path);
@@ -155,11 +155,11 @@ public class TraverseUIStarter implements ApplicationStarter {
       final AnAction anAction = actionManager.getAction(id);
       final String text = anAction.getTemplatePresentation().getText();
       if (text != null) {
-        options.addAll(SearchUtil.getProcessedWords(text));
+        options.addAll(SearchUtil.getProcessedWordsWithoutStemming(text));
       }
       final String description = anAction.getTemplatePresentation().getDescription();
       if (description != null) {
-        options.addAll(SearchUtil.getProcessedWords(description));
+        options.addAll(SearchUtil.getProcessedWordsWithoutStemming(description));
       }
     }
     for (String opt : options) {

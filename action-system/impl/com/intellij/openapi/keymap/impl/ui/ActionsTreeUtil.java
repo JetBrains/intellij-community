@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
@@ -458,11 +455,20 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(createExternalToolsGroup(filtered));
     mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filter, forceFiltering, quickLists));
-
-    Group otherGroup = createOtherGroup(filtered, mainGroup, keymap);
-    mainGroup.addGroup(otherGroup);
-
+    mainGroup.addGroup(createOtherGroup(filtered, mainGroup, keymap));
     mainGroup.addGroup(createPluginsActionsGroup(filtered));
+    if (filter != null || filtered != null){
+      final ArrayList list = mainGroup.getChildren();
+      for (Iterator i = list.iterator(); i.hasNext();) {
+        final Object o = i.next();
+        if (o instanceof Group){
+          final Group group = (Group)o;
+          if (group.getSize() == 0){
+            i.remove();
+          }
+        }
+      }
+    }
     return mainGroup;
   }
 

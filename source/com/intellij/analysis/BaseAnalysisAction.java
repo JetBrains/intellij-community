@@ -7,12 +7,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class BaseAnalysisAction extends AnAction {
   protected final String myTitle;
@@ -41,6 +44,11 @@ public abstract class BaseAnalysisAction extends AnAction {
       }
       else {
         scope = getInspectionScope(dataContext);
+      }
+      if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
+        FileDocumentManager.getInstance().saveAllDocuments();
+        analyze(project, scope);
+        return;
       }
       final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
       final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
@@ -134,6 +142,14 @@ public abstract class BaseAnalysisAction extends AnAction {
       return null;
     }
 
+    final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+    if (virtualFiles != null){ //analyze on selection
+      Set<VirtualFile> files = new HashSet<VirtualFile>();
+      for (VirtualFile vFile : virtualFiles) {
+        traverseDirectory(vFile, files);
+      }
+      return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT), files);
+    }
     return getProjectScope(dataContext);
   }
 
@@ -150,4 +166,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
+  private static void traverseDirectory(VirtualFile vFile, Set<VirtualFile> files){
+    if (vFile.isDirectory()){
+      final VirtualFile[] virtualFiles = vFile.getChildren();
+      for (VirtualFile virtualFile : virtualFiles) {
+        traverseDirectory(virtualFile, files);
+      }
+    } else {
+      files.add(vFile);
+    }
+  }
 }

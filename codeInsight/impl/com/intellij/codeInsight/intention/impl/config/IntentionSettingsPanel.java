@@ -64,7 +64,8 @@ public class IntentionSettingsPanel {
   }
 
   private void intentionSelected(IntentionActionMetaData actionMetaData) {
-    myIntentionDescriptionPanel.reset(actionMetaData);
+    myIntentionDescriptionPanel.reset(actionMetaData,
+                                      myIntentionSettingsTree.getFilter());
   }
 
   private void categorySelected(String intentionCategory) {

@@ -255,7 +255,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     //noinspection HardCodedStringLiteral
     Content content = PeerFactory.getInstance().getContentFactory().createContent(view, "FOOO", false);
 
-    content.setDisplayName(RUN_WITH_EDITOR_PROFILE
+    content.setDisplayName(view.getCurrentProfileName() == null
                            ? InspectionsBundle.message("inspection.results.title")
                            : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
     contentManager.addContent(content);

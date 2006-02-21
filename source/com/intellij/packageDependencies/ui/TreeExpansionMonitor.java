@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
@@ -12,13 +13,49 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class TreeExpansionMonitor {
-  public static TreeExpansionMonitor install(JTree tree, Project project) {
-    return new TreeExpansionMonitor(tree, project);
+public abstract class TreeExpansionMonitor<T> {
+  public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
+    return new TreeExpansionMonitor<PackageDependenciesNode>(tree, project){
+      protected TreePath findPathByNode(final PackageDependenciesNode node) {
+         if (node.getPsiElement() == null){
+           return new TreePath(node.getPath());
+         }
+          PsiManager manager = PsiManager.getInstance(project);
+          Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+          while (enumeration.hasMoreElements()) {
+            final Object nextElement = enumeration.nextElement();
+            if (nextElement instanceof PackageDependenciesNode) { //do not include root
+              PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
+              if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
+                return new TreePath(child.getPath());
+              }
+            }
+          }
+          return null;
+      }
+    };
+  }
+
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree){
+    return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree, null) {
+      protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
+        Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          final Object nextElement = enumeration.nextElement();
+          if (nextElement instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode)nextElement;
+            if (Comparing.equal(child.getUserObject(), node.getUserObject())) {
+              return new TreePath(child.getPath());
+            }
+          }
+        }
+        return null;
+      }
+    };
   }
 
   private Set<TreePath> myExpandedPaths = new HashSet<TreePath>();
-  private List<PackageDependenciesNode> mySelectionNodes = new ArrayList<PackageDependenciesNode>();
+  private List<T> mySelectionNodes = new ArrayList<T>();
   private JTree myTree;
   private boolean myFrozen = false;
   private Project myProject;
@@ -29,11 +66,11 @@ public class TreeExpansionMonitor {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (myFrozen) return;
-        mySelectionNodes = new ArrayList<PackageDependenciesNode>();
+        mySelectionNodes = new ArrayList<T>();
         TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (TreePath path : paths) {
-            mySelectionNodes.add((PackageDependenciesNode)path.getLastPathComponent());
+            mySelectionNodes.add((T)path.getLastPathComponent());
           }
         }
       }
@@ -70,7 +107,7 @@ public class TreeExpansionMonitor {
 
   public void restore() {
     freeze();
-    for (PackageDependenciesNode mySelectionNode : mySelectionNodes) {
+    for (T mySelectionNode : mySelectionNodes) {
       myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
     }
     for (final TreePath myExpandedPath : myExpandedPaths) {
@@ -79,22 +116,9 @@ public class TreeExpansionMonitor {
     myFrozen = false;
   }
 
+  protected abstract TreePath findPathByNode(final T node);
 
-  private TreePath findPathByNode(final PackageDependenciesNode node) {
-     if (node.getPsiElement() == null){
-       return new TreePath(node.getPath());
-     }
-      PsiManager manager = PsiManager.getInstance(myProject);
-      Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).breadthFirstEnumeration();
-      while (enumeration.hasMoreElements()) {
-        final Object nextElement = enumeration.nextElement();
-        if (nextElement instanceof PackageDependenciesNode) { //do not include root
-          PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
-          if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
-            return new TreePath(child.getPath());
-          }
-        }
-      }
-      return null;
+  public boolean isFreeze() {
+    return myFrozen;
   }
 }

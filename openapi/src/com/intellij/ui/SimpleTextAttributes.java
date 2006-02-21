@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -33,6 +32,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_STRIKEOUT = STYLE_ITALIC << 1;
   public static final int STYLE_WAVED = STYLE_STRIKEOUT << 1;
 
+  private final Color myBgColor;
   private final Color myFgColor;
   private final Color myWaveColor;
   private final int myStyle;
@@ -56,13 +56,18 @@ public final class SimpleTextAttributes {
     this(style, fgColor, null);
   }
 
-  public SimpleTextAttributes(int style, Color fgColor, Color waveColor){
+  public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, final int style) {
     if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED) & style) != 0){
       throw new IllegalArgumentException("wrong style: "+style);
     }
     myFgColor = fgColor;
     myWaveColor = waveColor;
     myStyle = style;
+    myBgColor = bgColor;
+  }
+
+  public SimpleTextAttributes(int style, Color fgColor, Color waveColor){
+    this(null, fgColor, waveColor, style);
   }
 
   /**
@@ -70,6 +75,14 @@ public final class SimpleTextAttributes {
    */
   public Color getFgColor(){
     return myFgColor;
+  }
+
+
+  /**
+   * @return background color
+   */
+  public Color getBgColor() {
+    return myBgColor;
   }
 
   /**

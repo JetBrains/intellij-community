@@ -1,6 +1,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -9,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Alarm;
@@ -29,8 +31,10 @@ import java.util.Enumeration;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
-
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
+  private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
+  private static final Icon CLOSE_ICON = new DefaultTreeCellRenderer().getClosedIcon();
+
   private TreeTable myTreeTable;
   private DefaultMutableTreeNode myRoot;
   private JScrollPane myComponent;
@@ -40,6 +44,8 @@ public class ActionsTree {
 
   @NonNls
   private static final String ROOT = "ROOT";
+
+  private String myFilter = null;
 
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
@@ -60,31 +66,27 @@ public class ActionsTree {
       }
     };
 
-    myTreeTable.getTree().setCellRenderer(new DefaultTreeCellRenderer(){
-      public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-        setBorderSelectionColor(null);
+    myTreeTable.getTree().setCellRenderer(new ColoredTreeCellRenderer(){
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         Icon icon = null;
+        String text;
         if (value instanceof DefaultMutableTreeNode) {
           Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
           boolean changed;
           if (userObject instanceof Group) {
             Group group = (Group)userObject;
-            setText(group.getName());
+            text = group.getName();
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
             icon = expanded ? group.getOpenIcon() : group.getIcon();
-
-            if (icon == null) {
-              icon = expanded ? getOpenIcon() : getClosedIcon();
+            if (icon == null){
+              icon = expanded ? OPEN_ICON : CLOSE_ICON;
             }
-
-
           }
           else if (userObject instanceof String) {
             String actionId = (String)userObject;
             AnAction action = ActionManager.getInstance().getAction(actionId);
-            setText(action != null ? action.getTemplatePresentation().getText() : actionId);
+            text = action != null ? action.getTemplatePresentation().getText() : actionId;
             if (action != null) {
               Icon actionIcon = action.getTemplatePresentation().getIcon();
               if (actionIcon != null) {
@@ -97,14 +99,15 @@ public class ActionsTree {
           else if (userObject instanceof QuickList) {
             QuickList list = (QuickList)userObject;
             icon = QUICK_LIST_ICON;
-            setText(list.getDisplayName());
+            text = list.getDisplayName();
+
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
           }
           else if (userObject instanceof Separator) {
             // TODO[vova,anton]: beautify
             changed = false;
-            setText("-------------");
+            text = "-------------";
           }
           else {
             throw new IllegalArgumentException("unknown userObject: " + userObject);
@@ -117,19 +120,18 @@ public class ActionsTree {
           }
           setIcon(layeredIcon);
 
-          // Set color
-
-          if(sel){
-            setForeground(UIUtil.getTreeSelectionForeground());
+          Color foreground;
+          if(selected){
+            foreground = UIUtil.getTreeSelectionForeground();
           }else{
             if(changed){
-              setForeground(Color.BLUE);
+              foreground = Color.BLUE;
             }else{
-              setForeground(UIUtil.getTreeForeground());
+              foreground = UIUtil.getTreeForeground();
             }
           }
+          SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground, selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), this);
         }
-        return this;
       }
     });
 
@@ -185,6 +187,7 @@ public class ActionsTree {
   }
 
   public void filter(final String filter, final QuickList[] currentQuickListIds) {
+    myFilter = filter;
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 

@@ -410,7 +410,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   public String getCurrentProfileName() {
-    return myInspectionProfile != null ? myInspectionProfile.getName() : "";
+    return myInspectionProfile != null && myInspectionProfile.isEditable() ? myInspectionProfile.getName() : null;
   }
 
   public boolean update() {
@@ -647,7 +647,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myInspectionProfile != null);
+        e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable());
       }
 
     });
@@ -712,7 +712,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myInspectionProfile != null);
+      e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable());
     }
   }
 
@@ -747,6 +747,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           for (String profileName : profiles) {
             ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
           }
+        } else {
+          InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myInspectionProfile.getName()).getInspectionProfile().cleanup();
         }
         final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
         inspectionManagerEx.setExternalProfile(myInspectionProfile);

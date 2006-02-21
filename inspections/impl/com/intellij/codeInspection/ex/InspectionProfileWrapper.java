@@ -65,4 +65,8 @@ public class InspectionProfileWrapper {
     }
     myProfile.cleanup();
   }
+
+  public InspectionProfile getInspectionProfile() {
+    return myProfile;
+  }
 }

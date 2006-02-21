@@ -65,7 +65,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
- 
+  private boolean myEditable = true;
 
 //private String myBaseProfileName;
 
@@ -289,6 +289,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }
     InspectionProfileManager.getInstance().fireProfileChanged(this);
+  }
+
+  public boolean isEditable() {
+    return myEditable;
+  }
+
+  public void setEditable(final boolean editable) {
+    myEditable = editable;
   }
 
   public void load() {

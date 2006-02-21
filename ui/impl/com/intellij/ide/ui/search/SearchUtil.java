@@ -10,7 +10,10 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,9 +21,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * User: anna
@@ -109,7 +112,7 @@ public class SearchUtil {
   private static void processUILabel(@NonNls final String title,
                                      final Set<Pair<String, String>> configurableOptions,
                                      String path) {
-    final Set<String> words = getProcessedWords(title);
+    final Set<String> words = getProcessedWordsWithoutStemming(title);
     for (String option : words) {
       configurableOptions.add(Pair.create(option, path));
     }
@@ -238,6 +241,21 @@ public class SearchUtil {
     return result;
   }
 
+  public static Set<String> getProcessedWordsWithoutStemming(@NotNull String text){
+    Set<String> result = new HashSet<String>();
+    @NonNls final String toLowerCase = text.toLowerCase();
+    final String[] options = toLowerCase.split("[\\W&&[^_-]]");
+    if (options != null) {
+      final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+      for (String opt : options) {
+        if (opt == null) continue;
+        if (registrar.isStopWord(opt)) continue;
+        result.add(opt);
+      }
+    }
+    return result;
+  }
+
   public static Set<String> getProcessedWords(@NotNull String text){
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
@@ -265,4 +283,61 @@ public class SearchUtil {
       }
     };
   }
+
+  public static String markup(@NonNls String textToMarkup, String filter) {
+    if (filter == null || filter.length() == 0){
+      return textToMarkup;
+    }
+    final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
+    final Set<String> options = getProcessedWords(filter);
+    final String[] words = textToMarkup.split("[\\W&&[^_-]]");
+    for (String word : words) {
+      if (options.contains(PorterStemmerUtil.stem(word.toLowerCase()))){
+        final String[] splittedText = textToMarkup.split(word);
+        if (splittedText != null && splittedText.length > 0) {
+          textToMarkup = "";
+          for (String aPart : splittedText) {
+            if (aPart == null){
+              aPart = "";
+            }
+            if (insideHtmlTagPattern.matcher(aPart).matches()){
+              textToMarkup += aPart + word;
+            } else {
+              textToMarkup += aPart + "<font color='#ffffff' bgColor='#1d5da7'>" + word + "</font>";
+            }
+          }
+        }
+      }
+    }
+    return textToMarkup;
+  }
+
+  public static void appendFragments(final String filter,
+                                     @NonNls String text,
+                                     final int style,
+                                     final Color foreground,
+                                     final Color background,
+                                     final ColoredTreeCellRenderer textRenderer) {
+    if (text == null) return;
+    if (filter == null || filter.length() == 0){
+       textRenderer.append(text, new SimpleTextAttributes(style, foreground));
+    } else { //markup
+       final Set<String> filters = getProcessedWords(filter);
+       String [] words = text.split("[\\W&&[^_-]]");
+       List<String> selectedWords = new ArrayList<String>();
+       for (String word : words) {
+         if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase()))/* || word.toLowerCase().indexOf(filter.toLowerCase()) != -1*/){
+           selectedWords.add(word);
+         }
+       }
+       int idx = 0;
+       for (String word : selectedWords) {
+         text = text.substring(idx);
+         textRenderer.append(text.substring(0, text.indexOf(word)), new SimpleTextAttributes(background, foreground, null, style));
+         idx = text.indexOf(word) + word.length();
+         textRenderer.append(text.substring(idx - word.length(), idx), new SimpleTextAttributes(UIUtil.getTreeSelectionBackground(), foreground, null, style));
+       }
+       textRenderer.append(text.substring(idx, text.length()), new SimpleTextAttributes(background, foreground, null, style));
+     }
+   }
 }

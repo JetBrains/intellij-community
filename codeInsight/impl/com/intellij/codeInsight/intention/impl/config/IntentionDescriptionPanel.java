@@ -4,12 +4,13 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ResourceUtil;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -34,10 +35,10 @@ public class IntentionDescriptionPanel {
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
   private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
 
-  public void reset(IntentionActionMetaData actionMetaData)  {
+  public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
       final URL url = actionMetaData.getDescription();
-      final String description = url != null ? ResourceUtil.loadText(url) : CodeInsightBundle.message("under.construction.string");
+      final String description = url != null ? SearchUtil.markup(ResourceUtil.loadText(url), filter) : CodeInsightBundle.message("under.construction.string");
       myDescriptionBrowser.setText(description);
 
       showUsages(myBeforePanel, myBeforeSeparator, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
