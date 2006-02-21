@@ -243,61 +243,38 @@ public class RedundantCastUtil {
       PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return;
       PsiExpression[] args = argumentList.getExpressions();
-      PsiMethod oldMethod = null;
-      PsiParameter[] methodParms = null;
-      boolean[] typeCastCandidates = null;
-      boolean hasCandidate = false;
-      for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = deparenthesizeExpression(args[i]);
-        if (arg instanceof PsiTypeCastExpression) {
-          if (oldMethod == null){
-            oldMethod = expression.resolveMethod();
-            if (oldMethod == null) return;
-            methodParms = oldMethod.getParameterList().getParameters();
-            if (methodParms.length == 0 || methodParms.length > args.length) return;
-            typeCastCandidates = new boolean[args.length];
-          }
+      PsiMethod oldMethod = expression.resolveMethod();
+      if (oldMethod == null) return;
+      PsiParameter[] parameters = oldMethod.getParameterList().getParameters();
 
-          PsiExpression castOperand = ((PsiTypeCastExpression)arg).getOperand();
-          if (castOperand == null) return;
-          PsiType operandType = castOperand.getType();
-          if (operandType == null) return;
-          PsiParameter methodParm = methodParms[Math.min(i, methodParms.length - 1)];
-          if (!methodParm.getType().isAssignableFrom(operandType)) continue;
-
-          //Check explicit cast for varargs parameter, see SCR 37199
-          if (args.length == methodParms.length) {
-            if (PsiType.NULL.equals(operandType) && methodParm.isVarArgs()) continue;
-          }
-
-          typeCastCandidates[i] = true;
-          hasCandidate = true;
-        }
-      }
-
-      if (hasCandidate) {
-        try {
-          for (int i = 0; i < args.length; i++) {
-            final PsiExpression arg = deparenthesizeExpression(args[i]);
-            if (typeCastCandidates[i]) {
-              PsiCallExpression newCall = (PsiCallExpression)expression.copy();
-              final PsiExpressionList argList = newCall.getArgumentList();
-              LOG.assertTrue(argList != null);
-              PsiExpression[] newArgs = argList.getExpressions();
-              PsiTypeCastExpression castExpression = (PsiTypeCastExpression)deparenthesizeExpression(newArgs[i]);
-              PsiExpression castOperand = castExpression.getOperand();
-              if (castOperand == null) return;
-              castExpression.replace(castOperand);
-              final JavaResolveResult newResult = newCall.resolveMethodGenerics();
-              if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() && Comparing.equal(newCall.getType(), expression.getType())) {
-                addToResults((PsiTypeCastExpression)arg);
-              }
+      try {
+        for (int i = 0; i < args.length; i++) {
+          final PsiExpression arg = deparenthesizeExpression(args[i]);
+          if (arg instanceof PsiTypeCastExpression) {
+            PsiTypeCastExpression cast = ((PsiTypeCastExpression) arg);
+            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() &&
+                PsiType.NULL.equals(cast.getOperand().getType())) {
+              //do not mark cast from null to resolve ambiguity for calling varargs method with incomplete argument list
+              continue;
+            }
+            PsiCallExpression newCall = (PsiCallExpression) expression.copy();
+            final PsiExpressionList argList = newCall.getArgumentList();
+            LOG.assertTrue(argList != null);
+            PsiExpression[] newArgs = argList.getExpressions();
+            PsiTypeCastExpression castExpression = (PsiTypeCastExpression) deparenthesizeExpression(newArgs[i]);
+            PsiExpression castOperand = castExpression.getOperand();
+            if (castOperand == null) return;
+            castExpression.replace(castOperand);
+            final JavaResolveResult newResult = newCall.resolveMethodGenerics();
+            if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
+                Comparing.equal(newCall.getType(), expression.getType())) {
+              addToResults(cast);
             }
           }
         }
-        catch (IncorrectOperationException e) {
-          return;
-        }
+      }
+      catch (IncorrectOperationException e) {
+        return;
       }
 
       for (PsiExpression arg : args) {
