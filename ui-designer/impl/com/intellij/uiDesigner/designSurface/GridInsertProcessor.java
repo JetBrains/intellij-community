@@ -47,6 +47,11 @@ public class GridInsertProcessor {
     }
 
     final Point targetPoint = SwingUtilities.convertPoint(rootContainer.getDelegee(), aPoint, container.getDelegee());
+    DropLocation containerDropLocation = container.getDropLocation(targetPoint);
+    if (containerDropLocation != null) {
+      return containerDropLocation;
+    }
+
     if (!container.isGrid()) {
       return new GridDropLocation(container, targetPoint, container.canDrop(targetPoint, dragObject));
     }

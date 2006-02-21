@@ -6,10 +6,9 @@ import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
@@ -50,26 +49,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return null;
   }
 
-  @Override public boolean canDrop(@Nullable Point location, final ComponentDragObject dragObject) {
-    return dragObject.getComponentCount() == 1;
+  @Override public DropLocation getDropLocation(Point location) {
+    return new AddTabDropLocation();
   }
-
-  @Override public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
-    addComponent(components[0]);
-  }
-
-  @Nullable
-  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
-    final JTabbedPane tabbedPane = getTabbedPane();
-    final TabbedPaneUI ui = tabbedPane.getUI();
-    if (tabbedPane.getTabCount() > 0) {
-      Rectangle rc = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount()-1);
-      return new Rectangle(rc.x+rc.width, rc.y, 50, rc.height);
-    }
-    // approximate
-    return new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
-  }
-
 
   @Override public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
     super.init(editor, item);
@@ -156,7 +138,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     LOG.assertTrue(index != -1);
     return ui.getTabBounds(tabbedPane, index);
   }
-
 
   @Override @Nullable
   public Rectangle getDefaultInplaceEditorBounds() {
@@ -318,6 +299,39 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     public PropertyEditor getEditor() {
       return myEditor;
+    }
+  }
+
+  private final class AddTabDropLocation implements DropLocation {
+
+    public RadContainer getContainer() {
+      return RadTabbedPane.this;
+    }
+
+    public boolean canDrop(ComponentDragObject dragObject) {
+      return dragObject.getComponentCount() == 1;
+    }
+
+    public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
+      Rectangle rcFeedback;
+      final JTabbedPane tabbedPane = getTabbedPane();
+      final TabbedPaneUI ui = tabbedPane.getUI();
+      if (tabbedPane.getTabCount() > 0) {
+        Rectangle rc = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount()-1);
+        rcFeedback = new Rectangle(rc.x+rc.width, rc.y, 50, rc.height);
+      }
+      else {
+        // approximate
+        rcFeedback = new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
+      }
+      feedbackLayer.putFeedback(getDelegee(), rcFeedback);
+    }
+
+    public void processDrop(GuiEditor editor,
+                            RadComponent[] components,
+                            GridConstraints[] constraintsToAdjust,
+                            ComponentDragObject dragObject) {
+      addComponent(components [0]);
     }
   }
 }

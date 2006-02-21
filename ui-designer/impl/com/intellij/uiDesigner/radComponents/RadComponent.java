@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.lw.ComponentVisitor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -428,6 +429,10 @@ public abstract class RadComponent implements IComponent {
 
   public final void removeModifiedProperty(final Property property) {
     myModifiedPropertyNames.remove(property.getName());
+  }
+
+  @Nullable public DropLocation getDropLocation(Point location) {
+    return null;
   }
 
   public abstract boolean canDrop(@Nullable Point location, ComponentDragObject dragObject);
