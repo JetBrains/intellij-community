@@ -64,7 +64,9 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
-    return myName2Profile.get(getInspectionProfile(psiElement).getName());
+    final String profileName = getInspectionProfile(psiElement).getName();
+    LOG.assertTrue(profileName != null && myName2Profile.containsKey(profileName), "Profile with name \'" + profileName + "\' wasn't loaded.");
+    return myName2Profile.get(profileName);
   }
 
   public InspectionProfileWrapper getProfileWrapper(final String profileName){
