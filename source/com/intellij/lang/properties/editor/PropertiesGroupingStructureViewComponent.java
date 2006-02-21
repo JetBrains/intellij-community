@@ -63,8 +63,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     }
 
     private String getCurrentSeparator() {
-      String separator = ((PropertiesGroupingStructureViewModel)getTreeModel()).getSeparator();
-      return separator;
+      return ((PropertiesGroupingStructureViewModel)getTreeModel()).getSeparator();
     }
 
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
