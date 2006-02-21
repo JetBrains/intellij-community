@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -29,6 +31,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private boolean myIsDisposed = false;
+  private boolean myIsInitialized = false;
 
   public VcsDirtyScopeManagerImpl(Project project, ProjectRootManager rootManager, ChangeListManager changeListManager) {
     myProject = project;
@@ -38,16 +41,20 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void projectOpened() {
-    VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
+    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        markEverythingDirty();
-      }
-    });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          myIsInitialized = true;
+          markEverythingDirty();
+        }
+      });
+    }
   }
 
   public void markEverythingDirty() {
+    if (!myIsInitialized || myIsDisposed) return;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -78,7 +85,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void fileDirty(FilePath file) {
-    if (myIsDisposed) return;
+    if (!myIsInitialized || myIsDisposed) return;
+
     VirtualFile root = VcsDirtyScope.getRootFor(myIndex, file);
     if (root != null) {
       getScope(root).addDirtyFile(file);
@@ -87,7 +95,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir) {
-    if (myIsDisposed) return;
+    if (!myIsInitialized || myIsDisposed) return;
+
     final VirtualFile root = myIndex.getContentRootForFile(dir);
     if (root != null) {
       FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
