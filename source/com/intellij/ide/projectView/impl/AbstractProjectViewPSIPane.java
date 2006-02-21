@@ -80,7 +80,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     super.dispose();
   }
 
-  protected final void initTree() {
+  private void initTree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
@@ -187,7 +187,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public void projectOpened() {
     final Runnable runnable = new Runnable() {
       public void run() {
-        //initTree();
         final ProjectView projectView = ProjectView.getInstance(myProject);
         projectView.addProjectPane(AbstractProjectViewPSIPane.this);
       }

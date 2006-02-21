@@ -1,6 +1,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,13 +37,15 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   public String[] getSubIds() {
-    return new String[0];
+    AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
+    return pane.getSubIds();
   }
   public boolean isSubIdSelectable(String subId, VirtualFile file) {
     return false;
   }
   public String getSubIdPresentableName(String subId) {
-    return null;
+    AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
+    return pane.getPresentableSubIdName(subId);
   }
 
   public final void select(PsiElement element, final boolean requestFocus) {

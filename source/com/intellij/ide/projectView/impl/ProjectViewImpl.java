@@ -49,6 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -109,7 +110,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private JPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<String, AbstractProjectViewPane>();
-  private final List<AbstractProjectViewPane> myUninitializedPanes = new ArrayList<AbstractProjectViewPane>();
+  private final Collection<AbstractProjectViewPane> myUninitializedPanes = new THashSet<AbstractProjectViewPane>();
 
   static final String PROJECT_VIEW_DATA_CONSTANT = "com.intellij.ide.projectView.impl.ProjectViewImpl";
   private DefaultActionGroup myActionGroup;
@@ -202,12 +203,19 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     initAlarm.cancelAllRequests();
     initAlarm.addRequest(new Runnable() {
       public void run() {
-         changeView(id, subId);
+        changeView(id, subId);
       }
     }, 10);
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
+    //try {
+    //  throw new Exception("Adding " + pane);
+    //}
+    //catch(Exception e) {
+    //  e.printStackTrace();
+    //}
+
     myUninitializedPanes.add(pane);
     if (isInitialized) {
       doAddUninitializedPanes();
@@ -262,14 +270,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
     //try {
-    //  throw new Exception();
+    //  throw new Exception("DoAdding " + newPane);
     //} catch(Exception e) {
     //  e.printStackTrace();
     //}
 
-    int i;
-    for (i = 0; i < myCombo.getItemCount(); i++) {
-      Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(i);
+    int index;
+    for (index = 0; index < myCombo.getItemCount(); index++) {
+      Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(index);
       String id = ids.first;
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
@@ -281,7 +289,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     final String id = newPane.getId();
     myId2Pane.put(id, newPane);
-    int index = i;
     myCombo.insertItemAt(Pair.create(id, null), index);
     String[] subIds = newPane.getSubIds();
     if (subIds != null) {
@@ -335,7 +342,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  private void setupImpl() {
+  private synchronized void setupImpl() {
     myCombo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == null) return this;

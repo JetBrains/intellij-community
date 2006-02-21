@@ -16,8 +16,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 public class SelectInAction extends AnAction {
@@ -50,38 +49,150 @@ public class SelectInAction extends AnAction {
                                                                   dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
     }
     else {
-      popup = JBPopupFactory.getInstance().createWizardStep(new SelectActionStep(targetVector, context, context.getVirtualFile()));
+      popup = JBPopupFactory.getInstance().createWizardStep(new TopLevelActionsStep(targetVector, context, context.getVirtualFile()));
     }
 
     popup.showInBestPositionFor(dataContext);
   }
 
+  private static class TopLevelActionsStep extends BaseListPopupStep<SelectInTarget> {
+    private final SelectInContext mySelectInContext;
+    private final VirtualFile myVirtualFile;
+    private final List<SelectInTarget> myProjectViewTargets;
+    private final List<SelectInTarget> myVisibleTargets;
+
+    private final FakeProjectViewSelectInTarget PROJECT_VIEW_FAKE_TARGET = new FakeProjectViewSelectInTarget();
+    private class FakeProjectViewSelectInTarget implements SelectInTarget {
+      public boolean canSelect(SelectInContext context) {
+        for (SelectInTarget projectViewTarget : myProjectViewTargets) {
+          if (projectViewTarget.canSelect(mySelectInContext)) return true;
+        }
+        return false;
+      }
+
+      public void selectIn(SelectInContext context, final boolean requestFocus) {
+        ProjectView projectView = ProjectView.getInstance(context.getProject());
+        Collection<SelectInTarget> targetsToCheck = new LinkedHashSet<SelectInTarget>();
+        String currentId = projectView.getCurrentViewId();
+        for (SelectInTarget projectViewTarget : myProjectViewTargets) {
+          if (currentId.equals(projectViewTarget.getMinorViewId())) {
+            targetsToCheck.add(projectViewTarget);
+            break;
+          }
+        }
+        targetsToCheck.addAll(myProjectViewTargets);
+        for (SelectInTarget target : targetsToCheck) {
+          if (target.canSelect(context)) {
+            target.selectIn(context, requestFocus);
+            break;
+          }
+        }
+      }
+
+      public String getToolWindowId() {
+        return ToolWindowId.PROJECT_VIEW;
+      }
+
+      public String getMinorViewId() {
+        return null;
+      }
+
+      public float getWeight() {
+        return 0;
+      }
+
+      public String toString() {
+        return IdeBundle.message("select.in.title.project.view");
+      }
+    }
+
+    public TopLevelActionsStep(final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
+      mySelectInContext = selectInContext;
+      myVirtualFile = virtualFile;
+      myProjectViewTargets = new ArrayList<SelectInTarget>();
+      myVisibleTargets = new ArrayList<SelectInTarget>();
+      myVisibleTargets.add(PROJECT_VIEW_FAKE_TARGET);
+      for (SelectInTarget target : targetVector) {
+        if (target instanceof ProjectViewSelectInTarget) {
+          myProjectViewTargets.add(target);
+        }
+        else {
+          myVisibleTargets.add(target);
+        }
+      }
+      init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
+    }
+
+    @NotNull
+    public String getTextFor(final SelectInTarget value) {
+      String text = value.toString();
+      int n = myVisibleTargets.indexOf(value);
+      return numberingText(n, text);
+    }
+
+    public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
+      if (finalChoice) {
+        target.selectIn(mySelectInContext, true);
+        return FINAL_CHOICE;
+      }
+      if (target == PROJECT_VIEW_FAKE_TARGET) {
+        return createProjectViewsStep(myVirtualFile);
+      }
+      return FINAL_CHOICE;
+    }
+
+    private PopupStep createProjectViewsStep(final VirtualFile virtualFile) {
+      return new SelectActionStep(myProjectViewTargets, mySelectInContext, virtualFile);
+    }
+
+    public boolean hasSubstep(final SelectInTarget selectedValue) {
+      if (selectedValue == PROJECT_VIEW_FAKE_TARGET) return true;
+      if (!(selectedValue instanceof ProjectViewSelectInTarget)) return false;
+      final ProjectViewSelectInTarget target = (ProjectViewSelectInTarget)selectedValue;
+      return target.getSubIds().length != 0;
+    }
+
+    public boolean isSelectable(final SelectInTarget target) {
+      return target.canSelect(mySelectInContext);
+    }
+
+    public boolean isMnemonicsNavigationEnabled() {
+      return true;
+    }
+  }
+
+  private static String numberingText(final int n, String text) {
+    if (n < 9) {
+      text = "&" + (n + 1) + ". " + text;
+    }
+    else if (n == 9) {
+      text = "&" + 0 + ". " + text;
+    }
+    else {
+      text = "&" + (char)('A' + n - 10) + ". " + text;
+    }
+    return text;
+  }
+
   private static class SelectActionStep extends BaseListPopupStep<SelectInTarget> {
     private final List<SelectInTarget> myTargets;
+
     private final SelectInContext mySelectInContext;
+
     private final VirtualFile myVirtualFile;
 
     public SelectActionStep(final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
       myTargets = targetVector;
       mySelectInContext = selectInContext;
       myVirtualFile = virtualFile;
-      init(IdeBundle.message("title.popup.select.target"),myTargets, null);
+      init(IdeBundle.message("select.in.title.project.view"), myTargets, null);
     }
 
     @NotNull
     public String getTextFor(final SelectInTarget value) {
-      String text = value.toString();
       int n = myTargets.indexOf(value);
-      if (n < 9) {
-        text = "&" + (n + 1) + ". " + text;
-      }
-      else if (n == 9) {
-        text = "&" + 0 + ". " + text;
-      }
-      else {
-        text = "&" + (char)('A' + n - 10) + ". " + text;
-      }
-      return text;
+      String text = value.toString();
+      return numberingText(n, text);
     }
 
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
@@ -90,12 +201,12 @@ public class SelectInAction extends AnAction {
         return FINAL_CHOICE;
       }
       if (hasSubstep(target)) {
-        return createSubStep((ProjectViewSelectInTarget)target,myVirtualFile);
+        return createSubIdsStep((ProjectViewSelectInTarget)target,myVirtualFile);
       }
       return FINAL_CHOICE;
     }
 
-    private PopupStep createSubStep(final ProjectViewSelectInTarget target, final VirtualFile virtualFile) {
+    private PopupStep createSubIdsStep(final ProjectViewSelectInTarget target, final VirtualFile virtualFile) {
       class SelectSubIdAction extends AnAction {
         private final String mySubId;
         public SelectSubIdAction(String subId, String presentableName) {
@@ -127,7 +238,8 @@ public class SelectInAction extends AnAction {
     public boolean hasSubstep(final SelectInTarget selectedValue) {
       if (!(selectedValue instanceof ProjectViewSelectInTarget)) return false;
       final ProjectViewSelectInTarget target = (ProjectViewSelectInTarget)selectedValue;
-      return target.getSubIds().length != 0;
+      String[] subIds = target.getSubIds();
+      return subIds != null && subIds.length != 0;
     }
 
     public boolean isSelectable(final SelectInTarget target) {

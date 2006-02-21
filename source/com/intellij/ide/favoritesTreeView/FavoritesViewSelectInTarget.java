@@ -46,18 +46,8 @@ public class FavoritesViewSelectInTarget extends ProjectViewSelectInTarget {
     return false;
   }
 
-  public String[] getSubIds() {
-    final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
-    return favoritesManager.getAvailableFavoritesLists();
-  }
-
-
   public boolean isSubIdSelectable(String subId, VirtualFile file) {
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
     return favoritesManager.contains(subId, file);
-  }
-
-  public String getSubIdPresentableName(String subId) {
-    return FavoritesProjectViewPane.getInstance(myProject).getPresentableSubIdName(subId);
   }
 }
