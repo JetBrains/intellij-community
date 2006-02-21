@@ -52,7 +52,7 @@ public class RunInspectionOnFileIntention implements IntentionAction {
       model.disableTool(entry.getShortName());
     }
     model.enableTool(myTool.getShortName());
-    model.setEditable(false);
+    model.setEditable(myTool.getDisplayName());
     managerEx.setExternalProfile((InspectionProfile)model);
     managerEx.RUN_WITH_EDITOR_PROFILE = false;
     managerEx.doInspections(new AnalysisScope(file));

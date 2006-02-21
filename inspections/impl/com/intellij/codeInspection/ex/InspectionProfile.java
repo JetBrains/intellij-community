@@ -29,4 +29,5 @@ public interface InspectionProfile extends Profile {
 
   boolean isEditable();  
 
+  String getDisplayName();
 }

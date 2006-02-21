@@ -65,7 +65,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String CLASS_TAG = "class";
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
-  private boolean myEditable = true;
+  private String myEnabledTool = null;
 
 //private String myBaseProfileName;
 
@@ -292,11 +292,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isEditable() {
-    return myEditable;
+    return myEnabledTool == null;
   }
 
-  public void setEditable(final boolean editable) {
-    myEditable = editable;
+  public String getDisplayName() {
+    return isEditable() ? getName() : myEnabledTool;
+  }
+
+  public void setEditable(final String displayName) {
+    myEnabledTool = displayName;
   }
 
   public void load() {

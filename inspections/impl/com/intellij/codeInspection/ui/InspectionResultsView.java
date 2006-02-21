@@ -16,10 +16,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +40,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,21 +192,44 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     add(mySplitter, BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new CloseAction());
     group.add(new RerunAction(this));
-    group.add(manager.createToggleAutoscrollAction());
-    group.add(manager.createGroupBySeverityAction());
+    group.add(new CloseAction());
+    final TreeExpander treeExpander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 0);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    group.add(actionsManager.createCollapseAllAction(treeExpander));
+    group.add(actionsManager.createExpandAllAction(treeExpander));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
+    group.add(manager.createToggleAutoscrollAction());
     group.add(new ExportHTMLAction(this));
-    group.add(new EditSettingsAction());
-    group.add(new InvokeQuickFixAction(this));
-    group.add(new SuppressInspectionToolbarAction(this));
     group.add(new HelpAction());
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION,
-                                                                                  group, false);
-    add(actionToolbar.getComponent(), BorderLayout.WEST);
+    JPanel westPanel = new JPanel(new BorderLayout());
+    westPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, group, false).getComponent(), BorderLayout.WEST);
+
+    DefaultActionGroup specialGroup = new DefaultActionGroup();
+    specialGroup.add(manager.createGroupBySeverityAction());
+    specialGroup.add(new EditSettingsAction());
+    specialGroup.add(new InvokeQuickFixAction(this));
+    specialGroup.add(new SuppressInspectionToolbarAction(this));
+    westPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent(), BorderLayout.EAST);
+
+    add(westPanel, BorderLayout.WEST);
   }
 
   public void dispose(){
@@ -410,7 +431,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   public String getCurrentProfileName() {
-    return myInspectionProfile != null && myInspectionProfile.isEditable() ? myInspectionProfile.getName() : null;
+    return myInspectionProfile != null ? myInspectionProfile.getDisplayName() : null;
   }
 
   public boolean update() {

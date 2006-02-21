@@ -59,5 +59,5 @@ public interface ModifiableModel extends Profile {
 
   boolean isExecutable();
 
-  void setEditable(boolean isEditable);
+  void setEditable(String toolDisplayName);
 }
