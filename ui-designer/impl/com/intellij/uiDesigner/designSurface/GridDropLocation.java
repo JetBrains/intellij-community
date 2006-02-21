@@ -12,7 +12,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-class GridDropLocation {
+class GridDropLocation implements DropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridDropLocation");
 
   protected RadContainer myContainer;
