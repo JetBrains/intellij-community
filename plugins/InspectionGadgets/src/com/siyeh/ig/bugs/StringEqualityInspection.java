@@ -87,9 +87,6 @@ public class StringEqualityInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
             final PsiExpression strippedRhs =
                     ParenthesesUtils.stripParentheses(rhs);
             if (strippedRhs == null) {

@@ -24,14 +24,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class MisspelledEqualsInspection extends MethodInspection {
-    private final RenameFix fix = new RenameFix("equals");
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("misspelled.equals.display.name");
+        return InspectionGadgetsBundle.message(
+                "misspelled.equals.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,11 +40,12 @@ public class MisspelledEqualsInspection extends MethodInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix(HardcodedMethodConstants.EQUALS);
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("misspelled.equals.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "misspelled.equals.problem.descriptor");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -68,7 +70,5 @@ public class MisspelledEqualsInspection extends MethodInspection {
             }
             registerMethodError(method);
         }
-
     }
-
 }

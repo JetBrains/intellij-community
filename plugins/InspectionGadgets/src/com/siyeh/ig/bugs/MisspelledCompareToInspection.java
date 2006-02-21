@@ -24,14 +24,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class MisspelledCompareToInspection extends MethodInspection {
-    private final RenameFix fix = new RenameFix("compareTo");
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("misspelled.compareto.display.name");
+        return InspectionGadgetsBundle.message(
+                "misspelled.compareto.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,11 +40,12 @@ public class MisspelledCompareToInspection extends MethodInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix(HardcodedMethodConstants.COMPARE_TO);
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("misspelled.compareto.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "misspelled.compareto.problem.descriptor");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -54,7 +56,8 @@ public class MisspelledCompareToInspection extends MethodInspection {
         return new MisspelledCompareToVisitor();
     }
 
-    private static class MisspelledCompareToVisitor extends BaseInspectionVisitor {
+    private static class MisspelledCompareToVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
@@ -68,8 +71,5 @@ public class MisspelledCompareToInspection extends MethodInspection {
             }
             registerMethodError(method);
         }
-
-
     }
-
 }

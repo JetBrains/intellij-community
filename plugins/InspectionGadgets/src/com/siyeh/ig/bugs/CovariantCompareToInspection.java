@@ -78,14 +78,13 @@ public class CovariantCompareToInspection extends MethodInspection {
             final PsiClassType[] implementsListTypes =
                     aClass.getImplementsListTypes();
             for(final PsiClassType implementedType : implementsListTypes){
-              if(implementedType.hasParameters()) {
-                final PsiClass resolved = implementedType.resolve();
-                    if (resolved != null &&
-                            "java.lang.Comparable".equals(
+                if(implementedType.hasParameters()) {
+                    final PsiClass resolved = implementedType.resolve();
+                    if (resolved != null && "java.lang.Comparable".equals(
                                     resolved.getQualifiedName())) {
-                  return;
+                        return;
+                    }
                 }
-              }
             }
             registerMethodError(method);
         }
@@ -103,7 +102,5 @@ public class CovariantCompareToInspection extends MethodInspection {
             final PsiType argType = parameters[0].getType();
             return TypeUtils.isJavaLangObject(argType);
         }
-
     }
-
 }

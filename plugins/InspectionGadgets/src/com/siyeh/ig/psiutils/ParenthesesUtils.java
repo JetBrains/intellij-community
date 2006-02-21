@@ -79,12 +79,11 @@ public class ParenthesesUtils{
 
     @Nullable
     public static PsiExpression stripParentheses(
-            @NotNull PsiExpression expression){
+            @Nullable PsiExpression expression){
         PsiExpression parenthesized = expression;
         while(parenthesized instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression)parenthesized;
-
             parenthesized = parenthesizedExpression.getExpression();
         }
         return parenthesized;

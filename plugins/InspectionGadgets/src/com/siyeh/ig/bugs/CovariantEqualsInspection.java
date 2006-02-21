@@ -91,7 +91,5 @@ public class CovariantEqualsInspection extends MethodInspection {
             final PsiType argType = parameters[0].getType();
             return TypeUtils.isJavaLangObject(argType);
         }
-
     }
-
 }

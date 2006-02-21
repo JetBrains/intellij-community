@@ -24,14 +24,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class MisspelledHashcodeInspection extends MethodInspection{
-    private final RenameFix fix = new RenameFix("hashCode");
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("misspelled.hashcode.display.name");
+        return InspectionGadgetsBundle.message(
+                "misspelled.hashcode.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -39,11 +40,12 @@ public class MisspelledHashcodeInspection extends MethodInspection{
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix(HardcodedMethodConstants.HASH_CODE);
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("misspelled.hashcode.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "misspelled.hashcode.problem.descriptor");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -55,8 +57,7 @@ public class MisspelledHashcodeInspection extends MethodInspection{
     }
 
     private static class MisspelledHashcodeVisitor
-                                                   extends BaseInspectionVisitor{
-
+            extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super
@@ -65,9 +66,6 @@ public class MisspelledHashcodeInspection extends MethodInspection{
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return;
-            }
             if(parameterList.getParameters().length != 0){
                 return;
             }

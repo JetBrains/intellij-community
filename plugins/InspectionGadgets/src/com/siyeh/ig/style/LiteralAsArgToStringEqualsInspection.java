@@ -76,9 +76,6 @@ public class LiteralAsArgToStringEqualsInspection
             final String methodName = methodExpression.getReferenceName();
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression arg = argumentList.getExpressions()[0];
-            if (target == null) {
-                return;
-            }
             final PsiExpression strippedTarget =
                     ParenthesesUtils.stripParentheses(target);
             if (strippedTarget == null) {

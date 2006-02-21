@@ -20,22 +20,18 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nullable;
 
 class ConcreteClassUtil {
+
     private ConcreteClassUtil() {
         super();
     }
 
-    public static boolean typeIsConcreteClass(@Nullable PsiTypeElement typeElement) {
+    public static boolean typeIsConcreteClass(
+            @Nullable PsiTypeElement typeElement) {
         if (typeElement == null) {
             return false;
         }
         final PsiType type = typeElement.getType();
-        if (type == null) {
-            return false;
-        }
         final PsiType baseType = type.getDeepComponentType();
-        if (baseType == null) {
-            return false;
-        }
         if (!(baseType instanceof PsiClassType)) {
             return false;
         }
@@ -43,11 +39,11 @@ class ConcreteClassUtil {
         if (aClass == null) {
             return false;
         }
-        if (aClass.isInterface() || aClass.isEnum()|| aClass.isAnnotationType()) {
+        if (aClass.isInterface() || aClass.isEnum()||
+                aClass.isAnnotationType()) {
             return false;
         }
-        if(aClass instanceof PsiTypeParameter)
-        {
+        if(aClass instanceof PsiTypeParameter) {
             return false;
         }
         return !LibraryUtil.classIsInLibrary(aClass);

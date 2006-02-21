@@ -24,14 +24,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public class MisspelledToStringInspection extends MethodInspection {
-    private final RenameFix fix = new RenameFix("toString");
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("misspelled.tostring.display.name");
+        return InspectionGadgetsBundle.message(
+                "misspelled.tostring.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -39,7 +40,7 @@ public class MisspelledToStringInspection extends MethodInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix(HardcodedMethodConstants.TO_STRING);
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -47,14 +48,16 @@ public class MisspelledToStringInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("misspelled.tostring.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "misspelled.tostring.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new MisspelledToStringVisitor();
     }
 
-    private static class MisspelledToStringVisitor extends BaseInspectionVisitor {
+    private static class MisspelledToStringVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
@@ -68,7 +71,5 @@ public class MisspelledToStringInspection extends MethodInspection {
             }
             registerMethodError(method);
         }
-
     }
-
 }

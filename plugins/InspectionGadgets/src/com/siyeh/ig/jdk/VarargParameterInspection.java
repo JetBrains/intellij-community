@@ -20,10 +20,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VarargParameterInspection extends MethodInspection {
 
@@ -38,6 +43,23 @@ public class VarargParameterInspection extends MethodInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.JDK_GROUP_NAME;
+    }
+
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new VarargParameterFix();
+    }
+
+    private static class VarargParameterFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return "Change variable argument parameter to array parameter";
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+        }
     }
 
     public String buildErrorString(PsiElement location) {

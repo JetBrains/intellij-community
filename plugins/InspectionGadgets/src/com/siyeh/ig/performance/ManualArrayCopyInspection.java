@@ -125,9 +125,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final PsiExpression lArray = lhs.getArrayExpression();
             final String toArrayText = lArray.getText();
             final PsiExpression rExpression = assignment.getRExpression();
-            if (rExpression == null) {
-                return null;
-            }
             final PsiArrayAccessExpression rhs = (PsiArrayAccessExpression)
                     ParenthesesUtils.stripParentheses(rExpression);
             if (rhs == null) {
@@ -249,7 +246,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 }
             }
             final PsiExpression condition = forStatement.getCondition();
-            if (condition == null || !isComparison(condition, var)) {
+            if (!isComparison(condition, var)) {
                 return;
             }
             final PsiStatement update = forStatement.getUpdate();
@@ -284,10 +281,10 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             return false;
         }
 
-        private static boolean expressionIsArrayMove(PsiExpression exp,
+        private static boolean expressionIsArrayMove(PsiExpression expression,
                                                      PsiLocalVariable var) {
             final PsiExpression strippedExpression =
-                    ParenthesesUtils.stripParentheses(exp);
+                    ParenthesesUtils.stripParentheses(expression);
             if (strippedExpression == null) {
                 return false;
             }
@@ -354,10 +351,11 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             }
             final PsiExpressionStatement expressionStatement =
                     (PsiExpressionStatement)statement;
-            PsiExpression exp = expressionStatement.getExpression();
-            exp = ParenthesesUtils.stripParentheses(exp);
-            if (exp instanceof PsiPrefixExpression) {
-                final PsiPrefixExpression prefixExp = (PsiPrefixExpression)exp;
+            PsiExpression expression = expressionStatement.getExpression();
+            expression = ParenthesesUtils.stripParentheses(expression);
+            if (expression instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExp =
+                        (PsiPrefixExpression)expression;
                 final PsiJavaToken sign = prefixExp.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
@@ -366,9 +364,9 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 final PsiExpression operand = prefixExp.getOperand();
                 return expressionIsVariableLookup(operand, var);
             }
-            else if (exp instanceof PsiPostfixExpression) {
+            else if (expression instanceof PsiPostfixExpression) {
                 final PsiPostfixExpression postfixExp =
-                        (PsiPostfixExpression)exp;
+                        (PsiPostfixExpression)expression;
                 final PsiJavaToken sign = postfixExp.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
@@ -384,7 +382,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                                             PsiLocalVariable var) {
             final PsiExpression strippedCondition =
                     ParenthesesUtils.stripParentheses(condition);
-
             if (!(strippedCondition instanceof PsiBinaryExpression)) {
                 return false;
             }

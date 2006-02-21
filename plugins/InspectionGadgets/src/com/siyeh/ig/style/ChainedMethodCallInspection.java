@@ -17,112 +17,115 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ChainedMethodCallInspection extends ExpressionInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreFieldInitializations = true;
-  private final ChainedMethodCallFix fix = new ChainedMethodCallFix();
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_ignoreFieldInitializations = true;
 
-  public String getGroupDisplayName() {
-    return GroupNames.STYLE_GROUP_NAME;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new ChainedMethodCallVisitor();
-  }
-
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("chained.method.call.ignore.option"),
-      this, "m_ignoreFieldInitializations");
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  protected InspectionGadgetsFix buildFix(PsiElement location) {
-    return fix;
-  }
-
-  private static class ChainedMethodCallFix extends InspectionGadgetsFix {
-    public String getName() {
-      return InspectionGadgetsBundle.message("introduce.variable.quickfix");
+    public String getGroupDisplayName() {
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final RefactoringActionHandlerFactory factory =
-        RefactoringActionHandlerFactory.getInstance();
-      final RefactoringActionHandler introduceHandler =
-        factory.createIntroduceVariableHandler();
-      final PsiElement methodNameElement = descriptor.getPsiElement();
-      final PsiReferenceExpression methodCallExpression =
-        (PsiReferenceExpression)methodNameElement.getParent();
-      assert methodCallExpression != null;
-      final PsiExpression qualifier =
-        methodCallExpression.getQualifierExpression();
-      introduceHandler.invoke(project,
-                              new PsiElement[]{qualifier},
-                              null);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ChainedMethodCallVisitor();
     }
-  }
 
-  private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression reference = expression
-        .getMethodExpression();
-      if (reference == null) {
-        return;
-      }
-      final PsiExpression qualifier = reference.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      if (!isCallExpression(qualifier)) {
-        return;
-      }
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "chained.method.call.ignore.option"),
+                this, "m_ignoreFieldInitializations");
+    }
 
-      if (m_ignoreFieldInitializations) {
-        final PsiElement field = PsiTreeUtil
-          .getParentOfType(expression, PsiField.class);
-        if (field != null) {
-          return;
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+        return true;
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new ChainedMethodCallFix();
+    }
+
+    private static class ChainedMethodCallFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "introduce.variable.quickfix");
         }
-      }
-      registerMethodCallError(expression);
-    }
-  }
 
-  private static boolean isCallExpression(PsiExpression expression) {
-    if (expression instanceof PsiMethodCallExpression ||
-        expression instanceof PsiNewExpression) {
-      return true;
+        public void doFix(Project project, ProblemDescriptor descriptor) {
+            final RefactoringActionHandlerFactory factory =
+                    RefactoringActionHandlerFactory.getInstance();
+            final RefactoringActionHandler introduceHandler =
+                    factory.createIntroduceVariableHandler();
+            final PsiElement methodNameElement = descriptor.getPsiElement();
+            final PsiReferenceExpression methodCallExpression =
+                    (PsiReferenceExpression)methodNameElement.getParent();
+            assert methodCallExpression != null;
+            final PsiExpression qualifier =
+                    methodCallExpression.getQualifierExpression();
+            final DataManager dataManager = DataManager.getInstance();
+            final DataContext dataContext = dataManager.getDataContext();
+            introduceHandler.invoke(project,
+                    new PsiElement[]{qualifier},
+                    dataContext);
+        }
     }
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
-      final PsiExpression containedExpression =
-        parenthesizedExpression.getExpression();
-      return isCallExpression(containedExpression);
+
+    private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            final PsiReferenceExpression reference =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier = reference.getQualifierExpression();
+            if (qualifier == null) {
+                return;
+            }
+            if (!isCallExpression(qualifier)) {
+                return;
+            }
+            if (m_ignoreFieldInitializations) {
+                final PsiElement field =
+                        PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                if (field != null) {
+                    return;
+                }
+            }
+            registerMethodCallError(expression);
+        }
+
+        private boolean isCallExpression(PsiExpression expression) {
+            if (expression instanceof PsiMethodCallExpression ||
+                    expression instanceof PsiNewExpression) {
+                return true;
+            }
+            if (expression instanceof PsiParenthesizedExpression) {
+                final PsiParenthesizedExpression parenthesizedExpression =
+                        (PsiParenthesizedExpression)expression;
+                final PsiExpression containedExpression =
+                        parenthesizedExpression.getExpression();
+                return isCallExpression(containedExpression);
+            }
+            return false;
+        }
     }
-    return false;
-  }
 }

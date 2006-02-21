@@ -70,9 +70,6 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
                 @NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
-            if(rhs == null){
-                return;
-            }
             if(!ComparisonUtils.isEqualityComparison(expression)){
                 return;
             }

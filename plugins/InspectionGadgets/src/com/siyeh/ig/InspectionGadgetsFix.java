@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
-    private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
+    private static final Logger LOG =
+            Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
 
     //to appear in "Apply Fix" statement when multiple Quick Fixes exist
     public String getFamilyName() {
@@ -112,15 +113,20 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         PsiStatement newStatement;
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         if (PsiUtil.isInJspFile(statement)) {
-            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiManager.getProject());
-            JspFile file = PsiUtil.getJspFile(statement);
-            Document document = documentManager.getDocument(file);
-            TextRange textRange = statement.getTextRange();
-            document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), newStatementText);
+            final PsiDocumentManager documentManager =
+                    PsiDocumentManager.getInstance(psiManager.getProject());
+            final JspFile file = PsiUtil.getJspFile(statement);
+            final Document document = documentManager.getDocument(file);
+            final TextRange textRange = statement.getTextRange();
+            document.replaceString(textRange.getStartOffset(),
+                    textRange.getEndOffset(), newStatementText);
             documentManager.commitDocument(document);
-          JspxFileViewProvider viewProvider = file.getViewProvider();
-          PsiElement elementAt = viewProvider.findElementAt(textRange.getStartOffset(), StdLanguages.JAVA);
-            int endOffset = textRange.getStartOffset() + newStatementText.length();
+            final JspxFileViewProvider viewProvider = file.getViewProvider();
+            PsiElement elementAt =
+                    viewProvider.findElementAt(textRange.getStartOffset(),
+                            StdLanguages.JAVA);
+            final int endOffset = textRange.getStartOffset() +
+                    newStatementText.length();
             while(elementAt.getTextRange().getEndOffset() < endOffset ||
                     !(elementAt instanceof PsiStatement)) {
                 elementAt = elementAt.getParent();
@@ -131,9 +137,11 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             }
             newStatement = (PsiStatement) elementAt;
             styleManager.shortenClassReferences(newStatement);
-            styleManager.reformatRange(viewProvider.getPsi(viewProvider.getBaseLanguage()),
-                newStatement.getTextRange().getStartOffset(),
-                newStatement.getTextRange().getEndOffset());
+            final TextRange newTextRange = newStatement.getTextRange();
+            final PsiFile element = viewProvider.getPsi(
+                    viewProvider.getBaseLanguage());
+            styleManager.reformatRange(element, newTextRange.getStartOffset(),
+                newTextRange.getEndOffset());
         } else {
             final PsiElementFactory factory = psiManager.getElementFactory();
             newStatement = factory.createStatementFromText(newStatementText, statement);

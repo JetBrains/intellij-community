@@ -40,9 +40,6 @@ public class BoolUtils {
     private static PsiExpression getNegated(@NotNull PsiExpression expression) {
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) expression;
         final PsiExpression operand = prefixExp.getOperand();
-        if (operand == null) {
-            return null;
-        }
         return ParenthesesUtils.stripParentheses(operand);
     }
 

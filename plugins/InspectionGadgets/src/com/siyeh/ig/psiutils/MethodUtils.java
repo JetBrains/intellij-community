@@ -152,7 +152,7 @@ public class MethodUtils{
         final PsiField field = (PsiField) referent;
         final PsiType fieldType = field.getType();
         final PsiType returnType = method.getReturnType();
-        if(fieldType == null || returnType == null){
+        if(returnType == null){
             return null;
         }
         if(!fieldType.equalsToText(returnType.getCanonicalText())){
@@ -256,9 +256,6 @@ public class MethodUtils{
         }
         final PsiType fieldType = field.getType();
         final PsiType parameterType = ((PsiVariable) rReferent).getType();
-        if(fieldType == null || parameterType == null){
-            return null;
-        }
         if (fieldType.equalsToText(parameterType.getCanonicalText())) {
             return field;
         } else {

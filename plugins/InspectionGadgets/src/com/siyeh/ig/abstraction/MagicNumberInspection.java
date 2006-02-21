@@ -18,6 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -25,11 +26,10 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +54,7 @@ public class MagicNumberInspection extends ExpressionInspection {
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
     static {
-        for(String string : s_specialCaseLiteralArray){
+        for(String string : s_specialCaseLiteralArray) {
             s_specialCaseLiterals.add(string);
         }
     }
@@ -68,12 +68,15 @@ public class MagicNumberInspection extends ExpressionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("magic.number.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "magic.number.problem.descriptor");
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("magic.number.ignore.option.label"),
-                                              this, "m_ignoreInHashCode");
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "magic.number.ignore.option.label"),
+                this, "m_ignoreInHashCode");
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -110,7 +113,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (isDeclaredConstant(expression)) {
                 return;
             }
-            if(m_ignoreInHashCode){
+            if(m_ignoreInHashCode) {
                 final PsiMethod containingMethod =
                         PsiTreeUtil.getParentOfType(expression,
                                                     PsiMethod.class);
@@ -122,7 +125,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (parent instanceof PsiPrefixExpression) {
                 registerError(parent);
             } else {
-            registerError(expression);
+                registerError(expression);
             }
         }
 
