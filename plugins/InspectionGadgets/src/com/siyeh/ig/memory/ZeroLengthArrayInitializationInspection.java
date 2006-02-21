@@ -25,15 +25,16 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ZeroLengthArrayInitializationInspection extends ExpressionInspection {
-    private final IntroduceConstantFix fix = new IntroduceConstantFix();
+public class ZeroLengthArrayInitializationInspection
+        extends ExpressionInspection {
 
     public String getID(){
         return "ZeroLengthArrayAllocation";
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("array.allocation.zero.length.display.name");
+        return InspectionGadgetsBundle.message(
+                "array.allocation.zero.length.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +42,8 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("array.allocation.zero.length.problem.description");
+        return InspectionGadgetsBundle.message(
+                "array.allocation.zero.length.problem.description");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -49,21 +51,24 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new IntroduceConstantFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
-    private static class ZeroLengthArrayInitializationVisitor extends BaseInspectionVisitor {
+    private static class ZeroLengthArrayInitializationVisitor
+            extends BaseInspectionVisitor {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiExpression[] dimensions = expression.getArrayDimensions();
-            final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
+            final PsiArrayInitializerExpression arrayInitializer =
+                    expression.getArrayInitializer();
             if (arrayInitializer != null) {
-                final PsiExpression[] initializers = arrayInitializer.getInitializers();
+                final PsiExpression[] initializers =
+                        arrayInitializer.getInitializers();
                 if (initializers.length != 0) {
                     return;
                 }
@@ -83,6 +88,19 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
             registerError(expression);
         }
 
+        public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression expression) {
+            super.visitArrayInitializerExpression(expression);
+            final PsiExpression[] initializers = expression.getInitializers();
+            if (initializers.length > 0) {
+                return;
+            }
+            if (expression.getParent() instanceof PsiNewExpression) {
+                return;
+            }
+            registerError(expression);
+        }
+
         private static boolean isDeclaredConstant(PsiExpression expression) {
             final PsiField field =
                     PsiTreeUtil.getParentOfType(expression, PsiField.class);
@@ -92,7 +110,5 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
             return field.hasModifierProperty(PsiModifier.STATIC) &&
                     field.hasModifierProperty(PsiModifier.FINAL);
         }
-
     }
-
 }
