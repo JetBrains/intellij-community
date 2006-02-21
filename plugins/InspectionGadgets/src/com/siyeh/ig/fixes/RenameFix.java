@@ -16,17 +16,20 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 
 public class RenameFix extends InspectionGadgetsFix {
+
     private final String m_targetName;
 
     public RenameFix() {
@@ -41,9 +44,10 @@ public class RenameFix extends InspectionGadgetsFix {
 
     public String getName() {
         if (m_targetName == null) {
-            return InspectionGadgetsBundle.message("quickfix.rename");
+            return InspectionGadgetsBundle.message("rename.quickfix");
         } else {
-            return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
+            return InspectionGadgetsBundle.message("renameto.quickfix",
+                    m_targetName);
         }
     }
 
@@ -53,11 +57,17 @@ public class RenameFix extends InspectionGadgetsFix {
         if (m_targetName == null) {
             final RefactoringActionHandlerFactory factory =
                     RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler renameHandler = factory.createRenameHandler();
-            renameHandler.invoke(project, new PsiElement[]{elementToRename}, null);
+            final RefactoringActionHandler renameHandler =
+                    factory.createRenameHandler();
+            final DataManager dataManager = DataManager.getInstance();
+            final DataContext dataContext = dataManager.getDataContext();
+            renameHandler.invoke(project, new PsiElement[]{elementToRename},
+                    dataContext);
         } else {
-            final RefactoringFactory factory = RefactoringFactory.getInstance(project);
-            final RenameRefactoring renameRefactoring = factory.createRename(elementToRename, m_targetName);
+            final RefactoringFactory factory =
+                    RefactoringFactory.getInstance(project);
+            final RenameRefactoring renameRefactoring =
+                    factory.createRename(elementToRename, m_targetName);
             renameRefactoring.run();
         }
     }
