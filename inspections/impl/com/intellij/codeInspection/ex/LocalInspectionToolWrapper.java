@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,13 +28,13 @@ import java.util.*;
 public final class LocalInspectionToolWrapper extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
-  private LocalInspectionTool myTool;
+  @NotNull private final LocalInspectionTool myTool;
 
-  public LocalInspectionToolWrapper(LocalInspectionTool tool) {
+  public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
     myTool = tool;
   }
 
-  public LocalInspectionTool getTool() {
+  @NotNull public LocalInspectionTool getTool() {
     return myTool;
   }
 
@@ -202,5 +203,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
   public JComponent createOptionsPanel() {
     return myTool.createOptionsPanel();    
+  }
+
+  public void projectOpened(Project project) {
+    myTool.projectOpened(project);
+  }
+
+  public void projectClosed(Project project) {
+    myTool.projectClosed(project);
   }
 }

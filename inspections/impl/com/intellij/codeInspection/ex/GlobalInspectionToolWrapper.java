@@ -15,6 +15,7 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,29 +27,26 @@ import javax.swing.*;
  * Date: 28-Dec-2005
  */
 public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
-  private GlobalInspectionTool myGlobalInspectionTool;
+  @NotNull private GlobalInspectionTool myTool;
 
-  public GlobalInspectionToolWrapper(GlobalInspectionTool globalInspectionTool) {
-    myGlobalInspectionTool = globalInspectionTool;
+  public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
+    myTool = globalInspectionTool;
   }
-
 
   public void initialize(InspectionManagerEx manager) {
     super.initialize(manager);
-    final RefGraphAnnotator annotator = myGlobalInspectionTool.getAnnotator(getRefManager());
+    final RefGraphAnnotator annotator = myTool.getAnnotator(getRefManager());
     if (annotator != null) {
       ((RefManagerImpl)getRefManager()).registerGraphAnnotator(annotator);
     }
   }
 
   public void runInspection(final AnalysisScope scope) {
-    myGlobalInspectionTool.runInspection(scope, getManager(), getManager(), this);
+    myTool.runInspection(scope, getManager(), getManager(), this);
   }
 
-
-
   public boolean queryExternalUsagesRequests() {
-    return myGlobalInspectionTool.queryExternalUsagesRequests(getManager(), getManager(), this);
+    return myTool.queryExternalUsagesRequests(getManager(), getManager(), this);
   }
 
   @NotNull
@@ -57,44 +55,44 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return myGlobalInspectionTool.getDisplayName();
+    return myTool.getDisplayName();
   }
 
   public String getGroupDisplayName() {
-    return myGlobalInspectionTool.getGroupDisplayName();
+    return myTool.getGroupDisplayName();
   }
 
   @NonNls
   public String getShortName() {
-    return myGlobalInspectionTool.getShortName();
+    return myTool.getShortName();
   }
 
   public boolean isEnabledByDefault() {
-    return myGlobalInspectionTool.isEnabledByDefault();
+    return myTool.isEnabledByDefault();
   }
 
   public HighlightDisplayLevel getDefaultLevel() {
-    return myGlobalInspectionTool.getDefaultLevel();
+    return myTool.getDefaultLevel();
   }
 
   public void readSettings(Element element) throws InvalidDataException {
-    myGlobalInspectionTool.readSettings(element);
+    myTool.readSettings(element);
   }
 
   public void writeSettings(Element element) throws WriteExternalException {
-    myGlobalInspectionTool.writeSettings(element);
+    myTool.writeSettings(element);
   }
 
   public JComponent createOptionsPanel() {
-    return myGlobalInspectionTool.createOptionsPanel();    
+    return myTool.createOptionsPanel();
   }
 
   public boolean isGraphNeeded() {
-    return myGlobalInspectionTool.isGraphNeeded();
+    return myTool.isGraphNeeded();
   }
 
-  public GlobalInspectionTool getTool() {
-    return myGlobalInspectionTool;
+  @NotNull public GlobalInspectionTool getTool() {
+    return myTool;
   }
 
   public void processFile(final AnalysisScope analysisScope,
@@ -103,12 +101,19 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
                           final boolean filterSuppressed) {
     ((GlobalInspectionContext)manager).getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (filterSuppressed && ((GlobalInspectionContext)manager).isSuppressed(refEntity, myGlobalInspectionTool.getShortName())) return;
-        CommonProblemDescriptor[] descriptors = myGlobalInspectionTool.checkElement(refEntity, analysisScope, manager, (GlobalInspectionContext)manager);
+        if (filterSuppressed && ((GlobalInspectionContext)manager).isSuppressed(refEntity, myTool.getShortName())) return;
+        CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, (GlobalInspectionContext)manager);
         if (descriptors != null) {
           addProblemElement(refEntity, descriptors);
         }
       }
     });
+  }
+  public void projectOpened(Project project) {
+    myTool.projectOpened(project);
+  }
+
+  public void projectClosed(Project project) {
+    myTool.projectClosed(project);
   }
 }

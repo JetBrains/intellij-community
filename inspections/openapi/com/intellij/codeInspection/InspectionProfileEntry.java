@@ -84,15 +84,14 @@ public abstract class InspectionProfileEntry {
 
   /**
    * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation
-   * @param project
-
+   * @param project to be associated with this entry
    */
   public void projectOpened(Project project) {
   }
 
   /**
    * Cleanup inspection settings conserning with project. Is called on project closed for all profiles as well as on profile deletion
-   * @param project
+   * @param project to be disassociated from this entry
    */
   public void projectClosed(Project project) {
   }
