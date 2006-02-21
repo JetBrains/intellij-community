@@ -18,7 +18,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-class GridInsertLocation extends DropLocation {
+class GridInsertLocation extends GridDropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
 
   private static final int INSERT_ARROW_SIZE = 3;

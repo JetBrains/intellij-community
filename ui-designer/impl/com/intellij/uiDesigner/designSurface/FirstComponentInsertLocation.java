@@ -17,7 +17,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class FirstComponentInsertLocation extends DropLocation {
+public class FirstComponentInsertLocation extends GridDropLocation {
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
                                       final int column,

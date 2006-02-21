@@ -24,7 +24,7 @@ public class PasteProcessor extends EventProcessor {
   private PastedComponentList myPastedComponentList;
   private final GuiEditor myEditor;
   private final ArrayList<RadComponent> myComponentsToPaste;
-  private DropLocation myLastLocation;
+  private GridDropLocation myLastLocation;
   private int[] myDX;
   private int[] myDY;
   private int myMinRow;
@@ -93,12 +93,12 @@ public class PasteProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
-    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint(),
+    GridDropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint(),
                                                                 myPastedComponentList);
     doPaste(location);
   }
 
-  private void doPaste(final DropLocation location) {
+  private void doPaste(final GridDropLocation location) {
     if (location.canDrop(myPastedComponentList)) {
       RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
       location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
