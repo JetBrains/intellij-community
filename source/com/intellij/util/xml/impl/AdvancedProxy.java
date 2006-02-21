@@ -87,7 +87,7 @@ public class AdvancedProxy {
         return constructor;
       }
       catch (NoSuchMethodException e) {
-        throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));
+        throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs) + " in class " + aClass);
       }
     }
 
