@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.extapi.psi.PsiElementBase;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
@@ -51,5 +51,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   public PsiElement findElementAt(int offset) {
     return null;
+  }
+
+  public ASTNode getNode() {
+    return getSourceElement().getNode();
   }
 }

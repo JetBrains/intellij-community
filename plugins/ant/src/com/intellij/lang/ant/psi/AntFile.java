@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.extapi.psi.LightPsiFileBase;
+import com.intellij.extapi.psi.MetadataPsiFileBase;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -8,14 +8,15 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 
-public class AntFile extends LightPsiFileBase implements AntElement {
+public class AntFile extends MetadataPsiFileBase implements AntElement {
 
   private AntProject myProject;
 
   public AntFile(final FileViewProvider viewProvider) {
-    super(viewProvider, AntSupport.getFileType().getLanguage() );
+    super(viewProvider, AntSupport.getLanguage());
   }
 
   @NotNull
@@ -25,7 +26,7 @@ public class AntFile extends LightPsiFileBase implements AntElement {
 
   @NotNull
   public PsiElement[] getChildren() {
-    return new PsiElement[] {  };
+    return new PsiElement[]{};
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -39,9 +40,9 @@ public class AntFile extends LightPsiFileBase implements AntElement {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public AntProject getAntProject() {
-    if( myProject == null ) {
-      final XmlFile xmlFile = (XmlFile)getManager().getElementFactory().createFileFromText("fake.xml", StdFileTypes.XML, getText());
-      myProject = new AntProjectImpl(xmlFile);
+    if (myProject == null) {
+      setSourceFile(getManager().getElementFactory().createFileFromText("fake.xml", StdFileTypes.XML, getText()));
+      myProject = new AntProjectImpl((XmlFile)getSourceFile());
     }
     return myProject;
   }

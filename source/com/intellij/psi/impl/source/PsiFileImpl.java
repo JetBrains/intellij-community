@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
-  private final IElementType myElementType;
-  protected final IElementType myContentElementType;
+  private IElementType myElementType;
+  protected IElementType myContentElementType;
 
   public PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
@@ -35,10 +35,20 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
-    myElementType = elementType;
-    myContentElementType = contentElementType;
+    init(elementType, contentElementType);
     myViewProvider = provider;
   }
+
+  protected PsiFileImpl( FileViewProvider provider ) {
+    super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
+    myViewProvider = provider;
+  }
+
+  protected void init(final IElementType elementType, final IElementType contentElementType) {
+    myElementType = elementType;
+    myContentElementType = contentElementType;
+  }
+
 
   public TreeElement createContentLeafElement(final char[] text, final int startOffset, final int endOffset, final CharTable table) {
     return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, table);

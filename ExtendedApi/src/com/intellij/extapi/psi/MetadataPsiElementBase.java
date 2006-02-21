@@ -1,15 +1,15 @@
 package com.intellij.extapi.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class MetadataPsiElementBase extends PsiElementBase{
+public abstract class MetadataPsiElementBase extends PsiElementBase {
 
   private final PsiElement mySourceElement;
 
-  public MetadataPsiElementBase( PsiElement sourceElement ) {
+  public MetadataPsiElementBase(PsiElement sourceElement) {
     mySourceElement = sourceElement;
   }
 
@@ -41,10 +41,6 @@ public abstract class MetadataPsiElementBase extends PsiElementBase{
 
   public boolean textContains(char c) {
     return mySourceElement.textContains(c);
-  }
-
-  public ASTNode getNode() {
-    return null;
   }
 
   public PsiElement getSourceElement() {
