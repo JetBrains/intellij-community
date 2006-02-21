@@ -18,9 +18,10 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.lang.reflect.Array;
+import java.util.*;
 
 public class ContainerUtil {
   public static List mergeSortedLists(List list1, List list2, Comparator comparator, boolean mergeEqualItems){
@@ -126,6 +127,7 @@ public class ContainerUtil {
     return -1;
   }
 
+  @Nullable
   public static <T> T find(Object[] array, Condition<T> condition) {
     for (Object anArray : array) {
       T element = (T)anArray;
@@ -143,10 +145,12 @@ public class ContainerUtil {
     return true;
   }
 
+  @Nullable
   public static <T> T find(Iterable<? extends T> iterable, Condition<T> condition) {
     return find(iterable.iterator(), condition);
   }
 
+  @Nullable
   public static <T> T find(Iterable<? extends T> iterable, final T equalTo) {
     return find(iterable, new Condition<T>() {
       public boolean value(final T object) {
@@ -155,6 +159,7 @@ public class ContainerUtil {
     });
   }
 
+  @Nullable
   public static <T> T find(Iterator<? extends T> iterator, Condition<T> condition) {
     while (iterator.hasNext()) {
       T value = iterator.next();
