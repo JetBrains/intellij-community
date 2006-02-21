@@ -42,10 +42,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) &&
           superMethod.getManager().isInProject(superMethod)) {
-        superMethod = SuperMethodWarningUtil.checkSuperMethod(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
-        if (superMethod != null && superMethod != method) {
-          annotateMethod(superMethod);
+        final PsiMethod[] superMethods =
+          SuperMethodWarningUtil.checkSuperMethods(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
+        for (final PsiMethod psiMethod : superMethods) {
+          if (psiMethod != null && psiMethod != method) {
+            annotateMethod(psiMethod);
+          }
         }
+
+
         break;
       }
     }

@@ -60,13 +60,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     if (checkSuperMethods) {
       for (PsiElement element : temptoDelete) {
         if (element instanceof PsiMethod) {
-          final PsiMethod deepestSuperMethod = ((PsiMethod) element).findDeepestSuperMethod();
-          if (!elementsSet.contains(deepestSuperMethod)) {
-            final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod((PsiMethod) element,
-                RefactoringBundle.message("to.delete.with.usage.search"));
-            if (method == null) return;
-            fullElementsSet.add(method);
-          }
+          final PsiMethod[] methods =
+            SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"), elementsSet);
+          if (methods.length == 0) return;
+          fullElementsSet.addAll(Arrays.asList(methods));
         } else
         if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
           PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();

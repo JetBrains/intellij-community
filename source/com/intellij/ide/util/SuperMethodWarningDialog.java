@@ -15,7 +15,7 @@ import java.awt.event.ActionEvent;
 class SuperMethodWarningDialog extends DialogWrapper {
   public static final int NO_EXIT_CODE=NEXT_USER_EXIT_CODE+1;
   private String myName;
-  private String myClassName;
+  private String[] myClassNames;
   private String myActionString;
   private boolean myIsSuperAbstract;
   private boolean myIsParentInterface;
@@ -23,15 +23,14 @@ class SuperMethodWarningDialog extends DialogWrapper {
 
   public SuperMethodWarningDialog(Project project,
                                   String name,
-                                  String className,
                                   String actionString,
                                   boolean isSuperAbstract,
                                   boolean isParentInterface,
-                                  boolean isContainedInInterface
-  ) {
+                                  boolean isContainedInInterface,
+                                  String... classNames) {
     super(project, true);
     myName = name;
-    myClassName = className;
+    myClassNames = classNames;
     myActionString = actionString;
     myIsSuperAbstract = isSuperAbstract;
     myIsParentInterface = isParentInterface;
@@ -54,20 +53,23 @@ class SuperMethodWarningDialog extends DialogWrapper {
       JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
       panel.add(iconLabel, BorderLayout.WEST);
     }
-    JPanel labelsPanel = new JPanel(new GridLayout(3, 1, 0, 0));
+    JPanel labelsPanel = new JPanel(new GridLayout(0, 1, 0, 0));
     labelsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     String classType = (myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class"));
     String methodString = IdeBundle.message("element.method");
     labelsPanel.add(new JLabel(IdeBundle.message("label.method", myName)));
-    if (myIsContainedInInterface || !myIsSuperAbstract){
-      labelsPanel.add(new JLabel(IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, myClassName)));
+    if (myClassNames.length == 1) {
+      final String className = myClassNames[0];
+      labelsPanel.add(new JLabel(myIsContainedInInterface || !myIsSuperAbstract
+                                 ? IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
+                                 : IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className)));
+    } else {
+      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method.of_interfaces")));
+      for (final String className : myClassNames) {
+        labelsPanel.add(new JLabel("    " + className));
+      }
     }
-    else{
-      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, myClassName)));
-    }
-    String fromClassType = (myIsParentInterface ? IdeBundle.message("element.from.interface") : IdeBundle.message("element.from.base.class"));
-    String s = IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, methodString, fromClassType);
-    labelsPanel.add(new JLabel(s));
+    labelsPanel.add(new JLabel(IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, myClassNames.length > 1 ? 2 : 1)));
     panel.add(labelsPanel, BorderLayout.CENTER);
     return panel;
   }

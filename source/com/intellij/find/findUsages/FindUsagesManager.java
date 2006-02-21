@@ -217,9 +217,16 @@ public class FindUsagesManager implements JDOMExternalizable{
       isOpenInNewTabEnabled = (UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0);
     }
 
+    final String actionString = FindBundle.message("find.super.method.warning.action.verb");
     if (psiElement instanceof PsiMethod) {
-      psiElement = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)psiElement,
-                                                           FindBundle.message("find.super.method.warning.action.verb"));
+      final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)psiElement, actionString);
+      if (methods.length > 1) {
+        elementsToSearch = methods;
+      } else if (methods.length == 1) {
+        psiElement = methods[0];
+      } else {
+        return;
+      }
     }
 
     if (psiElement == null) {
@@ -293,20 +300,11 @@ public class FindUsagesManager implements JDOMExternalizable{
                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             if (getter != null) {
-              getter = SuperMethodWarningUtil.checkSuperMethod(getter, FindBundle.message("find.super.method.warning.action.verb"));
-              if (getter == null) {
-                return;
-              }
-              elements.add(getter);
+              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, actionString)));
             }
             if (setter != null) {
-              setter = SuperMethodWarningUtil.checkSuperMethod(setter, FindBundle.message("find.super.method.warning.action.verb"));
-              if (setter == null) {
-                return;
-              }
-              elements.add(setter);
+              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(setter, actionString)));
             }
-
             secondaryElementsToSearch = elements.toArray(new PsiElement[elements.size()]);
           }
         }
