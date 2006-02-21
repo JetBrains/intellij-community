@@ -66,9 +66,9 @@ public abstract class LogConsole extends JPanel implements Disposable{
 
   private JComponent createToolbar(){
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new FilterAction(LogConsolePreferences.INFO, IconLoader.getIcon("/ant/filterInfo.png.png")));
-    group.add(new FilterAction(LogConsolePreferences.WARNING, IconLoader.getIcon("/ant/filterWarning.png.png")));
-    group.add(new FilterAction(LogConsolePreferences.ERROR, IconLoader.getIcon("/ant/filterError.png.png")));
+    group.add(new FilterAction(LogConsolePreferences.INFO, IconLoader.getIcon("/ant/filterInfo.png")));
+    group.add(new FilterAction(LogConsolePreferences.WARNING, IconLoader.getIcon("/ant/filterWarning.png")));
+    group.add(new FilterAction(LogConsolePreferences.ERROR, IconLoader.getIcon("/ant/filterError.png")));
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
