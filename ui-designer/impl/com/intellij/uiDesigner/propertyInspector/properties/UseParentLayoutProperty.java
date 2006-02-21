@@ -23,7 +23,7 @@ public class UseParentLayoutProperty extends Property {
   private BooleanEditor myEditor = new BooleanEditor();
 
   public UseParentLayoutProperty() {
-    super(null, "Use Parent Layout");
+    super(null, "Align Grid with Parent");
   }
 
   public Object getValue(RadComponent component) {
