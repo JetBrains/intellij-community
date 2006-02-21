@@ -16,13 +16,13 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.intellij.util.Processor;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -48,7 +48,8 @@ public class VarargParameterInspection extends MethodInspection {
 
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new VarargParameterFix();
+        //return new VarargParameterFix();
+        return null;
     }
 
     private static class VarargParameterFix extends InspectionGadgetsFix {
@@ -59,6 +60,45 @@ public class VarargParameterInspection extends MethodInspection {
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiMethod method = (PsiMethod)element.getParent();
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+
+            final Query<PsiReference> query = ReferencesSearch.search(method);
+            query.forEach(new Processor<PsiReference>() {
+                public boolean process(PsiReference reference) {
+                    final PsiReferenceExpression referenceExpression =
+                            (PsiReferenceExpression)reference.getElement();
+                    final PsiMethodCallExpression methodCallExpression =
+                            (PsiMethodCallExpression)
+                                    referenceExpression.getParent();
+                    final PsiExpressionList argumentList =
+                            methodCallExpression.getArgumentList();
+                    final PsiExpression[] arguments =
+                            argumentList.getExpressions();
+                    for (PsiExpression argument : arguments) {
+                        System.out.println(argument);
+                    }
+                    return true;
+                }
+            });
+
+            final PsiParameter lastParameter =
+                    parameters[parameters.length - 1];
+            if (lastParameter.isVarArgs()) {
+                final PsiEllipsisType type =
+                        (PsiEllipsisType)lastParameter.getType();
+                final PsiType arrayType = type.toArrayType();
+                final PsiManager psiManager = lastParameter.getManager();
+                final PsiElementFactory factory =
+                        psiManager.getElementFactory();
+                final PsiTypeElement newTypeElement =
+                        factory.createTypeElement(arrayType);
+                final PsiTypeElement typeElement =
+                        lastParameter.getTypeElement();
+                typeElement.replace(newTypeElement);
+            }
         }
     }
 
@@ -76,14 +116,13 @@ public class VarargParameterInspection extends MethodInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
+            if (parameters.length < 1) {
                 return;
             }
-            for(final PsiParameter parameter : parameters){
-                if(parameter.isVarArgs()){
-                    registerMethodError(method);
-                    return;
-                }
+            final PsiParameter lastParameter =
+                    parameters[parameters.length - 1];
+            if (lastParameter.isVarArgs()) {
+                registerMethodError(method);
             }
         }
     }
