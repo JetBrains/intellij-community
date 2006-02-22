@@ -171,6 +171,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       myResizeLine = myIsRow
                      ? layout.getHorizontalGridLineNear(pnt.y, 4)
                      : layout.getVerticalGridLineNear(pnt.x, 4);
+      
+      checkShowPopupMenu(e);
     }
 
     @Override public void mouseClicked(MouseEvent e) {
@@ -215,6 +217,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         myResizeLine = -1;
       }
 
+      checkShowPopupMenu(e);
+    }
+
+    private void checkShowPopupMenu(final MouseEvent e) {
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
