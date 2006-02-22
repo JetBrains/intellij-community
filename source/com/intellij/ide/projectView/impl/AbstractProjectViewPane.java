@@ -238,21 +238,33 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-        Object userObject = node.getUserObject();
-        if (userObject instanceof AbstractTreeNode) {
-          AbstractTreeNode descriptor = (AbstractTreeNode)userObject;
-          Object element = descriptor.getValue();
+        Object element = exhumeElementFromNode(node);
+        if (element != null) {
           list.add(element);
         }
-        else if (userObject instanceof NodeDescriptor) {
-          NodeDescriptor descriptor = (NodeDescriptor)userObject;
-          Object element = descriptor.getElement();
-          list.add(element);
-        }
-
       }
     }
     return list.toArray(new Object[list.size()]);
+  }
+
+  protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
+    Object userObject = node.getUserObject();
+    Object element = null;
+    if (userObject instanceof AbstractTreeNode) {
+      AbstractTreeNode descriptor = (AbstractTreeNode)userObject;
+      element = descriptor.getValue();
+    }
+    else if (userObject instanceof NodeDescriptor) {
+      NodeDescriptor descriptor = (NodeDescriptor)userObject;
+      element = descriptor.getElement();
+      if (element instanceof AbstractTreeNode) {
+        element = ((AbstractTreeNode)element).getValue();
+      }
+    }
+    else if (userObject != null) {
+      element = userObject;
+    }
+    return element;
   }
 
   public BaseProjectTreeBuilder getTreeBuilder() {

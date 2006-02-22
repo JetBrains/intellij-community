@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ClassTreeNode extends BasePsiNode<PsiClass>{
   public ClassTreeNode(Project project, PsiClass value, ViewSettings viewSettings) {
@@ -26,9 +25,8 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
 
     ArrayList<PsiElement> result = new ArrayList<PsiElement>();
     if (getSettings().isShowMembers()) {
-      PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren((PsiClass)parent, result);
-      for (Iterator<PsiElement> iterator = result.iterator(); iterator.hasNext();) {
-        PsiElement psiElement = iterator.next();
+      PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
+      for (PsiElement psiElement : result) {
         psiElement.accept(new PsiElementVisitor() {
           public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassTreeNode(getProject(), aClass, getSettings()));

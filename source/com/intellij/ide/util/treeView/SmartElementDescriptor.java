@@ -1,6 +1,5 @@
 package com.intellij.ide.util.treeView;
 
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
     if (isMarkModified() ){
       color = FileStatusManager.getInstance(myProject).getStatus(myElement.getContainingFile().getVirtualFile()).getColor();
     }
-    if (((CopyPasteManagerEx)CopyPasteManager.getInstance()).isCutElement(myElement)) {
+    if (CopyPasteManager.getInstance().isCutElement(myElement)) {
       color = CopyPasteManager.CUT_COLOR;
     }
 

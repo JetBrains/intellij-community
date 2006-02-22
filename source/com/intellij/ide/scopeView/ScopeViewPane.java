@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -192,4 +193,10 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
     myDependencyValidationManager.removeScopeListener(myScopeListener);
   }
 
+  protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
+    if (node instanceof PackageDependenciesNode) {
+      return ((PackageDependenciesNode)node).getPsiElement();
+    }
+    return super.exhumeElementFromNode(node);
+  }
 }
