@@ -33,8 +33,8 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlTag[] EMPTY = new XmlTag[0];
 
   @NotNull @NonNls String getName();
-  @NonNls String getNamespace();
-  @NonNls String getLocalName();
+  @NotNull @NonNls String getNamespace();
+  @NotNull @NonNls String getLocalName();
 
   @Nullable XmlElementDescriptor getDescriptor();
 

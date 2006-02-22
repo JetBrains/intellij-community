@@ -417,6 +417,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return null;
   }
 
+  @NotNull
   public String getNamespace() {
     return getNamespaceByPrefix(getNamespacePrefix());
   }
@@ -509,6 +510,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
+  @NotNull
   public String getLocalName() {
     final String name = getName();
     return name.substring(name.indexOf(':') + 1);

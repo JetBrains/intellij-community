@@ -77,6 +77,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return super.getAttributeValue(name, namespace);
   }
 
+  @NotNull
   public String getNamespace() {
     if(getNamespacePrefix().length() == 0)
       return XmlUtil.HTML_URI;
