@@ -518,6 +518,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return myHaveNamespaceDeclarations;
   }
 
+  @NotNull
   public Map<String, String> getLocalNamespaceDeclarations() {
     Map<String, String> namespaces = new HashMap<String, String>();
     for (final XmlAttribute attribute : getAttributes()) {
