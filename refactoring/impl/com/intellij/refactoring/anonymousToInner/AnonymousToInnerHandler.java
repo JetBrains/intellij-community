@@ -11,9 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,11 +22,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.jetbrains.annotations.NonNls;
+
+import java.util.*;
 
 public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler");
@@ -156,7 +153,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     newExpr.replace(newClassExpression);
   }
 
-  private PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
+  private static PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
       if (element instanceof PsiAnonymousClass) {
@@ -216,8 +213,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
       }
       final HasExplicitThis hasExplicitThis = new HasExplicitThis();
-      ((PsiNewExpression) myAnonClass.getParent()).getArgumentList().accept(hasExplicitThis);
-      cachedNeedsThis = new Boolean(memberNeedsThis.usesMembers() || hasExplicitThis.hasExplicitThis);
+      PsiExpressionList argList = myAnonClass.getArgumentList();
+      if (argList != null) argList.accept(hasExplicitThis);
+      cachedNeedsThis = memberNeedsThis.usesMembers() || hasExplicitThis.hasExplicitThis;
     }
     return cachedNeedsThis.booleanValue();
   }
@@ -267,12 +265,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
     PsiJavaCodeReferenceElement baseClassRef = myAnonClass.getBaseClassReference();
     PsiClass baseClass = (PsiClass)baseClassRef.resolve();
-    if (baseClass != null && baseClass.isInterface()) {
-      aClass.getImplementsList().add(baseClassRef);
-    }
-    else {
-      aClass.getExtendsList().add(baseClassRef);
-    }
+    PsiReferenceList refList = baseClass != null && baseClass.isInterface() ?
+                               aClass.getImplementsList() :
+                               aClass.getExtendsList();
+    if (refList != null) refList.add(baseClassRef);
 
     renameReferences(myAnonClass);
     copyClassBody(myAnonClass, aClass, myVariableInfos.length > 0);
@@ -281,8 +277,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       createFields(aClass);
     }
 
-    PsiExpressionList exprList = newExpression.getArgumentList();
-    PsiExpression[] originalExpressions = exprList.getExpressions();
+    PsiExpressionList argList = newExpression.getArgumentList();
+    assert argList != null;
+    PsiExpression[] originalExpressions = argList.getExpressions();
     final PsiReferenceList superConstructorThrowsList =
             superConstructor != null && superConstructor.getThrowsList().getReferencedTypes().length > 0
             ? superConstructor.getThrowsList()
@@ -318,25 +315,45 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void appendInitializers(final PsiMethod constructor) throws IncorrectOperationException {
-    final PsiClassInitializer[] initializers = myAnonClass.getInitializers();
-    for (PsiClassInitializer initializer : initializers) {
+    PsiCodeBlock constructorBody = constructor.getBody();
+    assert constructorBody != null;
+
+    List<PsiElement> toAdd = new ArrayList<PsiElement>();
+    for (PsiClassInitializer initializer : myAnonClass.getInitializers()) {
       if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiCodeBlock body = initializer.getBody();
-        if (body != null) {
-          PsiElement firstBodyElement = body.getFirstBodyElement();
-          if (firstBodyElement != null) {
-            constructor.getBody().addRange(firstBodyElement, body.getLastBodyElement());
-          }
-        }
+        toAdd.add(initializer);
       }
     }
-    final PsiField[] fields = myAnonClass.getFields();
-    for (PsiField field : fields) {
+    for (PsiField field : myAnonClass.getFields()) {
       if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null) {
+        toAdd.add(field);
+      }
+    }
+
+    Collections.sort(toAdd, new Comparator<PsiElement>() {
+      public int compare(PsiElement e1, PsiElement e2) {
+        return e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset();
+      }
+    });
+
+    for (PsiElement element : toAdd) {
+      if (element instanceof PsiClassInitializer) {
+        PsiClassInitializer initializer = (PsiClassInitializer) element;
+        final PsiCodeBlock initializerBody = initializer.getBody();
+        PsiElement firstBodyElement = initializerBody.getFirstBodyElement();
+        if (firstBodyElement != null) {
+          constructorBody.addRange(firstBodyElement, initializerBody.getLastBodyElement());
+        }
+      } else {
+        PsiField field = (PsiField) element;
         final PsiExpressionStatement statement = (PsiExpressionStatement)myManager.getElementFactory()
           .createStatementFromText(field.getName() + "= 0;", null);
-        ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(field.getInitializer());
-        constructor.getBody().add(statement);
+        PsiExpression rightExpression = ((PsiAssignmentExpression) statement.getExpression()).getRExpression();
+        assert rightExpression != null;
+        PsiExpression fieldInitializer = field.getInitializer();
+        assert fieldInitializer != null;
+        rightExpression.replace(fieldInitializer);
+        constructorBody.add(statement);
       }
     }
   }
@@ -355,8 +372,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
         final PsiField[] fields = targetClass.getFields();
         for (PsiField field : fields) {
-          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null) {
-            field.getInitializer().delete();
+          PsiExpression initializer = field.getInitializer();
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && initializer != null) {
+            initializer.delete();
           }
         }
       }
@@ -396,13 +414,15 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(text, null);
         statement = (PsiExpressionStatement)CodeStyleManager.getInstance(myProject).reformat(statement);
         // in order for "..." trick to work, the statement must be added to constructor first
-        statement = (PsiExpressionStatement)constructor.getBody().add(statement);
+        PsiCodeBlock constructorBody = constructor.getBody();
+        assert constructorBody != null;
+        statement = (PsiExpressionStatement)constructorBody.add(statement);
 
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
         PsiReferenceExpression rExpr = (PsiReferenceExpression)assignment.getRExpression();
-        PsiIdentifier identifier = (PsiIdentifier)rExpr.getReferenceNameElement();
+        assert rExpr != null;
         if (info.passAsParameter) {
-          identifier.replace(factory.createIdentifier(info.parameterName));
+          rExpr.replace(factory.createExpressionFromText(info.parameterName, null));
         }
         else {
           TextRange range = rExpr.getTextRange();
@@ -414,23 +434,21 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void renameReferences(PsiElement scope) throws IncorrectOperationException {
-    PsiSearchHelper helper = myManager.getSearchHelper();
     PsiElementFactory factory = myManager.getElementFactory();
     for (VariableInfo info : myVariableInfos) {
-      PsiReference[] references = helper.findReferences(info.variable, new LocalSearchScope(scope), false);
-      if (references.length > 0) {
-        for (PsiReference reference : references) {
-          PsiElement ref = reference.getElement();
-          PsiIdentifier identifier = (PsiIdentifier)((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
-          boolean renameToFieldName = !isUsedInInitializer(ref);
-          PsiIdentifier newNameIdentifier = factory.createIdentifier(renameToFieldName ? info.fieldName : info.parameterName);
-          if (renameToFieldName) {
+      Collection<PsiReference> references = ReferencesSearch.search(info.variable, new LocalSearchScope(scope)).findAll();
+      for (PsiReference reference : references) {
+        PsiElement ref = reference.getElement();
+        PsiIdentifier identifier = (PsiIdentifier)((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
+        assert identifier != null;
+        boolean renameToFieldName = !isUsedInInitializer(ref);
+        PsiIdentifier newNameIdentifier = factory.createIdentifier(renameToFieldName ? info.fieldName : info.parameterName);
+        if (renameToFieldName) {
+          identifier.replace(newNameIdentifier);
+        }
+        else {
+          if (info.passAsParameter) {
             identifier.replace(newNameIdentifier);
-          }
-          else {
-            if (info.passAsParameter) {
-              identifier.replace(newNameIdentifier);
-            }
           }
         }
       }
@@ -439,6 +457,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private void createSuperStatement(PsiMethod constructor, PsiExpression[] paramExpressions) throws IncorrectOperationException {
     PsiCodeBlock body = constructor.getBody();
+    assert body != null;
     final PsiElementFactory factory = constructor.getManager().getElementFactory();
 
     PsiStatement statement = factory.createStatementFromText("super();", null);
@@ -453,7 +472,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       final PsiThisExpression qualifiedThis =
         (PsiThisExpression) factory.createExpressionFromText("A.this", null);
       final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-      qualifiedThis.getQualifier().replace(targetClassRef);
+      PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+      assert thisQualifier != null;
+      thisQualifier.replace(targetClassRef);
 
       for (PsiExpression expr : paramExpressions) {
         ChangeContextUtil.encodeContextInfo(expr, true);
@@ -468,7 +489,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
           final PsiThisExpression qualifiedThis =
                   (PsiThisExpression) factory.createExpressionFromText("A.this", null);
           final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-          qualifiedThis.getQualifier().replace(targetClassRef);
+          PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+          assert thisQualifier != null;
+          thisQualifier.replace(targetClassRef);
           expression.replace(qualifiedThis);
         } catch (IncorrectOperationException e) {
           LOG.error(e);
