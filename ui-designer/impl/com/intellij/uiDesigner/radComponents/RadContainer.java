@@ -146,7 +146,6 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * @param component component to be added.
    *
-   * @param checkExisting
    * @exception java.lang.IllegalArgumentException if <code>component</code> is <code>null</code>
    * @exception java.lang.IllegalArgumentException if <code>component</code> already exist in the
    * container
