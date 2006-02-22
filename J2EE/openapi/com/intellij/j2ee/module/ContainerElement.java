@@ -30,7 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ContainerElement implements JDOMExternalizable, Cloneable {
+public abstract class ContainerElement implements JDOMExternalizable, Cloneable, ResolvableElement {
   private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
   private Module myParentModule;
   @NonNls private static final String URI_ATTR = "URI";

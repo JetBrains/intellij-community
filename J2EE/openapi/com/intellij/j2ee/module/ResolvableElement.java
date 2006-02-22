@@ -31,6 +31,8 @@
  */
 package com.intellij.j2ee.module;
 
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+
 public interface ResolvableElement {
-  boolean resolveElement(ModuleByNameProvider provider);
+  boolean resolveElement(ModulesProvider provider);
 }

@@ -7,18 +7,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.components.LoadCancelledException;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,19 +31,7 @@ public class NewModuleAction extends AnAction {
     if (project == null) {
       return;
     }
-    final AddModuleWizard wizard = new AddModuleWizard(project, new ModulesProvider() {
-      public Module[] getModules() {
-        return ModuleManager.getInstance(project).getModules();
-      }
-
-      public Module getModule(String name) {
-        return ModuleManager.getInstance(project).findModuleByName(name);
-      }
-
-      public ModuleRootModel getRootModel(Module module) {
-        return ModuleRootManager.getInstance(module);
-      }
-    });
+    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project));
 
     wizard.show();
 
@@ -86,9 +71,9 @@ public class NewModuleAction extends AnAction {
     e.getPresentation().setEnabled(getProject(e) != null);
   }
 
-  private Project getProject(AnActionEvent e) {
+  private static Project getProject(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    return project;
+    return (Project)dataContext.getData(DataConstants.PROJECT);
   }
+
 }

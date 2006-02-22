@@ -21,18 +21,19 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 
 /**
  * @author Alexey Kudravtsev
  */
 public abstract class ModuleLink extends ContainerElement {
-  protected static Map<J2EEPackagingMethod, String> methodToDescription = new HashMap<J2EEPackagingMethod, String>();
 
   public ModuleLink(Module parentModule) {
     super(parentModule);
   }
 
-  public abstract Module getModule();
+  public abstract @Nullable Module getModule();
 
   public abstract String getId();
 

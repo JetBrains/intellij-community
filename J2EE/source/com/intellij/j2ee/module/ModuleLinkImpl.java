@@ -39,17 +39,22 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.javaee.J2EEBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
+import java.util.Map;
+import java.util.HashMap;
 
+public class ModuleLinkImpl extends ModuleLink {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.ModuleLink");
+  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;
   private String myModuleName;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.ModuleLink");
-  @NonNls protected static final String NAME_ELEMENT = "name";
-  @NonNls protected static final String TEMP_ELEMENT_NAME = "temp";
+  private static Map<J2EEPackagingMethod, String> methodToDescription = new HashMap<J2EEPackagingMethod, String>();
 
   static {
     methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
@@ -70,17 +75,17 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
     myModuleName = moduleName;
   }
 
-  private Module getModule(ModuleByNameProvider provider) {
+  private Module getModule(ModulesProvider provider) {
     if (myModule != null && myModule.isDisposed()) {
       myModule = null;
     }
     if (myModule == null) {
-      myModule = provider.findModule(myModuleName);
+      myModule = provider.getModule(myModuleName);
     }
     return myModule;
   }
 
-  public Module getModule() {
+  public @Nullable Module getModule() {
     if (myModule != null && myModule.isDisposed()) {
       myModule = null;
     }
@@ -120,12 +125,13 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
     return methodToDescription.get(method);
   }
 
-  public boolean resolveElement(ModuleByNameProvider provider) {
+  public boolean resolveElement(ModulesProvider provider) {
     return getModule(provider) != null;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
+    myModuleName = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
     migratePackagingMethods();
   }
 
@@ -137,7 +143,7 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.setAttribute(NAME_ELEMENT, getName());
+    element.setAttribute(NAME_ATTRIBUTE_NAME, getName());
   }
 
   public String getName() {
