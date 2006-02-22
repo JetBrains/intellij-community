@@ -47,6 +47,9 @@ public abstract class FilterComponent extends JPanel {
     myFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
       public void keyPressed(final KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          e.consume();
+        }
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(new Runnable(){
           public void run() {
@@ -58,8 +61,6 @@ public abstract class FilterComponent extends JPanel {
             }
           }
         }, 100, ModalityState.stateForComponent(myFilter));
-
-        e.consume();
       }
     });
     myFilter.setEditable(true);

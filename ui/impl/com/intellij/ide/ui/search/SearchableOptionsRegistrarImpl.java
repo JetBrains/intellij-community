@@ -48,7 +48,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
           final String option = optionElement.getAttributeValue("name");
           final String path = optionElement.getAttributeValue("path");
           putOptionWithHelpId(option, id);
-          myHelpIdWithOption2Path.put(Pair.create(id, option), path);
+          myHelpIdWithOption2Path.put(Pair.create(id, PorterStemmerUtil.stem(option)), path);
         }
       }
 
@@ -62,7 +62,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
         final List synonyms = configurable.getChildren("synonym");
         for (Object o1 : synonyms) {
           Element synonymElement = (Element)o1;
-          final String synonym = PorterStemmerUtil.stem(synonymElement.getTextNormalize());
+          final String synonym = synonymElement.getTextNormalize();
           if (synonym != null) {
             putOptionWithHelpId(synonym, id);
           }
@@ -74,7 +74,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
           final List list = optionElement.getChildren("synonym");
           for (Object o2 : list) {
             Element synonymElement = (Element)o2;
-            final String synonym = PorterStemmerUtil.stem(synonymElement.getTextNormalize());
+            final String synonym = synonymElement.getTextNormalize();
             if (synonym != null) {
               putOptionWithHelpId(synonym, id);
               myHighlightSynonym2Option.put(Pair.create(synonym, id), option);
