@@ -55,8 +55,14 @@ public class ParameterInfoController {
 
   public static ParameterInfoController getControllerAtOffset(Editor editor, int offset) {
     ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
-    for (ParameterInfoController controller : allControllers) {
-      if (controller.myLbraceMarker.getStartOffset() == offset) return controller;
+    for (int i = 0; i < allControllers.size(); ++i) {
+      ParameterInfoController controller = allControllers.get(i);
+
+      if (controller.myLbraceMarker.getStartOffset() == offset) {
+        if (controller.myHint.isVisible()) return controller;
+        controller.dispose();
+        --i;
+      }
     }
 
     return null;

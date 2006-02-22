@@ -32,6 +32,7 @@ public class LightweightHint implements Hint, UserDataHolder {
   private JComponent myParentComponent;
   private boolean myIsRealPopup = false;
   private boolean myForceLightweightPopup = false;
+  private boolean mySelectingHint;
 
   public LightweightHint(final JComponent component) {
     LOG.assertTrue(component != null);
@@ -40,6 +41,14 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   public void setForceLightweightPopup(final boolean forceLightweightPopup) {
     myForceLightweightPopup = forceLightweightPopup;
+  }
+
+  public boolean isSelectingHint() {
+    return mySelectingHint;
+  }
+
+  public void setSelectingHint(final boolean selectingHint) {
+    mySelectingHint = selectingHint;
   }
 
   /**

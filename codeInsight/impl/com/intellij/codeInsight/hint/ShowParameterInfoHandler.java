@@ -97,6 +97,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     component.update();
 
     final LightweightHint hint = new LightweightHint(component);
+    hint.setSelectingHint(true);
     final HintManager hintManager = HintManager.getInstance();
     final Point p = chooseBestHintPosition(project, editor, -1, -1, hint);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -133,6 +134,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     component.update(); // to have correct preferred size
 
     final LightweightHint hint = new LightweightHint(component);
+    hint.setSelectingHint(true);
     final HintManager hintManager = HintManager.getInstance();
     final Point p = provider.getBestPointPosition(hint);
 

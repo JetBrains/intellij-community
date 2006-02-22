@@ -356,13 +356,11 @@ public class HintManager implements ApplicationComponent {
 
     if (lookup == null) {
       for (HintInfo info : myHintsStack) {
-        if (info.hint instanceof LightweightHint) {
-          if (info.hint.getClass().isInstance(hint)) continue;
-          final Rectangle rectangle = info.hint.getBounds();
+        if (!info.hint.isSelectingHint()) continue;
+        final Rectangle rectangle = info.hint.getBounds();
 
-          if (rectangle != null) {
-            return getHintPositionRelativeTo(hint, editor, constraint, rectangle, rectangle, pos);
-          }
+        if (rectangle != null) {
+          return getHintPositionRelativeTo(hint, editor, constraint, rectangle, rectangle, pos);
         }
       }
       return getHintPosition(hint, editor, pos, constraint);
