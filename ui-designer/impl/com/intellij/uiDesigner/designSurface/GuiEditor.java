@@ -47,6 +47,8 @@ import java.awt.dnd.DropTarget;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -674,8 +676,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private void readFromFile(final boolean keepSelection) {
     try {
       ComponentPtr[] selection = null;
+      Map<String, String> tabbedPaneSelectedTabs = null;
       if (keepSelection) {
         selection = SelectionState.getSelection(this);
+        tabbedPaneSelectedTabs = saveTabbedPaneSelectedTabs();
       }
 
       final String text = myDocument.getText();
@@ -687,6 +691,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       setRootContainer(container);
       if (keepSelection) {
         SelectionState.restoreSelection(this, selection);
+        restoreTabbedPaneSelectedTabs(tabbedPaneSelectedTabs);
       }
       myCardLayout.show(this, CARD_VALID);
       refresh();
@@ -699,6 +704,43 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myCardLayout.show(this, CARD_INVALID);
       repaint();
     }
+  }
+
+  private Map<String, String> saveTabbedPaneSelectedTabs() {
+    final Map<String, String> result = new HashMap<String, String>();
+    FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        if (component instanceof RadTabbedPane) {
+          RadTabbedPane tabbedPane = (RadTabbedPane) component;
+          RadComponent c = tabbedPane.getSelectedTab();
+          if (c != null) {
+            result.put(tabbedPane.getId(), c.getId());
+          }
+        }
+        return true;
+      }
+    });
+    return result;
+  }
+
+  private void restoreTabbedPaneSelectedTabs(final Map<String, String> tabbedPaneSelectedTabs) {
+    FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
+      public boolean visit(final IComponent component) {
+        if (component instanceof RadTabbedPane) {
+          RadTabbedPane tabbedPane = (RadTabbedPane) component;
+          String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
+          if (selectedTabId != null) {
+            for(RadComponent c: tabbedPane.getComponents()) {
+              if (c.getId().equals(selectedTabId)) {
+                tabbedPane.selectTab(c);
+                break;
+              }
+            }
+          }
+        }
+        return true;
+      }
+    });
   }
 
   public JComponent getPreferredFocusedComponent() {

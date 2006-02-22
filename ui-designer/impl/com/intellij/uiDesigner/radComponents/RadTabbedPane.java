@@ -81,7 +81,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
         }
       }
     }
-    return new AddTabDropLocation();
+    return new InsertTabDropLocation(tabbedPane.getTabCount(), null);
   }
 
   @Override public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
@@ -259,6 +259,11 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return id2Descriptor;
   }
 
+  public RadComponent getSelectedTab() {
+    int index = getTabbedPane().getSelectedIndex();
+    return index < 0 ? null : getComponent(index);
+  }
+
   public void selectTab(final RadComponent component) {
     final JTabbedPane tabbedPane = getTabbedPane();
     int index = tabbedPane.indexOfComponent(component.getDelegee());
@@ -338,7 +343,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     public InsertTabDropLocation(final int insertIndex, final Rectangle feedbackRect) {
       myInsertIndex = insertIndex;
-      myInsertBeforeId = getRadComponent(myInsertIndex).getId();
+      if (myInsertIndex < getTabbedPane().getTabCount()) {
+        myInsertBeforeId = getRadComponent(myInsertIndex).getId();
+      }
       myFeedbackRect = feedbackRect;
     }
 
@@ -351,55 +358,51 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE);
-    }
-
-    public void processDrop(GuiEditor editor,
-                            RadComponent[] components,
-                            GridConstraints[] constraintsToAdjust,
-                            ComponentDragObject dragObject) {
-      for(int i=0; i<getTabbedPane().getTabCount(); i++) {
-        if (getRadComponent(i).getId().equals(myInsertBeforeId)) {
-          myInsertIndex = i;
-          break;
-        }
-      }
-      addComponent(components [0], myInsertIndex);
-      getTabbedPane().setSelectedIndex(myInsertIndex);
-    }
-  }
-
-  private final class AddTabDropLocation implements DropLocation {
-
-    public RadContainer getContainer() {
-      return RadTabbedPane.this;
-    }
-
-    public boolean canDrop(ComponentDragObject dragObject) {
-      return dragObject.getComponentCount() == 1;
-    }
-
-    public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      Rectangle rcFeedback;
-      final JTabbedPane tabbedPane = getTabbedPane();
-      final TabbedPaneUI ui = tabbedPane.getUI();
-      if (tabbedPane.getTabCount() > 0) {
-        Rectangle rc = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount()-1);
-        rcFeedback = new Rectangle(rc.x+rc.width, rc.y, 50, rc.height);
+      if (myInsertIndex < getTabbedPane().getTabCount()) {
+        feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE);
       }
       else {
-        // approximate
-        rcFeedback = new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
+        Rectangle rcFeedback;
+        final JTabbedPane tabbedPane = getTabbedPane();
+        final TabbedPaneUI ui = tabbedPane.getUI();
+        if (tabbedPane.getTabCount() > 0) {
+          Rectangle rc = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount()-1);
+          rcFeedback = new Rectangle(rc.x+rc.width, rc.y, 50, rc.height);
+        }
+        else {
+          // approximate
+          rcFeedback = new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
+        }
+        feedbackLayer.putFeedback(getDelegee(), rcFeedback);
       }
-      feedbackLayer.putFeedback(getDelegee(), rcFeedback);
     }
 
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
                             ComponentDragObject dragObject) {
-      addComponent(components [0]);
-      getTabbedPane().setSelectedIndex(getTabbedPane().getTabCount()-1);
+      if (myInsertBeforeId != null) {
+        for(int i=0; i<getTabbedPane().getTabCount(); i++) {
+          if (getRadComponent(i).getId().equals(myInsertBeforeId)) {
+            myInsertIndex = i;
+            break;
+          }
+        }
+      }
+      if (myInsertIndex > getTabbedPane().getTabCount()) {
+        myInsertIndex = getTabbedPane().getTabCount();
+      }
+      RadComponent componentToAdd = components [0];
+      if (componentToAdd instanceof RadContainer) {
+        addComponent(componentToAdd, myInsertIndex);
+      }
+      else {
+        Palette palette = Palette.getInstance(editor.getProject());
+        RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
+        addComponent(panel);
+        panel.drop(null, new RadComponent[] { componentToAdd }, palette.getPanelItem());
+      }
+      getTabbedPane().setSelectedIndex(myInsertIndex);
     }
   }
 }
