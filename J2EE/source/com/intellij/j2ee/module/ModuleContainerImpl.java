@@ -1,15 +1,12 @@
 package com.intellij.j2ee.module;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
@@ -17,16 +14,15 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ExternalizableString;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author Alexey Kudravtsev
  */
-public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContainer {
+public class ModuleContainerImpl implements ModuleContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.J2EEModuleContainerImpl");
-
+  private ModulesProvider myDefaultModulesProvider;
   private ModuleContainerImpl myModifiableModel;
   protected final Module myParentModule;
   private final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
@@ -36,13 +32,10 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
    */
   private ModuleRootsWatcher<ExternalizableString> myModuleRootsWatcher;
   private Map<ExternalizableString, OrderEntryInfo> myOrderInfo;
-  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
-  @NonNls private static final String LEVEL_ATTRIBUTE_NAME = "level";
   @NonNls private static final String TYPE_ATTRIBUTE_NAME = "type";
   @NonNls private static final String CONTAINER_ELEMENT_NAME = "containerElement";
   @NonNls private static final String MODULE_TYPE = "module";
   @NonNls private static final String LIBRARY_TYPE = "library";
-  @NonNls private static final String URL_ELEMENT_NAME = "url";
   @NonNls protected static final String WATCHER_ELEMENT_NAME = "orderEntriesWatcher";
   @NonNls protected static final String ENTRY_INFO_ELEMENT_NAME = "order-entry-info";
   @NonNls protected static final String INFO_ELEMENT_NAME = "info";
@@ -52,7 +45,17 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
   public ModuleContainerImpl(Module module) {
     LOG.assertTrue(module != null);
     myParentModule = module;
+    myDefaultModulesProvider = new DefaultModulesProvider(module.getProject());
     initContainer();
+  }
+
+  public void removeLibrary(final Library library) {
+    for (ContainerElement content : myContents) {
+      if (content instanceof LibraryLink && library.equals(((LibraryLink)content).getLibrary())) {
+        myContents.remove(content);
+        break;
+      }
+    }
   }
 
   protected void initContainer() {
@@ -104,56 +107,26 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
 
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
-    final List children = element.getChildren(CONTAINER_ELEMENT_NAME);
-    for (Object aChildren : children) {
-      Element child = (Element)aChildren;
+    final List<Element> children = element.getChildren(CONTAINER_ELEMENT_NAME);
+    for (Element child : children) {
       final String type = child.getAttributeValue(TYPE_ATTRIBUTE_NAME);
-      ContainerElement containerElement = null;
+      ContainerElement containerElement;
       if (MODULE_TYPE.equals(type)) {
-        String moduleName = child.getAttributeValue(NAME_ATTRIBUTE_NAME);
-        if (moduleName != null) {
-          containerElement = new ModuleLinkImpl(moduleName, getModule());
-        }
+        containerElement = new ModuleLinkImpl((String)null, getModule());
       }
       else if (LIBRARY_TYPE.equals(type)) {
-        Library library = findLibrary(child);
-        if (library != null) {
-          containerElement = new LibraryLinkImpl(library, getModule());
-        }
-        else {
-          String libraryLevel = child.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
-          if (LibraryLink.MODULE_LEVEL.equals(libraryLevel)) {
-            containerElement = new LibraryLinkImpl(null, getModule());
-          }
-        }
+        containerElement = new LibraryLinkImpl(null, getModule());
       }
       else {
         throw new InvalidDataException("invalid type: " + type + " " + child);
       }
-      if (containerElement != null) {
-        containerElement.readExternal(child);
-        addElement(containerElement);
-      }
 
+      containerElement.readExternal(child);
+      addElement(containerElement);
     }
     if (children.size() == 0) {
       readPlainOldWatcherEntries(element);
     }
-  }
-
-  @Nullable
-  private Library findLibrary(Element child) {
-    String libraryName = child.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    String libraryLevel = child.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
-    if (LibraryLink.MODULE_LEVEL.equals(libraryLevel)) {
-      Element urlElement = child.getChild(URL_ELEMENT_NAME);
-      if (urlElement == null) return null;
-      return LibraryLink.findModuleLibrary(getModule(), urlElement.getText());
-    }
-    else {
-      return LibraryLink.findLibrary(libraryName, libraryLevel, getModule().getProject());
-    }
-
   }
 
   private static class ExternalizableStringFactory implements Factory<ExternalizableString> {
@@ -211,16 +184,12 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
       final Element child = new Element(CONTAINER_ELEMENT_NAME);
       if (containerElement instanceof ModuleLink) {
         child.setAttribute(TYPE_ATTRIBUTE_NAME, MODULE_TYPE);
-        child.setAttribute(NAME_ATTRIBUTE_NAME, ((ModuleLink)containerElement).getName());
       }
       else if (containerElement instanceof LibraryLink) {
         child.setAttribute(TYPE_ATTRIBUTE_NAME, LIBRARY_TYPE);
-        LibraryLink libraryLink = (LibraryLink)containerElement;
-        String level = libraryLink.getLevel();
-        child.setAttribute(LEVEL_ATTRIBUTE_NAME, level);
       }
       else {
-        throw new WriteExternalException("invalid type: " + child);
+        throw new WriteExternalException("invalid type: " + containerElement);
       }
       containerElement.writeExternal(child);
       element.addContent(child);
@@ -253,13 +222,18 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
   }
 
   public ContainerElement[] getElements() {
-    return getElements(this);
+    return getElements(myDefaultModulesProvider, true, false);
   }
 
-  public ContainerElement[] getElements(ModuleByNameProvider provider) {
+  public ContainerElement[] getAllElements() {
+    return getElements(myDefaultModulesProvider, true, true);
+  }
+
+  public ContainerElement[] getElements(ModulesProvider provider, final boolean includeResolved, final boolean includeUnresolved) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
     for (final ContainerElement containerElement : myContents) {
-      if (((ResolvableElement)containerElement).resolveElement(provider)) {
+      final boolean resolved = containerElement.resolveElement(provider);
+      if (resolved && includeResolved || !resolved && includeUnresolved) {
         result.add(containerElement);
       }
     }
@@ -302,8 +276,7 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
 
   public void commit(ModifiableRootModel model) throws ConfigurationException {
     if (isModified(model)) {
-      final ModuleContainerImpl modified = (ModuleContainerImpl)getModifiableModel();
-      copyContainerInfoFrom(modified);
+      copyContainerInfoFrom(myModifiableModel);
       containedEntriesChanged();
     }
   }
@@ -314,19 +287,18 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
 
   public void startEdit(ModifiableRootModel rootModel) {
     myModifiableModel = new ModuleContainerImpl(getModule());
-    myModifiableModel.copyFrom(this,rootModel);
+    myModifiableModel.copyFrom(this, rootModel);
   }
 
   public boolean isModified(ModifiableRootModel model) {
-    final ModuleContainer modified = getModifiableModel();
-    final ContainerElement[] modifiedElements = modified.getElements();
+    final ContainerElement[] modifiedElements = myModifiableModel.getAllElements();
 
-    return !Arrays.equals(modifiedElements, getElements());
+    return !Arrays.equals(modifiedElements, getAllElements());
   }
 
   private void copyContainerInfoFrom(ModuleContainerImpl from) {
     clearContainer();
-    final ContainerElement[] elements = from.getElements();
+    final ContainerElement[] elements = from.getAllElements();
     for (final ContainerElement element : elements) {
       addElement(element.clone());
     }
@@ -336,11 +308,4 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
     myContents.add(element);
   }
 
-  public Module findModule(final String name) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-      public Module compute() {
-        return ModuleManager.getInstance(getModule().getProject()).findModuleByName(name);
-      }
-    });
-  }
 }
