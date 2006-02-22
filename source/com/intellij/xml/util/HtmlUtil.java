@@ -128,15 +128,17 @@ public class HtmlUtil {
     final PsiFile containingFile = doc.getContainingFile();
 
     if (PsiUtil.isInJspFile(containingFile)) {
-      final PsiFile baseLanguageRoot = (PsiUtil.getJspFile(containingFile)).getBaseLanguageRoot();
-      final PsiElement[] children = baseLanguageRoot.getChildren();
+      final JspFile jspFile = PsiUtil.getJspFile(containingFile);
+      
+      if (jspFile != null) { // it may be for some reason
+        final PsiFile baseLanguageRoot = jspFile.getBaseLanguageRoot();
+        final PsiElement[] children = baseLanguageRoot.getChildren();
 
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
-
-        if (child instanceof XmlDocument) {
-          doc = (XmlDocument)child;
-          break;
+        for (PsiElement child : children) {
+          if (child instanceof XmlDocument) {
+            doc = (XmlDocument)child;
+            break;
+          }
         }
       }
     }
