@@ -32,11 +32,11 @@ import java.util.Map;
 public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTagChild {
   XmlTag[] EMPTY = new XmlTag[0];
 
-  @NonNls String getName();
+  @NotNull @NonNls String getName();
   @NonNls String getNamespace();
   @NonNls String getLocalName();
 
-  XmlElementDescriptor getDescriptor();
+  @Nullable XmlElementDescriptor getDescriptor();
 
   XmlAttribute[] getAttributes();
 
@@ -64,9 +64,9 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   boolean hasNamespaceDeclarations();
   @NotNull Map<String, String> getLocalNamespaceDeclarations();
 
-  XmlTagValue getValue();
+  @NotNull XmlTagValue getValue();
 
-  XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict);
+  @Nullable XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict);
 
   boolean isEmpty();
 }

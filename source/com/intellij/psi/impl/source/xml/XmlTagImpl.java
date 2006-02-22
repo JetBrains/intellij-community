@@ -270,6 +270,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
+  @NotNull
   public String getName() {
     if (myName != null) return myName;
 
@@ -559,6 +560,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
   }
 
+  @NotNull
   public XmlTagValue getValue() {
     if(myValue != null) return myValue;
     final PsiElement[] elements = getElements();
