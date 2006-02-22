@@ -146,11 +146,12 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * @param component component to be added.
    *
+   * @param checkExisting
    * @exception java.lang.IllegalArgumentException if <code>component</code> is <code>null</code>
    * @exception java.lang.IllegalArgumentException if <code>component</code> already exist in the
    * container
    */
-  public final void addComponent(@NotNull final RadComponent component) {
+  public final void addComponent(@NotNull final RadComponent component, int index) {
     if (myComponents.contains(component)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is already added: " + component);
@@ -165,15 +166,19 @@ public class RadContainer extends RadComponent implements IContainer {
     }
 
     // Attach to new parent
-    myComponents.add(component);
+    myComponents.add(index, component);
     component.setParent(this);
-    addToDelegee(component);
+    addToDelegee(index, component);
 
     final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
-  protected void addToDelegee(final RadComponent component){
+  public final void addComponent(@NotNull final RadComponent component) {
+    addComponent(component, myComponents.size());
+  }
+
+  protected void addToDelegee(final int index, final RadComponent component){
     getDelegee().add(component.getDelegee(), component.getConstraints(), 0);
   }
 

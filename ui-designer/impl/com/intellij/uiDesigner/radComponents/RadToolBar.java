@@ -47,7 +47,7 @@ public class RadToolBar extends RadContainer {
     return new Rectangle(maxX, getDelegee().getInsets().top, getPreferredSize().height, getPreferredSize().height);
   }
 
-  protected void addToDelegee(final RadComponent component){
+  protected void addToDelegee(final int index, final RadComponent component){
     getDelegee().add(component.getDelegee(), component.getConstraints());
   }
 

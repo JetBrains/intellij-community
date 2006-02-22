@@ -21,11 +21,9 @@ import java.awt.*;
 class GridInsertLocation extends GridDropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
 
-  private static final int INSERT_ARROW_SIZE = 3;
+  public static final int INSERT_ARROW_SIZE = 3;
   public static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift
 
-  private FeedbackPainter myHorzInsertFeedbackPainter = new HorzInsertFeedbackPainter();
-  private FeedbackPainter myVertInsertFeedbackPainter = new VertInsertFeedbackPainter();
   private GridInsertMode myMode;
 
   public GridInsertLocation(@NotNull final RadContainer container,
@@ -136,8 +134,8 @@ class GridInsertLocation extends GridDropLocation {
 
     FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
                                insertMode == GridInsertMode.ColumnAfter)
-                              ? myVertInsertFeedbackPainter
-                              : myHorzInsertFeedbackPainter;
+                              ? VertInsertFeedbackPainter.INSTANCE
+                              : HorzInsertFeedbackPainter.INSTANCE;
     Rectangle rc;
 
     Rectangle rcFeedback = null;
@@ -256,37 +254,4 @@ class GridInsertLocation extends GridDropLocation {
     return "GridInsertLocation(" + myMode.toString() + ", row=" + getRow() + ", col=" + getColumn() + ")";
   }
 
-  private static class HorzInsertFeedbackPainter implements FeedbackPainter {
-    public void paintFeedback(Graphics2D g2d, Rectangle rc) {
-      g2d.setColor(Color.BLUE);
-      g2d.setStroke(new BasicStroke(1.5f));
-      int midY = (int)rc.getCenterY();
-      int right = rc.x + rc.width - 1;
-      int bottom = rc.y + rc.height - 1;
-      g2d.drawLine(rc.x, rc.y, INSERT_ARROW_SIZE, midY);
-      g2d.drawLine(rc.x, bottom, INSERT_ARROW_SIZE, midY);
-      g2d.drawLine(INSERT_ARROW_SIZE, midY,
-                   right - INSERT_ARROW_SIZE, midY);
-      g2d.drawLine(right, rc.y,
-                   rc.x+rc.width-INSERT_ARROW_SIZE, midY);
-      g2d.drawLine(right, bottom,
-                   right-INSERT_ARROW_SIZE, midY);
-    }
-  }
-
-  private static class VertInsertFeedbackPainter implements FeedbackPainter {
-    public void paintFeedback(Graphics2D g2d, Rectangle rc) {
-      g2d.setColor(Color.BLUE);
-      g2d.setStroke(new BasicStroke(1.5f));
-      int right = rc.x + rc.width - 1;
-      int bottom = rc.y + rc.height - 1;
-      int midX = (int) rc.getCenterX();
-      g2d.drawLine(rc.x, rc.y, midX, rc.y+INSERT_ARROW_SIZE);
-      g2d.drawLine(right, rc.y, midX, rc.y+INSERT_ARROW_SIZE);
-      g2d.drawLine(midX, rc.y+INSERT_ARROW_SIZE,
-                   midX, bottom-INSERT_ARROW_SIZE);
-      g2d.drawLine(rc.x, bottom, midX, bottom-INSERT_ARROW_SIZE);
-      g2d.drawLine(right, bottom, midX, bottom-INSERT_ARROW_SIZE);
-    }
-  }
 }

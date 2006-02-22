@@ -111,7 +111,7 @@ public final class RadSplitPane extends RadContainer {
     }
   }
 
-  protected void addToDelegee(final RadComponent component) {
+  @Override protected void addToDelegee(final int index, final RadComponent component) {
     final JSplitPane splitPane = getSplitPane();
     final JComponent delegee = component.getDelegee();
     if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())) {

@@ -38,7 +38,7 @@ public final class RadScrollPane extends RadContainer {
     return new Rectangle(0, 0, getWidth(), getHeight());
   }
 
-  protected void addToDelegee(final RadComponent component){
+  @Override protected void addToDelegee(final int index, final RadComponent component){
     final JScrollPane scrollPane = (JScrollPane)getDelegee();
     final JComponent delegee = component.getDelegee();
     delegee.setLocation(0,0);

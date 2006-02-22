@@ -431,6 +431,10 @@ public abstract class RadComponent implements IComponent {
     myModifiedPropertyNames.remove(property.getName());
   }
 
+  public RadComponent getComponentToDrag(final Point pnt) {
+    return this;
+  }
+
   @Nullable public DropLocation getDropLocation(Point location) {
     return null;
   }

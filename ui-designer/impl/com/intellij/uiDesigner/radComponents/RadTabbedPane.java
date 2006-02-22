@@ -36,10 +36,10 @@ import java.awt.event.MouseEvent;
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadTabbedPane");
   /**
-   * value: HashMap<Integer, StringDescriptor>
+   * value: HashMap<String, StringDescriptor>
    */
   @NonNls
-  private static final String CLIENT_PROP_INDEX_2_DESCRIPTOR = "index2descriptor";
+  private static final String CLIENT_PROP_ID_2_DESCRIPTOR = "index2descriptor";
 
   public RadTabbedPane(final Module module, final String id){
     super(module, JTabbedPane.class, id);
@@ -49,7 +49,38 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return null;
   }
 
+  @Override public RadComponent getComponentToDrag(final Point pnt) {
+    final int i = getTabbedPane().getUI().tabForCoordinate(getTabbedPane(), pnt.x, pnt.y);
+    if (i >= 0) {
+      RadComponent c = getRadComponent(i);
+      if (c != null) {
+        return c;
+      }
+    }
+    return this;
+  }
+
+  private RadComponent getRadComponent(final int i) {
+    RadComponent c = null;
+    final Component component = getTabbedPane().getComponentAt(i);
+    if (component instanceof JComponent) {
+      JComponent jc = (JComponent) component;
+      c = (RadComponent) jc.getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT);
+    }
+    return c;
+  }
+
   @Override public DropLocation getDropLocation(Point location) {
+    final JTabbedPane tabbedPane = getTabbedPane();
+    final TabbedPaneUI ui = tabbedPane.getUI();
+    if (tabbedPane.getTabCount() > 0) {
+      for(int i=0; i<tabbedPane.getTabCount(); i++) {
+        Rectangle rc = ui.getTabBounds(tabbedPane, i);
+        if (location.x < rc.getCenterX()) {
+          return new InsertTabDropLocation(i, new Rectangle(rc.x-4, rc.y, 8, rc.height));
+        }
+      }
+    }
     return new AddTabDropLocation();
   }
 
@@ -66,7 +97,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return (JTabbedPane)getDelegee();
   }
 
-  protected void addToDelegee(final RadComponent component){
+  @Override protected void addToDelegee(final int index, final RadComponent component) {
     final JTabbedPane tabbedPane = getTabbedPane();
     final StringDescriptor titleDescriptor;
     if (component.getCustomLayoutConstraints() instanceof LwTabbedPane.Constraints) {
@@ -76,10 +107,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       titleDescriptor = null;
     }
     component.setCustomLayoutConstraints(null);
-    tabbedPane.addTab(calcTabName(titleDescriptor), component.getDelegee());
-    if (titleDescriptor != null) {
-      getIndex2Descriptor(this).put(new Integer(tabbedPane.getTabCount() - 1), titleDescriptor);
-    }
+    final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
+    tabbedPane.insertTab(calcTabName(titleDescriptor), null, component.getDelegee(), null, index);
+    id2Descriptor.put(component.getId(), titleDescriptor);
   }
 
   private String calcTabName(final StringDescriptor titleDescriptor) {
@@ -102,11 +132,13 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot find tab for " + component);
     }
-    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(new Integer(i));
+    final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
+    StringDescriptor titleDescriptor = id2Descriptor.get(component.getId());
     if (titleDescriptor == null) {
       titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
     }
     component.setCustomLayoutConstraints(new LwTabbedPane.Constraints(titleDescriptor));
+    id2Descriptor.remove(component.getId());
     tabbedPane.removeTabAt(i);
   }
 
@@ -151,11 +183,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   @Nullable
   public StringDescriptor getChildTitle(RadComponent component) {
-    final JComponent delegee = component.getDelegee();
-    final JTabbedPane tabbedPane = getTabbedPane();
-    int index = tabbedPane.indexOfComponent(delegee);
-    final HashMap<Integer, StringDescriptor> index2DescriptorMap = getIndex2Descriptor(this);
-    return index2DescriptorMap.get(new Integer(index));
+    final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
+    return id2Descriptor.get(component.getId());
   }
 
   public void setChildTitle(RadComponent component, StringDescriptor title) throws Exception {
@@ -202,8 +231,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
         throw new IllegalArgumentException("cannot find tab for " + child);
       }
 
-      final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(this);
-      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(new Integer(i));
+      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(this);
+      final StringDescriptor tabTitleDescriptor = id2Descriptor.get(child.getId());
       if (tabTitleDescriptor != null) {
         writer.writeStringDescriptor(tabTitleDescriptor,
                                      UIFormXmlConstants.ATTRIBUTE_TITLE,
@@ -221,13 +250,13 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   @NotNull
-  private HashMap<Integer, StringDescriptor> getIndex2Descriptor(final RadComponent component){
-    HashMap<Integer, StringDescriptor> index2Descriptor = (HashMap<Integer, StringDescriptor>)component.getClientProperty(CLIENT_PROP_INDEX_2_DESCRIPTOR);
-    if(index2Descriptor == null){
-      index2Descriptor = new HashMap<Integer,StringDescriptor>();
-      component.putClientProperty(CLIENT_PROP_INDEX_2_DESCRIPTOR, index2Descriptor);
+  private static HashMap<String, StringDescriptor> getId2Descriptor(final RadComponent component){
+    HashMap<String, StringDescriptor> id2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_ID_2_DESCRIPTOR);
+    if(id2Descriptor == null){
+      id2Descriptor = new HashMap<String,StringDescriptor>();
+      component.putClientProperty(CLIENT_PROP_ID_2_DESCRIPTOR, id2Descriptor);
     }
-    return index2Descriptor;
+    return id2Descriptor;
   }
 
   public void selectTab(final RadComponent component) {
@@ -268,7 +297,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     public Object getValue(final RadComponent component) {
       // 1. resource bundle
-      final StringDescriptor descriptor = getIndex2Descriptor(component).get(new Integer(myIndex));
+      final StringDescriptor descriptor = getId2Descriptor(component).get(component.getId());
       if(descriptor != null){
         return descriptor;
       }
@@ -280,12 +309,12 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
       // 1. Put value into map
       final StringDescriptor descriptor = (StringDescriptor)value;
-      final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(component);
+      final HashMap<String, StringDescriptor> id2Descriptor = getId2Descriptor(component);
       if(descriptor == null){
-        index2Descriptor.remove(new Integer(myIndex));
+        id2Descriptor.remove(component.getId());
       }
       else{
-        index2Descriptor.put(new Integer(myIndex), descriptor);
+        id2Descriptor.put(component.getId(), descriptor);
       }
 
       // 2. Apply real string value to JComponent peer
@@ -299,6 +328,44 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     public PropertyEditor getEditor() {
       return myEditor;
+    }
+  }
+
+  private final class InsertTabDropLocation implements DropLocation {
+    private int myInsertIndex;
+    private String myInsertBeforeId;
+    private Rectangle myFeedbackRect;
+
+    public InsertTabDropLocation(final int insertIndex, final Rectangle feedbackRect) {
+      myInsertIndex = insertIndex;
+      myInsertBeforeId = getRadComponent(myInsertIndex).getId();
+      myFeedbackRect = feedbackRect;
+    }
+
+    public RadContainer getContainer() {
+      return RadTabbedPane.this;
+    }
+
+    public boolean canDrop(ComponentDragObject dragObject) {
+      return dragObject.getComponentCount() == 1;
+    }
+
+    public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
+      feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE);
+    }
+
+    public void processDrop(GuiEditor editor,
+                            RadComponent[] components,
+                            GridConstraints[] constraintsToAdjust,
+                            ComponentDragObject dragObject) {
+      for(int i=0; i<getTabbedPane().getTabCount(); i++) {
+        if (getRadComponent(i).getId().equals(myInsertBeforeId)) {
+          myInsertIndex = i;
+          break;
+        }
+      }
+      addComponent(components [0], myInsertIndex);
+      getTabbedPane().setSelectedIndex(myInsertIndex);
     }
   }
 
@@ -332,6 +399,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
                             GridConstraints[] constraintsToAdjust,
                             ComponentDragObject dragObject) {
       addComponent(components [0]);
+      getTabbedPane().setSelectedIndex(getTabbedPane().getTabCount()-1);
     }
   }
 }

@@ -45,24 +45,52 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private boolean myHasDragDelta = false;
 
   private DraggedComponentList(final GuiEditor editor, final Point pnt) {
-    getSelectionFromEditor(editor);
+    // Store selected components
+    mySelection = FormEditingUtil.getSelectedComponents(editor);
 
-    // It's very important to get component under mouse before the components are
-    // removed from their parents.
+    // sort selection in correct grid order
+    Collections.sort(mySelection, new Comparator<RadComponent>() {
+      public int compare(final RadComponent o1, final RadComponent o2) {
+        if (o1.getParent() == o2.getParent()) {
+          int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
+          if (result == 0) {
+            result = o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
+          }
+          return result;
+        }
+        return 0;
+      }
+    });
 
     RadComponent componentUnderMouse = null;
-    if (mySelection.size() > 0) {
-      int componentUnderMouseIndex = 0;
-      if (pnt != null) {
-        for(int i=0; i<mySelection.size(); i++) {
-          Point aPoint = SwingUtilities.convertPoint(editor.getRootContainer().getDelegee(), pnt,
-                                                  myOriginalParents [i].getDelegee());
-          if (myOriginalBounds [i].contains(aPoint)) {
-            componentUnderMouseIndex = i;
-          }
+    int componentUnderMouseIndex = mySelection.size() == 0 ? -1 : 0;
+    if (pnt != null) {
+      for(int i=0; i<mySelection.size(); i++) {
+        RadComponent c = mySelection.get(i);
+        Point aPoint = SwingUtilities.convertPoint(editor.getRootContainer().getDelegee(), pnt,
+                                                   c.getParent().getDelegee());
+        if (c.getBounds().contains(aPoint)) {
+          aPoint = SwingUtilities.convertPoint(editor.getRootContainer().getDelegee(), pnt,
+                                               c.getDelegee());
+          mySelection.set(i, c.getComponentToDrag(aPoint));
+          componentUnderMouseIndex = i;
         }
       }
+    }
 
+    // Store original constraints and parents. This information is required
+    // to restore initial state if drag is canceled.
+    myOriginalConstraints = new GridConstraints[mySelection.size()];
+    myOriginalBounds = new Rectangle[mySelection.size()];
+    myOriginalParents = new RadContainer[mySelection.size()];
+    for (int i1 = 0; i1 < mySelection.size(); i1++) {
+      final RadComponent component = mySelection.get(i1);
+      myOriginalConstraints[i1] = component.getConstraints().store();
+      myOriginalBounds[i1] = component.getBounds();
+      myOriginalParents[i1] = component.getParent();
+    }
+
+    if (componentUnderMouseIndex >= 0) {
       componentUnderMouse = mySelection.get(componentUnderMouseIndex);
       myComponentUnderMouseColumn = myOriginalConstraints [componentUnderMouseIndex].getColumn();
       myComponentUnderMouseRow = myOriginalConstraints [componentUnderMouseIndex].getRow();
@@ -89,36 +117,6 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
         }
         myHasDragDelta = true;
       }
-    }
-  }
-
-  private void getSelectionFromEditor(final GuiEditor editor) {
-    // Store selected components
-    mySelection = FormEditingUtil.getSelectedComponents(editor);
-    // sort selection in correct grid order
-    Collections.sort(mySelection, new Comparator<RadComponent>() {
-      public int compare(final RadComponent o1, final RadComponent o2) {
-        if (o1.getParent() == o2.getParent()) {
-          int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
-          if (result == 0) {
-            result = o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
-          }
-          return result;
-        }
-        return 0;
-      }
-    });
-
-    // Store original constraints and parents. This information is required
-    // to restore initial state if drag is canceled.
-    myOriginalConstraints = new GridConstraints[mySelection.size()];
-    myOriginalBounds = new Rectangle[mySelection.size()];
-    myOriginalParents = new RadContainer[mySelection.size()];
-    for (int i = 0; i < mySelection.size(); i++) {
-      final RadComponent component = mySelection.get(i);
-      myOriginalConstraints[i] = component.getConstraints().store();
-      myOriginalBounds[i] = component.getBounds();
-      myOriginalParents[i] = component.getParent();
     }
   }
 
