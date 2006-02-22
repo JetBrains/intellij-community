@@ -76,7 +76,11 @@ public class RedundantSuppressInspection extends LocalInspectionTool{
             suppressed = ids;
           }
           else {
-            suppressed.addAll(ids);
+            for (String id : ids) {
+              if (!suppressed.contains(id)) {
+                suppressed.add(id);
+              }
+            }
           }
           suppressedScopes.put(owner, suppressed);
         }

@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class HighlightDisplayKey {
   private static final HashMap<String,HighlightDisplayKey> ourMap = new HashMap<String, HighlightDisplayKey>();
-  private static final Map<HighlightDisplayKey, String>  ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
+  private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
 
   private final String myName;
   private final String myID;
@@ -28,11 +28,8 @@ public class HighlightDisplayKey {
     return highlightDisplayKey;
   }
 
-  public static HighlightDisplayKey register(@NonNls String name, String displayName){
-    if (find(name) != null) throw new IllegalArgumentException("Key already registered");
-    HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name);
-    ourKeyToDisplayNameMap.put(highlightDisplayKey, displayName);
-    return highlightDisplayKey;
+  public static HighlightDisplayKey register(@NonNls String name, String displayName) {
+    return register(name, displayName, name);
   }
 
   public static String getDisplayNameByKey(HighlightDisplayKey key){
@@ -40,9 +37,7 @@ public class HighlightDisplayKey {
   }
 
   private HighlightDisplayKey(String name) {
-    myName = name;
-    myID = myName;
-    ourMap.put(myName, this);
+    this(name, name);
   }
 
   public HighlightDisplayKey(@NonNls final String name, @NonNls final String ID) {
