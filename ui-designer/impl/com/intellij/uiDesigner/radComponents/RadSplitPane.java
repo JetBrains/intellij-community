@@ -3,7 +3,11 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,32 +27,12 @@ public final class RadSplitPane extends RadContainer {
     return null;
   }
 
-  @Override public boolean canDrop(@Nullable Point location, ComponentDragObject dragObject) {
-    if (dragObject.getComponentCount() != 1) {
-      return false;
-    }
-
-    /*
-    TODO[yole]: support multi-drop (is it necessary?)
-    if (componentCount == 2) {
-      return isEmptySplitComponent(getSplitPane().getLeftComponent()) &&
-             isEmptySplitComponent(getSplitPane().getRightComponent());
-    }
-    */
+  @Override @Nullable
+  public DropLocation getDropLocation(@Nullable Point location) {
     if (location == null) {
-      return isEmptySplitComponent(getSplitPane().getLeftComponent()) ||
-             isEmptySplitComponent(getSplitPane().getRightComponent());
+      return new MyDropLocation(isEmptySplitComponent(getSplitPane().getLeftComponent()));
     }
-
-    final Component component;
-    if (isLeft(location)) {
-      component = getSplitPane().getLeftComponent();
-    }
-    else {
-      component = getSplitPane().getRightComponent();
-    }
-
-    return isEmptySplitComponent(component);
+    return new MyDropLocation(isLeft(location));
   }
 
   private static boolean isEmptySplitComponent(final Component component) {
@@ -78,37 +62,6 @@ public final class RadSplitPane extends RadContainer {
 
   private JSplitPane getSplitPane() {
     return (JSplitPane)getDelegee();
-  }
-
-  @Override public void drop(@Nullable Point location, RadComponent[] components, ComponentDragObject dragObject) {
-    boolean dropToLeft;
-    if (location != null) {
-      dropToLeft = isLeft(location);
-    }
-    else {
-      dropToLeft = isEmptySplitComponent(getSplitPane().getLeftComponent());
-    }
-
-    components[0].setCustomLayoutConstraints(dropToLeft ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
-    addComponent(components[0]);
-  }
-
-  @Nullable
-  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
-    final JSplitPane splitPane = getSplitPane();
-    int dividerPos = getDividerPos();
-    int dividerLeftPos = dividerPos - splitPane.getDividerSize()/2;
-    int dividerRightPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
-    if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-      return isLeft(location)
-             ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
-             : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
-    }
-    else {
-      return isLeft(location)
-             ? new Rectangle(0, 0, dividerLeftPos, getHeight())
-             : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
-    }
   }
 
   @Override protected void addToDelegee(final int index, final RadComponent component) {
@@ -156,6 +109,57 @@ public final class RadSplitPane extends RadContainer {
     }
     finally {
       writer.endElement();
+    }
+  }
+
+  private class MyDropLocation implements DropLocation {
+    private boolean myLeft;
+
+    public MyDropLocation(final boolean left) {
+      myLeft = left;
+    }
+
+    public RadContainer getContainer() {
+      return RadSplitPane.this;
+    }
+
+    public boolean canDrop(ComponentDragObject dragObject) {
+      /*
+      TODO[yole]: support multi-drop (is it necessary?)
+      if (componentCount == 2) {
+        return isEmptySplitComponent(getSplitPane().getLeftComponent()) &&
+               isEmptySplitComponent(getSplitPane().getRightComponent());
+      }
+      */
+      return dragObject.getComponentCount() == 1 &&
+             isEmptySplitComponent(myLeft ? getSplitPane().getLeftComponent() : getSplitPane().getRightComponent());
+    }
+
+    public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
+      final JSplitPane splitPane = getSplitPane();
+      int dividerPos = getDividerPos();
+      int dividerLeftPos = dividerPos - splitPane.getDividerSize()/2;
+      int dividerRightPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
+      Rectangle rc;
+      if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+        rc = myLeft
+               ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
+               : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
+      }
+      else {
+        rc = myLeft
+               ? new Rectangle(0, 0, dividerLeftPos, getHeight())
+               : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
+      }
+      feedbackLayer.putFeedback(getDelegee(), rc);
+    }
+
+    public void processDrop(GuiEditor editor,
+                            RadComponent[] components,
+                            GridConstraints[] constraintsToAdjust,
+                            ComponentDragObject dragObject) {
+      components[0].setCustomLayoutConstraints(myLeft ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
+      addComponent(components[0]);
     }
   }
 }

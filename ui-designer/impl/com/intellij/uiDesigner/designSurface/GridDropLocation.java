@@ -79,13 +79,9 @@ class GridDropLocation implements DropLocation {
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-    int componentCount = dragObject.getComponentCount();
-    Rectangle feedbackRect;
+    Rectangle feedbackRect = null;
     if (getContainer().isGrid()) {
       feedbackRect = getGridFeedbackRect(dragObject);
-    }
-    else {
-      feedbackRect = getContainer().getDropFeedbackRectangle(myTargetPoint, componentCount);
     }
     if (feedbackRect != null) {
       feedbackLayer.putFeedback(getContainer().getDelegee(), feedbackRect);

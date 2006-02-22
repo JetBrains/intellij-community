@@ -435,16 +435,11 @@ public abstract class RadComponent implements IComponent {
     return this;
   }
 
-  @Nullable public DropLocation getDropLocation(Point location) {
+  @Nullable public DropLocation getDropLocation(@Nullable Point location) {
     return null;
   }
 
   public abstract boolean canDrop(@Nullable Point location, ComponentDragObject dragObject);
-
-  @Nullable
-  public Rectangle getDropFeedbackRectangle(Point location, final int componentCount) {
-    return null;
-  }
 
   public void processMouseEvent(final MouseEvent event) {}
 

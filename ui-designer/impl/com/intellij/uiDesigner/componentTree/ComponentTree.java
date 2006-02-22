@@ -19,10 +19,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
-import com.intellij.uiDesigner.designSurface.DraggedComponentList;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -473,19 +470,23 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
 
+      boolean canDrop = false;
       if (dragObject != null) {
         final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
-        if (path != null && targetComponent != null && targetComponent.canDrop(null, dragObject)) {
-          dropTargetComponent = targetComponent;
-          dtde.acceptDrag(dtde.getDropAction());
-        }
-        else {
-          dtde.rejectDrag();
+        if (path != null && targetComponent != null) {
+          DropLocation dropLocation = targetComponent.getDropLocation(null);
+          canDrop = (dropLocation != null)
+                    ? dropLocation.canDrop(dragObject)
+                    : targetComponent.canDrop(null, dragObject);
+          if (canDrop) {
+            dropTargetComponent = targetComponent;
+            dtde.acceptDrag(dtde.getDropAction());
+          }
         }
       }
-      else {
+      if (!canDrop) {
         dtde.rejectDrag();
       }
       setDropTargetComponent(dropTargetComponent);
@@ -504,12 +505,24 @@ public final class ComponentTree extends Tree implements DataProvider {
         final RadComponent targetComponent = getComponentFromPath(path);
         if (targetComponent instanceof RadContainer) {
           RadContainer container = (RadContainer)targetComponent;
-          if (dcl != null) {
-            RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-            container.drop(null, components, dcl);
+          DropLocation dropLocation = targetComponent.getDropLocation(null);
+          if (dropLocation != null) {
+            if (dcl != null) {
+              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+              dropLocation.processDrop(myEditor, components, null, dcl);
+            }
+            else {
+              new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);
+            }
           }
           else {
-            new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem);
+            if (dcl != null) {
+              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+              container.drop(null, components, dcl);
+            }
+            else {
+              new InsertComponentProcessor(myEditor).processComponentInsert(null, container, componentItem);
+            }
           }
         }
       }

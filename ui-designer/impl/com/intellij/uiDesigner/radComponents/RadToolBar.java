@@ -29,18 +29,20 @@ public class RadToolBar extends RadContainer {
   }
 
   @Override @Nullable
-  public DropLocation getDropLocation(Point location) {
+  public DropLocation getDropLocation(@Nullable Point location) {
     int insertIndex = getDelegee().getComponentCount();
-    for(int i=0; i<getDelegee().getComponentCount(); i++) {
-      Rectangle bounds = getDelegee().getComponent(i).getBounds();
-      if (bounds.contains(location)) {
-        if (location.x < bounds.getCenterX()) {
-          insertIndex = i;
+    if (location != null) {
+      for(int i=0; i<getDelegee().getComponentCount(); i++) {
+        Rectangle bounds = getDelegee().getComponent(i).getBounds();
+        if (bounds.contains(location)) {
+          if (location.x < bounds.getCenterX()) {
+            insertIndex = i;
+          }
+          else {
+            insertIndex = i+1;
+          }
+          break;
         }
-        else {
-          insertIndex = i+1;
-        }
-        break;
       }
     }
     String insertBeforeId = null;

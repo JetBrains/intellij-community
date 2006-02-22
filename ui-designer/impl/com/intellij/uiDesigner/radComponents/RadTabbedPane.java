@@ -70,10 +70,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return c;
   }
 
-  @Override public DropLocation getDropLocation(Point location) {
+  @Override public DropLocation getDropLocation(@Nullable Point location) {
     final JTabbedPane tabbedPane = getTabbedPane();
     final TabbedPaneUI ui = tabbedPane.getUI();
-    if (tabbedPane.getTabCount() > 0) {
+    if (location != null && tabbedPane.getTabCount() > 0) {
       for(int i=0; i<tabbedPane.getTabCount(); i++) {
         Rectangle rc = ui.getTabBounds(tabbedPane, i);
         if (location.x < rc.getCenterX()) {
