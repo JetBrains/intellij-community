@@ -872,8 +872,7 @@ public class HighlightUtil {
 
       PsiType type = expr.getType();
       if (!TypeConversionUtil.isBooleanType(type)) {
-        HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange());
-        return highlightInfo;
+        return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange());
       }
     }
     return null;
@@ -1204,7 +1203,7 @@ public class HighlightUtil {
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)parent;
-      if (variable.getType() == null || variable.getType() instanceof PsiArrayType) return null;
+      if (variable.getType() instanceof PsiArrayType) return null;
     }
     else if (parent instanceof PsiNewExpression) {
       return null;
@@ -1882,7 +1881,6 @@ public class HighlightUtil {
         String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
-        List<IntentionAction> options = new ArrayList<IntentionAction>();
         if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
           return null;
         }
@@ -2096,4 +2094,19 @@ public class HighlightUtil {
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass);
   }
+
+  public static HighlightInfo checkClassReferenceAfterQualifier(final PsiReferenceExpression expression,
+                                                                final PsiElement resolved) {
+    if (!(resolved instanceof PsiClass)) return null;
+    final PsiExpression qualifier = expression.getQualifierExpression();
+    if (qualifier == null) return null;
+    if (qualifier instanceof PsiReferenceExpression) {
+      PsiElement qualifierResolved = ((PsiReferenceExpression)qualifier).resolve();
+      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return null;
+    }
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
+    QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
+    return info;
+  }
+
 }
