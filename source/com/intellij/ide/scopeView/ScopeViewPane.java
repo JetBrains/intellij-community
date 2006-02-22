@@ -70,7 +70,7 @@ public class ScopeViewPane extends AbstractProjectViewPane implements ProjectCom
   }
 
   public String getTitle() {
-    return IdeBundle.message("title.scope");
+    return IdeBundle.message("scope.view.title");
   }
 
   public Icon getIcon() {

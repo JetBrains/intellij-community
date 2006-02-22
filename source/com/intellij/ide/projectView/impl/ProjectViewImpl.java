@@ -57,12 +57,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.*;
 import java.util.List;
 
@@ -136,6 +138,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private JComboBox myCombo;
   private JPanel myViewContentPanel;
   private JPanel myActionGroupPanel;
+  private JLabel myLabel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = new Comparator<AbstractProjectViewPane>() {
     public int compare(final AbstractProjectViewPane o1, final AbstractProjectViewPane o2) {
       return o1.getWeight() - o2.getWeight();
@@ -411,27 +414,29 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     };
 
-    myCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
-        final String id = ids.first;
-        String subId = ids.second;
-        if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
-        AbstractProjectViewPane newPane = getProjectViewPaneById(id);
-        newPane.setSubId(subId);
-        String[] subIds = newPane.getSubIds();
+    myCombo.addPopupMenuListener(new PopupMenuListener() {
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 
-        if (subId == null && subIds != null) {
-          final String firstSubId = subIds.length == 0 ? null : subIds[0];
-          SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-              changeView(id, firstSubId);
-            }
-          });
+      }
+
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        viewSelectionChanged();
+      }
+
+      public void popupMenuCanceled(PopupMenuEvent e) {
+
+      }
+    });
+    myLabel.addFocusListener(new FocusListener() {
+      public void focusGained(FocusEvent e) {
+        if (!myCombo.isPopupVisible()) {
+          myCombo.requestFocusInWindow();
+          myCombo.showPopup();
         }
-        else {
-          showPane(newPane);
-        }
+      }
+
+      public void focusLost(FocusEvent e) {
+
       }
     });
 
@@ -440,6 +445,28 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     isInitialized = true;
     doAddUninitializedPanes();
     showSavedPane();
+  }
+
+  private void viewSelectionChanged() {
+    Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
+    final String id = ids.first;
+    String subId = ids.second;
+    if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
+    AbstractProjectViewPane newPane = getProjectViewPaneById(id);
+    newPane.setSubId(subId);
+    String[] subIds = newPane.getSubIds();
+
+    if (subId == null && subIds != null) {
+      final String firstSubId = subIds.length == 0 ? null : subIds[0];
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          changeView(id, firstSubId);
+        }
+      });
+    }
+    else {
+      showPane(newPane);
+    }
   }
 
   private void createToolbarActions() {
@@ -732,6 +759,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     if (viewId.equals(getCurrentViewId()) && (subId == null || subId.equals(pane.getSubId()))) return;
     myCombo.setSelectedItem(Pair.create(viewId, subId));
+    viewSelectionChanged();
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
