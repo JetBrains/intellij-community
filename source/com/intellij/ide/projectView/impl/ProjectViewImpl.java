@@ -449,6 +449,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void viewSelectionChanged() {
     Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
+    if (ids == null) return; // it is possible in tests
     final String id = ids.first;
     String subId = ids.second;
     if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
