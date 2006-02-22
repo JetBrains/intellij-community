@@ -17,11 +17,6 @@ public interface ParameterInfoContext {
 
   PsiFile getFile();
   int getOffset();
-  int getParameterListStart();
 
   Editor getEditor();
-  PsiElement getHighlightedElement();
-  void setHighlightedElement(PsiElement elements);
-
-  Object[] getItemsToShow();
 }

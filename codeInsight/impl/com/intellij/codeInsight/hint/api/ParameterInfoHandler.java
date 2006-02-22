@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ParameterInfoHandler <O,P> {
   boolean couldShowInLookup();
   @Nullable Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context);
+  @Nullable Object[] getParametersForDocumentation(P p, ParameterInfoContext context);
 
   @Nullable O findElementForParameterInfo(final CreateParameterInfoContext context);
   void showParameterInfo(@NotNull final O element, final CreateParameterInfoContext context);

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
   public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
     return new Object[]{item.getObject()};
+  }
+
+  public Object[] getParametersForDocumentation(final XmlElementDescriptor p, final ParameterInfoContext context) {
+    return p.getAttributesDescriptors();
   }
 
   public boolean couldShowInLookup() {

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,10 @@ import org.jetbrains.annotations.Nullable;
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod> {
   public @Nullable Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
     return null;
+  }
+
+  public Object[] getParametersForDocumentation(final PsiAnnotationMethod p, final ParameterInfoContext context) {
+    return new Object[] {p};
   }
 
   public boolean couldShowInLookup() {

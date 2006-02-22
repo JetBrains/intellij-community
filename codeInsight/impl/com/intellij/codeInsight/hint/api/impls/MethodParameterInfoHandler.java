@@ -8,7 +8,9 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
       return allMethods;
     }
     return null;
+  }
+
+  public Object[] getParametersForDocumentation(final Object p, final ParameterInfoContext context) {
+    if (p instanceof MethodCandidateInfo) {
+      return ((MethodCandidateInfo)p).getElement().getParameterList().getParameters();
+    } else if (p instanceof PsiMethod) {
+      return ((PsiMethod)p).getParameterList().getParameters();
+    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean couldShowInLookup() {

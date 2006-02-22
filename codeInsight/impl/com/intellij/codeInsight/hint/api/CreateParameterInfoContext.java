@@ -10,7 +10,12 @@ import com.intellij.psi.PsiElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface CreateParameterInfoContext extends ParameterInfoContext {
+  Object[] getItemsToShow();
   void setItemsToShow(Object[] items);
 
   void showHint(PsiElement element, int offset, ParameterInfoHandler handler);
+  int getParameterListStart();
+
+  PsiElement getHighlightedElement();
+  void setHighlightedElement(PsiElement elements);
 }

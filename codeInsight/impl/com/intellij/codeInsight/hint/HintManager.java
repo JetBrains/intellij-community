@@ -353,7 +353,17 @@ public class HintManager implements ApplicationComponent {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     Project project = editor.getProject();
     Lookup lookup = project == null ? null : LookupManager.getInstance(project).getActiveLookup();
+
     if (lookup == null) {
+      for (HintInfo info : myHintsStack) {
+        if (info.hint instanceof LightweightHint) {
+          final Rectangle rectangle = info.hint.getBounds();
+          
+          if (rectangle != null) {
+            return getHintPositionRelativeTo(hint, editor, constraint, rectangle, rectangle, pos);
+          }
+        }
+      }
       return getHintPosition(hint, editor, pos, constraint);
     }
     else {
@@ -362,48 +372,57 @@ public class HintManager implements ApplicationComponent {
         return getHintPosition(hint, editor, pos, constraint);
       }
       Rectangle lookupBounds = lookup.getBounds();
-      Dimension hintSize = hint.getComponent().getPreferredSize();
-      JComponent editorComponent = editor.getComponent();
-      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-      int layeredPaneHeight = layeredPane.getHeight();
+      return getHintPositionRelativeTo(hint, editor, constraint, cellBounds, lookupBounds, pos);
+    }
+  }
 
-      switch (constraint) {
-        case LEFT:
-          {
-            int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
-            if (y < 0) {
-              y = 0;
-            }
-            else if (y + hintSize.height >= layeredPaneHeight) {
-              y = layeredPaneHeight - hintSize.height;
-            }
-            return new Point(lookupBounds.x - hintSize.width, y);
+  private Point getHintPositionRelativeTo(final LightweightHint hint,
+                                          final Editor editor,
+                                          final short constraint,
+                                          final Rectangle cellBounds,
+                                          final Rectangle lookupBounds,
+                                          final LogicalPosition pos) {
+    Dimension hintSize = hint.getComponent().getPreferredSize();
+    JComponent editorComponent = editor.getComponent();
+    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    int layeredPaneHeight = layeredPane.getHeight();
+
+    switch (constraint) {
+      case LEFT:
+        {
+          int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
+          if (y < 0) {
+            y = 0;
           }
-
-        case RIGHT:
-          {
-            int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
-            if (y < 0) {
-              y = 0;
-            }
-            else if (y + hintSize.height >= layeredPaneHeight) {
-              y = layeredPaneHeight - hintSize.height;
-            }
-            return new Point(lookupBounds.x + lookupBounds.width, y);
+          else if (y + hintSize.height >= layeredPaneHeight) {
+            y = layeredPaneHeight - hintSize.height;
           }
+          return new Point(lookupBounds.x - hintSize.width, y);
+        }
 
-        case ABOVE:
-          Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
-          return new Point(lookupBounds.x, Math.min(posAboveCaret.y, lookupBounds.y - hintSize.height));
+      case RIGHT:
+        {
+          int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
+          if (y < 0) {
+            y = 0;
+          }
+          else if (y + hintSize.height >= layeredPaneHeight) {
+            y = layeredPaneHeight - hintSize.height;
+          }
+          return new Point(lookupBounds.x + lookupBounds.width, y);
+        }
 
-        case UNDER:
-          Point posUnderCaret = getHintPosition(hint, editor, pos, UNDER);
-          return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
+      case ABOVE:
+        Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
+        return new Point(lookupBounds.x, Math.min(posAboveCaret.y, lookupBounds.y - hintSize.height));
 
-        default:
-          LOG.assertTrue(false);
-          return null;
-      }
+      case UNDER:
+        Point posUnderCaret = getHintPosition(hint, editor, pos, UNDER);
+        return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
+
+      default:
+        LOG.assertTrue(false);
+        return null;
     }
   }
 

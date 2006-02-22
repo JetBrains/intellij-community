@@ -3,6 +3,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -49,6 +50,7 @@ import java.util.List;
 public class JavaDocManager implements ProjectComponent {
   private final Project myProject;
   private Editor myEditor = null;
+  private ParameterInfoController myParameterInfoController;
 
   private WeakReference<LightweightHint> myDocInfoHintRef;
   private boolean myRequestFocus;
@@ -192,6 +194,13 @@ public class JavaDocManager implements ProjectComponent {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    final PsiExpressionList list =
+      ParameterInfoController.findArgumentList(file, myEditor.getCaretModel().getOffset(), -1);
+    if (list != null) {
+      myParameterInfoController = ParameterInfoController.getControllerAtOffset(myEditor, list.getTextRange().getStartOffset());
+    }
+
+
     PsiElement element = TargetElementUtil.findTargetElement(editor,
                                                              TargetElementUtil.ELEMENT_NAME_ACCEPTED
                                                              | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
@@ -231,6 +240,14 @@ public class JavaDocManager implements ProjectComponent {
 
     if (element instanceof PsiAnonymousClass) {
       element = ((PsiAnonymousClass)element).getBaseClassType().resolve();
+    }
+
+    if (element == null && myParameterInfoController != null) {
+      final Object[] objects = myParameterInfoController.getSelectedElements();
+
+      if (objects != null && objects.length > 0) {
+        element = getPsiElementFromParameterInfoObject(objects[0], element);
+      }
     }
 
     if (element == null && file != null) { // look if we are within a javadoc comment
@@ -279,6 +296,7 @@ public class JavaDocManager implements ProjectComponent {
 
         myEditor = null;
         myPreviouslyFocused = null;
+        myParameterInfoController = null;
       }
     };
     component.setHint(hint);
@@ -292,6 +310,15 @@ public class JavaDocManager implements ProjectComponent {
     myDocInfoHintRef = new WeakReference<LightweightHint>(hint);
 
     return hint;
+  }
+
+  private static PsiElement getPsiElementFromParameterInfoObject(final Object o, PsiElement element) {
+    if (o instanceof CandidateInfo) {
+      element = ((CandidateInfo)o).getElement();
+    } else if (o instanceof PsiElement) {
+      element = (PsiElement)o;
+    }
+    return element;
   }
 
   void hookFocus(LightweightHint hint) {
@@ -579,6 +606,34 @@ public class JavaDocManager implements ProjectComponent {
       return getMethodCandidateInfo(((PsiMethodCallExpression)element));
     }
     else {
+      final DocumentationProvider provider = getProviderFromElement(element);
+      final JavaDocInfoGenerator javaDocInfoGenerator =
+        new JavaDocInfoGenerator(myProject, element, provider);
+
+      if (myParameterInfoController != null) {
+        final Object[] objects = myParameterInfoController.getSelectedElements();
+
+        if (objects.length > 0) {
+          @NonNls StringBuffer sb = null;
+
+          for(Object o:objects) {
+            PsiElement parameter = getPsiElementFromParameterInfoObject(o, null);
+
+            if (parameter != null) {
+              if (sb == null) sb = new StringBuffer();
+              final String str2 = new JavaDocInfoGenerator(myProject, parameter, provider).generateDocInfo();
+              sb.append(str2);
+              sb.append("<br>");
+            } else {
+              sb = null;
+              break;
+            }
+          }
+
+          if (sb != null) return sb.toString();
+        }
+      }
+
       JavaDocExternalFilter docFilter = new JavaDocExternalFilter(myProject);
       String docURL = getExternalJavaDocUrl(element);
 
@@ -588,8 +643,9 @@ public class JavaDocManager implements ProjectComponent {
           return externalDoc;
         }
       }
+
       return docFilter.filterInternalDocInfo(
-        new JavaDocInfoGenerator(myProject, element, getProviderFromElement(element)).generateDocInfo(),
+        javaDocInfoGenerator.generateDocInfo(),
         docURL);
     }
   }
@@ -617,19 +673,24 @@ public class JavaDocManager implements ProjectComponent {
           continue;
         }
 
-        sb.append("&nbsp;&nbsp;<a href=\"psi_element://" + JavaDocUtil.getReferenceText(myProject, element) + "\">");
-        sb.append(PsiFormatUtil.formatMethod(((PsiMethod)element),
-                                             candidate.getSubstitutor(),
-                                             PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE |
-                                             PsiFormatUtil.SHOW_PARAMETERS,
-                                             PsiFormatUtil.SHOW_TYPE));
-        sb.append("</a><br>");
+        final String str = PsiFormatUtil.formatMethod(((PsiMethod)element), candidate.getSubstitutor(),
+                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
+                                                      PsiFormatUtil.SHOW_TYPE);
+        createElementLink(sb, element, str, null);
       }
 
       return CodeInsightBundle.message("javadoc.candiates", text, sb);
     }
 
     return CodeInsightBundle.message("javadoc.candidates.not.found", text);
+  }
+
+  private void createElementLink(final @NonNls StringBuffer sb, final PsiElement element, final String str,final String str2) {
+    sb.append("&nbsp;&nbsp;<a href=\"psi_element://" + JavaDocUtil.getReferenceText(myProject, element) + "\">");
+    sb.append(str);
+    sb.append("</a>");
+    if (str2 != null) sb.append(str2);
+    sb.append("<br>");
   }
 
   void navigateByLink(final JavaDocInfoComponent component, String url) {

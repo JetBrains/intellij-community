@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -138,8 +140,7 @@ class JavaDocInfoGenerator {
 
         PsiDocTag[] tags = getThrowsTags(comment);
 
-        for (int i = 0; i < tags.length; i++) {
-          PsiDocTag tag = tags[i];
+        for (PsiDocTag tag : tags) {
           PsiDocTagValue value = tag.getValueElement();
 
           if (value != null) {
@@ -156,7 +157,8 @@ class JavaDocInfoGenerator {
     };
   }
 
-  public JavaDocInfoGenerator(Project project, PsiElement element,JavaDocManager.DocumentationProvider _provider) {
+  public JavaDocInfoGenerator(Project project, PsiElement element,
+                              JavaDocManager.DocumentationProvider _provider) {
     myProject = project;
     myElement = element;
     myProvider = _provider;
@@ -169,6 +171,8 @@ class JavaDocInfoGenerator {
     }
     else if (myElement instanceof PsiMethod) {
       generateMethodJavaDoc(buffer, (PsiMethod)myElement);
+    } else if (myElement instanceof PsiParameter) {
+      generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement);
     }
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement);
@@ -472,6 +476,21 @@ class JavaDocInfoGenerator {
     }
   }
 
+  private void generateMethodParameterJavaDoc(@NonNls StringBuffer buffer, PsiParameter parameter) {
+    final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
+
+    if (method != null) {
+      final PsiDocComment docComment = getDocComment(method);
+      if (docComment != null) {
+        final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagInfoProvider =
+          findDocTag(docComment.getTags(), parameter.getName(), method);
+
+        PsiElement[] elements = tagInfoProvider.first.getDataElements();
+        if (elements.length != 0) generateOneParameter(elements, buffer, tagInfoProvider);
+      }
+    }
+  }
+
   private void generateMethodJavaDoc(@NonNls StringBuffer buffer, PsiMethod method) {
     generatePrologue(buffer);
 
@@ -517,8 +536,7 @@ class JavaDocInfoGenerator {
     indent += name.length();
 
     buffer.append("(");
-    indent++;
-    indent--;//???
+
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
@@ -970,33 +988,7 @@ class JavaDocInfoGenerator {
       final String paramName = param.getName();
       Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = null;
 
-      for (PsiDocTag localTag : localTags) {
-        PsiDocTagValue value = localTag.getValueElement();
-
-        if (value != null) {
-          String tagName = value.getText();
-
-          if (tagName != null && tagName.equals(paramName)) {
-            parmTag =
-            new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>
-              (localTag,
-               new InheritDocProvider<PsiDocTag>() {
-                 public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-                   return findInheritDocTag(method, parameterLocator(paramName));
-                 }
-
-                 public PsiClass getElement() {
-                   return method.getContainingClass();
-                 }
-               });
-            break;
-          }
-        }
-      }
-
-      if (parmTag == null) {
-        parmTag = findInheritDocTag(method, parameterLocator(paramName));
-      }
+      parmTag = findDocTag(localTags, paramName, method);
 
       if (parmTag != null) {
         collectedTags.addLast(parmTag);
@@ -1009,22 +1001,62 @@ class JavaDocInfoGenerator {
       for (Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag : collectedTags) {
         PsiElement[] elements = tag.first.getDataElements();
         if (elements.length == 0) continue;
-        String text = elements[0].getText();
-        buffer.append("<DD>");
-        int spaceIndex = text.indexOf(' ');
-        if (spaceIndex < 0) {
-          spaceIndex = text.length();
-        }
-        String parmName = text.substring(0, spaceIndex);
-        buffer.append("<code>");
-        buffer.append(parmName);
-        buffer.append("</code>");
-        buffer.append(" - ");
-        buffer.append(text.substring(spaceIndex));
-        generateValue(buffer, elements, 1, mapProvider(tag.second, true));
+        generateOneParameter(elements, buffer, tag);
       }
       buffer.append("</DD></DL></DD>");
     }
+  }
+
+  private Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findDocTag(final PsiDocTag[] localTags,
+                                                                                         final String paramName,
+                                                                                         final PsiMethod method) {
+    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = null;
+    for (PsiDocTag localTag : localTags) {
+      PsiDocTagValue value = localTag.getValueElement();
+
+      if (value != null) {
+        String tagName = value.getText();
+
+        if (tagName != null && tagName.equals(paramName)) {
+          parmTag =
+          new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>
+            (localTag,
+             new InheritDocProvider<PsiDocTag>() {
+               public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+                 return findInheritDocTag(method, parameterLocator(paramName));
+               }
+
+               public PsiClass getElement() {
+                 return method.getContainingClass();
+               }
+             });
+          break;
+        }
+      }
+    }
+
+    if (parmTag == null) {
+      parmTag = findInheritDocTag(method, parameterLocator(paramName));
+    }
+    return parmTag;
+  }
+
+  private void generateOneParameter(final PsiElement[] elements,
+                                    final StringBuffer buffer,
+                                    final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag) {
+    String text = elements[0].getText();
+    buffer.append("<DD>");
+    int spaceIndex = text.indexOf(' ');
+    if (spaceIndex < 0) {
+      spaceIndex = text.length();
+    }
+    String parmName = text.substring(0, spaceIndex);
+    buffer.append("<code>");
+    buffer.append(parmName);
+    buffer.append("</code>");
+    buffer.append(" - ");
+    buffer.append(text.substring(spaceIndex));
+    generateValue(buffer, elements, 1, mapProvider(tag.second, true));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

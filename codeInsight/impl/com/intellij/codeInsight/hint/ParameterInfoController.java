@@ -2,6 +2,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.hint.api.ParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.UpdateParameterInfoContext;
+import com.intellij.codeInsight.hint.api.ParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.ParameterInfoUtils;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -17,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +29,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-class ParameterInfoController {
+public class ParameterInfoController {
   private Project myProject;
   private Editor myEditor;
 
@@ -50,6 +52,55 @@ class ParameterInfoController {
    * Keeps Vector of ParameterInfoController's in Editor
    */
   private static final Key<ArrayList<ParameterInfoController>> ALL_CONTROLLERS_KEY = Key.create("ParameterInfoController.ALL_CONTROLLERS_KEY");
+
+  public static ParameterInfoController getControllerAtOffset(Editor editor, int offset) {
+    ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
+    for (ParameterInfoController controller : allControllers) {
+      if (controller.myLbraceMarker.getStartOffset() == offset) return controller;
+    }
+
+    return null;
+  }
+
+  public Object[] getSelectedElements() {
+    ParameterInfoContext context = new ParameterInfoContext() {
+      public Project getProject() {
+        return myProject;
+      }
+
+      public PsiFile getFile() {
+        return myComponent.getParameterOwner().getContainingFile();
+      }
+
+      public int getOffset() {
+        return myEditor.getCaretModel().getOffset();
+      }
+
+      public Editor getEditor() {
+        return myEditor;
+      }
+    };
+
+    if (!myHandler.tracksParameterIndex()) {
+      return myHandler.getParametersForDocumentation(myComponent.getObjects()[0],context);
+    }
+
+    final Object[] objects = myComponent.getObjects();
+    int selectedParameterIndex = myComponent.getCurrentParameterIndex();
+    java.util.List<Object> params = new ArrayList<Object>(objects.length);
+
+    for(Object o:objects) {
+      final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
+
+      if (availableParams != null &&
+          selectedParameterIndex < availableParams.length
+        ) {
+        params.add(availableParams[selectedParameterIndex]);
+      }
+    }
+
+    return params.size() > 0 ? params.toArray(new Object[params.size()]): ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
 
   private static ArrayList<ParameterInfoController> getAllControllers(Editor editor) {
     ArrayList<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
@@ -326,7 +377,7 @@ class ParameterInfoController {
     }
 
     public void setCurrentParameter(final int index) {
-      myComponent.setCurrentParameter(index);
+      myComponent.setCurrentParameterIndex(index);
     }
 
     public boolean isUIComponentEnabled(int index) {

@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -142,8 +143,10 @@ public class JavaDocUtil {
     }
     else {
       String name = memberRefText.substring(0, parenthIndex).trim();
-      if (!StringUtil.endsWithChar(memberRefText, ')')) return null;
-      String parmsText = memberRefText.substring(parenthIndex + 1, memberRefText.length() - 1).trim();
+      int rparenIndex = memberRefText.lastIndexOf(')');
+      if (rparenIndex == -1) return null;
+      
+      String parmsText = memberRefText.substring(parenthIndex + 1, rparenIndex).trim();
       StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
       PsiType[] types = new PsiType[tokenizer.countTokens()];
       int i = 0;
@@ -171,6 +174,7 @@ public class JavaDocUtil {
         if (!method.getName().equals(name)) continue;
         PsiParameter[] parms = method.getParameterList().getParameters();
         if (parms.length != types.length) continue;
+
         for (int k = 0; k < parms.length; k++) {
           PsiParameter parm = parms[k];
           if (
@@ -178,6 +182,12 @@ public class JavaDocUtil {
             ) {
             continue MethodsLoop;
           }
+        }
+
+        int hashIndex = memberRefText.indexOf('#',rparenIndex);
+        if (hashIndex != -1) {
+          int parameterNumber = Integer.parseInt(memberRefText.substring(hashIndex + 1));
+          if (parameterNumber < parms.length) return method.getParameterList().getParameters()[parameterNumber].getNavigationElement();
         }
         return method.getNavigationElement();
       }
@@ -237,9 +247,16 @@ public class JavaDocUtil {
       buffer.append(")");
       return buffer.toString();
     }
-    else {
-      return null;
+    else if (element instanceof PsiParameter) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method != null) {
+        return getReferenceText(project, method) +
+               "#"+
+               ((PsiParameterList)element.getParent()).getParameterIndex((PsiParameter)element);
+      }
     }
+
+    return null;
   }
 
   public static String getShortestClassName(PsiClass aClass, PsiElement context) {

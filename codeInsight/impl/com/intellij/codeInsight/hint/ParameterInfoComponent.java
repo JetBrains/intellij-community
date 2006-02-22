@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 class ParameterInfoComponent extends JPanel{
   private Object[] myObjects;
-  private int myCurrentParameter;
+  private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
   private PsiElement myHighlighted;
@@ -63,7 +63,7 @@ class ParameterInfoComponent extends JPanel{
       add(myPanels[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
     }
 
-    myCurrentParameter = -1;
+    myCurrentParameterIndex = -1;
   }
 
   class MyParameterContext implements ParameterInfoUIContext {
@@ -92,7 +92,7 @@ class ParameterInfoComponent extends JPanel{
     }
 
     public int getCurrentParameterIndex() {
-      return myCurrentParameter;
+      return myCurrentParameterIndex;
     }
 
     public PsiElement getParameterOwner() {
@@ -131,8 +131,12 @@ class ParameterInfoComponent extends JPanel{
     return myPanels[index].isEnabled();
   }
 
-  public void setCurrentParameter(int currentParameter) {
-    myCurrentParameter = currentParameter;
+  public void setCurrentParameterIndex(int currentParameterIndex) {
+    myCurrentParameterIndex = currentParameterIndex;
+  }
+
+  public int getCurrentParameterIndex() {
+    return myCurrentParameterIndex;
   }
 
   public void setParameterOwner (PsiElement element) {

@@ -23,6 +23,10 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     return null;
   }
 
+  public Object[] getParametersForDocumentation(final PsiTypeParameter p, final ParameterInfoContext context) {
+    return new Object[] {p};
+  }
+
   public boolean couldShowInLookup() {
     return false;
   }
