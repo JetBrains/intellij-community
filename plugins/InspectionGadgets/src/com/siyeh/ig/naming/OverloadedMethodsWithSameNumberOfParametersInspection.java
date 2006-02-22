@@ -26,7 +26,8 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
         extends MethodInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.display.name");
+        return InspectionGadgetsBundle.message(
+                "overloaded.methods.with.same.number.parameters.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -34,7 +35,8 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
     }
 
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "overloaded.methods.with.same.number.parameters.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -48,25 +50,19 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
             if (method.isConstructor()) {
                 return;
             }
-
-            final String methodName = method.getName();
-            if (methodName == null) {
-                return;
-            }
             final int parameterCount = calculateParamCount(method);
-
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;
             }
-            final PsiMethod[] methods = aClass.getMethods();
-            for (PsiMethod method1 : methods) {
-                if(!method1.equals(method)) {
-                    final String testMethName = method1.getName();
-
-                    final int testParameterCount = calculateParamCount(method1);
-                    if(testMethName != null && methodName.equals(testMethName)
-                            && parameterCount == testParameterCount) {
+            final String methodName = method.getName();
+            final PsiMethod[] sameNameMethods =
+                    aClass.findMethodsByName(methodName, false);
+            for (PsiMethod sameNameMethod : sameNameMethods) {
+                if(!sameNameMethod.equals(method)) {
+                    final int testParameterCount = 
+                            calculateParamCount(sameNameMethod);
+                    if(parameterCount == testParameterCount) {
                         registerMethodError(method);
                     }
                 }

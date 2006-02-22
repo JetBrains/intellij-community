@@ -369,6 +369,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConfusingMainMethodInspection.class);
         m_inspectionClasses.add(UpperCaseFieldNameNotConstantInspection.class);
         m_inspectionClasses.add(DollarSignInNameInspection.class);
+        m_inspectionClasses.add(OverloadedVarargsMethodInspection.class);
     }
 
     private void registerControlFlowInspections() {
