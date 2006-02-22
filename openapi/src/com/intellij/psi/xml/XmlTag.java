@@ -22,6 +22,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -38,10 +39,12 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlElementDescriptor getDescriptor();
 
   XmlAttribute[] getAttributes();
-  XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
 
-  String getAttributeValue(@NonNls String name);
-  String getAttributeValue(@NonNls String name, @NonNls String namespace);
+  @Nullable XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
+
+  @Nullable String getAttributeValue(@NonNls String name);
+
+  @Nullable String getAttributeValue(@NonNls String name, @NonNls String namespace);
 
   XmlAttribute setAttribute(@NonNls String name, @NonNls String namespace, @NonNls String value) throws IncorrectOperationException;
   XmlAttribute setAttribute(@NonNls String name, @NonNls String value) throws IncorrectOperationException;
