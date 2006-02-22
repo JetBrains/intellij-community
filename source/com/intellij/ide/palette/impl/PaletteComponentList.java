@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +61,14 @@ public class PaletteComponentList extends JList {
         myNeedClearSelection = (SwingUtilities.isLeftMouseButton(e) &&
                                 myBeforeClickSelectedRow >= 0 &&
                                 locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
-                                !e.isControlDown() && !e.isShiftDown());
+                                !UIUtil.isControlKeyDown(e) && !e.isShiftDown());
       }
 
       @Override public void mouseReleased(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e) &&
             myBeforeClickSelectedRow >= 0 &&
             locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
-            !e.isControlDown() && !e.isShiftDown() && myNeedClearSelection) {
+            !UIUtil.isControlKeyDown(e) && !e.isShiftDown() && myNeedClearSelection) {
           clearSelection();
         }
       }

@@ -65,7 +65,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       myPressPoint = e.getPoint();
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-      if (!myDragStarted && e.isControlDown()) {
+      if (!myDragStarted && UIUtil.isControlKeyDown(e)) {
         RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
         if (component != null) {
           component.setSelected(!component.isSelected());

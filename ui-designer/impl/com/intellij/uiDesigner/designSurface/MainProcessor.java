@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -258,22 +259,14 @@ public final class MainProcessor extends EventProcessor{
 
     final ComponentItem selectedItem = PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class);
     if (selectedItem != null) {
-      myInsertComponentProcessor.setSticky(e.isControlDown());
+      myInsertComponentProcessor.setSticky(UIUtil.isControlKeyDown(e));
       myCurrentProcessor = myInsertComponentProcessor;
       return;
     }
 
-    if (e.isControlDown()) {
-      //component.setSelected(!(component.isSelected()));
-    }
-    else if (e.isShiftDown()) {
-      // Do not select component is shift is pressed
-    }
-    else {
-      if (!component.isSelected()) {
-        FormEditingUtil.clearSelection(myEditor.getRootContainer());
-        component.setSelected(true);
-      }
+    if (!UIUtil.isControlKeyDown(e) && !e.isShiftDown() && !component.isSelected()) {
+      FormEditingUtil.clearSelection(myEditor.getRootContainer());
+      component.setSelected(true);
     }
 
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getDelegee());
