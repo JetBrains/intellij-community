@@ -111,7 +111,6 @@ public class SelectInAction extends AnAction {
       myVirtualFile = virtualFile;
       myProjectViewTargets = new ArrayList<SelectInTarget>();
       myVisibleTargets = new ArrayList<SelectInTarget>();
-      myVisibleTargets.add(PROJECT_VIEW_FAKE_TARGET);
       for (SelectInTarget target : targetVector) {
         if (target instanceof ProjectViewSelectInTarget) {
           myProjectViewTargets.add(target);
@@ -119,6 +118,9 @@ public class SelectInAction extends AnAction {
         else {
           myVisibleTargets.add(target);
         }
+      }
+      if (!myProjectViewTargets.isEmpty()) {
+        myVisibleTargets.add(0,PROJECT_VIEW_FAKE_TARGET);
       }
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
     }
