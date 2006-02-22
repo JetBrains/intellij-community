@@ -7,6 +7,7 @@ import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
   private DomElement myModelElement;
@@ -23,11 +24,13 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     if (!myModelElement.isValid()) return NO_CHILDREN;
 
     final List<? extends DomElement> domChildren = myChildDescription.getValues(myModelElement);
-    final SimpleNode[] simpleNodes = new SimpleNode[domChildren.size()];
-    for (int i = 0; i < domChildren.size(); i++) {
-      simpleNodes[i] = new BaseDomElementNode(domChildren.get(i), this);
+    final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>();
+    for (DomElement domChild : domChildren) {
+      if (shouldBeShowed(domChild.getDomElementType())) {
+        simpleNodes.add(new BaseDomElementNode(domChild, this));
+      }
     }
-    return simpleNodes;
+    return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);
   }
 
   public Object[] getEqualityObjects() {

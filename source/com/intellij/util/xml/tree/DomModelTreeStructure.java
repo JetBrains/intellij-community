@@ -6,6 +6,7 @@ import jetbrains.fabrique.ui.treeStructure.SimpleTreeStructure;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
   private DomFileElement myFileElement;
+  private DomFileElementNode myRootNode;
 
   public DomModelTreeStructure(DomFileElement fileElement) {
     myFileElement = fileElement;
@@ -16,6 +17,14 @@ public class DomModelTreeStructure extends SimpleTreeStructure {
   }
 
   public DomFileElementNode getRootElement() {
-    return createRoot(myFileElement);
+    if (myRootNode == null) {
+      myRootNode = createRoot(myFileElement);
+    }
+    return myRootNode;
+  }
+
+
+  public DomFileElement getFileElement() {
+    return myFileElement;
   }
 }

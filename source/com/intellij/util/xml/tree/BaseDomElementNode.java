@@ -9,10 +9,8 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.lang.reflect.Type;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
@@ -44,23 +42,24 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
       final List<? extends DomElement> values = description.getValues(element);
-      if (DomUtil.isGenericValueType(description.getType())) {
-        if (showGenericValues()) {
+      if (shouldBeShowed(description.getType())) {
+        if (DomUtil.isGenericValueType(description.getType())) {
           for (DomElement domElement : values) {
             children.add(new GenericValueNode((GenericDomValue)domElement, this));
           }
-        }
-      }
-      else {
-        for (DomElement domElement : values) {
-          children.add(new BaseDomElementNode(domElement, this));
+        } else {
+          for (DomElement domElement : values) {
+            children.add(new BaseDomElementNode(domElement, this));
+          }
         }
       }
     }
 
     final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getGenericInfo().getCollectionChildrenDescriptions();
     for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
-      children.add(new DomElementsGroupNode(element, description));
+      if (shouldBeShowed(description.getType())) {
+        children.add(new DomElementsGroupNode(element, description));
+      }
     }
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
@@ -106,7 +105,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return myTagName;
   }
 
-  public final DomElement getDomElement() {
+  public DomElement getDomElement() {
     return myDomElement;
   }
 

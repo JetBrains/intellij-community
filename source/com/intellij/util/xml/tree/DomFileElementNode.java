@@ -1,6 +1,7 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomElement;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 public class DomFileElementNode extends BaseDomElementNode {
@@ -14,5 +15,10 @@ public class DomFileElementNode extends BaseDomElementNode {
 
   public SimpleNode[] getChildren() {
     return doGetChildren(myFileElement.getRootElement());
+  }
+
+
+  public DomFileElement getDomElement() {
+    return (DomFileElement)super.getDomElement();
   }
 }
