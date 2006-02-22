@@ -15,10 +15,7 @@ import java.awt.*;
 public abstract class ComboBoxCellEditor extends DefaultCellEditor {
   public ComboBoxCellEditor() {
     super(new JComboBox());
-  }
-
-  public int getClickCountToStart() {
-    return 2;
+    setClickCountToStart(2);
   }
 
   protected abstract List<String> getComboBoxItems();
