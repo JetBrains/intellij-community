@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -124,8 +125,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
 
     final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
+    final CommitAction commitAction = new CommitAction();
 
     toolBarGroup.add(refreshAction);
+    toolBarGroup.add(commitAction);
     toolBarGroup.add(newChangeListAction);
     toolBarGroup.add(removeChangeListAction);
     toolBarGroup.add(setDefaultChangeListAction);
@@ -138,6 +141,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(refreshAction);
+    menuGroup.add(commitAction);
     menuGroup.add(newChangeListAction);
     menuGroup.add(removeChangeListAction);
     menuGroup.add(setDefaultChangeListAction);
@@ -330,6 +334,23 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void actionPerformed(AnActionEvent e) {
       setDefaultChangeList(((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0]);
+    }
+  }
+
+  public class CommitAction extends AnAction {
+    public CommitAction() {
+      super("Commit Change List", "Commit selected changelists", IconLoader.getIcon("/actions/execute.png"));
+    }
+
+
+    public void update(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0].getChanges().size() > 0);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      new CommitChangeListDialog(myProject, lists[0], new ArrayList<Change>(lists[0].getChanges())).show();
     }
   }
 

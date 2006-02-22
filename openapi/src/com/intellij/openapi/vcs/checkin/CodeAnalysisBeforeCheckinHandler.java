@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,9 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     final JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.standard.options.check.smells"));
     return new RefreshableOnComponent() {
       public JComponent getComponent() {
-        return checkBox;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(checkBox);
+        return panel;
       }
 
       public void refresh() {
