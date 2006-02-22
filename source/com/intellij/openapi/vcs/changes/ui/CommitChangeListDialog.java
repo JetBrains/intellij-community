@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.localVcs.LocalVcs;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -19,6 +21,8 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
+import com.intellij.openapi.vcs.ui.CheckinDialog;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -37,9 +41,8 @@ import java.util.List;
 /**
  * @author max
  */
-public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel {
-  private JTextArea myCommitMessageArea;
-  private JButton myCommitMessageHistoryButton;
+public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
+  private CommitMessage myCommitMessageArea;
   private JList myChangesList;
   private JSplitPane myRootPane;
   private JPanel myAdditionalOptionsPanel;
@@ -64,6 +67,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (Change change : myChanges) {
       listModel.addElement(change);
     }
+
+    setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
 
     myChangesList.setCellRenderer(new MyListCellRenderer());
 
@@ -151,21 +156,52 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     init();
   }
 
+  private boolean checkComment() {
+    if (VcsConfiguration.getInstance(myProject).FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
+      int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
+                                                       VcsBundle.message("confirmation.title.check.in.with.empty.comment"),
+                                                       Messages.getWarningIcon());
+      return requestForCheckin == OK_EXIT_CODE;
+    }
+    else {
+      return true;
+    }
+  }
 
-  protected void doOKAction() {
+  public boolean runBeforeCommitHandlers() {
     for (CheckinHandler handler : myHandlers) {
       final CheckinHandler.ReturnResult result = handler.beforeCheckin();
       if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-      if (result == CheckinHandler.ReturnResult.CANCEL) return;
+      if (result == CheckinHandler.ReturnResult.CANCEL) return false;
       if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
         doCancelAction();
-        return;
+        return false;
       }
     }
 
-    doCommit();
+    return true;
+  }
 
-    super.doOKAction();
+  protected void doOKAction() {
+    if (!checkComment()) {
+      return;
+    }
+
+    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    try {
+      saveState();
+
+      if (!runBeforeCommitHandlers()) {
+        return;
+      }
+
+      doCommit();
+
+      super.doOKAction();
+    }
+    catch (InputException ex) {
+      ex.show();
+    }
   }
 
   private void doCommit() {
@@ -422,6 +458,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return result;
   }
 
+  private FilePath[] getPaths() {
+    List<FilePath> result = new ArrayList<FilePath>();
+    for (Change change : myIncludedChanges) {
+      result.add(getFilePath(change));
+    }
+    return result.toArray(new FilePath[result.size()]);
+  }
+
   public Project getProject() {
     return myProject;
   }
@@ -432,10 +476,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public void setCommitMessage(final String currentDescription) {
     myCommitMessageArea.setText(currentDescription);
+    myCommitMessageArea.requestFocusInMessage();
   }
 
   public String getCommitMessage() {
-    return myCommitMessageArea.getText();
+    return myCommitMessageArea.getComment();
   }
 
   public void refresh() {
@@ -454,5 +499,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (RefreshableOnComponent component : myAdditionalComponents) {
       component.restoreState();
     }
+  }
+
+
+  @Nullable
+  public Object getData(String dataId) {
+    if (CheckinProjectPanel.PANEL.equals(dataId)) {
+      return this;
+    }
+
+    return null;
   }
 }

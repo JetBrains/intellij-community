@@ -251,6 +251,39 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  public List<File> getAffectedPaths() {
+    List<File> files = new ArrayList<File>();
+    for (ChangeList list : myChangeLists) {
+      final Collection<Change> changes = list.getChanges();
+      for (Change change : changes) {
+        files.add(getFilePath(change).getIOFile());
+      }
+    }
+    return files;
+  }
+
+
+  public List<VirtualFile> getAffectedFiles() {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (ChangeList list : myChangeLists) {
+      final Collection<Change> changes = list.getChanges();
+      for (Change change : changes) {
+        final VirtualFile vFile = getFilePath(change).getVirtualFile();
+        if (vFile != null) {
+          files.add(vFile);
+        }
+      }
+    }
+    return files;
+  }
+
+  private static FilePath getFilePath(final Change change) {
+    ContentRevision revision = change.getBeforeRevision();
+    if (revision == null) revision = change.getAfterRevision();
+
+    return revision.getFile();
+  }
+
   public ChangeList addChangeList(String name) {
     synchronized (myChangeLists) {
       final ChangeList list = ChangeList.createEmptyChangeList(name);
