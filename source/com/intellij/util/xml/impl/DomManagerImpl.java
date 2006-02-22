@@ -13,12 +13,14 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.Function;
 import net.sf.cglib.core.CodeGenerationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders = new ArrayList<Function<DomElement, Collection<PsiElement>>>();
+
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
@@ -260,6 +264,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public DomElement getDomElement(final XmlTag tag) {
     final DomInvocationHandler handler = _getDomElement(tag);
     return handler != null ? handler.getProxy() : null;
+  }
+
+  public void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider) {
+    myPsiElementProviders.add(provider);
+  }
+
+  public void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider) {
+    myPsiElementProviders.remove(provider);
   }
 
   @Nullable

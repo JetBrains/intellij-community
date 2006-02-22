@@ -4,13 +4,16 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -36,5 +39,9 @@ public abstract class DomManager {
 
   @Nullable
   public abstract DomElement getDomElement(final XmlTag tag);
+
+  public abstract void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
+
+  public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
 
 }
