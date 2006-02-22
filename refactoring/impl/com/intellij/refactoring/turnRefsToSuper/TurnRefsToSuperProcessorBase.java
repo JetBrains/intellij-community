@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -135,7 +136,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     return !myMarkedNodes.contains(ref);
   }
 
-  protected void processTurnToSuperRefs(UsageInfo[] usages, final PsiClass aSuper) throws IncorrectOperationException {
+  protected static void processTurnToSuperRefs(UsageInfo[] usages, final PsiClass aSuper) throws IncorrectOperationException {
     for (UsageInfo usage : usages) {
       if (usage instanceof TurnToSuperReferenceUsageInfo) {
         final PsiElement element = usage.getElement();
@@ -154,8 +155,10 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     }
   }
 
-  private void fixPossiblyRedundantCast(PsiTypeCastExpression cast) throws IncorrectOperationException {
-    PsiClass castClass = PsiUtil.resolveClassInType(cast.getCastType().getType());
+  private static void fixPossiblyRedundantCast(PsiTypeCastExpression cast) throws IncorrectOperationException {
+    PsiTypeElement castTypeElement = cast.getCastType();
+    if (castTypeElement == null) return;
+    PsiClass castClass = PsiUtil.resolveClassInType(castTypeElement.getType());
     if (castClass == null) return;
 
     PsiExpression operand = cast.getOperand();
@@ -285,7 +288,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)tmp;
 
     PsiReferenceExpression methodRef = methodCall.getMethodExpression();
-    if (methodRef == null) return;
     tmp = methodRef.resolve();
     if (!(tmp instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod)tmp;
@@ -307,8 +309,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       addLink(type, initializer);
     }
 
-    final PsiReference[] refs = mySearchHelper.findReferences(variable, GlobalSearchScope.projectScope(myProject), false);
-    for (PsiReference ref : refs) {
+    for (PsiReference ref : ReferencesSearch.search(variable).findAll()) {
       final PsiElement element = ref.getElement();
       addLink(element, type);
       addLink(type, element);
@@ -330,8 +331,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final int index = method.getParameterList().getParameterIndex((PsiParameter)variable);
 
         {
-          PsiReference[] calls = mySearchHelper.findReferences(method, GlobalSearchScope.projectScope(myProject), false);
-          for (PsiReference call : calls) {
+          for (PsiReference call : ReferencesSearch.search(method).findAll()) {
             PsiElement ref = call.getElement();
             PsiExpressionList argumentList;
             if (ref.getParent() instanceof PsiCall) {
@@ -406,8 +406,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void processMethodReturnType(final PsiMethod method) {
     final PsiTypeElement returnType = method.getReturnTypeElement();
-    final PsiReference[] calls = mySearchHelper.findReferences(method, GlobalSearchScope.projectScope(myProject), false);
-    for (PsiReference call : calls) {
+    for (PsiReference call : ReferencesSearch.search(method).findAll()) {
       final PsiElement ref = call.getElement();
       if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) continue;
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
@@ -432,7 +431,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
     }
-  ;
+
     new Inner().linkInheritors(superMethods);
     // ??? In the theory this is non-efficient way: too many inheritors can be processed (and multiple times).
     // ??? But in real use it seems reasonably fast. If poor performance problems emerged,

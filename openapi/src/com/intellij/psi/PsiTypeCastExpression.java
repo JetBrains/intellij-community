@@ -33,5 +33,5 @@ public interface PsiTypeCastExpression extends PsiExpression {
    *
    * @return the operand of the type cast expression.
    */
-  PsiExpression getOperand();
+  @Nullable PsiExpression getOperand();
 }
