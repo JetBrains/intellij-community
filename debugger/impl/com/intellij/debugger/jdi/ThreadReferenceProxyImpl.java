@@ -200,6 +200,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public boolean isSuspended() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return getThreadReference().isSuspended();
+    final ThreadReference thread = getThreadReference();
+    return thread != null && thread.isSuspended();
   }
 }
