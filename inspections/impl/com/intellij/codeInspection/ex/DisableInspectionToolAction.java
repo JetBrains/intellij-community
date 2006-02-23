@@ -35,10 +35,11 @@ public class DisableInspectionToolAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile(file);
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
+    InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
     ModifiableModel model = inspectionProfile.getModifiableModel();
     model.disableTool(myToolId);
-    model.commit();
+    model.commit(profileManager);    
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

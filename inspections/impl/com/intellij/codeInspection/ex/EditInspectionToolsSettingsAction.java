@@ -14,7 +14,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles ? profileManager.getRootProfile() : projectProfileManager.getInspectionProfile((PsiElement)file));
+    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles ? profileManager.getRootProfile() : projectProfileManager.getInspectionProfile(file));
     editToolSettings(project, inspectionProfile, canChooseDifferentProfiles, myShortName, canChooseDifferentProfiles ? profileManager : InspectionProjectProfileManager.getInstance(project));
   }
 
@@ -98,16 +97,18 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     private InspectionProfileImpl myInspectionProfile;
     private String mySelectedTool;
     private InspectionToolsPanel myPanel;
+    private Project myProject;
 
     public InspectionToolsConfigurable(final Project project,
                                        final boolean chooseDifferentProfile,
                                        final ProfileManager profileManager,
                                        final InspectionProfileImpl inspectionProfile,
                                        final String selectedTool) {
+      myProject = project;
       myChooseDifferentProfile = chooseDifferentProfile;
       myInspectionProfile = inspectionProfile;
       mySelectedTool = selectedTool;
-      myPanel =  new InspectionToolsPanel(myInspectionProfile.getName(), project, myChooseDifferentProfile, profileManager);
+      myPanel =  new InspectionToolsPanel(myInspectionProfile.getName(), myProject, myChooseDifferentProfile, profileManager);
     }
 
     public String getDisplayName() {
@@ -137,9 +138,10 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     public void apply() throws ConfigurationException {
       if (myChooseDifferentProfile) {
         myPanel.apply();
-        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile();
+        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile().getParentProfile();
         InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
         myInspectionProfile.copyFrom(editedProfile);
+        InspectionProjectProfileManager.getInstance(myProject).initProfileWrapper(myInspectionProfile);
       }
       else {
         final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile();

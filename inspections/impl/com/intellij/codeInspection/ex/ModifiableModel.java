@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileManager;
 
 /**
  * User: anna
@@ -21,7 +22,7 @@ public interface ModifiableModel extends Profile {
 
   void setBaseProfile(InspectionProfile profile);
 
-  String getName();
+  void patchTool(InspectionProfileEntry tool);
 
   void enableTool(String inspectionTool);
 
@@ -33,7 +34,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  void commit();
+  void commit(final ProfileManager profileManager);
 
   boolean isChanged();
 
@@ -60,4 +61,6 @@ public interface ModifiableModel extends Profile {
   boolean isExecutable();
 
   void setEditable(String toolDisplayName);
+
+  void save();
 }

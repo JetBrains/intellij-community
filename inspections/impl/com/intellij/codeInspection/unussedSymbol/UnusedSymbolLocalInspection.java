@@ -5,7 +5,7 @@
 package com.intellij.codeInspection.unussedSymbol;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ import java.awt.*;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends BaseLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
   @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
 

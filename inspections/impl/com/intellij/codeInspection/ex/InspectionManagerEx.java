@@ -879,10 +879,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
           if (runWithEditorSettings){
             profile = profileManager.getInspectionProfile(file);
           } else {
-            profile = (InspectionProfile)profileManager.getProfile(myCurrentProfileName);
-            if (profile == null){
-              profile = (InspectionProfile)InspectionProfileManager.getInstance().getProfile(myCurrentProfileName);
-            }
+            profile = getCurrentProfile();
           }
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null) {
@@ -928,7 +925,7 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
         processProfileTools(inspectionProfile, tools, localTools);
       }
     } else {
-      InspectionProfileWrapper profile = profileManager.getProfileWrapper(myCurrentProfileName);
+      InspectionProfileWrapper profile = new InspectionProfileWrapper(getCurrentProfile());
       processProfileTools(profile, tools, localTools);
     }
 

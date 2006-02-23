@@ -13,6 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.ProfileEx;
+import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
@@ -178,6 +179,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myName;
   }
 
+  public void patchTool(InspectionProfileEntry tool) {
+    myTools.put(tool.getShortName(), (InspectionTool)tool);
+  }
+
   public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey) {
     return getToolState(inspectionToolKey).getLevel();
   }
@@ -272,9 +277,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myTools.get(shortName);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void save() {
     if (isLocal() && myFile != null) {
       try {
+        if (!myFile.exists()){
+          if (!myFile.createNewFile()){
+            myFile = File.createTempFile("profile", ".xml", InspectionProfileManager.getInstance().getProfileDirectory());
+          }
+        }
         Element root = new Element(ROOT_ELEMENT_TAG);
         root.setAttribute(PROFILE_NAME_TAG, myName);
         writeExternal(root);
@@ -465,14 +476,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   //invoke when isChanged() == true
-  public void commit() {
+  public void commit(final ProfileManager profileManager) {
     LOG.assertTrue(mySource != null);
     mySource.commit(this);
+    profileManager.updateProfile(mySource);
     mySource = null;
   }
 
   private void commit(InspectionProfileImpl inspectionProfile) {
     myName = inspectionProfile.myName;
+    myLocal = inspectionProfile.myLocal;
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;

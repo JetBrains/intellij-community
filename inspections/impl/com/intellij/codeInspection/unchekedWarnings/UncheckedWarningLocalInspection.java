@@ -5,14 +5,14 @@
 package com.intellij.codeInspection.unchekedWarnings;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UncheckedWarningLocalInspection extends BaseLocalInspectionTool {
+public class UncheckedWarningLocalInspection extends UnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls public static final String ID = "unchecked";

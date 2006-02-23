@@ -64,8 +64,11 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public InspectionProfileWrapper getProfileWrapper(final PsiElement psiElement){
-    final String profileName = getInspectionProfile(psiElement).getName();
-    LOG.assertTrue(profileName != null && myName2Profile.containsKey(profileName), "Profile with name \'" + profileName + "\' wasn't loaded.");
+    final InspectionProfileImpl profile = getInspectionProfile(psiElement);
+    final String profileName = profile.getName();
+    if (!myName2Profile.containsKey(profileName)){
+      initProfileWrapper(profile);
+    }
     return myName2Profile.get(profileName);
   }
 
@@ -78,15 +81,10 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     initProfileWrapper(profile);
   }
 
-
-  public void updateProjectProfile(Profile profile) {
-    super.updateProjectProfile(profile);
-    initProfileWrapper(profile);
-  }
-
   public void deleteProfile(String name) {
     super.deleteProfile(name);
     final InspectionProfileWrapper profileWrapper = myName2Profile.remove(name);
+    LOG.assertTrue(profileWrapper != null, "Profile wasn't initialized" + name);
     profileWrapper.cleanup(myProject);
   }
 

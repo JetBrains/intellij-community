@@ -15,11 +15,8 @@
  */
 package com.intellij.profile;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -28,7 +25,6 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,31 +68,6 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return profile;
   }
 
-  protected String updateProjectProfiles(final String profile) {
-    String projectProfileName = profile;
-    if (!myProfiles.containsKey(profile)) {
-      final Profile projectProfile = myApplicationProfileManager.createProfile();
-      projectProfile.copyFrom(myApplicationProfileManager.getProfile(profile));
-      projectProfile.setLocal(false);
-      projectProfileName = Messages.showInputDialog(myProject, InspectionsBundle.message("profile.import.profile.name"),
-                                                    InspectionsBundle.message("profile.import.dialog.title"), Messages.getInformationIcon(),
-                                                    projectProfile.getName() + "<project>", new InputValidator() {
-        public boolean checkInput(String inputString) {
-          return inputString.length() > 0 && !myProfiles.keySet().contains(inputString) &&
-                 ArrayUtil.find(myApplicationProfileManager.getAvailableProfileNames(), inputString) == -1;
-        }
-
-        public boolean canClose(String inputString) {
-          return checkInput(inputString);
-        }
-      });
-      if (projectProfileName == null) return null;
-      projectProfile.setName(projectProfileName);
-      myProfiles.put(projectProfileName, projectProfile);
-    }
-    return projectProfileName;
-  }
-
   public void deassignProfileFromScope(NamedScope scope) {
     final String profile = myScopeToProfileMap.remove(scope);
     if (!myScopeToProfileMap.containsValue(profile)) {
@@ -115,21 +86,15 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return profile != null ? profile.getName() : null;
   }
 
-  public String getProfile(final NamedScope scope) {
-    if (!USE_PROJECT_LEVEL_SETTINGS) return myApplicationProfileManager.getRootProfile().getName();
-    return myScopeToProfileMap.get(scope);
-  }
-
   public Profile getProfile(String name) {
     return USE_PROJECT_LEVEL_SETTINGS ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name);
   }
 
   public void updateProfile(Profile profile) {
-    if (USE_PROJECT_LEVEL_SETTINGS) {
-      myProfiles.put(profile.getName(), profile);
-    }
-    else {
+    if (profile.isLocal()) {
       myApplicationProfileManager.updateProfile(profile);
+    } else {
+      myProfiles.put(profile.getName(), profile);
     }
   }
 
@@ -216,10 +181,6 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
 
   public Collection<Profile> getProfiles() {
     return myProfiles.values();
-  }
-
-  public void updateProjectProfile(Profile profile){
-    myProfiles.put(profile.getName(), profile);
   }
 
   public void clearProfileScopeAssignments() {

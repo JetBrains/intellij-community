@@ -46,8 +46,6 @@ public abstract class ProjectProfileManager implements ProfileManager, JDOMExter
 
   public abstract String getProfileName(PsiFile psiFile);
 
-  public abstract String getProfile(NamedScope scope);
-
   public abstract LinkedHashMap<NamedScope,String> getProfilesUsedInProject();
 
   public abstract void clearProfileScopeAssignments();

@@ -45,9 +45,11 @@ public class RunInspectionOnFileIntention implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-    final InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProjectProfileManager.getInstance(project).getProfileName(file));
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    final InspectionProfileImpl profile = new InspectionProfileImpl(profileManager.getProfileName(file));
     final ModifiableModel model = profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
+    model.patchTool(profileManager.getInspectionProfile(file).getInspectionTool(myTool.getShortName()));
     for (InspectionProfileEntry entry : profileEntries) {
       model.disableTool(entry.getShortName());
     }
