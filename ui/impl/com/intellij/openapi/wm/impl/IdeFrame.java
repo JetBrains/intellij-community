@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -15,13 +16,12 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
-import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -171,7 +171,9 @@ public class IdeFrame extends JFrame implements DataProvider {
         }
       });
     } else {
-      myRootPane.deinstallNavigationBar();
+      if (myRootPane != null) { //already disposed
+        myRootPane.deinstallNavigationBar();
+      }
     }
   }
 
