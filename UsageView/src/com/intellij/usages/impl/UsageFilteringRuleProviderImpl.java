@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
-  private ReadWriteState myReadWriteState = new ReadWriteState();
+  private ReadWriteState myReadWriteState;
 
   public UsageFilteringRule[] getActiveRules(Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
@@ -63,6 +63,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
+    myReadWriteState = new ReadWriteState();
     if(view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
 
