@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -48,7 +47,7 @@ public abstract class LibraryLink extends ContainerElement {
 
   public abstract boolean hasDirectoriesOnly();
 
-  public abstract @NotNull String getName();
+  public abstract @Nullable String getName();
 
   public abstract String getLevel();
 

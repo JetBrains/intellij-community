@@ -33,13 +33,14 @@ package com.intellij.j2ee.module;
 
 import com.intellij.j2ee.make.MakeUtil;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -48,10 +49,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
-import com.intellij.javaee.J2EEBundle;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -194,7 +194,6 @@ public class LibraryLinkImpl extends LibraryLink {
     return hasDirsOnly;
   }
 
-  @NotNull
   public String getName() {
     return myLibraryInfo.getName();
   }
@@ -283,7 +282,7 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   interface LibraryInfo {
-    @NotNull String getName();
+    String getName();
 
     @NotNull List<String> getUrls();
 
@@ -296,10 +295,9 @@ public class LibraryLinkImpl extends LibraryLink {
 
   private static class LibraryInfoImpl implements LibraryInfo {
     private final List<String> myUrls = new ArrayList<String>();
-    @NotNull private String myName;
+    private String myName;
     private String myLevel;
 
-    @NotNull
     public String getName() {
       return myName;
     }
@@ -334,7 +332,6 @@ public class LibraryLinkImpl extends LibraryLink {
 
     public void readExternal(Element element) throws InvalidDataException {
       myName = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
-      if (myName == null) myName = "noname";
 
       myLevel = element.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
       myUrls.clear();
@@ -353,10 +350,8 @@ public class LibraryLinkImpl extends LibraryLink {
       myLibrary = library;
     }
 
-    @NotNull
     public String getName() {
-      final String name = myLibrary.getName();
-      return name == null ? "noname" : name;
+      return myLibrary.getName();
     }
 
     @NotNull
