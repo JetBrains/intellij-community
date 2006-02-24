@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import org.picocontainer.PicoContainer;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.IOException;
@@ -168,16 +169,18 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return 0;
   }
 
+  @NotNull
   public Class[] getComponentInterfaces() {
-    return new Class[0];
+    return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
   public boolean hasComponent(Class interfaceClass) {
     return false;
   }
 
+  @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return ArrayUtil.<T>emptyArray();
+    return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public PicoContainer getPicoContainer() {

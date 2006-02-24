@@ -10,6 +10,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.picocontainer.PicoContainer;
+import org.jetbrains.annotations.NotNull;
 
 public class MockProject extends UserDataHolderBase implements ProjectEx {
   public void dispose() {
@@ -85,16 +86,18 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
     return null;
   }
 
+  @NotNull
   public Class[] getComponentInterfaces() {
-    return new Class[0];
+    return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
   public boolean hasComponent(Class interfaceClass) {
     return false;
   }
 
+  @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return ArrayUtil.<T>emptyArray();
+    return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public PicoContainer getPicoContainer() {

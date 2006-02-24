@@ -64,7 +64,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return ArrayUtil.<T>emptyArray();
+    return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public PicoContainer getPicoContainer() {
