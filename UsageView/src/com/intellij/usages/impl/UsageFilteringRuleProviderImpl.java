@@ -22,27 +22,43 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
+import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
+import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author max
+ * Created by IntelliJ IDEA.
+ * User: max
+ * Date: Dec 27, 2004
+ * Time: 8:20:57 PM
+ * To change this template use File | Settings | File Templates.
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
+  private ReadWriteState myReadWriteState = new ReadWriteState();
 
   public UsageFilteringRule[] getActiveRules(Project project) {
+    final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
     if (!SHOW_IMPORTS) {
-      return new UsageFilteringRule[] {new ImportFilteringRule()};
+      rules.add(new ImportFilteringRule());
     }
-    return UsageFilteringRule.EMPTY_ARRAY;
+    if (!myReadWriteState.isShowReadAccess()) {
+      rules.add(new ReadAccessFilteringRule());
+    }
+    if (!myReadWriteState.isShowWriteAccess()) {
+      rules.add(new WriteAccessFilteringRule());
+    }
+    return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
 
   public AnAction[] createFilteringActions(UsageView view) {
@@ -53,12 +69,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
       showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), component);
 
-      final ReadWriteState readWriteSharedState = new ReadWriteState();
-
-      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl, readWriteSharedState);
+      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl);
       showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), component);
 
-      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl, readWriteSharedState);
+      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl);
       showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), component);
 
       impl.scheduleDisposeOnClose(new Disposable() {
@@ -116,42 +130,38 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private static class ShowReadAccessUsagesAction extends ToggleAction {
+  private class ShowReadAccessUsagesAction extends ToggleAction {
     private final UsageViewImpl myView;
-    private final ReadWriteState myState;
 
-    public ShowReadAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
+    public ShowReadAccessUsagesAction(UsageViewImpl view) {
       super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
       myView = view;
-      myState = state;
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return myState.isShowReadAccess();
+      return myReadWriteState.isShowReadAccess();
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      myState.setShowReadAccess(state);
+      myReadWriteState.setShowReadAccess(state);
       myView.rulesChanged();
     }
   }
 
-  private static class ShowWriteAccessUsagesAction extends ToggleAction {
+  private class ShowWriteAccessUsagesAction extends ToggleAction {
     private final UsageViewImpl myView;
-    private final ReadWriteState myState;
 
-    public ShowWriteAccessUsagesAction(UsageViewImpl view, ReadWriteState state) {
+    public ShowWriteAccessUsagesAction(UsageViewImpl view) {
       super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
       myView = view;
-      myState = state;
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return myState.isShowWriteAccess();
+      return myReadWriteState.isShowWriteAccess();
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      myState.setShowWriteAccess(state);
+      myReadWriteState.setShowWriteAccess(state);
       myView.rulesChanged();
     }
   }
