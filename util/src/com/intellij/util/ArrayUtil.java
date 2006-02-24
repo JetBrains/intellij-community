@@ -91,10 +91,6 @@ public class ArrayUtil {
     return highlights;
   }
 
-  public static <T> T[] emptyArray() {
-    return (T[])EMPTY_OBJECT_ARRAY;
-  }
-
   /**
    * Appends <code>element</code> to the <code>src</code> array. As you can
    * imagine the appended element will be the last one in the returned result.
