@@ -52,8 +52,7 @@ public class VcsBlockHistoryDialog extends VcsHistoryDialog{
 
   protected VcsFileRevision[] revisionsNeededToBeLoaded(VcsFileRevision[] revisions) {
     Collection<VcsFileRevision> result = new HashSet<VcsFileRevision>();
-    for (int i = 0; i < revisions.length; i++) {
-      VcsFileRevision revision = revisions[i];
+    for (VcsFileRevision revision : revisions) {
       result.addAll(collectRevisionsFromFirstTo(revision));
     }
 
@@ -62,8 +61,7 @@ public class VcsBlockHistoryDialog extends VcsHistoryDialog{
 
   private Collection<VcsFileRevision> collectRevisionsFromFirstTo(VcsFileRevision revision) {
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    for (Iterator iterator = myRevisions.iterator(); iterator.hasNext();) {
-      VcsFileRevision vcsFileRevision = (VcsFileRevision) iterator.next();
+    for (VcsFileRevision vcsFileRevision : myRevisions) {
       if (VcsHistoryUtil.compare(revision, vcsFileRevision) > 0) continue;
       result.add(vcsFileRevision);
     }
