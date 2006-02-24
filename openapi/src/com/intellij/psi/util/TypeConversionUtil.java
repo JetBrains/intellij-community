@@ -729,7 +729,15 @@ public class TypeConversionUtil {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
-      if (leftBound == null || leftBound.equalsToText("java.lang.Object")) return true;
+      if (leftBound == null) return true;
+      if (leftBound.equalsToText("java.lang.Object")) {
+        if (leftWildcard.isSuper()) {
+          return typeRight.equalsToText("java.lang.Object");
+        } else {
+          return true;
+        }
+      }
+
       if (typeRight instanceof PsiWildcardType) {
         final PsiWildcardType rightWildcard = ((PsiWildcardType)typeRight);
         if (leftWildcard.isExtends()) {
