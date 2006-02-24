@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -22,12 +23,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +32,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -45,52 +43,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class ChangesListView extends TreeTable implements DataProvider {
-  private static final ColumnInfo<DefaultMutableTreeNode, String> CHANGELIST_OR_FILE =
-    new ColumnInfo<DefaultMutableTreeNode, String>("change") {
-      public Class getColumnClass() {
-        return TreeTableModel.class;
-      }
-
-      public String valueOf(final DefaultMutableTreeNode node) {
-        Object object = node.getUserObject();
-        if (object instanceof ChangeList) {
-          return ((ChangeList)object).getDescription();
-        }
-
-        if (object instanceof Change) {
-          return getFilePath((Change)object).getName();
-        }
-
-        return "";
-      }
-    };
-
-  private static final ColumnInfo<DefaultMutableTreeNode, String> CHANGE_PATH = new ColumnInfo<DefaultMutableTreeNode, String>("path") {
-    public String valueOf(final DefaultMutableTreeNode node) {
-      Object object = node.getUserObject();
-      if (object instanceof Change) {
-        return getFilePath((Change)object).getPath();
-      }
-      if (object instanceof VirtualFile) {
-        return ((VirtualFile)object).getPresentableUrl();
-      }
-
-      return "";
-    }
-  };
-
-  private static final ColumnInfo<DefaultMutableTreeNode, String> CHANGE_TYPE = new ColumnInfo<DefaultMutableTreeNode, String>("type") {
-    public String valueOf(final DefaultMutableTreeNode node) {
-      Object object = node.getUserObject();
-      if (object instanceof Change) {
-        return ((Change)object).getType().name();
-      }
-
-      return "";
-    }
-  };
-
+public class ChangesListView extends Tree implements DataProvider {
   private ChangesListView.DragSource myDragSource;
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
@@ -104,17 +57,22 @@ public class ChangesListView extends TreeTable implements DataProvider {
     return revision.getFile();
   }
 
+  private FileStatus getChangeStatus(Change change) {
+    final VirtualFile vFile = getFilePath(change).getVirtualFile();
+    if (vFile == null) return FileStatus.DELETED;
+    return FileStatusManager.getInstance(myProject).getStatus(vFile);
+  }
+
   private DefaultMutableTreeNode myRoot;
 
   public ChangesListView(final Project project) {
-    super(
-      new ListTreeTableModelOnColumns(new DefaultMutableTreeNode("root"), new ColumnInfo[]{CHANGELIST_OR_FILE, CHANGE_PATH, CHANGE_TYPE}));
     myProject = project;
-    final Tree tree = getTree();
-    myRoot = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    tree.setShowsRootHandles(true);
-    tree.setRootVisible(false);
-    tree.setCellRenderer(new ColoredTreeCellRenderer() {
+    myRoot = new DefaultMutableTreeNode("root");
+    setModel(new DefaultTreeModel(myRoot));
+
+    setShowsRootHandles(true);
+    setRootVisible(false);
+    setCellRenderer(new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,
                                         boolean selected,
@@ -134,11 +92,16 @@ public class ChangesListView extends TreeTable implements DataProvider {
           final Change change = (Change)object;
           final FilePath filePath = getFilePath(change);
           append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
+          append(" (" + filePath.getVirtualFileParent().getPresentableUrl() + ", " + getChangeStatus(change).getText() + ")",
+                 SimpleTextAttributes.GRAYED_ATTRIBUTES);
           setIcon(filePath.getFileType().getIcon());
         }
         else if (object instanceof VirtualFile) {
           final VirtualFile file = (VirtualFile)object;
           append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
+          final VirtualFile parentFile = file.getParent();
+          assert parentFile != null;
+          append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           setIcon(file.getFileType().getIcon());
         }
         else {
@@ -146,21 +109,8 @@ public class ChangesListView extends TreeTable implements DataProvider {
         }
       }
 
-      // TODO: take real statuses like merged into an account
       private Color getColor(final Change change) {
-        final Change.Type type = change.getType();
-        switch (type) {
-          case DELETED:
-            return FileStatus.COLOR_MISSING;
-          case MODIFICATION:
-            return FileStatus.COLOR_MODIFIED;
-          case MOVED:
-            return FileStatus.COLOR_MODIFIED;
-          case NEW:
-            return FileStatus.COLOR_ADDED;
-        }
-
-        return Color.black;
+        return getChangeStatus(change).getColor();
       }
     });
   }
@@ -177,8 +127,8 @@ public class ChangesListView extends TreeTable implements DataProvider {
 
   public void dispose() {
     if (myDragSource != null) {
-      myDndManager.unregisterSource(myDragSource, getTree());
-      myDndManager.unregisterTarget(myDropTarget, getTree());
+      myDndManager.unregisterSource(myDragSource, this);
+      myDndManager.unregisterTarget(myDropTarget, this);
 
       myDragSource = null;
       myDropTarget = null;
@@ -205,9 +155,9 @@ public class ChangesListView extends TreeTable implements DataProvider {
       }
     }
 
-    ((DefaultTreeModel)getTree().getModel()).nodeStructureChanged(myRoot);
+    ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
 
-    TreeUtil.expandAll(getTree());
+    TreeUtil.expandAll(this);
   }
 
   @Nullable
@@ -246,7 +196,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
       }
     }
 
-    final TreePath[] paths = getTree().getSelectionPaths();
+    final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -271,7 +221,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
       changes.addAll(list.getChanges());
     }
 
-    final TreePath[] paths = getTree().getSelectionPaths();
+    final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new Change[0];
     for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -288,7 +238,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
   private ChangeList[] getSelectedChangeLists() {
     Set<ChangeList> lists = new HashSet<ChangeList>();
 
-    final TreePath[] paths = getTree().getSelectionPaths();
+    final TreePath[] paths = getSelectionPaths();
     if (paths == null) return new ChangeList[0];
 
     for (TreePath path : paths) {
@@ -319,7 +269,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
 
     @Nullable
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return new Pair<Image, Point>(DragImageFactory.createImage(ChangesListView.this, 0), new Point());
+      return new Pair<Image, Point>(DragImageFactory.createImage(ChangesListView.this), new Point());
     }
 
     public void dragDropEnd() {
@@ -353,6 +303,35 @@ public class ChangesListView extends TreeTable implements DataProvider {
       }
     }
 
+    private static void drawSelection(JTree tree, Graphics g, final int width) {
+      int y = 0;
+      final int[] rows = tree.getSelectionRows();
+      final int height = tree.getRowHeight();
+      for (int row : rows) {
+        final TreeCellRenderer renderer = tree.getCellRenderer();
+        final Object value = tree.getPathForRow(row).getLastPathComponent();
+        if (value == null) continue;
+        final Component component = renderer.getTreeCellRendererComponent(tree, value, false, false, false, row, false);
+        if (component.getFont() == null) {
+          component.setFont(new JLabel().getFont()); // TODO: ??? Something strange happens here. When painted renderer's component has null font
+        }
+        g.translate(0, y);
+        component.setBounds(0, 0, width, height);
+        boolean wasOpaque = false;
+        if (component instanceof JComponent) {
+          final JComponent j = (JComponent)component;
+          if (j.isOpaque()) wasOpaque = true;
+          j.setOpaque(false);
+        }
+        component.paint(g);
+        if (wasOpaque) {
+          ((JComponent)component).setOpaque(true);
+        }
+        y += height;
+        g.translate(0, -y);
+      }
+    }
+
     public static Image createImage(final JTable table, int column) {
       final int height = Math.min(100, table.getSelectedRowCount() * table.getRowHeight());
       final int width = table.getColumnModel().getColumn(column).getWidth();
@@ -365,6 +344,21 @@ public class ChangesListView extends TreeTable implements DataProvider {
       drawSelection(table, column, g2, width);
       return image;
     }
+
+    public static Image createImage(final JTree tree) {
+      final int height = Math.min(100, tree.getSelectionCount() * tree.getRowHeight());
+      final int width = tree.getWidth();
+
+      final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = (Graphics2D)image.getGraphics();
+
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+
+      drawSelection(tree, g2, width);
+      return image;
+    }
+
+
   }
 
   private static class ChangeListDragBean {
@@ -408,9 +402,8 @@ public class ChangesListView extends TreeTable implements DataProvider {
       dragBean.setTargetList(null);
 
       RelativePoint dropPoint = aEvent.getRelativePoint();
-      Point onTable = dropPoint.getPoint(ChangesListView.this);
-      final int dropRow = rowAtPoint(onTable);
-      final TreePath dropPath = getTree().getPathForRow(dropRow);
+      Point onTree = dropPoint.getPoint(ChangesListView.this);
+      final TreePath dropPath = getPathForLocation(onTree.x, onTree.y);
 
       if (dropPath == null) return false;
 
@@ -432,7 +425,7 @@ public class ChangesListView extends TreeTable implements DataProvider {
         }
       }
 
-      final Rectangle tableCellRect = getCellRect(getTree().getRowForPath(new TreePath(dropNode.getPath())), 0, false);
+      final Rectangle tableCellRect = getPathBounds(new TreePath(dropNode.getPath()));
 
       aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect),
                              DnDEvent.DropTargetHighlightingType.RECTANGLE);
