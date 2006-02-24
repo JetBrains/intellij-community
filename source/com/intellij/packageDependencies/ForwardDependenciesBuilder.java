@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -44,7 +45,10 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
               throw new ProcessCanceledException();
             }
             indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
-            indicator.setText2(file.getVirtualFile().getPresentableUrl());
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null) {
+              indicator.setText2(virtualFile.getPresentableUrl());
+            }
             indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
           }
 
