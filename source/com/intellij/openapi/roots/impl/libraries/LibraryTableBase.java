@@ -93,29 +93,29 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
 
   public void commit(LibraryModel model) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    List<LibraryImpl> addedLibraries = new ArrayList<LibraryImpl>(model.myLibraries);
+    List<Library> addedLibraries = new ArrayList<Library>(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
-    List<LibraryImpl> removedLibraries = new ArrayList<LibraryImpl>(myModel.myLibraries);
+    List<Library> removedLibraries = new ArrayList<Library>(myModel.myLibraries);
     removedLibraries.removeAll(model.myLibraries);
 
-    for (LibraryImpl library : removedLibraries) {
+    for (Library library : removedLibraries) {
       fireBeforeLibraryRemoved(library);
     }
     myModel = model;
-    for (LibraryImpl library : removedLibraries) {
+    for (Library library : removedLibraries) {
       fireAfterLibraryRemoved(library);
     }
-    for (LibraryImpl library : addedLibraries) {
+    for (Library library : addedLibraries) {
       fireLibraryAdded(library);
     }
   }
 
-  private void fireAfterLibraryRemoved(LibraryImpl library) {
+  private void fireAfterLibraryRemoved(Library library) {
     myDispatcher.getMulticaster().afterLibraryRemoved(library);
   }
 
   private class LibraryModel implements LibraryTable.ModifiableModel {
-    private final ArrayList<LibraryImpl> myLibraries = new ArrayList<LibraryImpl>();
+    private final ArrayList<Library> myLibraries = new ArrayList<Library>();
     private boolean myWritable;
 
     private LibraryModel() {
@@ -137,7 +137,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     }
 
     public Library getLibraryByName(String name) {
-      for (LibraryImpl myLibrary : myLibraries) {
+      for (Library myLibrary : myLibraries) {
         LibraryImpl library = (LibraryImpl)myLibrary;
         if (Comparing.equal(name, library.getName())) return library;
       }
@@ -146,7 +146,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
 
 
     public Library[] getLibraries() {
-      return (Library[]) myLibraries.toArray(new Library[myLibraries.size()]);
+      return myLibraries.toArray(new Library[myLibraries.size()]);
     }
 
     private void assertWritable() {
@@ -167,14 +167,14 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
 
     public boolean isChanged() {
       if (!myWritable) return false;
-      Set<LibraryImpl> thisLibraries = new com.intellij.util.containers.HashSet<LibraryImpl>(myLibraries);
-      Set<LibraryImpl> thatLibraries = new com.intellij.util.containers.HashSet<LibraryImpl>(myModel.myLibraries);
+      Set<Library> thisLibraries = new com.intellij.util.containers.HashSet<Library>(myLibraries);
+      Set<Library> thatLibraries = new com.intellij.util.containers.HashSet<Library>(myModel.myLibraries);
       return !thisLibraries.equals(thatLibraries);
     }
 
     public void readExternal(Element element) throws InvalidDataException {
-      HashMap<String, LibraryImpl> libraries = new HashMap<String, LibraryImpl>();
-      for (LibraryImpl library : myLibraries) {
+      HashMap<String, Library> libraries = new HashMap<String, Library>();
+      for (Library library : myLibraries) {
         libraries.put(library.getName(), library);
       }
 
@@ -184,7 +184,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this);
         library.readExternal(libraryElement);
         if (library.getName() != null) {
-          LibraryImpl oldLibrary = libraries.get(library.getName());
+          Library oldLibrary = libraries.get(library.getName());
           if (oldLibrary != null) {
             myLibraries.remove(oldLibrary);
           }
@@ -195,8 +195,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-      for (LibraryImpl myLibrary : myLibraries) {
-        LibraryImpl library = (LibraryImpl)myLibrary;
+      for (Library library : myLibraries) {
         if (library.getName() != null) {
           library.writeExternal(element);
         }

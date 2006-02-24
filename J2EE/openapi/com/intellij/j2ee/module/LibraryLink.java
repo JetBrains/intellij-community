@@ -17,20 +17,14 @@ package com.intellij.j2ee.module;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Comparing;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 
 /**
@@ -54,7 +48,7 @@ public abstract class LibraryLink extends ContainerElement {
 
   public abstract boolean hasDirectoriesOnly();
 
-  public abstract String getName();
+  public abstract @NotNull String getName();
 
   public abstract String getLevel();
 

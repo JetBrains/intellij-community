@@ -194,6 +194,7 @@ public class LibraryLinkImpl extends LibraryLink {
     return hasDirsOnly;
   }
 
+  @NotNull
   public String getName() {
     return myLibraryInfo.getName();
   }
@@ -282,7 +283,7 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   interface LibraryInfo {
-    String getName();
+    @NotNull String getName();
 
     @NotNull List<String> getUrls();
 
@@ -295,9 +296,10 @@ public class LibraryLinkImpl extends LibraryLink {
 
   private static class LibraryInfoImpl implements LibraryInfo {
     private final List<String> myUrls = new ArrayList<String>();
-    private String myName;
+    @NotNull private String myName;
     private String myLevel;
 
+    @NotNull
     public String getName() {
       return myName;
     }
@@ -332,6 +334,8 @@ public class LibraryLinkImpl extends LibraryLink {
 
     public void readExternal(Element element) throws InvalidDataException {
       myName = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
+      if (myName == null) myName = "noname";
+
       myLevel = element.getAttributeValue(LEVEL_ATTRIBUTE_NAME);
       myUrls.clear();
       final List urls = element.getChildren(URL_ELEMENT_NAME);
@@ -349,8 +353,10 @@ public class LibraryLinkImpl extends LibraryLink {
       myLibrary = library;
     }
 
+    @NotNull
     public String getName() {
-      return myLibrary.getName();
+      final String name = myLibrary.getName();
+      return name == null ? "noname" : name;
     }
 
     @NotNull
