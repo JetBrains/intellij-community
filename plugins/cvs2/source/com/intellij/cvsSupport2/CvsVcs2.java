@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
+import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
@@ -32,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -81,6 +83,8 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   private VcsShowConfirmationOption myAddConfirmation;
   private VcsShowConfirmationOption myRemoveConfirmation;
 
+  private CvsChangeProvider myChangeProvider;
+
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
@@ -95,6 +99,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
     myDiffProvider = new CvsDiffProvider(myProject);
+    myChangeProvider = new CvsChangeProvider(this);
   }
 
   /* ======================================= ProjectComponent */
@@ -261,6 +266,11 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return myUpToDateRevisionProvider;
   }
 
+
+  public ChangeProvider getChangeProvider() {
+    return myChangeProvider;
+  }
+
   public CvsOperation getTransactionForOperations(CvsCheckinFile[] operations, String message) throws VcsException {
     return myCvsStandardOperationsProvider.getTransactionForOperation(operations, message);
   }
@@ -294,14 +304,20 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   public void entriesChanged(VirtualFile parent) {
     VirtualFile[] children = parent.getChildren();
     if (children == null) return;
-    for (VirtualFile aChildren : children) {
-      entryChanged(aChildren);
+    for (VirtualFile child : children) {
+      fireFileStatusChanged(child);
     }
+
+    VcsDirtyScopeManager.getInstance(getProject()).fileDirty(parent);
   }
 
   public void entryChanged(VirtualFile file) {
-    FileStatusManager.getInstance(getProject()).fileStatusChanged(file);
+    fireFileStatusChanged(file);
     VcsDirtyScopeManager.getInstance(getProject()).fileDirty(file);
+  }
+
+  private void fireFileStatusChanged(final VirtualFile file) {
+    FileStatusManager.getInstance(getProject()).fileStatusChanged(file);
   }
 
   public FileViewEnvironment getFileViewEnvironment() {

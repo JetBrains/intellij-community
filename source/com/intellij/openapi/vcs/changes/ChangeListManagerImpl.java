@@ -239,7 +239,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myRepaintAlarm.addRequest(new Runnable() {
       public void run() {
         if (myDisposed) return;
-        myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+        synchronized (myChangeLists) {
+          myView.updateModel(getChangeLists(), new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()));
+        }
       }
     }, 100, ModalityState.NON_MMODAL);
   }
@@ -477,7 +479,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
       }
 
-      SimpleContent content = new SimpleContent(revision.getContent(), revision.getFile().getFileType());
+      final String revisionContent = revision.getContent();
+      SimpleContent content = revisionContent == null
+                              ? new SimpleContent("")
+                              : new SimpleContent(revisionContent, revision.getFile().getFileType());
       content.setReadOnly(true);
       return content;
     }
@@ -524,16 +529,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (ChangeList list : getChangeLists()) {
-      Element listNode = new Element("list");
-      element.addContent(listNode);
-      if (list.isDefault()) {
-        listNode.setAttribute("default", "true");
-      }
+    synchronized (myChangeLists) {
+      for (ChangeList list : myChangeLists) {
+        Element listNode = new Element("list");
+        element.addContent(listNode);
+        if (list.isDefault()) {
+          listNode.setAttribute("default", "true");
+        }
 
-      listNode.setAttribute("name", list.getDescription());
-      for (Change change : list.getChanges()) {
-        writeChange(listNode, change);
+        listNode.setAttribute("name", list.getDescription());
+        for (Change change : list.getChanges()) {
+          writeChange(listNode, change);
+        }
       }
     }
   }

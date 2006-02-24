@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -25,6 +26,11 @@ public class IdeBorderFactory {
   public static TitledBorder createTitledBorder(String title) {
     //return BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), title);
     return BorderFactory.createTitledBorder(new RoundedLineBorder(Color.LIGHT_GRAY, 3), title);
+  }
+
+  public static TitledBorder createTitledHeaderBorder(String title) {
+    //return BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), title);
+    return BorderFactory.createTitledBorder(new CompoundBorder(createEmptyBorder(0, 0, 5, 5), new SideBorder(Color.LIGHT_GRAY, SideBorder.TOP)), title);
   }
 
   public static Border createBorder() {

@@ -10,6 +10,8 @@ import com.intellij.peer.PeerFactory;
 import gnu.trove.THashSet;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,11 +50,31 @@ public class VcsDirtyScope {
       }
     }
 
+    if (newcomer.isDirectory()) {
+      final List<FilePath> files = new ArrayList<FilePath>(myDirtyFiles);
+      for (FilePath oldBoy : files) {
+        if (!oldBoy.isDirectory() && oldBoy.getVirtualFileParent() == newcomer.getVirtualFile()) {
+          myDirtyFiles.remove(oldBoy);
+        }
+      }
+    }
+    else {
+      for (FilePath oldBoy : myDirtyFiles) {
+        if (oldBoy.isDirectory() && newcomer.getVirtualFileParent() == oldBoy.getVirtualFile()) {
+          return;
+        }
+      }
+    }
+
     myDirtyFiles.add(newcomer);
   }
 
   public VirtualFile getScopeRoot() {
     return myScopeRoot;
+  }
+
+  public Module getScopeModule() {
+    return myIndex.getModuleForFile(myScopeRoot);
   }
 
   public Set<FilePath> getDirtyFiles() {

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +46,7 @@ import java.util.List;
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
   private CommitMessage myCommitMessageArea;
   private JList myChangesList;
-  private JSplitPane myRootPane;
+  private Splitter myRootPane;
   private JPanel myAdditionalOptionsPanel;
 
   private Project myProject;
@@ -62,8 +64,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myIncludedChanges = new ArrayList<Change>(changes);
     myActionName = "Commit Changes"; // TODO: should be customizable;
 
+    myAdditionalOptionsPanel = new JPanel();
+    myCommitMessageArea = new CommitMessage();
+
     final DefaultListModel listModel = new DefaultListModel();
-    myChangesList.setModel(listModel);
+    myChangesList = new JList(listModel);
+
     for (Change change : myChanges) {
       listModel.addElement(change);
     }
@@ -81,9 +87,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, true);
+        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanelForCheckinProject(this);
         if (options != null) {
-          vcsCommitOptions.add(options.getComponent());
+          JPanel vcsOptions = new JPanel(new BorderLayout());
+          vcsOptions.add(options.getComponent());
+          vcsOptions.setBorder(IdeBorderFactory.createTitledHeaderBorder(vcs.getDisplayName()));
+          vcsCommitOptions.add(vcsOptions);
           myAdditionalComponents.add(options);
           hasVcsOptions = true;
         }
@@ -120,13 +129,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
-      beforeBox.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.checkin.options.group")));
+      beforeBox.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.standard.checkin.options.group")));
       optionsBox.add(beforeBox);
     }
 
     if (afterVisible) {
       afterBox.add(Box.createVerticalGlue());
-      afterBox.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.standard.after.checkin.options.group")));
+      afterBox.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.standard.after.checkin.options.group")));
       optionsBox.add(afterBox);
     }
 
@@ -152,6 +161,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     setOKButtonText("Commit");
 
     setTitle(myActionName);
+
+    restoreState();
 
     init();
   }
@@ -302,7 +313,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   }
 
-  private List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
+  private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
     final ArrayList<VcsException> result = new ArrayList<VcsException>();
     for (VcsException vcsException : vcsExceptions) {
       if (!vcsException.isWarning()) {
@@ -330,6 +341,20 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   protected JComponent createCenterPanel() {
+    myChangesList.setVisibleRowCount(10);
+    myRootPane = new Splitter(true);
+    myRootPane.setHonorComponentsMinimumSize(true);
+    final JScrollPane pane = new JScrollPane(myChangesList);
+    pane.setPreferredSize(new Dimension(400, 400));
+    JPanel topPanel = new JPanel(new BorderLayout());
+    topPanel.add(pane);
+    topPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changed Files"));
+    myRootPane.setFirstComponent(topPanel);
+    JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.add(myAdditionalOptionsPanel, BorderLayout.EAST);
+    bottomPanel.add(myCommitMessageArea, BorderLayout.CENTER);
+    myRootPane.setSecondComponent(bottomPanel);
+    myRootPane.setProportion(1);
     return myRootPane;
   }
 
@@ -353,7 +378,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           final FilePath path = getFilePath(change);
           setIcon(path.getFileType().getIcon());
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
-          append(" (" + path.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(" (" + path.getIOFile().getParentFile().getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
 
         private Color getColor(final Change change) {
@@ -501,6 +526,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  @NonNls
+  protected String getDimensionServiceKey() {
+    return "CommitChangelistDialog";
+  }
 
   @Nullable
   public Object getData(String dataId) {

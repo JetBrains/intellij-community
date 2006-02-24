@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,8 +33,7 @@ public class CommitMessage extends JPanel{
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
-    add(new JLabel(VcsBundle.message("label.commit.comment")), BorderLayout.NORTH);
-
+    setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
 
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup messageActionGroup = (ActionGroup)actionManager.getAction("Vcs.MessageActionGroup");
