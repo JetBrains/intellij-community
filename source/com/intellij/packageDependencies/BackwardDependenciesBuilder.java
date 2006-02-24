@@ -1,14 +1,19 @@
 package com.intellij.packageDependencies;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.psi.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna
@@ -36,8 +41,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     final AnalysisScope[] scopes = getScope().getNarrowedComplementaryScope(getProject());
     final DependenciesBuilder[] builders = new DependenciesBuilder[scopes.length];
     int totalCount = 0;
-    for (int i = 0; i < scopes.length; i++) {
-      AnalysisScope scope = scopes[i];
+    for (AnalysisScope scope : scopes) {
       totalCount += scope.getFileCount();
     }
     final int finalTotalFilesCount = totalCount;
@@ -62,13 +66,15 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
               throw new ProcessCanceledException();
             }
             indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
-            indicator.setText2(file.getVirtualFile().getPresentableUrl());
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null) {
+              indicator.setText2(virtualFile.getPresentableUrl());
+            }
             indicator.setFraction(((double) ++myFileCount) / getScope().getFileCount());
           }
-          for (int i = 0; i < builders.length; i++) {
-            final Map<PsiFile, Set<PsiFile>> dependencies = builders[i].getDependencies();
-            for (Iterator<PsiFile> iterator = dependencies.keySet().iterator(); iterator.hasNext();) {
-              final PsiFile psiFile = iterator.next();
+          for (DependenciesBuilder builder : builders) {
+            final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
+            for (final PsiFile psiFile : dependencies.keySet()) {
               if (dependencies.get(psiFile).contains(file)) {
                 Set<PsiFile> fileDeps = getDependencies().get(file);
                 if (fileDeps == null) {
