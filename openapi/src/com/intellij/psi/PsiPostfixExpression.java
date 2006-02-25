@@ -30,7 +30,7 @@ public interface PsiPostfixExpression extends PsiExpression {
   PsiExpression getOperand();
 
   /**
-   * Returns the token representing the operation performed (of type {@link JavaTokenType.PLUSPLUS} or
+   * Returns the token representing the operation performed (of type {@link JavaTokenType#PLUSPLUS} or
    * {@link JavaTokenType#MINUSMINUS}).
    *
    * @return the token for the operation performed.

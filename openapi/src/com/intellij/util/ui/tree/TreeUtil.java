@@ -29,7 +29,10 @@ import java.util.List;
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
 
+  private TreeUtil() {}
+
   /**
+   * @param tree JTree to collect expanded paths from.
    * @param paths output parameter.
    */
   public static void collectExpandedPaths(final JTree tree, final List<TreePath> paths){
@@ -106,6 +109,8 @@ public final class TreeUtil {
 
   /**
    * Expands specified paths.
+   * @param tree JTree to apply expansion status to
+   * @param paths to expand. See {@link #collectExpandedPaths(javax.swing.JTree, java.util.List<javax.swing.tree.TreePath>)}
    */
   public static void restoreExpandedPaths(final JTree tree, final List<TreePath> paths){
     LOG.assertTrue(tree != null);
@@ -117,7 +122,7 @@ public final class TreeUtil {
   }
 
   public static TreePath getPath(final TreeNode aRootNode, final TreeNode aNode) {
-    final List pathStack = new ArrayList();
+    final List<TreeNode> pathStack = new ArrayList<TreeNode>();
     addEach(aRootNode, aNode, pathStack);
 
     final Object[] pathElements = new Object[pathStack.size()];
@@ -171,7 +176,8 @@ public final class TreeUtil {
   }
 
   /**
-   * Removes last component in the current selection path
+   * Removes last component in the current selection path.
+   * @param tree to remove selected node from.
    */
   public static void removeSelected(final JTree tree) {
     LOG.assertTrue(tree != null);
@@ -222,7 +228,7 @@ public final class TreeUtil {
     selectPath(tree, selectionPath);
   }
 
-  private static void addEach(final TreeNode aRootNode, final TreeNode aNode, final List aPathStack) {
+  private static void addEach(final TreeNode aRootNode, final TreeNode aNode, final List<TreeNode> aPathStack) {
     aPathStack.add(aNode);
 
     if (aNode != aRootNode) {
@@ -273,7 +279,7 @@ public final class TreeUtil {
   }
 
   public static void sort(final DefaultMutableTreeNode node, final Comparator comparator) {
-    final List children = childrenToArray(node);
+    final List<TreeNode> children = childrenToArray(node);
     Collections.sort(children, comparator);
     node.removeAllChildren();
     addChildrenTo(node, children);
@@ -282,7 +288,7 @@ public final class TreeUtil {
     }
   }
 
-  private static void addChildrenTo(final MutableTreeNode node, final List children) {
+  private static void addChildrenTo(final MutableTreeNode node, final List<TreeNode> children) {
     for (final Object aChildren : children) {
       final MutableTreeNode child = (MutableTreeNode)aChildren;
       node.insert(child, node.getChildCount());
