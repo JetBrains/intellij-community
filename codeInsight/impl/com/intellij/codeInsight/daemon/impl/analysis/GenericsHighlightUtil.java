@@ -281,7 +281,7 @@ public class GenericsHighlightUtil {
     MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
     if (sameErasure != null) {
-      checkSameErasureNotSubsignature(sameErasure, toCheckSubsignature, signature, aClass, method, result);
+      checkSameErasureNotSubsignatureOrSameClass(sameErasure, toCheckSubsignature, signature, aClass, method, result);
     }
     sameErasureMethods.put(signatureToErase, signature);
     toCheckSubsignature.put(signature, signature);
@@ -291,7 +291,7 @@ public class GenericsHighlightUtil {
     }
   }
 
-  private static void checkSameErasureNotSubsignature(
+  private static void checkSameErasureNotSubsignatureOrSameClass(
     final MethodSignatureBackedByPsiMethod signatureToCheck,
     final Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature,
     final HierarchicalMethodSignature superSignature,
@@ -310,7 +310,8 @@ public class GenericsHighlightUtil {
       if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
     }
 
-    if (!MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
+    if (checkMethod.getContainingClass().equals(superMethod.getContainingClass()) ||
+        !MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
       PsiMethod method1 = signatureToCheck.getMethod();
       if (aClass.equals(method1.getContainingClass())) {
         boolean sameClass = method1.getContainingClass().equals(superMethod.getContainingClass());
