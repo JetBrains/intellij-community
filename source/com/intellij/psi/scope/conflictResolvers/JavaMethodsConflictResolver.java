@@ -217,21 +217,11 @@ outer:
     for(int i = 0; i < args.length; i++){
       if (i >= params1.length || i >= params2.length) break;
       final PsiType argType = args[i].getType();
-      final PsiType type1 = info1.getSubstitutor().substitute(params1[i].getType());
-      final PsiType type2 = info2.getSubstitutor().substitute(params2[i].getType());
-      assert type1 != null && type2 != null; //because substitute returns null for nulls only
       boolean varArgs1 = params1[i].isVarArgs();
       boolean varArgs2 = params2[i].isVarArgs();
-      if (!varArgs1 && varArgs2) {
-        return argType != null &&
-            !TypeConversionUtil.isNullType(argType) &&
-            type1.isAssignableFrom(argType) ? Specifics.TRUE : Specifics.CONFLICT;
-      }
-      if (varArgs1 && !varArgs2) {
-        return argType != null &&
-            !TypeConversionUtil.isNullType(argType) &&
-            type2.isAssignableFrom(argType) ? Specifics.FALSE : Specifics.CONFLICT;
-      }
+      final PsiType type1 = TypeConversionUtil.erasure(params1[i].getType());
+      final PsiType type2 = TypeConversionUtil.erasure(params2[i].getType());
+      assert type1 != null && type2 != null; //because erasure returns null for nulls only
 
       Boolean lessBoxing = isLessBoxing(argType, type1, type2);
       if (lessBoxing != null) {
@@ -240,30 +230,29 @@ outer:
         continue;
       }
 
+      if (varArgs1 && !varArgs2) {
+        if (PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = argType instanceof PsiArrayType;
+        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
+        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
+      } else if (varArgs2 && !varArgs1) {
+        if (PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = !(argType instanceof PsiArrayType);
+        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
+        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
+      }
+
       final boolean assignable2From1 = type2.isAssignableFrom(type1);
       final boolean assignable1From2 = type1.isAssignableFrom(type2);
       if (assignable1From2 && assignable2From1) {
-        //prefer less generic candidate
-        PsiType erased1 = TypeConversionUtil.erasure(params1[i].getType());
-        PsiType erased2 = TypeConversionUtil.erasure(params2[i].getType());
-        if (!erased2.isAssignableFrom(erased1)) {
-          if (isMoreSpecific == Boolean.TRUE) return Specifics.CONFLICT;
-          isMoreSpecific = Boolean.FALSE;
-        }
-        if (!erased1.isAssignableFrom(erased2)) {
-          if (isMoreSpecific == Boolean.FALSE) return Specifics.CONFLICT;
-          isMoreSpecific = Boolean.TRUE;
-        }
-      }
-      else if (assignable1From2){
+        continue;
+      } else if (assignable1From2) {
         if (isMoreSpecific == Boolean.TRUE) return Specifics.CONFLICT;
         isMoreSpecific = Boolean.FALSE;
-      }
-      else if (assignable2From1){
+      } else if (assignable2From1) {
         if (isMoreSpecific == Boolean.FALSE) return Specifics.CONFLICT;
         isMoreSpecific = Boolean.TRUE;
-      }
-      else{
+      } else {
         return Specifics.CONFLICT;
       }
     }
