@@ -2,9 +2,6 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ArrayUtil;
@@ -186,13 +183,9 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     }
   }
 
-  public RevisionOrDate createVirsionInfo() {
-    if (myDateOrRevision != null) {
-      return RevisionOrDateImpl.createOn(myDateOrRevision);
-    }
-    else {
-      return new SimpleRevision(asString());
-    }
+
+  public DateOrRevisionSettings getDateOrRevision() {
+    return myDateOrRevision;
   }
 
   @Nullable

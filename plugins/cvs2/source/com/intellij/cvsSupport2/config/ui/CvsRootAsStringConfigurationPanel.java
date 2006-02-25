@@ -6,7 +6,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditCvsConfigurationFie
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.BooleanValueHolder;
-import com.intellij.util.BooleanValueHolder;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -38,7 +37,7 @@ public class CvsRootAsStringConfigurationPanel {
 
     myEditFieldByFieldButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        CvsRootConfiguration cvsRootConfiguration = new CvsRootConfiguration(CvsApplicationLevelConfiguration.getInstance());
+        CvsRootConfiguration cvsRootConfiguration = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
         saveTo(cvsRootConfiguration, false);
         EditCvsConfigurationFieldByFieldDialog dialog
           = new EditCvsConfigurationFieldByFieldDialog(myCvsRoot.getText());

@@ -1,9 +1,10 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
@@ -15,10 +16,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
@@ -26,7 +26,6 @@ import org.netbeans.lib.cvsclient.command.log.SymbolicName;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -110,8 +109,8 @@ public class TagsHelper {
   private static BranchesProvider getBranchesProvider(CvsOperation operation, Project project, boolean forTemporaryConfiguration) throws VcsException {
     LOG.assertTrue(operation instanceof BranchesProvider);
     CvsOperationExecutor executor = new CvsOperationExecutor(true, project,
-                                                             new ModalityContext(ModalityState.defaultModalityState(),
-                                                                                 forTemporaryConfiguration));
+                                                             new ModalityContextImpl(ModalityState.defaultModalityState(),
+                                                                                     forTemporaryConfiguration));
     CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true) {
       public String getCancelButtonText() {
         return com.intellij.CvsBundle.message("button.text.stop");

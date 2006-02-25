@@ -2,57 +2,34 @@ package com.intellij.cvsSupport2.connections.pserver;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.connections.ConnectionSettingsImpl;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
-import org.netbeans.lib.cvsclient.connection.PServerConnection;
-import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 
 /**
  * author: lesya
  */
 public class PServerCvsSettings extends CvsConnectionSettings {
-  private static final int DEFAULT_PORT = 2401;
 
   public PServerCvsSettings(CvsRootConfiguration cvsRootConfiguration) {
     super(cvsRootConfiguration);
-    PORT = DEFAULT_PORT;
+    PORT = CvsConnectionUtil.DEFAULT_PSERVER_PORT;
   }
 
-  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                 ModalityContext executor,
-                                                 CvsRootConfiguration cvsRootConfiguration) {
+  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
     if (PASSWORD == null) {
       PASSWORD = PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(myStringRepsentation);
     }
 
-    com.intellij.cvsSupport2.config.ProxySettings proxy_settings = cvsRootConfiguration.PROXY_SETTINGS;
-    ConnectionSettings connectionSettings = new ConnectionSettingsImpl(HOST,
-                                                                   PORT,
-                                                                   proxy_settings.USE_PROXY,
-                                                                   proxy_settings.PROXY_HOST,
-                                                                   proxy_settings.PROXY_PORT,
-                                                                   CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000,
-                                                                   proxy_settings.TYPE,
-                                                                   proxy_settings.getLogin(),
-                                                                   proxy_settings.getPassword());
-
-    return new PServerConnection(connectionSettings, USER, PASSWORD, adjustRepository());
-  }
-
-  private String adjustRepository() {
-    if (REPOSITORY != null) {
-      return REPOSITORY.replace('\\', '/');
-    } else {
-      return null;
-    }
+    return CvsConnectionUtil.createPServerConnection(this, cvsRootConfiguration.PROXY_SETTINGS,
+                                                     CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000);
   }
 
   public int getDefaultPort() {
-    return DEFAULT_PORT;
+    return CvsConnectionUtil.DEFAULT_PSERVER_PORT;
   }
 
   public boolean login(ModalityContext executor) {

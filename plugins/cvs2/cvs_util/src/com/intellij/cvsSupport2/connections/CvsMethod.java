@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -66,8 +65,7 @@ public class CvsMethod {
 
   public static CvsMethod getValue(String method) {
     CvsMethod[] availableMethods = AVAILABLE_METHODS;
-    for (int i = 0; i < availableMethods.length; i++) {
-      CvsMethod availableMethod = availableMethods[i];
+    for (CvsMethod availableMethod : availableMethods) {
       if (Comparing.equal(availableMethod.getName(), method)) return availableMethod;
     }
     return null;

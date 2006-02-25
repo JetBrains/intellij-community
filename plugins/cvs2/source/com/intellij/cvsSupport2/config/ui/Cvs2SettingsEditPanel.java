@@ -6,13 +6,13 @@ import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsMethod;
 import com.intellij.cvsSupport2.connections.CvsRootData;
-import com.intellij.cvsSupport2.connections.RootFormatter;
+import com.intellij.cvsSupport2.connections.CvsRootDataBuilder;
 import com.intellij.cvsSupport2.connections.ext.ui.ExtConnectionDualPanel;
 import com.intellij.cvsSupport2.connections.local.ui.LocalConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.pserver.ui.PServerSettingsPanel;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.ui.ProxySettingsPanel;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
@@ -21,13 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.BooleanValueHolder;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NonNls;
 
 
 public class Cvs2SettingsEditPanel implements CvsRootEditor {
@@ -173,14 +172,14 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   }
 
   private CvsRootConfiguration createConfigurationWithCurrentSettings() {
-    CvsRootConfiguration newConfiguration = new CvsRootConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    CvsRootConfiguration newConfiguration = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     if (!saveTo(newConfiguration, true)) return null;
     return newConfiguration;
   }
 
   public static void testConnection(CvsRootConfiguration configuration, Component component) {
     try {
-      boolean loggedIn = configuration.login(new ModalityContext(true));
+      boolean loggedIn = configuration.login(new ModalityContextImpl(true));
       if (!loggedIn) return;
 
       configuration.testConnection();
@@ -213,7 +212,7 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
   private void setExtPanelEnabling() {
     try {
-      CvsRootData currentRootData = RootFormatter.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
+      CvsRootData currentRootData = CvsRootDataBuilder.createSettingsOn(myCvsRootConfigurationPanelView.getCvsRoot(), true);
       String settingsPanelName = getSettingsPanelName(currentRootData);
       ((CardLayout)myConnectionSettingsPanel.getLayout()).show(myConnectionSettingsPanel, settingsPanelName);
 

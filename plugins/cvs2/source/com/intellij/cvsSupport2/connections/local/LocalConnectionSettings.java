@@ -19,11 +19,9 @@ public class LocalConnectionSettings extends CvsConnectionSettings{
     return -1;
   }
 
-  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                 ModalityContext executor,
-                                                 CvsRootConfiguration cvsRootConfiguration) {
+  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
-    return new LocalConnection(REPOSITORY, getLocalConfiguration(), errorRegistry, executor);
+    return new LocalConnection(REPOSITORY, getLocalConfiguration(), errorRegistry);
   }
 
   public boolean login(ModalityContext executor) {

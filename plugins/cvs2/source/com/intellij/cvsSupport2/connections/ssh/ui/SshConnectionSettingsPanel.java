@@ -1,12 +1,13 @@
 package com.intellij.cvsSupport2.connections.ssh.ui;
 
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshTypesToUse;
-import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProvider;
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootEditor;
+import com.intellij.cvsSupport2.config.SshSettings;
+import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
+import com.intellij.cvsSupport2.connections.sshViaMaverick.SshTypesToUse;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -116,7 +117,7 @@ public class SshConnectionSettingsPanel {
   }
 
   private void changePassword() {
-    final SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
+    final SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
     if (!myUsePrivateKeyFile.isSelected()) {
       final String cvsRoot = myRootProvider.getCurrentRoot();
       SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.password.for", cvsRoot));

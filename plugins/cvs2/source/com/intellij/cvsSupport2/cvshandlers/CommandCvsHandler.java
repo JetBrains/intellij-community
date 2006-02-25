@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
@@ -24,7 +25,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportDetails;
 import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.RemoveFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.RTagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
@@ -42,14 +42,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.InvalidEntryFormatException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.text.MessageFormat;
 
 /**
  * author: lesya

@@ -55,7 +55,7 @@ public class CvsOperationExecutor {
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityState modalityState) {
     myProject = project;
     myShowProgress = showProgress;
-    myExecutor = new ModalityContext(modalityState, false);
+    myExecutor = new ModalityContextImpl(modalityState, false);
   }
 
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityContext modalityContext) {

@@ -1,16 +1,15 @@
 package com.intellij.cvsSupport2.connections.ext.ui;
 
-import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootEditor;
+import com.intellij.cvsSupport2.config.ExtConfiguration;
+import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ExtConnectionDualPanel {
 

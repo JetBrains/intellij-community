@@ -3,8 +3,8 @@ package com.intellij.cvsSupport2.config;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.connections.*;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModulesListOperation;
@@ -46,13 +46,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   private static final String AT = "@";
 
 
-  public CvsRootConfiguration(CvsApplicationLevelConfiguration mainConfiguration) {
+  public CvsRootConfiguration() {
     super("CvsRootConfiguration");
-    EXT_CONFIGURATION = mainConfiguration.EXT_CONFIGURATION.clone();
-    SSH_CONFIGURATION = mainConfiguration.SSH_CONFIGURATION.clone();
-    SSH_FOR_EXT_CONFIGURATION = mainConfiguration.SSH_FOR_EXT_CONFIGURATION.clone();
-    LOCAL_CONFIGURATION = mainConfiguration.LOCAL_CONFIGURATION.clone();
-    PROXY_SETTINGS = mainConfiguration.PROXY_SETTINGS.clone();
   }
 
   private CvsConnectionSettings getSettings() {
@@ -60,12 +55,12 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   public CvsConnectionSettings createSettings() {
-    return RootFormatter.createConfigurationOn(this);
+    return new IDEARootFormatter(this).createConfiguration();
   }
 
 
-  public IConnection createConnection(ReadWriteStatistics statistics, ModalityContext executor) {
-    return getSettings().createConnection(statistics, executor);
+  public IConnection createConnection(ReadWriteStatistics statistics) {
+    return getSettings().createConnection(statistics);
   }
 
   public String getCvsRootAsString() {
@@ -131,7 +126,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   public void testConnection() throws Exception {
-    testConnection(getSettings().createConnection(new ReadWriteStatistics(), new ModalityContext(true)), getSettings());
+    testConnection(getSettings().createConnection(new ReadWriteStatistics()), getSettings());
   }
 
   public static void testConnection(final IConnection connection, final CvsConnectionSettings settings)
@@ -139,7 +134,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
-                                                                                        errorProcessor, new ModalityContext(true),
+                                                                                        errorProcessor, new ModalityContextImpl(true),
                                                                                         PostCvsActivity.DEAF);
 
     final CvsResult result = new CvsResultEx();
@@ -230,7 +225,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   public static CvsRootConfiguration createOn(CvsRepository repository) {
-    CvsRootConfiguration result = new CvsRootConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    CvsRootConfiguration result = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     result.DATE_OR_REVISION_SETTINGS.updateFrom(repository.getDateOrRevision());
     result.CVS_ROOT = createFieldByFieldCvsRoot(repository);
     return result;

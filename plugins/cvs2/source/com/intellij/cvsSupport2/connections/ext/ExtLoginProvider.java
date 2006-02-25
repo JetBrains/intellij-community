@@ -21,7 +21,7 @@ public class ExtLoginProvider {
 
   public boolean login(CvsConnectionSettings env, ModalityContext executor) {
 
-    IConnection connection = env.createConnection(new ReadWriteStatistics(), executor);
+    IConnection connection = env.createConnection(new ReadWriteStatistics());
     try {
       connection.open(new StreamLogger());
       return true;
@@ -44,7 +44,7 @@ public class ExtLoginProvider {
     return relogin(ex.getLocalizedMessage(), env, executor);
   }
 
-  private boolean relogin(String message, CvsConnectionSettings env,ModalityContext executor) {
+  private boolean relogin(String message, CvsConnectionSettings env, ModalityContext executor) {
     Messages.showMessageDialog(message, com.intellij.CvsBundle.message("message.error.cannot.connect.to.cvs.title"), Messages.getErrorIcon());
     if (!executor.isForTemporaryConfiguration()){
     CvsRootConfiguration cvsRootConfiguration = CvsConfigurationsListEditor.reconfigureCvsRoot(env.getCvsRootAsString(), null);

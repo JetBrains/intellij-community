@@ -3,6 +3,8 @@ package com.intellij.cvsSupport2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
 import com.intellij.cvsSupport2.history.CvsFileContent;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
@@ -36,7 +38,15 @@ public class CvsDiffProvider implements DiffProvider{
 
   public VcsFileContent createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     if ((revisionNumber instanceof CvsRevisionNumber)) {
-      final RevisionOrDate versionInfo = ((CvsRevisionNumber)revisionNumber).createVirsionInfo();
+      final CvsRevisionNumber cvsRevisionNumber = ((CvsRevisionNumber)revisionNumber);
+      final RevisionOrDate versionInfo;
+      if (cvsRevisionNumber.getDateOrRevision() != null) {
+        versionInfo = RevisionOrDateImpl.createOn(cvsRevisionNumber.getDateOrRevision());
+      }
+      else {
+        versionInfo = new SimpleRevision(cvsRevisionNumber.asString());
+      }
+      
       if (versionInfo != null) {
         final GetFileContentOperation operation = new GetFileContentOperation(new File(CvsUtil.getModuleName(selectedFile)),
                                                                               CvsEntriesManager.getInstance()

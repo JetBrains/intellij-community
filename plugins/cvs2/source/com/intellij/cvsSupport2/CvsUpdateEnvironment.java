@@ -42,14 +42,13 @@ import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
 import com.intellij.cvsSupport2.cvshandlers.UpdateHandler;
 import com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 

@@ -7,8 +7,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
-import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * author: lesya
  */
-public class SSHPasswordProvider implements ApplicationComponent, JDOMExternalizable {
+public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExternalizable, SSHPasswordProvider {
 
   private Map<String, String> myCvsRootToPasswordMap = new HashMap<String, String>();
   private Map<String, String> myCvsRootToStoringPasswordMap = new HashMap<String, String>();
@@ -32,8 +32,8 @@ public class SSHPasswordProvider implements ApplicationComponent, JDOMExternaliz
   @NonNls private static final String CVSROOT_ATTR = "CVSROOT";
   @NonNls private static final String PASSWORD_ATTR = "PASSWORD";
 
-  public static SSHPasswordProvider getInstance() {
-    return ApplicationManager.getApplication().getComponent(SSHPasswordProvider.class);
+  public static SSHPasswordProviderImpl getInstance() {
+    return ApplicationManager.getApplication().getComponent(SSHPasswordProviderImpl.class);
   }
 
   public String getComponentName() {

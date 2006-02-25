@@ -1,11 +1,6 @@
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.ExtConfiguration;
-import com.intellij.cvsSupport2.config.LocalSettings;
-import com.intellij.cvsSupport2.config.ProxySettings;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.config.*;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
@@ -17,7 +12,7 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 /**
  * author: lesya
  */
-public abstract class CvsConnectionSettings extends CvsRootData implements CvsEnvironment {
+public abstract class CvsConnectionSettings extends CvsRootData implements CvsEnvironment, CvsSettings {
 
   private final CvsRootConfiguration myCvsRootConfiguration;
 
@@ -45,9 +40,9 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
     return true;
   }
 
-  public IConnection createConnection(ReadWriteStatistics statistics, ModalityContext executor) {
+  public IConnection createConnection(ReadWriteStatistics statistics) {
     CvsListenerWithProgress cvsCommandStopper = CvsListenerWithProgress.createOnProgress();
-    IConnection originalConnection = createOriginalConnection(cvsCommandStopper, executor, myCvsRootConfiguration);
+    IConnection originalConnection = createOriginalConnection(cvsCommandStopper, myCvsRootConfiguration);
     if (originalConnection instanceof SelfTestingConnection) {
       return new SelfTestingConnectionWrapper(originalConnection, statistics, cvsCommandStopper);
     }
@@ -56,9 +51,7 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
     }
   }
 
-  protected abstract IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                          ModalityContext executor,
-                                                          CvsRootConfiguration cvsRootConfiguration);
+  protected abstract IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration);
 
   protected ExtConfiguration getExtConfiguration() {
     return myCvsRootConfiguration.EXT_CONFIGURATION;

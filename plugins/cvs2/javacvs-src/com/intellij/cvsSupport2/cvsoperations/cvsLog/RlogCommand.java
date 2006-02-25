@@ -86,7 +86,7 @@ public class RlogCommand extends AbstractCommand {
 
   public final String getCvsCommandLine() {
     //noinspection HardCodedStringLiteral
-    final StringBuffer cvsCommandLine = new StringBuffer("log ");
+    final StringBuffer cvsCommandLine = new StringBuffer("rlog ");
     cvsCommandLine.append(getCVSArguments());
     appendFileArguments(cvsCommandLine);
     return cvsCommandLine.toString();

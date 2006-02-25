@@ -1,20 +1,16 @@
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -81,6 +77,8 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
       ENCODING = DEFAULT;
     }
 
+    updateConfigurations();
+
   }
 
   private boolean encodingExists(String encoding) {
@@ -109,7 +107,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   }
 
   private CvsRootConfiguration createConfigurationOn(Element child) throws InvalidDataException {
-    CvsRootConfiguration config = new CvsRootConfiguration(this);
+    CvsRootConfiguration config = createNewConfiguration(this);
     config.readExternal(child);
     return config;
   }
@@ -156,7 +154,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
         return cvsRootConfiguration;
       }
     }
-    CvsRootConfiguration newConfig = new CvsRootConfiguration(this);
+    CvsRootConfiguration newConfig = createNewConfiguration(this);
     newConfig.CVS_ROOT = root;
     CONFIGURATIONS.add(newConfig);
     return newConfig;
@@ -172,5 +170,57 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
       return value;
     }
 
+  }
+
+  public void setPathToPasswordFile(final String text) {
+    PATH_TO_PASSWORD_FILE = text;
+    updateConfigurations();
+  }
+
+  private void updateConfigurations() {
+    final File passFile = new File(getPathToPassFile());
+    if (passFile.isFile()) {
+      try {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
+        try {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            final int sepPosition = line.indexOf(' ');
+            if (sepPosition > 0) {
+              final String cvsRoot = line.substring(0, sepPosition);
+              tryToAddNewRoot(cvsRoot);
+            }
+          }
+
+        } finally {
+          reader.close();
+        }
+      } catch (IOException e) {
+        //ignore
+      }
+
+    }
+  }
+
+  private void tryToAddNewRoot(final String cvsRoot) {
+    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
+      if (Comparing.equal(configuration.getCvsRootAsString(), cvsRoot)) {
+        return;
+      }
+    }
+
+    final CvsRootConfiguration newConfiguration = createNewConfiguration(this);
+    newConfiguration.CVS_ROOT = cvsRoot;
+    CONFIGURATIONS.add(newConfiguration);
+  }
+
+  public static CvsRootConfiguration createNewConfiguration(CvsApplicationLevelConfiguration mainConfiguration) {
+    final CvsRootConfiguration result = new CvsRootConfiguration();
+    result.EXT_CONFIGURATION = mainConfiguration.EXT_CONFIGURATION.clone();
+    result.SSH_CONFIGURATION = mainConfiguration.SSH_CONFIGURATION.clone();
+    result.SSH_FOR_EXT_CONFIGURATION = mainConfiguration.SSH_FOR_EXT_CONFIGURATION.clone();
+    result.LOCAL_CONFIGURATION = mainConfiguration.LOCAL_CONFIGURATION.clone();
+    result.PROXY_SETTINGS = mainConfiguration.PROXY_SETTINGS.clone();
+    return result;
   }
 }

@@ -31,28 +31,26 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.connections.ConnectionSettingsImpl;
+import com.intellij.cvsSupport2.config.ProxySettings;
+import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
+import com.intellij.cvsSupport2.connections.CvsRootData;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshPasswordDialog;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.PublicKeyVerification;
 import com.intellij.cvsSupport2.connections.sshViaMaverick.SolveableAuthenticationException;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshPasswordMaverickConnection;
-import com.intellij.cvsSupport2.connections.sshViaMaverick.SshPublicKeyMaverickConnection;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
@@ -71,70 +69,26 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     return 22;
   }
 
-  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                 ModalityContext executor,
-                                                 CvsRootConfiguration cvsRootConfiguration) {
+  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
     return createSshConnection(cvsRootConfiguration, this, cvsRootConfiguration.SSH_CONFIGURATION);
 
   }
 
   public static IConnection createSshConnection(CvsRootConfiguration cvsRootConfiguration, 
-                                                CvsConnectionSettings settings,
+                                                CvsRootData settings,
                                                 SshSettings sshConfiguration) {
 
     int timeout = CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000;
 
-    com.intellij.cvsSupport2.config.ProxySettings proxy_settings = cvsRootConfiguration.PROXY_SETTINGS;
-    ConnectionSettingsImpl connectionSettings = new ConnectionSettingsImpl(settings.HOST,
-                                                                   getPort(sshConfiguration),
-                                                                   proxy_settings.USE_PROXY,
-                                                                   proxy_settings.PROXY_HOST,
-                                                                   proxy_settings.PROXY_PORT,
-                                                                   timeout,
-                                                                   proxy_settings.getType(),
-                                                                   proxy_settings.getLogin(),
-                                                                   proxy_settings.getPassword());
-    if (sshConfiguration.USE_PPK) {
-      return new SshPublicKeyMaverickConnection(connectionSettings, settings.USER,
-                                                new File(sshConfiguration.PATH_TO_PPK),
-                                                SSHPasswordProvider.getInstance().getPPKPasswordForCvsRoot(settings.getCvsRootAsString()),
-                                                sshConfiguration.SSH_TYPE,
-                                                new PublicKeyVerification() {
-                                                  public boolean allowsPublicKey(String host,
-                                                                                 int keyLength,
-                                                                                 String fingerprint,
-                                                                                 String algorithmName) {
-                                                    return true;
-                                                  }
-                                                },
-                                                settings.REPOSITORY);
-    }
-    else {
-      return new SshPasswordMaverickConnection(connectionSettings, settings.USER,
-                                               SSHPasswordProvider.getInstance().getPasswordForCvsRoot(settings.getCvsRootAsString()),
-                                               sshConfiguration.SSH_TYPE,
-                                               new PublicKeyVerification() {
-                                                 public boolean allowsPublicKey(String host,
-                                                                                int keyLength,
-                                                                                String fingerprint,
-                                                                                String algorithmName) {
-                                                   return true;
-                                                 }
-                                               },
-                                               settings.REPOSITORY);
-    }
-  }
+    ProxySettings proxy_settings = cvsRootConfiguration.PROXY_SETTINGS;
 
-  private static int getPort(SshSettings configuration) {
-    String port = configuration.PORT;
-    if (port.length() == 0) return 22;
-    return Integer.parseInt(port);
+    return CvsConnectionUtil.createSshConnection(settings, sshConfiguration, proxy_settings, SSHPasswordProviderImpl.getInstance(),timeout);
   }
 
   public static boolean login(String cvsRoot, SshSettings settings) {
     if (!settings.USE_PPK) {
-      SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
+      SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
       String password = sshPasswordProvider.getPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
@@ -147,7 +101,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
 
       if (password == null) return false;
     } else {
-      SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
+      SSHPasswordProviderImpl sshPasswordProvider = SSHPasswordProviderImpl.getInstance();
       String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
@@ -171,7 +125,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       return false;
     }
     try {
-      IConnection connection = createConnection(new ReadWriteStatistics(), executor);
+      IConnection connection = createConnection(new ReadWriteStatistics());
       connection.open(new StreamLogger());
       try {
         connection.close();
@@ -191,10 +145,10 @@ public class SshConnectionSettings extends CvsConnectionSettings {
                                    CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
 
         if (getSshConfiguration().USE_PPK) {
-          SSHPasswordProvider.getInstance().removePPKPasswordFor(myStringRepsentation);
+          SSHPasswordProviderImpl.getInstance().removePPKPasswordFor(myStringRepsentation);
           return login(executor);
         } else {
-          SSHPasswordProvider.getInstance().removePasswordFor(myStringRepsentation);
+          SSHPasswordProviderImpl.getInstance().removePasswordFor(myStringRepsentation);
           return login(executor);
         }
       } else {

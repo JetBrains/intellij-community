@@ -18,7 +18,7 @@
       <implementation-class>com.intellij.cvsSupport2.application.CvsEntriesManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.cvsSupport2.connections.ssh.SSHPasswordProvider</implementation-class>
+      <implementation-class>com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>
 

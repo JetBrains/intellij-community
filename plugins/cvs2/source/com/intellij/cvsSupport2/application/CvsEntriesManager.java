@@ -2,8 +2,9 @@ package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
-import com.intellij.cvsSupport2.connections.RootFormatter;
+import com.intellij.cvsSupport2.connections.IDEARootFormatter;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.UserDirIgnores;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
@@ -360,8 +361,9 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   public CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
     if (!myStringToSettingsMap.containsKey(cvsRoot)) {
-      CvsConnectionSettings settings = RootFormatter.createConfigurationOn(CvsApplicationLevelConfiguration.getInstance()
-                                                                           .getConfigurationForCvsRoot(cvsRoot));
+      final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance()
+        .getConfigurationForCvsRoot(cvsRoot);
+      CvsConnectionSettings settings = new IDEARootFormatter(rootConfiguration).createConfiguration();
       myStringToSettingsMap.put(cvsRoot, settings);
     }
     return myStringToSettingsMap.get(cvsRoot);

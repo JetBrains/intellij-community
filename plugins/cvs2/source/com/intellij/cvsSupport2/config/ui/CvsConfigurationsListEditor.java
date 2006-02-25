@@ -1,17 +1,18 @@
 package com.intellij.cvsSupport2.config.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsActionPlaces;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -23,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -187,7 +186,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   private void createNewConfiguration() {
     if (!saveSelectedConfiguration()) return;
     myList.setSelectedValue(null, false);
-    CvsRootConfiguration newConfig = new CvsRootConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    CvsRootConfiguration newConfig = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     myModel.addElement(newConfig);
     myList.setSelectedValue(newConfig, true);
   }

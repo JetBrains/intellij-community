@@ -53,6 +53,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ClientEnvironment;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
@@ -70,11 +71,12 @@ import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.*;
-import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public abstract class CvsCommandOperation extends CvsOperation implements IFileInfoListener,
                                                                           IMessageListener,
@@ -201,7 +203,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     throws CommandException,
            CommandAbortedException,
            VcsException {
-    IConnection connection = root.createConnection(statistics, executor);
+    IConnection connection = root.createConnection(statistics);
     execute(root, executionEnvironment, connection);
 
   }

@@ -6,12 +6,11 @@ import com.maverick.ssh.SshTransport;
 import com.sshtools.net.HttpProxyTransport;
 import com.sshtools.net.SocketTransport;
 import com.sshtools.net.SocksProxyTransport;
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 
 import java.io.IOException;
 import java.net.Socket;
-
-import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
-import org.jetbrains.annotations.NonNls;
 
 public class ConnectionSettingsImpl implements ConnectionSettings {
 

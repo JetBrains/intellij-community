@@ -1,12 +1,11 @@
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -155,10 +154,9 @@ public final class CvsRootParser {
 
     final String[] paramValueStrings = proxySettings.split(";");
 
-    for (int i = 0; i < paramValueStrings.length; i++) {
-      String paramValueString = paramValueStrings[i];
+    for (String paramValueString : paramValueStrings) {
       final int eqIndex = paramValueString.indexOf("=");
-      if (eqIndex >=0 ){
+      if (eqIndex >= 0) {
         setValue(paramValueString.substring(0, eqIndex), paramValueString.substring(eqIndex + 1));
       }
     }
@@ -196,8 +194,7 @@ public final class CvsRootParser {
 
 
   private String extractMethod(String str, CvsRootParser cvsRoot, boolean check) {
-    for (int i = 0; i < CvsMethod.AVAILABLE_METHODS.length; i++) {
-      CvsMethod cvsMethod = CvsMethod.AVAILABLE_METHODS[i];
+    for (CvsMethod cvsMethod : CvsMethod.AVAILABLE_METHODS) {
       String tail = tryToCutMethod(cvsMethod, str);
       if (tail != null) {
         cvsRoot.METHOD = cvsMethod;
@@ -222,4 +219,5 @@ public final class CvsRootParser {
     PORT = null;
     PASSWORD = null;
   }
+
 }

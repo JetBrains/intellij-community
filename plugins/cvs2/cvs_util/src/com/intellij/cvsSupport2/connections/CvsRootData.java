@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Comparing;
 /**
  * author: lesya
  */
-public class CvsRootData {
+public class CvsRootData implements CvsSettings{
   protected final String myStringRepsentation;
   public CvsMethod METHOD = null;
   public String HOST = "";
@@ -27,8 +27,8 @@ public class CvsRootData {
   }
 
   public boolean equals(Object object) {
-    if (!object.getClass().equals(getClass())) return false;
-    CvsConnectionSettings other = (CvsConnectionSettings)object;
+    if (object instanceof CvsRootData) return false;
+    CvsRootData other = (CvsRootData)object;
 
     return Comparing.equal(METHOD, other.METHOD)
            && Comparing.equal(HOST, other.HOST)
@@ -40,5 +40,34 @@ public class CvsRootData {
   public int hashCode() {
     int methodHashCode = METHOD == null ? 0 : METHOD.hashCode();
     return methodHashCode ^ HOST.hashCode() ^ USER.hashCode() ^ REPOSITORY.hashCode() ^ PORT;
+  }
+
+
+  public void setPassword(String password) {
+    PASSWORD = password;
+  }
+
+  public void setHost(String host) {
+    HOST = host;
+  }
+
+  public void setPort(int port) {
+    PORT = port;
+  }
+
+  public void setUser(String user) {
+    USER = user;
+  }
+
+  public void setRepository(String repository) {
+    REPOSITORY = repository;
+  }
+
+  public void setUseProxy(String proxyHost, int proxyPort) {
+    CONTAINS_PROXY_INFO = true;
+    PROXY_HOST = proxyHost;
+    if (proxyPort > 0) {
+      PROXY_PORT = String.valueOf(proxyPort);
+    }
   }
 }

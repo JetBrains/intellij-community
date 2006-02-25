@@ -1,8 +1,8 @@
 package com.intellij.cvsSupport2.cvsoperations.dateOrRevision;
 
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import org.netbeans.lib.cvsclient.command.Command;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.command.Command;
 
 
 /**

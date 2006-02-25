@@ -1,11 +1,8 @@
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
+import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -43,8 +40,8 @@ public abstract class CvsRootProvider implements CvsEnvironment{
     myLocalRoot = localRoot;
   }
 
-  public IConnection createConnection(ReadWriteStatistics statistics, ModalityContext executor) {
-    return myCvsEnvironment.createConnection(statistics, executor);
+  public IConnection createConnection(ReadWriteStatistics statistics) {
+    return myCvsEnvironment.createConnection(statistics);
   }
 
   public boolean login(ModalityContext executor) {

@@ -1,19 +1,20 @@
 package com.intellij.cvsSupport2.connections.ext;
 
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.ExtConfiguration;
+import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
+import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
 import com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings;
-import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -27,17 +28,13 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     mySshSettings = cvsRootConfiguration.SSH_FOR_EXT_CONFIGURATION;
   }
 
-  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                 ModalityContext executor,
-                                                 CvsRootConfiguration cvsRootConfiguration) {
+  protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
-    ExtConfiguration extConfiguration = getExtConfiguration();
-    if (extConfiguration.USE_INTERNAL_SSH_IMPLEMENTATION) {
-      return SshConnectionSettings.createSshConnection(cvsRootConfiguration, this, cvsRootConfiguration.SSH_FOR_EXT_CONFIGURATION);
-    }
-    else {
-      return new ExtConnection(HOST, USER, REPOSITORY, extConfiguration, errorRegistry, executor);
-    }
+    return CvsConnectionUtil.createExtConnection(this, getExtConfiguration(), cvsRootConfiguration.SSH_CONFIGURATION,
+                                                 SSHPasswordProviderImpl.getInstance(), 
+                                                 cvsRootConfiguration.PROXY_SETTINGS,
+                                                 errorRegistry,
+                                                 CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000);
   }
 
   public int getDefaultPort() {

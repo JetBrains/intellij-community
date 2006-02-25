@@ -7,9 +7,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
 /**
  * author: lesya
  */

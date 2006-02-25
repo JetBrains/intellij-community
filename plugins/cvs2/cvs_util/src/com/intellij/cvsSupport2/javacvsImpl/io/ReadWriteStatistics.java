@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.Progress;
 import org.jetbrains.annotations.NonNls;
 
 /**

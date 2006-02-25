@@ -4,11 +4,11 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
-import com.intellij.openapi.util.PasswordPromptDialog;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.PasswordPromptDialog;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
@@ -52,7 +52,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     String cvsRoot = settings.getCvsRootAsString();
     String stored = getPassword(cvsRoot);
     if (stored != null) {
-      IConnection connection = settings.createConnection(new ReadWriteStatistics(), executor);
+      IConnection connection = settings.createConnection(new ReadWriteStatistics());
       try {
         connection.open(new StreamLogger());
         return true;

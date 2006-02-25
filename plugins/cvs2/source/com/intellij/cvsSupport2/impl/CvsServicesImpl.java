@@ -1,10 +1,11 @@
 package com.intellij.cvsSupport2.impl;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
-import com.intellij.cvsSupport2.connections.RootFormatter;
+import com.intellij.cvsSupport2.connections.IDEARootFormatter;
 import com.intellij.cvsSupport2.connections.pserver.PServerLoginProvider;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
@@ -24,10 +25,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -68,9 +68,10 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
   }
 
   private ComparableVcsRevisionOnOperation createCvsVersionOn(CvsModule module, Project project) {
-    CvsConnectionSettings env = RootFormatter.createConfigurationOn(CvsApplicationLevelConfiguration.getInstance()
-                                                                    .getConfigurationForCvsRoot(module.getRepository()
-                                                                                                .getStringRepresentation()));
+    final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance()
+      .getConfigurationForCvsRoot(module.getRepository()
+        .getStringRepresentation());
+    CvsConnectionSettings env = new IDEARootFormatter(rootConfiguration).createConfiguration();
 
     GetFileContentOperation operation = new GetFileContentOperation(new File(module.getPathInCvs()),
                                                                     env, new SimpleRevision(module.getRevision())

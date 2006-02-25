@@ -35,7 +35,7 @@ public class PServerSettingsPanel {
   }
 
   public void saveTo(CvsApplicationLevelConfiguration config) {
-    config.PATH_TO_PASSWORD_FILE = myPathToPasswordFile.getText();
+    config.setPathToPasswordFile(myPathToPasswordFile.getText());
     try {
       int timeout = Integer.parseInt(myTimeout.getText());
       if (timeout < 0) throwInvalidTimeoutException();

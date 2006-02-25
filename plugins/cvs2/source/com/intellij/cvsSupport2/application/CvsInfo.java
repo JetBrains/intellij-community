@@ -255,21 +255,18 @@ public class CvsInfo {
 
   private static class MyInvalidCvsConnectionSettings extends CvsConnectionSettings {
     public MyInvalidCvsConnectionSettings() {
-      super(new CvsRootConfiguration(CvsApplicationLevelConfiguration.getInstance()));
+      super(CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance()));
     }
 
     public int getDefaultPort() {
       return 0;
     }
 
-    public IConnection createConnection(ReadWriteStatistics statistics,
-                                        ModalityContext executor) {
+    public IConnection createConnection(ReadWriteStatistics statistics) {
       throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
-    protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
-                                                   ModalityContext executor,
-                                                   CvsRootConfiguration cvsRootConfiguration) {
+    protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
       throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 

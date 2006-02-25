@@ -3,8 +3,8 @@ package com.intellij.cvsSupport2.javacvsImpl.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
-import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 
 import java.io.IOException;
 import java.io.InputStream;

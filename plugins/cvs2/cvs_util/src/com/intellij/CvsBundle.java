@@ -14,8 +14,8 @@ package com.intellij;/*
  * limitations under the License.
  */
 
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.ResourceBundle;
 
