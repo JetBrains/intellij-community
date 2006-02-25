@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.usages.UsageView;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
-  private ReadWriteState myReadWriteState;
+  private ReadWriteState myReadWriteState = new ReadWriteState();
 
   public UsageFilteringRule[] getActiveRules(Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
@@ -63,7 +63,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
-    myReadWriteState = new ReadWriteState();
     if(view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
 
