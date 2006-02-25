@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -49,6 +50,7 @@ public class ChangesListView extends Tree implements DataProvider {
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
   private final Project myProject;
+  private FileStatusListener myFileStatusManager;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getBeforeRevision();
@@ -113,6 +115,18 @@ public class ChangesListView extends Tree implements DataProvider {
         return getChangeStatus(change).getColor();
       }
     });
+
+    myFileStatusManager = new FileStatusListener() {
+      public void fileStatusesChanged() {
+        ((DefaultTreeModel)getModel()).reload();
+      }
+
+      public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+        ((DefaultTreeModel)getModel()).reload();
+      }
+    };
+
+    FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusManager);
   }
 
   public void installDndSupport(ChangeListOwner owner) {
@@ -126,6 +140,7 @@ public class ChangesListView extends Tree implements DataProvider {
   }
 
   public void dispose() {
+    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusManager);
     if (myDragSource != null) {
       myDndManager.unregisterSource(myDragSource, this);
       myDndManager.unregisterTarget(myDropTarget, this);
