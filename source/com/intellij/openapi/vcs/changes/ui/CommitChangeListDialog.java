@@ -14,10 +14,7 @@ import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -235,6 +232,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                 }
               }
 
+              final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
+
               for (AbstractVcs vcs : changesByVcs.keySet()) {
                 final CheckinEnvironment environment = vcs.getCheckinEnvironment();
                 if (environment != null) {
@@ -243,6 +242,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                   for (Change change : vcsChanges) {
                     paths.add(getFilePath(change));
                   }
+
+                  pathsToRefresh.addAll(paths);
 
                   vcsExceptions
                     .addAll(environment.commit(paths.toArray(new FilePath[paths.size()]), myProject, getCommitMessage()));
@@ -254,6 +255,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                 public void run() {
                   lvcsAction.finish();
                   FileStatusManager.getInstance(myProject).fileStatusesChanged();
+                  for (FilePath path : pathsToRefresh) {
+                    VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+                  }
                 }
               });
               AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
@@ -271,11 +275,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                             VcsConfiguration.getInstance(myProject), checkinAction, true);
   }
 
-  private void commitCompleted(final List<VcsException> allExceptions,
-                               VcsConfiguration config,
-                               final List<CheckinHandler> checkinHandlers) {
-
-
+  private static void commitCompleted(final List<VcsException> allExceptions,
+                                      VcsConfiguration config,
+                                      final List<CheckinHandler> checkinHandlers) {
     final List<VcsException> errors = collectErrors(allExceptions);
     final int errorsSize = errors.size();
     final int warningsSize = allExceptions.size() - errorsSize;
