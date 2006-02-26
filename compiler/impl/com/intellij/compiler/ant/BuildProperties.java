@@ -5,7 +5,7 @@ import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;

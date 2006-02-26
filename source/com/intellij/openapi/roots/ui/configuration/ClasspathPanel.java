@@ -18,7 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;

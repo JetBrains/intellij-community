@@ -34,7 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.javaee.serverInstances.ApplicationServersManager;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
