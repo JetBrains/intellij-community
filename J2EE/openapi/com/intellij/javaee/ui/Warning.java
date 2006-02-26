@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.j2ee.ui;
+package com.intellij.javaee.ui;
 
 import javax.swing.*;
 

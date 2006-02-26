@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.j2ee.ui;
+package com.intellij.javaee.ui;
 
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
-
-import java.util.List;
+import javax.swing.*;
 
 /**
  * author: lesya
  */
-public interface Committable {
-  void commit() throws ReadOnlyDeploymentDescriptorModificationException;
-
-  void reset();
-
-  void dispose();
-
-  List<Warning> getWarnings();
+public interface CommittablePanel extends Committable {
+  JComponent getComponent();
 }
