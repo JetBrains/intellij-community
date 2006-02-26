@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -318,6 +319,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  public ChangeList getChangeList(Change change) {
+    synchronized (myChangeLists) {
+      for (ChangeList list : myChangeLists) {
+        if (list.getChanges().contains(change)) return list;
+      }
+      return null;
+    }
+  }
+
   public class RefreshAction extends AnAction {
     public RefreshAction() {
       super("Refresh", "Refresh VCS changes", IconLoader.getIcon("/actions/sync.png"));
@@ -377,15 +387,35 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       super("Commit Change List", "Commit selected changelists", IconLoader.getIcon("/actions/execute.png"));
     }
 
+    @Nullable
+    private ChangeList getChangeListIfOnlyOne(Change[] changes) {
+      if (changes == null || changes.length == 0) {
+        return null;
+      }
+
+      ChangeList selectedList = null;
+      for (Change change : changes) {
+        final ChangeList list = getChangeList(change);
+        if (selectedList == null) {
+          selectedList = list;
+        }
+        else if (selectedList != list) {
+          return null;
+        }
+      }
+      return selectedList;
+    }
 
     public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0].getChanges().size() > 0);
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      new CommitChangeListDialog(myProject, lists[0], new ArrayList<Change>(lists[0].getChanges())).show();
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      final ChangeList list = getChangeListIfOnlyOne(changes);
+      if (list == null) return;
+      new CommitChangeListDialog(myProject, list, Arrays.asList(changes)).show();
     }
   }
 
