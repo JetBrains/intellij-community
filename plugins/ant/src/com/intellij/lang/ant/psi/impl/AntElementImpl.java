@@ -5,14 +5,19 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
-  public AntElementImpl(final PsiElement sourceElement) {
+  protected final AntFile myFile;
+  private AntASTNode myNode = null;
+
+  public AntElementImpl(final PsiElement sourceElement, final AntFile file) {
     super(sourceElement);
+    myFile = file;
   }
 
   @NotNull
@@ -54,6 +59,11 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public ASTNode getNode() {
-    return getSourceElement().getNode();
+    if (myNode == null) {
+      final ASTNode sourceNode = getSourceElement().getNode();
+      myNode = new AntASTNode(sourceNode, this, myFile);
+      myFile.registerAntNode(myNode);
+    }
+    return myNode;
   }
 }

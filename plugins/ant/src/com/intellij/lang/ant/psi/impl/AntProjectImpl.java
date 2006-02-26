@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -12,8 +13,8 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
   private String myDefaultTarget;
   private String myBaseDir;
 
-  public AntProjectImpl(final XmlFile xmlFile) {
-    super(xmlFile);
+  public AntProjectImpl(final XmlFile xmlFile, final AntFile file) {
+    super(xmlFile, file);
     parseXml();
   }
 
@@ -38,12 +39,17 @@ public class AntProjectImpl extends AntElementImpl implements AntProject {
     parseTag(tag);
   }
 
-  private void parseTag(XmlTag tag) {
+  void parseTag(XmlTag tag) {
     final String name = tag.getName();
     if ("project".compareToIgnoreCase(name) == 0) {
       myName = tag.getAttributeValue("name");
       myDefaultTarget = tag.getAttributeValue("default");
       myBaseDir = tag.getAttributeValue("basedir");
+    }
+    else if ("target".compareToIgnoreCase(name) == 0) {
+      final AntTargetImpl antTarget = new AntTargetImpl(tag, myFile);
+      //add(antTarget);
+      antTarget.parseTag(tag);
     }
     for (XmlTag subTag : tag.getSubTags()) {
       parseTag(subTag);
