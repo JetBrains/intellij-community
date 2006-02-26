@@ -28,19 +28,18 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
-  private ArrayList<SelectionListener> mySelectionListeners = new ArrayList<SelectionListener>();
+  private CopyOnWriteArrayList<SelectionListener> mySelectionListeners = new CopyOnWriteArrayList<SelectionListener>();
   private MyRangeMarker mySelectionMarker = null;
   private EditorImpl myEditor;
   private int myLastSelectionStart;
@@ -191,10 +190,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
                                               oldSelectionStart, oldSelectionEnd,
                                               startOffset, endOffset);
 
-    SelectionListener[] listeners = mySelectionListeners.toArray(new SelectionListener[mySelectionListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
+    for (SelectionListener listener : mySelectionListeners) {
       try {
-        listeners[i].selectionChanged(event);
+        listener.selectionChanged(event);
       }
       catch (Exception e) {
         LOG.error(e);

@@ -64,6 +64,7 @@ import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TooManyListenersException;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
@@ -79,8 +80,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
 
-  private ArrayList<EditorMouseListener> myMouseListeners = new ArrayList<EditorMouseListener>();
-  private ArrayList<EditorMouseMotionListener> myMouseMotionListeners = new ArrayList<EditorMouseMotionListener>();
+  private CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = new CopyOnWriteArrayList<EditorMouseListener>();
+  private CopyOnWriteArrayList<EditorMouseMotionListener> myMouseMotionListeners = new CopyOnWriteArrayList<EditorMouseMotionListener>();
 
   private int myCharHeight = -1;
   private int myLineHeight = -1;
@@ -358,7 +359,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     if (markupModel instanceof MarkupModelImpl) {
       ((MarkupModelImpl)markupModel).removeMarkupModelListener(myMarkupModelListener);
     }
-    
+
     myMarkupModel.dispose();
 
     myLineHeight = -1;
@@ -2117,8 +2118,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myMousePressedEvent = e;
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
 
-    EditorMouseListener[] mouseListeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (EditorMouseListener mouseListener : mouseListeners) {
+    for (EditorMouseListener mouseListener : myMouseListeners) {
       mouseListener.mousePressed(event);
     }
 
@@ -2145,8 +2145,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private void runMouseClickedCommand(final MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (EditorMouseListener listener : listeners) {
+    for (EditorMouseListener listener : myMouseListeners) {
       listener.mouseClicked(event);
       if (event.isConsumed()) {
         e.consume();
@@ -2158,8 +2157,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private void runMouseReleasedCommand(final MouseEvent e) {
     myScrollingTimer.stop();
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (EditorMouseListener listener : listeners) {
+    for (EditorMouseListener listener : myMouseListeners) {
       listener.mouseReleased(event);
       if (event.isConsumed()) {
         e.consume();
@@ -2182,8 +2180,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private void runMouseEnteredCommand(MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (EditorMouseListener listener : listeners) {
+    for (EditorMouseListener listener : myMouseListeners) {
       listener.mouseEntered(event);
       if (event.isConsumed()) {
         e.consume();
@@ -2194,8 +2191,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   private void runMouseExitedCommand(MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
-    EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (EditorMouseListener listener : listeners) {
+    for (EditorMouseListener listener : myMouseListeners) {
       listener.mouseExited(event);
       if (event.isConsumed()) {
         e.consume();
@@ -3513,9 +3509,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         myGutterComponent.mouseDragged(e);
       }
 
-      EditorMouseMotionListener[] listeners = myMouseMotionListeners.toArray(
-        new EditorMouseMotionListener[myMouseMotionListeners.size()]);
-      for (EditorMouseMotionListener listener : listeners) {
+      for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseDragged(event);
       }
     }
@@ -3542,9 +3536,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         }
       }
 
-      EditorMouseMotionListener[] listeners = myMouseMotionListeners.toArray(
-        new EditorMouseMotionListener[myMouseMotionListeners.size()]);
-      for (EditorMouseMotionListener listener : listeners) {
+      for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseMoved(event);
       }
     }

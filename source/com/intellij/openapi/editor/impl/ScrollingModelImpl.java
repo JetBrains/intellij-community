@@ -25,6 +25,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -32,7 +33,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
   private EditorImpl myEditor;
-  private ArrayList<VisibleAreaListener> myVisibleAreaListeners = new ArrayList<VisibleAreaListener>();
+  private CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
 
   private AnimatedScrollingRunnable myCurrentAnimatedRunnable = null;
   private final Object myAnimatedLock = new Object();
@@ -50,10 +51,8 @@ public class ScrollingModelImpl implements ScrollingModel {
         Rectangle viewRect = getVisibleArea();
         VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(myEditor, myLastViewRect, viewRect);
         myLastViewRect = viewRect;
-        VisibleAreaListener[] listeners = myVisibleAreaListeners.toArray(
-          new VisibleAreaListener[myVisibleAreaListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].visibleAreaChanged(visibleAreaEvent);
+        for (VisibleAreaListener listener : myVisibleAreaListeners) {
+          listener.visibleAreaChanged(visibleAreaEvent);
         }
       }
     });

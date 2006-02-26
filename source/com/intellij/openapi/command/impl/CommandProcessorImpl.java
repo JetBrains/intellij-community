@@ -12,8 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Stack;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  *
@@ -46,7 +46,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
 
 //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
 
-  private ArrayList<CommandListener> myListeners = new ArrayList<CommandListener>();
+  private CopyOnWriteArrayList<CommandListener> myListeners = new CopyOnWriteArrayList<CommandListener>();
 
   private int myUndoTransparentCount = 0;
 
@@ -200,8 +200,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
 
   private void fireCommandStarted() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
-    CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (CommandListener listener : listeners) {
+    for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);
       }
@@ -214,8 +213,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   private void fireBeforeCommandFinished() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
                                           myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
-    CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (CommandListener listener : listeners) {
+    for (CommandListener listener : myListeners) {
       try {
         listener.beforeCommandFinished(event);
       }
@@ -228,8 +226,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   private void fireCommandFinished() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
                                           myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
-    CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (CommandListener listener : listeners) {
+    for (CommandListener listener : myListeners) {
       try {
         listener.commandFinished(event);
       }
@@ -240,8 +237,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   }
 
   private void fireUndoTransparentStarted() {
-    CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (CommandListener listener : listeners) {
+    for (CommandListener listener : myListeners) {
       try {
         listener.undoTransparentActionStarted();
       }
@@ -252,8 +248,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   }
 
   private void fireUndoTransparentFinished() {
-    CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (CommandListener listener : listeners) {
+    for (CommandListener listener : myListeners) {
       try {
         listener.undoTransparentActionFinished();
       }

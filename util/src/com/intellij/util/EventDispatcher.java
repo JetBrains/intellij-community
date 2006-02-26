@@ -12,6 +12,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -21,7 +22,7 @@ public class EventDispatcher <T extends EventListener>{
 
   private final T myMulticaster;
 
-  private List<T> myListeners = new ArrayList<T>();
+  private CopyOnWriteArrayList<T> myListeners = new CopyOnWriteArrayList<T>();
 
   private List<T> myCachedListeners = null;
 
@@ -68,8 +69,7 @@ public class EventDispatcher <T extends EventListener>{
   }
 
   private void dispatch(final Method method, final Object[] args) {
-    List<T> listeners = getListeners();
-    for (T listener : listeners) {
+    for (T listener : myListeners) {
       try {
         method.invoke(listener, args);
       }

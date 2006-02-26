@@ -22,11 +22,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
   private EditorImpl myEditor;
-  private ArrayList<CaretListener> myCaretListeners = new ArrayList<CaretListener>();
+  private CopyOnWriteArrayList<CaretListener> myCaretListeners = new CopyOnWriteArrayList<CaretListener>();
   private LogicalPosition myLogicalCaret;
   private VisualPosition myVisibleCaret;
   private int myOffset;
@@ -106,9 +107,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     if (oldPosition.column != myLogicalCaret.column || oldPosition.line != myLogicalCaret.line) {
       CaretEvent event = new CaretEvent(myEditor, oldPosition, myLogicalCaret);
 
-
-      CaretListener[] listeners = myCaretListeners.toArray(new CaretListener[myCaretListeners.size()]);
-      for (CaretListener listener : listeners) {
+      for (CaretListener listener : myCaretListeners) {
         listener.caretPositionChanged(event);
       }
     }
@@ -272,9 +271,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
     if (oldCaretPosition.column != myLogicalCaret.column || oldCaretPosition.line != myLogicalCaret.line) {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
-
-      CaretListener[] listeners = myCaretListeners.toArray(new CaretListener[myCaretListeners.size()]);
-      for (CaretListener listener : listeners) {
+      for (CaretListener listener : myCaretListeners) {
         listener.caretPositionChanged(event);
       }
     }
