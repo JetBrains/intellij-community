@@ -60,7 +60,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
   @NotNull public FileEditorPolicy getPolicy() {
     return
       ApplicationManagerEx.getApplicationEx().isInternal() ?
-      FileEditorPolicy.NONE : FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+      FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR : FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
   public String getComponentName(){

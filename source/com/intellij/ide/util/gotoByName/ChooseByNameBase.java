@@ -22,7 +22,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
@@ -129,7 +128,7 @@ public abstract class ChooseByNameBase{
         }
       }
       else if (dataId.equals(DataConstantsEx.PSI_ELEMENT_ARRAY)) {
-        final Object[] chosenElements = getChosenElements();
+        final List<Object> chosenElements = getChosenElements();
         if (chosenElements != null) {
           List<PsiElement> result = new ArrayList<PsiElement>();
           for (Object element : chosenElements) {
@@ -317,7 +316,7 @@ public abstract class ChooseByNameBase{
             ListScrollingUtil.movePageDown(myList);
             break;
           case KeyEvent.VK_ENTER:
-            if (myList.getSelectedValue() == OUR_EXTRA_ELEMENT) {
+            if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
               rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
               e.consume();
@@ -345,7 +344,7 @@ public abstract class ChooseByNameBase{
         }
 
         if (e.getClickCount() == 2) {
-          if (myList.getSelectedValue() == OUR_EXTRA_ELEMENT) {
+          if (myList.getSelectedValue() == EXTRA_ELEM) {
             myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
             rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
             e.consume();
@@ -665,15 +664,15 @@ public abstract class ChooseByNameBase{
   protected abstract void close(boolean isOk);
 
   public Object getChosenElement() {
-    final Object[] elements = getChosenElements();
-    return elements != null && elements.length == 1 ? elements[0] : null;
+    final List<Object> elements = getChosenElements();
+    return elements != null && elements.size() == 1 ? elements.get(0) : null;
   }
 
-  protected Object[] getChosenElements() {
+  protected List<Object> getChosenElements() {
     if (myListIsUpToDate) {
-      final List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
-      values.remove(OUR_EXTRA_ELEMENT);
-      return values.toArray(new Object[values.size()]);
+      List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
+      values.remove(EXTRA_ELEM);
+      return values;
     }
 
     final String text = myTextField.getText();
@@ -691,7 +690,7 @@ public abstract class ChooseByNameBase{
         uniqueElement = elements[0];
       }
     }
-    return uniqueElement == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {uniqueElement};
+    return uniqueElement == null ? Collections.emptyList() : Collections.singletonList(uniqueElement);
   }
 
   protected void choosenElementMightChange() {
@@ -781,11 +780,10 @@ public abstract class ChooseByNameBase{
       final String oldText = myTextField.getText();
       final int oldPos = myList.getSelectedIndex();
 
-      final String newPattern;
       String commonPrefix  = null;
       if (list.size() != 0) {
-        for (int i = 0; i < list.size(); i++) {
-          final String string = list.get(i).toLowerCase();
+        for (String name : list) {
+          final String string = name.toLowerCase();
           if (commonPrefix == null) {
             commonPrefix = string;
           }
@@ -809,7 +807,7 @@ public abstract class ChooseByNameBase{
         }
       }
       if (commonPrefix == null) commonPrefix = "";
-      newPattern = commonPrefix;
+      final String newPattern = commonPrefix;
 
       myHistory.add(Pair.create(oldText, new Integer(oldPos)));
       myTextField.setText(newPattern);
@@ -819,10 +817,7 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private static class ExtraElem {
-    public String toString () { return "..."; }
-  }
-  private static final ExtraElem OUR_EXTRA_ELEMENT = new ExtraElem();
+  private static final String EXTRA_ELEM = "...";
 
   private class CalcElementsThread extends Thread {
     private final String myPattern;
@@ -913,11 +908,10 @@ public abstract class ChooseByNameBase{
       Collections.sort(namesList, new MatchesComparator(pattern));
 
       All:
-      for (int i = 0; i < namesList.size(); i++) {
+      for (String name : namesList) {
         if (myCancelled[0]) {
           throw new ProcessCanceledException();
         }
-        final String name = namesList.get(i);
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
         for (final Object element : elements) {
           elementsArray.add(element);
@@ -929,7 +923,7 @@ public abstract class ChooseByNameBase{
       }
 
       if (overflow) {
-        elementsArray.add(OUR_EXTRA_ELEMENT);
+        elementsArray.add(EXTRA_ELEM);
       }
     }
 
@@ -948,17 +942,13 @@ public abstract class ChooseByNameBase{
       LOG.assertTrue(pattern.length() > 0);
     }
 
-    boolean overflow = false;
     final String[] names = checkboxState ? myNames[1] : myNames[0];
     final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen, false);
 
     try {
-
       Perl5Compiler compiler = new Perl5Compiler();
       final Pattern compiledPattern = compiler.compile(regex);
       final PatternMatcher matcher = new Perl5Matcher();
-
-
 
       for (String name : names) {
         if (cancelled != null && cancelled[0]) {
@@ -973,7 +963,7 @@ public abstract class ChooseByNameBase{
     catch (MalformedPatternException e) {
     }
 
-    return overflow;
+    return false;
   }
 
   private static interface CalcElementsCallback {

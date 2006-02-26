@@ -90,7 +90,7 @@ public abstract class EditorComposite{
     myInitialFileModificationStamp = myFile.getModificationStamp();
 
     if(editors.length > 1){
-      final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM);
+      final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM, false);
       myTabbedPaneWrapper=wrapper;
       myComponent=new MyComponent(wrapper.getComponent()){
         public void requestFocus() {

@@ -24,8 +24,8 @@ import java.lang.reflect.Array;
 import java.util.*;
 
 public class ContainerUtil {
-  public static List mergeSortedLists(List list1, List list2, Comparator comparator, boolean mergeEqualItems){
-    ArrayList result = new ArrayList();
+  public static List<Object> mergeSortedLists(List<Object> list1, List<Object> list2, Comparator<Object> comparator, boolean mergeEqualItems){
+    ArrayList<Object> result = new ArrayList<Object>();
 
     int index1 = 0;
     int index2 = 0;
@@ -254,7 +254,7 @@ public class ContainerUtil {
     list.set(index2, e1);
   }
 
-  public static <T> ArrayList<T> collect(Iterator iterator, FilteringIterator.InstanceOf<T> instanceOf) {
+  public static <T> ArrayList<T> collect(Iterator<?> iterator, FilteringIterator.InstanceOf<T> instanceOf) {
     return collect(FilteringIterator.create(iterator, instanceOf));
   }
 
@@ -287,5 +287,18 @@ public class ContainerUtil {
     final HashSet<T> set = new HashSet<T>(from);
     set.removeAll(what);
     return set;
+  }
+
+  public static <T> T[] toArray(List<T> collection, T[] array){
+    final int length = array.length;
+    if (length < 20) {
+      for (int i = 0; i < collection.size(); i++) {
+        array[i] = collection.get(i);
+      }
+      return array;
+    }
+    else {
+      return collection.toArray(array);
+    }
   }
 }

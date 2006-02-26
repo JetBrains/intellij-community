@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
+import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -212,13 +213,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
-    //try {
-    //  throw new Exception("Adding " + pane);
-    //}
-    //catch(Exception e) {
-    //  e.printStackTrace();
-    //}
-
     myUninitializedPanes.add(pane);
     if (isInitialized) {
       doAddUninitializedPanes();
@@ -272,12 +266,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
-    //try {
-    //  throw new Exception("DoAdding " + newPane);
-    //} catch(Exception e) {
-    //  e.printStackTrace();
-    //}
-
     int index;
     for (index = 0; index < myCombo.getItemCount(); index++) {
       Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(index);
@@ -326,8 +314,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     JComponent component = newPane.createComponent();
     myViewContentPanel.setLayout(new BorderLayout());
     myViewContentPanel.add(component, BorderLayout.CENTER);
-    myCurrentViewId = newPane.getId();
-    myCurrentViewSubId = newPane.getSubId();
+    String newId = myCurrentViewId = newPane.getId();
+    String newSubId = myCurrentViewSubId = newPane.getSubId();
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();
     createToolbarActions();
@@ -341,7 +329,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     if (selectedPsiElement != null) {
       VirtualFile virtualFile = PsiUtil.getVirtualFile(selectedPsiElement);
-      newPane.select(selectedPsiElement, virtualFile, true);
+      if (((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, virtualFile)) {
+        newPane.select(selectedPsiElement, virtualFile, true);
+      }
     }
   }
 
@@ -406,7 +396,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, getComponent(), ToolWindowAnchor.LEFT);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
 
-    //todo                                                                   tree ?
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myPanel) {
       protected PsiElement[] getSelectedElements() {
         final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
@@ -449,7 +438,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void viewSelectionChanged() {
     Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
-    if (ids == null) return; // it is possible in tests
     final String id = ids.first;
     String subId = ids.second;
     if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
@@ -758,9 +746,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void changeView(@NotNull String viewId, @Nullable String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
-    if (viewId.equals(getCurrentViewId()) && (subId == null || subId.equals(pane.getSubId()))) return;
-    myCombo.setSelectedItem(Pair.create(viewId, subId));
-    viewSelectionChanged();
+    if (!viewId.equals(getCurrentViewId()) || (subId != null && !subId.equals(pane.getSubId()))) {
+      myCombo.setSelectedItem(Pair.create(viewId, subId));
+      viewSelectionChanged();
+    }
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
@@ -1443,5 +1432,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       final AbstractProjectViewPane pane = projectView.getCurrentProjectViewPane();
       presentation.setVisible(pane != null && (PackageViewPane.ID.equals(pane.getId()) || ProjectViewPane.ID.equals(pane.getId())));
     }
+  }
+
+  public Collection<String> getPaneIds() {
+    return myId2Pane.keySet();
   }
 }

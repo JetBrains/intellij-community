@@ -58,7 +58,7 @@ public class GotoFileModel implements ChooseByNameModel {
     return PsiManager.getInstance(myProject).getShortNamesCache().getAllFileNames();
   }
 
-  private boolean isEditable(PsiFile psiFile, final boolean checkboxState) {
+  private static boolean isEditable(PsiFile psiFile, final boolean checkboxState) {
     FileType type = psiFile.getFileType();
     if (!checkboxState && type == StdFileTypes.JAVA) return false;
     return type != StdFileTypes.CLASS;

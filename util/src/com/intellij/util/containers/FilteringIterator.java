@@ -33,10 +33,10 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   private E myCurrent;
   private Boolean myCurrentPassedFilter = null;
   public static final Condition NOT_NULL = new Condition() {
-        public boolean value(Object t) {
-          return t != null;
-        }
-      };
+    public boolean value(Object t) {
+      return t != null;
+    }
+  };
 
   public FilteringIterator(Iterator<E> baseIterator, Condition<Dom> filter) {
     myBaseIterator = baseIterator;

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -18,8 +19,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -41,9 +40,15 @@ public class TabbedPaneWrapper {
    * <code>SwingConstants.RIGHT</code>.
    */
   public TabbedPaneWrapper(final int tabPlacement) {
+    this(tabPlacement, true);
+  }
+
+
+  public TabbedPaneWrapper(int tabPlacement, boolean installKeyboardNavigation) {
     assertIsDispatchThread();
 
     myTabbedPane = createTabbedPane(tabPlacement);
+    myTabbedPane.myInstallKeyboardNavigation = installKeyboardNavigation;
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane, BorderLayout.CENTER);
     myTabbedPaneHolder.setFocusCycleRoot(true);
@@ -308,6 +313,7 @@ public class TabbedPaneWrapper {
     private ScrollableTabSupport myScrollableTabSupport;
     private AnAction myNextTabAction = null;
     private AnAction myPreviousTabAction = null;
+    private boolean myInstallKeyboardNavigation = true;
 
     public TabbedPane(final int tabPlacement) {
       super(tabPlacement);
@@ -324,13 +330,17 @@ public class TabbedPaneWrapper {
     @Override
     public void addNotify() {
       super.addNotify();
-      installKeyboardNavigation();
+      if (myInstallKeyboardNavigation) {
+        installKeyboardNavigation();
+      }
     }
 
     @Override
     public void removeNotify() {
       super.removeNotify();
-      uninstallKeyboardNavigation();
+      if (myInstallKeyboardNavigation) {
+        uninstallKeyboardNavigation();
+      }
     }
 
     @SuppressWarnings({"NonStaticInitializer"})
@@ -516,10 +526,9 @@ public class TabbedPaneWrapper {
 
           Method setLeadingIndexMethod=null;
           final Method[] methods=tabScrollerValue.getClass().getDeclaredMethods();
-          for(int i=0;i<methods.length;i++){
-            final Method method=methods[i];
-            if(SET_LEADING_TAB_INDEX_METHOD.equals(method.getName())){
-              setLeadingIndexMethod=method;
+          for (final Method method : methods) {
+            if (SET_LEADING_TAB_INDEX_METHOD.equals(method.getName())) {
+              setLeadingIndexMethod = method;
               break;
             }
           }
@@ -529,8 +538,7 @@ public class TabbedPaneWrapper {
           setLeadingIndexMethod.setAccessible(true);
           setLeadingIndexMethod.invoke(
             tabScrollerValue,
-            new Object[]{new Integer(getTabPlacement()),new Integer(leadingIndex)}
-          );
+            new Integer(getTabPlacement()), new Integer(leadingIndex));
         }catch(Exception exc){
           final StringWriter writer=new StringWriter();
           exc.printStackTrace(new PrintWriter(writer));

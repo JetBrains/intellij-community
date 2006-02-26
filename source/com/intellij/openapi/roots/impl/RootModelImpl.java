@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
-import com.intellij.util.containers.CollectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -223,7 +223,7 @@ class RootModelImpl implements ModifiableRootModel {
     for (OrderEntry orderEntry : myOrder) {
       result.addAll(Arrays.asList(orderEntry.getFiles(type)));
     }
-    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
+    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public String[] getOrderedRootUrls(OrderRootType type) {
@@ -232,7 +232,7 @@ class RootModelImpl implements ModifiableRootModel {
     for (OrderEntry orderEntry : myOrder) {
       result.addAll(Arrays.asList(orderEntry.getUrls(type)));
     }
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getContentRoots() {
@@ -244,7 +244,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(file);
       }
     }
-    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
+    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public String[] getContentRootUrls() {
@@ -253,7 +253,7 @@ class RootModelImpl implements ModifiableRootModel {
     for (ContentEntry contentEntry : myContent) {
       result.add(contentEntry.getUrl());
     }
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public String[] getExcludeRootUrls() {
@@ -264,7 +264,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(excludeFolder.getUrl());
       }
     }
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getExcludeRoots() {
@@ -278,7 +278,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
+    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
 
@@ -290,7 +290,7 @@ class RootModelImpl implements ModifiableRootModel {
         result.add(sourceFolder.getUrl());
       }
     }
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public String[] getSourceRootUrls(boolean testFlagValue) {
@@ -303,7 +303,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public VirtualFile[] getSourceRoots() {
@@ -317,7 +317,7 @@ class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    return CollectionUtil.toArray(result, new VirtualFile[result.size()]);
+    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
   public ContentEntry[] getContentEntries() {
@@ -985,7 +985,7 @@ class RootModelImpl implements ModifiableRootModel {
 
   public String[] getDependencyModuleNames() {
     List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
-    return CollectionUtil.toArray(result, new String[result.size()]);
+    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   public Module[] getModuleDependencies() {
@@ -1000,7 +1000,7 @@ class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    return CollectionUtil.toArray(result, new Module[result.size()]);
+    return ContainerUtil.toArray(result, new Module[result.size()]);
   }
 
   VirtualFilePointerFactory pointerFactory() {

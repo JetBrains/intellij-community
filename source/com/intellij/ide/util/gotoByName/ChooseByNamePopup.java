@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
@@ -82,7 +83,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (isOk){
       myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
 
-      final Object[] chosenElements = getChosenElements();
+      final List<Object> chosenElements = getChosenElements();
       if (chosenElements != null) {
         for (Object element : chosenElements) {
           myActionListener.elementChosen(element);
@@ -91,7 +92,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         return;
       }
 
-      if (chosenElements.length > 0){
+      if (chosenElements.size() > 0){
         final String enteredText = myTextField.getText().toLowerCase();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
@@ -147,7 +148,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     finally {
       LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
     }
-    
+
     if (layeredPane != null) {
       layeredPane.validate();
       layeredPane.repaint();

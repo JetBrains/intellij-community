@@ -31,7 +31,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.CollectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -337,7 +337,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       return XmlAttribute.EMPTY_ARRAY;
     }
     else {
-      return CollectionUtil.toArray(result, new XmlAttribute[result.size()]);
+      return ContainerUtil.toArray(result, new XmlAttribute[result.size()]);
     }
   }
 

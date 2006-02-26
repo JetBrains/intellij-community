@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -57,24 +58,25 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
   }
 
-  private synchronized void ensurePropertiesLoaded() {
-    if (myPropertiesMap != null) {
-      return;
-    }
-
-    final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-    myPropertiesMap = new LinkedHashMap<String, List<Property>>();
-    myProperties = new ArrayList<Property>(props.length);
-    for (final ASTNode prop : props) {
-      final Property property = (Property) prop.getPsi();
-      String key = property.getKey();
-      List<Property> list = myPropertiesMap.get(key);
-      if (list == null) {
-        list = new SmartList<Property>();
-        myPropertiesMap.put(key, list);
+  private void ensurePropertiesLoaded() {
+    synchronized (PsiLock.LOCK) {
+      if (myPropertiesMap != null) {
+        return;
       }
-      list.add(property);
-      myProperties.add(property);
+      final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
+      myPropertiesMap = new LinkedHashMap<String, List<Property>>();
+      myProperties = new ArrayList<Property>(props.length);
+      for (final ASTNode prop : props) {
+        final Property property = (Property) prop.getPsi();
+        String key = property.getKey();
+        List<Property> list = myPropertiesMap.get(key);
+        if (list == null) {
+          list = new SmartList<Property>();
+          myPropertiesMap.put(key, list);
+        }
+        list.add(property);
+        myProperties.add(property);
+      }
     }
   }
 

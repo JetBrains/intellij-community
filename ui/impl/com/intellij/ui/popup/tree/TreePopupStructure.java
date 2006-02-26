@@ -12,6 +12,7 @@ import jetbrains.fabrique.ui.treeStructure.CachingSimpleNode;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class TreePopupStructure extends AbstractTreeStructure {
   public class Node extends CachingSimpleNode {
 
     private Object myDelegate;
-    private List myChildren = new ArrayList();
+    private List<Node> myChildren = new ArrayList<Node>();
 
     public Node(Project project) {
       super(project, null);
@@ -68,10 +69,10 @@ public class TreePopupStructure extends AbstractTreeStructure {
     }
 
     protected boolean doUpdate() {
-      boolean result = true;
       clearColoredText();
+      boolean result = true;
       if (myDelegate instanceof SimpleNode) {
-        SimpleNode node = ((SimpleNode) myDelegate);
+        SimpleNode node = (SimpleNode)myDelegate;
         result = node.update();
 
         ColoredFragment[] text = node.getColoredText();
@@ -82,7 +83,15 @@ public class TreePopupStructure extends AbstractTreeStructure {
         setIcons(node.getClosedIcon(), node.getOpenIcon());
       } else if (myDelegate != null) {
         setPlainText(myDelegate.toString());
-        setIcons(null, null);
+        NodeDescriptor descriptor = getStructure().createDescriptor(myDelegate, getParentDescriptor());
+        Icon closedIcon = null;
+        Icon openIcon = null;
+        if (descriptor != null) {
+          descriptor.update();
+          closedIcon = descriptor.getClosedIcon();
+          openIcon = descriptor.getOpenIcon();
+        }
+        setIcons(closedIcon, openIcon);
       }
       return result;
     }
@@ -103,7 +112,7 @@ public class TreePopupStructure extends AbstractTreeStructure {
     }
 
     protected SimpleNode[] buildChildren() {
-      return (SimpleNode[]) myChildren.toArray(new SimpleNode[myChildren.size()]);
+      return myChildren.toArray(new SimpleNode[myChildren.size()]);
     }
 
     public Object[] getEqualityObjects() {
@@ -130,7 +139,7 @@ public class TreePopupStructure extends AbstractTreeStructure {
 
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    return ((Node) element);
+    return (Node)element;
   }
 
   public void commit() {

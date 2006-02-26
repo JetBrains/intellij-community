@@ -4,7 +4,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.CollectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
