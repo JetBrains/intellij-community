@@ -29,9 +29,13 @@ public class DomModelTreeView extends Wrapper {
   private DomElement myRootElement;
 
   public DomModelTreeView(DomElement rootElement) {
+    this(rootElement, false);
+  }
+
+  public DomModelTreeView(DomElement rootElement, boolean isRootVisible) {
     myRootElement = rootElement;
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myTree.setRootVisible(false);
+    myTree.setRootVisible(isRootVisible);
     myTree.setShowsRootHandles(true);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
@@ -63,7 +67,7 @@ public class DomModelTreeView extends Wrapper {
   }
 
   protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
-    return new DomModelTreeStructure(rootDomElement.getRoot());
+    return new DomModelTreeStructure(rootDomElement);
   }
 
   public SimpleTreeBuilder getBuilder() {
