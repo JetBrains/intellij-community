@@ -78,7 +78,7 @@ public class ChangeList {
     return false;
   }
 
-  private static boolean changesEqual(Change c1, Change c2) {
+  public static boolean changesEqual(Change c1, Change c2) {
     final ContentRevision br1 = c1.getBeforeRevision();
     final ContentRevision br2 = c2.getBeforeRevision();
     final ContentRevision ar1 = c1.getAfterRevision();

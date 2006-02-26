@@ -3,6 +3,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
+import gnu.trove.Equality;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -15,7 +16,7 @@ import java.util.*;
 
 public abstract class TreeExpansionMonitor<T> {
   public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
-    return new TreeExpansionMonitor<PackageDependenciesNode>(tree, project){
+    return new TreeExpansionMonitor<PackageDependenciesNode>(tree) {
       protected TreePath findPathByNode(final PackageDependenciesNode node) {
          if (node.getPsiElement() == null){
            return new TreePath(node.getPath());
@@ -36,15 +37,23 @@ public abstract class TreeExpansionMonitor<T> {
     };
   }
 
-  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree){
-    return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree, null) {
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
+    return install(tree, new Equality<DefaultMutableTreeNode>() {
+      public boolean equals(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
+        return Comparing.equal(o1.getUserObject(), o2.getUserObject());
+      }
+    });
+  }
+
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final Equality<DefaultMutableTreeNode> equality) {
+    return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree) {
       protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
         Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           final Object nextElement = enumeration.nextElement();
           if (nextElement instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode)nextElement;
-            if (Comparing.equal(child.getUserObject(), node.getUserObject())) {
+            if (equality.equals(child, node)) {
               return new TreePath(child.getPath());
             }
           }
@@ -58,11 +67,9 @@ public abstract class TreeExpansionMonitor<T> {
   private List<T> mySelectionNodes = new ArrayList<T>();
   private JTree myTree;
   private boolean myFrozen = false;
-  private Project myProject;
 
-  private TreeExpansionMonitor(JTree tree, Project project) {
+  private TreeExpansionMonitor(JTree tree) {
     myTree = tree;
-    myProject = project;
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (myFrozen) return;

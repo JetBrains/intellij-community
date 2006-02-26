@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -26,6 +28,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +41,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,6 +55,7 @@ public class ChangesListView extends Tree implements DataProvider {
   private ChangeListOwner myDragOwner;
   private final Project myProject;
   private FileStatusListener myFileStatusManager;
+  private final TreeExpansionMonitor<DefaultMutableTreeNode> myTreeExpansionMonitor;
 
   private static FilePath getFilePath(final Change change) {
     ContentRevision revision = change.getAfterRevision();
@@ -118,15 +123,27 @@ public class ChangesListView extends Tree implements DataProvider {
 
     myFileStatusManager = new FileStatusListener() {
       public void fileStatusesChanged() {
-        ((DefaultTreeModel)getModel()).reload();
+        reload();
       }
 
       public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-        ((DefaultTreeModel)getModel()).reload();
+        reload();
       }
     };
 
     FileStatusManager.getInstance(project).addFileStatusListener(myFileStatusManager);
+
+    myTreeExpansionMonitor = TreeExpansionMonitor.install(this, new Equality<DefaultMutableTreeNode>() {
+      public boolean equals(final DefaultMutableTreeNode n1, final DefaultMutableTreeNode n2) {
+        final Object o1 = n1.getUserObject();
+        final Object o2 = n2.getUserObject();
+        if (o1 instanceof Change && o2 instanceof Change) {
+          return ChangeList.changesEqual((Change)o1, (Change)o2);
+        }
+
+        return Comparing.equal(o1, o2);
+      }
+    });
   }
 
   public void installDndSupport(ChangeListOwner owner) {
@@ -152,7 +169,14 @@ public class ChangesListView extends Tree implements DataProvider {
     }
   }
 
+  private void reload() {
+    myTreeExpansionMonitor.freeze();
+    ((DefaultTreeModel)getModel()).reload();
+    myTreeExpansionMonitor.restore();
+  }
+
   public void updateModel(java.util.List<ChangeList> changeLists, java.util.List<VirtualFile> unversionedFiles) {
+    myTreeExpansionMonitor.freeze();
     myRoot.removeAllChildren();
     for (ChangeList list : changeLists) {
       DefaultMutableTreeNode listNode = new DefaultMutableTreeNode(list);
@@ -170,9 +194,25 @@ public class ChangesListView extends Tree implements DataProvider {
       }
     }
 
+    TreeUtil.sort(myRoot, new Comparator() {
+      public int compare(final Object n1, final Object n2) {
+        Object o1 = ((DefaultMutableTreeNode)n1).getUserObject();
+        Object o2 = ((DefaultMutableTreeNode)n2).getUserObject();
+        if (o1 instanceof Change && o2 instanceof Change) {
+          return getFilePath((Change)o1).getName().compareToIgnoreCase(getFilePath((Change)o2).getName());
+        }
+
+        if (o1 instanceof ChangeList && o2 instanceof ChangeList) {
+          return ((ChangeList)o1).getDescription().compareToIgnoreCase(((ChangeList)o2).getDescription());
+        }
+
+        return 0;
+      }
+    });
+
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
 
-    TreeUtil.expandAll(this);
+    myTreeExpansionMonitor.restore();
   }
 
   @Nullable
