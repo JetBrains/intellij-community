@@ -19,13 +19,21 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean canSelect(PsiFile file) {
-    if (file.getManager().isInProject(file)) {
-      return true;
-    }
-
     final VirtualFile vFile = file.getVirtualFile();
+    return canSelect(vFile);
+  }
+
+  public boolean isSubIdSelectable(String subId, VirtualFile file) {
+    return canSelect(file);
+  }
+
+  private boolean canSelect(final VirtualFile vFile) {
     if (vFile != null && vFile.isValid()) {
-      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
+      ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (projectFileIndex.getModuleForFile(vFile) != null) {
+        return true;
+      }
+
       if (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) {
         return true;
       }
