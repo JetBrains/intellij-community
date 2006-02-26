@@ -5,6 +5,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
@@ -29,10 +30,14 @@ import java.util.regex.Pattern;
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchUtil {
+public class SearchUtil implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchUtil");
+  private static SearchableOptionsRegistrar ourSearchableOptionsRegistrar;
 
-  private SearchUtil() {
+
+  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+  public SearchUtil(SearchableOptionsRegistrar searchableOptionsRegistrar) {
+    ourSearchableOptionsRegistrar = searchableOptionsRegistrar;
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable,Set<Pair<String,String>>> options) {
@@ -229,9 +234,8 @@ public class SearchUtil {
 
   public static Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
     final Set<String> result = new HashSet<String>(options);
-    final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     for (String option : options) {
-      final String synonym = registrar.getSynonym(option, configurable);
+      final String synonym = ourSearchableOptionsRegistrar.getSynonym(option, configurable);
       if (synonym != null) {
         result.add(synonym);
       } else {
@@ -246,10 +250,9 @@ public class SearchUtil {
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = toLowerCase.split("[\\W&&[^_-]]");
     if (options != null) {
-      final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
       for (String opt : options) {
         if (opt == null) continue;
-        if (registrar.isStopWord(opt)) continue;
+        if (ourSearchableOptionsRegistrar.isStopWord(opt)) continue;
         result.add(opt);
       }
     }
@@ -261,9 +264,8 @@ public class SearchUtil {
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = toLowerCase.split("[\\W&&[^_-]]");
     if (options != null) {
-      final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
       for (String opt : options) {
-        if (registrar.isStopWord(opt)) continue;
+        if (ourSearchableOptionsRegistrar.isStopWord(opt)) continue;
         opt = PorterStemmerUtil.stem(opt);
         if (opt == null) continue;
         result.add(opt);
@@ -340,4 +342,15 @@ public class SearchUtil {
        textRenderer.append(text.substring(idx, text.length()), new SimpleTextAttributes(background, foreground, null, style));
      }
    }
+
+  @NonNls
+  public String getComponentName() {
+    return "SearchUtil";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
 }
