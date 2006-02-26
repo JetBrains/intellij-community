@@ -2,28 +2,31 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.javaee.model.ElementPresentationManager;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
-  private DomElement myModelElement;
+  private DomElement myParentElement;
   private String myChildrenTagName;
   private DomCollectionChildDescription myChildDescription;
 
   public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description) {
-    myModelElement = modelElement;
+    myParentElement = modelElement;
     myChildDescription = description;
     myChildrenTagName = description.getXmlElementName();
   }
 
   public SimpleNode[] getChildren() {
-    if (!myModelElement.isValid()) return NO_CHILDREN;
+    if (!myParentElement.isValid()) return NO_CHILDREN;
 
-    final List<? extends DomElement> domChildren = myChildDescription.getValues(myModelElement);
+    final List<? extends DomElement> domChildren = myChildDescription.getValues(myParentElement);
     final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>();
     for (DomElement domChild : domChildren) {
       if (shouldBeShowed(domChild.getDomElementType())) {
@@ -34,7 +37,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public Object[] getEqualityObjects() {
-    return new Object[]{myModelElement, myChildrenTagName};
+    return new Object[]{myParentElement, myChildrenTagName};
   }
 
   protected boolean doUpdate() {
@@ -49,7 +52,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
-    return myChildDescription.getCommonPresentableName(myModelElement);
+    return myChildDescription.getCommonPresentableName(myParentElement);
   }
 
   public String getTagName() {
@@ -57,6 +60,15 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public DomElement getDomElement() {
-    return myModelElement;
+    return myParentElement;
+  }
+
+
+  public DomCollectionChildDescription getChildDescription() {
+    return myChildDescription;
+  }
+
+  public Icon getNodeIcon() {
+    return ElementPresentationManager.getPresentationForClass(DomUtil.getRawType(myChildDescription.getType())).getIcon();
   }
 }

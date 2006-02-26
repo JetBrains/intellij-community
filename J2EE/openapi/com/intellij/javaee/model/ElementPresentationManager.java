@@ -44,4 +44,15 @@ public class ElementPresentationManager {
     }
     return null;
   }
+
+  @Nullable
+  public static ElementPresentation getPresentationForClass(Class aClass) {
+    for (final ElementPresentationFactory factory : ourPresentationFactories) {
+      final ElementPresentation presentation = factory.getPresentationForClass(aClass);
+      if (presentation != null) {
+        return presentation;
+      }
+    }
+    return null;
+  }
 }

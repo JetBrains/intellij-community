@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.Map;
 
 public class DomModelTreeView extends Wrapper {
   private final SimpleTree myTree;
@@ -47,7 +48,6 @@ public class DomModelTreeView extends Wrapper {
     myBuilder.initRoot();
 
     add(myTree, BorderLayout.CENTER);
-    add(getToolbarPane(), BorderLayout.NORTH);
 
     myDomEventListener = new DomEventListener() {
       public void eventOccured(DomEvent event) {
@@ -58,38 +58,12 @@ public class DomModelTreeView extends Wrapper {
     myDomManager.addDomEventListener(myDomEventListener);
   }
 
-  protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
-    return new DomModelTreeStructure(rootDomElement.getRoot());
+  public DomElement getRootElement() {
+    return myRootElement;
   }
 
-  protected JComponent getToolbarPane() {
-    DefaultActionGroup actions = new DefaultActionGroup();
-
-    actions.add(new ToggleAction("ShowProperties") {
-      public void update(final AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setIcon(IconLoader.getIcon("/nodes/pointcut.png"));
-      }
-
-      public boolean isSelected(AnActionEvent e) {
-        final Boolean showGenericValues = myRootElement.getRoot().getUserData(BaseDomElementNode.SHOW_PROPERTIES_KEY);
-
-        return showGenericValues == null ? false: showGenericValues;
-      }
-
-      public void setSelected(AnActionEvent e, boolean state) {
-        myRootElement.getRoot().putUserData(BaseDomElementNode.SHOW_PROPERTIES_KEY, state);
-        myBuilder.updateFromRoot(true);
-      }
-    });
-
-    actions.add(new ExpandAllAction(myTree));
-    actions.add(new CollapseAllAction(myTree));
-
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN, actions, true);
-
-    return actionToolbar.getComponent();
+  protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
+    return new DomModelTreeStructure(rootDomElement.getRoot());
   }
 
   public SimpleTreeBuilder getBuilder() {

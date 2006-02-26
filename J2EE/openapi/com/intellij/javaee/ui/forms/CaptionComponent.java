@@ -43,7 +43,7 @@ public class CaptionComponent extends JPanel {
   }
 
   public void setIcon(final Icon icon) {
-    myCaptionLabel.setIcon(icon);
+    myIconLabel.setIcon(icon);
   }
 
   public Icon getIcon() {
