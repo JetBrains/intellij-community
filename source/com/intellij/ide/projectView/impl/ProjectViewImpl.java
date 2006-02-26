@@ -310,6 +310,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       currentPane.dispose();
     }
+    removeLabelFocusListener();
     myViewContentPanel.removeAll();
     JComponent component = newPane.createComponent();
     myViewContentPanel.setLayout(new BorderLayout());
@@ -333,6 +334,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
+    installLabelFocusListener();
   }
 
   private synchronized void setupImpl() {
@@ -416,24 +418,32 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
       }
     });
-    myLabel.addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-        if (!myCombo.isPopupVisible()) {
-          myCombo.requestFocusInWindow();
-          myCombo.showPopup();
-        }
-      }
-
-      public void focusLost(FocusEvent e) {
-
-      }
-    });
+    installLabelFocusListener();
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel, true);
     ModuleManager.getInstance(myProject).addModuleListener(myModulesListener);
     isInitialized = true;
     doAddUninitializedPanes();
     showSavedPane();
+  }
+
+  private final FocusListener myLabelFocusListener = new FocusListener() {
+    public void focusGained(FocusEvent e) {
+      if (!myCombo.isPopupVisible()) {
+        myCombo.requestFocusInWindow();
+        myCombo.showPopup();
+      }
+    }
+
+    public void focusLost(FocusEvent e) {
+
+    }
+  };
+  private void installLabelFocusListener() {
+    myLabel.addFocusListener(myLabelFocusListener);
+  }
+  private void removeLabelFocusListener() {
+    myLabel.removeFocusListener(myLabelFocusListener);
   }
 
   private void viewSelectionChanged() {

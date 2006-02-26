@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -40,13 +41,13 @@ public class SelectInAction extends AnAction {
   }
 
   private static void invoke(DataContext dataContext, SelectInContext context) {
-    final List<SelectInTarget> targetVector = getTargets(context.getProject());
+    final List<SelectInTarget> targetVector = Arrays.asList(getSelectInManager(context.getProject()).getTargets());
     ListPopup popup;
     if (targetVector.size() == 0) {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new NoTargetsAction());
-      popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("title.popup.select.target"), group,
-                                                                  dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+      popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("title.popup.select.target"), group, dataContext,
+                                                                  JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
     }
     else {
       popup = JBPopupFactory.getInstance().createWizardStep(new TopLevelActionsStep(targetVector, context, context.getVirtualFile()));
@@ -184,8 +185,8 @@ public class SelectInAction extends AnAction {
     private final VirtualFile myVirtualFile;
 
     public SelectActionStep(final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
-      myTargets = targetVector;
       mySelectInContext = selectInContext;
+      myTargets = targetVector;
       myVirtualFile = virtualFile;
       init(IdeBundle.message("select.in.title.project.view"), myTargets, null);
     }
@@ -245,6 +246,13 @@ public class SelectInAction extends AnAction {
     }
 
     public boolean isSelectable(final SelectInTarget target) {
+      final String activeToolWindowId = ToolWindowManager.getInstance(mySelectInContext.getProject()).getActiveToolWindowId();
+      if (target instanceof ProjectViewSelectInTarget
+          && ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)
+          && Comparing.strEqual(ProjectView.getInstance(mySelectInContext.getProject()).getCurrentViewId(), target.getMinorViewId())) {
+        return false;
+      }
+
       return target.canSelect(mySelectInContext);
     }
 
@@ -253,40 +261,8 @@ public class SelectInAction extends AnAction {
     }
   }
 
-  private static List<SelectInTarget> getTargets(final Project project) {
-    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>(Arrays.asList(getTargetsFor(project)));
-
-    if (result.size() > 1) {
-      rearrangeTargetList(project, result);
-    }
-
-    return result;
-  }
-
-  private static SelectInTarget[] getTargetsFor(final Project project) {
-    return getSelectInManager(project).getTargets();
-  }
-
   private static SelectInManager getSelectInManager(Project project) {
     return SelectInManager.getInstance(project);
-  }
-
-  private static void rearrangeTargetList(final Project project, final ArrayList<SelectInTarget> result) {
-    final String activeToolWindowId = ToolWindowManager.getInstance(project).getActiveToolWindowId();
-    if (activeToolWindowId != null) {
-      SelectInTarget firstTarget = result.get(0);
-      if (activeToolWindowId.equals(firstTarget.getToolWindowId())) {
-        boolean shouldMoveToBottom = true;
-        if (ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)) {
-          final String currentMinorViewId = ProjectView.getInstance(project).getCurrentViewId();
-          shouldMoveToBottom = currentMinorViewId != null && currentMinorViewId.equals(firstTarget.getMinorViewId());
-        }
-        if (shouldMoveToBottom) {
-          result.remove(0);
-          result.add(firstTarget);
-        }
-      }
-    }
   }
 
   private static class NoTargetsAction extends AnAction {
