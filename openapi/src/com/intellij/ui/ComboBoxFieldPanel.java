@@ -81,8 +81,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
 
   public void setItems(Object[] items) {
     myComboBox.removeAllItems();
-    for (int i = 0; i < items.length; i++) {
-      Object item = items[i];
+    for (Object item : items) {
       myComboBox.addItem(item);
     }
   }
