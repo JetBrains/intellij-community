@@ -314,7 +314,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     JComponent component = newPane.createComponent();
     myViewContentPanel.setLayout(new BorderLayout());
     myViewContentPanel.add(component, BorderLayout.CENTER);
-    String newId = myCurrentViewId = newPane.getId();
+    myCurrentViewId = newPane.getId();
     String newSubId = myCurrentViewSubId = newPane.getSubId();
     myViewContentPanel.revalidate();
     myViewContentPanel.repaint();

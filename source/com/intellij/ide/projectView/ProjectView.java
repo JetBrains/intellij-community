@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 
+import java.util.Collection;
+
 public abstract class ProjectView {
   public static ProjectView getInstance(Project project) {
     return project.getComponent(ProjectView.class);
@@ -63,4 +65,6 @@ public abstract class ProjectView {
   public abstract void setSortByType(String paneId, final boolean sortByType);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
+
+  public abstract Collection<String> getPaneIds();
 }

@@ -40,17 +40,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.projectView.impl.PackageViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.commander.Commander</interface-class>
       <implementation-class>com.intellij.ide.commander.Commander</implementation-class>
       <option name="workspace" value="true"/>
