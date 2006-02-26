@@ -231,13 +231,13 @@ outer:
       }
 
       if (varArgs1 && !varArgs2) {
-        if (PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
-        boolean isFirstMoreSpecific = argType instanceof PsiArrayType;
+        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type1.getArrayDimensions();
         if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
         return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
       } else if (varArgs2 && !varArgs1) {
-        if (PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
-        boolean isFirstMoreSpecific = !(argType instanceof PsiArrayType);
+        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type2.getArrayDimensions();
         if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
         return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
       }
