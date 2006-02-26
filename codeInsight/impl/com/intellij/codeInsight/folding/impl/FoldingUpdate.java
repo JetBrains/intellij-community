@@ -25,6 +25,9 @@ class FoldingUpdate {
 
   private static final Key<Object> LAST_UPDATE_STAMP_KEY = Key.create("LAST_UPDATE_STAMP_KEY");
 
+  private FoldingUpdate() {
+  }
+
   public static void updateFoldRegions(Document document, PsiFile file) {
     Editor[] editors = EditorFactory.getInstance().getEditors(document, file.getProject());
     for (Editor editor : editors) {
@@ -50,10 +53,10 @@ class FoldingUpdate {
       file = ((PsiCompiledElement)file).getMirror();
     }
 
-    TreeMap elementsToFoldMap = null;
+    TreeMap<PsiElement, TextRange> elementsToFoldMap = null;
     final PsiElement[] psiRoots = ((PsiFile)file).getPsiRoots();
     for (PsiElement psiRoot : psiRoots) {
-      TreeMap fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoot, document);
+      TreeMap<PsiElement, TextRange> fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoot, document);
       if (elementsToFoldMap == null) {
         elementsToFoldMap = fileElementsToFoldMap;
       }
@@ -66,7 +69,7 @@ class FoldingUpdate {
     return new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperation(operation);
-        editor.putUserData(LAST_UPDATE_STAMP_KEY, new Long(timeStamp));
+        editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
       }
     };
   }

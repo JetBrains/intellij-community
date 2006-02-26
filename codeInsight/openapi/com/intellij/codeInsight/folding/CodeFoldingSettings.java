@@ -33,6 +33,9 @@ public abstract class CodeFoldingSettings implements ApplicationComponent {
   public abstract boolean isCollapseAnonymousClasses();
   public abstract void setCollapseAnonymousClasses(boolean value);
 
+  public abstract boolean isCollapseAnnotations();
+  public abstract void setCollapseAnnotations(boolean value);
+
   public String getComponentName() {
     return "CodeFoldingSettings";
   }
@@ -41,4 +44,5 @@ public abstract class CodeFoldingSettings implements ApplicationComponent {
 
   public void disposeComponent() {
   }
+
 }

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -14,17 +15,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
 
 import java.util.*;
 
 class FoldingPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingPolicy");
+
+  private FoldingPolicy() {}
 
   /**
    * Returns map from element to range to fold, elements are sorted in reverse start offset order
@@ -38,15 +41,13 @@ class FoldingPolicy {
       }
     });
     final Language lang = file.getLanguage();
-    if (lang != null) {
-      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
-      if (foldingBuilder != null) {
-        final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
-        for (FoldingDescriptor descriptor : foldingDescriptors) {
-          map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
-        }
-        return map;
+    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    if (foldingBuilder != null) {
+      final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
+      for (FoldingDescriptor descriptor : foldingDescriptors) {
+        map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
       }
+      return map;
     }
 
     if (file instanceof PsiJavaFile) {
@@ -76,21 +77,30 @@ class FoldingPolicy {
     return map;
   }
 
-  private static void findClasses(PsiElement scope, Map<PsiElement, TextRange> foldElements, Document document) {
-    final List<PsiClass> list = new ArrayList<PsiClass>();
-    PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
-        list.add(aClass);
+  private static void addAnnotationsToFold(PsiModifierList modifierList, final Map<PsiElement, TextRange> foldElements, Document document) {
+    if (modifierList == null) return;
+    PsiElement[] children = modifierList.getChildren();
+    for (int i = 0; i < children.length; i++) {
+      PsiElement child = children[i];
+      if (child instanceof PsiAnnotation) {
+        int j;
+        addToFold(foldElements, child, document, false);
+        for (j = i + 1; j < children.length; j++) {
+          PsiElement nextChild = children[j];
+          if (nextChild instanceof PsiModifier) break;
+        }
+        i = j;
       }
+    }
+  }
 
-    };
-    scope.accept(visitor);
-    for (PsiClass aClass : list) {
-      if (aClass.isValid()) {
+  private static void findClasses(PsiElement scope, final Map<PsiElement, TextRange> foldElements, final Document document) {
+    scope.accept(new PsiRecursiveElementVisitor() {
+      public void visitClass(PsiClass aClass) {
         addToFold(foldElements, aClass, document, true);
         addElementsToFold(foldElements, aClass, document, false);
       }
-    }
+    });
   }
 
   private static void addElementsToFold(Map<PsiElement, TextRange> map, PsiClass aClass, Document document, boolean foldJavaDocs) {
@@ -105,15 +115,16 @@ class FoldingPolicy {
         addToFold(map, docComment, document, true);
       }
     }
+    addAnnotationsToFold(aClass.getModifierList(), map, document);
 
     PsiElement[] children = aClass.getChildren();
-    for (PsiElement aChild : children) {
+    for (PsiElement child : children) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement child = aChild;
       if (child instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)child;
         addToFold(map, method, document, true);
+        addAnnotationsToFold(method.getModifierList(), map, document);
 
         if (!AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
           if (foldJavaDocs) {
@@ -137,6 +148,7 @@ class FoldingPolicy {
             addToFold(map, docComment, document, true);
           }
         }
+        addAnnotationsToFold(field.getModifierList(), map, document);
         PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
           findClasses(initializer, map, document);
@@ -169,9 +181,7 @@ class FoldingPolicy {
         return element.getTextRange();
       }
       else {
-        PsiCodeBlock body = ((PsiClassInitializer)element).getBody();
-        if (body == null) return null;
-        return body.getTextRange();
+        return ((PsiClassInitializer)element).getBody().getTextRange();
       }
     }
     else if (element instanceof PsiClass) {
@@ -199,16 +209,22 @@ class FoldingPolicy {
       return element.getTextRange();
     }
     else if (element instanceof XmlTag) {
-      final Language language = element.getLanguage();
+      final FoldingBuilder foldingBuilder = element.getLanguage().getFoldingBuilder();
 
-      if (language != null) {
-        final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
-
-        if (foldingBuilder instanceof XmlFoldingBuilder) {
-          return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
-        }
+      if (foldingBuilder instanceof XmlFoldingBuilder) {
+        return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
       }
+    } else if (element instanceof PsiAnnotation) {
+      int startOffset = element.getTextRange().getStartOffset();
+      PsiElement last = element;
+      while(element instanceof PsiAnnotation) {
+        last = element;
+        element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
+      }
+
+      return new TextRange(startOffset, last.getTextRange().getEndOffset());
     }
+
 
     return null;
   }
@@ -228,17 +244,15 @@ class FoldingPolicy {
     }
     if (element == null) return null;
     if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (element.equals(first)) return null;
+    if (element == null || element.equals(first)) return null;
     return new TextRange(first.getTextOffset(), element.getTextOffset());
   }
 
   public static String getFoldingText(PsiElement element) {
     final Language lang = element.getLanguage();
-    if (lang != null) {
-      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
-      if (foldingBuilder != null) {
-        return foldingBuilder.getPlaceholderText(element.getNode());
-      }
+    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    if (foldingBuilder != null) {
+      return foldingBuilder.getPlaceholderText(element.getNode());
     }
 
     if (element instanceof PsiImportList) {
@@ -257,6 +271,9 @@ class FoldingPolicy {
     else if (element instanceof PsiFile) {
       return "/.../";
     }
+    else if (element instanceof PsiAnnotation) {
+      return "@{...}";
+    }
     else {
       LOG.error("Unknown element:" + element);
       return null;
@@ -266,11 +283,9 @@ class FoldingPolicy {
 
   public static boolean isCollapseByDefault(PsiElement element) {
     final Language lang = element.getLanguage();
-    if (lang != null) {
-      final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
-      if (foldingBuilder != null) {
-        return foldingBuilder.isCollapsedByDefault(element.getNode());
-      }
+    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    if (foldingBuilder != null) {
+      return foldingBuilder.isCollapsedByDefault(element.getNode());
     }
 
     CodeFoldingSettings settings = CodeFoldingSettings.getInstance();
@@ -291,13 +306,16 @@ class FoldingPolicy {
       return settings.isCollapseAnonymousClasses();
     }
     else if (element instanceof PsiClass) {
-      return element.getParent() instanceof PsiFile ? false : settings.isCollapseInnerClasses();
+      return !(element.getParent() instanceof PsiFile) && settings.isCollapseInnerClasses();
     }
     else if (element instanceof PsiDocComment) {
       return settings.isCollapseJavadocs();
     }
     else if (element instanceof PsiJavaFile) {
       return settings.isCollapseFileHeader();
+    }
+    else if (element instanceof PsiAnnotation) {
+      return settings.isCollapseAnnotations();
     }
     else {
       LOG.error("Unknown element:" + element);
@@ -322,7 +340,7 @@ class FoldingPolicy {
     PsiCodeBlock body = method.getBody();
     if (body == null) return false;
     PsiStatement[] statements = body.getStatements();
-    if (statements == null || statements.length != 1) return false;
+    if (statements.length != 1) return false;
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
@@ -336,8 +354,8 @@ class FoldingPolicy {
       if (statement instanceof PsiExpressionStatement) {
         PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
         if (expr instanceof PsiAssignmentExpression) {
-          PsiExpression lhs = ((PsiAssignmentExpression)expr).getLExpression(),
-            rhs = ((PsiAssignmentExpression)expr).getRExpression();
+          PsiExpression lhs = ((PsiAssignmentExpression)expr).getLExpression();
+          PsiExpression rhs = ((PsiAssignmentExpression)expr).getRExpression();
           if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
             return ((PsiReferenceExpression)lhs).resolve() instanceof PsiField &&
                    ((PsiReferenceExpression)rhs).resolve() instanceof PsiParameter;

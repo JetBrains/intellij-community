@@ -72,6 +72,15 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
     COLLAPSE_ANONYMOUS_CLASSES = value;
   }
 
+
+  public boolean isCollapseAnnotations() {
+    return COLLAPSE_ANNOTATIONS;
+  }
+
+  public void setCollapseAnnotations(boolean value) {
+    COLLAPSE_ANNOTATIONS = value;
+  }
+
   public boolean COLLAPSE_IMPORTS = true;
   public boolean COLLAPSE_METHODS = false;
   public boolean COLLAPSE_ACCESSORS = false;
@@ -80,6 +89,7 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
   public boolean COLLAPSE_XML_TAGS = false;
   public boolean COLLAPSE_FILE_HEADER = true;
   public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
+  public boolean COLLAPSE_ANNOTATIONS = false;
 
   public String getExternalFileName() {
     return "editor.codeinsight";

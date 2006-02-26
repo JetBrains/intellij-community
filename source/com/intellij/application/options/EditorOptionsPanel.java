@@ -90,6 +90,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbCollapseFileHeader;
   private JTextField myClipboardContentLimitTextField;
   private JCheckBox myCbCollapseAccessors;
+  private JCheckBox myCbCollapseAnnotations;
   private JCheckBox myCbShowWhitespaces;
   private JCheckBox myCbSmoothScrolling;
   private JCheckBox myCbCamelWords;
@@ -283,6 +284,7 @@ public class EditorOptionsPanel {
     myCbCollapseXMLTags.setSelected(codeFoldingSettings.isCollapseXmlTags());
     myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.isCollapseAnonymousClasses());
     myCbCollapseFileHeader.setSelected(codeFoldingSettings.isCollapseFileHeader());
+    myCbCollapseAnnotations.setSelected(codeFoldingSettings.isCollapseAnnotations());
 
     // optmiza imports
     myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
@@ -415,6 +417,7 @@ public class EditorOptionsPanel {
     codeFoldingSettings.setCollapseXmlTags( myCbCollapseXMLTags.isSelected() );
     codeFoldingSettings.setCollapseAnonymousClasses( myCbCollapseAnonymousClasses.isSelected() );
     codeFoldingSettings.setCollapseFileHeader( myCbCollapseFileHeader.isSelected() );
+    codeFoldingSettings.setCollapseAnnotations( myCbCollapseAnnotations.isSelected() );
 
     codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
@@ -554,6 +557,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbCollapseXMLTags, codeFoldingSettings.isCollapseXmlTags());
     isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.isCollapseAnonymousClasses());
     isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.isCollapseFileHeader());
+    isModified |= isModified(myCbCollapseAnnotations, codeFoldingSettings.isCollapseAnnotations());
 
     // optimize imports
     isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);

@@ -3,7 +3,7 @@
   <tabbedpane id="97a1e">
     <constraints>
       <xy x="105" y="89" width="689" height="594"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0">
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
         <preferred-size width="200" height="200"/>
       </grid>
     </constraints>
@@ -21,16 +21,16 @@
           <grid id="6c1ca" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="2" width="371" height="218"/>
-              <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="2" y="2" width="324" height="206"/>
+              <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.smart.keys"/>
             <children>
               <component id="d78f0" class="javax.swing.JCheckBox" binding="myCbSmartHome">
                 <constraints>
-                  <xy x="7" y="23" width="59" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="21" width="52" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -39,8 +39,8 @@
               </component>
               <component id="d3814" class="javax.swing.JCheckBox" binding="myCbSmartEnd">
                 <constraints>
-                  <xy x="7" y="52" width="134" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="48" width="113" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -49,8 +49,8 @@
               </component>
               <component id="6a095" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="191" y="27" width="36" height="16"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="164" y="25" width="30" height="14"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="label.smart.enter"/>
@@ -58,8 +58,8 @@
               </component>
               <component id="a5c7a" class="javax.swing.JCheckBox" binding="myCbSmartIndentOnEnter">
                 <constraints>
-                  <xy x="191" y="52" width="114" height="24"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="164" y="48" width="99" height="22"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -69,8 +69,8 @@
               </component>
               <component id="a1584" class="javax.swing.JCheckBox" binding="myCbInsertPairCurlyBraceOnEnter">
                 <constraints>
-                  <xy x="191" y="81" width="112" height="24"/>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="164" y="75" width="100" height="22"/>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -80,8 +80,8 @@
               </component>
               <component id="7fed6" class="javax.swing.JCheckBox" binding="myCbInsertScriptletEndOnEnter">
                 <constraints>
-                  <xy x="191" y="110" width="161" height="24"/>
-                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="164" y="102" width="145" height="22"/>
+                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -91,8 +91,8 @@
               </component>
               <component id="7ef1d" class="javax.swing.JCheckBox" binding="myCbInsertJavadocStubOnEnter">
                 <constraints>
-                  <xy x="191" y="139" width="173" height="24"/>
-                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="164" y="129" width="153" height="22"/>
+                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -102,8 +102,8 @@
               </component>
               <component id="79418" class="javax.swing.JCheckBox" binding="myCbInsertPairBracket">
                 <constraints>
-                  <xy x="7" y="81" width="134" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="75" width="114" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -112,8 +112,8 @@
               </component>
               <component id="458d0" class="javax.swing.JCheckBox" binding="myCbInsertPairQuote">
                 <constraints>
-                  <xy x="7" y="110" width="123" height="24"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="102" width="106" height="22"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -122,8 +122,8 @@
               </component>
               <component id="c4d91" class="javax.swing.JCheckBox" binding="myCbCamelWords">
                 <constraints>
-                  <xy x="7" y="139" width="174" height="24"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="129" width="147" height="22"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.use.camelhumps.words"/>
@@ -131,8 +131,8 @@
               </component>
               <vspacer id="b85b8">
                 <constraints>
-                  <xy x="88" y="163" width="11" height="48"/>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="75" y="151" width="11" height="48"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -140,16 +140,16 @@
           <grid id="8dc1a" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="225" width="371" height="132"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+              <xy x="2" y="213" width="324" height="124"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
             <children>
               <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
                 <constraints>
-                  <xy x="7" y="24" width="239" height="40"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="22" width="199" height="36"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.honor.camelhumps.words.settings.on.double.click"/>
@@ -157,8 +157,8 @@
               </component>
               <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
                 <constraints>
-                  <xy x="7" y="100" width="263" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="94" width="220" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.drag.n.drop.functionality.in.editor"/>
@@ -166,8 +166,8 @@
               </component>
               <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
                 <constraints>
-                  <xy x="7" y="70" width="274" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="65" width="233" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.ctrl.mousewheel.changes.font.size"/>
@@ -178,16 +178,16 @@
           <grid id="efd81" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="5" bottom="5" right="5"/>
             <constraints>
-              <xy x="383" y="110" width="282" height="110"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="336" y="104" width="237" height="104"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.paste"/>
             <children>
               <component id="630f6" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="12" y="27" width="60" height="16"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="25" width="49" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="combobox.paste.reformat"/>
@@ -195,15 +195,15 @@
               </component>
               <component id="4eeb7" class="javax.swing.JComboBox" binding="myReformatOnPasteCombo">
                 <constraints>
-                  <xy x="110" y="23" width="160" height="25"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0"/>
+                  <xy x="93" y="21" width="132" height="23"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
               <component id="18331" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="12" y="57" width="88" height="16"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="53" width="71" height="14"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="combobox.paste.insert.imports"/>
@@ -211,15 +211,15 @@
               </component>
               <component id="1688" class="javax.swing.JComboBox" binding="mySmartPasteCombo">
                 <constraints>
-                  <xy x="110" y="53" width="160" height="25"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0"/>
+                  <xy x="93" y="49" width="132" height="23"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
               <vspacer id="c1ef4">
                 <constraints>
-                  <xy x="50" y="78" width="11" height="20"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="42" y="72" width="11" height="20"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -227,16 +227,16 @@
           <grid id="54c3d" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="383" y="362" width="282" height="103"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="336" y="342" width="237" height="97"/>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.brace.highlighting"/>
             <children>
               <component id="917a4" class="javax.swing.JCheckBox" binding="myCbHighlightScope">
                 <constraints>
-                  <xy x="7" y="52" width="161" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="48" width="135" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.highlight.current.scope"/>
@@ -244,8 +244,8 @@
               </component>
               <component id="18ff6" class="javax.swing.JCheckBox" binding="myCbHighlightBraces">
                 <constraints>
-                  <xy x="7" y="23" width="168" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="21" width="140" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.highlight.matched.brace"/>
@@ -253,8 +253,8 @@
               </component>
               <vspacer id="52d7f">
                 <constraints>
-                  <xy x="135" y="76" width="11" height="20"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="113" y="70" width="11" height="20"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -262,16 +262,16 @@
           <grid id="7fdc1" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="10" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="362" width="371" height="103"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+              <xy x="2" y="342" width="324" height="97"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
             <children>
               <component id="498f1" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="17" y="23" width="300" height="16"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="1" indent="0"/>
+                  <xy x="17" y="21" width="241" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="editbox.maximum.number.of.contents.to.keep.in.clipboard"/>
@@ -279,8 +279,8 @@
               </component>
               <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
                 <constraints>
-                  <xy x="327" y="23" width="35" height="22"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="9" fill="0" indent="0">
+                  <xy x="268" y="21" width="35" height="20"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="9" fill="0" indent="0" use-parent-layout="false">
                     <preferred-size width="35" height="-1"/>
                   </grid>
                 </constraints>
@@ -290,8 +290,8 @@
               </component>
               <component id="48bb5" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="17" y="53" width="105" height="16"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="17" y="49" width="81" height="14"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="editbox.recent.files.limit"/>
@@ -299,8 +299,8 @@
               </component>
               <component id="695ab" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
                 <constraints>
-                  <xy x="327" y="50" width="35" height="22"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0">
+                  <xy x="268" y="46" width="35" height="20"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
                     <preferred-size width="35" height="-1"/>
                   </grid>
                 </constraints>
@@ -310,37 +310,37 @@
               </component>
               <vspacer id="42333">
                 <constraints>
-                  <xy x="161" y="72" width="11" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="132" y="66" width="11" height="24"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
           </grid>
           <vspacer id="5b762">
             <constraints>
-              <xy x="182" y="548" width="11" height="20"/>
-              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+              <xy x="158" y="518" width="11" height="52"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
           <hspacer id="c567c">
             <constraints>
-              <xy x="665" y="285" width="20" height="11"/>
-              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0"/>
+              <xy x="573" y="269" width="112" height="11"/>
+              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
           <grid id="200c2" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="10"/>
             <constraints>
-              <xy x="383" y="2" width="282" height="103"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="336" y="2" width="237" height="97"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.imports"/>
             <children>
               <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
                 <constraints>
-                  <xy x="7" y="52" width="236" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="48" width="197" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.add.unambiguous.imports.on.the.fly"/>
@@ -348,8 +348,8 @@
               </component>
               <component id="b9c63" class="javax.swing.JCheckBox" binding="myCbOptimizeImports">
                 <constraints>
-                  <xy x="7" y="23" width="186" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="21" width="153" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.optimize.imports.on.the.fly"/>
@@ -357,8 +357,8 @@
               </component>
               <vspacer id="53505">
                 <constraints>
-                  <xy x="130" y="76" width="11" height="20"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="108" y="70" width="11" height="20"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -366,16 +366,16 @@
           <grid id="5342a" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="383" y="225" width="282" height="132"/>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3" indent="0"/>
+              <xy x="336" y="213" width="237" height="124"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
             <children>
               <component id="400d4" class="javax.swing.JCheckBox" binding="myCbVirtualPageAtBottom">
                 <constraints>
-                  <xy x="7" y="81" width="219" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="75" width="182" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.virtual.space.at.file.bottom"/>
@@ -383,8 +383,8 @@
               </component>
               <component id="f762" class="javax.swing.JCheckBox" binding="myCbCaretInsideTabs">
                 <constraints>
-                  <xy x="7" y="52" width="237" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="48" width="197" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.inside.tabs"/>
@@ -392,8 +392,8 @@
               </component>
               <component id="bb18b" class="javax.swing.JCheckBox" binding="myCbVirtualSpace">
                 <constraints>
-                  <xy x="7" y="23" width="268" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="21" width="223" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -402,8 +402,8 @@
               </component>
               <vspacer id="944a3">
                 <constraints>
-                  <xy x="135" y="105" width="11" height="20"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="113" y="97" width="11" height="20"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -411,8 +411,8 @@
           <grid id="99111" binding="myHighlightSettingsPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="383" y="499" width="282" height="49"/>
-              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+              <xy x="336" y="471" width="237" height="47"/>
+              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -421,23 +421,23 @@
           <grid id="9b59a" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="15" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="499" width="371" height="49"/>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+              <xy x="2" y="471" width="324" height="47"/>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="35690" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
                 <constraints>
-                  <xy x="199" y="2" width="170" height="25"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0"/>
+                  <xy x="166" y="2" width="156" height="23"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
               <component id="301cb" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="17" y="6" width="172" height="16"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="17" y="6" width="139" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="combobox.strip.trailing.spaces.on.save"/>
@@ -445,16 +445,16 @@
               </component>
               <vspacer id="a282">
                 <constraints>
-                  <xy x="97" y="27" width="11" height="20"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="81" y="25" width="11" height="20"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
           </grid>
           <component id="d8c38" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
             <constraints>
-              <xy x="2" y="470" width="204" height="24"/>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+              <xy x="2" y="444" width="170" height="22"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ApplicationBundle" key="checkbox.rename.local.variables.inplace"/>
@@ -472,23 +472,23 @@
         <children>
           <hspacer id="dc017">
             <constraints>
-              <xy x="665" y="125" width="20" height="11"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0"/>
+              <xy x="589" y="116" width="96" height="11"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
           <grid id="94773" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="264" width="318" height="211"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0"/>
+              <xy x="2" y="246" width="265" height="201"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.closing.policy"/>
             <children>
               <component id="5689d" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="7" y="25" width="298" height="16"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="24" width="242" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="label.when.number.of.opened.editors.exceeds.tab.limit"/>
@@ -496,8 +496,8 @@
               </component>
               <component id="a9aa" class="javax.swing.JRadioButton" binding="myCloseNonModifiedFilesFirstRadio">
                 <constraints>
-                  <xy x="7" y="48" width="209" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="46" width="173" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -506,8 +506,8 @@
               </component>
               <component id="27127" class="javax.swing.JRadioButton" binding="myCloseLRUFilesRadio">
                 <constraints>
-                  <xy x="7" y="77" width="218" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="73" width="186" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -516,8 +516,8 @@
               </component>
               <component id="b233" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="7" y="108" width="161" height="16"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="103" width="130" height="14"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="label.when.closing.active.editor"/>
@@ -525,8 +525,8 @@
               </component>
               <component id="3914d" class="javax.swing.JRadioButton" binding="myActivateLeftEditorOnCloseRadio">
                 <constraints>
-                  <xy x="7" y="131" width="214" height="24"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="125" width="181" height="22"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -535,8 +535,8 @@
               </component>
               <component id="ec599" class="javax.swing.JRadioButton" binding="myActivateMRUEditorOnCloseRadio">
                 <constraints>
-                  <xy x="7" y="160" width="239" height="24"/>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="152" width="204" height="22"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -545,8 +545,8 @@
               </component>
               <vspacer id="1bedd">
                 <constraints>
-                  <xy x="153" y="184" width="11" height="20"/>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="127" y="174" width="11" height="20"/>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
             </children>
@@ -554,16 +554,16 @@
           <grid id="caba8" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="330" y="264" width="335" height="211"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="3" indent="0"/>
+              <xy x="277" y="246" width="312" height="201"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.appearance"/>
             <children>
               <component id="f95c3" class="javax.swing.JCheckBox" binding="myHideKnownExtensions">
                 <constraints>
-                  <xy x="7" y="138" width="217" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="130" width="177" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -572,8 +572,8 @@
               </component>
               <component id="1013f" class="javax.swing.JCheckBox" binding="myScrollTabLayoutInEditorCheckBox">
                 <constraints>
-                  <xy x="7" y="109" width="165" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="103" width="137" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -582,23 +582,23 @@
               </component>
               <vspacer id="80a61">
                 <constraints>
-                  <xy x="162" y="162" width="11" height="42"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="150" y="152" width="11" height="42"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <grid id="ef53" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="3" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="7" y="23" width="321" height="81"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+                  <xy x="7" y="21" width="298" height="77"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
                   <component id="1cce0" class="javax.swing.JLabel">
                     <constraints>
-                      <xy x="5" y="4" width="127" height="16"/>
-                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                      <xy x="5" y="5" width="103" height="14"/>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <iconTextGap value="4"/>
@@ -607,8 +607,8 @@
                   </component>
                   <component id="774ac" class="javax.swing.JTextField" binding="myEditorTabLimitField">
                     <constraints>
-                      <xy x="73" y="57" width="30" height="22"/>
-                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0">
+                      <xy x="58" y="55" width="30" height="20"/>
+                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
                         <preferred-size width="30" height="-1"/>
                       </grid>
                     </constraints>
@@ -618,8 +618,8 @@
                   </component>
                   <component id="5339" class="javax.swing.JLabel">
                     <constraints>
-                      <xy x="5" y="60" width="58" height="16"/>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                      <xy x="5" y="58" width="43" height="14"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/ApplicationBundle" key="editbox.tab.limit"/>
@@ -627,8 +627,8 @@
                   </component>
                   <component id="87b20" class="javax.swing.JComboBox" binding="myEditorTabPlacement">
                     <constraints>
-                      <xy x="5" y="27" width="314" height="25"/>
-                      <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="1" indent="0">
+                      <xy x="5" y="27" width="291" height="23"/>
+                      <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="1" indent="0" use-parent-layout="false">
                         <minimum-size width="140" height="-1"/>
                       </grid>
                     </constraints>
@@ -640,23 +640,23 @@
           </grid>
           <vspacer id="45be5">
             <constraints>
-              <xy x="155" y="475" width="11" height="93"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+              <xy x="129" y="447" width="11" height="123"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
-          <grid id="1821b" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
+          <grid id="1821b" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
             <margin top="0" left="5" bottom="5" right="5"/>
             <constraints>
-              <xy x="330" y="2" width="335" height="257"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="277" y="2" width="312" height="239"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.code.folding"/>
             <children>
               <component id="f26ff" class="javax.swing.JCheckBox" binding="myCbFolding">
                 <constraints>
-                  <xy x="12" y="23" width="174" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="21" width="147" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <actionCommand resource-bundle="messages/ApplicationBundle" key="checkbox.show.code.folding.outline"/>
@@ -666,8 +666,8 @@
               </component>
               <component id="562b8" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="12" y="54" width="115" height="16"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="51" width="96" height="14"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="label.collapse.by.default"/>
@@ -675,8 +675,8 @@
               </component>
               <component id="af43a" class="javax.swing.JCheckBox" binding="myCbCollapseFileHeader">
                 <constraints>
-                  <xy x="12" y="85" width="103" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="73" width="91" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -686,8 +686,8 @@
               </component>
               <component id="ba41d" class="javax.swing.JCheckBox" binding="myCbCollapseImports">
                 <constraints>
-                  <xy x="12" y="122" width="83" height="24"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="100" width="75" height="22"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -697,8 +697,8 @@
               </component>
               <component id="820d5" class="javax.swing.JCheckBox" binding="myCbCollapseJavadocComments">
                 <constraints>
-                  <xy x="12" y="151" width="150" height="24"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="127" width="130" height="22"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -707,8 +707,8 @@
               </component>
               <component id="827c7" class="javax.swing.JCheckBox" binding="myCbCollapseMethodBodies">
                 <constraints>
-                  <xy x="12" y="180" width="123" height="24"/>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="12" y="154" width="108" height="22"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
@@ -717,8 +717,8 @@
               </component>
               <component id="44b56" class="javax.swing.JCheckBox" binding="myCbCollapseAccessors">
                 <constraints>
-                  <xy x="185" y="77" width="138" height="40"/>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="152" y="73" width="148" height="22"/>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -727,8 +727,8 @@
               </component>
               <component id="41ff8" class="javax.swing.JCheckBox" binding="myCbCollapseInnerClasses">
                 <constraints>
-                  <xy x="185" y="122" width="98" height="24"/>
-                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="152" y="100" width="86" height="22"/>
+                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -737,8 +737,8 @@
               </component>
               <component id="16c6f" class="javax.swing.JCheckBox" binding="myCbCollapseAnonymousClasses">
                 <constraints>
-                  <xy x="185" y="151" width="134" height="24"/>
-                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="152" y="127" width="116" height="22"/>
+                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -747,8 +747,8 @@
               </component>
               <component id="1f32f" class="javax.swing.JCheckBox" binding="myCbCollapseXMLTags">
                 <constraints>
-                  <xy x="185" y="180" width="76" height="24"/>
-                  <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="152" y="154" width="66" height="22"/>
+                  <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
@@ -757,25 +757,35 @@
               </component>
               <vspacer id="d4905">
                 <constraints>
-                  <xy x="88" y="204" width="11" height="41"/>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0"/>
+                  <xy x="71" y="203" width="11" height="24"/>
+                  <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
+              <component id="9e376" class="javax.swing.JCheckBox" binding="myCbCollapseAnnotations">
+                <constraints>
+                  <xy x="12" y="181" width="96" height="22"/>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <margin top="2" left="15" bottom="2" right="2"/>
+                  <text value="Annotations"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="58a7a" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="2" width="318" height="257"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0"/>
+              <xy x="2" y="2" width="265" height="239"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="groupbox.display"/>
             <children>
               <component id="2b4c4" class="javax.swing.JCheckBox" binding="myCbModifiedTabsMarkedWithAsterisk">
                 <constraints>
-                  <xy x="7" y="23" width="219" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="21" width="178" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.mark.modified.tabs.with.asterisk"/>
@@ -783,8 +793,8 @@
               </component>
               <component id="718a" class="javax.swing.JCheckBox" binding="myCbBlinkCaret">
                 <constraints>
-                  <xy x="7" y="52" width="143" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="48" width="118" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -793,8 +803,8 @@
               </component>
               <component id="68f0a" class="javax.swing.JCheckBox" binding="myCbBlockCursor">
                 <constraints>
-                  <xy x="7" y="81" width="114" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="75" width="98" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.use.block.caret"/>
@@ -802,8 +812,8 @@
               </component>
               <component id="9fe07" class="javax.swing.JCheckBox" binding="myCbRightMargin">
                 <constraints>
-                  <xy x="7" y="110" width="304" height="24"/>
-                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="102" width="251" height="22"/>
+                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -812,8 +822,8 @@
               </component>
               <component id="a2796" class="javax.swing.JCheckBox" binding="myCbShowLineNumbers">
                 <constraints>
-                  <xy x="7" y="139" width="134" height="24"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="129" width="114" height="22"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.line.numbers"/>
@@ -821,8 +831,8 @@
               </component>
               <component id="52af3" class="javax.swing.JCheckBox" binding="myCbShowMethodSeparators">
                 <constraints>
-                  <xy x="7" y="168" width="169" height="24"/>
-                  <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="156" width="145" height="22"/>
+                  <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.method.separators"/>
@@ -830,8 +840,8 @@
               </component>
               <component id="1f86" class="javax.swing.JCheckBox" binding="myCbShowWhitespaces">
                 <constraints>
-                  <xy x="7" y="197" width="130" height="24"/>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="183" width="113" height="22"/>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.whitespaces"/>
@@ -839,8 +849,8 @@
               </component>
               <component id="61cf9" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
                 <constraints>
-                  <xy x="7" y="226" width="121" height="24"/>
-                  <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <xy x="7" y="210" width="102" height="22"/>
+                  <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="true"/>
@@ -849,8 +859,8 @@
               </component>
               <component id="2459c" class="javax.swing.JTextField" binding="myBlinkIntervalField">
                 <constraints>
-                  <xy x="160" y="53" width="50" height="22"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
+                  <xy x="135" y="49" width="50" height="20"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="50" height="-1"/>
                     <maximum-size width="50" height="-1"/>
                   </grid>
