@@ -632,7 +632,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
             myCachedForLongName = getName();
             final PsiMethod valuesMethod = getManager().getElementFactory().createMethodFromText("public static " + getName() + "[] values() {}", this);
             myValuesMethod = new LightMethod(getManager(), valuesMethod, this);
-            final PsiMethod valueOfMethod = getManager().getElementFactory().createMethodFromText("public static " + getName() + " valueOf(String name) {}", this);
+            final PsiMethod valueOfMethod = getManager().getElementFactory().createMethodFromText("public static " + getName() + " valueOf(String name) throws IllegalArgumentException {}", this);
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
           final NameHint hint = processor.getHint(NameHint.class);
