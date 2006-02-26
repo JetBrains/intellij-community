@@ -4,11 +4,13 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.HierarchyChangeListener;
+import com.intellij.uiDesigner.SelectionWatcher;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -44,8 +46,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     }
 
     myEditor = editor;
-    mySelectionWatcher = new MySelectionWatcher();
-    mySelectionWatcher.install(myEditor.getRootContainer());
+    mySelectionWatcher = new MySelectionWatcher(editor);
     myTreeStructure = new ComponentTreeStructure(editor);
 
     initRootNode();
@@ -60,7 +61,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
   public void dispose() {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
     myTree.getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
-    mySelectionWatcher.deinstall(myEditor.getRootContainer());
+    mySelectionWatcher.dispose();
     super.dispose();
   }
 
@@ -181,9 +182,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
         updateFromRoot();
         // After updating the tree we have to synchronize the selection in the tree
         // with selected elemenet in the hierarchy
-        final RadRootContainer rootContainer = myEditor.getRootContainer();
-        mySelectionWatcher.deinstall(rootContainer);
-        mySelectionWatcher.install(rootContainer);
         syncSelection();
       }finally{
         myInsideChange--;
@@ -195,6 +193,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
    * Synchronizes selection in the tree with selection in the editor
    */
   private final class MySelectionWatcher extends SelectionWatcher{
+    public MySelectionWatcher(final GuiEditor editor) {
+      super(editor);
+    }
+
     protected void selectionChanged(final RadComponent component, final boolean ignored) {
       if(myInsideChange > 0){
         return;

@@ -264,7 +264,7 @@ public class DefUseUtil {
                 }
                 public void visitVariable(PsiVariable var) {
                   if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
-                    res.add(var.getNameIdentifier());
+                    res.add(var);
                   }
                 }
               });

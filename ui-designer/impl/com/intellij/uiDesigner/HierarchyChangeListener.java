@@ -11,5 +11,5 @@ public interface HierarchyChangeListener extends EventListener{
    * This event is fired each time when the something was changes inside component tree.
    * For example root container changes, or some undoable action has beed performed, etc.
    */
-  public void hierarchyChanged();
+  void hierarchyChanged();
 }

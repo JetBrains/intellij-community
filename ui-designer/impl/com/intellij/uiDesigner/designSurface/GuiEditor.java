@@ -283,6 +283,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     myDropTargetListener = new DesignDropTargetListener(this);
     new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+
+    myActiveDecorationLayer.installSelectionWatcher();
   }
 
   @NotNull

@@ -1,11 +1,13 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.SelectionWatcher;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +26,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ActiveDecorationLayer");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ActiveDecorationLayer");
 
   private final GuiEditor myEditor;
   private final HashMap<RadContainer, ArrayList<ActiveSpot>> myHorizontalSpots;
@@ -33,6 +35,9 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
    * Cache of invalid items which can be reused later for better performance
    */
   private final ArrayList<ActiveSpot> myInvalidSpotCache;
+
+  private Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<RadComponent, ListenerNavigateButton>();
+
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
@@ -41,6 +46,10 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     myHorizontalSpots = new HashMap<RadContainer, ArrayList<ActiveSpot>>();
     myVerticalSpots = new HashMap<RadContainer, ArrayList<ActiveSpot>>();
     myInvalidSpotCache = new ArrayList<ActiveSpot>();
+  }
+
+  public void installSelectionWatcher() {
+    new MyNavigateButtonSelectionWatcher(myEditor);
   }
 
   /**
@@ -269,9 +278,21 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     layoutVerticalSpots();
     LOG.assertTrue(myVerticalSpots.size() == myHorizontalSpots.size());
     */
+    layoutListenerNavigateButtons();
 
     // Paint active decorators
     paintChildren(g);
+  }
+
+  private void layoutListenerNavigateButtons() {
+    for(Map.Entry<RadComponent, ListenerNavigateButton> e: myNavigateButtons.entrySet()) {
+      RadComponent c = e.getKey();
+      ListenerNavigateButton btn = e.getValue();
+      if (btn.isVisible()) {
+        Rectangle rc = SwingUtilities.convertRectangle(c.getDelegee().getParent(), c.getBounds(), this);
+        btn.setLocation(rc.x, rc.y+rc.height);
+      }
+    }
   }
 
   public void putFeedback(Component relativeTo, final Rectangle rc) {
@@ -328,6 +349,37 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
 
     public void setPainter(final FeedbackPainter feedbackPainter) {
       myFeedbackPainter = feedbackPainter;
+    }
+  }
+
+  private class MyNavigateButtonSelectionWatcher extends SelectionWatcher {
+    public MyNavigateButtonSelectionWatcher(final GuiEditor editor) {
+      super(editor);
+    }
+
+    protected void selectionChanged(RadComponent component, boolean selected) {
+      ListenerNavigateButton btn = myNavigateButtons.get(component);
+      if (selected) {
+        DefaultActionGroup group = component.getBinding() != null ? ListenerNavigateButton.prepareActionGroup(component) : null;
+        if (group != null && group.getChildrenCount() > 0) {
+          if (btn == null) {
+            btn = new ListenerNavigateButton(component);
+            myNavigateButtons.put(component, btn);
+          }
+          add(btn);
+          btn.setVisible(true);
+        }
+        else {
+          if (btn != null) {
+            btn.setVisible(false);
+          }
+        }
+      }
+      else {
+        if (btn != null) {
+          btn.setVisible(false);
+        }
+      }
     }
   }
 }
