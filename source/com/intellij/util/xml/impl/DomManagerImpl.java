@@ -219,7 +219,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   @Nullable
   public static DomFileElementImpl getCachedElement(final XmlFile file) {
-    return file.getUserData(CACHED_FILE_ELEMENT);
+    return file != null ? file.getUserData(CACHED_FILE_ELEMENT) : null;
   }
 
   @Nullable
