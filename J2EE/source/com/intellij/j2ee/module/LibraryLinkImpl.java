@@ -272,7 +272,7 @@ public class LibraryLinkImpl extends LibraryLink {
         if (dependency == null) {
           continue;
         }
-        final Library library = findModuleLibrary(module, provider, url, visited);
+        final Library library = findModuleLibrary(dependency, provider, url, visited);
         if (library != null) {
           return library;
         }
