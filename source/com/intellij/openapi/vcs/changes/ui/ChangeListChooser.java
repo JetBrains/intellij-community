@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Collection;
 
 /**
@@ -73,8 +73,8 @@ public class ChangeListChooser extends DialogWrapper {
       }
     });
 
-    myRbExisting.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
+    myRbExisting.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
         myExisitingsCombo.setEnabled(myRbExisting.isSelected());
         myNewListNameField.setEnabled(!myRbExisting.isSelected());
       }
