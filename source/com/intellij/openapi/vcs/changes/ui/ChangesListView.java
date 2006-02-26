@@ -53,8 +53,8 @@ public class ChangesListView extends Tree implements DataProvider {
   private FileStatusListener myFileStatusManager;
 
   private static FilePath getFilePath(final Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    if (revision == null) revision = change.getAfterRevision();
+    ContentRevision revision = change.getAfterRevision();
+    if (revision == null) revision = change.getBeforeRevision();
 
     return revision.getFile();
   }

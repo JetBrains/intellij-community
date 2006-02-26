@@ -259,9 +259,26 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     for (ChangeList list : myChangeLists) {
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
-        files.add(getFilePath(change).getIOFile());
+        File beforeFile = null;
+        ContentRevision beforeRevision = change.getBeforeRevision();
+        if (beforeRevision != null) {
+          beforeFile = beforeRevision.getFile().getIOFile();
+        }
+
+        if (beforeFile != null) {
+          files.add(beforeFile);
+        }
+
+        ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null) {
+          final File afterFile = afterRevision.getFile().getIOFile();
+          if (afterFile != null && !afterFile.equals(beforeFile)) {
+            files.add(afterFile);
+          }
+        }
       }
     }
+
     return files;
   }
 
@@ -271,20 +288,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     for (ChangeList list : myChangeLists) {
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
-        final VirtualFile vFile = getFilePath(change).getVirtualFile();
-        if (vFile != null) {
-          files.add(vFile);
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null) {
+          final VirtualFile vFile = afterRevision.getFile().getVirtualFile();
+          if (vFile != null) {
+            files.add(vFile);
+          }
         }
       }
     }
     return files;
-  }
-
-  private static FilePath getFilePath(final Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    if (revision == null) revision = change.getAfterRevision();
-
-    return revision.getFile();
   }
 
   public ChangeList addChangeList(String name) {
