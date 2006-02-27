@@ -337,6 +337,9 @@ public class FormatterImpl extends FormatterEx
                               @Nullable final IndentInfoStorage indentInfoStorage) {
     disableFormatting();
     try {
+      if (model instanceof PsiBasedFormattingModel) {
+        ((PsiBasedFormattingModel)model).doNotUseallTrees();
+      }
       Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
       LeafBlockWrapper current = processor.getFirstTokenBlock();

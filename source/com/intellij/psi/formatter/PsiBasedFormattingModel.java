@@ -12,7 +12,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -28,7 +27,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
   private boolean myCanModifyAllWhiteSpaces = false;
 
-
+  private boolean myUseAllTrees = true;
+  
   public PsiBasedFormattingModel(final PsiFile file,
                                  final Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
@@ -111,19 +111,20 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
 
   private ASTNode findElementAt(final int offset) {
-    final PsiElement[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
-    for (int i = psiRoots.length -1; i >= 0; i--) {
-      PsiElement psiRoot = psiRoots[i];
-      final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
-      if (found != null) {
-        if (!myCanModifyAllWhiteSpaces && found.getElementType() == ElementType.WHITE_SPACE) return found;
-        if (!(found.getPsi()instanceof OuterLanguageElement) && found.getTextRange().getStartOffset() == offset) {
-          return chooseElement(found);
-        }
+    if (myUseAllTrees) {
+      final PsiElement psiElement = myASTNode.getPsi().findElementAt(offset);
+      if (psiElement.getTextRange().getStartOffset() != offset) {
+        LOG.assertTrue(false);
       }
+      return psiElement.getNode();
     }
-    final ASTNode found = myASTNode.findLeafElementAt(offset);
-    return chooseElement(found);
+    else {
+      final ASTNode result = myASTNode.findLeafElementAt(offset);
+      if (result.getTextRange().getStartOffset() != offset) {
+        LOG.assertTrue(false);
+      }      
+      return result;
+    }
   }
 
   private ASTNode chooseElement(final ASTNode found) {
@@ -147,5 +148,9 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   public void canModifyAllWhiteSpaces() {
     myCanModifyAllWhiteSpaces = true;
+  }
+  
+  public void doNotUseallTrees(){
+    myUseAllTrees = false;
   }
 }
