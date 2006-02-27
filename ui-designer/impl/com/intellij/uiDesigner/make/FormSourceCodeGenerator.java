@@ -32,9 +32,9 @@ public final class FormSourceCodeGenerator {
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
-  private LayoutSourceGenerator myLayoutSourceGenerator = new GridLayoutSourceGenerator();
 
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
+  private static Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
   @NonNls private static TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
 
   static {
@@ -59,6 +59,11 @@ public final class FormSourceCodeGenerator {
     if (module == null) {
       return;
     }
+
+    // ensure that new instances of generators are used for every run
+    ourContainerLayoutCodeGenerators.clear();
+    ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutSourceGenerator());
+    ourContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_GRIDBAG, new GridBagLayoutSourceGenerator());
 
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
 
@@ -104,13 +109,6 @@ public final class FormSourceCodeGenerator {
 
     if (myErrors.size() != 0) {
       return;
-    }
-
-    if ("GridBagLayout".equals(rootContainer.getLayoutManager())) {
-      myLayoutSourceGenerator = new GridBagLayoutSourceGenerator();
-    }
-    else {
-      myLayoutSourceGenerator = new GridLayoutSourceGenerator();
     }
 
     try {
@@ -269,7 +267,7 @@ public final class FormSourceCodeGenerator {
     final String variable = getVariable(component, component2TempVariable, class2variableIndex, aClass);
     final String componentClass = component instanceof LwNestedForm
                                   ? getNestedFormClass(module, (LwNestedForm) component)
-                                  : myLayoutSourceGenerator.mapComponentClass(component.getComponentClassName());
+                                  : getComponentLayoutGenerator(component.getParent()).mapComponentClass(component.getComponentClassName());
 
     final String binding = component.getBinding();
     if (binding != null) {
@@ -286,7 +284,7 @@ public final class FormSourceCodeGenerator {
     endConstructor(); // will finish the line
 
     if (component instanceof LwContainer) {
-      getComponentLayoutGenerator(component).generateContainerLayout((LwContainer) component, this, variable);
+      getComponentLayoutGenerator((LwContainer) component).generateContainerLayout((LwContainer) component, this, variable);
     }
 
     // introspected properties
@@ -535,12 +533,23 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private LayoutSourceGenerator getComponentLayoutGenerator(final LwComponent lwComponent) {
-    LayoutSourceGenerator generator = ourComponentLayoutCodeGenerators.get(lwComponent.getClass());
+  private LayoutSourceGenerator getComponentLayoutGenerator(final LwContainer container) {
+    LayoutSourceGenerator generator = ourComponentLayoutCodeGenerators.get(container.getClass());
     if (generator != null) {
       return generator;
     }
-    return myLayoutSourceGenerator;
+    LwContainer parent = container;
+    while(parent != null) {
+      final String layoutManager = parent.getLayoutManager();
+      if (layoutManager != null && layoutManager.length() > 0) {
+        generator = (LayoutSourceGenerator) ourContainerLayoutCodeGenerators.get(layoutManager);
+        if (generator != null) {
+          return generator;
+        }
+      }
+      parent = parent.getParent();
+    }
+    return GridLayoutSourceGenerator.INSTANCE;
   }
 
   void push(final StringDescriptor descriptor) {

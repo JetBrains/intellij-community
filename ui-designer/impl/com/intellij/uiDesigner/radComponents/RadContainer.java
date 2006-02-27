@@ -52,6 +52,8 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   @Nullable private StringDescriptor myBorderTitle;
 
+  private String myLayoutManager;
+
   public RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
   }
@@ -484,6 +486,14 @@ public class RadContainer extends RadComponent implements IContainer {
     getDelegee().setBorder(myBorderType.createBorder(title));
   }
 
+  public String getLayoutManager() {
+    return myLayoutManager;
+  }
+
+  public void setLayoutManager(final String layoutManager) {
+    myLayoutManager = layoutManager;
+  }
+
   /**
    * Serializes container's border
    */
@@ -536,6 +546,10 @@ public class RadContainer extends RadComponent implements IContainer {
       writeId(writer);
       writeBinding(writer);
 
+      if (myLayoutManager != null) {
+        writer.addAttribute("layout-manager", myLayoutManager);
+      }
+      
       final AbstractLayout layout = (AbstractLayout)getLayout();
       if (isGrid()) {
         final GridLayoutManager _layout = (GridLayoutManager)layout;

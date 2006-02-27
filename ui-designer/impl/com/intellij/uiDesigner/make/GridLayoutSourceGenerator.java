@@ -17,6 +17,8 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   private static final TIntObjectHashMap<String> myAnchors = fillMap(GridConstraints.class, "ANCHOR_");
   private static final TIntObjectHashMap<String> myFills = fillMap(GridConstraints.class, "FILL_");
 
+  public static final GridLayoutSourceGenerator INSTANCE = new GridLayoutSourceGenerator();
+
   @Override
   public void generateContainerLayout(final LwContainer container, final FormSourceCodeGenerator generator,
                                       final String variable) {

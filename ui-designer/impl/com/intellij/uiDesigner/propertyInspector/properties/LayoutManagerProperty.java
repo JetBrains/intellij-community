@@ -1,12 +1,13 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class LayoutManagerProperty extends Property {
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor {
     public LayoutManagerEditor() {
-      myCbx.setModel(new DefaultComboBoxModel(new String[] { "GridLayoutManager", "GridBagLayout" } ));
+      myCbx.setModel(new DefaultComboBoxModel(new String[] { UIFormXmlConstants.LAYOUT_INTELLIJ, UIFormXmlConstants.LAYOUT_GRIDBAG } ));
     }
 
     public JComponent getComponent(RadComponent component, Object value, boolean inplace) {
@@ -39,12 +40,19 @@ public class LayoutManagerProperty extends Property {
   }
 
   public Object getValue(RadComponent component) {
-    final String layoutManager = ((RadRootContainer)component).getLayoutManager();
-    return layoutManager == null ? "GridLayoutManager" : layoutManager;
+    RadContainer container = ((RadContainer)component);
+    while(container != null) {
+      final String layoutManager = container.getLayoutManager();
+      if (layoutManager != null && layoutManager.length() > 0) {
+        return layoutManager;
+      }
+      container = container.getParent();
+    }
+    return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
   protected void setValueImpl(RadComponent component, Object value) throws Exception {
-    ((RadRootContainer) component).setLayoutManager((String) value);
+    ((RadContainer) component).setLayoutManager((String) value);
   }
 
   @NotNull public PropertyRenderer getRenderer() {

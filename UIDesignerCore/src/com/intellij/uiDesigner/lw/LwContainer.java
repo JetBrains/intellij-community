@@ -50,6 +50,7 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   private StringDescriptor myBorderTitle;
   private AbstractLayout myLayout;
+  private String myLayoutManager;
 
   public LwContainer(final String className){
     super(className);
@@ -72,6 +73,10 @@ public class LwContainer extends LwComponent implements IContainer{
 
   public final void setLayout(final AbstractLayout layout) {
     myLayout = layout;
+  }
+
+  public String getLayoutManager() {
+    return myLayoutManager;
   }
 
   public final boolean isGrid(){
@@ -298,6 +303,7 @@ public class LwContainer extends LwComponent implements IContainer{
    * 'xy' or 'grid'
    */
   protected final void readLayout(final Element element){
+    myLayoutManager = element.getAttributeValue("layout-manager");
     if("xy".equals(element.getName())){
       setLayout(new XYLayoutManager());
     }

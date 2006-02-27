@@ -176,6 +176,7 @@ public final class XmlReader {
       // border
       container.setBorderType(lwContainer.getBorderType());
       container.setBorderTitle(lwContainer.getBorderTitle());
+      container.setLayoutManager(lwContainer.getLayoutManager());
 
       // add children
       for (int i=0; i < lwContainer.getComponentCount(); i++){
@@ -188,9 +189,8 @@ public final class XmlReader {
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
-      radRootContainer.setLayoutManager(lwRootContainer.getLayoutManager());
       radRootContainer.setButtonGroups(lwRootContainer.getButtonGroups());
-      radRootContainer.getDelegee().setBackground(Color.WHITE );
+      radRootContainer.getDelegee().setBackground(Color.WHITE);
     }
 
     return component;

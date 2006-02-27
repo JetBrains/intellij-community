@@ -35,6 +35,8 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type myGridLayoutManagerType = Type.getType(GridLayoutManager.class);
   private static final Type myGridConstraintsType = Type.getType(GridConstraints.class);
 
+  public static GridLayoutCodeGenerator INSTANCE = new GridLayoutCodeGenerator();
+
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
       LwContainer container = (LwContainer) lwComponent;

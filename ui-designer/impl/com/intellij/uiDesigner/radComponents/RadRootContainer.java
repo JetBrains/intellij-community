@@ -26,7 +26,6 @@ import java.util.Locale;
 public final class RadRootContainer extends RadContainer implements IRootContainer {
   private String myClassToBind;
   private String myMainComponentBinding;
-  private String myLayoutManager;
   private Locale myStringDescriptorLocale;
   private List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
 
@@ -68,14 +67,6 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     myMainComponentBinding = mainComponentBinding;
   }
 
-  public String getLayoutManager() {
-    return myLayoutManager;
-  }
-
-  public void setLayoutManager(final String layoutManager) {
-    myLayoutManager = layoutManager;
-  }
-
   public void write(final XmlWriter writer) {
     writer.startElement("form", Utils.FORM_NAMESPACE);
     try{
@@ -87,9 +78,6 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       final String mainComponentBinding = getMainComponentBinding();
       if (mainComponentBinding != null) {
         writer.addAttribute("stored-main-component-binding", mainComponentBinding);
-      }
-      if (myLayoutManager != null) {
-        writer.addAttribute("layout-manager", myLayoutManager);
       }
       writeChildrenImpl(writer);
       if (myButtonGroups.size() > 0) {

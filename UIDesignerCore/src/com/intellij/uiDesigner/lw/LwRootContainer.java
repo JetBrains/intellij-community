@@ -33,7 +33,6 @@ import java.util.Iterator;
 public final class LwRootContainer extends LwContainer implements IRootContainer{
   private String myClassToBind;
   private String myMainComponentBinding;
-  private String myLayoutManager;
   private ArrayList myButtonGroups = new ArrayList();
 
   public LwRootContainer() throws Exception{
@@ -52,10 +51,6 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     myClassToBind = classToBind;
   }
 
-  public String getLayoutManager() {
-    return myLayoutManager;
-  }
-
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     if (element == null) {
       throw new IllegalArgumentException("element cannot be null");
@@ -71,7 +66,6 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     setId("root");
 
     myClassToBind = element.getAttributeValue("bind-to-class");
-    myLayoutManager = element.getAttributeValue("layout-manager");
 
     // Constraints and properties
     for(Iterator i=element.getChildren().iterator(); i.hasNext();){

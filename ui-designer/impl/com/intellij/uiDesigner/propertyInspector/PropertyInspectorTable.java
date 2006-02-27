@@ -115,7 +115,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final MinimumSizeProperty myMinimumSizeProperty;
   private final PreferredSizeProperty myPreferredSizeProperty;
   private final MaximumSizeProperty myMaximumSizeProperty;
-  private final LayoutManagerProperty myLayoutManagerProperty;
+  private final LayoutManagerProperty myLayoutManagerProperty = new LayoutManagerProperty();
   private final ButtonGroupProperty myButtonGroupProperty = new ButtonGroupProperty();
 
   private boolean myInsideSynch;
@@ -136,7 +136,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myMinimumSizeProperty = new MinimumSizeProperty();
     myPreferredSizeProperty = new PreferredSizeProperty();
     myMaximumSizeProperty = new MaximumSizeProperty();
-    myLayoutManagerProperty = new LayoutManagerProperty();
 
     myPropertyEditorListener = new MyPropertyEditorListener();
     myLafManagerListener = new MyLafManagerListener();
@@ -416,7 +415,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private void collectProperties(final RadComponent component, final ArrayList<Property> result) {
     if (component instanceof RadRootContainer){
       addProperty(result, myClassToBindProperty);
-      addProperty(result, myLayoutManagerProperty);
     }
     else {
       final boolean isVSpacer = component instanceof RadVSpacer;
@@ -431,6 +429,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final boolean inGrid = parent != null && parent.isGrid();
 
       if(component instanceof RadContainer){
+        addProperty(result, myLayoutManagerProperty);
         addProperty(result, myBorderProperty);
       }
       if (component instanceof RadContainer && ((RadContainer)component).isGrid()) {

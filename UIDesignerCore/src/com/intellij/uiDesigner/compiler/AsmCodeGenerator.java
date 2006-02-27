@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
@@ -35,7 +36,6 @@ import java.util.Map;
 public class AsmCodeGenerator {
   private LwRootContainer myRootContainer;
   private ClassLoader myLoader;
-  private LayoutCodeGenerator myLayoutCodeGenerator;
   private ArrayList myErrors;
   private ArrayList myWarnings;
 
@@ -45,6 +45,7 @@ public class AsmCodeGenerator {
   private String myClassToBind;
   private byte[] myPatchedData;
 
+  private static Map myContainerLayoutCodeGenerators = new HashMap();
   private static Map myComponentLayoutCodeGenerators = new HashMap();
   private static Map myPropertyCodeGenerators = new HashMap();
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
@@ -53,6 +54,9 @@ public class AsmCodeGenerator {
   private NestedFormLoader myFormLoader;
 
   static {
+    myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_INTELLIJ, new GridLayoutCodeGenerator());
+    myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_GRIDBAG, new GridBagLayoutCodeGenerator());
+
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutCodeGenerator());
     myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutCodeGenerator());
@@ -132,13 +136,6 @@ public class AsmCodeGenerator {
       myErrors.add(new FormErrorInfo(nonEmptyPanel,
                                      "There are non empty panels with XY layout. Please lay them out in a grid."));
       return null;
-    }
-
-    if ("GridBagLayout".equals(myRootContainer.getLayoutManager())) {
-      myLayoutCodeGenerator = new GridBagLayoutCodeGenerator();
-    }
-    else {
-      myLayoutCodeGenerator = new GridLayoutCodeGenerator();
     }
 
     ClassReader reader;
@@ -297,7 +294,7 @@ public class AsmCodeGenerator {
         className = nestedFormContainer.getClassToBind();
       }
       else {
-        className = myLayoutCodeGenerator.mapComponentClass(lwComponent.getComponentClassName());
+        className = getComponentCodeGenerator(lwComponent.getParent()).mapComponentClass(lwComponent.getComponentClassName());
       }
       final Type componentType = typeFromClassName(className);
       int componentLocal = generator.newLocal(componentType);
@@ -313,7 +310,10 @@ public class AsmCodeGenerator {
       validateFieldBinding(lwComponent, componentClass);
       generateFieldBinding(lwComponent, generator, componentLocal);
 
-      getComponentCodeGenerator(lwComponent).generateContainerLayout(lwComponent, generator, componentLocal);
+      if (lwComponent instanceof LwContainer) {
+        getComponentCodeGenerator((LwContainer) lwComponent).generateContainerLayout(lwComponent, generator, componentLocal);
+      }
+
 
       generateComponentProperties(lwComponent, componentClass, generator, componentLocal);
 
@@ -347,12 +347,23 @@ public class AsmCodeGenerator {
       return componentLocal;
     }
 
-    private LayoutCodeGenerator getComponentCodeGenerator(final LwComponent lwComponent) {
-      LayoutCodeGenerator generator = (LayoutCodeGenerator) myComponentLayoutCodeGenerators.get(lwComponent.getClass());
+    private LayoutCodeGenerator getComponentCodeGenerator(final LwContainer container) {
+      LayoutCodeGenerator generator = (LayoutCodeGenerator) myComponentLayoutCodeGenerators.get(container.getClass());
       if (generator != null) {
         return generator;
       }
-      return myLayoutCodeGenerator;
+      LwContainer parent = container;
+      while(parent != null) {
+        final String layoutManager = parent.getLayoutManager();
+        if (layoutManager != null && layoutManager.length() > 0) {
+          generator = (LayoutCodeGenerator) myContainerLayoutCodeGenerators.get(layoutManager);
+          if (generator != null) {
+            return generator;
+          }
+        }
+        parent = parent.getParent();
+      }
+      return GridLayoutCodeGenerator.INSTANCE;
     }
 
     private void generateComponentProperties(final LwComponent lwComponent,
@@ -413,7 +424,8 @@ public class AsmCodeGenerator {
                                                       final GeneratorAdapter generator) throws CodeGenerationException {
       if (component instanceof LwNestedForm) return;
       int componentLocal = ((Integer) myIdToLocalMap.get(component.getId())).intValue();
-      Class componentClass = getComponentClass(myLayoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
+      final LayoutCodeGenerator layoutCodeGenerator = getComponentCodeGenerator(component.getParent());
+      Class componentClass = getComponentClass(layoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
       final Type componentType = Type.getType(componentClass);
 
       final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
