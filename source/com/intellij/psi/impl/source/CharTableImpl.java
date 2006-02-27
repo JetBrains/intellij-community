@@ -91,7 +91,7 @@ public class CharTableImpl implements CharTable {
     }
   }
 
-  private static class WeakCharEntryMap extends ReferenceMap {
+  private static final class WeakCharEntryMap extends ReferenceMap {
     public WeakCharEntryMap() {
       super(ReferenceMap.WEAK, ReferenceMap.WEAK, true);
     }
