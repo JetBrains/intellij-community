@@ -214,10 +214,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
+    final int checkboxWidth = new JCheckBox().getPreferredSize().width;
+
     myChangesList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 1) {
-          toggleSelection();
+        final int idx = myChangesList.locationToIndex(e.getPoint());
+        if (idx >= 0) {
+          final Rectangle baseRect = myChangesList.getCellBounds(idx, idx);
+          baseRect.setSize(checkboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) {
+            toggleChange((Change)myChangesList.getModel().getElementAt(idx));
+          }
         }
       }
     });
@@ -405,13 +412,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     final Object[] values = myChangesList.getSelectedValues();
     if (values != null) {
       for (Object value : values) {
-        if (myIncludedChanges.contains(value)) {
-          myIncludedChanges.remove(value);
-        }
-        else {
-          myIncludedChanges.add((Change)value);
-        }
+        toggleChange((Change)value);
       }
+    }
+    myChangesList.repaint();
+  }
+
+  private void toggleChange(Change value) {
+    if (myIncludedChanges.contains(value)) {
+      myIncludedChanges.remove(value);
+    }
+    else {
+      myIncludedChanges.add(value);
     }
     myChangesList.repaint();
   }
@@ -427,14 +439,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }
       });
 
-      chooser.setSelectedItem(mySelectedChangeList);
-
-      chooser.setEditable(false);
-      JLabel label = new JLabel("Change list: ");
-      label.setLabelFor(chooser);
-      add(label, BorderLayout.CENTER);
-      add(chooser, BorderLayout.EAST);
-
       chooser.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -442,6 +446,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
       });
+
+      chooser.setSelectedItem(mySelectedChangeList);
+      chooser.setEditable(false);
+      chooser.setEnabled(lists.size() > 1);
+      add(chooser, BorderLayout.EAST);
+
+      JLabel label = new JLabel("Change list: ");
+      label.setDisplayedMnemonic('l');
+      label.setLabelFor(chooser);
+      add(label, BorderLayout.CENTER);
     }
   }
 
@@ -463,8 +477,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
                                                                                       SystemInfo.isMac
                                                                                       ? KeyEvent.META_DOWN_MASK
-                                                                                      : KeyEvent.CTRL_DOWN_MASK)),
-                                         getRootPane());
+                                                                                      : KeyEvent.CTRL_DOWN_MASK)), getRootPane());
 
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), getRootPane());
 
@@ -482,26 +495,25 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myRootPane.setHonorComponentsMinimumSize(true);
     final JScrollPane pane = new JScrollPane(myChangesList);
     pane.setPreferredSize(new Dimension(400, 400));
+
+    JPanel topPanel = new JPanel(new BorderLayout());
+
     JPanel listPanel = new JPanel(new BorderLayout());
     listPanel.add(pane);
     listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changed Files"));
-
-    JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(listPanel, BorderLayout.CENTER);
 
     JPanel headerPanel = new JPanel(new BorderLayout());
+    headerPanel.add(new ChangeListChooser(myChangeLists), BorderLayout.EAST);
+    headerPanel.add(createToolbar(), BorderLayout.WEST);
     topPanel.add(headerPanel, BorderLayout.NORTH);
 
-    if (myChangeLists.size() > 1) {
-      headerPanel.add(new ChangeListChooser(myChangeLists), BorderLayout.EAST);
-    }
-
-    headerPanel.add(createToolbar(), BorderLayout.WEST);
-
     myRootPane.setFirstComponent(topPanel);
+
     JPanel bottomPanel = new JPanel(new BorderLayout());
     bottomPanel.add(myAdditionalOptionsPanel, BorderLayout.EAST);
     bottomPanel.add(myCommitMessageArea, BorderLayout.CENTER);
+
     myRootPane.setSecondComponent(bottomPanel);
     myRootPane.setProportion(1);
     return myRootPane;
@@ -697,6 +709,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls
   protected String getDimensionServiceKey() {
     return "CommitChangelistDialog";
+  }
+  
+  public JComponent getPreferredFocusedComponent() {
+    if (VcsConfiguration.getInstance(myProject).PUT_FOCUS_INTO_COMMENT) {
+      return myCommitMessageArea.getTextField();
+    }
+    else {
+      return myChangesList;
+    }
   }
 
   private Change[] getSelectedChanges() {
