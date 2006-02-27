@@ -1,7 +1,5 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -41,16 +39,14 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void projectOpened() {
-    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-      VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
+    VirtualFileManager.getInstance().addVirtualFileListener(myVfsListener);
 
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          myIsInitialized = true;
-          markEverythingDirty();
-        }
-      });
-    }
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        myIsInitialized = true;
+        markEverythingDirty();
+      }
+    });
   }
 
   public void markEverythingDirty() {

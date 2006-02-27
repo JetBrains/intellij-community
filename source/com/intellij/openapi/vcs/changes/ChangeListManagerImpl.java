@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -68,25 +67,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       setDefaultChangeList(list);
     }
 
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          ToolWindowManager.getInstance(myProject).registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
-          myInitilized = true;
-        }
-      });
-    }
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        ToolWindowManager.getInstance(myProject).registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+        myInitilized = true;
+      }
+    });
   }
 
   public void projectClosed() {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      myDisposed = true;
-      myUpdateAlarm.cancelAllRequests();
-      myRepaintAlarm.cancelAllRequests();
+    myDisposed = true;
+    myUpdateAlarm.cancelAllRequests();
+    myRepaintAlarm.cancelAllRequests();
 
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
-      myView.dispose();
-    }
+    ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
+    myView.dispose();
   }
 
   @NonNls

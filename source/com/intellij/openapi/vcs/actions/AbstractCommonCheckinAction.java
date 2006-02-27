@@ -78,9 +78,24 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().saveAll();
     }
-    CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
 
-    /*
+    boolean enforceOldCommit = false;
+    final AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    for (AbstractVcs activeVcs : activeVcss) {
+      if (activeVcs.getChangeProvider() == null) {
+        enforceOldCommit = true;
+      }
+    }
+
+    if (enforceOldCommit) {
+      oldActionPerformed(roots, project, context);
+    }
+    else {
+      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
+    }
+  }
+
+  private void oldActionPerformed(final FilePath[] roots, final Project project, final VcsContext context) {
     int ciType = getCheckinType(roots);
 
     if (ciType == MIXED) {
@@ -100,8 +115,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
       checkinFiles(project, context, roots, env);
     }
-    */
-
   }
 
   protected CheckinEnvironment getCommonEnvironmentFor(FilePath[] roots, Project project) {
