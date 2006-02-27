@@ -45,7 +45,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
 
   public ListenerNavigateButton(RadComponent component) {
     myComponent = component;
-    setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown-small.png"));
+    setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/listener.png"));
     setOpaque(false);
     setFocusable(false);
     setBorderPainted(false);
