@@ -79,7 +79,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         final boolean canExecute = profile != null && profile.isExecutable();
         dialog.setOKActionEnabled(canExecute);
         if (canExecute){
-          manager.setProfile(profile);
+          manager.setProfile(profile.getName());
         }
       }
     });

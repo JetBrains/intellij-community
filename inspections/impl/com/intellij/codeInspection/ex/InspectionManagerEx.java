@@ -1051,8 +1051,8 @@ public class InspectionManagerEx extends InspectionManager implements GlobalInsp
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
   }
 
-  public void setProfile(InspectionProfile profile) {
-    myCurrentProfileName = profile.getName();
+  public void setProfile(String profile) {
+    myCurrentProfileName = profile;
   }
 
   public void setExternalProfile(InspectionProfile profile) {

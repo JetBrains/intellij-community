@@ -88,7 +88,7 @@ public class InspectionApplication {
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       final AnalysisScope scope;
 
-      im.setProfile((InspectionProfile)inspectionProfile);
+      im.setProfile(inspectionProfile.getName());
 
       if (mySourceDirectory == null) {
         scope = new AnalysisScope(myProject);
