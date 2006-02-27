@@ -51,7 +51,7 @@ public class AddNewFavoritesListAction extends AnAction {
   private static String getUniqueName(Project project) {
       String[] names = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
       for (int i = 0; ; i++) {
-        String newName = IdeBundle.message("favorites.list.unnamed", (i > 0 ? i : ""));
+        String newName = IdeBundle.message("favorites.list.unnamed", i > 0 ? i : "");
         if (ArrayUtil.find(names, newName) > -1) continue;
         return newName;
       }

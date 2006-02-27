@@ -4,10 +4,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +25,8 @@ import javax.swing.*;
 /**
  * @author cdr
  */
-public class FavoritesProjectViewPane extends AbstractProjectViewPane implements ProjectComponent {
-  @NonNls static final String ID = "Favorites";
+public class FavoritesProjectViewPane extends AbstractProjectViewPane {
+  @NonNls public static final String ID = "Favorites";
   private FavoritesTreeViewPanel myViewPanel;
   private final ProjectView myProjectView;
   private final FavoritesManager myFavoritesManager;

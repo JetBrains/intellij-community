@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -96,10 +95,9 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
     }
   }
 
-  private void runActivities(final List<Runnable> activities) {
+  private static void runActivities(final List<Runnable> activities) {
     try {
-      for (Iterator<Runnable> iterator = activities.iterator(); iterator.hasNext();) {
-        Runnable runnable = iterator.next();
+      for (Runnable runnable : activities) {
         try {
           runnable.run();
         }

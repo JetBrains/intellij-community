@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider {
+public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent {
   protected final Project myProject;
   protected Runnable myTreeChangeListener;
   protected JTree myTree;

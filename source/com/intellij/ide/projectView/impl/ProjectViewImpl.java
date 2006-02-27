@@ -18,6 +18,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -145,7 +146,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       return o1.getWeight() - o2.getWeight();
     }
   };
-  private final Alarm initAlarm = new Alarm();
   private final FileEditorManager myFileEditorManager;
   private final SelectInManager mySelectInManager;
   private MyPanel myDataProvider;
@@ -190,7 +190,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   public void initComponent() { }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.PROJECT_VIEW);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager != null) {
+      toolWindowManager.unregisterToolWindow(ToolWindowId.PROJECT_VIEW);
+    }
     ModuleManager.getInstance(myProject).removeModuleListener(myModulesListener);
     dispose();
   }
@@ -203,30 +206,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     });
   }
 
-  private void requestToShowInitialPane(final String id, final String subId) {
-    if (id != null) {
-      initAlarm.cancelAllRequests();
-      initAlarm.addRequest(new Runnable() {
-        public void run() {
-          changeView(id, subId);
-        }
-      }, 10);
-    }
-  }
-
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
     myUninitializedPanes.add(pane);
     if (isInitialized) {
       doAddUninitializedPanes();
-    }
-  }
-
-  private void showSavedPane() {
-    AbstractProjectViewPane pane = getProjectViewPaneById(mySavedPaneId);
-    if (pane != null) {
-      requestToShowInitialPane(mySavedPaneId, mySavedPaneSubId);
-      mySavedPaneId = null;
-      mySavedPaneSubId = null;
     }
   }
 
@@ -264,10 +247,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       doAddPane(pane);
     }
     myUninitializedPanes.clear();
-    showSavedPane();
   }
 
   private void doAddPane(final AbstractProjectViewPane newPane) {
+    Pair<String, String> selected = (Pair<String, String>)myCombo.getSelectedItem();
     int index;
     for (index = 0; index < myCombo.getItemCount(); index++) {
       Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(index);
@@ -293,6 +276,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     SelectInTarget selectInTarget = newPane.createSelectInTarget();
     if (selectInTarget != null) {
       mySelectInManager.addTarget(selectInTarget);
+    }
+
+    if (id.equals(mySavedPaneId)) {
+      changeView(mySavedPaneId, mySavedPaneSubId);
+      mySavedPaneId = null;
+      mySavedPaneSubId = null;
+    }
+    else if (selected == null) {
+      changeView(id, subIds==null||subIds.length==0 ? null : subIds[0]);
     }
   }
 
@@ -339,7 +331,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     installLabelFocusListener();
   }
 
-  private synchronized void setupImpl() {
+  // public for tests
+  public synchronized void setupImpl() {
     myCombo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == null) return this;
@@ -396,9 +389,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     splitterProportions.restoreSplitterProportions(myPanel);
     myStructureViewPanel.setVisible(isShowStructure());
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, getComponent(), ToolWindowAnchor.LEFT);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, getComponent(), ToolWindowAnchor.LEFT);
+      toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
+    }
 
     myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myPanel) {
       protected PsiElement[] getSelectedElements() {
@@ -426,7 +421,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     ModuleManager.getInstance(myProject).addModuleListener(myModulesListener);
     isInitialized = true;
     doAddUninitializedPanes();
-    showSavedPane();
   }
 
   private final FocusListener myLabelFocusListener = new FocusListener() {
@@ -450,6 +444,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void viewSelectionChanged() {
     Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
+    if (ids == null) return;
     final String id = ids.first;
     String subId = ids.second;
     if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
@@ -568,7 +563,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void updateToolWindowTitle() {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager == null ? null : toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (toolWindow == null) return;
 
     final PsiElement element = (PsiElement)myDataProvider.getData(DataConstants.PSI_ELEMENT);
