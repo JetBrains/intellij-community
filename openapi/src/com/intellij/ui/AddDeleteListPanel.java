@@ -18,10 +18,10 @@ import java.util.List;
  */
 public abstract class AddDeleteListPanel extends PanelWithButtons {
   private String myTitle;
-  private JButton myAddButton = new JButton(CommonBundle.message("button.add"));
-  private JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
-  private DefaultListModel myListModel = new DefaultListModel();
-  private JList myList = new JList(myListModel);
+  protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
+  protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
+  protected DefaultListModel myListModel = new DefaultListModel();
+  protected JList myList = new JList(myListModel);
 
   public AddDeleteListPanel(final String title,
                             final List initialList) {

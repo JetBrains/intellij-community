@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Initializer.java</file>
+    <line>4</line>
+    <description>'x' should probably not be assigned to 'y'</description>
+  </problem>
+</problems>

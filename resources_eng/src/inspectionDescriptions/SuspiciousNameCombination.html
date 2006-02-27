@@ -1,0 +1,12 @@
+<html>
+<body>
+<font face="verdana" size="-1">Reports assignments and function calls where the name of the variable to which
+  a value is assigned or the function parameter does not seem to match the name of the value assigned to it.
+  For example: <br><b><font color="#000080">int x = 0;<br>int y = x;</font></b><br>
+  or
+  <br><b><font color="#000080">int x = 0, y = 0;<br>Rectangle rc = new Rectangle(y, x, 20, 20);</font></b><br>
+  <p>The configuration pane allows to specify the names which should not be used together: the error is reported
+  if the parameter name or assignment target name contains words from one group and the name of the assigned or passed
+  variable contains words from a different group.</p>
+  </font></body>
+</html>
