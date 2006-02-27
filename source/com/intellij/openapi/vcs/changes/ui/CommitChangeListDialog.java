@@ -1,6 +1,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.localVcs.LocalVcs;
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,29 +49,94 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private JPanel myAdditionalOptionsPanel;
 
   private Project myProject;
-  private Collection<Change> myChanges;
+
+  private ChangeList mySelectedChangeList;
+  private Collection<Change> myAllChanges;
   private Collection<Change> myIncludedChanges;
 
   private List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
   private List<CheckinHandler> myHandlers = new ArrayList<CheckinHandler>();
   private String myActionName;
+  private List<ChangeList> myChangeLists;
 
-  public CommitChangeListDialog(Project project, ChangeList list, final List<Change> changes) {
+  private static void commit(Project project, List<ChangeList> list, final List<Change> changes) {
+    new CommitChangeListDialog(project, list, changes).show();
+  }
+
+  public static void commitFile(Project project, VirtualFile file) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final Change change = manager.getChange(file);
+    if (change == null) {
+      Messages.showWarningDialog(project, "No changes for file: '" + file.getPresentableUrl() + "'.", "No Changes Detected");
+      return;
+    }
+
+    commit(project, Arrays.asList(manager.getChangeList(change)), Arrays.asList(change));
+  }
+
+  public static void commitFiles(final Project project, Collection<VirtualFile> directoriesOrFiles) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final Collection<Change> changes = new HashSet<Change>();
+    for (VirtualFile file : directoriesOrFiles) {
+      changes.addAll(manager.getChangesIn(file));
+    }
+
+    commitChanges(project, changes);
+  }
+
+  public static void commitPaths(final Project project, Collection<FilePath> paths) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final Collection<Change> changes = new HashSet<Change>();
+    for (FilePath path : paths) {
+      changes.addAll(manager.getChangesIn(path));
+    }
+
+    commitChanges(project, changes);
+  }
+
+  public static void commitChanges(final Project project, final Collection<Change> changes) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+
+    if (changes.isEmpty()) {
+      Messages.showWarningDialog(project, "No changes detected." , "No Changes Detected");
+      return;
+    }
+
+    Set<ChangeList> lists = new THashSet<ChangeList>();
+    for (Change change : changes) {
+      lists.add(manager.getChangeList(change));
+    }
+
+    commit(project, new ArrayList<ChangeList>(lists), new ArrayList<Change>(changes));
+  }
+
+  private CommitChangeListDialog(Project project, List<ChangeList> changeLists, final List<Change> changes) {
     super(project, true);
     myProject = project;
-    myChanges = list.getChanges();
+    myChangeLists = changeLists;
+    myAllChanges = new ArrayList<Change>();
+
+    ChangeList initalListSelection = null;
+    for (ChangeList list : changeLists) {
+      myAllChanges.addAll(list.getChanges());
+      if (list.isDefault()) {
+        initalListSelection = list;
+      }
+    }
+
+    if (initalListSelection == null) {
+      initalListSelection = changeLists.get(0);
+    }
+
     myIncludedChanges = new ArrayList<Change>(changes);
-    myActionName = "Commit Changes"; // TODO: should be customizable;
+    myActionName = "Commit Changes"; // TODO: should be customizable?
 
     myAdditionalOptionsPanel = new JPanel();
     myCommitMessageArea = new CommitMessage();
 
-    final DefaultListModel listModel = new DefaultListModel();
-    myChangesList = new JList(listModel);
+    myChangesList = new JList(new DefaultListModel());
 
-    for (Change change : myChanges) {
-      listModel.addElement(change);
-    }
+    setSelectedList(initalListSelection);
 
     setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
 
@@ -164,6 +231,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     init();
   }
 
+  private void rebuildList() {
+    final DefaultListModel listModel = (DefaultListModel)myChangesList.getModel();
+    listModel.removeAllElements();
+    for (Change change : getCurrentDisplayedChanges()) {
+      listModel.addElement(change);
+    }
+  }
+
   private boolean checkComment() {
     if (VcsConfiguration.getInstance(myProject).FORCE_NON_EMPTY_COMMENT && (getCommitMessage().length() == 0)) {
       int requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
@@ -220,7 +295,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           public void run() {
             try {
               Map<AbstractVcs, List<Change>> changesByVcs = new HashMap<AbstractVcs, List<Change>>();
-              for (Change change : myIncludedChanges) {
+              for (Change change : getCurrentIncludedChanges()) {
                 final AbstractVcs vcs = getVcsForChange(change);
                 if (vcs != null) {
                   List<Change> vcsChanges = changesByVcs.get(vcs);
@@ -341,6 +416,65 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesList.repaint();
   }
 
+  private class ChangeListChooser extends JPanel {
+    public ChangeListChooser(List<ChangeList> lists) {
+      super(new BorderLayout());
+      final JComboBox chooser = new JComboBox(lists.toArray());
+      chooser.setRenderer(new ColoredListCellRenderer() {
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          final ChangeList l = ((ChangeList)value);
+          append(l.getDescription(), l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      });
+
+      chooser.setSelectedItem(mySelectedChangeList);
+
+      chooser.setEditable(false);
+      JLabel label = new JLabel("Change list: ");
+      label.setLabelFor(chooser);
+      add(label, BorderLayout.CENTER);
+      add(chooser, BorderLayout.EAST);
+
+      chooser.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            setSelectedList((ChangeList)chooser.getSelectedItem());
+          }
+        }
+      });
+    }
+  }
+
+  private void setSelectedList(final ChangeList list) {
+    mySelectedChangeList = list;
+    rebuildList();
+  }
+
+  private JComponent createToolbar() {
+    DefaultActionGroup toolBarGroup = new DefaultActionGroup();
+    final ShowDiffAction diffAction = new ShowDiffAction();
+    final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        rebuildList();
+      }
+    };
+
+    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
+                                                                                      SystemInfo.isMac
+                                                                                      ? KeyEvent.META_DOWN_MASK
+                                                                                      : KeyEvent.CTRL_DOWN_MASK)),
+                                         getRootPane());
+
+    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), getRootPane());
+
+    toolBarGroup.add(diffAction);
+    toolBarGroup.add(moveAction);
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolBarGroup, true).getComponent();
+  }
+
+
   @Nullable
   protected JComponent createCenterPanel() {
     myChangesList.setVisibleRowCount(10);
@@ -348,9 +482,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myRootPane.setHonorComponentsMinimumSize(true);
     final JScrollPane pane = new JScrollPane(myChangesList);
     pane.setPreferredSize(new Dimension(400, 400));
+    JPanel listPanel = new JPanel(new BorderLayout());
+    listPanel.add(pane);
+    listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changed Files"));
+
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(pane);
-    topPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changed Files"));
+    topPanel.add(listPanel, BorderLayout.CENTER);
+
+    JPanel headerPanel = new JPanel(new BorderLayout());
+    topPanel.add(headerPanel, BorderLayout.NORTH);
+
+    if (myChangeLists.size() > 1) {
+      headerPanel.add(new ChangeListChooser(myChangeLists), BorderLayout.EAST);
+    }
+
+    headerPanel.add(createToolbar(), BorderLayout.WEST);
+
     myRootPane.setFirstComponent(topPanel);
     JPanel bottomPanel = new JPanel(new BorderLayout());
     bottomPanel.add(myAdditionalOptionsPanel, BorderLayout.EAST);
@@ -407,9 +554,28 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  private Collection<Change> getCurrentDisplayedChanges() {
+    return filterBySelectedChangeList(myAllChanges);
+  }
+
+  private Collection<Change> getCurrentIncludedChanges() {
+    return filterBySelectedChangeList(myIncludedChanges);
+  }
+
+  private Collection<Change> filterBySelectedChangeList(final Collection<Change> changes) {
+    List<Change> filtered = new ArrayList<Change>();
+    final ChangeListManager manager = ChangeListManager.getInstance(myProject);
+    for (Change change : changes) {
+      if (manager.getChangeList(change) == mySelectedChangeList) {
+        filtered.add(change);
+      }
+    }
+    return filtered;
+  }
+
   public List<AbstractVcs> getAffectedVcses() {
     Set<AbstractVcs> result = new HashSet<AbstractVcs>();
-    for (Change change : myChanges) {
+    for (Change change : myAllChanges) {
       final AbstractVcs vcs = getVcsForChange(change);
       if (vcs != null) {
         result.add(vcs);
@@ -433,7 +599,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<VirtualFile> getRoots() {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Set<VirtualFile> result = new HashSet<VirtualFile>();
-    for (Change change : myChanges) {
+    for (Change change : getCurrentDisplayedChanges()) {
       final FilePath filePath = getFilePath(change);
       VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
       if (root != null) {
@@ -461,7 +627,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public Collection<VirtualFile> getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Change change: myIncludedChanges) {
+    for (Change change: getCurrentIncludedChanges()) {
       final FilePath path = getFilePath(change);
       final VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
@@ -474,7 +640,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public Collection<File> getFiles() {
     List<File> result = new ArrayList<File>();
-    for (Change change: myIncludedChanges) {
+    for (Change change: getCurrentIncludedChanges()) {
       final FilePath path = getFilePath(change);
       final File file = path.getIOFile();
       if (file != null) {
@@ -487,7 +653,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private FilePath[] getPaths() {
     List<FilePath> result = new ArrayList<FilePath>();
-    for (Change change : myIncludedChanges) {
+    for (Change change : getCurrentIncludedChanges()) {
       result.add(getFilePath(change));
     }
     return result.toArray(new FilePath[result.size()]);
@@ -533,10 +699,47 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return "CommitChangelistDialog";
   }
 
+  private Change[] getSelectedChanges() {
+    final Object[] o = myChangesList.getSelectedValues();
+    final Change[] changes = new Change[o.length];
+    for (int i = 0; i < changes.length; i++) {
+      changes[i] = (Change)o[i];
+    }
+    return changes;
+  }
+
+  private ChangeList[] getSelectedChangeLists() {
+    return new ChangeList[] {mySelectedChangeList};
+  }
+
+  private VirtualFile[] getSelectedFiles() {
+    final Change[] changes = getSelectedChanges();
+    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (Change change : changes) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        final VirtualFile file = afterRevision.getFile().getVirtualFile();
+        if (file != null && file.isValid()) {
+          files.add(file);
+        }
+      }
+    }
+    return files.toArray(new VirtualFile[files.size()]);
+  }
+
   @Nullable
   public Object getData(String dataId) {
     if (CheckinProjectPanel.PANEL.equals(dataId)) {
       return this;
+    }
+    else if (DataConstants.CHANGES.equals(dataId)) {
+      return getSelectedChanges();
+    }
+    else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
+      return getSelectedChangeLists();
+    }
+    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+      return getSelectedFiles();
     }
 
     return null;

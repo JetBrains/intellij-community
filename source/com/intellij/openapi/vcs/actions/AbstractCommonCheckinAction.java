@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -74,7 +75,12 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     FilePath[] roots = filterDescindingFiles(getRoots(context), project);
 
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().saveAll();
+    }
+    CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
 
+    /*
     int ciType = getCheckinType(roots);
 
     if (ciType == MIXED) {
@@ -94,6 +100,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
       checkinFiles(project, context, roots, env);
     }
+    */
 
   }
 

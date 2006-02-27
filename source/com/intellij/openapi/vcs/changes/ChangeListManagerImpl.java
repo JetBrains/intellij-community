@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -14,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -341,6 +339,50 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  @Nullable
+  public Change getChange(VirtualFile file) {
+    synchronized (myChangeLists) {
+      for (ChangeList list : myChangeLists) {
+        for (Change change : list.getChanges()) {
+          final ContentRevision afterRevision = change.getAfterRevision();
+          if (afterRevision != null && afterRevision.getFile().getVirtualFile() == file) return change;
+        }
+      }
+
+      return null;
+    }
+  }
+
+
+  @NotNull
+  public Collection<Change> getChangesIn(VirtualFile dir) {
+    return getChangesIn(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir));
+  }
+
+  @NotNull
+  public Collection<Change> getChangesIn(final FilePath dirPath) {
+    synchronized (myChangeLists) {
+      List<Change> changes = new ArrayList<Change>();
+      for (ChangeList list : myChangeLists) {
+        for (Change change : list.getChanges()) {
+          final ContentRevision afterRevision = change.getAfterRevision();
+          if (afterRevision != null && afterRevision.getFile().isUnder(dirPath, false)) {
+            changes.add(change);
+            continue;
+          }
+
+          final ContentRevision beforeRevision = change.getBeforeRevision();
+          if (beforeRevision != null && beforeRevision.getFile().isUnder(dirPath, false)) {
+            changes.add(change);
+          }
+        }
+      }
+
+      return changes;
+    }
+  }
+
+
   public class RefreshAction extends AnAction {
     public RefreshAction() {
       super("Refresh", "Refresh VCS changes", IconLoader.getIcon("/actions/sync.png"));
@@ -428,106 +470,35 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
       final ChangeList list = getChangeListIfOnlyOne(changes);
       if (list == null) return;
-      new CommitChangeListDialog(myProject, list, Arrays.asList(changes)).show();
+
+      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes));
     }
   }
 
-  public class RemoveChangeListAction extends AnAction {
+  public static class RemoveChangeListAction extends AnAction {
     public RemoveChangeListAction() {
       super("Remove Changelist", "Remove changelist and move all changes to default", IconLoader.getIcon("/actions/exclude.png"));
     }
 
-
     public void update(AnActionEvent e) {
+      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && !lists[0].isDefault());
+      e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 && !lists[0].isDefault());
     }
 
     public void actionPerformed(AnActionEvent e) {
+      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
       final ChangeList list = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS))[0];
       int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
-               Messages.showYesNoDialog(myProject,
+               Messages.showYesNoDialog(project,
                                         "Are you sure want to remove changelist '" + list.getDescription() + "'?\n" +
                                         "All changes will be moved to default changelist.",
                                         "Remove Change List",
                                         Messages.getQuestionIcon());
 
       if (rc == DialogWrapper.OK_EXIT_CODE) {
-        removeChangeList(list);
+        ChangeListManager.getInstance(project).removeChangeList(list);
       }
-    }
-  }
-
-  public class MoveChangesToAnotherListAction extends AnAction {
-    public MoveChangesToAnotherListAction() {
-      super("Move to another list", "Move selected changes to another changelist", IconLoader.getIcon("/actions/fileStatus.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(changes != null && changes.length > 0);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      if (changes == null) return;
-
-      ChangeListChooser chooser = new ChangeListChooser(myProject, getChangeLists(), null);
-      chooser.show();
-      ChangeList resultList = chooser.getSelectedList();
-      if (resultList != null) {
-        moveChangesTo(resultList, changes);
-      }
-    }
-  }
-
-  public class ShowDiffAction extends AnAction {
-    public ShowDiffAction() {
-      super("Show Diff", "Show diff for selected change", IconLoader.getIcon("/actions/diff.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(changes != null && changes.length == 1);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      if (changes == null) return;
-
-      Change change = changes[0];
-
-      final DiffTool tool = DiffManager.getInstance().getDiffTool();
-
-      final ContentRevision bRev = change.getBeforeRevision();
-      final ContentRevision aRev = change.getAfterRevision();
-
-      if (bRev != null && bRev.getFile().getFileType().isBinary() || aRev != null && aRev.getFile().getFileType().isBinary()) {
-        return;
-      }
-
-      String title = bRev != null ? bRev.getFile().getPath() : aRev != null ? aRev.getFile().getPath() : "Unknown diff";
-      final SimpleDiffRequest diffReq = new SimpleDiffRequest(myProject, title);
-
-      diffReq.setContents(createContent(bRev), createContent(aRev));
-      diffReq.setContentTitles("Base version", "Your version");
-      tool.show(diffReq);
-    }
-
-    private DiffContent createContent(ContentRevision revision) {
-      if (revision == null) return new SimpleContent("");
-      if (revision instanceof CurrentContentRevision) {
-        final CurrentContentRevision current = (CurrentContentRevision)revision;
-        final VirtualFile vFile = current.getVirtualFile();
-        return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
-      }
-
-      final String revisionContent = revision.getContent();
-      SimpleContent content = revisionContent == null
-                              ? new SimpleContent("")
-                              : new SimpleContent(revisionContent, revision.getFile().getFileType());
-      content.setReadOnly(true);
-      return content;
     }
   }
 

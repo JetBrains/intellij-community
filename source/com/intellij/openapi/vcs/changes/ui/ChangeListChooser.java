@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collection;
@@ -51,22 +49,6 @@ public class ChangeListChooser extends DialogWrapper {
       myExisitingsCombo.setSelectedItem(defaultSelection);
     }
 
-    myRbExisting.addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-        myExisitingsCombo.requestFocus();
-      }
-
-      public void focusLost(FocusEvent e) {}
-    });
-
-    myRbNew.addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-        myNewListNameField.requestFocus();
-      }
-
-      public void focusLost(FocusEvent e) {}
-    });
-
     myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         append(((ChangeList)value).getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -75,8 +57,7 @@ public class ChangeListChooser extends DialogWrapper {
 
     myRbExisting.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        myExisitingsCombo.setEnabled(myRbExisting.isSelected());
-        myNewListNameField.setEnabled(!myRbExisting.isSelected());
+        updateEnabledItems();
       }
     });
 
@@ -87,9 +68,28 @@ public class ChangeListChooser extends DialogWrapper {
       myRbNew.setSelected(true);
     }
 
+    updateEnabledItems();
+
     setTitle("Choose Changelist");
 
     init();
+  }
+
+  private void updateEnabledItems() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myRbExisting.isSelected()) {
+          myExisitingsCombo.setEnabled(true);
+          myNewListNameField.setEnabled(false);
+          myExisitingsCombo.requestFocus();
+        }
+        else {
+          myExisitingsCombo.setEnabled(false);
+          myNewListNameField.setEnabled(true);
+          myNewListNameField.requestFocus();
+        }
+      }
+    });
   }
 
   public JComponent getPreferredFocusedComponent() {
