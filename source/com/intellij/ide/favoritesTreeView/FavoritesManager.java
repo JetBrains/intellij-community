@@ -34,7 +34,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     void listAdded(String listName);
     void listRemoved(String listName);
   }
-  private final FavoritesListener fireListener = new FavoritesListener() {
+  private final FavoritesListener fireListeners = new FavoritesListener() {
     public void rootsChanged(String listName) {
       FavoritesListener[] listeners = myListeners.toArray(new FavoritesListener[myListeners.size()]);
       for (FavoritesListener listener : listeners) {
@@ -57,10 +57,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   };
 
-  public void addFavoritesListener(FavoritesListener listener) {
+  public synchronized void addFavoritesListener(FavoritesListener listener) {
     myListeners.add(listener);
   }
-  public void removeFavoritesListener(FavoritesListener listener) {
+  public synchronized void removeFavoritesListener(FavoritesListener listener) {
     myListeners.remove(listener);
   }
 
@@ -77,15 +77,15 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return keys.toArray(new String[keys.size()]);
   }
 
-  public void createNewList(@NotNull String name){
+  public synchronized void createNewList(@NotNull String name){
     myName2FavoritesRoots.put(name, new ArrayList<Pair<AbstractUrl, String>>());
-    fireListener.listAdded(name);
+    fireListeners.listAdded(name);
   }
 
-  public boolean removeFavoritesList(@NotNull String name){
+  public synchronized boolean removeFavoritesList(@NotNull String name){
     if (name.equals(myProject.getName())) return false;
     boolean result = myName2FavoritesRoots.remove(name) != null;
-    fireListener.listRemoved(name);
+    fireListeners.listRemoved(name);
     return result;
   }
 
@@ -93,7 +93,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return myName2FavoritesRoots.get(name);
   }
 
-  public boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
+  public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
     List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, ViewSettings.DEFAULT);
     if (nodes.isEmpty()) return false;
@@ -103,11 +103,11 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       AbstractUrl url = createUrlByElement(value);
       list.add(Pair.create(url, className));
     }
-    fireListener.rootsChanged(name);
+    fireListeners.rootsChanged(name);
     return true;
   }
 
-  public boolean removeRoot(@NotNull String name, @NotNull Object element) {
+  public synchronized boolean removeRoot(@NotNull String name, @NotNull Object element) {
     AbstractUrl url = createUrlByElement(element);
     if (url == null) return false;
     List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
@@ -117,16 +117,16 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         break;
       }
     }
-    fireListener.rootsChanged(name);
+    fireListeners.rootsChanged(name);
     return true;
   }
 
-  public boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
+  public synchronized boolean renameFavoritesList(@NotNull String oldName, @NotNull String newName) {
     List<Pair<AbstractUrl, String>> list = myName2FavoritesRoots.remove(oldName);
     if (list != null && newName.length() > 0) {
       myName2FavoritesRoots.put(newName, list);
-      fireListener.listRemoved(oldName);
-      fireListener.listAdded(newName);
+      fireListeners.listRemoved(oldName);
+      fireListeners.listAdded(newName);
       return true;
     }
     return false;

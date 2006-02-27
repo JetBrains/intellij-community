@@ -51,7 +51,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     NamedScope scope = scopesHolder.getScope(subId);
     PackageSet packageSet = scope.getValue();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-
+    if (psiFile == null) return false;
     return packageSet.contains(psiFile, scopesHolder);
   }
 }

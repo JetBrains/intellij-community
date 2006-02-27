@@ -204,12 +204,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void requestToShowInitialPane(final String id, final String subId) {
-    initAlarm.cancelAllRequests();
-    initAlarm.addRequest(new Runnable() {
-      public void run() {
-        changeView(id, subId);
-      }
-    }, 10);
+    if (id != null) {
+      initAlarm.cancelAllRequests();
+      initAlarm.addRequest(new Runnable() {
+        public void run() {
+          changeView(id, subId);
+        }
+      }, 10);
+    }
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
@@ -223,6 +225,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     AbstractProjectViewPane pane = getProjectViewPaneById(mySavedPaneId);
     if (pane != null) {
       requestToShowInitialPane(mySavedPaneId, mySavedPaneSubId);
+      mySavedPaneId = null;
+      mySavedPaneSubId = null;
     }
   }
 
@@ -242,9 +246,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     }
     myId2Pane.remove(idToRemove);
-    Pair<String, String> ids = (Pair<String, String>)myCombo.getSelectedItem();
-    myCurrentViewId = ids == null ? null : ids.getFirst();
-    myCurrentViewSubId = ids == null ? null : ids.getSecond();
+    viewSelectionChanged();
   }
 
   private void removeSelectInTargetsFor(final AbstractProjectViewPane pane) {
@@ -756,7 +758,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void changeView(@NotNull String viewId, @Nullable String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
-    if (!viewId.equals(getCurrentViewId()) || (subId != null && !subId.equals(pane.getSubId()))) {
+    if (!viewId.equals(getCurrentViewId())
+        || subId != null && !subId.equals(pane.getSubId()) ||
+        // element not in model anymore
+        pane != null && ((DefaultComboBoxModel)myCombo.getModel()).getIndexOf(Pair.create(viewId, pane.getSubId())) == -1) {
       myCombo.setSelectedItem(Pair.create(viewId, subId));
       viewSelectionChanged();
     }

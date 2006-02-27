@@ -49,15 +49,18 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane implements
         refreshMySubIdsAndSelect(selectedSubId);
       }
 
-      private void refreshMySubIdsAndSelect(final String listName) {
+      private void refreshMySubIdsAndSelect(String listName) {
+        myFavoritesManager.removeFavoritesListener(myFavoritesListener);
         myProjectView.removeProjectPane(FavoritesProjectViewPane.this);
         myProjectView.addProjectPane(FavoritesProjectViewPane.this);
-        if (ArrayUtil.find(myFavoritesManager.getAvailableFavoritesLists(), listName) != -1) {
-          myProjectView.changeView(ID, listName);
+        myFavoritesManager.addFavoritesListener(myFavoritesListener);
+
+        if (ArrayUtil.find(myFavoritesManager.getAvailableFavoritesLists(), listName) == -1) {
+          listName = null;
         }
+        myProjectView.changeView(ID, listName);
       }
     };
-    myFavoritesManager.addFavoritesListener(myFavoritesListener);
   }
   public static FavoritesProjectViewPane getInstance(Project project) {
     return project.getComponent(FavoritesProjectViewPane.class);
@@ -145,7 +148,8 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane implements
 
   //project component related
   public void projectOpened() {
-    myFavoritesListener.listAdded(null);
+    myProjectView.addProjectPane(this);
+    myFavoritesManager.addFavoritesListener(myFavoritesListener);
   }
 
   public void projectClosed() {

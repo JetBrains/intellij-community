@@ -33,7 +33,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   private final FavoritesManager myFavoritesManager;
   private final String myListName;
 
-  public FavoritesTreeStructure(Project project, final String name) {
+  public FavoritesTreeStructure(Project project, @NotNull final String name) {
     super(project, FavoritesProjectViewPane.ID);
     myListName = name;
     myFavoritesManager = FavoritesManager.getInstance(project);
@@ -61,8 +61,10 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
   //for tests only
-  public Collection<AbstractTreeNode> getFavoritesRoots() {
-    return createFavoritesRoots(myFavoritesManager.getFavoritesListRootUrls(myListName));
+  @NotNull public Collection<AbstractTreeNode> getFavoritesRoots() {
+    List<Pair<AbstractUrl, String>> urls = myFavoritesManager.getFavoritesListRootUrls(myListName);
+    if (urls == null) return Collections.emptyList();
+    return createFavoritesRoots(urls);
   }
 
   public Object[] getChildElements(Object element) {
@@ -152,7 +154,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);
   }
 
-  private Collection<AbstractTreeNode> createFavoritesRoots(@NotNull List<Pair<AbstractUrl,String>> urls) {
+  @NotNull private Collection<AbstractTreeNode> createFavoritesRoots(@NotNull List<Pair<AbstractUrl,String>> urls) {
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (Pair<AbstractUrl, String> pair : urls) {
       AbstractUrl abstractUrl = pair.getFirst();
