@@ -21,7 +21,7 @@ import gnu.trove.TObjectHashingStrategy;
 /**
  * @author max
  */
-public class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
+public final class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
   public int computeHashCode(final CharSequence chars) {
     return StringUtil.stringHashCode(chars);
   }
