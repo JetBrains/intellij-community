@@ -20,6 +20,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
@@ -47,8 +48,8 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myActions;
   }
 
-  public void setActions(final AnAction[] actions) {
-    myActions = actions != null ? actions : AnAction.EMPTY_ARRAY;
+  public void setActions(@NotNull final AnAction... actions) {
+    myActions = actions;
   }
 
   public ProcessHandler getProcessHandler() {

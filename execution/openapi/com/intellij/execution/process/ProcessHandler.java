@@ -24,13 +24,13 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
-  private List<ProcessListener> myListeners = new ArrayList<ProcessListener>();
+  private final List<ProcessListener> myListeners = new CopyOnWriteArrayList<ProcessListener>();
 
   private static final int STATE_INITIAL     = 0;
   private static final int STATE_STARTING    = 1;
@@ -105,18 +105,13 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public void addProcessListener(final ProcessListener listener) {
     synchronized(myListeners) {
-      final ArrayList<ProcessListener> processListeners = new ArrayList<ProcessListener>(myListeners.size() + 1);
-      processListeners.addAll(myListeners);
-      processListeners.add(listener);
-      myListeners = processListeners;
+      myListeners.add(listener);
     }
   }
 
   public void removeProcessListener(final ProcessListener listener) {
     synchronized(myListeners) {
-      final ArrayList<ProcessListener> processListeners = new ArrayList<ProcessListener>(myListeners);
-      processListeners.remove(listener);
-      myListeners = processListeners;
+      myListeners.remove(listener);
     }
   }
 
