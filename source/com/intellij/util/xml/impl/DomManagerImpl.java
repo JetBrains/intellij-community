@@ -21,6 +21,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.core.CodeGenerationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
-  
+
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
@@ -264,6 +265,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public DomElement getDomElement(final XmlTag tag) {
     final DomInvocationHandler handler = _getDomElement(tag);
     return handler != null ? handler.getProxy() : null;
+  }
+
+  public final Collection<PsiElement> getPsiElements(final DomElement element) {
+    return ContainerUtil.concat(myPsiElementProviders, new Function<Function<DomElement, Collection<PsiElement>>, Collection<PsiElement>>() {
+      public Collection<PsiElement> fun(final Function<DomElement, Collection<PsiElement>> s) {
+        return s.fun(element);
+      }
+    });
   }
 
   public void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider) {

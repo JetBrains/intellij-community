@@ -271,11 +271,11 @@ public class ContainerUtil {
     return (T)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
   }
 
-  public static <T,V> List<T> concat(V[] array, Function<V,List<T>> fun) {
+  public static <T,V> List<T> concat(V[] array, Function<V,Collection<T>> fun) {
     return concat(Arrays.asList(array), fun);
   }
 
-  public static <T,V> List<T> concat(Iterable<V> list, Function<V,List<T>> fun) {
+  public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<T>> fun) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(fun.fun(v));

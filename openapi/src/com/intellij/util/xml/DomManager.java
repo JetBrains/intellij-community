@@ -40,6 +40,8 @@ public abstract class DomManager {
   @Nullable
   public abstract DomElement getDomElement(final XmlTag tag);
 
+  public abstract Collection<PsiElement> getPsiElements(DomElement element);
+
   public abstract void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
 
   public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
