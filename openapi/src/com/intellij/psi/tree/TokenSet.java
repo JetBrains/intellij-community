@@ -98,8 +98,8 @@ public class TokenSet {
     return mySet.contains(t);
   }
 
-  private static class TokenHashingStrategy implements TObjectHashingStrategy<IElementType> {
-    public static TokenHashingStrategy INSTANCE = new TokenHashingStrategy();
+  private static final class TokenHashingStrategy implements TObjectHashingStrategy<IElementType> {
+    public static final TokenHashingStrategy INSTANCE = new TokenHashingStrategy();
     public int computeHashCode(final IElementType token) {
       return token != null ? token.getIndex() : 0;
     }
