@@ -1,18 +1,18 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 
 import java.util.Iterator;
 import java.util.List;
@@ -41,78 +41,188 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doExitPointsTest(true);
   }
 
-  public void testExitPoints5() throws Exception { doTest(); }
-  public void testExitPoints6() throws Exception { doExitPointsTest(false); }
-  public void testExitPoints7() throws Exception { doExitPointsTest(false); }
+  public void testExitPoints5() throws Exception {
+    doTest();
+  }
 
-  public void testBooleanExpression() throws Exception { doTest(); }
+  public void testExitPoints6() throws Exception {
+    doExitPointsTest(false);
+  }
 
-  public void testScr6241() throws Exception { doTest(); }
+  public void testExitPoints7() throws Exception {
+    doExitPointsTest(false);
+  }
 
-  public void testScr7091() throws Exception { doTest(); }
+  public void testBooleanExpression() throws Exception {
+    doTest();
+  }
 
-  public void testScr10464() throws Exception { doTest(); }
+  public void testScr6241() throws Exception {
+    doTest();
+  }
 
-  public void testScr9852() throws Exception { doTest(); }
+  public void testScr7091() throws Exception {
+    doTest();
+  }
 
-  public void testUseVarAfterTry() throws Exception { doTest(); }
+  public void testScr10464() throws Exception {
+    doTest();
+  }
 
-  public void testOneBranchAssignment() throws Exception { doTest(); }
+  public void testScr9852() throws Exception {
+    doTest();
+  }
 
-  public void testExtractFromCodeBlock() throws Exception { doTest(); }
+  public void testUseVarAfterTry() throws Exception {
+    doTest();
+  }
 
-  public void testUnusedInitializedVar() throws Exception { doTest(); }
+  public void testOneBranchAssignment() throws Exception {
+    doTest();
+  }
 
-  public void testTryFinally() throws Exception { doTest(); }
+  public void testExtractFromCodeBlock() throws Exception {
+    doTest();
+  }
 
-  public void testFinally() throws Exception { doTest(); }
+  public void testUnusedInitializedVar() throws Exception {
+    doTest();
+  }
 
-  public void testExtractFromAnonymous() throws Exception { doTest(); }
+  public void testTryFinally() throws Exception {
+    doTest();
+  }
 
-  public void testSCR12245() throws Exception { doTest(); }
+  public void testFinally() throws Exception {
+    doTest();
+  }
 
-  public void testSCR15815() throws Exception { doTest(); }
+  public void testExtractFromAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testSCR12245() throws Exception {
+    doTest();
+  }
+
+  public void testSCR15815() throws Exception {
+    doTest();
+  }
 
   public void testSCR27887() throws Exception {
-    doTest(); 
+    doTest();
   }
-  public void testSCR28427() throws Exception { doTest(); }
-  public void testTryFinallyInsideFor() throws Exception { doTest(); }
 
-  public void testExtractFromTryFinally() throws Exception { doTest(); }
+  public void testSCR28427() throws Exception {
+    doTest();
+  }
+
+  public void testTryFinallyInsideFor() throws Exception {
+    doTest();
+  }
+
+  public void testExtractFromTryFinally() throws Exception {
+    doTest();
+  }
 
   public void testLesyaBug() throws Exception {
-    myCatchOnNewLine = false;    
-    doTest(); 
+    myCatchOnNewLine = false;
+    doTest();
   }
 
-  public void testForEach() throws Exception { doTest(); }
+  public void testForEach() throws Exception {
+    doTest();
+  }
 
-  public void testAnonInner() throws Exception { doTest(); }
+  public void testAnonInner() throws Exception {
+    doTest();
+  }
 
-  public void testExpressionDuplicates() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicates() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicates2() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicates3() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicates4() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicates5() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicatesWithOutputValue() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicatesWithOutputValue1() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicatesWithMultExitPoints() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicatesWithReturn() throws Exception { doDuplicatesTest(); }
-  public void testCodeDuplicatesWithReturn2() throws Exception { doDuplicatesTest(); }
-  public void testSCR32924() throws Exception { doDuplicatesTest(); }
-  public void testFinalOutputVar() throws Exception { doDuplicatesTest(); }
-  public void testIdeaDev2291() throws Exception { doTest(); }
-  public void testOxfordBug() throws Exception { doTest(); }
-  public void testGuardMethodDuplicates() throws Exception { doDuplicatesTest(); }
-  public void testGuardMethodDuplicates1() throws Exception { doDuplicatesTest(); }
+  public void testFinalParamUsedInsideAnon() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = false;
+    doTest();
+  }
+
+  public void testNonFinalWritableParam() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = true;
+    doTest();
+  }
+
+  public void testExpressionDuplicates() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicates() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicates2() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicates3() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicates4() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicates5() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithOutputValue() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithOutputValue1() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithMultExitPoints() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithReturn() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithReturn2() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSCR32924() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testFinalOutputVar() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testIdeaDev2291() throws Exception {
+    doTest();
+  }
+
+  public void testOxfordBug() throws Exception {
+    doTest();
+  }
+
+  public void testGuardMethodDuplicates() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testGuardMethodDuplicates1() throws Exception {
+    doDuplicatesTest();
+  }
 
   private void doDuplicatesTest() throws Exception {
     doTest(true);
   }
 
-  public void testExtractFromFinally() throws Exception { doTest(); }
+  public void testExtractFromFinally() throws Exception {
+    doTest();
+  }
 
 
   private void doExitPointsTest(boolean shouldSucceed) throws Exception {
@@ -140,10 +250,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     return performExtractMethod(doRefactor, replaceAllDuplicates, getEditor(), getFile(), getProject());
   }
 
-  public static boolean performExtractMethod(boolean doRefactor,
-                                             boolean replaceAllDuplicates,
-                                             Editor editor,
-                                             PsiFile file, Project project) throws PrepareFailedException, IncorrectOperationException {
+  public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project)
+    throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -151,14 +259,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr != null) {
       elements = new PsiElement[]{expr};
-    } else {
+    }
+    else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     assertTrue(elements.length > 0);
 
-    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, elements,
-            null, "Extract Method", "newMethod", null
-    );
+    final ExtractMethodProcessor processor =
+      new ExtractMethodProcessor(project, editor, elements, null, "Extract Method", "newMethod", null);
     processor.setShowErrorDialogs(false);
 
     if (!processor.prepare()) {
