@@ -189,10 +189,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean isLineCommented(final int line, final CharSequence chars, final Commenter commenter) {
-    boolean commented;
     String prefix = commenter.getLineCommentPrefix();
     int lineStart = myDocument.getLineStartOffset(line);
     lineStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
+    boolean commented;
     if (prefix != null) {
       commented = CharArrayUtil.regionMatches(chars, lineStart, prefix);
       if (commented) {
