@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.pom.Navigatable;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class InvocationCache {
 
   static {
     addCoreInvocations(DomElement.class);
+    addCoreInvocations(Navigatable.class);
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {

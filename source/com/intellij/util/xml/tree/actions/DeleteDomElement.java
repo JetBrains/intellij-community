@@ -5,8 +5,8 @@
 package com.intellij.util.xml.tree.actions;
 
 import com.intellij.javaee.model.ElementPresentation;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.util.Icons;
@@ -16,20 +16,23 @@ import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 /**
  * User: Sergey.Vasiliev
- * Date: Feb 26, 2006
  */
-public class DeleteElementFromCollection extends AnAction {
-  private DomModelTreeView myTreeView;
+public class DeleteDomElement extends BaseDomTreeAction {
 
 
-  public DeleteElementFromCollection(final DomModelTreeView treeView) {
-    myTreeView = treeView;
+  public DeleteDomElement() {
   }
 
-  public void actionPerformed(AnActionEvent e) {
-     if (myTreeView.getTree().getSelectedNode() instanceof BaseDomElementNode) {
-       final BaseDomElementNode selectedNode = (BaseDomElementNode)myTreeView.getTree().getSelectedNode();
-       new WriteCommandAction(selectedNode.getDomElement().getParent().getManager().getProject()) {
+  public DeleteDomElement(final DomModelTreeView treeView) {
+     super(treeView);
+  }
+
+
+  public void actionPerformed(AnActionEvent e, DomModelTreeView treeView) {
+      if (treeView.getTree().getSelectedNode() instanceof BaseDomElementNode) {
+       final BaseDomElementNode selectedNode = (BaseDomElementNode)treeView.getTree().getSelectedNode();
+
+        new WriteCommandAction(selectedNode.getDomElement().getParent().getManager().getProject()) {
          protected void run(final Result result) throws Throwable {
 
            selectedNode.getDomElement().undefine();
@@ -38,16 +41,20 @@ public class DeleteElementFromCollection extends AnAction {
      }
   }
 
-  public void update(AnActionEvent e) {
-    final SimpleNode selectedNode = myTreeView.getTree().getSelectedNode();
+
+  public void update(AnActionEvent e, DomModelTreeView treeView) {
+    final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 
     final boolean enabled = selectedNode instanceof BaseDomElementNode;
+
     e.getPresentation().setEnabled(enabled);
+    //e.getPresentation().setVisible(enabled);
+
     if (enabled) {
       final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
       e.getPresentation().setText("Delete " + presentation.getTypeName()+(presentation.getElementName() == null? "": ": " + presentation.getElementName()));
     } else {
-      e.getPresentation().setText("");
+      e.getPresentation().setText("Delete");
     }
 
     e.getPresentation().setIcon(Icons.DELETE_ICON);

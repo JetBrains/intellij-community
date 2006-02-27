@@ -1497,5 +1497,28 @@
         <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
         <reference ref="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"/>
     </group>
+
+    <action id="DomElementsTreeView.GotoDomElementDeclarationAction" class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
+      text="Goto Element" >
+      <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+    </action>
+
+    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction"
+      text ="Insert element">
+      <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+    </action>
+    <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
+      text="Delete element">
+      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+    </action>
+
+    <group id="DomElementsTreeView.TreePopup">
+        <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
+
+        <separator/>
+        <reference ref="DomElementsTreeView.AddElement"/>
+        <reference ref="DomElementsTreeView.DeleteElement"/>
+    </group>
+
   </actions>
 </component>

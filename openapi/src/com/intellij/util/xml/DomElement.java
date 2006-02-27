@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public interface DomElement {
+public interface DomElement extends Navigatable {
 
   @Nullable
   XmlTag getXmlTag();

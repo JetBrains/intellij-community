@@ -1,6 +1,7 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -21,7 +22,11 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Map;
 
-public class DomModelTreeView extends Wrapper {
+import org.jetbrains.annotations.Nullable;
+
+public class DomModelTreeView extends Wrapper implements DataProvider {
+  public static String DOM_MODEL_TREE_VIEW_KEY = "DOM_MODEL_TREE_VIEW_KEY";
+
   private final SimpleTree myTree;
   private final SimpleTreeBuilder myBuilder;
   private DomManager myDomManager;
@@ -60,6 +65,8 @@ public class DomModelTreeView extends Wrapper {
     };
     myDomManager = rootElement.getManager();
     myDomManager.addDomEventListener(myDomEventListener);
+
+    myTree.setPopupGroup(getPopupActions(), ActionPlaces.UNKNOWN);
   }
 
   public DomElement getRootElement() {
@@ -80,6 +87,26 @@ public class DomModelTreeView extends Wrapper {
 
   public SimpleTree getTree() {
     return myTree;
+  }
+
+  protected ActionGroup getPopupActions() {
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    group.add(ActionManagerEx.getInstance().getAction("DomElementsTreeView.TreePopup"));
+    group.addSeparator();
+
+    group.add(new ExpandAllAction(myTree));
+    group.add(new CollapseAllAction(myTree));
+
+    return group;
+  }
+
+  @Nullable
+  public Object getData(String dataId) {
+    if (DOM_MODEL_TREE_VIEW_KEY.equals(dataId)) {
+      return this;
+    }
+    return null;
   }
 }
 

@@ -85,8 +85,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private static boolean isCoreMethod(final Method method) {
-    final Class<?> declaringClass = method.getDeclaringClass();
-    return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);
+    return method.getDeclaringClass().isAssignableFrom(DomElement.class);
   }
 
   @Nullable

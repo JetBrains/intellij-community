@@ -1,16 +1,17 @@
 package com.intellij.util.xml.tree;
 
+import com.intellij.javaee.model.ElementPresentation;
+import com.intellij.javaee.model.ElementPresentationManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.javaee.model.ElementPresentationManager;
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
   private DomElement myParentElement;
@@ -69,6 +70,9 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public Icon getNodeIcon() {
-    return ElementPresentationManager.getPresentationForClass(DomUtil.getRawType(myChildDescription.getType())).getIcon();
+    final ElementPresentation presentation =
+      ElementPresentationManager.getPresentationForClass(DomUtil.getRawType(myChildDescription.getType()));
+
+    return presentation == null ? null: presentation.getIcon();
   }
 }

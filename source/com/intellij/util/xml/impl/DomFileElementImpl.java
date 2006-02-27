@@ -227,4 +227,17 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   public <T> void putUserData(Key<T> key, T value) {
     myUserData.put(key, value);
   }
+
+
+  public void navigate(boolean requestFocus) {
+
+  }
+
+  public boolean canNavigate() {
+    return false;
+  }
+
+  public boolean canNavigateToSource() {
+    return false;
+  }
 }

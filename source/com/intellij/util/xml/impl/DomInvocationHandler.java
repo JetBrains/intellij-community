@@ -5,6 +5,9 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -563,6 +566,25 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       assert !myInitializedChildren.contains(tagName);
       myFixedChildrenClasses.put(tagName, aClass);
     }
+  }
+
+
+  public void navigate(boolean requestFocus) {
+    final Project project = getManager().getProject();
+
+    final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, getFile().getVirtualFile(),
+                                                                           getXmlTag().getTextOffset());
+
+
+    FileEditorManagerEx.getInstanceEx(project).openTextEditor(fileDescriptor, requestFocus);
+  }
+
+  public boolean canNavigate() {
+    return true;
+  }
+
+  public boolean canNavigateToSource() {
+    return true;
   }
 }
 
