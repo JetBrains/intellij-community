@@ -339,7 +339,8 @@ public final class ErrorAnalyzer {
   @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     for(ErrorInfo errInfo: getAllErrorsForComponent(component)) {
-      if (displayLevel == null || errInfo.getHighlightDisplayLevel() == HighlightDisplayLevel.ERROR) {
+      if (displayLevel == null ||
+          errInfo.getHighlightDisplayLevel().getSeverity().myVal > displayLevel.getSeverity().myVal) {
         displayLevel = errInfo.getHighlightDisplayLevel();
       }
     }

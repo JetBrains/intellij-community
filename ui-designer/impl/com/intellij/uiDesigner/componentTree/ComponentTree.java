@@ -1,13 +1,17 @@
 package com.intellij.uiDesigner.componentTree;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
@@ -17,7 +21,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -26,10 +29,10 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +49,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -60,8 +64,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private SimpleTextAttributes myUnknownAttributes; // exists only for performance reason
   private SimpleTextAttributes myTitleAttributes; // exists only for performance reason
 
-  private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2errAttr; // exists only for performance reason
-  private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2WarningAttr; // exists only for performance reason
+  private Map<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>> myHighlightAttributes;
 
   private GuiEditor myEditor;
   private final QuickFixManager myQuickFixManager;
@@ -253,24 +256,22 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (level == null) {
       return attrs;
     }
-    if (level == HighlightDisplayLevel.WARNING) {
-      SimpleTextAttributes result = myAttr2WarningAttr.get(attrs);
-      if (result == null) {
-        result = new SimpleTextAttributes(attrs.getStyle() | SimpleTextAttributes.STYLE_WAVED,
-                                          attrs.getFgColor(),
-                                          Color.ORANGE);
-        myAttr2WarningAttr.put(attrs, result);
-      }
-      return result;
+
+    Map<SimpleTextAttributes, SimpleTextAttributes> highlightMap = myHighlightAttributes.get(level.getSeverity());
+    if (highlightMap == null) {
+      highlightMap = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+      myHighlightAttributes.put(level.getSeverity(), highlightMap);
     }
 
-    SimpleTextAttributes result = myAttr2errAttr.get(attrs);
+    SimpleTextAttributes result = highlightMap.get(attrs);
     if (result == null) {
-      result = new SimpleTextAttributes(attrs.getStyle() | SimpleTextAttributes.STYLE_WAVED,
-                                        attrs.getFgColor(),
-                                        Color.RED);
-      myAttr2errAttr.put(attrs, result);
+      final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
+      textAttrs = TextAttributes.merge(attrs.toTextAttributes(), textAttrs);
+      result = SimpleTextAttributes.fromTextAttributes(textAttrs);
+      highlightMap.put(attrs, result);
     }
+
     return result;
   }
 
@@ -279,8 +280,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     // [vova] we cannot create this hash in constructor and just clear it here. The
     // problem is that setUI is invoked by constructor of superclass.
-    myAttr2errAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
-    myAttr2WarningAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+    myHighlightAttributes = new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes attributes = globalScheme.getAttributes(HighlighterColors.JAVA_STRING);

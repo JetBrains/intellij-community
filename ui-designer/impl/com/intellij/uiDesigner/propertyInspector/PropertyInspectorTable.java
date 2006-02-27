@@ -1,15 +1,19 @@
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -19,20 +23,23 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableUtil;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.ErrorAnalyzer;
+import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.Properties;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -46,9 +53,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -88,6 +93,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   private boolean myShowExpertProperties;
 
+  private Map<HighlightSeverity, SimpleTextAttributes> myHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+  private Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+
   private final ClassToBindProperty myClassToBindProperty;
   private final BindingProperty myBindingProperty;
   private final BorderProperty myBorderProperty;
@@ -110,16 +118,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final LayoutManagerProperty myLayoutManagerProperty;
   private final ButtonGroupProperty myButtonGroupProperty = new ButtonGroupProperty();
 
-  /**
-   * This two attributes exist here only for performance reason
-   * and they should be updated when updateUI method is invoked
-   */
-  private SimpleTextAttributes myPropertyNameAttrs;
-  private SimpleTextAttributes myErrorPropertyNameAttrs;
-  private SimpleTextAttributes myWarningPropertyNameAttrs;
-  private SimpleTextAttributes myModifiedPropertyNameAttrs;
-  private SimpleTextAttributes myModifiedErrorPropertyNameAttrs;
-  private SimpleTextAttributes myModifiedWarningPropertyNameAttrs;
   private boolean myInsideSynch;
 
   PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
@@ -248,33 +246,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
     }
     else if (GuiEditor.class.getName().equals(dataId)) {
-      return myEditor;      
+      return myEditor;
     }
     else {
       return null;
     }
-  }
-
-  public void updateUI() {
-    myPropertyNameAttrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    myModifiedPropertyNameAttrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-    myErrorPropertyNameAttrs = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_WAVED,
-      null, Color.RED
-    );
-    myModifiedErrorPropertyNameAttrs = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_WAVED | SimpleTextAttributes.STYLE_BOLD,
-      null, Color.RED
-    );
-    myWarningPropertyNameAttrs = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_WAVED,
-      null, Color.ORANGE
-    );
-    myModifiedWarningPropertyNameAttrs = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_WAVED | SimpleTextAttributes.STYLE_BOLD,
-      null, Color.ORANGE
-    );
-    super.updateUI();
   }
 
   /**
@@ -499,7 +475,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         addProperty(result, myMaximumSizeProperty);
       }
       if (component.getDelegee() instanceof AbstractButton &&
-        !(component.getDelegee() instanceof JButton)) {
+          !(component.getDelegee() instanceof JButton)) {
         addProperty(result, myButtonGroupProperty);
       }
 
@@ -901,17 +877,27 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     private SimpleTextAttributes getTextAttributes(final int row, final Property property) {
       // 1. Text
       ErrorInfo errInfo = getErrorInfoForRow(row);
-      SimpleTextAttributes attrs;
-      if (errInfo != null && errInfo.getHighlightDisplayLevel() == HighlightDisplayLevel.ERROR) {
-        attrs = property.isModified(myComponent) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
+
+      if (errInfo == null) {
+        return property.isModified(myComponent) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
       }
-      else if (errInfo != null) {
-        attrs = property.isModified(myComponent) ? myModifiedWarningPropertyNameAttrs : myWarningPropertyNameAttrs;
+
+      boolean modified = property.isModified(myComponent);
+      final HighlightSeverity severity = errInfo.getHighlightDisplayLevel().getSeverity();
+      Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
+      SimpleTextAttributes result = cache.get(severity);
+      if (result == null) {
+        final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+        TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
+        if (modified) {
+          textAttrs = textAttrs.clone();
+          textAttrs.setFontType(textAttrs.getFontType() | Font.BOLD);
+        }
+        result = SimpleTextAttributes.fromTextAttributes(textAttrs);
+        cache.put(severity, result);
       }
-      else {
-        attrs = property.isModified(myComponent) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
-      }
-      return attrs;
+
+      return result;
     }
   }
 

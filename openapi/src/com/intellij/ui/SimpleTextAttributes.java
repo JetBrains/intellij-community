@@ -130,7 +130,7 @@ public final class SimpleTextAttributes {
         // not supported
       }
     }
-    return new SimpleTextAttributes(style, foregroundColor, attributes.getEffectColor());
+    return new SimpleTextAttributes(attributes.getBackgroundColor(), foregroundColor, attributes.getEffectColor(), style);
   }
 
   public TextAttributes toTextAttributes() {
