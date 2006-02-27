@@ -6,7 +6,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ public final class ResizeProcessor extends EventProcessor {
   private Rectangle myOriginalBounds;
   private RadContainer myOriginalParent;
   private final GuiEditor myEditor;
-  private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
   private boolean doResize = false;
   private static final int EPSILON = 5;
   private GridConstraints myOriginalConstraints;
@@ -170,7 +168,7 @@ public final class ResizeProcessor extends EventProcessor {
       if (myResizedCopy != null) {
         myEditor.getDragLayer().remove(myResizedCopy.getDelegee());
       }
-      if (myOriginalParent.isGrid()) {
+      if (myOriginalParent.isGrid() && myEditor.ensureEditable()) {
         final Point point = SwingUtilities.convertPoint(myEditor.getDragLayer(), e.getX(), e.getY(), myOriginalParent.getDelegee());
         final GridLayoutManager grid = (GridLayoutManager)myOriginalParent.getLayout();
         Rectangle rcGrid = getGridSpanGridRect(grid, myOriginalConstraints, point, myResizeMask);
@@ -181,27 +179,6 @@ public final class ResizeProcessor extends EventProcessor {
           myOriginalConstraints.setRowSpan(rcGrid.height);
         }
       }
-      /*
-      if (myOriginalParent.isGrid()) {
-        if (doResize && myEditor.ensureEditable()) {
-          Dimension preferredSize = (Dimension) myPreferredSizeProperty.getValue(myComponent);
-          if ((myResizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0) {
-            preferredSize.width= myComponent.getWidth();
-          }
-          if ((myResizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0) {
-            preferredSize.height= myComponent.getHeight();
-          }
-          try {
-            myPreferredSizeProperty.setValue(myComponent, preferredSize);
-          }
-          catch (Exception e1) {
-            LOG.error(e1);
-          }
-        }
-        myOriginalParent.addComponent(myComponent);
-      }
-      myComponent.setResizing(false);
-      */
       myEditor.getActiveDecorationLayer().removeFeedback();
       myComponent.setDragging(false);
       myEditor.refreshAndSave(true);
